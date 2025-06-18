@@ -9,252 +9,217 @@ import {
   TableRow,
   Paper,
   Box,
-  Stack,
-  Select,
-  MenuItem,
-  TextField,
-  InputAdornment,
   Container,
+  useTheme,
+  OutlinedInput,
+  InputLabel,
+  MenuItem,
+  FormControl,
+  Select,
+  Grid,
+  TextField,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import dayjs from 'dayjs';
+import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
+
+const BCrumb = [
+  { to: '/', title: 'Home' },
+  { title: 'School' },
+];
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+const getStyles = (name, selected, theme) => ({
+  fontWeight: selected.includes(name)
+    ? theme.typography.fontWeightMedium
+    : theme.typography.fontWeightRegular,
+});
+
+const filterGroups = [
+  { mainLabel: 'Agent', mainOptions: ['Agent A', 'Agent B'] },
+  { mainLabel: 'Country', mainOptions: ['Nigeria', 'Ghana'] },
+  { mainLabel: 'State', mainOptions: ['Ogun', 'Lagos'] },
+  { mainLabel: 'LGA', mainOptions: ['Abeokuta', 'Ijebu-Ode'] },
+  // Removed "Name" from this list to handle it separately
+];
 
 const SchoolDashboard = () => {
-  // Hardcoded school summary data
+  const theme = useTheme();
+  const [filterValues, setFilterValues] = useState({});
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+  const [nameValue, setNameValue] = useState('');
+
+  const handleChange = (key) => (event) => {
+    const {
+      target: { value },
+    } = event;
+    setFilterValues((prev) => ({
+      ...prev,
+      [key]: typeof value === 'string' ? value.split(',') : value,
+    }));
+  };
+
   const schoolSummary = {
     total: 2,
     myRegistered: 2,
     active: 2,
-    inactive: 0
+    inactive: 0,
   };
 
-  // State for filter inputs
-  const [filters, setFilters] = useState({
-    agent: '',
-    country: '',
-    state: '',
-    lga: '',
-    name: '',
-    dateFrom: null,
-    dateTo: null,
-  });
-
-  // Hardcoded table data (example)
   const tableData = [
-    { id: 1, schoolName: 'Greenwood Elementary', schoolUrl: 'greenwood.edu', agent: 'Agent A', gateway: 'Gateway 1', date: '06/15/2025', socialLink: 'link1', colourScheme: 'Blue', status: 'Active', action: 'Edit' },
-    { id: 2, schoolName: 'Oakridge High', schoolUrl: 'oakridge.edu', agent: 'Agent B', gateway: 'Gateway 2', date: '06/10/2025', socialLink: 'link2', colourScheme: 'Green', status: 'Inactive', action: 'View' },
+    {
+      id: 1,
+      schoolName: 'Greenwood Elementary',
+      schoolUrl: 'greenwood.edu',
+      agent: 'Agent A',
+      gateway: 'Gateway 1',
+      date: '06/15/2025',
+      socialLink: 'link1',
+      colourScheme: 'Blue',
+      status: 'Active',
+      action: 'Edit',
+    },
+    {
+      id: 2,
+      schoolName: 'Oakridge High',
+      schoolUrl: 'oakridge.edu',
+      agent: 'Agent B',
+      gateway: 'Gateway 2',
+      date: '06/10/2025',
+      socialLink: 'link2',
+      colourScheme: 'Green',
+      status: 'Inactive',
+      action: 'View',
+    },
   ];
 
-  // Handle filter changes
-  const handleFilterChange = (field) => (event) => {
-    setFilters({ ...filters, [field]: event.target.value });
-  };
-
-  const handleDateChange = (field) => (date) => {
-    setFilters({ ...filters, [field]: date });
-  };
-
   return (
-    <>
     <Container>
-      {/* School Summary Section */}
-      <Box sx={{ width: '100%', display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <Box sx={{
-          bgcolor: '#f8f9fa',
-          border: '1px solid #e9ecef',
-          borderRadius: 2,
-          p: 3,
-          minWidth: '200px',
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '120px'
-        }}>
-          <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px', fontWeight: 500 }}>
-              Total
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px' }}>
-              Schools
-            </Typography>
-          </Box>
-          <Typography variant="h2" sx={{ color: '#28a745', fontWeight: 'bold', fontSize: '48px' }}>
-            {schoolSummary.total}
-          </Typography>
-        </Box>
+      <Breadcrumb title="School" items={BCrumb} />
 
-        <Box sx={{
-          bgcolor: '#f8f9fa',
-          border: '1px solid #e9ecef',
-          borderRadius: 2,
-          p: 3,
-          minWidth: '200px',
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '120px'
-        }}>
-          <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px', fontWeight: 500 }}>
-              My Registered
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px' }}>
-              Schools
-            </Typography>
-          </Box>
-          <Typography variant="h2" sx={{ color: '#28a745', fontWeight: 'bold', fontSize: '48px' }}>
-            {schoolSummary.myRegistered}
-          </Typography>
-        </Box>
-
-        <Box sx={{
-          bgcolor: '#f8f9fa',
-          border: '1px solid #e9ecef',
-          borderRadius: 2,
-          p: 3,
-          minWidth: '200px',
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '120px'
-        }}>
-          <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px', fontWeight: 500 }}>
-              Active
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px' }}>
-              Schools
+      {/* Summary Cards */}
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+        {[
+          { label: 'Total', value: schoolSummary.total },
+          { label: 'My Registered', value: schoolSummary.myRegistered },
+          { label: 'Active', value: schoolSummary.active },
+          { label: 'Inactive', value: schoolSummary.inactive },
+        ].map((item) => (
+          <Box
+            key={item.label}
+            sx={{
+              bgcolor: '#f8f9fa',
+              border: '2px solid #fff',
+              borderRadius: 1,
+              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.5)',
+              p: 3,
+              minWidth: '275px',
+              height: '120px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Box>
+              <Typography variant="body2" sx={{ fontSize: '20px', fontWeight: 'bold' }}>
+                {item.label}
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '14px' }}>
+                Schools
+              </Typography>
+            </Box>
+            <Typography variant="h2" sx={{ fontWeight: 'bold', fontSize: '48px', color: '#28a745' }}>
+              {item.value}
             </Typography>
           </Box>
-          <Typography variant="h2" sx={{ color: '#28a745', fontWeight: 'bold', fontSize: '48px' }}>
-            {schoolSummary.active}
-          </Typography>
-        </Box>
-
-        <Box sx={{
-          bgcolor: '#f8f9fa',
-          border: '1px solid #e9ecef',
-          borderRadius: 2,
-          p: 3,
-          minWidth: '200px',
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: '120px'
-        }}>
-          <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px', fontWeight: 500 }}>
-              Inactive
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '14px' }}>
-              Schools
-            </Typography>
-          </Box>
-          <Typography variant="h2" sx={{ color: '#28a745', fontWeight: 'bold', fontSize: '48px' }}>
-            {schoolSummary.inactive}
-          </Typography>
-        </Box>
+        ))}
       </Box>
 
       {/* Filter Section */}
       <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
-        <Stack direction="row" spacing={2} alignItems="center" mb={2}>
-          <Typography variant="h6" color="text.secondary">All Schools</Typography>
-        </Stack>
-        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-          <Select
-            value={filters.agent}
-            onChange={handleFilterChange('agent')}
-            displayEmpty
-            renderValue={(value) => value || 'Agent'}
-            sx={{ minWidth: 120, bgcolor: 'white' }}
-          >
-            <MenuItem value="">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>All Agents</span>
-            </MenuItem>
-            <MenuItem value="Agent A">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>Agent A</span>
-            </MenuItem>
-            <MenuItem value="Agent B">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>Agent B</span>
-            </MenuItem>
-          </Select>
-          <Select
-            value={filters.country}
-            onChange={handleFilterChange('country')}
-            displayEmpty
-            renderValue={(value) => value || 'Country'}
-            sx={{ minWidth: 120, bgcolor: 'white' }}
-          >
-            <MenuItem value="">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>All Countries</span>
-            </MenuItem>
-            <MenuItem value="USA">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>USA</span>
-            </MenuItem>
-            <MenuItem value="UK">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>UK</span>
-            </MenuItem>
-          </Select>
-          <Select
-            value={filters.state}
-            onChange={handleFilterChange('state')}
-            displayEmpty
-            renderValue={(value) => value || 'State'}
-            sx={{ minWidth: 120, bgcolor: 'white' }}
-          >
-            <MenuItem value="">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>All States</span>
-            </MenuItem>
-            <MenuItem value="California">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>California</span>
-            </MenuItem>
-            <MenuItem value="Texas">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>Texas</span>
-            </MenuItem>
-          </Select>
-          <Select
-            value={filters.lga}
-            onChange={handleFilterChange('lga')}
-            displayEmpty
-            renderValue={(value) => value || 'Lga'}
-            sx={{ minWidth: 120, bgcolor: 'white' }}
-          >
-            <MenuItem value="">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>All LGAs</span>
-            </MenuItem>
-            <MenuItem value="LGA1">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>LGA1</span>
-            </MenuItem>
-            <MenuItem value="LGA2">
-              <span style={{ display: 'block', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}>LGA2</span>
-            </MenuItem>
-          </Select>
-          <TextField
-            value={filters.name}
-            onChange={handleFilterChange('name')}
-            placeholder="Name"
-            variant="outlined"
-            sx={{ minWidth: 200, bgcolor: 'white' }}
-          />
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <DatePicker
-              value={filters.dateFrom}
-              onChange={handleDateChange('dateFrom')}
-              renderInput={(params) => <TextField {...params} placeholder="From mm/dd/yyyy" sx={{ minWidth: 150, bgcolor: 'white' }} />}
+        <Grid container spacing={2}>
+          {filterGroups.map(({ mainLabel, mainOptions }) => (
+            <Grid item size={{ xs: 12, sm: 6, md: 3 }} key={mainLabel}>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id={`${mainLabel}-label`}>{mainLabel}</InputLabel>
+                <Select
+                  labelId={`${mainLabel}-label`}
+                  id={`${mainLabel}-select`}
+                  multiple
+                  value={filterValues[mainLabel] || []}
+                  onChange={handleChange(mainLabel)}
+                  input={<OutlinedInput label={mainLabel} />}
+                  MenuProps={MenuProps}
+                  sx={{ bgcolor: 'white' }}
+                >
+                  {mainOptions.map((option) => (
+                    <MenuItem
+                      key={option}
+                      value={option}
+                      style={getStyles(option, filterValues[mainLabel] || [], theme)}
+                    >
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          ))}
+
+          {/* Name Filter as Text Input */}
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              fullWidth
+              label="Name"
+              variant="outlined"
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              sx={{ bgcolor: 'white', mb: 2 }}
             />
+          </Grid>
+
+          {/* From Date Picker */}
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
             <DatePicker
-              value={filters.dateTo}
-              onChange={handleDateChange('dateTo')}
-              renderInput={(params) => <TextField {...params} placeholder="To mm/dd/yyyy" sx={{ minWidth: 150, bgcolor: 'white' }} />}
+              label="From"
+              value={fromDate}
+              onChange={(newValue) => setFromDate(newValue)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  sx: { bgcolor: 'white', mb: 2 }
+                },
+              }}
             />
-          </LocalizationProvider>
-        </Stack>
+          </Grid>
+
+          {/* To Date Picker */}
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+            <DatePicker
+              label="To"
+              value={toDate}
+              onChange={(newValue) => setToDate(newValue)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  sx: { bgcolor: 'white', mb: 2 },
+                },
+              }}
+            />
+          </Grid>
+        </Grid>
       </Box>
 
       {/* Table Section */}
@@ -292,8 +257,7 @@ const SchoolDashboard = () => {
           </TableBody>
         </Table>
       </TableContainer>
-      </Container>
-    </>
+    </Container>
   );
 };
 

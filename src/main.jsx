@@ -4,6 +4,8 @@ import App from './App';
 import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 async function deferRender() {
   const { worker } = await import("./api/mocks/browser");
@@ -14,10 +16,12 @@ async function deferRender() {
 
 deferRender().then(() => {
   ReactDOM.createRoot(document.getElementById('root')).render(
-    <CustomizerContextProvider>
-      <Suspense fallback={<Spinner />}>
-        <App />
-      </Suspense>
-    </CustomizerContextProvider>,
-  )
-})
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <CustomizerContextProvider>
+        <Suspense fallback={<Spinner />}>
+          <App />
+        </Suspense>
+      </CustomizerContextProvider>
+    </LocalizationProvider>
+  );
+});

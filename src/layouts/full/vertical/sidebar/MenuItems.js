@@ -71,14 +71,15 @@ const Menuitems = [
     icon: IconChartPie,
     href: '/dashboards/analytical',
   },
-  /*
+  
+  
   {
     id: uniqueId(),
-    title: 'eCommerce',
+    title: 'school',
     icon: IconShoppingCart,
-    href: '/dashboards/ecommerce',
+    href: '/dashboards/school',
   },
-  */
+
   /*
   {
     id: uniqueId(),
@@ -285,38 +286,38 @@ const Menuitems = [
   //   href: '/apps/kanban',
   // },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Invoice',
-  //   icon: IconFileCheck,
-  //   href: '/apps/invoice/list',
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'List',
-  //       icon: IconPoint,
-  //       href: '/apps/invoice/list',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Details',
-  //       icon: IconPoint,
-  //       href: '/apps/invoice/detail/PineappleInc',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Create',
-  //       icon: IconPoint,
-  //       href: '/apps/invoice/create',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Edit',
-  //       icon: IconPoint,
-  //       href: '/apps/invoice/edit/PineappleInc',
-  //     },
-  //   ],
-  // },
+  {
+    id: uniqueId(),
+    title: 'Invoice',
+    icon: IconFileCheck,
+    href: '/apps/invoice/list',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'List',
+        icon: IconPoint,
+        href: '/apps/invoice/list',
+      },
+      {
+        id: uniqueId(),
+        title: 'Details',
+        icon: IconPoint,
+        href: '/apps/invoice/detail/PineappleInc',
+      },
+      {
+        id: uniqueId(),
+        title: 'Create',
+        icon: IconPoint,
+        href: '/apps/invoice/create',
+      },
+      {
+        id: uniqueId(),
+        title: 'Edit',
+        icon: IconPoint,
+        href: '/apps/invoice/edit/PineappleInc',
+      },
+    ],
+  },
 
   {
     navlabel: true,

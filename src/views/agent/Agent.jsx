@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useContext } from 'react'; // Import useContext
-// import { CustomizerContext } from '../context/CustomizerContext'; // Import your context
+import { useContext } from 'react'; 
+// import { CustomizerContext } from '../context/CustomizerContext';
 
 import {
   Grid,
@@ -71,8 +71,11 @@ const Agent = () => {
   const [lga, setLga] = useState('');
   const [referer, setReferer] = useState('');
   const [search, setSearch] = useState('');
-  // const { setHeaderColor, setSidebarColor, setBodyColor } = useContext(CustomizerContext); // Access the context
+  // const { setHeaderColor, setSidebarColor, setBodyColor } = useContext(CustomizerContext); 
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [actionType, setActionType] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
 
@@ -80,21 +83,68 @@ const Agent = () => {
 
 
   const handleAddAgent = (newAgent) => {
-    // Update the 'data' state with the new agent
-    // Using functional update to ensure we have the latest state
     setData(prevData => [...prevData, newAgent]);
-    console.log("New Agent Added:", newAgent); // Optional: Log to console for verification
+    console.log("New Agent Added:", newAgent); 
 
-    // Update the theme colors:
     setHeaderColor(newAgent.headerColor);
     setSidebarColor(newAgent.sidebarColor);
     setBodyColor(newAgent.bodyColor);
   };
 
-  const handleRefresh = (data) => {
-    
-    setData(prevData => [...prevData, data]);
-    setRefreshKey(prevData => prevData + 1);
+ const handleRefresh = (newData) => {
+    setData((prevData) => {
+      const existingIndex = prevData.findIndex((item) => item.s_n === newData.s_n);
+
+      if (existingIndex !== -1) {
+        // If the item exists, update it
+        const updatedData = [...prevData];
+        updatedData[existingIndex] = newData;
+        return updatedData;
+      } else {
+        // If the item doesn't exist, add it
+        return [...prevData, newData];
+      }
+    });
+    setRefreshKey((prevData) => prevData + 1);
+  };
+
+  const handleUpdateAgent = (agentData, actionType) => {
+    console.log("Selected Agent Data:", agentData);
+    setSelectedAgent(agentData);
+    setActionType(actionType);
+    setIsModalOpen(true);
+  };
+
+  const handleViewSchools = (agentData) => {
+    console.log("Selected Agent Data:", agentData);
+    setSelectedAgent(agentData);
+    setActionType('viewSchools');
+    setIsModalOpen(true);
+  };
+
+  const handleManagePermission = (agentData) => {
+    setSelectedAgent(agentData);
+    setActionType('managePermission');
+    setIsModalOpen(true);
+  };
+
+  // const schoolsData = [
+  //   {
+  //     schoolName: 'ABC School',
+  //     address: '123 Main St',
+  //   },
+  //   {
+  //     schoolName: 'XYZ School',
+  //     address: '456 Oak Ave',
+  //   },
+  // ];
+
+  const handleAgentUpdate = (updatedAgent) => {
+    setData(prevData =>
+      prevData.map(agent =>
+        agent.s_n === updatedAgent.s_n ? updatedAgent : agent
+      )
+    );
   };
 
   // const initialAgentData = [
@@ -340,7 +390,7 @@ const Agent = () => {
           <div>
             <IconButton
               aria-label="more"
-              id={`action-menu-button-${row.original.s_n}`} // Unique ID for accessibility
+              id={`action-menu-button-${row.original.s_n}`} 
               aria-controls={open ? `action-menu-${row.original.s_n}` : undefined}
               aria-expanded={open ? 'true' : undefined}
               aria-haspopup="true"
@@ -349,7 +399,7 @@ const Agent = () => {
               <MoreVertIcon />
             </IconButton>
             <Menu
-              id={`action-menu-${row.original.s_n}`} // Unique ID for accessibility
+              id={`action-menu-${row.original.s_n}`} 
               MenuListProps={{
                 'aria-labelledby': `action-menu-button-${row.original.s_n}`,
               }}
@@ -358,21 +408,25 @@ const Agent = () => {
               onClose={handleClose}
               PaperProps={{
                 style: {
-                  maxHeight: 48 * 4.5, // Adjust height as needed
-                  width: '20ch', // Adjust width as needed
+                  maxHeight: 48 * 4.5,
+                  width: '20ch', 
                 },
               }}
             >
-              {/* Your 9 Menu Items */}
-              <MenuItem onClick={() => { handleClose(); console.log('Option 1 clicked for agent', row.original.s_n); }}>Update Agent Info</MenuItem>
-              <MenuItem onClick={() => { handleClose(); console.log('Option 2 clicked for agent', row.original.s_n); }}>View Schools</MenuItem>
+            
+              <MenuItem onClick={() => { handleClose(); handleUpdateAgent(row.original, 'update'); }}>Update Agent Info</MenuItem>
+              <MenuItem onClick={() => { handleClose(); handleViewSchools(row.original, 'view'); }}>View School</MenuItem>
+              <MenuItem onClick={() => { handleClose(); handleManagePermission(row.original, 'managePermission'); }}>Manage Permission</MenuItem>
+              
+              
+              {/* <MenuItem onClick={() => { handleClose(); console.log('Option 2 clicked for agent', row.original.s_n); }}>View Schools</MenuItem>
               <MenuItem onClick={() => { handleClose(); console.log('Option 3 clicked for agent', row.original.s_n); }}>Manage Permission</MenuItem>
               <MenuItem onClick={() => { handleClose(); console.log('Option 4 clicked for agent', row.original.s_n); }}>Update Commision</MenuItem>
               <MenuItem onClick={() => { handleClose(); console.log('Option 5 clicked for agent', row.original.s_n); }}>Manage Refferal</MenuItem>
               <MenuItem onClick={() => { handleClose(); console.log('Option 6 clicked for agent', row.original.s_n); }}>Manage Payment Gateway</MenuItem>
               <MenuItem onClick={() => { handleClose(); console.log('Option 7 clicked for agent', row.original.s_n); }}>View Agent Profile</MenuItem>
               <MenuItem onClick={() => { handleClose(); console.log('Option 8 clicked for agent', row.original.s_n); }}>Change Agent Colour Scheme</MenuItem>
-              <MenuItem onClick={() => { handleClose(); console.log('Option 9 clicked for agent', row.original.s_n); }}>Delete Agent</MenuItem>
+              <MenuItem onClick={() => { handleClose(); console.log('Option 9 clicked for agent', row.original.s_n); }}>Delete Agent</MenuItem> */}
             </Menu>
           </div>
         );
@@ -421,7 +475,7 @@ const Agent = () => {
               <Typography variant="h5" fontWeight={200}>
                 All Agent
               </Typography>
-              <Button variant="contained" color="primary" startIcon={<HowToRegIcon />} onClick={() => setIsModalOpen(true)}>
+              <Button variant="contained" color="primary" startIcon={<HowToRegIcon />} onClick={() => setIsRegisterModalOpen(true)}>
                 Register Agent
               </Button>
 
@@ -523,7 +577,19 @@ const Agent = () => {
             </Table>
           </TableContainer>
         </ParentCard>
-        <AddAgentModal open={isModalOpen} onClose={() => setIsModalOpen(false)} handleRefresh={handleRefresh} />
+        <AddAgentModal
+          open={isRegisterModalOpen || isModalOpen}
+          onClose={() => {
+            setIsRegisterModalOpen(false);
+            setIsModalOpen(false);
+            if (actionType === 'update') {
+              setSelectedAgent(null);
+            }
+          }}
+          handleRefresh={handleRefresh}
+          selectedAgent={selectedAgent}
+          actionType={isModalOpen ? actionType : 'create'}
+        />
       </Box>
     </PageContainer>
   );

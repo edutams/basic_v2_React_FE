@@ -4,6 +4,7 @@ import App from './App';
 import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
+import  ErrorBoundary  from './ErrorBoundary';
 
 async function deferRender() {
   const { worker } = await import("./api/mocks/browser");
@@ -14,10 +15,14 @@ async function deferRender() {
 
 deferRender().then(() => {
   ReactDOM.createRoot(document.getElementById('root')).render(
+    
     <CustomizerContextProvider>
       <Suspense fallback={<Spinner />}>
+      <ErrorBoundary>
         <App />
+    </ErrorBoundary>
       </Suspense>
     </CustomizerContextProvider>,
+
   )
 })

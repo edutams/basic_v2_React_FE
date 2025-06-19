@@ -18,10 +18,22 @@ import {
   Select,
   Grid,
   TextField,
+  IconButton,
+  Menu,
 } from '@mui/material';
+import AddSchoolModal from '../../components/add-school/AddSchool';  
+
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
+
+import ListIcon from '@mui/icons-material/List';
+import AppsIcon from '@mui/icons-material/Apps';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import Pagination from '../../components/pagination/Pagination';
+
+
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -50,7 +62,6 @@ const filterGroups = [
   { mainLabel: 'Country', mainOptions: ['Nigeria', 'Ghana'] },
   { mainLabel: 'State', mainOptions: ['Ogun', 'Lagos'] },
   { mainLabel: 'LGA', mainOptions: ['Abeokuta', 'Ijebu-Ode'] },
-  // Removed "Name" from this list to handle it separately
 ];
 
 const SchoolDashboard = () => {
@@ -59,6 +70,13 @@ const SchoolDashboard = () => {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [nameValue, setNameValue] = useState('');
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const [openRegisterModal, setOpenRegisterModal] = useState(false);
+
 
   const handleChange = (key) => (event) => {
     const {
@@ -109,46 +127,128 @@ const SchoolDashboard = () => {
       <Breadcrumb title="School" items={BCrumb} />
 
       {/* Summary Cards */}
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          width: '100%',
+          mb: 3,
+        }}
+      >
         {[
           { label: 'Total', value: schoolSummary.total },
           { label: 'My Registered', value: schoolSummary.myRegistered },
           { label: 'Active', value: schoolSummary.active },
           { label: 'Inactive', value: schoolSummary.inactive },
         ].map((item) => (
-          <Box
+          <Paper
             key={item.label}
+            elevation={2}
             sx={{
-              bgcolor: '#f8f9fa',
-              border: '2px solid #fff',
-              borderRadius: 1,
-              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.5)',
-              p: 3,
-              minWidth: '275px',
-              height: '120px',
               display: 'flex',
-              justifyContent: 'space-between',
+              flexDirection: 'row',
               alignItems: 'center',
-              flexShrink: 0,
+              justifyContent: 'space-between',
+              minHeight: 120,
+              height: '100%',
+              width: '100%',
+              borderRadius: 2,
+              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+              gap: 2,
             }}
           >
-            <Box>
+            
+            <Box sx={{ display: 'flex', flexDirection: 'column', ml: 2 }}>
               <Typography variant="body2" sx={{ fontSize: '20px', fontWeight: 'bold' }}>
                 {item.label}
               </Typography>
-              <Typography variant="body2" sx={{ fontSize: '14px' }}>
+              <Typography variant="body2" sx={{ fontSize: '14px', color: 'text.secondary' }}>
                 Schools
               </Typography>
             </Box>
-            <Typography variant="h2" sx={{ fontWeight: 'bold', fontSize: '48px', color: '#28a745' }}>
+            <Typography
+              variant="h2"
+              sx={{ fontWeight: 'bold', fontSize: '36px', color: '#28a745', minWidth: 56, textAlign: 'center' }}
+            >
               {item.value}
             </Typography>
-          </Box>
+          </Paper>
         ))}
       </Box>
 
       {/* Filter Section */}
       <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ListIcon sx={{ color: '#b76cc2' }} />
+            <Typography variant="h6" sx={{ fontWeight: 500 }}>
+              All Schools
+            </Typography>
+          </Box>
+
+          {/* Right dropdown */}
+          <Box sx={{ display: 'flex', alignItems: 'center'  }}>
+            <IconButton onClick={handleMenuOpen}>
+              <AppsIcon sx={{  '&:hover': {
+                    bgcolor: '#d1ffe3',
+                  }, }} />
+              <ArrowDropDownIcon sx={{
+                 '&:hover': {
+                    bgcolor: '#d1ffe3',
+                  },
+               }} />
+            </IconButton>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleMenuClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              PaperProps={{
+                sx: {
+                  p: 1,
+                  mt: 1,
+                  boxShadow: 3,
+                  minWidth: 200,
+                },
+              }}
+            >
+              <MenuItem
+  onClick={() => {
+    setOpenRegisterModal(true);
+    handleMenuClose();
+  }}
+  sx={{
+    bgcolor: '#e8fff1',
+    borderRadius: 1,
+    px: 2,
+    py: 1.5,
+    '&:hover': {
+      bgcolor: '#d1ffe3',
+    },
+  }}
+>
+  <DescriptionOutlinedIcon fontSize="small" sx={{ mr: 1, color: '#000' }} />
+  <Typography variant="body1" sx={{ color: '#000', fontWeight: 500 }}>
+    Register New School
+  </Typography>
+</MenuItem>
+
+            </Menu>
+          </Box>
+        </Box>
+
+        <Box component="hr" sx={{ mb: 3 }} />
+
+        {/* Filters */}
         <Grid container spacing={2}>
           {filterGroups.map(({ mainLabel, mainOptions }) => (
             <Grid item size={{ xs: 12, sm: 6, md: 3 }} key={mainLabel}>
@@ -178,7 +278,7 @@ const SchoolDashboard = () => {
             </Grid>
           ))}
 
-          {/* Name Filter as Text Input */}
+          {/* Name */}
           <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
@@ -190,8 +290,8 @@ const SchoolDashboard = () => {
             />
           </Grid>
 
-          {/* From Date Picker */}
-          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+          {/* Dates */}
+          <Grid itemsize={{ xs: 12, sm: 6, md: 3 }}>
             <DatePicker
               label="From"
               value={fromDate}
@@ -199,14 +299,13 @@ const SchoolDashboard = () => {
               slotProps={{
                 textField: {
                   fullWidth: true,
-                  sx: { bgcolor: 'white', mb: 2 }
+                  sx: { bgcolor: 'white', mb: 2 },
                 },
               }}
             />
           </Grid>
 
-          {/* To Date Picker */}
-          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
             <DatePicker
               label="To"
               value={toDate}
@@ -220,43 +319,50 @@ const SchoolDashboard = () => {
             />
           </Grid>
         </Grid>
-      </Box>
 
-      {/* Table Section */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>School Name</TableCell>
-              <TableCell>School Url</TableCell>
-              <TableCell>Agent</TableCell>
-              <TableCell>Gateway</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Social Link</TableCell>
-              <TableCell>Colour Scheme</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tableData.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.id}</TableCell>
-                <TableCell>{row.schoolName}</TableCell>
-                <TableCell>{row.schoolUrl}</TableCell>
-                <TableCell>{row.agent}</TableCell>
-                <TableCell>{row.gateway}</TableCell>
-                <TableCell>{row.date}</TableCell>
-                <TableCell>{row.socialLink}</TableCell>
-                <TableCell>{row.colourScheme}</TableCell>
-                <TableCell>{row.status}</TableCell>
-                <TableCell>{row.action}</TableCell>
+        {/* Table */}
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell>School Name</TableCell>
+                <TableCell>School Url</TableCell>
+                <TableCell>Agent</TableCell>
+                <TableCell>Gateway</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Social Link</TableCell>
+                <TableCell>Colour Scheme</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Action</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {tableData.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.id}</TableCell>
+                  <TableCell>{row.schoolName}</TableCell>
+                  <TableCell>{row.schoolUrl}</TableCell>
+                  <TableCell>{row.agent}</TableCell>
+                  <TableCell>{row.gateway}</TableCell>
+                  <TableCell>{row.date}</TableCell>
+                  <TableCell>{row.socialLink}</TableCell>
+                  <TableCell>{row.colourScheme}</TableCell>
+                  <TableCell>{row.status}</TableCell>
+                  <TableCell>{row.action}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box component="hr" sx={{ mt: 6, mb: 3 }} />
+        <Pagination totalItems={100} itemsPerPage={10} />
+
+<AddSchoolModal open={openRegisterModal} onClose={() => setOpenRegisterModal(false)} />
+
+        
+      </Box>
     </Container>
   );
 };

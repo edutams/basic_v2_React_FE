@@ -22,6 +22,7 @@ import {
   Menu,
 } from '@mui/material';
 import AddSchoolModal from '../../components/add-school/AddSchool';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
@@ -71,6 +72,19 @@ const SchoolDashboard = () => {
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
+
+  const [actionAnchorEl, setActionAnchorEl] = useState(null);
+  const [activeRow, setActiveRow] = useState(null);
+
+  const handleActionClick = (event, rowId) => {
+    setActionAnchorEl(event.currentTarget);
+    setActiveRow(rowId);
+  };
+
+  const handleActionClose = () => {
+    setActionAnchorEl(null);
+    setActiveRow(null);
+  };
 
   const handleChange = (key) => (event) => {
     const {
@@ -192,61 +206,22 @@ const SchoolDashboard = () => {
             </Typography>
           </Box>
 
-          {/* Right dropdown */}
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box>
             <IconButton onClick={handleMenuOpen}>
-              <AppsIcon
-                sx={{
-                  '&:hover': {
-                    bgcolor: '#d1ffe3',
-                  },
-                }}
-              />
-              <ArrowDropDownIcon
-                sx={{
-                  '&:hover': {
-                    bgcolor: '#d1ffe3',
-                  },
-                }}
-              />
+              <MoreVertIcon />
             </IconButton>
-
-            <Menu
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleMenuClose}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-              PaperProps={{
-                sx: {
-                  p: 1,
-                  mt: 1,
-                  boxShadow: 3,
-                  minWidth: 200,
-                },
-              }}
-            >
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
               <MenuItem
                 onClick={() => {
                   setOpenRegisterModal(true);
                   handleMenuClose();
                 }}
-                sx={{
-                  bgcolor: '#e8fff1',
-                  borderRadius: 1,
-                  px: 2,
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: '#d1ffe3',
-                  },
-                }}
               >
-                <DescriptionOutlinedIcon fontSize="small" sx={{ mr: 1, color: '#000' }} />
-                <Typography variant="body1" sx={{ color: '#000', fontWeight: 500 }}>
-                  Register New School
-                </Typography>
+                <DescriptionOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+                <Typography variant="body1">Register New School</Typography>
               </MenuItem>
             </Menu>
+                      
           </Box>
         </Box>
 
@@ -353,63 +328,25 @@ const SchoolDashboard = () => {
                   <TableCell>{row.socialLink}</TableCell>
                   <TableCell>{row.colourScheme}</TableCell>
                   <TableCell>{row.status}</TableCell>
-                  {/* <TableCell>{row.action}</TableCell> */}
-                  <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={handleMenuOpen}>
-                      <AppsIcon
-                        sx={{
-                          '&:hover': {
-                            bgcolor: '#d1ffe3',
-                          },
-                        }}
-                      />
-                      <ArrowDropDownIcon
-                        sx={{
-                          '&:hover': {
-                            bgcolor: '#d1ffe3',
-                          },
-                        }}
-                      />
-                    </IconButton>
 
+                  <TableCell>
+                    <IconButton onClick={(e) => handleActionClick(e, row.id)}>
+                      <MoreVertIcon />
+                    </IconButton>
                     <Menu
-                      anchorEl={anchorEl}
-                      open={open}
-                      onClose={handleMenuClose}
+                      anchorEl={actionAnchorEl}
+                      open={Boolean(actionAnchorEl) && activeRow === row.id}
+                      onClose={handleActionClose}
                       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                       PaperProps={{
-                        sx: {
-                          p: 1,
-                          mt: 1,
-                          boxShadow: 3,
-                          minWidth: 200,
-                        },
+                        sx: { minWidth: 120, boxShadow: 3 },
                       }}
                     >
-                      <MenuItem
-                        onClick={() => {
-                          setOpenRegisterModal(true);
-                          handleMenuClose();
-                        }}
-                        sx={{
-                          bgcolor: '#e8fff1',
-                          borderRadius: 1,
-                          px: 2,
-                          py: 1.5,
-                          '&:hover': {
-                            bgcolor: '#d1ffe3',
-                          },
-                        }}
-                      >
-                        <DescriptionOutlinedIcon fontSize="small" sx={{ mr: 1, color: '#000' }} />
-                        <Typography variant="body1" sx={{ color: '#000', fontWeight: 500 }}>
-                          Register New School
-                        </Typography>
-                      </MenuItem>
+                      <MenuItem onClick={handleActionClose}>View</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Edit</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Delete</MenuItem>
                     </Menu>
-                  </Box>
                   </TableCell>
                 </TableRow>
               ))}

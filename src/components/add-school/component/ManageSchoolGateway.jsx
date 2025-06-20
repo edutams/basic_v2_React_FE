@@ -48,7 +48,7 @@ const ManageSchoolGateway = ({ open, onClose }) => {
           p: 3,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 2 }}>
+        <Typography variant="h3" sx={{ mb: 2 }}>
           Manage School Gateway
         </Typography>
 

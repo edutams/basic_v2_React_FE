@@ -35,7 +35,7 @@ const ManageTenantDomain = ({ open, onClose, domainData = [] }) => {
       disableAutoFocus
     >
       <Box sx={style}>
-        <Typography variant="h6" mb={2}>
+        <Typography variant="h3" mb={2}>
           Manage Tenant Domain
         </Typography>
         <Divider sx={{ mb: 2 }} />

@@ -33,6 +33,8 @@ import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import Pagination from '../../components/pagination/Pagination';
 import ManageTenantDomain from '../../components/add-school/component/ManageSchoolDomain';
 import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
+import ChangeAgent from '../../components/add-school/component/ChangeAgent';
+import ConfirmDialog from '../../components/add-school/component/ConfirmDialog';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
@@ -99,10 +101,7 @@ const SchoolDashboard = () => {
   };
 
   const handleRefresh = (newSchool) => {
-    setSchoolList((prevList) => [
-      ...prevList,
-      { id: prevList.length + 1, ...newSchool },
-    ]);
+    setSchoolList((prevList) => [...prevList, { id: prevList.length + 1, ...newSchool }]);
   };
 
   const schoolSummary = {
@@ -113,10 +112,16 @@ const SchoolDashboard = () => {
   };
 
   const [openTenantModal, setOpenTenantModal] = useState(false);
-const [selectedTenantDomain, setSelectedTenantDomain] = useState(null);
-const [openGatewayModal, setOpenGatewayModal] = useState(false);
-
-
+  const [selectedTenantDomain, setSelectedTenantDomain] = useState(null);
+  const [openGatewayModal, setOpenGatewayModal] = useState(false);
+  const [openAgentModal, setOpenAgentModal] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState('');
+  const [agentList] = useState([
+    { label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' },
+    { label: 'Agent B', value: 'agentB' },
+  ]);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [schoolToDelete, setSchoolToDelete] = useState(null);
 
   return (
     <Container>
@@ -242,7 +247,6 @@ const [openGatewayModal, setOpenGatewayModal] = useState(false);
               value={nameValue}
               onChange={(e) => setNameValue(e.target.value)}
               sx={{ bgcolor: 'white', mb: 2 }}
-              
             />
           </Grid>
 
@@ -335,11 +339,20 @@ const [openGatewayModal, setOpenGatewayModal] = useState(false);
                       >
                         Manage School Gateway
                       </MenuItem>
-                      <ManageSchoolGateway open={openGatewayModal} onClose={() => setOpenGatewayModal(false)} />
 
-                      <MenuItem onClick={handleActionClose}>Manage School Domain</MenuItem>
-                      <MenuItem onClick={handleActionClose}>Manage School Gateway</MenuItem>
-                      <MenuItem onClick={handleActionClose}>Change Agent</MenuItem>
+                      <ManageSchoolGateway
+                        open={openGatewayModal}
+                        onClose={() => setOpenGatewayModal(false)}
+                      />
+
+                      <MenuItem
+                        onClick={() => {
+                          setOpenAgentModal(true);
+                          handleActionClose();
+                        }}
+                      >
+                        Change Agent
+                      </MenuItem>
                       <MenuItem onClick={handleActionClose}>View School</MenuItem>
                       <MenuItem onClick={handleActionClose}>Clear @fa Setting</MenuItem>
                       <MenuItem onClick={handleActionClose}>Fix User Images</MenuItem>
@@ -348,7 +361,15 @@ const [openGatewayModal, setOpenGatewayModal] = useState(false);
                       <MenuItem onClick={handleActionClose}>Details</MenuItem>
                       <MenuItem onClick={handleActionClose}>Change Color School Scheme</MenuItem>
                       <MenuItem onClick={handleActionClose}>Public Analytics</MenuItem>
-                      <MenuItem onClick={handleActionClose}>Delete School</MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          setSchoolToDelete(row); // row is your current school
+                          setOpenConfirmDialog(true);
+                          handleActionClose();
+                        }}
+                      >
+                        Delete School
+                      </MenuItem>
                     </Menu>
                   </TableCell>
                 </TableRow>
@@ -373,9 +394,22 @@ const [openGatewayModal, setOpenGatewayModal] = useState(false);
           onClose={() => setOpenTenantModal(false)}
           domainData={selectedTenantDomain}
         />
-        <ManageSchoolGateway
-          open={openGatewayModal}
-          onClose={() => setOpenGatewayModal(false)}
+        <ManageSchoolGateway open={openGatewayModal} onClose={() => setOpenGatewayModal(false)} />
+        <ChangeAgent
+          open={openAgentModal}
+          onClose={() => setOpenAgentModal(false)}
+          selectedAgent={selectedAgent}
+          agentList={agentList}
+        />
+        <ConfirmDialog
+          open={openConfirmDialog}
+          onClose={() => setOpenConfirmDialog(false)}
+          onConfirm={() => {
+            setSchoolList((prev) => prev.filter((s) => s.id !== schoolToDelete.id));
+            setOpenConfirmDialog(false);
+          }}
+          title="Delete School"
+          message={`Are you sure you want to perform this operation?`}
         />
       </Box>
     </Container>

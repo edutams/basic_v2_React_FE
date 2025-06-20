@@ -21,18 +21,18 @@ import {
   IconButton,
   Menu,
 } from '@mui/material';
-import AddSchoolModal from '../../components/add-school/AddSchool';
+import AddSchoolModal from '../../components/add-school/AddSchoolModal';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
-
 import ListIcon from '@mui/icons-material/List';
 import AppsIcon from '@mui/icons-material/Apps';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import Pagination from '../../components/pagination/Pagination';
+import ManageTenantDomain from '../../components/add-school/component/ManageSchoolDomain';
+import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
@@ -76,6 +76,8 @@ const SchoolDashboard = () => {
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
 
+  const [schoolList, setSchoolList] = useState([]);
+
   const handleActionClick = (event, rowId) => {
     setActionAnchorEl(event.currentTarget);
     setActiveRow(rowId);
@@ -96,45 +98,30 @@ const SchoolDashboard = () => {
     }));
   };
 
-  const schoolSummary = {
-    total: 2,
-    myRegistered: 2,
-    active: 2,
-    inactive: 0,
+  const handleRefresh = (newSchool) => {
+    setSchoolList((prevList) => [
+      ...prevList,
+      { id: prevList.length + 1, ...newSchool },
+    ]);
   };
 
-  const tableData = [
-    {
-      id: 1,
-      schoolName: 'Greenwood Elementary',
-      schoolUrl: 'greenwood.edu',
-      agent: 'Agent A',
-      gateway: 'Gateway 1',
-      date: '06/15/2025',
-      socialLink: 'link1',
-      colourScheme: 'Blue',
-      status: 'Active',
-      action: 'Edit',
-    },
-    {
-      id: 2,
-      schoolName: 'Oakridge High',
-      schoolUrl: 'oakridge.edu',
-      agent: 'Agent B',
-      gateway: 'Gateway 2',
-      date: '06/10/2025',
-      socialLink: 'link2',
-      colourScheme: 'Green',
-      status: 'Inactive',
-      action: 'View',
-    },
-  ];
+  const schoolSummary = {
+    total: schoolList.length,
+    myRegistered: schoolList.length,
+    active: schoolList.filter((s) => s.status === 'Active').length,
+    inactive: schoolList.filter((s) => s.status === 'Inactive').length,
+  };
+
+  const [openTenantModal, setOpenTenantModal] = useState(false);
+const [selectedTenantDomain, setSelectedTenantDomain] = useState(null);
+const [openGatewayModal, setOpenGatewayModal] = useState(false);
+
+
 
   return (
     <Container>
       <Breadcrumb title="School" items={BCrumb} />
 
-      {/* Summary Cards */}
       <Box
         sx={{
           display: 'grid',
@@ -190,22 +177,14 @@ const SchoolDashboard = () => {
         ))}
       </Box>
 
-      {/* Filter Section */}
       <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <ListIcon sx={{ color: '#b76cc2' }} />
             <Typography variant="h6" sx={{ fontWeight: 500 }}>
               All Schools
             </Typography>
           </Box>
-
           <Box>
             <IconButton onClick={handleMenuOpen}>
               <MoreVertIcon />
@@ -221,13 +200,11 @@ const SchoolDashboard = () => {
                 <Typography variant="body1">Register New School</Typography>
               </MenuItem>
             </Menu>
-                      
           </Box>
         </Box>
 
         <Box component="hr" sx={{ mb: 3 }} />
 
-        {/* Filters */}
         <Grid container spacing={2}>
           {filterGroups.map(({ mainLabel, mainOptions }) => (
             <Grid item size={{ xs: 12, sm: 6, md: 3 }} key={mainLabel}>
@@ -257,7 +234,6 @@ const SchoolDashboard = () => {
             </Grid>
           ))}
 
-          {/* Name */}
           <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               fullWidth
@@ -266,11 +242,11 @@ const SchoolDashboard = () => {
               value={nameValue}
               onChange={(e) => setNameValue(e.target.value)}
               sx={{ bgcolor: 'white', mb: 2 }}
+              
             />
           </Grid>
 
-          {/* Dates */}
-          <Grid itemsize={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
             <DatePicker
               label="From"
               value={fromDate}
@@ -284,7 +260,7 @@ const SchoolDashboard = () => {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
             <DatePicker
               label="To"
               value={toDate}
@@ -299,7 +275,6 @@ const SchoolDashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Table */}
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -317,18 +292,17 @@ const SchoolDashboard = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tableData.map((row) => (
+              {schoolList.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.schoolName}</TableCell>
-                  <TableCell>{row.schoolUrl}</TableCell>
-                  <TableCell>{row.agent}</TableCell>
+                  <TableCell>{row.institutionName}</TableCell>
+                  <TableCell>{row.schoolUrl || '-'}</TableCell>
+                  <TableCell>{row.agent || '-'}</TableCell>
                   <TableCell>{row.gateway}</TableCell>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{row.socialLink}</TableCell>
+                  <TableCell>{dayjs(row.date).format('MM/DD/YYYY')}</TableCell>
+                  <TableCell>{row.socialLink || '-'}</TableCell>
                   <TableCell>{row.colourScheme}</TableCell>
                   <TableCell>{row.status}</TableCell>
-
                   <TableCell>
                     <IconButton onClick={(e) => handleActionClick(e, row.id)}>
                       <MoreVertIcon />
@@ -339,13 +313,42 @@ const SchoolDashboard = () => {
                       onClose={handleActionClose}
                       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                       transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                      PaperProps={{
-                        sx: { minWidth: 120, boxShadow: 3 },
-                      }}
+                      PaperProps={{ sx: { minWidth: 120, boxShadow: 3 } }}
                     >
-                      <MenuItem onClick={handleActionClose}>View</MenuItem>
-                      <MenuItem onClick={handleActionClose}>Edit</MenuItem>
-                      <MenuItem onClick={handleActionClose}>Delete</MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          const selectedSchool = schoolList.find((s) => s.id === row.id);
+                          setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
+                          setOpenTenantModal(true);
+                          handleActionClose();
+                        }}
+                      >
+                        Manage School Domain
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          const selectedSchool = schoolList.find((s) => s.id === row.id);
+                          setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
+                          setOpenGatewayModal(true);
+                          handleActionClose();
+                        }}
+                      >
+                        Manage School Gateway
+                      </MenuItem>
+                      <ManageSchoolGateway open={openGatewayModal} onClose={() => setOpenGatewayModal(false)} />
+
+                      <MenuItem onClick={handleActionClose}>Manage School Domain</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Manage School Gateway</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Change Agent</MenuItem>
+                      <MenuItem onClick={handleActionClose}>View School</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Clear @fa Setting</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Fix User Images</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Edit School Details</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Deactivate School</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Details</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Change Color School Scheme</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Public Analytics</MenuItem>
+                      <MenuItem onClick={handleActionClose}>Delete School</MenuItem>
                     </Menu>
                   </TableCell>
                 </TableRow>
@@ -357,7 +360,23 @@ const SchoolDashboard = () => {
         <Box component="hr" sx={{ mt: 6, mb: 3 }} />
         <Pagination totalItems={100} itemsPerPage={10} />
 
-        <AddSchoolModal open={openRegisterModal} onClose={() => setOpenRegisterModal(false)} />
+        <AddSchoolModal
+          open={openRegisterModal}
+          onClose={() => setOpenRegisterModal(false)}
+          handleRefresh={handleRefresh}
+          selectedAgent={null}
+          actionType="create"
+        />
+
+        <ManageTenantDomain
+          open={openTenantModal}
+          onClose={() => setOpenTenantModal(false)}
+          domainData={selectedTenantDomain}
+        />
+        <ManageSchoolGateway
+          open={openGatewayModal}
+          onClose={() => setOpenGatewayModal(false)}
+        />
       </Box>
     </Container>
   );

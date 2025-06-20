@@ -122,9 +122,9 @@ const Agent = () => {
     setIsModalOpen(true);
   };
 
-  const handleManagePermission = (agentData) => {
+  const handleManagePermissions = (agentData) => {
     setSelectedAgent(agentData);
-    setActionType('managePermission');
+    setActionType('managePermissions');
     setIsModalOpen(true);
   };
 
@@ -416,7 +416,8 @@ const Agent = () => {
             
               <MenuItem onClick={() => { handleClose(); handleUpdateAgent(row.original, 'update'); }}>Update Agent Info</MenuItem>
               <MenuItem onClick={() => { handleClose(); handleViewSchools(row.original, 'view'); }}>View School</MenuItem>
-              <MenuItem onClick={() => { handleClose(); handleManagePermission(row.original, 'managePermission'); }}>Manage Permission</MenuItem>
+              <MenuItem onClick={() => { handleClose(); handleManagePermissions(row.original); }}>Manage Permission</MenuItem>
+              
               
               
               {/* <MenuItem onClick={() => { handleClose(); console.log('Option 2 clicked for agent', row.original.s_n); }}>View Schools</MenuItem>

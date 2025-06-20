@@ -14,7 +14,7 @@ const AgentForm = ({ formik, onCancel, actionType }) => {
       <Grid container spacing={2} mb={3}>
         <AgentFormFields formik={formik} />
         <LocationFields formik={formik} />
-        <ColorSchemeSelector formik={formik} />
+        {actionType !== 'update' && <ColorSchemeSelector formik={formik} />}
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

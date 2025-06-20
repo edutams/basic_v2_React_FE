@@ -4,25 +4,58 @@ import {
   Box,
   Typography,
   Divider,
+  IconButton,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import AgentForm from './components/AgentForm';
 import SchoolsView from './components/SchoolsView';
 import PermissionManager from './components/PermissionManager';
+import SetCommissionModal from './components/SetCommission';
+import ManageReferralModal from './components/ManageReferral';
+import ManageGateway from './components/ManageGateway';
+import ChangeColorScheme from './components/ChangeColorScheme';
 import { agentValidationSchema } from './validation/agentValidationSchema';
 
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '60%',
-  maxWidth: 800,
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-  maxHeight: '90vh',
-  overflowY: 'auto',
+import CloseIcon from '@mui/icons-material/Close';
+
+// Dynamic modal width based on action type
+const getModalStyle = (actionType) => {
+  const baseStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    bgcolor: 'background.paper',
+    boxShadow: 24,
+    p: 4,
+    maxHeight: '90vh',
+    overflowY: 'auto',
+  };
+
+  // Medium width for color scheme (needs more space for preview)
+  if (actionType === 'changeColorScheme') {
+    return {
+      ...baseStyle,
+      width: '90%',
+      maxWidth: 850, // Medium size for color previews
+    };
+  }
+
+  // Compact width for simple actions
+  if (actionType === 'setCommission' || actionType === 'manageReferral' || actionType === 'manageGateway') {
+    return {
+      ...baseStyle,
+      width: '90%',
+      maxWidth: 500, // Smaller for simple forms
+    };
+  }
+
+  // Full width for complex actions
+  return {
+    ...baseStyle,
+    width: '60%',
+    maxWidth: 800, // Larger for complex forms
+  };
 };
 
 const AddAgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType }) => {
@@ -107,14 +140,27 @@ const AddAgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType
     disableEnforceFocus
     disableAutoFocus
   >
-      <Box sx={style}>
+      <Box sx={getModalStyle(actionType)}>
+      <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+            <IconButton onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
         <Typography variant="h6" mb={2}>
           {actionType === 'update'
             ? 'Update Agent'
             : actionType === 'viewSchools'
             ? 'View Schools'
             : actionType === 'managePermissions'
-            ? 'Manage Permissions'
+            ? 'Edit Permissions'
+            : actionType === 'setCommission'
+            ? 'Set Commission'
+            : actionType === 'manageReferral'
+            ? 'Manage Referral'
+            : actionType === 'manageGateway'
+            ? 'Manage Gateway'
+            : actionType === 'changeColorScheme'
+            ? 'Change Color Scheme'
             : 'Create Agent'}
         </Typography>
         <Divider sx={{ mb: 2 }} />
@@ -126,6 +172,30 @@ const AddAgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onCancel={handleClose}
+          />
+        ) : actionType === 'setCommission' ? (
+          <SetCommissionModal
+            selectedAgent={selectedAgent}
+            onSave={handleUpdate}
+            onClose={handleClose}
+          />
+        ) : actionType === 'manageReferral' ? (
+          <ManageReferralModal
+            selectedAgent={selectedAgent}
+            onSave={handleUpdate}
+            onClose={handleClose}
+          />
+        ) : actionType === 'manageGateway' ? (
+          <ManageGateway
+            selectedAgent={selectedAgent}
+            onSave={handleUpdate}
+            onClose={handleClose}
+          />
+        ) : actionType === 'changeColorScheme' ? (
+          <ChangeColorScheme
+            selectedAgent={selectedAgent}
+            onSave={handleUpdate}
+            onClose={handleClose}
           />
         ) : (
           <AgentForm

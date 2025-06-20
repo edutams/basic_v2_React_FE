@@ -12,42 +12,66 @@ import {
   Divider,
   Chip,
   Alert,
+  Select,
+  MenuItem,
+  InputLabel,
 } from '@mui/material';
 
-// Available permissions grouped by category
+
 const permissionCategories = {
+  'Agent Management': [
+    { id: 'add_agent', label: 'Add Agent', description: 'Can create new agents' },
+    { id: 'edit_agent', label: 'Edit Agent', description: 'Can modify agent information' },
+  ],
+  'Package Management': [
+    { id: 'add_manage_packages', label: 'Add/Manage Packages', description: 'Can create and manage package options' },
+    { id: 'add_manage_plan', label: 'Add/Manage Plan', description: 'Can create and update subscription plans' },
+  ],
   'School Management': [
-    { id: 'create_school', label: 'Create School', description: 'Can create new schools' },
+    { id: 'add_school', label: 'Add School', description: 'Can create new schools' },
     { id: 'edit_school', label: 'Edit School', description: 'Can modify school information' },
-    { id: 'delete_school', label: 'Delete School', description: 'Can remove schools' },
-    { id: 'view_schools', label: 'View Schools', description: 'Can view school list and details' },
+    { id: 'add_school_plan', label: 'Add School Plan', description: 'Can define school-specific plans' },
+    { id: 'add_manage_modules', label: 'Add/Manage Modules', description: 'Can manage functional modules' },
   ],
-  'User Management': [
-    { id: 'create_user', label: 'Create User', description: 'Can create new users' },
-    { id: 'edit_user', label: 'Edit User', description: 'Can modify user information' },
-    { id: 'delete_user', label: 'Delete User', description: 'Can remove users' },
-    { id: 'view_users', label: 'View Users', description: 'Can view user list and profiles' },
+  'Session Management': [
+    { id: 'add_manage_session', label: 'Add/Manage Session', description: 'Can create and manage academic sessions' },
+    { id: 'add_manage_term', label: 'Add/Manage Term', description: 'Can create and manage academic terms' },
   ],
-  'Reports & Analytics': [
-    { id: 'view_reports', label: 'View Reports', description: 'Can access reports and analytics' },
-    { id: 'export_data', label: 'Export Data', description: 'Can export data and reports' },
-    { id: 'view_analytics', label: 'View Analytics', description: 'Can access analytics dashboard' },
+  'Financial Integration': [
+    { id: 'add_manage_payment_gateway', label: 'Add/Manage Payment Gateway', description: 'Can configure payment gateways' },
   ],
-  'Financial Management': [
-    { id: 'view_payments', label: 'View Payments', description: 'Can view payment information' },
-    { id: 'manage_commissions', label: 'Manage Commissions', description: 'Can manage commission settings' },
-    { id: 'view_financial_reports', label: 'Financial Reports', description: 'Can access financial reports' },
-  ],
-  'System Administration': [
-    { id: 'manage_settings', label: 'Manage Settings', description: 'Can modify system settings' },
-    { id: 'manage_permissions', label: 'Manage Permissions', description: 'Can modify user permissions' },
-    { id: 'system_backup', label: 'System Backup', description: 'Can perform system backups' },
-  ],
+ 
+
 };
+
+// Agent level options with descriptions and default permissions
+const agentLevels = [
+  {
+    value: 'Level 1',
+    label: 'Level 1 - Basic Agent',
+    description: 'Basic permissions for new agents',
+    defaultPermissions: ['view_schools', 'view_users', 'view_reports']
+  },
+  {
+    value: 'Level 2',
+    label: 'Level 2 - Senior Agent',
+    description: 'Enhanced permissions for experienced agents',
+    defaultPermissions: ['view_schools', 'create_school', 'edit_school', 'view_users', 'create_user', 'view_reports', 'view_payments']
+  },
+  {
+    value: 'Level 3',
+    label: 'Level 3 - Manager Agent',
+    description: 'Full permissions for management level agents',
+    defaultPermissions: ['create_school', 'edit_school', 'delete_school', 'view_schools', 'create_user', 'edit_user', 'delete_user', 'view_users', 'view_reports', 'export_data', 'view_analytics', 'view_payments', 'manage_commissions', 'view_financial_reports', 'manage_settings']
+  },
+];
 
 const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
   const [selectedPermissions, setSelectedPermissions] = useState(
     selectedAgent?.permissions || []
+  );
+  const [agentLevel, setAgentLevel] = useState(
+    selectedAgent?.level || ''
   );
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -66,7 +90,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
   const handleSelectAll = (categoryPermissions) => {
     const categoryIds = categoryPermissions.map(p => p.id);
     const allSelected = categoryIds.every(id => selectedPermissions.includes(id));
-    
+
     let newPermissions;
     if (allSelected) {
       // Deselect all in this category
@@ -76,8 +100,21 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
       const toAdd = categoryIds.filter(id => !selectedPermissions.includes(id));
       newPermissions = [...selectedPermissions, ...toAdd];
     }
-    
+
     setSelectedPermissions(newPermissions);
+    setHasChanges(true);
+  };
+
+  const handleAgentLevelChange = (newLevel) => {
+    setAgentLevel(newLevel);
+
+    // Find the selected level configuration
+    const levelConfig = agentLevels.find(level => level.value === newLevel);
+    if (levelConfig) {
+      // Set permissions based on the selected level
+      setSelectedPermissions(levelConfig.defaultPermissions);
+    }
+
     setHasChanges(true);
   };
 
@@ -85,6 +122,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
     const updatedAgent = {
       ...selectedAgent,
       permissions: selectedPermissions,
+      level: agentLevel,
     };
     onSave(updatedAgent);
   };
@@ -97,12 +135,59 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
   return (
     <Box>
       <Typography variant="h6" mb={2}>
-        Manage Permissions for {selectedAgent?.agentDetails || selectedAgent?.organizationName}
+        Edit Permissions for {selectedAgent?.agentDetails || selectedAgent?.organizationName}
       </Typography>
-      
+
       <Alert severity="info" sx={{ mb: 3 }}>
-        Select the permissions you want to grant to this agent. Changes will take effect immediately after saving.
+        Select the agent level and permissions you want to grant to this agent. Changes will take effect immediately after saving.
       </Alert>
+
+      {/* Agent Level Selection */}
+      <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h6" color="primary" mb={2}>
+          Access Level 
+        </Typography>
+
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth>
+              <InputLabel>Access Level</InputLabel>
+              <Select
+                value={agentLevel}
+                label="Agent Level"
+                onChange={(e) => handleAgentLevelChange(e.target.value)}
+              >
+                <MenuItem value="">-- Select Level --</MenuItem>
+                {agentLevels.map((level) => (
+                  <MenuItem key={level.value} value={level.value}>
+                    {level.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            {agentLevel && (
+              <Box>
+                <Typography variant="body2" fontWeight="medium" color="primary">
+                  {agentLevels.find(l => l.value === agentLevel)?.label}
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  {agentLevels.find(l => l.value === agentLevel)?.description}
+                </Typography>
+                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                  Default permissions: {agentLevels.find(l => l.value === agentLevel)?.defaultPermissions.length} selected
+                </Typography>
+              </Box>
+            )}
+          </Grid>
+        </Grid>
+      </Paper>
+
+      <Typography variant="h6" color="primary" mb={2}>
+        Custom Permission Settings
+      </Typography>
 
       <Grid container spacing={3}>
         {Object.entries(permissionCategories).map(([category, permissions]) => {
@@ -169,20 +254,25 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" color="textSecondary">
-          Total permissions selected: {selectedPermissions.length}
-        </Typography>
-        
+        <Box>
+          <Typography variant="body2" color="textSecondary">
+            Agent Level: <strong>{agentLevel || 'Not selected'}</strong>
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Total permissions selected: <strong>{selectedPermissions.length}</strong>
+          </Typography>
+        </Box>
+
         <Box display="flex" gap={2}>
           <Button onClick={onCancel} color="inherit">
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleSave}
             disabled={!hasChanges}
           >
-            Save Permissions
+            Save Changes
           </Button>
         </Box>
       </Box>

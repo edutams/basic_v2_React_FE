@@ -33,7 +33,7 @@ const ConfirmDialog = ({ open, onClose, onConfirm, title, message }) => {
 
        
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <WarningAmberIcon color="error" sx={{ fontSize: 100 }} />
+          <WarningAmberIcon color="error" sx={{ fontSize: 60 }} />
         </Box>
 
         

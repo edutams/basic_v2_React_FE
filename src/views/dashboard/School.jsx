@@ -17,10 +17,18 @@ import {
   FormControl,
   Select,
   Grid,
+  Stack,
   TextField,
   IconButton,
   Menu,
 } from '@mui/material';
+// import {
+//   IconListDetails,
+//   IconShoppingBag,
+//   IconTruck,
+//   IconSortAscending,
+// } from '@tabler/icons-react';
+import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import AddSchoolModal from '../../components/add-school/AddSchoolModal';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -35,6 +43,7 @@ import ManageTenantDomain from '../../components/add-school/component/ManageScho
 import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
 import ConfirmDialog from '../../components/add-school/component/ConfirmDialog';
+import BlankCard from '../../components/shared/BlankCard';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
@@ -80,6 +89,10 @@ const SchoolDashboard = () => {
 
   const [schoolList, setSchoolList] = useState([]);
 
+  const Shipped = schoolList.filter((s) => s.status === 'Shipped').length;
+  const Delivered = schoolList.filter((s) => s.status === 'Delivered').length;
+  const Pending = schoolList.filter((s) => s.status === 'Pending').length;
+
   const handleActionClick = (event, rowId) => {
     setActionAnchorEl(event.currentTarget);
     setActiveRow(rowId);
@@ -124,65 +137,106 @@ const SchoolDashboard = () => {
   const [schoolToDelete, setSchoolToDelete] = useState(null);
 
   return (
-    <Container>
-      <Breadcrumb title="School" items={BCrumb} />
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
-          gap: 2,
-          width: '100%',
-          mb: 3,
-        }}
-      >
-        {[
-          { label: 'Total', value: schoolSummary.total },
-          { label: 'My Registered', value: schoolSummary.myRegistered },
-          { label: 'Active', value: schoolSummary.active },
-          { label: 'Inactive', value: schoolSummary.inactive },
-        ].map((item) => (
-          <Paper
-            key={item.label}
-            elevation={2}
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              minHeight: 120,
-              height: '100%',
-              width: '100%',
-              borderRadius: 2,
-              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-              gap: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', ml: 2 }}>
-              <Typography variant="body2" sx={{ fontSize: '20px', fontWeight: 'bold' }}>
-                {item.label}
-              </Typography>
-              <Typography variant="body2" sx={{ fontSize: '14px', color: 'text.secondary' }}>
-                Schools
-              </Typography>
-            </Box>
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 'bold',
-                fontSize: '36px',
-                color: '#28a745',
-                minWidth: 56,
-                textAlign: 'center',
-              }}
-            >
-              {item.value}
-            </Typography>
-          </Paper>
-        ))}
-      </Box>
+  <>
+  <Breadcrumb title="School" items={BCrumb} />
+    <BlankCard>
+       
+    <TableContainer>
 
       <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: '1fr 1fr',
+              md: 'repeat(4, 1fr)',
+            },
+            gap: 2,
+            width: '100%',
+            mb: 3,
+          }}
+        >
+          {[
+            {
+              label: 'Total Schools',
+              value: schoolSummary.total,
+              bg: 'primary',
+              icon: <IconSchool width={22} color="#fff" />,
+            },
+            {
+              label: 'My Registered Schools',
+              value: schoolSummary.myRegistered,
+              bg: 'secondary',
+              icon: <IconUserPlus width={22} color="#fff" />,
+            },
+            {
+              label: 'Active Schools',
+              value: schoolSummary.active,
+              bg: 'success',
+              icon: <IconCheck width={22} color="#fff" />,
+            },
+            {
+              label: 'Inactive Schools',
+              value: schoolSummary.inactive,
+              bg: 'warning',
+              icon: <IconX width={22} color="#fff" />,
+            },
+          ].map((item, index) => (
+            <Paper
+              key={index}
+              elevation={2}
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                minHeight: 120,
+                height: '100%',
+                width: '100%',
+                borderRadius: 2,
+                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+                gap: 2,
+                px: 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <Box
+                  width={38}
+                  height={38}
+                  bgcolor={`${item.bg}.main`}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  borderRadius={1}
+                >
+                  {item.icon}
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="body2" sx={{ fontSize: '16px', fontWeight: 'bold' }}>
+                    {item.label}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: '14px', color: 'text.secondary' }}>
+                    Schools
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: '36px',
+                  color: '#28a745',
+                  minWidth: 56,
+                  textAlign: 'center',
+                }}
+              >
+                {item.value}
+              </Typography>
+            </Paper>
+          ))}
+        </Box>
+      
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <ListIcon sx={{ color: '#b76cc2' }} />
@@ -412,7 +466,9 @@ const SchoolDashboard = () => {
           message={`Are you sure you want to perform this operation?`}
         />
       </Box>
-    </Container>
+    </TableContainer>
+    </BlankCard>
+    </>
   );
 };
 

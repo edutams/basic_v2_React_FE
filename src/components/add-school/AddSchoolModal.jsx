@@ -25,7 +25,7 @@ const style = {
   overflowY: 'auto',
 };
 
-// Helper function to generate incremental ID starting from 1
+// Generate incremental ID starting from 1
 const getNextSchoolId = () => {
   const lastId = parseInt(localStorage.getItem('lastSchoolId')) || 0;
   const newId = lastId + 1;
@@ -78,7 +78,7 @@ const AddSchoolModal = ({
   const handleSaveClick = (values) => {
     const updatedData = {
       ...values,
-      id: getNextSchoolId(), // ID starts from 1 and increments
+      id: getNextSchoolId(), // New ID
       schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
       gateway: 'No Gateway',
       colourScheme: values.bodyColor,
@@ -89,21 +89,23 @@ const AddSchoolModal = ({
       date: new Date().toISOString(),
     };
 
-    handleRefresh(updatedData);  // Push to school list
+    handleRefresh(updatedData); // Add new
     resetForm();
-    onClose();                   // Close modal
+    onClose();
   };
 
   const handleUpdate = (values) => {
     const updatedData = {
       ...selectedAgent,
       ...values,
+      schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
       colourScheme: values.bodyColor,
       headerColor: values.headerColor,
       sidebarColor: values.sidebarColor,
+      date: new Date().toISOString(),
     };
 
-    handleRefresh(updatedData);  // Refresh parent table
+    handleRefresh(updatedData); // Update existing
     resetForm();
     onClose();
   };
@@ -111,6 +113,19 @@ const AddSchoolModal = ({
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const getTitle = () => {
+    switch (actionType) {
+      case 'update':
+        return 'Edit School';
+      case 'viewSchools':
+        return 'View Schools';
+      case 'managePermissions':
+        return 'Manage Permissions';
+      default:
+        return 'Register School';
+    }
   };
 
   return (
@@ -122,7 +137,6 @@ const AddSchoolModal = ({
       disableAutoFocus
     >
       <Box sx={style}>
-        {/* Close icon */}
         <IconButton
           aria-label="close"
           onClick={handleClose}
@@ -137,13 +151,7 @@ const AddSchoolModal = ({
         </IconButton>
 
         <Typography variant="h6" mb={2}>
-          {actionType === 'update'
-            ? 'Update Register School'
-            : actionType === 'viewSchools'
-            ? 'View Schools'
-            : actionType === 'managePermissions'
-            ? 'Manage Permissions'
-            : 'Register School'}
+          {getTitle()}
         </Typography>
         <Divider sx={{ mb: 2 }} />
 

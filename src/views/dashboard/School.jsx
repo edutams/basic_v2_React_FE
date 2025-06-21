@@ -37,7 +37,6 @@ import ManageSchoolGateway from '../../components/add-school/component/ManageSch
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
 import ConfirmDialog from '../../components/add-school/component/ConfirmDialog';
 import BlankCard from '../../components/shared/BlankCard';
-// import handleMenuOpen from '../../components/shared/HandleMenu';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 const ITEM_HEIGHT = 48;
@@ -73,6 +72,8 @@ const SchoolDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [schoolList, setSchoolList] = useState([]);
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [editSchoolData, setEditSchoolData] = useState(null);
   const [openTenantModal, setOpenTenantModal] = useState(false);
   const [selectedTenantDomain, setSelectedTenantDomain] = useState(null);
   const [openGatewayModal, setOpenGatewayModal] = useState(false);
@@ -88,10 +89,8 @@ const SchoolDashboard = () => {
   const [selectedSchoolFor2FA, setSelectedSchoolFor2FA] = useState(null);
   const [openFixImageConfirm, setOpenFixImageConfirm] = useState(false);
   const handleFixImage = () => {
-  // console.log('Request sent to backend to fix user image.');
-  setOpenFixImageConfirm(false);
-};
-
+    setOpenFixImageConfirm(false);
+  };
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -109,6 +108,9 @@ const SchoolDashboard = () => {
 
   const handleMenuClose = () => setAnchorEl(null);
   const [activeRow, setActiveRow] = useState(null);
+  const handleMenuOpen = (event) => {
+  setAnchorEl(event.currentTarget);
+};
 
   useEffect(() => {
     const savedList = localStorage.getItem('schoolList');
@@ -174,11 +176,15 @@ const SchoolDashboard = () => {
   };
 
   const handleRefresh = (newSchool) => {
-    setSchoolList((prevList) => [...prevList, { id: prevList.length + 1, ...newSchool }]);
-  };
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
+    setSchoolList((prevList) => {
+      const existingIndex = prevList.findIndex((s) => s.id === newSchool.id);
+      if (existingIndex !== -1) {
+        const updatedList = [...prevList];
+        updatedList[existingIndex] = newSchool;
+        return updatedList;
+      }
+      return [...prevList, { id: prevList.length + 1, ...newSchool }];
+    });
   };
 
   const schoolSummary = {
@@ -479,7 +485,15 @@ const SchoolDashboard = () => {
                             Fix User Images
                           </MenuItem>
 
-                          <MenuItem onClick={handleActionClose}>Edit School Details</MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              setEditSchoolData(row);
+                              setOpenEditModal(true);
+                              handleActionClose();
+                            }}
+                          >
+                            Edit School Details
+                          </MenuItem>
                           <MenuItem onClick={handleActionClose}>Deactivate School</MenuItem>
                           <MenuItem onClick={handleActionClose}>Details</MenuItem>
                           <MenuItem onClick={handleActionClose}>
@@ -507,11 +521,14 @@ const SchoolDashboard = () => {
             <Pagination totalItems={100} itemsPerPage={10} />
 
             <AddSchoolModal
-              open={openRegisterModal}
-              onClose={() => setOpenRegisterModal(false)}
+              open={openRegisterModal || openEditModal}
+              onClose={() => {
+                setOpenRegisterModal(false);
+                setOpenEditModal(false);
+              }}
               handleRefresh={handleRefresh}
-              selectedAgent={null}
-              actionType="create"
+              selectedAgent={editSchoolData}
+              actionType={openEditModal ? 'update' : 'create'}
             />
 
             <ManageTenantDomain
@@ -560,8 +577,11 @@ const SchoolDashboard = () => {
               message={
                 <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
                   <h2>Replace use images with new url</h2>
-                  <p>Are you sure you want to perform this operation? This action is irreversible</p>
-                </Typography>}
+                  <p>
+                    Are you sure you want to perform this operation? This action is irreversible
+                  </p>
+                </Typography>
+              }
             />
           </Box>
         </TableContainer>

@@ -84,21 +84,28 @@ const SchoolDashboard = () => {
   ]);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
+  const [openClear2FAConfirm, setOpenClear2FAConfirm] = useState(false);
+  const [selectedSchoolFor2FA, setSelectedSchoolFor2FA] = useState(null);
+  const [openFixImageConfirm, setOpenFixImageConfirm] = useState(false);
+  const handleFixImage = () => {
+  // console.log('Request sent to backend to fix user image.');
+  setOpenFixImageConfirm(false);
+};
+
+
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
 
   const handleActionClick = (event, rowId) => {
-  setActionAnchorEl(event.currentTarget);
-  setActiveRow(rowId);
-};
+    setActionAnchorEl(event.currentTarget);
+    setActiveRow(rowId);
+  };
 
-const handleActionClose = () => {
-  setActionAnchorEl(null);
-  setActiveRow(null);
-};
-
-   
+  const handleActionClose = () => {
+    setActionAnchorEl(null);
+    setActiveRow(null);
+  };
 
   const handleMenuClose = () => setAnchorEl(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -171,9 +178,8 @@ const handleActionClose = () => {
   };
 
   const handleMenuOpen = (event) => {
-  setAnchorEl(event.currentTarget);
-};
-
+    setAnchorEl(event.currentTarget);
+  };
 
   const schoolSummary = {
     total: schoolList.length,
@@ -455,8 +461,24 @@ const handleActionClose = () => {
                             Change Agent
                           </MenuItem>
                           <MenuItem onClick={handleActionClose}>View School</MenuItem>
-                          <MenuItem onClick={handleActionClose}>Clear @fa Setting</MenuItem>
-                          <MenuItem onClick={handleActionClose}>Fix User Images</MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              setSelectedSchoolFor2FA(row);
+                              setOpenClear2FAConfirm(true);
+                              handleActionClose();
+                            }}
+                          >
+                            Clear 2fa Setting
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              setOpenFixImageConfirm(true);
+                              handleActionClose();
+                            }}
+                          >
+                            Fix User Images
+                          </MenuItem>
+
                           <MenuItem onClick={handleActionClose}>Edit School Details</MenuItem>
                           <MenuItem onClick={handleActionClose}>Deactivate School</MenuItem>
                           <MenuItem onClick={handleActionClose}>Details</MenuItem>
@@ -516,6 +538,30 @@ const handleActionClose = () => {
               }}
               title="Delete School"
               message={`Are you sure you want to perform this operation?`}
+            />
+            <ConfirmDialog
+              open={openClear2FAConfirm}
+              onClose={() => setOpenClear2FAConfirm(false)}
+              onConfirm={() => {
+                console.log(`2FA settings cleared for ${selectedSchoolFor2FA?.institutionName}`);
+                setOpenClear2FAConfirm(false);
+              }}
+              message={
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                  <h2>Clear 2FA for admin account</h2>
+                  <p>Are you sure you want to perform this operation for?</p>
+                </Typography>
+              }
+            />
+            <ConfirmDialog
+              open={openFixImageConfirm}
+              onClose={() => setOpenFixImageConfirm(false)}
+              onConfirm={handleFixImage}
+              message={
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                  <h2>Replace use images with new url</h2>
+                  <p>Are you sure you want to perform this operation? This action is irreversible</p>
+                </Typography>}
             />
           </Box>
         </TableContainer>

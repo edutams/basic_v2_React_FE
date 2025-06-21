@@ -4,10 +4,12 @@ import {
   Box,
   Typography,
   Divider,
+  IconButton,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import RegisterSchoolForm from './component/RegisterSchool';
 import { schoolValidationScheme } from './validation/schoolValidationScheme';
+import CloseIcon from '@mui/icons-material/Close';
 
 const style = {
   position: 'absolute',
@@ -120,6 +122,20 @@ const AddSchoolModal = ({
       disableAutoFocus
     >
       <Box sx={style}>
+        {/* Close icon */}
+        <IconButton
+          aria-label="close"
+          onClick={handleClose}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
         <Typography variant="h6" mb={2}>
           {actionType === 'update'
             ? 'Update Register School'

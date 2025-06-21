@@ -10,7 +10,9 @@ import {
   Select,
   Button,
   Grid,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 const banks = ['Access Bank', 'GTBank', 'Zenith Bank', 'UBA'];
 const gateways = ['Auto_credit'];
@@ -48,15 +50,28 @@ const ManageSchoolGateway = ({ open, onClose }) => {
           p: 3,
         }}
       >
+        {/* Close Icon */}
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
         <Typography variant="h3" sx={{ mb: 2 }}>
           Manage School Gateway
         </Typography>
 
-<Box component="hr" sx={{ mt: 3, mb: 3 }} />
-
+        <Box component="hr" sx={{ mt: 3, mb: 3 }} />
 
         <Grid container spacing={2}>
-          <Grid item size={{ xs: 12, sm: 6, md: 12 }}>
+          <Grid item xs={12}>
             <FormControl fullWidth>
               <InputLabel>Select Gateway</InputLabel>
               <Select value={formData.gateway} disabled label="Select Gateway">
@@ -75,7 +90,7 @@ const ManageSchoolGateway = ({ open, onClose }) => {
             </Typography>
           </Grid>
 
-          <Grid item size={{ xs: 12, sm: 6, md: 12 }}>
+          <Grid item xs={12}>
             <FormControl fullWidth>
               <InputLabel>Select Bank</InputLabel>
               <Select
@@ -92,7 +107,7 @@ const ManageSchoolGateway = ({ open, onClose }) => {
             </FormControl>
           </Grid>
 
-          <Grid item size={{ xs: 12, sm: 6, md: 12 }}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Account Number"
@@ -101,7 +116,7 @@ const ManageSchoolGateway = ({ open, onClose }) => {
             />
           </Grid>
 
-          <Grid item size={{ xs: 12, sm: 6, md: 12 }}>
+          <Grid item xs={12}>
             <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
               <Select

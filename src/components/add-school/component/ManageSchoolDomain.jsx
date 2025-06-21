@@ -5,7 +5,9 @@ import {
   Typography,
   Divider,
   Paper,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 const style = {
   position: 'absolute',
@@ -35,6 +37,20 @@ const ManageTenantDomain = ({ open, onClose, domainData = [] }) => {
       disableAutoFocus
     >
       <Box sx={style}>
+        {/* Close Icon */}
+        <IconButton
+          aria-label="close"
+          onClick={handleClose}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
         <Typography variant="h3" mb={2}>
           Manage Tenant Domain
         </Typography>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Modal,
@@ -11,9 +10,18 @@ import {
   MenuItem,
   Button,
   Paper,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
-const ChangeAgentModal = ({ open, onClose, agentList = [], selectedAgent, onAgentChange, onSubmit }) => {
+const ChangeAgentModal = ({
+  open,
+  onClose,
+  agentList = [],
+  selectedAgent,
+  onAgentChange,
+  onSubmit,
+}) => {
   return (
     <Modal open={open} onClose={onClose}>
       <Box
@@ -24,9 +32,24 @@ const ChangeAgentModal = ({ open, onClose, agentList = [], selectedAgent, onAgen
           bgcolor: 'white',
           borderRadius: 2,
           p: 3,
+          position: 'relative',
           outline: 'none',
         }}
       >
+        {/* Close Icon */}
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+
         <Typography variant="h3" gutterBottom>
           Change School's Agent
         </Typography>
@@ -46,9 +69,7 @@ const ChangeAgentModal = ({ open, onClose, agentList = [], selectedAgent, onAgen
 
         <Grid container spacing={2} justifyContent="flex-end" mt={3}>
           <Grid item>
-            <Button onClick={onClose} >
-              Cancel
-            </Button>
+            <Button onClick={onClose}>Cancel</Button>
           </Grid>
           <Grid item>
             <Button onClick={onSubmit} variant="contained" sx={{ bgcolor: '#f7a400' }}>

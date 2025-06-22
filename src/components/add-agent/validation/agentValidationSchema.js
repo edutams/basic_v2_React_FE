@@ -38,9 +38,6 @@ export const agentValidationSchema = yup.object({
     .min(2, 'LGA must be at least 2 characters')
     .max(50, 'LGA must be less than 50 characters')
     .required('LGA is required'),
-  level: yup
-    .string()
-    .required('Agent level is required'),
 });
 
 export default agentValidationSchema;

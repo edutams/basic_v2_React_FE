@@ -11,7 +11,6 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import ColorSchemeSelector from './ColorSchemeSelector';
 
-// Validation schema for color scheme
 const colorSchemeValidationSchema = yup.object({
   headerColor: yup.string().required('Header color is required'),
   sidebarColor: yup.string().required('Sidebar color is required'),
@@ -38,7 +37,7 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
       headerColor: values.headerColor,
       sidebarColor: values.sidebarColor,
       bodyColor: values.bodyColor,
-      colourScheme: values.bodyColor, // For backward compatibility
+      colourScheme: values.bodyColor, 
       lastColorSchemeUpdate: new Date().toISOString(),
     };
     
@@ -137,7 +136,6 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
             </Paper>
           </Grid>
 
-          {/* Color Scheme Selector */}
           <Grid item xs={12}>
             <Paper variant="outlined" sx={{ p: 3 }}>
               <Typography variant="h6" color="primary" mb={2}>
@@ -148,7 +146,6 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
             </Paper>
           </Grid>
 
-          {/* Color Preview */}
           <Grid item xs={12}>
             <Paper variant="outlined" sx={{ p: 3, bgcolor: 'info.light' }}>
               <Typography variant="h6" color="info.dark" mb={2}>
@@ -238,41 +235,6 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
             </Paper>
           </Grid>
 
-          {/* Color Scheme Summary */}
-          {/* <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'success.light' }}>
-              <Typography variant="h6" color="success.dark" mb={2}>
-                Color Scheme Summary
-              </Typography>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    Header Color:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {formik.values.headerColor}
-                  </Typography>
-                </Grid>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    Sidebar Color:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {formik.values.sidebarColor}
-                  </Typography>
-                </Grid>
-                <Grid item xs={4}>
-                  <Typography variant="body2" color="textSecondary">
-                    Body Color:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {formik.values.bodyColor}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid> */}
         </Grid>
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

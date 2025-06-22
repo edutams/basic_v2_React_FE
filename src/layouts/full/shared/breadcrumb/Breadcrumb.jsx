@@ -8,7 +8,6 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
   <Grid
     container mb={6} alignItems='center' justifyContent="space-between"
   >
-    {/* Left side - Page Title */}
     <Grid size={{ xs: 12, md: 6 }} order={{ xs: 2, md: 1 }}>
       <Typography color="textSecondary" fontWeight="400" variant="h4">
         {subtitle}
@@ -24,7 +23,6 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
       </Typography>
     </Grid>
 
-    {/* Right side - Breadcrumb Navigation */}
     <Grid
       size={{ xs: 12, md: 6 }}
       order={{ xs: 1, md: 2 }}
@@ -52,7 +50,6 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
           : ''}
       </Breadcrumbs>
 
-      {/* Children content (if any) */}
       {children && (
         <Box
           gap={1}

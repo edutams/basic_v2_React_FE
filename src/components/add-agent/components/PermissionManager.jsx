@@ -44,7 +44,6 @@ const permissionCategories = {
 
 };
 
-// Agent level options with descriptions and default permissions
 const agentLevels = [
   {
     value: 'Level 1',
@@ -93,10 +92,8 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
 
     let newPermissions;
     if (allSelected) {
-      // Deselect all in this category
       newPermissions = selectedPermissions.filter(id => !categoryIds.includes(id));
     } else {
-      // Select all in this category
       const toAdd = categoryIds.filter(id => !selectedPermissions.includes(id));
       newPermissions = [...selectedPermissions, ...toAdd];
     }
@@ -108,10 +105,8 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
   const handleAgentLevelChange = (newLevel) => {
     setAgentLevel(newLevel);
 
-    // Find the selected level configuration
     const levelConfig = agentLevels.find(level => level.value === newLevel);
     if (levelConfig) {
-      // Set permissions based on the selected level
       setSelectedPermissions(levelConfig.defaultPermissions);
     }
 
@@ -142,7 +137,6 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
         Select the agent level and permissions you want to grant to this agent. Changes will take effect immediately after saving.
       </Alert>
 
-      {/* Agent Level Selection */}
       <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
         <Typography variant="h6" color="primary" mb={2}>
           Access Level 

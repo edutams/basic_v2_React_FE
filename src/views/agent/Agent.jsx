@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useContext } from 'react';
-// import { CustomizerContext } from '../context/CustomizerContext';
 
 import {
   Grid,
@@ -87,6 +86,105 @@ const Agent = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
 
+  const stateLgaData = {
+    'Ogun State': [
+      'Abeokuta North',
+      'Abeokuta South',
+      'Ado-Odo/Ota',
+      'Ewekoro',
+      'Ifo',
+      'Ijebu East',
+      'Ijebu North',
+      'Ijebu North East',
+      'Ijebu Ode',
+      'Ikenne',
+      'Imeko Afon',
+      'Ipokia',
+      'Obafemi Owode',
+      'Odeda',
+      'Odogbolu',
+      'Ogun Waterside',
+      'Remo North',
+      'Sagamu',
+      'Yewa North',
+      'Yewa South'
+    ],
+    'Lagos State': [
+      'Agege',
+      'Ajeromi-Ifelodun',
+      'Alimosho',
+      'Amuwo-Odofin',
+      'Apapa',
+      'Badagry',
+      'Epe',
+      'Eti Osa',
+      'Ibeju-Lekki',
+      'Ifako-Ijaiye',
+      'Ikeja',
+      'Ikorodu',
+      'Kosofe',
+      'Lagos Island',
+      'Lagos Mainland',
+      'Mushin',
+      'Ojo',
+      'Oshodi-Isolo',
+      'Shomolu',
+      'Surulere'
+    ]
+  };
+
+  const availableLgas = useMemo(() => {
+    return state ? stateLgaData[state] || [] : [];
+  }, [state]);
+
+  useEffect(() => {
+    if (state && !availableLgas.includes(lga)) {
+      setLga('');
+    }
+  }, [state, availableLgas, lga]);
+
+  const hasActiveFilters = useMemo(() => {
+    return agentLevel || country || state || lga || referer || search;
+  }, [agentLevel, country, state, lga, referer, search]);
+
+  const filteredData = useMemo(() => {
+    return data.filter((agent) => {
+      if (agentLevel && agent.level !== agentLevel) {
+        return false;
+      }
+
+      if (country && agent.country !== country) {
+        return false;
+      }
+
+      if (state && agent.stateFilter !== state) {
+        return false;
+      }
+
+      if (lga && agent.lga !== lga) {
+        return false;
+      }
+
+      if (referer && agent.referer !== referer) {
+        return false;
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const matchesSearch =
+          agent.agentDetails?.toLowerCase().includes(searchLower) ||
+          agent.organizationName?.toLowerCase().includes(searchLower) ||
+          agent.contactDetails?.toLowerCase().includes(searchLower);
+
+        if (!matchesSearch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [data, agentLevel, country, state, lga, referer, search]);
+
   const handleAddAgent = (newAgent) => {
     setData((prevData) => [...prevData, newAgent]);
     console.log('New Agent Added:', newAgent);
@@ -101,12 +199,10 @@ const Agent = () => {
       const existingIndex = prevData.findIndex((item) => item.s_n === newData.s_n);
 
       if (existingIndex !== -1) {
-        // If the item exists, update it
         const updatedData = [...prevData];
         updatedData[existingIndex] = newData;
         return updatedData;
       } else {
-        // If the item doesn't exist, add it
         return [...prevData, newData];
       }
     });
@@ -164,11 +260,9 @@ const Agent = () => {
 
   const handleConfirmDelete = () => {
     if (agentToDelete) {
-      // Remove agent from the data array
       const updatedData = data.filter((agent) => agent.s_n !== agentToDelete.s_n);
       setData(updatedData);
 
-      // Close dialog and reset state
       setDeleteDialogOpen(false);
       setAgentToDelete(null);
     }
@@ -178,17 +272,6 @@ const Agent = () => {
     setDeleteDialogOpen(false);
     setAgentToDelete(null);
   };
-
-  // const schoolsData = [
-  //   {
-  //     schoolName: 'ABC School',
-  //     address: '123 Main St',
-  //   },
-  //   {
-  //     schoolName: 'XYZ School',
-  //     address: '456 Oak Ave',
-  //   },
-  // ];
 
   const handleAgentUpdate = (updatedAgent) => {
     setData((prevData) =>
@@ -231,32 +314,6 @@ const Agent = () => {
   //     contactDetails: 'agentB@example.com',
   //     phoneNumber: '987-654-3210',
   //     performance: 'High',
-  //     gateway: 'Gateway 1',
-  //     colourScheme: 'Blue',
-  //     status: 'Inactive',
-  //     action: 'Edit',
-  //   },
-  //   {
-  //     s_n: 4,
-  //     organizationName: 'Org D',
-  //     level: 'Level 1',
-  //     agentDetails: 'Agent D',
-  //     contactDetails: 'agentB@example.com',
-  //     phoneNumber: '987-654-3210',
-  //     performance: 'Medium',
-  //     gateway: 'Gateway 1',
-  //     colourScheme: 'Blue',
-  //     status: 'Inactive',
-  //     action: 'Edit',
-  //   },
-  //   {
-  //     s_n: 5,
-  //     organizationName: 'Org E',
-  //     level: 'Level 2',
-  //     agentDetails: 'Agent E',
-  //     contactDetails: 'agentB@example.com',
-  //     phoneNumber: '987-654-3210',
-  //     performance: 'Medium',
   //     gateway: 'Gateway 1',
   //     colourScheme: 'Blue',
   //     status: 'Inactive',
@@ -318,10 +375,6 @@ const Agent = () => {
             fullWidth
           />
         ) : (
-          // <Typography color="textSecondary" variant="h6" fontWeight="400">
-          //   {/* {info.getValue()} */}
-          //   {info.row.original.contactDetails}
-          // </Typography>
           <Stack direction="column" spacing={0.5} alignItems="flex-start">
             <Typography color="textSecondary" variant="subtitle2">
               {info.row.original.contactDetails}
@@ -366,8 +419,13 @@ const Agent = () => {
     }),
     columnHelper.accessor('colourScheme', {
       header: () => 'Colour Scheme',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
+      cell: (info) => {
+        const agent = info.row.original;
+        const headerColor = agent.headerColor || '#1976d2';
+        const sidebarColor = agent.sidebarColor || '#2196f3';
+        const bodyColor = agent.bodyColor || '#f5f5f5';
+
+        return editRowId === info.row.original.s_n ? (
           <TextField
             variant="outlined"
             value={editedData?.[info.column.id] || ''}
@@ -375,10 +433,45 @@ const Agent = () => {
             fullWidth
           />
         ) : (
-          <Typography color="textSecondary" variant="h6" fontWeight="400">
-            {info.getValue()}
-          </Typography>
-        ),
+          <Box
+            sx={{
+              display: 'inline-block',
+              width: 40,
+              height: 30,
+              borderRadius: '5px',
+              overflow: 'hidden',
+            }}
+            title={`Header: ${headerColor} | Sidebar: ${sidebarColor} | Body: ${bodyColor}`}
+          >
+            <Box
+              sx={{
+                width: '100%',
+                height: '30%',
+                backgroundColor: headerColor,
+                borderRadius: 0,
+              }}
+            />
+            <Box sx={{ display: 'flex', height: '70%' }}>
+              <Box
+                sx={{
+                  width: '50%',
+                  height: '100%',
+                  backgroundColor: sidebarColor,
+                  borderRadius: 0,
+                }}
+              />
+              <Box
+                sx={{
+                  width: '50%',
+                  height: '100%',
+                  backgroundColor: bodyColor,
+                  borderRadius: 0,
+                }}
+              />
+            </Box>
+          </Box>
+        );
+      },
     }),
     columnHelper.accessor('status', {
       header: () => 'Status',
@@ -531,7 +624,7 @@ const Agent = () => {
   ];
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     enableRowVirtualization: true,
@@ -581,7 +674,7 @@ const Agent = () => {
           }
         >
           <Grid container spacing={3} mb={3}>
-            <Grid item size={{ xs: 12, md: 3, sm: 3 }}>
+            <Grid size={{ xs: 12, md: 3, sm: 3 }}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Agent Level</InputLabel>
                 <Select
@@ -590,9 +683,9 @@ const Agent = () => {
                   onChange={(e) => setAgentLevel(e.target.value)}
                 >
                   <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="option1">Level 1</MenuItem>
-                  <MenuItem value="option2">Level 2</MenuItem>
-                  <MenuItem value="option2">Level 3</MenuItem>
+                  <MenuItem value="Level 1">Level 1</MenuItem>
+                  <MenuItem value="Level 2">Level 2</MenuItem>
+                  <MenuItem value="Level 3">Level 3</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -614,18 +707,26 @@ const Agent = () => {
                 <InputLabel>State</InputLabel>
                 <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
                   <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="valueX">Ogun State</MenuItem>
-                  <MenuItem value="valueY">Lagos State</MenuItem>
+                  <MenuItem value="Ogun State">Ogun State</MenuItem>
+                  <MenuItem value="Lagos State">Lagos State</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 3, sm: 3 }}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>LGA</InputLabel>
-                <Select value={lga} label="Lga" onChange={(e) => setLga(e.target.value)}>
-                  <MenuItem value="">-- Choose --</MenuItem>
-                  {/* <MenuItem value="item1">Lga</MenuItem>
-                <MenuItem value="item2">Lga</MenuItem> */}
+                <Select
+                  value={lga}
+                  label="LGA"
+                  onChange={(e) => setLga(e.target.value)}
+                  disabled={!state}
+                >
+                  <MenuItem value="">-- Choose LGA --</MenuItem>
+                  {availableLgas.map((lgaOption) => (
+                    <MenuItem key={lgaOption} value={lgaOption}>
+                      {lgaOption}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -653,6 +754,26 @@ const Agent = () => {
                 variant="outlined"
               />
             </Grid>
+            {hasActiveFilters && (
+              <Grid size={{ xs: 12, md: 3, sm: 4 }}>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  fullWidth
+                  onClick={() => {
+                    setAgentLevel('');
+                    setCountry('');
+                    setState('');
+                    setLga('');
+                    setReferer('');
+                    setSearch('');
+                  }}
+                  sx={{ height: '48px' }}
+                >
+                  Clear Filters
+                </Button>
+              </Grid>
+            )}
           </Grid>
 
           <TableContainer component={Paper}>

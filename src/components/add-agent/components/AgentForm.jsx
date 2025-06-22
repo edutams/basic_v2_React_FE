@@ -5,7 +5,6 @@ import {
   Button,
 } from '@mui/material';
 import AgentFormFields from './AgentFormFields';
-import LocationFields from './LocationFields';
 import ColorSchemeSelector from './ColorSchemeSelector';
 
 const AgentForm = ({ formik, onCancel, actionType }) => {
@@ -13,7 +12,6 @@ const AgentForm = ({ formik, onCancel, actionType }) => {
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3}>
         <AgentFormFields formik={formik} />
-        <LocationFields formik={formik} />
         {actionType !== 'update' && <ColorSchemeSelector formik={formik} />}
       </Grid>
 

@@ -18,7 +18,6 @@ import { agentValidationSchema } from './validation/agentValidationSchema';
 
 import CloseIcon from '@mui/icons-material/Close';
 
-// Dynamic modal width based on action type
 const getModalStyle = (actionType) => {
   const baseStyle = {
     position: 'absolute',
@@ -32,49 +31,49 @@ const getModalStyle = (actionType) => {
     overflowY: 'auto',
   };
 
-  // Medium width for color scheme (needs more space for preview)
   if (actionType === 'changeColorScheme') {
     return {
       ...baseStyle,
       width: '90%',
-      maxWidth: 850, // Medium size for color previews
+      maxWidth: 850, 
     };
   }
 
-  // Compact width for simple actions
   if (actionType === 'setCommission' || actionType === 'manageReferral' || actionType === 'manageGateway') {
     return {
       ...baseStyle,
       width: '90%',
-      maxWidth: 500, // Smaller for simple forms
+      maxWidth: 500, 
     };
   }
 
-  // Full width for complex actions
   return {
     ...baseStyle,
     width: '60%',
-    maxWidth: 800, // Larger for complex forms
+    maxWidth: 800, 
   };
 };
 
 const AddAgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType }) => {
   console.log('selectedAgent:', selectedAgent);
+  console.log('actionType:', actionType);
+
+  const shouldPrefillForm = actionType === 'update' || actionType === 'changeColorScheme';
+
   const initialValues = {
-    organizationName: selectedAgent?.organizationName || '',
-    organizationTitle: selectedAgent?.organizationTitle || '',
-    agentDetails: selectedAgent?.agentDetails || '',
-    contactDetails: selectedAgent?.contactDetails || '',
-    agentPhone: selectedAgent?.phoneNumber || '',
-    contactAddress: selectedAgent?.contactAddress || '',
-    stateFilter: selectedAgent?.stateFilter || '',
-    lga: selectedAgent?.lga || '',
-    level: selectedAgent?.level || '',
-    headerColor: selectedAgent?.headerColor || '',
-    sidebarColor: selectedAgent?.sidebarColor || '',
-    bodyColor: selectedAgent?.bodyColor || '',
-    accessLevel: selectedAgent?.accessLevel || '', 
-    permissions: selectedAgent?.permissions || [],
+    organizationName: shouldPrefillForm ? (selectedAgent?.organizationName || '') : '',
+    organizationTitle: shouldPrefillForm ? (selectedAgent?.organizationTitle || '') : '',
+    agentDetails: shouldPrefillForm ? (selectedAgent?.agentDetails || '') : '',
+    contactDetails: shouldPrefillForm ? (selectedAgent?.contactDetails || '') : '',
+    agentPhone: shouldPrefillForm ? (selectedAgent?.phoneNumber || '') : '',
+    contactAddress: shouldPrefillForm ? (selectedAgent?.contactAddress || '') : '',
+    stateFilter: shouldPrefillForm ? (selectedAgent?.stateFilter || '') : '',
+    lga: shouldPrefillForm ? (selectedAgent?.lga || '') : '',
+    headerColor: shouldPrefillForm ? (selectedAgent?.headerColor || '') : '',
+    sidebarColor: shouldPrefillForm ? (selectedAgent?.sidebarColor || '') : '',
+    bodyColor: shouldPrefillForm ? (selectedAgent?.bodyColor || '') : '',
+    accessLevel: shouldPrefillForm ? (selectedAgent?.accessLevel || '') : '',
+    permissions: shouldPrefillForm ? (selectedAgent?.permissions || []) : [],
   };
   console.log('initialValues:', initialValues);
 

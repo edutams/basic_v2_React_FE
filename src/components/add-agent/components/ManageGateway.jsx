@@ -15,7 +15,6 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 
-// Available payment gateways
 const availableGateways = [
   { id: 'paystack', name: 'Paystack', description: 'Popular Nigerian payment gateway' },
   { id: 'flutterwave', name: 'Flutterwave', description: 'Pan-African payment platform' },
@@ -25,7 +24,6 @@ const availableGateways = [
   { id: 'remita', name: 'Remita', description: 'Nigerian payment platform' },
 ];
 
-// Available banks (Nigerian banks as example)
 const availableBanks = [
   { code: '044', name: 'Access Bank' },
   { code: '014', name: 'Afribank Nigeria Plc' },
@@ -48,17 +46,12 @@ const availableBanks = [
   { code: '057', name: 'Zenith Bank' },
 ];
 
-// Available currencies
+
 const availableCurrencies = [
   { code: 'NGN', name: 'Nigerian Naira (₦)', symbol: '₦' },
   { code: 'USD', name: 'US Dollar ($)', symbol: '$' },
-  { code: 'EUR', name: 'Euro (€)', symbol: '€' },
-  { code: 'GBP', name: 'British Pound (£)', symbol: '£' },
-  { code: 'GHS', name: 'Ghanaian Cedi (₵)', symbol: '₵' },
-  { code: 'KES', name: 'Kenyan Shilling (KSh)', symbol: 'KSh' },
 ];
 
-// Validation schema
 const gatewayValidationSchema = yup.object({
   gateway: yup.string().required('Please select a payment gateway'),
   bank: yup.string().required('Please select a bank'),
@@ -86,7 +79,6 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
     },
   });
 
-  // Set current gateway when component loads
   useEffect(() => {
     if (selectedAgent) {
       const gateway = availableGateways.find(
@@ -151,7 +143,6 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
             </Grid>
           )}
 
-          {/* Gateway Selection */}
           <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Select Gateway</InputLabel>
@@ -185,7 +176,6 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
             </FormControl>
           </Grid>
 
-          {/* Bank Selection */}
           <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Select Bank</InputLabel>
@@ -212,7 +202,6 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
             </FormControl>
           </Grid>
 
-          {/* Account Number */}
           <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
             <TextField
               fullWidth
@@ -231,7 +220,6 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
             />
           </Grid>
 
-          {/* Currency Selection */}
           <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
@@ -264,7 +252,6 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
             </FormControl>
           </Grid>
 
-          {/* Gateway Configuration Summary */}
           {formik.values.gateway && formik.values.bank && formik.values.accountNumber && (
             <Grid item xs={12}>
               <Paper variant="outlined" sx={{ p: 3, bgcolor: 'success.light' }}>

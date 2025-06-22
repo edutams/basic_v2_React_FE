@@ -34,9 +34,7 @@ const ManageReferralModal = ({ selectedAgent, onSave, onClose }) => {
 
   const availableReferrers = [
     'Crownbirth Limited',
-    'TechCorp Solutions',
-    'EduPartners Inc',
-    'Global Education Hub',
+    'Digital Solutions',
   ];
 
   useEffect(() => {

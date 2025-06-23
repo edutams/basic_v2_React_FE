@@ -654,8 +654,10 @@ const Agent = () => {
 
   return (
     <PageContainer title="Agent Page" description="This is the Agent page">
-      <Breadcrumb title="Agent" items={BCrumb} />
-      <Box>
+      <Box sx={{ mt: 0 }}>
+        <Breadcrumb title="Agent" items={BCrumb} />
+      </Box>
+      <Box sx={{ mt: 1 }}>
         <ParentCard
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">

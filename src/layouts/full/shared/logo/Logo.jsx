@@ -35,8 +35,33 @@ const Logo = () => {
       <LinkStyled to="/" style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
       }}>
-        <h2>BASIC V2</h2>
+        {isCollapse === "mini-sidebar" && !isSidebarHover ? (
+          <h2 style={{
+            fontSize: '16px',
+            margin: 0,
+            fontWeight: 'bold',
+            color: 'inherit',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            BV
+          </h2>
+        ) : (
+          <h2 style={{
+            fontSize: '20px',
+            margin: 0,
+            fontWeight: 'bold',
+            color: 'inherit',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            BASIC V2
+          </h2>
+        )}
         {/* {activeMode === 'dark' ? (
           <LogoLight />
         ) : (
@@ -50,13 +75,38 @@ const Logo = () => {
     <LinkStyled to="/" style={{
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
     }}>
-      {activeMode === 'dark' ? (
+      {isCollapse === "mini-sidebar" && !isSidebarHover ? (
+        <h2 style={{
+          fontSize: '16px',
+          margin: 0,
+          fontWeight: 'bold',
+          color: 'inherit',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          BV
+        </h2>
+      ) : (
+        <h2 style={{
+          fontSize: '20px',
+          margin: 0,
+          fontWeight: 'bold',
+          color: 'inherit',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          BASIC V2
+        </h2>
+      )}
+      {/* {activeMode === 'dark' ? (
         <LogoLightRTL />
-
       ) : (
         <LogoDarkRTL />
-      )}
+      )} */}
     </LinkStyled>
   );
 };

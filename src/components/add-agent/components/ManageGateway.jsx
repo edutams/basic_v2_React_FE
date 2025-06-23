@@ -118,7 +118,6 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
 
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={3}>
-          {/* Current Gateway Display */}
           {currentGateway && (
             <Grid item xs={12}>
               <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>

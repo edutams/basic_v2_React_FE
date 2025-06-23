@@ -1,4 +1,3 @@
-// Import these at the top if not already there
 import React, { useState, useEffect } from 'react';
 import {
   Typography,
@@ -56,12 +55,10 @@ const getStyles = (name, selected, theme) => ({
     : theme.typography.fontWeightRegular,
 });
 
-const filterGroups = [
-  { mainLabel: 'Agent', mainOptions: ['Agent A', 'Agent B'] },
-  { mainLabel: 'Country', mainOptions: ['Nigeria', 'Ghana'] },
-  { mainLabel: 'State', mainOptions: ['Ogun', 'Lagos'] },
-  { mainLabel: 'LGA', mainOptions: ['Abeokuta', 'Ijebu-Ode'] },
-];
+const lgaData = {
+  Ogun: ['Abeokuta', 'Ijebu-Ode'],
+  Lagos: ['Ikeja', 'Epe', 'Ikorodu'],
+};
 
 const SchoolDashboard = () => {
   const theme = useTheme();
@@ -83,18 +80,28 @@ const SchoolDashboard = () => {
     { label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' },
     { label: 'Agent B', value: 'agentB' },
   ]);
-  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
+  const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
   const [openClear2FAConfirm, setOpenClear2FAConfirm] = useState(false);
   const [selectedSchoolFor2FA, setSelectedSchoolFor2FA] = useState(null);
   const [openFixImageConfirm, setOpenFixImageConfirm] = useState(false);
+  const [lgaOptions, setLgaOptions] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [actionAnchorEl, setActionAnchorEl] = useState(null);
+  const [activeRow, setActiveRow] = useState(null);
+
+  const [filterGroups, setFilterGroups] = useState([
+    { mainLabel: 'Agent', mainOptions: ['Agent A', 'Agent B'] },
+    { mainLabel: 'Country', mainOptions: ['Nigeria', 'Ghana'] },
+    { mainLabel: 'State', mainOptions: ['Ogun', 'Lagos'] },
+    { mainLabel: 'LGA', mainOptions: [] },
+  ]);
+
   const handleFixImage = () => {
     setOpenFixImageConfirm(false);
   };
-
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
-  const [actionAnchorEl, setActionAnchorEl] = useState(null);
 
   const handleActionClick = (event, rowId) => {
     setActionAnchorEl(event.currentTarget);
@@ -107,27 +114,76 @@ const SchoolDashboard = () => {
   };
 
   const handleMenuClose = () => setAnchorEl(null);
-  const [activeRow, setActiveRow] = useState(null);
-  const handleMenuOpen = (event) => {
-  setAnchorEl(event.currentTarget);
-};
 
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Load data from localStorage and initialize
   useEffect(() => {
     const savedList = localStorage.getItem('schoolList');
     const savedFilters = localStorage.getItem('schoolFilters');
     const savedPage = localStorage.getItem('currentPage');
 
-    if (savedList) setSchoolList(JSON.parse(savedList));
+    if (savedList) {
+      setSchoolList(JSON.parse(savedList));
+    } else {
+      const initialSchools = [
+        {
+          id: 1,
+          institutionName: 'Test School 1',
+          schoolUrl: 'test1.com',
+          agent: 'Agent A',
+          gateway: 'Gateway 1',
+          date: '2025-01-01',
+          socialLink: 'social1.com',
+          colourScheme: 'Blue',
+          status: 'Active',
+          State: 'Ogun',
+          LGA: 'Abeokuta',
+        },
+        {
+          id: 2,
+          institutionName: 'Test School 2',
+          schoolUrl: 'test2.com',
+          agent: 'Agent B',
+          gateway: 'Gateway 2',
+          date: '2025-02-01',
+          socialLink: 'social2.com',
+          colourScheme: 'Red',
+          status: 'Inactive',
+          State: 'Lagos',
+          LGA: 'Ikeja',
+        },
+      ];
+      setSchoolList(initialSchools);
+      localStorage.setItem('schoolList', JSON.stringify(initialSchools));
+    }
+
     if (savedFilters) {
       const { filterValues, nameValue, fromDate, toDate } = JSON.parse(savedFilters);
       setFilterValues(filterValues || {});
       setNameValue(nameValue || '');
       setFromDate(fromDate ? dayjs(fromDate) : null);
       setToDate(toDate ? dayjs(toDate) : null);
+      if (filterValues?.State) {
+        setLgaOptions(lgaData[filterValues.State] || []);
+      }
     }
+
     if (savedPage) setCurrentPage(parseInt(savedPage, 10));
   }, []);
 
+  // Update filterGroups when lgaOptions changes
+  useEffect(() => {
+    setFilterGroups((prev) =>
+      prev.map((group) =>
+        group.mainLabel === 'LGA' ? { ...group, mainOptions: lgaOptions } : group,
+      ),
+    );
+  }, [lgaOptions]);
+
+  // Save to localStorage
   useEffect(() => {
     localStorage.setItem('schoolList', JSON.stringify(schoolList));
   }, [schoolList]);
@@ -143,13 +199,47 @@ const SchoolDashboard = () => {
     localStorage.setItem('currentPage', currentPage);
   }, [currentPage]);
 
+  // Handle filter changes
+  const handleChange = (key) => (event) => {
+    const value = event.target.value;
+
+    setFilterValues((prev) => {
+      const newFilters = { ...prev, [key]: value };
+      if (key === 'State') {
+        delete newFilters['LGA'];
+        const lgas = lgaData[value] || [];
+        setLgaOptions(lgas);
+      }
+      return newFilters;
+    });
+  };
+
+  const handleRefresh = (newSchool) => {
+    setSchoolList((prevList) => {
+      const existingIndex = prevList.findIndex((s) => s.id === newSchool.id);
+      if (existingIndex !== -1) {
+        const updatedList = [...prevList];
+        updatedList[existingIndex] = newSchool;
+        return updatedList;
+      }
+      return [...prevList, { id: prevList.length + 1, ...newSchool }];
+    });
+  };
+
+  const handleDeactivateSchool = (school) => {
+    setSchoolList((prevList) =>
+      prevList.map((s) => (s.id === school.id ? { ...s, status: 'Inactive' } : s)),
+    );
+    setOpenDeactivateDialog(false);
+  };
+
   const filteredSchools = schoolList.filter((school) => {
     const matchesName = nameValue
       ? school.institutionName?.toLowerCase().includes(nameValue.toLowerCase())
       : true;
 
-    const matchesFilters = Object.entries(filterValues).every(([key, selectedOptions]) => {
-      return selectedOptions.length === 0 || selectedOptions.includes(school[key]);
+    const matchesFilters = Object.entries(filterValues).every(([key, value]) => {
+      return !value || school[key] === value;
     });
 
     const matchesDateRange =
@@ -164,28 +254,6 @@ const SchoolDashboard = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
-
-  const handleChange = (key) => (event) => {
-    const {
-      target: { value },
-    } = event;
-    setFilterValues((prev) => ({
-      ...prev,
-      [key]: typeof value === 'string' ? value.split(',') : value,
-    }));
-  };
-
-  const handleRefresh = (newSchool) => {
-    setSchoolList((prevList) => {
-      const existingIndex = prevList.findIndex((s) => s.id === newSchool.id);
-      if (existingIndex !== -1) {
-        const updatedList = [...prevList];
-        updatedList[existingIndex] = newSchool;
-        return updatedList;
-      }
-      return [...prevList, { id: prevList.length + 1, ...newSchool }];
-    });
-  };
 
   const schoolSummary = {
     total: schoolList.length,
@@ -331,18 +399,27 @@ const SchoolDashboard = () => {
                     <Select
                       labelId={`${mainLabel}-label`}
                       id={`${mainLabel}-select`}
-                      multiple
-                      value={filterValues[mainLabel] || []}
+                      value={filterValues[mainLabel] || ''}
                       onChange={handleChange(mainLabel)}
                       input={<OutlinedInput label={mainLabel} />}
                       MenuProps={MenuProps}
-                      sx={{ bgcolor: 'white' }}
+                      sx={{
+                        bgcolor: 'white',
+                        height: 56,
+                        '& .MuiOutlinedInput-input': {
+                          boxSizing: 'border-box',
+                          padding: '16.5px 14px',
+                        },
+                      }}
                     >
+                      <MenuItem value="">
+                        <em>None</em>
+                      </MenuItem>
                       {mainOptions.map((option) => (
                         <MenuItem
                           key={option}
                           value={option}
-                          style={getStyles(option, filterValues[mainLabel] || [], theme)}
+                          style={getStyles(option, [filterValues[mainLabel] || ''], theme)}
                         >
                           {option}
                         </MenuItem>
@@ -359,7 +436,14 @@ const SchoolDashboard = () => {
                   variant="outlined"
                   value={nameValue}
                   onChange={(e) => setNameValue(e.target.value)}
-                  sx={{ bgcolor: 'white', mb: 2 }}
+                  sx={{
+                    bgcolor: 'white',
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      height: 56,
+                      boxSizing: 'border-box',
+                    },
+                  }}
                 />
               </Grid>
 
@@ -371,7 +455,19 @@ const SchoolDashboard = () => {
                   slotProps={{
                     textField: {
                       fullWidth: true,
-                      sx: { bgcolor: 'white', mb: 2 },
+                      variant: 'outlined',
+                      sx: {
+                        bgcolor: 'white',
+                        mb: 2,
+                        '& .MuiOutlinedInput-root': {
+                          height: 56,
+                          boxSizing: 'border-box',
+                        },
+                        '& .MuiOutlinedInput-input': {
+                          padding: '16.5px 14px',
+                          boxSizing: 'border-box',
+                        },
+                      },
                     },
                   }}
                 />
@@ -385,7 +481,19 @@ const SchoolDashboard = () => {
                   slotProps={{
                     textField: {
                       fullWidth: true,
-                      sx: { bgcolor: 'white', mb: 2 },
+                      variant: 'outlined',
+                      sx: {
+                        bgcolor: 'white',
+                        mb: 2,
+                        '& .MuiOutlinedInput-root': {
+                          height: 56,
+                          boxSizing: 'border-box',
+                        },
+                        '& .MuiOutlinedInput-input': {
+                          padding: '16.5px 14px',
+                          boxSizing: 'border-box',
+                        },
+                      },
                     },
                   }}
                 />
@@ -409,7 +517,7 @@ const SchoolDashboard = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {schoolList.map((row) => (
+                  {paginatedSchools.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell>{row.id}</TableCell>
                       <TableCell>{row.institutionName}</TableCell>
@@ -418,7 +526,17 @@ const SchoolDashboard = () => {
                       <TableCell>{row.gateway}</TableCell>
                       <TableCell>{dayjs(row.date).format('MM/DD/YYYY')}</TableCell>
                       <TableCell>{row.socialLink || '-'}</TableCell>
-                      <TableCell>{row.colourScheme}</TableCell>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            width: 20,
+                            height: 20,
+                            backgroundColor: row.colourScheme || '#000000',
+                            borderRadius: 1,
+                            border: '1px solid #ccc',
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>{row.status}</TableCell>
                       <TableCell>
                         <IconButton onClick={(e) => handleActionClick(e, row.id)}>
@@ -452,12 +570,6 @@ const SchoolDashboard = () => {
                           >
                             Manage School Gateway
                           </MenuItem>
-
-                          <ManageSchoolGateway
-                            open={openGatewayModal}
-                            onClose={() => setOpenGatewayModal(false)}
-                          />
-
                           <MenuItem
                             onClick={() => {
                               setOpenAgentModal(true);
@@ -484,7 +596,6 @@ const SchoolDashboard = () => {
                           >
                             Fix User Images
                           </MenuItem>
-
                           <MenuItem
                             onClick={() => {
                               setEditSchoolData(row);
@@ -494,7 +605,15 @@ const SchoolDashboard = () => {
                           >
                             Edit School Details
                           </MenuItem>
-                          <MenuItem onClick={handleActionClose}>Deactivate School</MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              setSchoolToDeactivate(row);
+                              setOpenDeactivateDialog(true);
+                              handleActionClose();
+                            }}
+                          >
+                            Deactivate School
+                          </MenuItem>
                           <MenuItem onClick={handleActionClose}>Details</MenuItem>
                           <MenuItem onClick={handleActionClose}>
                             Change Color School Scheme
@@ -502,8 +621,8 @@ const SchoolDashboard = () => {
                           <MenuItem onClick={handleActionClose}>Public Analytics</MenuItem>
                           <MenuItem
                             onClick={() => {
-                              setSchoolToDelete(row); // row is your current school
-                              setOpenConfirmDialog(true);
+                              setSchoolToDelete(row);
+                              setOpenDeleteDialog(true);
                               handleActionClose();
                             }}
                           >
@@ -518,7 +637,12 @@ const SchoolDashboard = () => {
             </TableContainer>
 
             <Box component="hr" sx={{ mt: 6, mb: 3 }} />
-            <Pagination totalItems={100} itemsPerPage={10} />
+            <Pagination
+              totalItems={filteredSchools.length}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
 
             <AddSchoolModal
               open={openRegisterModal || openEditModal}
@@ -547,14 +671,21 @@ const SchoolDashboard = () => {
               agentList={agentList}
             />
             <ConfirmDialog
-              open={openConfirmDialog}
-              onClose={() => setOpenConfirmDialog(false)}
+              open={openDeleteDialog}
+              onClose={() => setOpenDeleteDialog(false)}
               onConfirm={() => {
                 setSchoolList((prev) => prev.filter((s) => s.id !== schoolToDelete.id));
-                setOpenConfirmDialog(false);
+                setOpenDeleteDialog(false);
               }}
               title="Delete School"
-              message={`Are you sure you want to perform this operation?`}
+              message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
+            />
+            <ConfirmDialog
+              open={openDeactivateDialog}
+              onClose={() => setOpenDeactivateDialog(false)}
+              onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
+              title="Deactivate School"
+              message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
             />
             <ConfirmDialog
               open={openClear2FAConfirm}

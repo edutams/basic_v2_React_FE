@@ -57,7 +57,7 @@ import {
   IconChartArcs3,
   IconChartPie,
   IconListTree,
-
+  IconSchool,
 } from '@tabler/icons-react';
 
 const Menuitems = [
@@ -75,8 +75,9 @@ const Menuitems = [
   
   {
     id: uniqueId(),
-    title: 'school',
-    icon: IconShoppingCart,
+    title: 'School',
+    // icon: IconShoppingCart,
+    icon: IconSchool,
     href: '/dashboards/school',
   },
 

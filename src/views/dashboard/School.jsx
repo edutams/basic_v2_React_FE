@@ -529,8 +529,11 @@ const SchoolDashboard = () => {
                       <TableCell>
                         <Box
                           sx={{
-                            width: 20,
-                            height: 20,
+                            width: 40,
+                            height: 40,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
                             backgroundColor: row.colourScheme || '#000000',
                             borderRadius: 1,
                             border: '1px solid #ccc',

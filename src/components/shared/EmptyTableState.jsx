@@ -10,7 +10,7 @@ const EmptyTableState = ({
   icon: CustomIcon,
   height = 200,
   showIcon = true,
-  type = 'default' // 'default', 'search', 'filter'
+  type = 'default'
 }) => {
   const getIcon = () => {
     if (CustomIcon) return <CustomIcon size={48} />;

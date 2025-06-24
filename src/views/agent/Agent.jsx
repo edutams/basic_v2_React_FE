@@ -179,7 +179,6 @@ const Agent = () => {
     });
   }, [data, agentLevel, country, state, lga, referer, search]);
 
-  // Empty state configuration (after filteredData is defined)
   const emptyState = useTableEmptyState(
     filteredData,
     hasActiveFilters,

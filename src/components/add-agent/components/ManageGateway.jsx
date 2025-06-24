@@ -253,47 +253,47 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
 
           {formik.values.gateway && formik.values.bank && formik.values.accountNumber && (
             <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'success.light' }}>
-                <Typography variant="h6" color="success.dark" mb={2}>
-                  Gateway Configuration Summary
-                </Typography>
-                
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      Gateway:
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {availableGateways.find(g => g.id === formik.values.gateway)?.name}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      Bank:
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {availableBanks.find(b => b.code === formik.values.bank)?.name}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      Account:
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {formik.values.accountNumber}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">
-                      Currency:
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {availableCurrencies.find(c => c.code === formik.values.currency)?.name}
-                    </Typography>
-                  </Grid>
+            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'success.light' }}>
+              <Typography variant="h6" color="success.dark" mb={2}>
+                Gateway Configuration Summary
+              </Typography>
+              
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    Gateway:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {availableGateways.find(g => g.id === formik.values.gateway)?.name}
+                  </Typography>
                 </Grid>
-              </Paper>
-            </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    Bank:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {availableBanks.find(b => b.code === formik.values.bank)?.name}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    Account:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {formik.values.accountNumber}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="textSecondary">
+                    Currency:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {availableCurrencies.find(c => c.code === formik.values.currency)?.name}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
           )}
         </Grid>
 

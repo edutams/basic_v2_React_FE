@@ -24,26 +24,21 @@ import {
   IconButton,
   Button,
   Badge,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Alert,
+
+
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../components/shared/ParentCard';
-import AddAgentModal from '../../components/add-agent/AddAgentModal';
+import AgentModal from '../../components/shared/AgentModal';
+import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import EmptyTableState from '../../components/shared/EmptyTableState';
+import useTableEmptyState from '../../hooks/useTableEmptyState';
 
-// import EditIcon from '@mui/icons-material/Edit';
-// import CheckIcon from '@mui/icons-material/Check';
-// import CloseIcon from '@mui/icons-material/Close';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import CloseIcon from '@mui/icons-material/Close';
+
 
 import {
   flexRender,
@@ -76,7 +71,6 @@ const Agent = () => {
   const [lga, setLga] = useState('');
   const [referer, setReferer] = useState('');
   const [search, setSearch] = useState('');
-  // const { setHeaderColor, setSidebarColor, setBodyColor } = useContext(CustomizerContext);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
@@ -185,6 +179,22 @@ const Agent = () => {
     });
   }, [data, agentLevel, country, state, lga, referer, search]);
 
+  // Empty state configuration (after filteredData is defined)
+  const emptyState = useTableEmptyState(
+    filteredData,
+    hasActiveFilters,
+    !!search,
+    search,
+    {
+      defaultMessage: "No agents found",
+      defaultDescription: "No agents have been registered yet. Click 'Register Agent' to add your first agent.",
+      filterMessage: "No agents match your filters",
+      filterDescription: "No agents match your current filters. Try adjusting your search criteria or clearing the filters.",
+      searchMessage: `No agents found for "${search}"`,
+      searchDescription: "Try adjusting your search terms or clearing the search to see all agents."
+    }
+  );
+
   const handleAddAgent = (newAgent) => {
     setData((prevData) => [...prevData, newAgent]);
     console.log('New Agent Added:', newAgent);
@@ -279,47 +289,6 @@ const Agent = () => {
     );
   };
 
-  // const initialAgentData = [
-  //   {
-  //     s_n: 1,
-  //     organizationName: 'Org A',
-  //     level: 'Level 1',
-  //     agentDetails: 'Agent A',
-  //     contactDetails: 'agentA@example.com',
-  //     phoneNumber: '123-456-7890',
-  //     performance: 'High',
-  //     gateway: 'Gateway 1',
-  //     colourScheme: 'Red',
-  //     status: 'Active',
-  //     action: 'View',
-  //   },
-  //   {
-  //     s_n: 2,
-  //     organizationName: 'Org B',
-  //     level: 'Level 2',
-  //     agentDetails: 'Agent B',
-  //     contactDetails: 'agentB@example.com',
-  //     phoneNumber: '987-654-3210',
-  //     performance: 'High',
-  //     gateway: 'Gateway 2',
-  //     colourScheme: 'Blue',
-  //     status: 'Active',
-  //     action: 'Edit',
-  //   },
-  //   {
-  //     s_n: 3,
-  //     organizationName: 'Org C',
-  //     level: 'Level 2',
-  //     agentDetails: 'Agent B',
-  //     contactDetails: 'agentB@example.com',
-  //     phoneNumber: '987-654-3210',
-  //     performance: 'High',
-  //     gateway: 'Gateway 1',
-  //     colourScheme: 'Blue',
-  //     status: 'Inactive',
-  //     action: 'Edit',
-  //   },
-  // ];
 
   const [editRowId, setEditRowId] = useState(null);
   const [editedData, setEditedData] = useState(null);
@@ -796,20 +765,29 @@ const Agent = () => {
                 ))}
               </TableHead>
               <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
+                {!emptyState.isEmpty ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <EmptyTableState
+                    colSpan={table.getHeaderGroups()[0]?.headers.length || 7}
+                    message={emptyState.message}
+                    description={emptyState.description}
+                    type={emptyState.type}
+                  />
+                )}
               </TableBody>
             </Table>
           </TableContainer>
         </ParentCard>
-        <AddAgentModal
+        <AgentModal
           open={isRegisterModalOpen || isModalOpen}
           onClose={() => {
             setIsRegisterModalOpen(false);
@@ -823,48 +801,16 @@ const Agent = () => {
           actionType={isModalOpen ? actionType : 'create'}
         />
 
-        <Dialog open={deleteDialogOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
-          <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
-            <IconButton onClick={handleCancelDelete}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-          <DialogContent sx={{ textAlign: 'center', py: 5 }}>
-            <WarningAmberRoundedIcon sx={{ fontSize: 60, color: '#fcbf49', mb: 2 }} />
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Delete Agent
-            </Typography>
-            <Typography variant="body2" color="textSecondary" gutterBottom>
-              Are you sure you want to perform this operation?
-            </Typography>
-            <DialogActions sx={{ justifyContent: 'center', mt: 4, gap: 2 }}>
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: '#007bff',
-                  '&:hover': { backgroundColor: '#0069d9' },
-                  px: 4,
-                  fontWeight: 'bold',
-                }}
-                onClick={handleConfirmDelete}
-              >
-                Yes Continue!
-              </Button>
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: '#dc3545',
-                  '&:hover': { backgroundColor: '#c82333' },
-                  px: 4,
-                  fontWeight: 'bold',
-                }}
-                onClick={handleCancelDelete}
-              >
-                No, Exit!
-              </Button>
-            </DialogActions>
-          </DialogContent>
-        </Dialog>
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          title="Delete Agent"
+          message="Are you sure you want to delete this agent? This action cannot be undone."
+          confirmText="Yes, Delete"
+          cancelText="Cancel"
+          severity="error"
+        />
       </Box>
     </PageContainer>
   );

@@ -37,12 +37,24 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
       headerColor: values.headerColor,
       sidebarColor: values.sidebarColor,
       bodyColor: values.bodyColor,
-      colourScheme: values.bodyColor, 
+      colourScheme: values.bodyColor,
       lastColorSchemeUpdate: new Date().toISOString(),
     };
-    
+
     onSave(updatedAgent);
     onClose();
+  };
+
+  const hasColorChanges = () => {
+    const originalHeader = selectedAgent?.headerColor || '#1976d2';
+    const originalSidebar = selectedAgent?.sidebarColor || '#2196f3';
+    const originalBody = selectedAgent?.bodyColor || '#f5f5f5';
+
+    return (
+      formik.values.headerColor !== originalHeader ||
+      formik.values.sidebarColor !== originalSidebar ||
+      formik.values.bodyColor !== originalBody
+    );
   };
 
   return (
@@ -53,15 +65,14 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
 
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={3}>
-          {/* Current Color Scheme Display */}
-          <Grid item xs={12}>
+          <Grid item xs={hasColorChanges() ? 6 : 12}>
             <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
               <Typography variant="h6" color="primary" mb={2}>
                 Current Color Scheme
               </Typography>
-              
+
               <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid item xs={12}>
                   <Box>
                     <Typography variant="body2" color="textSecondary" mb={1}>
                       Header Color
@@ -84,8 +95,8 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
                     </Box>
                   </Box>
                 </Grid>
-                
-                <Grid item xs={4}>
+
+                <Grid item xs={6}>
                   <Box>
                     <Typography variant="body2" color="textSecondary" mb={1}>
                       Sidebar Color
@@ -108,8 +119,8 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
                     </Box>
                   </Box>
                 </Grid>
-                
-                <Grid item xs={4}>
+
+                <Grid item xs={6}>
                   <Box>
                     <Typography variant="body2" color="textSecondary" mb={1}>
                       Body Color
@@ -136,6 +147,97 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
             </Paper>
           </Grid>
 
+          {hasColorChanges() && (
+            <Grid item xs={6}>
+              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'success.light' }}>
+                <Typography variant="h6" color="success.dark" mb={2}>
+                  New Color Preview
+                </Typography>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Box>
+                      <Typography variant="body2" color="textSecondary" mb={1}>
+                        Header Preview
+                      </Typography>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: 40,
+                          backgroundColor: formik.values.headerColor,
+                          borderRadius: 1,
+                          border: '1px solid #ddd',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background-color 0.3s ease',
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ color: 'white', fontWeight: 'bold' }}>
+                          {formik.values.headerColor}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={6}>
+                    <Box>
+                      <Typography variant="body2" color="textSecondary" mb={1}>
+                        Sidebar Preview
+                      </Typography>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: 40,
+                          backgroundColor: formik.values.sidebarColor,
+                          borderRadius: 1,
+                          border: '1px solid #ddd',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background-color 0.3s ease',
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ color: 'white', fontWeight: 'bold' }}>
+                          {formik.values.sidebarColor}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={6}>
+                    <Box>
+                      <Typography variant="body2" color="textSecondary" mb={1}>
+                        Body Preview
+                      </Typography>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: 40,
+                          backgroundColor: formik.values.bodyColor,
+                          borderRadius: 1,
+                          border: '1px solid #ddd',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background-color 0.3s ease',
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                          {formik.values.bodyColor}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                {/* <Typography variant="caption" color="success.dark" sx={{ mt: 2, display: 'block', fontStyle: 'italic' }}>
+                  ✓ Preview updates in real-time
+                </Typography> */}
+              </Paper>
+            </Grid>
+          )}
+
           <Grid item xs={12}>
             <Paper variant="outlined" sx={{ p: 3 }}>
               <Typography variant="h6" color="primary" mb={2}>
@@ -145,96 +247,6 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
               <ColorSchemeSelector formik={formik} />
             </Paper>
           </Grid>
-
-          <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'info.light' }}>
-              <Typography variant="h6" color="info.dark" mb={2}>
-                Color Scheme Preview
-              </Typography>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <Box>
-                    <Typography variant="body2" color="textSecondary" mb={1}>
-                      Header Preview
-                    </Typography>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: 50,
-                        backgroundColor: formik.values.headerColor,
-                        borderRadius: 1,
-                        border: '1px solid #ddd',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background-color 0.3s ease',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold' }}>
-                        Header
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                
-                <Grid item xs={4}>
-                  <Box>
-                    <Typography variant="body2" color="textSecondary" mb={1}>
-                      Sidebar Preview
-                    </Typography>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: 50,
-                        backgroundColor: formik.values.sidebarColor,
-                        borderRadius: 1,
-                        border: '1px solid #ddd',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background-color 0.3s ease',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ color: 'white', fontWeight: 'bold' }}>
-                        Sidebar
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-                
-                <Grid item xs={4}>
-                  <Box>
-                    <Typography variant="body2" color="textSecondary" mb={1}>
-                      Body Preview
-                    </Typography>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: 50,
-                        backgroundColor: formik.values.bodyColor,
-                        borderRadius: 1,
-                        border: '1px solid #ddd',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background-color 0.3s ease',
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        Body
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-              
-              <Typography variant="caption" color="textSecondary" sx={{ mt: 2, display: 'block' }}>
-                Preview updates in real-time as you select colors
-              </Typography>
-            </Paper>
-          </Grid>
-
         </Grid>
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

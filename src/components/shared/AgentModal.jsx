@@ -1,64 +1,67 @@
 import React from 'react';
-import {
-  Modal,
-  Box,
-  Typography,
-  Divider,
-  IconButton,
-} from '@mui/material';
 import { useFormik } from 'formik';
-import AgentForm from './components/AgentForm';
-import SchoolsView from './components/SchoolsView';
-import PermissionManager from './components/PermissionManager';
-import SetCommissionModal from './components/SetCommission';
-import ManageReferralModal from './components/ManageReferral';
-import ManageGateway from './components/ManageGateway';
-import ChangeColorScheme from './components/ChangeColorScheme';
-import { agentValidationSchema } from './validation/agentValidationSchema';
+import ReusableModal from './ReusableModal';
+import AgentForm from '../add-agent/components/AgentForm';
+import SchoolsView from '../add-agent/components/SchoolsView';
+import PermissionManager from '../add-agent/components/PermissionManager';
+import SetCommissionModal from '../add-agent/components/SetCommission';
+import ManageReferralModal from '../add-agent/components/ManageReferral';
+import ManageGateway from '../add-agent/components/ManageGateway';
+import ChangeColorScheme from '../add-agent/components/ChangeColorScheme';
+import { agentValidationSchema } from '../add-agent/validation/agentValidationSchema';
+import PropTypes from 'prop-types';
 
-import CloseIcon from '@mui/icons-material/Close';
-
-const getModalStyle = (actionType) => {
-  const baseStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    bgcolor: 'background.paper',
-    boxShadow: 24,
-    p: 4,
-    maxHeight: '90vh',
-    overflowY: 'auto',
+const getModalConfig = (actionType) => {
+  const configs = {
+    create: {
+      title: 'Create Agent',
+      size: 'large',
+    },
+    update: {
+      title: 'Update Agent',
+      size: 'large',
+    },
+    viewSchools: {
+      title: 'View Schools',
+      size: 'medium',
+    },
+    managePermissions: {
+      title: 'Edit Permissions',
+      size: 'large',
+    },
+    setCommission: {
+      title: 'Set Commission',
+      size: 'small',
+    },
+    manageReferral: {
+      title: 'Manage Referral',
+      size: 'small',
+    },
+    manageGateway: {
+      title: 'Manage Gateway',
+      size: 'small',
+    },
+    changeColorScheme: {
+      title: 'Change Color Scheme',
+      size: 'large',
+    },
   };
 
-  if (actionType === 'changeColorScheme') {
-    return {
-      ...baseStyle,
-      width: '90%',
-      maxWidth: 850, 
-    };
-  }
-
-  if (actionType === 'setCommission' || actionType === 'manageReferral' || actionType === 'manageGateway') {
-    return {
-      ...baseStyle,
-      width: '90%',
-      maxWidth: 500, 
-    };
-  }
-
-  return {
-    ...baseStyle,
-    width: '60%',
-    maxWidth: 800, 
-  };
+  return configs[actionType] || configs.create;
 };
 
-const AddAgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType }) => {
+const AgentModal = ({ 
+  open, 
+  onClose, 
+  handleRefresh, 
+  selectedAgent, 
+  actionType = 'create' 
+}) => {
   console.log('selectedAgent:', selectedAgent);
   console.log('actionType:', actionType);
 
   const shouldPrefillForm = actionType === 'update' || actionType === 'changeColorScheme';
+  const modalConfig = getModalConfig(actionType);
 
   const initialValues = {
     organizationName: shouldPrefillForm ? (selectedAgent?.organizationName || '') : '',
@@ -75,8 +78,6 @@ const AddAgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType
     accessLevel: shouldPrefillForm ? (selectedAgent?.accessLevel || '') : '',
     permissions: shouldPrefillForm ? (selectedAgent?.permissions || []) : [],
   };
-  console.log('initialValues:', initialValues);
-
 
   const formik = useFormik({
     initialValues,
@@ -134,78 +135,96 @@ const AddAgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType
     onClose();
   };
 
-  return (
-    <Modal open={open} onClose={handleClose} keepMounted
-    disableEnforceFocus
-    disableAutoFocus
-  >
-      <Box sx={getModalStyle(actionType)}>
-      <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
-            <IconButton onClick={handleClose}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        <Typography variant="h6" mb={2}>
-          {actionType === 'update'
-            ? 'Update Agent'
-            : actionType === 'viewSchools'
-            ? 'View Schools'
-            : actionType === 'managePermissions'
-            ? 'Edit Permissions'
-            : actionType === 'setCommission'
-            ? 'Set Commission'
-            : actionType === 'manageReferral'
-            ? 'Manage Referral'
-            : actionType === 'manageGateway'
-            ? 'Manage Gateway'
-            : actionType === 'changeColorScheme'
-            ? 'Change Color Scheme'
-            : 'Create Agent'}
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
-
-        {actionType === 'viewSchools' ? (
-          <SchoolsView selectedAgent={selectedAgent} />
-        ) : actionType === 'managePermissions' ? (
+  const renderContent = () => {
+    switch (actionType) {
+      case 'viewSchools':
+        return <SchoolsView selectedAgent={selectedAgent} />;
+      
+      case 'managePermissions':
+        return (
           <PermissionManager
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onCancel={handleClose}
           />
-        ) : actionType === 'setCommission' ? (
+        );
+      
+      case 'setCommission':
+        return (
           <SetCommissionModal
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onClose={handleClose}
           />
-        ) : actionType === 'manageReferral' ? (
+        );
+      
+      case 'manageReferral':
+        return (
           <ManageReferralModal
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onClose={handleClose}
           />
-        ) : actionType === 'manageGateway' ? (
+        );
+      
+      case 'manageGateway':
+        return (
           <ManageGateway
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onClose={handleClose}
           />
-        ) : actionType === 'changeColorScheme' ? (
+        );
+      
+      case 'changeColorScheme':
+        return (
           <ChangeColorScheme
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onClose={handleClose}
           />
-        ) : (
+        );
+      
+      default:
+        return (
           <AgentForm
             formik={formik}
             onCancel={handleClose}
             actionType={actionType}
           />
-        )}
-      </Box>
-    </Modal>
+        );
+    }
+  };
+
+  return (
+    <ReusableModal
+      open={open}
+      onClose={handleClose}
+      title={modalConfig.title}
+      size={modalConfig.size}
+      disableEnforceFocus
+      disableAutoFocus
+    >
+      {renderContent()}
+    </ReusableModal>
   );
 };
 
-export default AddAgentModal;
+AgentModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  handleRefresh: PropTypes.func.isRequired,
+  selectedAgent: PropTypes.object,
+  actionType: PropTypes.oneOf([
+    'create',
+    'update',
+    'viewSchools',
+    'managePermissions',
+    'setCommission',
+    'manageReferral',
+    'manageGateway',
+    'changeColorScheme',
+  ]),
+};
+
+export default AgentModal;

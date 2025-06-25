@@ -2,21 +2,17 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  FormControl,
-  FormGroup,
-  FormControlLabel,
   Checkbox,
   Button,
-  Grid,
   Paper,
-  Divider,
   Chip,
   Alert,
   Select,
   MenuItem,
   InputLabel,
+  Grid,
+  FormControl,
 } from '@mui/material';
-
 
 const permissionCategories = {
   'Agent Management': [
@@ -24,24 +20,55 @@ const permissionCategories = {
     { id: 'edit_agent', label: 'Edit Agent', description: 'Can modify agent information' },
   ],
   'Package Management': [
-    { id: 'add_manage_packages', label: 'Add/Manage Packages', description: 'Can create and manage package options' },
-    { id: 'add_manage_plan', label: 'Add/Manage Plan', description: 'Can create and update subscription plans' },
+    {
+      id: 'add_manage_packages',
+      label: 'Add/Manage Packages',
+      description: 'Can create and manage package options',
+    },
+    {
+      id: 'add_manage_plan',
+      label: 'Add/Manage Plan',
+      description: 'Can create and update subscription plans',
+    },
   ],
   'School Management': [
     { id: 'add_school', label: 'Add School', description: 'Can create new schools' },
     { id: 'edit_school', label: 'Edit School', description: 'Can modify school information' },
-    { id: 'add_school_plan', label: 'Add School Plan', description: 'Can define school-specific plans' },
-    { id: 'add_manage_modules', label: 'Add/Manage Modules', description: 'Can manage functional modules' },
+    {
+      id: 'add_school_plan',
+      label: 'Add School Plan',
+      description: 'Can define school-specific plans',
+    },
+    {
+      id: 'add_manage_modules',
+      label: 'Add/Manage Modules',
+      description: 'Can manage functional modules',
+    },
   ],
   'Session Management': [
-    { id: 'add_manage_session', label: 'Add/Manage Session', description: 'Can create and manage academic sessions' },
-    { id: 'add_manage_term', label: 'Add/Manage Term', description: 'Can create and manage academic terms' },
+    {
+      id: 'add_manage_session',
+      label: 'Add/Manage Session',
+      description: 'Can create and manage academic sessions',
+    },
+    {
+      id: 'add_manage_term',
+      label: 'Add/Manage Term',
+      description: 'Can create and manage academic terms',
+    },
+    {
+      id: 'add_manage_payment_gateway',
+      label: 'Add/Manage Payment Gateway',
+      description: 'Can configure payment gateways',
+    },
   ],
-  'Financial Integration': [
-    { id: 'add_manage_payment_gateway', label: 'Add/Manage Payment Gateway', description: 'Can configure payment gateways' },
-  ],
- 
-
+  // 'Financial Integration': [
+  //   {
+  //     id: 'add_manage_payment_gateway',
+  //     label: 'Add/Manage Payment Gateway',
+  //     description: 'Can configure payment gateways',
+  //   },
+  // ],
 };
 
 const agentLevels = [
@@ -49,29 +76,49 @@ const agentLevels = [
     value: 'Level 1',
     label: 'Level 1 - Basic Agent',
     description: 'Basic permissions for new agents',
-    defaultPermissions: ['view_schools', 'view_users', 'view_reports']
+    defaultPermissions: ['view_schools', 'view_users', 'view_reports'],
   },
   {
     value: 'Level 2',
     label: 'Level 2 - Senior Agent',
     description: 'Enhanced permissions for experienced agents',
-    defaultPermissions: ['view_schools', 'create_school', 'edit_school', 'view_users', 'create_user', 'view_reports', 'view_payments']
+    defaultPermissions: [
+      'view_schools',
+      'create_school',
+      'edit_school',
+      'view_users',
+      'create_user',
+      'view_reports',
+      'view_payments',
+    ],
   },
   {
     value: 'Level 3',
     label: 'Level 3 - Manager Agent',
     description: 'Full permissions for management level agents',
-    defaultPermissions: ['create_school', 'edit_school', 'delete_school', 'view_schools', 'create_user', 'edit_user', 'delete_user', 'view_users', 'view_reports', 'export_data', 'view_analytics', 'view_payments', 'manage_commissions', 'view_financial_reports', 'manage_settings']
+    defaultPermissions: [
+      'create_school',
+      'edit_school',
+      'delete_school',
+      'view_schools',
+      'create_user',
+      'edit_user',
+      'delete_user',
+      'view_users',
+      'view_reports',
+      'export_data',
+      'view_analytics',
+      'view_payments',
+      'manage_commissions',
+      'view_financial_reports',
+      'manage_settings',
+    ],
   },
 ];
 
 const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
-  const [selectedPermissions, setSelectedPermissions] = useState(
-    selectedAgent?.permissions || []
-  );
-  const [agentLevel, setAgentLevel] = useState(
-    selectedAgent?.level || ''
-  );
+  const [selectedPermissions, setSelectedPermissions] = useState(selectedAgent?.permissions || []);
+  const [agentLevel, setAgentLevel] = useState(selectedAgent?.level || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const handlePermissionChange = (permissionId, checked) => {
@@ -79,22 +126,22 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
     if (checked) {
       newPermissions = [...selectedPermissions, permissionId];
     } else {
-      newPermissions = selectedPermissions.filter(id => id !== permissionId);
+      newPermissions = selectedPermissions.filter((id) => id !== permissionId);
     }
-    
+
     setSelectedPermissions(newPermissions);
     setHasChanges(true);
   };
 
   const handleSelectAll = (categoryPermissions) => {
-    const categoryIds = categoryPermissions.map(p => p.id);
-    const allSelected = categoryIds.every(id => selectedPermissions.includes(id));
+    const categoryIds = categoryPermissions.map((p) => p.id);
+    const allSelected = categoryIds.every((id) => selectedPermissions.includes(id));
 
     let newPermissions;
     if (allSelected) {
-      newPermissions = selectedPermissions.filter(id => !categoryIds.includes(id));
+      newPermissions = selectedPermissions.filter((id) => !categoryIds.includes(id));
     } else {
-      const toAdd = categoryIds.filter(id => !selectedPermissions.includes(id));
+      const toAdd = categoryIds.filter((id) => !selectedPermissions.includes(id));
       newPermissions = [...selectedPermissions, ...toAdd];
     }
 
@@ -105,7 +152,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
   const handleAgentLevelChange = (newLevel) => {
     setAgentLevel(newLevel);
 
-    const levelConfig = agentLevels.find(level => level.value === newLevel);
+    const levelConfig = agentLevels.find((level) => level.value === newLevel);
     if (levelConfig) {
       setSelectedPermissions(levelConfig.defaultPermissions);
     }
@@ -123,8 +170,8 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
   };
 
   const getPermissionCount = (categoryPermissions) => {
-    const categoryIds = categoryPermissions.map(p => p.id);
-    return selectedPermissions.filter(id => categoryIds.includes(id)).length;
+    const categoryIds = categoryPermissions.map((p) => p.id);
+    return selectedPermissions.filter((id) => categoryIds.includes(id)).length;
   };
 
   return (
@@ -134,12 +181,13 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
       </Typography>
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        Select the agent level and permissions you want to grant to this agent. Changes will take effect immediately after saving.
+        Select the agent level and permissions you want to grant to this agent. Changes will take
+        effect immediately after saving.
       </Alert>
 
-      <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+      <Paper variant="outlined" sx={{ p: 3, mb: 3 }} fullWidth>
         <Typography variant="h6" color="primary" mb={2}>
-          Access Level 
+          Access Level
         </Typography>
 
         <Grid container spacing={3} alignItems="center">
@@ -165,13 +213,15 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
             {agentLevel && (
               <Box>
                 <Typography variant="body2" fontWeight="medium" color="primary">
-                  {agentLevels.find(l => l.value === agentLevel)?.label}
+                  {agentLevels.find((l) => l.value === agentLevel)?.label}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  {agentLevels.find(l => l.value === agentLevel)?.description}
+                  {agentLevels.find((l) => l.value === agentLevel)?.description}
                 </Typography>
                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                  Default permissions: {agentLevels.find(l => l.value === agentLevel)?.defaultPermissions.length} selected
+                  Default permissions:{' '}
+                  {agentLevels.find((l) => l.value === agentLevel)?.defaultPermissions.length}{' '}
+                  selected
                 </Typography>
               </Box>
             )}
@@ -179,73 +229,130 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
         </Grid>
       </Paper>
 
-      <Typography variant="h6" color="primary" mb={2}>
-        Custom Permission Settings
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+  <Typography variant="h6" color="primary" mb={3}>
+    Custom Permission Settings
+  </Typography>
 
-      <Grid container spacing={3}>
-        {Object.entries(permissionCategories).map(([category, permissions]) => {
-          const selectedCount = getPermissionCount(permissions);
-          const allSelected = selectedCount === permissions.length;
-          const someSelected = selectedCount > 0 && selectedCount < permissions.length;
+  <Box
+    sx={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 2, 
+      justifyContent: 'space-between',
+    }}
+  >
+    {Object.entries(permissionCategories).map(([category, permissions]) => {
+      const selectedCount = getPermissionCount(permissions);
+      const allSelected = selectedCount === permissions.length;
 
-          return (
-            <Grid item xs={12} md={6} key={category}>
-              <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6" color="primary">
-                    {category}
+      return (
+        <Paper
+          key={category}
+          // variant="outlined"
+          sx={{
+            mb: 2,
+            overflow: 'hidden',
+            // border: selectedCount > 0 ? '2px solid' : '1px solid',
+            // borderColor: selectedCount > 0 ? 'primary.main' : 'divider',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              boxShadow: 2,
+              borderColor: 'primary.light',
+            },
+            flex: '1 1 calc(50% - 8px)', 
+            minWidth: 0, 
+          }}
+        >
+
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'primary.light',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography variant="h6" color={selectedCount > 0 ? 'primary.dark' : 'text.primary'}>
+                {category}
+              </Typography>
+              <Chip
+                label={`${selectedCount}/${permissions.length}`}
+                size="small"
+                color={selectedCount > 0 ? 'primary' : 'default'}
+                // variant={selectedCount > 0 ? 'filled' : 'outlined'}
+              />
+            </Box>
+            <Button
+              size="small"
+              onClick={() => handleSelectAll(permissions)}
+              // variant={allSelected ? 'contained' : 'outlined'}
+              color="primary"
+              sx={{ minWidth: 120 }}
+            >
+              {allSelected ? 'Deselect All' : 'Select All'}
+            </Button>
+          </Box>
+
+          <Box sx={{ p: 2 }}>
+            {permissions.map((permission, index) => (
+              <Box
+                key={permission.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  p: 1.5,
+                  mb: index < permissions.length - 1 ? 1 : 0,
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: selectedPermissions.includes(permission.id) ? 'primary.main' : 'grey.300',
+                  bgcolor: selectedPermissions.includes(permission.id) ? 'primary.light' : 'background.paper',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: selectedPermissions.includes(permission.id) ? 'primary.light' : 'primary.light',
+                    opacity: selectedPermissions.includes(permission.id) ? 1 : 0.8,
+                  },
+                }}
+                onClick={() => handlePermissionChange(permission.id, !selectedPermissions.includes(permission.id))}
+              >
+                <Checkbox
+                  checked={selectedPermissions.includes(permission.id)}
+                  onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
+                  color="primary"
+                  size="small"
+                  sx={{ mt: -0.5 }}
+                />
+                <Box sx={{ ml: 1, flex: 1 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight="medium"
+                    color={selectedPermissions.includes(permission.id) ? 'primary.dark' : 'text.primary'}
+                    sx={{ mb: 0.5 }}
+                  >
+                    {permission.label}
                   </Typography>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <Chip 
-                      label={`${selectedCount}/${permissions.length}`} 
-                      size="small" 
-                      color={selectedCount > 0 ? "primary" : "default"}
-                    />
-                    <Button
-                      size="small"
-                      onClick={() => handleSelectAll(permissions)}
-                      variant={allSelected ? "outlined" : "text"}
-                    >
-                      {allSelected ? 'Deselect All' : 'Select All'}
-                    </Button>
-                  </Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', lineHeight: 1.3 }}
+                  >
+                    {permission.description}
+                  </Typography>
                 </Box>
-                
-                <Divider sx={{ mb: 2 }} />
-                
-                <FormControl component="fieldset" fullWidth>
-                  <FormGroup>
-                    {permissions.map((permission) => (
-                      <FormControlLabel
-                        key={permission.id}
-                        control={
-                          <Checkbox
-                            checked={selectedPermissions.includes(permission.id)}
-                            onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
-                            color="primary"
-                          />
-                        }
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight="medium">
-                              {permission.label}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                              {permission.description}
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{ mb: 1, alignItems: 'flex-start' }}
-                      />
-                    ))}
-                  </FormGroup>
-                </FormControl>
-              </Paper>
-            </Grid>
-          );
-        })}
-      </Grid>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+      );
+    })}
+  </Box>
+</Box>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
@@ -261,11 +368,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
           <Button onClick={onCancel} color="inherit">
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={!hasChanges}
-          >
+          <Button variant="contained" onClick={handleSave} disabled={!hasChanges}>
             Save Changes
           </Button>
         </Box>

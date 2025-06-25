@@ -238,14 +238,13 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
             </Grid>
           )}
 
-          <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3 }}>
+          <Grid item xs={12}  variant="outlined">
+         
               <Typography variant="h6" color="primary" mb={2}>
                 Select New Color Scheme
               </Typography>
               
               <ColorSchemeSelector formik={formik} />
-            </Paper>
           </Grid>
         </Grid>
 

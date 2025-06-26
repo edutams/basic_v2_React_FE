@@ -7,9 +7,9 @@ import {
   IconButton,
 } from '@mui/material';
 import { useFormik } from 'formik';
-import RegisterSchoolForm from './component/RegisterSchool';
-import { schoolValidationScheme } from './validation/schoolValidationScheme';
+import { schoolValidationScheme } from './validation/schoolValidationScheme'; // Keep this import for school validation
 import CloseIcon from '@mui/icons-material/Close';
+import PropTypes from 'prop-types';
 
 const style = {
   position: 'absolute',
@@ -26,10 +26,11 @@ const style = {
 };
 
 // Generate incremental ID starting from 1
-const getNextSchoolId = () => {
-  const lastId = parseInt(localStorage.getItem('lastSchoolId')) || 0;
+const getNextId = (type) => {
+  const key = type === 'session' ? 'lastSessionId' : 'lastSchoolId';
+  const lastId = parseInt(localStorage.getItem(key)) || 0;
   const newId = lastId + 1;
-  localStorage.setItem('lastSchoolId', newId);
+  localStorage.setItem(key, newId);
   return newId;
 };
 
@@ -39,28 +40,37 @@ const AddSchoolModal = ({
   handleRefresh,
   selectedAgent,
   actionType,
+  formComponent: FormComponent,
+  isSession = false,
 }) => {
-  const initialValues = {
-    institutionName: selectedAgent?.institutionName || '',
-    institutionShortName: selectedAgent?.institutionShortName || '',
-    institutionAddress: selectedAgent?.institutionAddress || '',
-    administratorFirstName: selectedAgent?.administratorFirstName || '',
-    administratorLastName: selectedAgent?.administratorLastName || '',
-    administratorEmail: selectedAgent?.administratorEmail || '',
-    administratorPhone: selectedAgent?.administratorPhone || '',
-    stateFilter: selectedAgent?.stateFilter || '',
-    lga: selectedAgent?.lga || '',
-    moduleType: selectedAgent?.moduleType || '',
-    headerColor: selectedAgent?.headerColor || '',
-    sidebarColor: selectedAgent?.sidebarColor || '',
-    bodyColor: selectedAgent?.bodyColor || '',
-    registerSchool: selectedAgent?.registerSchool || '',
-    permissions: selectedAgent?.permissions || [],
-  };
+  const initialValues = isSession
+    ? {
+        sessionName: selectedAgent?.sessionName || '',
+        status: selectedAgent?.status || 'Active',
+        isCurrent: selectedAgent?.isCurrent || false,
+      }
+    : {
+        institutionName: selectedAgent?.institutionName || '',
+        institutionShortName: selectedAgent?.institutionShortName || '',
+        institutionAddress: selectedAgent?.institutionAddress || '',
+        administratorFirstName: selectedAgent?.administratorFirstName || '',
+        administratorLastName: selectedAgent?.administratorLastName || '',
+        administratorEmail: selectedAgent?.administratorEmail || '',
+        administratorPhone: selectedAgent?.administratorPhone || '',
+        stateFilter: selectedAgent?.stateFilter || '',
+        lga: selectedAgent?.lga || '',
+        moduleType: selectedAgent?.moduleType || '',
+        headerColor: selectedAgent?.headerColor || '',
+        sidebarColor: selectedAgent?.sidebarColor || '',
+        bodyColor: selectedAgent?.bodyColor || '',
+        registerSchool: selectedAgent?.registerSchool || '',
+        permissions: selectedAgent?.permissions || [],
+      };
 
   const formik = useFormik({
     initialValues,
-    validationSchema: schoolValidationScheme,
+    // Only apply validationSchema for schools (when isSession is false)
+    validationSchema: isSession ? undefined : schoolValidationScheme,
     enableReinitialize: true,
     onSubmit: (values) => {
       if (actionType === 'update') {
@@ -76,36 +86,52 @@ const AddSchoolModal = ({
   };
 
   const handleSaveClick = (values) => {
-    const updatedData = {
-      ...values,
-      id: getNextSchoolId(), // New ID
-      schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
-      gateway: 'No Gateway',
-      colourScheme: values.bodyColor,
-      headerColor: values.headerColor,
-      sidebarColor: values.sidebarColor,
-      status: 'Inactive',
-      action: 'Edit',
-      date: new Date().toISOString(),
-    };
+    const updatedData = isSession
+      ? {
+          ...values,
+          id: getNextId('session'),
+          sessionName: values.sessionName || 'Unnamed Session', // Default to avoid empty sessionName
+          status: values.status || 'Pending', // Default to avoid empty status
+          isCurrent: values.isCurrent ?? false, // Default to false if undefined
+        }
+      : {
+          ...values,
+          id: getNextId('school'),
+          schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
+          gateway: 'No Gateway',
+          colourScheme: values.bodyColor,
+          headerColor: values.headerColor,
+          sidebarColor: values.sidebarColor,
+          status: 'Inactive',
+          action: 'Edit',
+          date: new Date().toISOString(),
+        };
 
-    handleRefresh(updatedData); // Add new
+    handleRefresh(updatedData);
     resetForm();
     onClose();
   };
 
   const handleUpdate = (values) => {
-    const updatedData = {
-      ...selectedAgent,
-      ...values,
-      schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
-      colourScheme: values.bodyColor,
-      headerColor: values.headerColor,
-      sidebarColor: values.sidebarColor,
-      date: new Date().toISOString(),
-    };
+    const updatedData = isSession
+      ? {
+          ...selectedAgent,
+          ...values,
+          sessionName: values.sessionName || 'Unnamed Session', // Default to avoid empty sessionName
+          status: values.status || 'Pending', // Default to avoid empty status
+          isCurrent: values.isCurrent ?? false, // Default to false if undefined
+        }
+      : {
+          ...selectedAgent,
+          ...values,
+          schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
+          colourScheme: values.bodyColor,
+          headerColor: values.headerColor,
+          sidebarColor: values.sidebarColor,
+          date: new Date().toISOString(),
+        };
 
-    handleRefresh(updatedData); // Update existing
+    handleRefresh(updatedData);
     resetForm();
     onClose();
   };
@@ -116,6 +142,16 @@ const AddSchoolModal = ({
   };
 
   const getTitle = () => {
+    if (isSession) {
+      switch (actionType) {
+        case 'update':
+          return 'Edit Session';
+        case 'view':
+          return 'View Session';
+        default:
+          return 'Add New Session';
+      }
+    }
     switch (actionType) {
       case 'update':
         return 'Edit School';
@@ -155,7 +191,7 @@ const AddSchoolModal = ({
         </Typography>
         <Divider sx={{ mb: 2 }} />
 
-        <RegisterSchoolForm
+        <FormComponent
           formik={formik}
           onCancel={handleClose}
           actionType={actionType}
@@ -163,6 +199,16 @@ const AddSchoolModal = ({
       </Box>
     </Modal>
   );
+};
+
+AddSchoolModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  handleRefresh: PropTypes.func.isRequired,
+  selectedAgent: PropTypes.object,
+  actionType: PropTypes.oneOf(['create', 'update', 'viewSchools', 'managePermissions', 'view']),
+  formComponent: PropTypes.elementType.isRequired,
+  isSession: PropTypes.bool,
 };
 
 export default AddSchoolModal;

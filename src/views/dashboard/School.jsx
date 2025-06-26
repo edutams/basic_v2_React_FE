@@ -21,6 +21,7 @@ import {
   TextField,
   IconButton,
   Menu,
+  Button,
 } from '@mui/material';
 import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import AddSchoolModal from '../../components/add-school/AddSchoolModal';
@@ -36,6 +37,7 @@ import ManageSchoolGateway from '../../components/add-school/component/ManageSch
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
 import ConfirmDialog from '../../components/add-school/component/ConfirmDialog';
 import BlankCard from '../../components/shared/BlankCard';
+import ParentCard from '../../components/shared/ParentCard';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 const ITEM_HEIGHT = 48;
@@ -56,8 +58,48 @@ const getStyles = (name, selected, theme) => ({
 });
 
 const lgaData = {
-  Ogun: ['Abeokuta', 'Ijebu-Ode'],
-  Lagos: ['Ikeja', 'Epe', 'Ikorodu'],
+  Ogun: ['Abeokuta North',
+      'Abeokuta South',
+      'Ado-Odo/Ota',
+      'Ewekoro',
+      'Ifo',
+      'Ijebu East',
+      'Ijebu North',
+      'Ijebu North East',
+      'Ijebu Ode',
+      'Ikenne',
+      'Imeko Afon',
+      'Ipokia',
+      'Obafemi Owode',
+      'Odeda',
+      'Odogbolu',
+      'Ogun Waterside',
+      'Remo North',
+      'Sagamu',
+      'Yewa North',
+      'Yewa South'
+    ],
+  Lagos: ['Agege',
+      'Ajeromi-Ifelodun',
+      'Alimosho',
+      'Amuwo-Odofin',
+      'Apapa',
+      'Badagry',
+      'Epe',
+      'Eti Osa',
+      'Ibeju-Lekki',
+      'Ifako-Ijaiye',
+      'Ikeja',
+      'Ikorodu',
+      'Kosofe',
+      'Lagos Island',
+      'Lagos Mainland',
+      'Mushin',
+      'Ojo',
+      'Oshodi-Isolo',
+      'Shomolu',
+      'Surulere'
+    ],
 };
 
 const SchoolDashboard = () => {
@@ -107,6 +149,12 @@ const SchoolDashboard = () => {
     setActionAnchorEl(event.currentTarget);
     setActiveRow(rowId);
   };
+
+  const handleOpen = () => setOpenRegisterModal(true);
+const handleClose = () => {
+  setOpenRegisterModal(false);
+  setOpenEditModal(false); // Optional: include if you want to close edit modal as well
+};
 
   const handleActionClose = () => {
     setActionAnchorEl(null);
@@ -364,7 +412,24 @@ const SchoolDashboard = () => {
               ))}
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+         
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
+            <Typography variant="h6">All School</Typography>
+            <Button variant="contained" color="primary" onClick={handleOpen}>
+              Register New School
+            </Button>
+          </Box>
+        
+      
+
+            {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ListIcon sx={{ color: '#b76cc2' }} />
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>
@@ -387,7 +452,7 @@ const SchoolDashboard = () => {
                   </MenuItem>
                 </Menu>
               </Box>
-            </Box>
+            </Box> */}
 
             <Box component="hr" sx={{ mb: 3 }} />
 

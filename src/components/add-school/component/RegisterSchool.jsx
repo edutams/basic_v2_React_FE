@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Grid,
   Box,
@@ -10,15 +10,74 @@ import {
   MenuItem,
   FormHelperText,
 } from '@mui/material';
- import ColorSchemeSelector from './ColorSchemeSelector';
+import ColorSchemeSelector from './ColorSchemeSelector';
+
+const lgaData = {
+  lagos: ['Agege',
+      'Ajeromi-Ifelodun',
+      'Alimosho',
+      'Amuwo-Odofin',
+      'Apapa',
+      'Badagry',
+      'Epe',
+      'Eti Osa',
+      'Ibeju-Lekki',
+      'Ifako-Ijaiye',
+      'Ikeja',
+      'Ikorodu',
+      'Kosofe',
+      'Lagos Island',
+      'Lagos Mainland',
+      'Mushin',
+      'Ojo',
+      'Oshodi-Isolo',
+      'Shomolu',
+      'Surulere'
+    ],
+  ogun: ['Abeokuta North',
+      'Abeokuta South',
+      'Ado-Odo/Ota',
+      'Ewekoro',
+      'Ifo',
+      'Ijebu East',
+      'Ijebu North',
+      'Ijebu North East',
+      'Ijebu Ode',
+      'Ikenne',
+      'Imeko Afon',
+      'Ipokia',
+      'Obafemi Owode',
+      'Odeda',
+      'Odogbolu',
+      'Ogun Waterside',
+      'Remo North',
+      'Sagamu',
+      'Yewa North',
+      'Yewa South'],
+};
 
 const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
+  const [lgaOptions, setLgaOptions] = useState([]);
+
+  // Update LGA options when stateFilter changes
+  useEffect(() => {
+    const selectedState = formik.values.stateFilter;
+    if (selectedState && lgaData[selectedState]) {
+      setLgaOptions(lgaData[selectedState]);
+      // Reset LGA if the current value is not in the new options
+      if (!lgaData[selectedState].includes(formik.values.lga)) {
+        formik.setFieldValue('lga', '');
+      }
+    } else {
+      setLgaOptions([]);
+      formik.setFieldValue('lga', '');
+    }
+  }, [formik.values.stateFilter, formik]);
+
   return (
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3}>
-
         {/* RegisterSchoolFormFields */}
-
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
             label="Institution Name"
@@ -50,7 +109,8 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
             label="Institution Address"
             fullWidth
             name="institutionAddress"
-             multiline                rows={2}
+            multiline
+            rows={2}
             value={formik.values.institutionAddress}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -59,7 +119,7 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
           />
         </Grid>
 
-         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
             label="Administrator First Name"
             fullWidth
@@ -85,7 +145,7 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
           />
         </Grid>
 
-         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
             label="Administrator Email"
             fullWidth
@@ -136,16 +196,30 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
         </Grid>
 
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <TextField
-            label="LGA"
+          <FormControl
             fullWidth
-            name="lga"
-            value={formik.values.lga}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
             error={formik.touched.lga && Boolean(formik.errors.lga)}
-            helperText={formik.touched.lga && formik.errors.lga}
-          />
+          >
+            <InputLabel>LGA</InputLabel>
+            <Select
+              name="lga"
+              value={formik.values.lga}
+              label="LGA"
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              disabled={!lgaOptions.length}
+            >
+              <MenuItem value="">-- Choose --</MenuItem>
+              {lgaOptions.map((lga) => (
+                <MenuItem key={lga} value={lga}>
+                  {lga}
+                </MenuItem>
+              ))}
+            </Select>
+            {formik.touched.lga && formik.errors.lga && (
+              <FormHelperText>{formik.errors.lga}</FormHelperText>
+            )}
+          </FormControl>
         </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
@@ -173,49 +247,9 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
         </Grid>
 
         {/* ColorSchemeSelector */}
-
         <Grid item xs={12}>
           <ColorSchemeSelector formik={formik} />
         </Grid>
-      
-        {/* <Grid item xs={12} sm={6}>
-          <TextField
-            label="Header Color"
-            fullWidth
-            name="headerColor"
-            value={formik.values.headerColor}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.headerColor && Boolean(formik.errors.headerColor)}
-            helperText={formik.touched.headerColor && formik.errors.headerColor}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Sidebar Color"
-            fullWidth
-            name="sidebarColor"
-            value={formik.values.sidebarColor}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.sidebarColor && Boolean(formik.errors.sidebarColor)}
-            helperText={formik.touched.sidebarColor && formik.errors.sidebarColor}
-          />
-        </Grid>
-
-         <Grid item xs={12} sm={6}>
-          <TextField
-            label="Body Color"
-            fullWidth
-            name="bodyColor"
-            value={formik.values.bodyColor}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.bodyColor && Boolean(formik.errors.bodyColor)}
-            helperText={formik.touched.bodyColor && formik.errors.bodyColor}
-          />
-        </Grid> */}
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

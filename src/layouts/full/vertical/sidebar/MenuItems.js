@@ -71,6 +71,12 @@ const Menuitems = [
     icon: IconChartPie,
     href: '/dashboards/analytical',
   },
+  {
+    id: uniqueId(),
+    title: 'Agent',
+    icon: IconUserCircle,
+    href: '/dashboards/agent',
+  },
   
   
   {

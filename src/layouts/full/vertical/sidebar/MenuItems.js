@@ -89,6 +89,12 @@ const Menuitems = [
     icon: IconSchool,
     href: '/dashboards/session',
   },
+  {
+    id: uniqueId(),
+    title: 'Term',
+    icon: IconSchool,
+    href: '/dashboards/term',
+  },
 
   /*
   {

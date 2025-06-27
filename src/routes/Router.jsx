@@ -11,6 +11,7 @@ const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')))
 const AnalyticalDashboard = Loadable(lazy(() => import('../views/dashboard/Analytical')));
 const SchoolDashboard = Loadable(lazy(() => import('../views/dashboard/School')));
 const SessionDashboard = Loadable(lazy(() => import('../views/dashboard/Session')));
+const TermDashboard = Loadable(lazy(() => import('../views/dashboard/Term')));
 const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern'))); 
 
@@ -179,6 +180,7 @@ const Router = [
       { path: '/dashboards/agent', exact: true, element: <Agent /> },
       { path: '/dashboards/school', exact: true, element: <SchoolDashboard /> },
       { path: '/dashboards/session', exact: true, element: <SessionDashboard /> },
+      { path: '/dashboards/term', exact: true, element: <TermDashboard /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },

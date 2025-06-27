@@ -27,26 +27,26 @@ import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
 import AddSchoolModal from '../../components/add-school/AddSchoolModal';
-import RegisterSessionForm from '../../components/add-session/component/RegisterSessionForm';
+import RegisterTermForm from '../../components/add-term/component/RegisterTermForm'
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
 const basicsTableData = [
-  { id: 1, sessionName: '2023-2024', status: 'Active', isCurrent: true },
-  { id: 2, sessionName: '2022-2023', status: 'Completed', isCurrent: false },
-  { id: 3, sessionName: '2021-2022', status: 'Completed', isCurrent: false },
+  { id: 1, termName: 'First Term 2023', status: 'Active', isCurrent: true },
+  { id: 2, termName: 'Second Term 2023', status: 'Completed', isCurrent: false },
+  { id: 3, termName: 'Third Term 2023', status: 'Completed', isCurrent: false },
 ];
 
-const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Session' }];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Term' }];
 
-const Session = () => {
+const Term = () => {
   const [open, setOpen] = useState(false);
-  const [sessions, setSessions] = useState(basicsTableData);
+  const [terms, setTerms] = useState(basicsTableData);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [actionType, setActionType] = useState('create');
-  const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedTerm, setSelectedTerm] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [sessionToDelete, setSessionToDelete] = useState(null);
+  const [termToDelete, setTermToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -54,7 +54,7 @@ const Session = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  const hasActiveSession = sessions.some((session) => session.status === 'Active');
+  const hasActiveTerm = terms.some((term) => term.status === 'Active');
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -65,23 +65,23 @@ const Session = () => {
     setPage(0); // Reset to first page when rows per page changes
   };
 
-  const handleOpen = (type = 'create', session = null) => {
+  const handleOpen = (type = 'create', term = null) => {
     setActionType(type);
-    setSelectedSession(session);
+    setSelectedTerm(term);
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
     setActionType('create');
-    setSelectedSession(null);
+    setSelectedTerm(null);
   };
 
-  const handleAddSession = (newSession) => {
+  const handleAddTerm = (newTerm) => {
     if (actionType === 'update') {
-      setSessions(sessions.map((session) => (session.id === newSession.id ? newSession : session)));
+      setTerms(terms.map((term) => (term.id === newTerm.id ? newTerm : term)));
     } else {
-      setSessions([...sessions, { id: newSession.id, ...newSession }]);
+      setTerms([...terms, { id: newTerm.id, ...newTerm }]);
     }
     handleClose();
   };
@@ -96,35 +96,35 @@ const Session = () => {
     setActiveRow(null);
   };
 
-  const handleOpenDeleteDialog = (session) => {
+  const handleOpenDeleteDialog = (term) => {
     handleActionClose();
     setTimeout(() => {
-      setSessionToDelete(session);
+      setTermToDelete(term);
       setOpenDeleteDialog(true);
     }, 100);
   };
 
-  const handleDeleteSession = () => {
-    if (sessionToDelete) {
-      setSessions((prev) => prev.filter((s) => s.id !== sessionToDelete.id));
+  const handleDeleteTerm = () => {
+    if (termToDelete) {
+      setTerms((prev) => prev.filter((t) => t.id !== termToDelete.id));
       setOpenDeleteDialog(false);
-      setSnackbarMessage('Session deleted successfully');
+      setSnackbarMessage('Term deleted successfully');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     }
   };
 
-  // Filter sessions based on searchTerm
-  const filteredSessions = sessions.filter((session) =>
-    session.sessionName.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter terms based on searchTerm
+  const filteredTerms = terms.filter((term) =>
+    term.termName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Paginate the filtered sessions
-  const paginatedSession = filteredSessions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Paginate the filtered terms
+  const paginatedTerms = filteredTerms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <PageContainer title="Session" description="This is Session page">
-      <Breadcrumb title="Session" items={BCrumb} />
+    <PageContainer title="Term" description="This is Term page">
+      <Breadcrumb title="Term" items={BCrumb} />
       <ParentCard
         title={
           <Box
@@ -135,15 +135,16 @@ const Session = () => {
               width: '100%',
             }}
           >
-            <Typography variant="h6">All Session</Typography>
+            <Typography variant="h6">All Terms</Typography>
             <Button variant="contained" color="primary" onClick={() => handleOpen('create')}>
-              Add New Session
+              Add New Term
             </Button>
           </Box>
         }
       >
+
          <TextField
-              placeholder="Search sessions..."
+              placeholder="Search terms..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               slotProps={{
@@ -155,26 +156,26 @@ const Session = () => {
                   ),
                 },
               }}
-              sx={{ flexGrow: 1, mb: 2 }} // Added margin-bottom for spacing
+              sx={{ flexGrow: 1, mb: 2 }}
             />
         <Paper variant="outlined">
           <TableContainer>
            
-            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap' }}>
+            <Table aria-label="term table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
                   <TableCell><Typography variant="h6">S/N</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Session Name</Typography></TableCell>
+                  <TableCell><Typography variant="h6">Term Name</Typography></TableCell>
                   <TableCell><Typography variant="h6">Status</Typography></TableCell>
                   <TableCell><Typography variant="h6">Is Current</Typography></TableCell>
                   <TableCell><Typography variant="h6">Action</Typography></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedSession.length > 0 ? (
-                  paginatedSession.map((session, index) => (
+                {paginatedTerms.length > 0 ? (
+                  paginatedTerms.map((term, index) => (
                     <TableRow
-                      key={session.id}
+                      key={term.id}
                       sx={{
                         '&:hover': { bgcolor: 'grey.50' },
                         '&:last-child td, &:last-child th': { border: 0 },
@@ -184,41 +185,41 @@ const Session = () => {
                         <Typography variant="subtitle2">{page * rowsPerPage + index + 1}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="h6" fontWeight="400">{session.sessionName}</Typography>
+                        <Typography variant="h6" fontWeight="400">{term.termName}</Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
                           sx={{
                             bgcolor:
-                              session.status === 'Active'
+                              term.status === 'Active'
                                 ? (theme) => theme.palette.success.light
                                 : (theme) => theme.palette.primary.light,
                             color:
-                              session.status === 'Active'
+                              term.status === 'Active'
                                 ? (theme) => theme.palette.success.main
                                 : (theme) => theme.palette.primary.main,
                             borderRadius: '8px',
                           }}
                           size="small"
-                          label={session.status || 'Unknown'}
+                          label={term.status || 'Unknown'}
                         />
                       </TableCell>
                       <TableCell>
-                        <Typography variant="h6">{session.isCurrent ? 'Yes' : 'No'}</Typography>
+                        <Typography variant="h6">{term.isCurrent ? 'Yes' : 'No'}</Typography>
                       </TableCell>
                       <TableCell>
-                        <IconButton onClick={(e) => handleActionClick(e, session.id)}>
+                        <IconButton onClick={(e) => handleActionClick(e, term.id)}>
                           <MoreVertIcon />
                         </IconButton>
                         <Menu
                           anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && activeRow === session.id}
+                          open={Boolean(anchorEl) && activeRow === term.id}
                           onClose={handleActionClose}
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleOpen('update', session)}>Edit Session</MenuItem>
-                          <MenuItem onClick={() => handleOpenDeleteDialog(session)}>Delete Session</MenuItem>
+                          <MenuItem onClick={() => handleOpen('update', term)}>Edit Term</MenuItem>
+                          <MenuItem onClick={() => handleOpenDeleteDialog(term)}>Delete Term</MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
@@ -227,11 +228,11 @@ const Session = () => {
                   <TableRow>
                     <TableCell colSpan={5}>
                       <Typography>
-                        {filteredSessions.length === 0 && searchTerm
-                          ? 'No sessions match your search'
-                          : hasActiveSession
-                          ? 'No sessions available on this page'
-                          : 'No active session available'}
+                        {filteredTerms.length === 0 && searchTerm
+                          ? 'No terms match your search'
+                          : hasActiveTerm
+                          ? 'No terms available on this page'
+                          : 'No active term available'}
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -241,7 +242,7 @@ const Session = () => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredSessions.length} // Use filteredSessions length for pagination
+                    count={filteredTerms.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -256,19 +257,19 @@ const Session = () => {
         <AddSchoolModal
           open={open}
           onClose={handleClose}
-          handleRefresh={handleAddSession}
+          handleRefresh={handleAddTerm}
           actionType={actionType}
-          selectedAgent={selectedSession}
-          formComponent={RegisterSessionForm}
-          isSession={true}
+          selectedAgent={selectedTerm}
+          formComponent={RegisterTermForm}
+          isSession={false} // Changed to false to indicate terms
         />
 
         <ConfirmationDialog
           open={openDeleteDialog}
           onClose={() => setOpenDeleteDialog(false)}
-          onConfirm={handleDeleteSession}
-          title="Delete Session"
-          message={`Are you sure you want to delete ${sessionToDelete?.sessionName}? This action is irreversible.`}
+          onConfirm={handleDeleteTerm}
+          title="Delete Term"
+          message={`Are you sure you want to delete ${termToDelete?.termName}? This action is irreversible.`}
           confirmText="Delete"
           cancelText="Cancel"
           confirmColor="error"
@@ -290,4 +291,4 @@ const Session = () => {
   );
 };
 
-export default Session;
+export default Term;

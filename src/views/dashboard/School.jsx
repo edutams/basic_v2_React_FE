@@ -22,20 +22,20 @@ import {
   IconButton,
   Menu,
   Button,
+  TableFooter,
+  TablePagination,
 } from '@mui/material';
 import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import AddSchoolModal from '../../components/add-school/AddSchoolModal';
-// import SchoolForm from '../../components/shared/SchoolForm';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'; // Added import
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'; // Added import
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ListIcon from '@mui/icons-material/List';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
-import Pagination from '../../components/pagination/Pagination';
 import ManageTenantDomain from '../../components/add-school/component/ManageSchoolDomain';
 import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
@@ -114,7 +114,8 @@ const SchoolDashboard = () => {
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [nameValue, setNameValue] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [schoolList, setSchoolList] = useState([]);
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
@@ -225,7 +226,7 @@ const SchoolDashboard = () => {
       }
     }
 
-    if (savedPage) setCurrentPage(parseInt(savedPage, 10));
+    if (savedPage) setPage(parseInt(savedPage, 10));
   }, []);
 
   // Update filterGroups when lgaOptions changes
@@ -250,8 +251,8 @@ const SchoolDashboard = () => {
   }, [filterValues, nameValue, fromDate, toDate]);
 
   useEffect(() => {
-    localStorage.setItem('currentPage', currentPage);
-  }, [currentPage]);
+    localStorage.setItem('currentPage', page);
+  }, [page]);
 
   // Handle filter changes
   const handleChange = (key) => (event) => {
@@ -266,6 +267,15 @@ const SchoolDashboard = () => {
       }
       return newFilters;
     });
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const handleRefresh = (newSchool) => {
@@ -303,10 +313,9 @@ const SchoolDashboard = () => {
     return matchesName && matchesFilters && matchesDateRange;
   });
 
-  const itemsPerPage = 10;
   const paginatedSchools = filteredSchools.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
   );
 
   const schoolSummary = {
@@ -432,31 +441,6 @@ const SchoolDashboard = () => {
               </Button>
             </Box>
 
-            {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ListIcon sx={{ color: '#b76cc2' }} />
-                <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                  All Schools
-                </Typography>
-              </Box>
-              <Box>
-                <IconButton onClick={handleMenuOpen}>
-                  <MoreVertIcon />
-                </IconButton>
-                <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                  <MenuItem
-                    onClick={() => {
-                      setOpenRegisterModal(true);
-                      handleMenuClose();
-                    }}
-                  >
-                    <DescriptionOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-                    <Typography variant="body1">Register New School</Typography>
-                  </MenuItem>
-                </Menu>
-              </Box>
-            </Box> */}
-
             <Box component="hr" sx={{ mb: 3 }} />
 
             <Grid container spacing={2}>
@@ -572,7 +556,7 @@ const SchoolDashboard = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>#</TableCell>
+                    <TableCell>S/N</TableCell>
                     <TableCell>School Name</TableCell>
                     <TableCell>School Url</TableCell>
                     <TableCell>Agent</TableCell>
@@ -585,135 +569,167 @@ const SchoolDashboard = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedSchools.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{row.id}</TableCell>
-                      <TableCell>{row.institutionName}</TableCell>
-                      <TableCell>{row.schoolUrl || '-'}</TableCell>
-                      <TableCell>{row.agent || '-'}</TableCell>
-                      <TableCell>{row.gateway}</TableCell>
-                      <TableCell>{dayjs(row.date).format('MM/DD/YYYY')}</TableCell>
-                      <TableCell>{row.socialLink || '-'}</TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            backgroundColor: row.colourScheme || '#000000',
-                            borderRadius: 1,
-                            border: '1px solid #ccc',
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{row.status}</TableCell>
-                      <TableCell>
-                        <IconButton onClick={(e) => handleActionClick(e, row.id)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={actionAnchorEl}
-                          open={Boolean(actionAnchorEl) && activeRow === row.id}
-                          onClose={handleActionClose}
-                          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                          PaperProps={{ sx: { minWidth: 120, boxShadow: 3 } }}
-                        >
-                          <MenuItem
-                            onClick={() => {
-                              const selectedSchool = schoolList.find((s) => s.id === row.id);
-                              setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
-                              setOpenTenantModal(true);
-                              handleActionClose();
+                  {paginatedSchools.length > 0 ? (
+                    paginatedSchools.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{row.id}</TableCell>
+                        <TableCell>{row.institutionName}</TableCell>
+                        <TableCell>{row.schoolUrl || '-'}</TableCell>
+                        <TableCell>{row.agent || '-'}</TableCell>
+                        <TableCell>{row.gateway}</TableCell>
+                        <TableCell>{dayjs(row.date).format('MM/DD/YYYY')}</TableCell>
+                        <TableCell>{row.socialLink || '-'}</TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              backgroundColor: row.colourScheme || '#000000',
+                              borderRadius: 1,
+                              border: '1px solid #ccc',
                             }}
+                          />
+                        </TableCell>
+                        <TableCell>{row.status}</TableCell>
+                        <TableCell>
+                          <IconButton onClick={(e) => handleActionClick(e, row.id)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={actionAnchorEl}
+                            open={Boolean(actionAnchorEl) && activeRow === row.id}
+                            onClose={handleActionClose}
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                            PaperProps={{ sx: { minWidth: 120, boxShadow: 3 } }}
                           >
-                            Manage School Domain
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              const selectedSchool = schoolList.find((s) => s.id === row.id);
-                              setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
-                              setOpenGatewayModal(true);
-                              handleActionClose();
-                            }}
+                            <MenuItem
+                              onClick={() => {
+                                const selectedSchool = schoolList.find((s) => s.id === row.id);
+                                setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
+                                setOpenTenantModal(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Manage School Domain
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                const selectedSchool = schoolList.find((s) => s.id === row.id);
+                                setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
+                                setOpenGatewayModal(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Manage School Gateway
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setOpenAgentModal(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Change Agent
+                            </MenuItem>
+                            <MenuItem onClick={handleActionClose}>View School</MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setSelectedSchoolFor2FA(row);
+                                setOpenClear2FAConfirm(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Clear 2fa Setting
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setOpenFixImageConfirm(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Fix User Images
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setEditSchoolData(row);
+                                setOpenEditModal(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Edit School Details
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setSchoolToDeactivate(row);
+                                setOpenDeactivateDialog(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Deactivate School
+                            </MenuItem>
+                            <MenuItem onClick={handleActionClose}>Details</MenuItem>
+                            <MenuItem onClick={handleActionClose}>
+                              Change Color School Scheme
+                            </MenuItem>
+                            <MenuItem onClick={handleActionClose}>Public Analytics</MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setSchoolToDelete(row);
+                                setOpenDeleteDialog(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Delete School
+                            </MenuItem>
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={10} sx={{ textAlign: 'center', padding: '40px 0' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <IconSchool
+                            width={48}
+                            height={48}
+                            color="#757575"
+                            sx={{ marginBottom: '16px' }}
+                          />
+                          <Typography
+                            variant="h6"
+                            sx={{ fontWeight: 'bold', color: '#757575', marginBottom: '8px' }}
                           >
-                            Manage School Gateway
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              setOpenAgentModal(true);
-                              handleActionClose();
-                            }}
+                            No schools available
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: '#757575', fontSize: '14px' }}
                           >
-                            Change Agent
-                          </MenuItem>
-                          <MenuItem onClick={handleActionClose}>View School</MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              setSelectedSchoolFor2FA(row);
-                              setOpenClear2FAConfirm(true);
-                              handleActionClose();
-                            }}
-                          >
-                            Clear 2fa Setting
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              setOpenFixImageConfirm(true);
-                              handleActionClose();
-                            }}
-                          >
-                            Fix User Images
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              setEditSchoolData(row);
-                              setOpenEditModal(true);
-                              handleActionClose();
-                            }}
-                          >
-                            Edit School Details
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              setSchoolToDeactivate(row);
-                              setOpenDeactivateDialog(true);
-                              handleActionClose();
-                            }}
-                          >
-                            Deactivate School
-                          </MenuItem>
-                          <MenuItem onClick={handleActionClose}>Details</MenuItem>
-                          <MenuItem onClick={handleActionClose}>
-                            Change Color School Scheme
-                          </MenuItem>
-                          <MenuItem onClick={handleActionClose}>Public Analytics</MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              setSchoolToDelete(row);
-                              setOpenDeleteDialog(true);
-                              handleActionClose();
-                            }}
-                          >
-                            Delete School
-                          </MenuItem>
-                        </Menu>
+                            No schools have been registered yet. Click 'Register New School' to add
+                            your first school.
+                          </Typography>
+                        </Box>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25]}
+                      count={filteredSchools.length}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={handleChangePage}
+                      onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                  </TableRow>
+                </TableFooter>
               </Table>
             </TableContainer>
-
-            <Box component="hr" sx={{ mt: 6, mb: 3 }} />
-            <Pagination
-              totalItems={filteredSchools.length}
-              itemsPerPage={itemsPerPage}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-            />
 
             <AddSchoolModal
               open={openRegisterModal || openEditModal}
@@ -778,7 +794,7 @@ const SchoolDashboard = () => {
               onClose={() => setOpenFixImageConfirm(false)}
               onConfirm={handleFixImage}
               message={
-                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
                   <h2>Replace use images with new url</h2>
                   <p>
                     Are you sure you want to perform this operation? This action is irreversible

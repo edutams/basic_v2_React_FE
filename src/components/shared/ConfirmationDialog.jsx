@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Box } from '@mui/material';
-import ReusableDialog from './ReusableDialog';
+import ReusableDialog from './ReusableDialog'; // Adjust path
 import PropTypes from 'prop-types';
 
 const ConfirmationDialog = ({
@@ -15,10 +15,11 @@ const ConfirmationDialog = ({
   confirmVariant = 'contained',
   cancelColor = 'inherit',
   cancelVariant = 'outlined',
-  severity = 'info', 
+  severity = 'info',
   maxWidth = 'xs',
   ...dialogProps
 }) => {
+  console.log('ConfirmationDialog rendered, open:', open); // Debugging
   const handleConfirm = () => {
     onConfirm();
     onClose();
@@ -41,15 +42,15 @@ const ConfirmationDialog = ({
     <Box sx={{ display: 'flex', gap: 1 }}>
       <Button
         onClick={onClose}
-        // color={cancelColor}
-        // variant={cancelVariant}
+        color={cancelColor}
+        variant={cancelVariant}
       >
         {cancelText}
       </Button>
       <Button
         onClick={handleConfirm}
-        // color={getSeverityColor()}
-        // variant={confirmVariant}
+        color={getSeverityColor()}
+        variant={confirmVariant}
         autoFocus
       >
         {confirmText}

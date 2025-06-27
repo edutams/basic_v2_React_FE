@@ -60,19 +60,23 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
   const [lgaOptions, setLgaOptions] = useState([]);
 
   // Update LGA options when stateFilter changes
-  useEffect(() => {
-    const selectedState = formik.values.stateFilter;
-    if (selectedState && lgaData[selectedState]) {
-      setLgaOptions(lgaData[selectedState]);
-      // Reset LGA if the current value is not in the new options
-      if (!lgaData[selectedState].includes(formik.values.lga)) {
-        formik.setFieldValue('lga', '');
-      }
-    } else {
-      setLgaOptions([]);
+ useEffect(() => {
+  const selectedState = formik.values.stateFilter;
+
+  if (selectedState && lgaData[selectedState]) {
+    setLgaOptions(lgaData[selectedState]);
+
+    if (!lgaData[selectedState].includes(formik.values.lga)) {
       formik.setFieldValue('lga', '');
     }
-  }, [formik.values.stateFilter, formik]);
+  } else {
+    setLgaOptions([]);
+    if (formik.values.lga !== '') {
+      formik.setFieldValue('lga', '');
+    }
+  }
+}, [formik.values.stateFilter, formik.values.lga]);
+
 
   return (
     <form onSubmit={formik.handleSubmit}>

@@ -77,6 +77,18 @@ const Menuitems = [
     icon: IconUserCircle,
     href: '/dashboards/agent',
   },
+  {
+    id: uniqueId(),
+    title: 'Modules',
+    icon: IconListTree,
+    href: '/dashboards/modules',
+  },
+  {
+    id: uniqueId(),
+    title: 'Package',
+    icon: IconPackage,
+    href: '/dashboards/package',
+  },
   /*
   {
     id: uniqueId(),

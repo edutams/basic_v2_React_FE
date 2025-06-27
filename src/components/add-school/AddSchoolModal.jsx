@@ -60,16 +60,15 @@ const AddSchoolModal = ({
         stateFilter: selectedAgent?.stateFilter || '',
         lga: selectedAgent?.lga || '',
         moduleType: selectedAgent?.moduleType || '',
-        headerColor: selectedAgent?.headerColor || '',
-        sidebarColor: selectedAgent?.sidebarColor || '',
-        bodyColor: selectedAgent?.bodyColor || '',
+        headerColor: selectedAgent?.headerColor || '#ffffff',
+        sidebarColor: selectedAgent?.sidebarColor || '#ffffff',
+        bodyColor: selectedAgent?.bodyColor || '#ffffff',
         registerSchool: selectedAgent?.registerSchool || '',
         permissions: selectedAgent?.permissions || [],
       };
 
   const formik = useFormik({
     initialValues,
-    // Only apply validationSchema for schools (when isSession is false)
     validationSchema: isSession ? undefined : schoolValidationScheme,
     enableReinitialize: true,
     onSubmit: (values) => {
@@ -90,9 +89,9 @@ const AddSchoolModal = ({
       ? {
           ...values,
           id: getNextId('session'),
-          sessionName: values.sessionName || 'Unnamed Session', // Default to avoid empty sessionName
-          status: values.status || 'Pending', // Default to avoid empty status
-          isCurrent: values.isCurrent ?? false, // Default to false if undefined
+          sessionName: values.sessionName || 'Unnamed Session',
+          status: values.status || 'Pending',
+          isCurrent: values.isCurrent ?? false,
         }
       : {
           ...values,
@@ -117,9 +116,9 @@ const AddSchoolModal = ({
       ? {
           ...selectedAgent,
           ...values,
-          sessionName: values.sessionName || 'Unnamed Session', // Default to avoid empty sessionName
-          status: values.status || 'Pending', // Default to avoid empty status
-          isCurrent: values.isCurrent ?? false, // Default to false if undefined
+          sessionName: values.sessionName || 'Unnamed Session',
+          status: values.status || 'Pending',
+          isCurrent: values.isCurrent ?? false,
         }
       : {
           ...selectedAgent,

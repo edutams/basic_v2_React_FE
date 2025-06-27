@@ -4,8 +4,8 @@ import { Grid, Box, Button, TextField, FormControl, InputLabel, Select, MenuItem
 const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
   return (
     <form onSubmit={formik.handleSubmit}>
-      <Grid container spacing={2} mb={3}>
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+      <Grid container spacing={2} mb={3} direction="column">
+        <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
           <TextField
             label="Session Name"
             fullWidth
@@ -13,11 +13,11 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
             value={formik.values.sessionName}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            // Removed error and helperText props since no validation for sessions
+           
           />
         </Grid>
 
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
           <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
             <Select
@@ -42,7 +42,7 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
           </FormControl>
         </Grid>
 
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
           <FormControl fullWidth>
             <InputLabel>Is Current</InputLabel>
             <Select
@@ -61,7 +61,7 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
               <MenuItem value={true}>Yes</MenuItem>
               <MenuItem value={false}>No</MenuItem>
             </Select>
-            {/* Removed FormHelperText since no validation for sessions */}
+            
           </FormControl>
         </Grid>
       </Grid>
@@ -74,7 +74,7 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
           <Button
             type="submit"
             variant="contained"
-            disabled={formik.isSubmitting} // Removed !formik.isValid since no validation for sessions
+            disabled={formik.isSubmitting} 
           >
             {actionType === 'update' ? 'Update Session' : 'Save'}
           </Button>

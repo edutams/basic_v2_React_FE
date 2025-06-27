@@ -25,8 +25,12 @@ import {
 } from '@mui/material';
 import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import AddSchoolModal from '../../components/add-school/AddSchoolModal';
+// import SchoolForm from '../../components/shared/SchoolForm';
+import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'; // Added import
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'; // Added import
 import dayjs from 'dayjs';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ListIcon from '@mui/icons-material/List';
@@ -58,48 +62,50 @@ const getStyles = (name, selected, theme) => ({
 });
 
 const lgaData = {
-  Ogun: ['Abeokuta North',
-      'Abeokuta South',
-      'Ado-Odo/Ota',
-      'Ewekoro',
-      'Ifo',
-      'Ijebu East',
-      'Ijebu North',
-      'Ijebu North East',
-      'Ijebu Ode',
-      'Ikenne',
-      'Imeko Afon',
-      'Ipokia',
-      'Obafemi Owode',
-      'Odeda',
-      'Odogbolu',
-      'Ogun Waterside',
-      'Remo North',
-      'Sagamu',
-      'Yewa North',
-      'Yewa South'
-    ],
-  Lagos: ['Agege',
-      'Ajeromi-Ifelodun',
-      'Alimosho',
-      'Amuwo-Odofin',
-      'Apapa',
-      'Badagry',
-      'Epe',
-      'Eti Osa',
-      'Ibeju-Lekki',
-      'Ifako-Ijaiye',
-      'Ikeja',
-      'Ikorodu',
-      'Kosofe',
-      'Lagos Island',
-      'Lagos Mainland',
-      'Mushin',
-      'Ojo',
-      'Oshodi-Isolo',
-      'Shomolu',
-      'Surulere'
-    ],
+  Ogun: [
+    'Abeokuta North',
+    'Abeokuta South',
+    'Ado-Odo/Ota',
+    'Ewekoro',
+    'Ifo',
+    'Ijebu East',
+    'Ijebu North',
+    'Ijebu North East',
+    'Ijebu Ode',
+    'Ikenne',
+    'Imeko Afon',
+    'Ipokia',
+    'Obafemi Owode',
+    'Odeda',
+    'Odogbolu',
+    'Ogun Waterside',
+    'Remo North',
+    'Sagamu',
+    'Yewa North',
+    'Yewa South',
+  ],
+  Lagos: [
+    'Agege',
+    'Ajeromi-Ifelodun',
+    'Alimosho',
+    'Amuwo-Odofin',
+    'Apapa',
+    'Badagry',
+    'Epe',
+    'Eti Osa',
+    'Ibeju-Lekki',
+    'Ifako-Ijaiye',
+    'Ikeja',
+    'Ikorodu',
+    'Kosofe',
+    'Lagos Island',
+    'Lagos Mainland',
+    'Mushin',
+    'Ojo',
+    'Oshodi-Isolo',
+    'Shomolu',
+    'Surulere',
+  ],
 };
 
 const SchoolDashboard = () => {
@@ -151,10 +157,10 @@ const SchoolDashboard = () => {
   };
 
   const handleOpen = () => setOpenRegisterModal(true);
-const handleClose = () => {
-  setOpenRegisterModal(false);
-  setOpenEditModal(false); // Optional: include if you want to close edit modal as well
-};
+  const handleClose = () => {
+    setOpenRegisterModal(false);
+    setOpenEditModal(false);
+  };
 
   const handleActionClose = () => {
     setActionAnchorEl(null);
@@ -311,7 +317,7 @@ const handleClose = () => {
   };
 
   return (
-    <>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
       <BlankCard>
         <TableContainer>
@@ -412,22 +418,19 @@ const handleClose = () => {
               ))}
             </Box>
 
-         
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            <Typography variant="h6">All School</Typography>
-            <Button variant="contained" color="primary" onClick={handleOpen}>
-              Register New School
-            </Button>
-          </Box>
-        
-      
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <Typography variant="h6">All School</Typography>
+              <Button variant="contained" color="primary" onClick={handleOpen}>
+                Register New School
+              </Button>
+            </Box>
 
             {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -721,6 +724,7 @@ const handleClose = () => {
               handleRefresh={handleRefresh}
               selectedAgent={editSchoolData}
               actionType={openEditModal ? 'update' : 'create'}
+              formComponent={RegisterSchoolForm}
             />
 
             <ManageTenantDomain
@@ -785,7 +789,7 @@ const handleClose = () => {
           </Box>
         </TableContainer>
       </BlankCard>
-    </>
+    </LocalizationProvider>
   );
 };
 

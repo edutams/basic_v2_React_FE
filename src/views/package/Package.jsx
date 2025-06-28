@@ -1,132 +1,118 @@
-import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  TextField,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Paper,
-  IconButton,
-  Grid as Grid,
-} from '@mui/material';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import PageContainer from '../../components/container/PageContainer';
-import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
-import ParentCard from '../../components/shared/ParentCard';
+import React, { useState } from 'react';
+import PackageManagement from '../../components/add-package/components/PackageManagement';
+import Swal from 'sweetalert2';
 
-const BCrumb = [
+const initialPackages = [
   {
-    to: '/',
-    title: 'Home',
+    id: 1,
+    pac_name: 'Basic Package',
+    pac_description: 'Basic features for small businesses',
+    pac_status: 'active',
+    pac_icon: 'fas fa-box',
   },
   {
-    title: 'Package',
+    id: 2,
+    pac_name: 'Pro Package',
+    pac_description: 'Advanced features for growing businesses',
+    pac_status: 'inactive',
+    pac_icon: 'fas fa-rocket',
+  },
+  {
+    id: 3,
+    pac_name: 'Enterprise Package',
+    pac_description: 'Comprehensive features for enterprises',
+    pac_status: 'active',
+    pac_icon: 'fas fa-building',
+  },
+];
+
+const initialModules = [
+  {
+    id: 1,
+    mod_name: 'Analytics',
+    mod_description: 'Data analytics module',
+    mod_status: 'active',
+    mod_links: { link: '/analytics', permission: 'analytics.view' },
+    packageId: 1,
+  },
+  {
+    id: 2,
+    mod_name: 'Reports',
+    mod_description: 'Generate detailed reports',
+    mod_status: 'active',
+    mod_links: { link: '/reports', permission: 'reports.view' },
+    packageId: 1,
+  },
+  {
+    id: 3,
+    mod_name: 'CRM',
+    mod_description: 'Customer relationship management',
+    mod_status: 'active',
+    mod_links: { link: '/crm', permission: 'crm.view' },
+    packageId: 2,
+  },
+  {
+    id: 4,
+    mod_name: 'Inventory',
+    mod_description: 'Inventory management system',
+    mod_status: 'active',
+    mod_links: { link: '/inventory', permission: 'inventory.view' },
+    packageId: null, 
   },
 ];
 
 const Package = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage] = useState(5);
+  const [packages, setPackages] = useState(initialPackages);
+  const [modules, setModules] = useState(initialModules);
+  const [isLoading, setIsLoading] = useState(false);
+  const handlePackageUpdate = (packageData, operation) => {
+    setIsLoading(true);
 
-  const packages = useMemo(() => [
-    { id: 1, name: 'Dashboard', description: 'school portal dashboard', status: 'ACTIVE' },
-    { id: 2, name: 'Setup', description: 'package used to setup the school', status: 'ACTIVE' },
-    { id: 3, name: 'Admission', description: 'admission package', status: 'ACTIVE' },
-    { id: 4, name: 'Digital Class', description: 'digital class package', status: 'ACTIVE' },
-    { id: 5, name: 'Forum', description: 'forum (discussion)', status: 'ACTIVE' },
-    { id: 6, name: 'Attendance', description: 'attendance package', status: 'ACTIVE' },
-    { id: 7, name: 'E-Resources', description: 'e-resource package', status: 'ACTIVE' },
-    { id: 8, name: 'Messaging', description: 'messaging package', status: 'ACTIVE' },
-    { id: 9, name: 'My Wards', description: 'my ward module', status: 'ACTIVE' },
-  ], []);
+    setTimeout(() => {
+      if (operation === 'create') {
+        setPackages(prev => [...prev, packageData]);
+        Swal.fire('Success', 'Package created successfully', 'success');
+      } else if (operation === 'update') {
+        setPackages(prev =>
+          prev.map(pkg => pkg.id === packageData.id ? packageData : pkg)
+        );
+        Swal.fire('Success', 'Package updated successfully', 'success');
+      } else if (operation === 'delete') {
+        setPackages(prev => prev.filter(pkg => pkg.id !== packageData.id));
+        Swal.fire('Success', 'Package deleted successfully', 'success');
+      }
+      setIsLoading(false);
+    }, 500);
+  };
 
-  const filteredPackages = useMemo(() => {
-    return packages.filter(pkg =>
-      pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [packages, searchTerm]);
+  const handleModuleUpdate = (moduleData, operation) => {
+    setIsLoading(true);
 
-  const paginatedPackages = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredPackages.slice(start, start + rowsPerPage);
-  }, [filteredPackages, page, rowsPerPage]);
-
-  const totalPages = Math.ceil(filteredPackages.length / rowsPerPage);
+    setTimeout(() => {
+      if (operation === 'create') {
+        setModules(prev => [...prev, moduleData]);
+        Swal.fire('Success', 'Module created successfully', 'success');
+      } else if (operation === 'update') {
+        setModules(prev =>
+          prev.map(mod => mod.id === moduleData.id ? moduleData : mod)
+        );
+        Swal.fire('Success', 'Module updated successfully', 'success');
+      } else if (operation === 'delete') {
+        setModules(prev => prev.filter(mod => mod.id !== moduleData.id));
+        Swal.fire('Success', 'Module deleted successfully', 'success');
+      }
+      setIsLoading(false);
+    }, 500);
+  };
 
   return (
-    <PageContainer title="Package Page" description="This is the Package page">
-      <Box sx={{ mt: 0 }}>
-        <Breadcrumb title="Package" items={BCrumb} />
-      </Box>
-      <Box sx={{ mt: 1 }}>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <ParentCard title="All Packages">
-              <TextField 
-                label="Name Filter"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                variant="outlined"
-                fullWidth
-                sx={{ mb: 2 }}
-              />
-              <Paper variant="outlined">
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {paginatedPackages.map((pkg, index) => (
-                        <TableRow key={pkg.id}>
-                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                          <TableCell>{pkg.name}</TableCell>
-                          <TableCell>{pkg.description}</TableCell>
-                          <TableCell>{pkg.status}</TableCell>
-                          <TableCell align="center">
-                            <IconButton size="small">
-                              <MoreVertIcon />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                <button onClick={() => setPage(prev => Math.max(prev - 1, 0))} disabled={page === 0}>
-                  Previous
-                </button>
-                <span>{page + 1} of {totalPages}</span>
-                <button onClick={() => setPage(prev => Math.min(prev + 1, totalPages - 1))} disabled={page === totalPages - 1}>
-                  Next
-                </button>
-              </Box>
-            </ParentCard>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <ParentCard title="Modules">
-              <Box sx={{ p: 2, backgroundColor: '#e3f2fd' }}>
-                Here is where you can select, add, edit and manage your package for the existing module of your preference.
-              </Box>
-            </ParentCard>
-          </Grid>
-        </Grid>
-      </Box>
-    </PageContainer>
+    <PackageManagement
+      packages={packages}
+      modules={modules}
+      onPackageUpdate={handlePackageUpdate}
+      onModuleUpdate={handleModuleUpdate}
+      isLoading={isLoading}
+    />
   );
 };
 

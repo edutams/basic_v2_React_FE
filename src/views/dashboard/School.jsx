@@ -39,7 +39,7 @@ import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ManageTenantDomain from '../../components/add-school/component/ManageSchoolDomain';
 import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
-import ConfirmDialog from '../../components/add-school/component/ConfirmDialog';
+import ConfirmationDialog from '../../components/shared/ConfirmationDialog'; // Already imported
 import BlankCard from '../../components/shared/BlankCard';
 import ParentCard from '../../components/shared/ParentCard';
 
@@ -758,7 +758,7 @@ const SchoolDashboard = () => {
               selectedAgent={selectedAgent}
               agentList={agentList}
             />
-            <ConfirmDialog
+            <ConfirmationDialog
               open={openDeleteDialog}
               onClose={() => setOpenDeleteDialog(false)}
               onConfirm={() => {
@@ -767,40 +767,46 @@ const SchoolDashboard = () => {
               }}
               title="Delete School"
               message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
+              confirmText="Delete"
+              cancelText="Cancel"
+              confirmColor="error"
+              severity="error"
             />
-            <ConfirmDialog
+            <ConfirmationDialog
               open={openDeactivateDialog}
               onClose={() => setOpenDeactivateDialog(false)}
               onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
               title="Deactivate School"
               message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
+              confirmText="Deactivate"
+              cancelText="Cancel"
+              confirmColor="warning"
+              severity="warning"
             />
-            <ConfirmDialog
+            <ConfirmationDialog
               open={openClear2FAConfirm}
               onClose={() => setOpenClear2FAConfirm(false)}
               onConfirm={() => {
                 console.log(`2FA settings cleared for ${selectedSchoolFor2FA?.institutionName}`);
                 setOpenClear2FAConfirm(false);
               }}
-              message={
-                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-                  <h2>Clear 2FA for admin account</h2>
-                  <p>Are you sure you want to perform this operation for?</p>
-                </Typography>
-              }
+              title="Clear 2FA for Admin Account"
+              message={`Are you sure you want to clear 2FA settings for ${selectedSchoolFor2FA?.institutionName}?`}
+              confirmText="Clear"
+              cancelText="Cancel"
+              confirmColor="warning"
+              severity="warning"
             />
-            <ConfirmDialog
+            <ConfirmationDialog
               open={openFixImageConfirm}
               onClose={() => setOpenFixImageConfirm(false)}
               onConfirm={handleFixImage}
-              message={
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                  <h2>Replace use images with new url</h2>
-                  <p>
-                    Are you sure you want to perform this operation? This action is irreversible
-                  </p>
-                </Typography>
-              }
+              title="Fix User Images"
+              message={`Are you sure you want to replace user images with new URL? This action is irreversible.`}
+              confirmText="Confirm"
+              cancelText="Cancel"
+              confirmColor="error"
+              severity="error"
             />
           </Box>
         </TableContainer>

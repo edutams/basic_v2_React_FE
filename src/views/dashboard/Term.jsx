@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Typography,
   Box,
@@ -26,8 +26,8 @@ import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
-import AddSchoolModal from '../../components/add-school/AddSchoolModal';
-import RegisterTermForm from '../../components/add-term/component/RegisterTermForm'
+import ReusableModal from '../../components/shared/ReusableModal';
+import RegisterTermForm from '../../components/add-term/component/RegisterTermForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
 const basicsTableData = [
@@ -62,7 +62,7 @@ const Term = () => {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to first page when rows per page changes
+    setPage(0);
   };
 
   const handleOpen = (type = 'create', term = null) => {
@@ -81,7 +81,7 @@ const Term = () => {
     if (actionType === 'update') {
       setTerms(terms.map((term) => (term.id === newTerm.id ? newTerm : term)));
     } else {
-      setTerms([...terms, { id: newTerm.id, ...newTerm }]);
+      setTerms([...terms, newTerm]);
     }
     handleClose();
   };
@@ -114,13 +114,16 @@ const Term = () => {
     }
   };
 
-  // Filter terms based on searchTerm
   const filteredTerms = terms.filter((term) =>
     term.termName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Paginate the filtered terms
   const paginatedTerms = filteredTerms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  // Reset page on search term change
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm]);
 
   return (
     <PageContainer title="Term" description="This is Term page">
@@ -142,8 +145,9 @@ const Term = () => {
           </Box>
         }
       >
-
-         <TextField
+        <Paper variant="outlined">
+          <TableContainer>
+            <TextField
               placeholder="Search terms..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -158,9 +162,6 @@ const Term = () => {
               }}
               sx={{ flexGrow: 1, mb: 2 }}
             />
-        <Paper variant="outlined">
-          <TableContainer>
-           
             <Table aria-label="term table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
@@ -254,15 +255,21 @@ const Term = () => {
           </TableContainer>
         </Paper>
 
-        <AddSchoolModal
+        <ReusableModal
           open={open}
           onClose={handleClose}
-          handleRefresh={handleAddTerm}
-          actionType={actionType}
-          selectedAgent={selectedTerm}
-          formComponent={RegisterTermForm}
-          isSession={false} // Changed to false to indicate terms
-        />
+          title={actionType === 'create' ? 'Add New Term' : 'Edit Term'}
+          size="medium"
+          showDivider={true}
+          showCloseButton={true}
+        >
+          <RegisterTermForm
+            actionType={actionType}
+            selectedAgent={selectedTerm}
+            onSubmit={handleAddTerm}
+            onCancel={handleClose}
+          />
+        </ReusableModal>
 
         <ConfirmationDialog
           open={openDeleteDialog}

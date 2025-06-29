@@ -26,7 +26,7 @@ import {
   TablePagination,
 } from '@mui/material';
 import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
-import AddSchoolModal from '../../components/add-school/AddSchoolModal';
+import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -39,9 +39,8 @@ import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ManageTenantDomain from '../../components/add-school/component/ManageSchoolDomain';
 import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
-import ConfirmationDialog from '../../components/shared/ConfirmationDialog'; // Already imported
+import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import BlankCard from '../../components/shared/BlankCard';
-import ParentCard from '../../components/shared/ParentCard';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 const ITEM_HEIGHT = 48;
@@ -174,7 +173,6 @@ const SchoolDashboard = () => {
     setAnchorEl(event.currentTarget);
   };
 
-  // Load data from localStorage and initialize
   useEffect(() => {
     const savedList = localStorage.getItem('schoolList');
     const savedFilters = localStorage.getItem('schoolFilters');
@@ -229,7 +227,6 @@ const SchoolDashboard = () => {
     if (savedPage) setPage(parseInt(savedPage, 10));
   }, []);
 
-  // Update filterGroups when lgaOptions changes
   useEffect(() => {
     setFilterGroups((prev) =>
       prev.map((group) =>
@@ -238,7 +235,6 @@ const SchoolDashboard = () => {
     );
   }, [lgaOptions]);
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem('schoolList', JSON.stringify(schoolList));
   }, [schoolList]);
@@ -254,7 +250,6 @@ const SchoolDashboard = () => {
     localStorage.setItem('currentPage', page);
   }, [page]);
 
-  // Handle filter changes
   const handleChange = (key) => (event) => {
     const value = event.target.value;
 
@@ -286,7 +281,7 @@ const SchoolDashboard = () => {
         updatedList[existingIndex] = newSchool;
         return updatedList;
       }
-      return [...prevList, { id: prevList.length + 1, ...newSchool }];
+      return [...prevList, newSchool];
     });
   };
 
@@ -731,17 +726,21 @@ const SchoolDashboard = () => {
               </Table>
             </TableContainer>
 
-            <AddSchoolModal
+            <ReusableModal
               open={openRegisterModal || openEditModal}
-              onClose={() => {
-                setOpenRegisterModal(false);
-                setOpenEditModal(false);
-              }}
-              handleRefresh={handleRefresh}
-              selectedAgent={editSchoolData}
-              actionType={openEditModal ? 'update' : 'create'}
-              formComponent={RegisterSchoolForm}
-            />
+              onClose={handleClose}
+              title={openEditModal ? 'Edit School' : 'Register School'}
+              size="large"
+              showDivider={true}
+              showCloseButton={true}
+            >
+              <RegisterSchoolForm
+                actionType={openEditModal ? 'update' : 'create'}
+                selectedAgent={editSchoolData}
+                onSubmit={handleRefresh}
+                onCancel={handleClose}
+              />
+            </ReusableModal>
 
             <ManageTenantDomain
               open={openTenantModal}

@@ -10,73 +10,126 @@ import {
   MenuItem,
   FormHelperText,
 } from '@mui/material';
+import { useFormik } from 'formik';
+import { schoolValidationScheme } from '../validation/schoolValidationScheme';
 import ColorSchemeSelector from './ColorSchemeSelector';
+import PropTypes from 'prop-types';
 
 const lgaData = {
-  lagos: ['Agege',
-      'Ajeromi-Ifelodun',
-      'Alimosho',
-      'Amuwo-Odofin',
-      'Apapa',
-      'Badagry',
-      'Epe',
-      'Eti Osa',
-      'Ibeju-Lekki',
-      'Ifako-Ijaiye',
-      'Ikeja',
-      'Ikorodu',
-      'Kosofe',
-      'Lagos Island',
-      'Lagos Mainland',
-      'Mushin',
-      'Ojo',
-      'Oshodi-Isolo',
-      'Shomolu',
-      'Surulere'
-    ],
-  ogun: ['Abeokuta North',
-      'Abeokuta South',
-      'Ado-Odo/Ota',
-      'Ewekoro',
-      'Ifo',
-      'Ijebu East',
-      'Ijebu North',
-      'Ijebu North East',
-      'Ijebu Ode',
-      'Ikenne',
-      'Imeko Afon',
-      'Ipokia',
-      'Obafemi Owode',
-      'Odeda',
-      'Odogbolu',
-      'Ogun Waterside',
-      'Remo North',
-      'Sagamu',
-      'Yewa North',
-      'Yewa South'],
+  lagos: [
+    'Agege',
+    'Ajeromi-Ifelodun',
+    'Alimosho',
+    'Amuwo-Odofin',
+    'Apapa',
+    'Badagry',
+    'Epe',
+    'Eti Osa',
+    'Ibeju-Lekki',
+    'Ifako-Ijaiye',
+    'Ikeja',
+    'Ikorodu',
+    'Kosofe',
+    'Lagos Island',
+    'Lagos Mainland',
+    'Mushin',
+    'Ojo',
+    'Oshodi-Isolo',
+    'Shomolu',
+    'Surulere',
+  ],
+  ogun: [
+    'Abeokuta North',
+    'Abeokuta South',
+    'Ado-Odo/Ota',
+    'Ewekoro',
+    'Ifo',
+    'Ijebu East',
+    'Ijebu North',
+    'Ijebu North East',
+    'Ijebu Ode',
+    'Ikenne',
+    'Imeko Afon',
+    'Ipokia',
+    'Obafemi Owode',
+    'Odeda',
+    'Odogbolu',
+    'Ogun Waterside',
+    'Remo North',
+    'Sagamu',
+    'Yewa North',
+    'Yewa South',
+  ],
 };
 
-const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
+// Generate incremental ID for schools
+const getNextId = () => {
+  const lastId = parseInt(localStorage.getItem('lastSchoolId')) || 0;
+  const newId = lastId + 1;
+  localStorage.setItem('lastSchoolId', newId);
+  return newId;
+};
+
+const RegisterSchoolForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => {
   const [lgaOptions, setLgaOptions] = useState([]);
 
+  const formik = useFormik({
+    initialValues: {
+      institutionName: selectedAgent?.institutionName || '',
+      institutionShortName: selectedAgent?.institutionShortName || '',
+      institutionAddress: selectedAgent?.institutionAddress || '',
+      administratorFirstName: selectedAgent?.administratorFirstName || '',
+      administratorLastName: selectedAgent?.administratorLastName || '',
+      administratorEmail: selectedAgent?.administratorEmail || '',
+      administratorPhone: selectedAgent?.administratorPhone || '',
+      stateFilter: selectedAgent?.stateFilter || '',
+      lga: selectedAgent?.lga || '',
+      moduleType: selectedAgent?.moduleType || '',
+      headerColor: selectedAgent?.headerColor || '#ffffff',
+      sidebarColor: selectedAgent?.sidebarColor || '#ffffff',
+      bodyColor: selectedAgent?.bodyColor || '#ffffff',
+      registerSchool: selectedAgent?.registerSchool || '',
+      permissions: selectedAgent?.permissions || [],
+    },
+    validationSchema: schoolValidationScheme,
+    enableReinitialize: true,
+    onSubmit: (values) => {
+      const updatedData = {
+        ...values,
+        id: actionType === 'update' ? selectedAgent.id : getNextId(),
+        schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
+        gateway: 'No Gateway',
+        colourScheme: values.bodyColor,
+        headerColor: values.headerColor,
+        sidebarColor: values.sidebarColor,
+        status: 'Inactive',
+        action: 'Edit',
+        date: new Date().toISOString(),
+        State: values.stateFilter, // Match SchoolDashboard.jsx field
+        LGA: values.lga, // Match SchoolDashboard.jsx field
+      };
+      onSubmit(updatedData);
+    },
+  });
+
   // Update LGA options when stateFilter changes
- useEffect(() => {
-  const selectedState = formik.values.stateFilter;
+  useEffect(() => {
+    const selectedState = formik.values.stateFilter;
+    const normalizedState = selectedState ? selectedState.toLowerCase() : '';
+    const newLgaOptions = normalizedState && lgaData[normalizedState] ? lgaData[normalizedState] : [];
 
-  if (selectedState && lgaData[selectedState]) {
-    setLgaOptions(lgaData[selectedState]);
+    // Only update state if necessary to prevent infinite loop
+    if (JSON.stringify(newLgaOptions) !== JSON.stringify(lgaOptions)) {
+      setLgaOptions(newLgaOptions);
+    }
 
-    if (!lgaData[selectedState].includes(formik.values.lga)) {
+    // Reset lga if it's not valid for the new state
+    if (normalizedState && formik.values.lga && !newLgaOptions.includes(formik.values.lga)) {
+      formik.setFieldValue('lga', '');
+    } else if (!normalizedState && formik.values.lga !== '') {
       formik.setFieldValue('lga', '');
     }
-  } else {
-    setLgaOptions([]);
-    if (formik.values.lga !== '') {
-      formik.setFieldValue('lga', '');
-    }
-  }
-}, [formik.values.stateFilter, formik.values.lga]);
-
+  }, [formik.values.stateFilter, formik.values.lga]);
 
   return (
     <form onSubmit={formik.handleSubmit}>
@@ -103,8 +156,8 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
             value={formik.values.institutionShortName}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            error={formik.touched.administratorName && Boolean(formik.errors.administratorName)}
-            helperText={formik.touched.administratorName && formik.errors.administratorName}
+            error={formik.touched.institutionShortName && Boolean(formik.errors.institutionShortName)}
+            helperText={formik.touched.institutionShortName && formik.errors.institutionShortName}
           />
         </Grid>
 
@@ -272,6 +325,13 @@ const RegisterSchoolForm = ({ formik, onCancel, actionType }) => {
       </Box>
     </form>
   );
+};
+
+RegisterSchoolForm.propTypes = {
+  actionType: PropTypes.oneOf(['create', 'update', 'viewSchools']).isRequired,
+  selectedAgent: PropTypes.object,
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
 };
 
 export default RegisterSchoolForm;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Typography,
   Box,
@@ -26,7 +26,7 @@ import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
-import AddSchoolModal from '../../components/add-school/AddSchoolModal';
+import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSessionForm from '../../components/add-session/component/RegisterSessionForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
@@ -62,7 +62,7 @@ const Session = () => {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset to first page when rows per page changes
+    setPage(0);
   };
 
   const handleOpen = (type = 'create', session = null) => {
@@ -81,7 +81,7 @@ const Session = () => {
     if (actionType === 'update') {
       setSessions(sessions.map((session) => (session.id === newSession.id ? newSession : session)));
     } else {
-      setSessions([...sessions, { id: newSession.id, ...newSession }]);
+      setSessions([...sessions, newSession]);
     }
     handleClose();
   };
@@ -122,6 +122,11 @@ const Session = () => {
   // Paginate the filtered sessions
   const paginatedSession = filteredSessions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+  // Reset page on search term change
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm]);
+
   return (
     <PageContainer title="Session" description="This is Session page">
       <Breadcrumb title="Session" items={BCrumb} />
@@ -142,7 +147,9 @@ const Session = () => {
           </Box>
         }
       >
-         <TextField
+        <Paper variant="outlined">
+          <TableContainer>
+            <TextField
               placeholder="Search sessions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -155,11 +162,8 @@ const Session = () => {
                   ),
                 },
               }}
-              sx={{ flexGrow: 1, mb: 2 }} // Added margin-bottom for spacing
+              sx={{ flexGrow: 1, mb: 2 }}
             />
-        <Paper variant="outlined">
-          <TableContainer>
-           
             <Table aria-label="session table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
@@ -241,7 +245,7 @@ const Session = () => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredSessions.length} // Use filteredSessions length for pagination
+                    count={filteredSessions.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -253,15 +257,21 @@ const Session = () => {
           </TableContainer>
         </Paper>
 
-        <AddSchoolModal
+        <ReusableModal
           open={open}
           onClose={handleClose}
-          handleRefresh={handleAddSession}
-          actionType={actionType}
-          selectedAgent={selectedSession}
-          formComponent={RegisterSessionForm}
-          isSession={true}
-        />
+          title={actionType === 'create' ? 'Add New Session' : 'Edit Session'}
+          size="medium"
+          showDivider={true}
+          showCloseButton={true}
+        >
+          <RegisterSessionForm
+            actionType={actionType}
+            selectedAgent={selectedSession}
+            onSubmit={handleAddSession}
+            onCancel={handleClose}
+          />
+        </ReusableModal>
 
         <ConfirmationDialog
           open={openDeleteDialog}

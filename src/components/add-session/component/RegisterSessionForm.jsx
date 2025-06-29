@@ -1,7 +1,45 @@
 import React from 'react';
-import { Grid, Box, Button, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Grid, Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import PropTypes from 'prop-types';
 
-const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
+// Validation schema for sessions (minimal, as original has no validation)
+const sessionValidationSchema = Yup.object({
+  sessionName: Yup.string().required('Session name is required'),
+  status: Yup.string().required('Status is required'),
+  isCurrent: Yup.boolean().nullable(),
+});
+
+// Generate incremental ID for sessions
+const getNextId = () => {
+  const lastId = parseInt(localStorage.getItem('lastSessionId')) || 0;
+  const newId = lastId + 1;
+  localStorage.setItem('lastSessionId', newId);
+  return newId;
+};
+
+const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => {
+  const formik = useFormik({
+    initialValues: {
+      sessionName: selectedAgent?.sessionName || '',
+      status: selectedAgent?.status || '',
+      isCurrent: selectedAgent?.isCurrent ?? false,
+    },
+    validationSchema: sessionValidationSchema,
+    enableReinitialize: true,
+    onSubmit: (values) => {
+      const updatedData = {
+        ...values,
+        id: actionType === 'update' ? selectedAgent.id : getNextId(),
+        sessionName: values.sessionName || 'Unnamed Session',
+        status: values.status || 'Pending',
+        isCurrent: values.isCurrent ?? false,
+      };
+      onSubmit(updatedData);
+    },
+  });
+
   return (
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3} direction="column">
@@ -13,12 +51,13 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
             value={formik.values.sessionName}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-           
+            error={formik.touched.sessionName && Boolean(formik.errors.sessionName)}
+            helperText={formik.touched.sessionName && formik.errors.sessionName}
           />
         </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-          <FormControl fullWidth>
+          <FormControl fullWidth error={formik.touched.status && Boolean(formik.errors.status)}>
             <InputLabel>Status</InputLabel>
             <Select
               name="status"
@@ -38,12 +77,14 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
               <MenuItem value="Completed">Completed</MenuItem>
               <MenuItem value="Pending">Pending</MenuItem>
             </Select>
-            {/* Removed FormHelperText since no validation for sessions */}
+            {formik.touched.status && formik.errors.status && (
+              <FormHelperText>{formik.errors.status}</FormHelperText>
+            )}
           </FormControl>
         </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-          <FormControl fullWidth>
+          <FormControl fullWidth error={formik.touched.isCurrent && Boolean(formik.errors.isCurrent)}>
             <InputLabel>Is Current</InputLabel>
             <Select
               name="isCurrent"
@@ -61,7 +102,9 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
               <MenuItem value={true}>Yes</MenuItem>
               <MenuItem value={false}>No</MenuItem>
             </Select>
-            
+            {formik.touched.isCurrent && formik.errors.isCurrent && (
+              <FormHelperText>{formik.errors.isCurrent}</FormHelperText>
+            )}
           </FormControl>
         </Grid>
       </Grid>
@@ -74,7 +117,7 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
           <Button
             type="submit"
             variant="contained"
-            disabled={formik.isSubmitting} 
+            disabled={formik.isSubmitting}
           >
             {actionType === 'update' ? 'Update Session' : 'Save'}
           </Button>
@@ -82,6 +125,13 @@ const RegisterSessionForm = ({ formik, onCancel, actionType }) => {
       </Box>
     </form>
   );
+};
+
+RegisterSessionForm.propTypes = {
+  actionType: PropTypes.oneOf(['create', 'update', 'view']).isRequired,
+  selectedAgent: PropTypes.object,
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
 };
 
 export default RegisterSessionForm;

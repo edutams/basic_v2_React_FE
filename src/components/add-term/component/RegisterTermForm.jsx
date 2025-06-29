@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Box,
   TextField,
@@ -11,66 +11,49 @@ import {
   Button,
   Typography,
 } from '@mui/material';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import PropTypes from 'prop-types';
 
-const RegisterTermForm = ({ actionType, selectedAgent, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    id: selectedAgent ? selectedAgent.id : Date.now(), // Simple ID generation for new terms
-    termName: selectedAgent ? selectedAgent.termName : '',
-    status: selectedAgent ? selectedAgent.status : 'Active',
-    isCurrent: selectedAgent ? selectedAgent.isCurrent : false,
+// Simple validation schema for terms
+const termValidationSchema = Yup.object({
+  termName: Yup.string().required('Term name is required'),
+  status: Yup.string().required('Status is required'),
+});
+
+// Generate incremental ID for terms
+const getNextId = () => {
+  const lastId = parseInt(localStorage.getItem('lastTermId')) || 0;
+  const newId = lastId + 1;
+  localStorage.setItem('lastTermId', newId);
+  return newId;
+};
+
+const RegisterTermForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => {
+  const formik = useFormik({
+    initialValues: {
+      termName: selectedAgent?.termName || '',
+      status: selectedAgent?.status || 'Active',
+      isCurrent: selectedAgent?.isCurrent || false,
+    },
+    validationSchema: termValidationSchema,
+    enableReinitialize: true,
+    onSubmit: (values) => {
+      const updatedData = {
+        ...values,
+        id: actionType === 'update' ? selectedAgent.id : getNextId(),
+        termName: values.termName || 'Unnamed Term',
+        status: values.status || 'Pending',
+        isCurrent: values.isCurrent ?? false,
+      };
+      onSubmit(updatedData);
+    },
   });
-
-  const [errors, setErrors] = useState({ termName: '' });
-
-  // Update formData when selectedAgent changes (for edit mode)
-  useEffect(() => {
-    if (selectedAgent && actionType === 'update') {
-      setFormData({
-        id: selectedAgent.id,
-        termName: selectedAgent.termName,
-        status: selectedAgent.status,
-        isCurrent: selectedAgent.isCurrent,
-      });
-    }
-  }, [selectedAgent, actionType]);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-
-    // Clear error for termName when user types
-    if (name === 'termName' && value.trim()) {
-      setErrors((prev) => ({ ...prev, termName: '' }));
-    }
-  };
-
-  const validateForm = () => {
-    let isValid = true;
-    const newErrors = { termName: '' };
-
-    if (!formData.termName.trim()) {
-      newErrors.termName = 'Term name is required';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
-    }
-  };
 
   return (
     <Box
       component="form"
-      onSubmit={handleSubmit}
+      onSubmit={formik.handleSubmit}
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -83,10 +66,11 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit }) => {
       <TextField
         label="Term Name"
         name="termName"
-        value={formData.termName}
-        onChange={handleChange}
-        error={!!errors.termName}
-        helperText={errors.termName}
+        value={formik.values.termName}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+        error={formik.touched.termName && !!formik.errors.termName}
+        helperText={formik.touched.termName && formik.errors.termName}
         fullWidth
         required
       />
@@ -95,9 +79,11 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit }) => {
         <InputLabel>Status</InputLabel>
         <Select
           name="status"
-          value={formData.status}
-          onChange={handleChange}
+          value={formik.values.status}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
           label="Status"
+          error={formik.touched.status && !!formik.errors.status}
         >
           <MenuItem value="Active">Active</MenuItem>
           <MenuItem value="Completed">Completed</MenuItem>
@@ -108,24 +94,30 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit }) => {
         control={
           <Checkbox
             name="isCurrent"
-            checked={formData.isCurrent}
-            onChange={handleChange}
+            checked={formik.values.isCurrent}
+            onChange={formik.handleChange}
           />
         }
         label="Set as Current Term"
       />
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          type="submit"
-        >
+        <Button variant="outlined" color="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="contained" color="primary" type="submit">
           {actionType === 'create' ? 'Add Term' : 'Update Term'}
         </Button>
       </Box>
     </Box>
   );
+};
+
+RegisterTermForm.propTypes = {
+  actionType: PropTypes.oneOf(['create', 'update']).isRequired,
+  selectedAgent: PropTypes.object,
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
 };
 
 export default RegisterTermForm;

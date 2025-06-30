@@ -33,7 +33,6 @@ const ModuleModal = ({
   onClose, 
   actionType, 
   selectedModule, 
-  currentPackage,
   onModuleUpdate,
   isLoading = false 
 }) => {
@@ -42,9 +41,8 @@ const ModuleModal = ({
   const handleSubmit = (values) => {
     if (actionType === 'create') {
       const newModule = {
-        id: Date.now(), 
+        id: Date.now(), // In real app, this would come from backend
         ...values,
-        packageId: currentPackage?.id,
       };
       onModuleUpdate(newModule, 'create');
       Swal.fire('Success', 'Module created successfully', 'success');
@@ -166,7 +164,6 @@ ModuleModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   actionType: PropTypes.oneOf(['create', 'update', 'activate', 'deactivate']),
   selectedModule: PropTypes.object,
-  currentPackage: PropTypes.object,
   onModuleUpdate: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
 };

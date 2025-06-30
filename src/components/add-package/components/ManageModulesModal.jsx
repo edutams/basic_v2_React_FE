@@ -144,10 +144,6 @@ const ManageModulesModal = ({
             variant="contained"
             onClick={handleSave}
             disabled={isLoading}
-            sx={{
-              bgcolor: '#1976d2',
-              '&:hover': { bgcolor: '#1565c0' },
-            }}
           >
             {isLoading ? 'Saving...' : 'Save Changes'}
           </Button>

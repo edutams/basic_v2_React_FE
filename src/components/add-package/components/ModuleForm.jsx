@@ -40,7 +40,6 @@ const ModuleForm = ({
   return (
     <Box component="form" onSubmit={formik.handleSubmit}>
       <Grid container spacing={3}>
-        {/* Module Name */}
         <Grid size={{ xs: 12 }}>
           <TextField
             label="Module Name"
@@ -52,7 +51,6 @@ const ModuleForm = ({
             variant="outlined"
             error={formik.touched.mod_name && Boolean(formik.errors.mod_name)}
             helperText={formik.touched.mod_name && formik.errors.mod_name}
-            required
           />
         </Grid>
 
@@ -69,7 +67,6 @@ const ModuleForm = ({
             variant="outlined"
             error={formik.touched.mod_description && Boolean(formik.errors.mod_description)}
             helperText={formik.touched.mod_description && formik.errors.mod_description}
-            required
           />
         </Grid>
 
@@ -85,11 +82,9 @@ const ModuleForm = ({
             error={formik.touched.mod_links?.link && Boolean(formik.errors.mod_links?.link)}
             helperText={formik.touched.mod_links?.link && formik.errors.mod_links?.link}
             placeholder="/module-path"
-            required
           />
         </Grid>
 
-        {/* Module Permission */}
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Module Permission"
@@ -102,7 +97,6 @@ const ModuleForm = ({
             error={formik.touched.mod_links?.permission && Boolean(formik.errors.mod_links?.permission)}
             helperText={formik.touched.mod_links?.permission && formik.errors.mod_links?.permission}
             placeholder="module.view"
-            required
           />
         </Grid>
 

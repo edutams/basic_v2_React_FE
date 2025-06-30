@@ -16,14 +16,14 @@ const DashboardFooter = () => {
       component="footer"
       sx={{
         mt: '20px',
-        py: 1,
+        py: 3,
         px: 2,
         backgroundColor: theme.palette.background.paper,
         borderTop: `1px solid ${theme.palette.divider}`,
         position: 'sticky',
         bottom: 0,
         zIndex: 1,
-        border: '2px solid red'
+        // border: '2px solid red'
       }}
     >
       <Container maxWidth="lg">

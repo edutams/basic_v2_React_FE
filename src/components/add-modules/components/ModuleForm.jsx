@@ -51,7 +51,6 @@ const ModuleForm = ({
             variant="outlined"
             error={formik.touched.mod_name && Boolean(formik.errors.mod_name)}
             helperText={formik.touched.mod_name && formik.errors.mod_name}
-            required
           />
         </Grid>
 
@@ -68,7 +67,6 @@ const ModuleForm = ({
             variant="outlined"
             error={formik.touched.mod_description && Boolean(formik.errors.mod_description)}
             helperText={formik.touched.mod_description && formik.errors.mod_description}
-            required
           />
         </Grid>
 
@@ -84,7 +82,6 @@ const ModuleForm = ({
             error={formik.touched.mod_links?.link && Boolean(formik.errors.mod_links?.link)}
             helperText={formik.touched.mod_links?.link && formik.errors.mod_links?.link}
             placeholder="/module-path"
-            required
           />
         </Grid>
 
@@ -100,7 +97,6 @@ const ModuleForm = ({
             error={formik.touched.mod_links?.permission && Boolean(formik.errors.mod_links?.permission)}
             helperText={formik.touched.mod_links?.permission && formik.errors.mod_links?.permission}
             placeholder="module.view"
-            required
           />
         </Grid>
 
@@ -135,10 +131,6 @@ const ModuleForm = ({
               variant="contained"
               type="submit"
               disabled={isLoading || !formik.isValid}
-              sx={{
-                bgcolor: '#1976d2',
-                '&:hover': { bgcolor: '#1565c0' },
-              }}
             >
               {isLoading ? 'Saving...' : submitText}
             </Button>

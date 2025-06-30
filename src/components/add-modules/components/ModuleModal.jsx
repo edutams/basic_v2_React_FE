@@ -113,14 +113,14 @@ const ModuleModal = ({
 
       case 'deactivate':
         return (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Box sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
               Deactivate Module
             </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
               Are you sure you want to deactivate "{selectedModule?.mod_name}"?
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
               <Button variant="outlined" onClick={onClose}>
                 Cancel
               </Button>

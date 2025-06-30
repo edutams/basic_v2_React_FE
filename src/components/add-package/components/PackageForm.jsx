@@ -49,7 +49,6 @@ const PackageForm = ({
             variant="outlined"
             error={formik.touched.pac_name && Boolean(formik.errors.pac_name)}
             helperText={formik.touched.pac_name && formik.errors.pac_name}
-            required
           />
         </Grid>
 
@@ -66,7 +65,6 @@ const PackageForm = ({
             variant="outlined"
             error={formik.touched.pac_description && Boolean(formik.errors.pac_description)}
             helperText={formik.touched.pac_description && formik.errors.pac_description}
-            required
           />
         </Grid>
 
@@ -121,10 +119,6 @@ const PackageForm = ({
               variant="contained"
               type="submit"
               disabled={isLoading || !formik.isValid}
-              sx={{
-                bgcolor: '#1976d2',
-                '&:hover': { bgcolor: '#1565c0' },
-              }}
             >
               {isLoading ? 'Saving...' : submitText}
             </Button>

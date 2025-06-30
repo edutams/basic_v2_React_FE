@@ -151,7 +151,7 @@ const Session = () => {
           </Box>
         }
       >
-
+        
          <TextField
               placeholder="Search sessions..."
               value={searchTerm}

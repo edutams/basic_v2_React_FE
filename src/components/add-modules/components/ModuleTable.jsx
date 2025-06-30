@@ -92,7 +92,6 @@ const ModuleTable = ({
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => onModuleAction('create')}
-            sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
           >
             Add New Module
           </Button>
@@ -100,7 +99,12 @@ const ModuleTable = ({
       }
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Box sx={{ mb: 3,
+           display: 'flex',
+           flexWrap: 'wrap',
+           gap: 2,
+           alignItems: 'center',
+        }}>
           <TextField
             placeholder="Search modules..."
             value={searchTerm}
@@ -114,7 +118,7 @@ const ModuleTable = ({
                 ),
               },
             }}
-            sx={{ flexGrow: 1, minWidth: 250 }}
+            // sx={{ flexGrow: 1, minWidth: 250 }}
           />
 
           <FormControl sx={{ minWidth: 120 }}>

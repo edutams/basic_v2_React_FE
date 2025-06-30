@@ -4,6 +4,7 @@ import App from './App';
 import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
+import { SnackbarProvider } from './context/SnackbarContext';
 import  ErrorBoundary  from './ErrorBoundary';
 
 async function deferRender() {
@@ -17,11 +18,13 @@ deferRender().then(() => {
   ReactDOM.createRoot(document.getElementById('root')).render(
     
     <CustomizerContextProvider>
-      <Suspense fallback={<Spinner />}>
-      <ErrorBoundary>
-        <App />
-    </ErrorBoundary>
-      </Suspense>
+      <SnackbarProvider>
+        <Suspense fallback={<Spinner />}>
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
+        </Suspense>
+      </SnackbarProvider>
     </CustomizerContextProvider>,
 
   )

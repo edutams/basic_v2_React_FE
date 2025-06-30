@@ -28,13 +28,13 @@ import ParentCard from '../../shared/ParentCard';
 import ModuleModal from './ModuleModal';
 import ConfirmationDialog from '../../shared/ConfirmationDialog';
 import PropTypes from 'prop-types';
-import Swal from 'sweetalert2';
+import { useNotification } from '../../../hooks/useNotification';
 
-const ModuleManagement = ({ 
-  packageModules = [], 
-  currentPackage, 
+const ModuleManagement = ({
+  packageModules = [],
+  currentPackage,
   onModuleUpdate,
-  isLoading = false 
+  isLoading = false
 }) => {
   const [modSearch, setModSearch] = useState('');
   const [modulePage, setModulePage] = useState(0);
@@ -45,6 +45,7 @@ const ModuleManagement = ({
   const [moduleActionType, setModuleActionType] = useState('create');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState(null);
+  const notify = useNotification();
 
   const filteredModules = packageModules.filter((mod) =>
     mod.mod_name.toLowerCase().includes(modSearch.toLowerCase())
@@ -87,7 +88,7 @@ const ModuleManagement = ({
   const handleConfirmDelete = () => {
     if (moduleToDelete) {
       onModuleUpdate(moduleToDelete, 'delete');
-      Swal.fire('Success', 'Module deleted successfully', 'success');
+      notify.success('Module deleted successfully', 'Success');
     }
     setDeleteDialogOpen(false);
     setModuleToDelete(null);
@@ -96,7 +97,7 @@ const ModuleManagement = ({
   const handleStatusChange = (module, status) => {
     const updatedModule = { ...module, mod_status: status };
     onModuleUpdate(updatedModule, 'update');
-    Swal.fire('Success', `Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`, 'success');
+    notify.success(`Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`, 'Success');
     handleModuleMenuClose();
   };
 

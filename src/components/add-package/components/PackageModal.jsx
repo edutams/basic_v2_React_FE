@@ -3,7 +3,6 @@ import { Box, Typography, Button } from '@mui/material';
 import ReusableModal from '../../shared/ReusableModal';
 import PackageForm from './PackageForm';
 import PropTypes from 'prop-types';
-import Swal from 'sweetalert2';
 
 const getModalConfig = (actionType) => {
   const configs = {
@@ -28,31 +27,29 @@ const getModalConfig = (actionType) => {
   return configs[actionType] || configs.create;
 };
 
-const PackageModal = ({ 
-  open, 
-  onClose, 
-  actionType, 
-  selectedPackage, 
+const PackageModal = ({
+  open,
+  onClose,
+  actionType,
+  selectedPackage,
   onPackageUpdate,
-  isLoading = false 
+  isLoading = false
 }) => {
   const modalConfig = getModalConfig(actionType);
 
   const handleSubmit = (values) => {
     if (actionType === 'create') {
       const newPackage = {
-        id: Date.now(), 
+        id: Date.now(),
         ...values,
       };
       onPackageUpdate(newPackage, 'create');
-      Swal.fire('Success', 'Package created successfully', 'success');
     } else if (actionType === 'update') {
       const updatedPackage = {
         ...selectedPackage,
         ...values,
       };
       onPackageUpdate(updatedPackage, 'update');
-      Swal.fire('Success', 'Package updated successfully', 'success');
     }
     onClose();
   };
@@ -63,7 +60,6 @@ const PackageModal = ({
       pac_status: status,
     };
     onPackageUpdate(updatedPackage, 'update');
-    Swal.fire('Success', `Package ${status === 'active' ? 'activated' : 'deactivated'} successfully`, 'success');
     onClose();
   };
 

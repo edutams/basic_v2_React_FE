@@ -14,18 +14,19 @@ import {
 } from '@mui/material';
 import ReusableModal from '../../shared/ReusableModal';
 import PropTypes from 'prop-types';
-import Swal from 'sweetalert2';
+import { useNotification } from '../../../hooks/useNotification';
 
-const ManageModulesModal = ({ 
-  open, 
-  onClose, 
+const ManageModulesModal = ({
+  open,
+  onClose,
   currentPackage,
   allModules = [],
   packageModules = [],
   onModuleAssignment,
-  isLoading = false 
+  isLoading = false
 }) => {
   const [moduleAssignments, setModuleAssignments] = useState({});
+  const notify = useNotification();
 
   useEffect(() => {
     if (open && currentPackage) {
@@ -49,7 +50,7 @@ const ManageModulesModal = ({
     const unassignedModules = allModules.filter(module => !moduleAssignments[module.id]);
     
     onModuleAssignment(currentPackage, assignedModules, unassignedModules);
-    Swal.fire('Success', 'Module assignments updated successfully', 'success');
+    notify.success('Module assignments updated successfully', 'Success');
     onClose();
   };
 

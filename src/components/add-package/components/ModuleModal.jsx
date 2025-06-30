@@ -3,7 +3,6 @@ import { Box, Typography, Button } from '@mui/material';
 import ReusableModal from '../../shared/ReusableModal';
 import ModuleForm from './ModuleForm';
 import PropTypes from 'prop-types';
-import Swal from 'sweetalert2';
 
 const getModalConfig = (actionType) => {
   const configs = {
@@ -28,33 +27,31 @@ const getModalConfig = (actionType) => {
   return configs[actionType] || configs.create;
 };
 
-const ModuleModal = ({ 
-  open, 
-  onClose, 
-  actionType, 
-  selectedModule, 
+const ModuleModal = ({
+  open,
+  onClose,
+  actionType,
+  selectedModule,
   currentPackage,
   onModuleUpdate,
-  isLoading = false 
+  isLoading = false
 }) => {
   const modalConfig = getModalConfig(actionType);
 
   const handleSubmit = (values) => {
     if (actionType === 'create') {
       const newModule = {
-        id: Date.now(), 
+        id: Date.now(),
         ...values,
         packageId: currentPackage?.id,
       };
       onModuleUpdate(newModule, 'create');
-      Swal.fire('Success', 'Module created successfully', 'success');
     } else if (actionType === 'update') {
       const updatedModule = {
         ...selectedModule,
         ...values,
       };
       onModuleUpdate(updatedModule, 'update');
-      Swal.fire('Success', 'Module updated successfully', 'success');
     }
     onClose();
   };
@@ -65,7 +62,6 @@ const ModuleModal = ({
       mod_status: status,
     };
     onModuleUpdate(updatedModule, 'update');
-    Swal.fire('Success', `Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`, 'success');
     onClose();
   };
 

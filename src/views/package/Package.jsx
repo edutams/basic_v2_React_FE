@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PackageManagement from '../../components/add-package/components/PackageManagement';
-import Swal from 'sweetalert2';
+import { useNotification } from '../../hooks/useNotification';
 
 const initialPackages = [
   {
@@ -162,21 +162,23 @@ const Package = () => {
   const [packages, setPackages] = useState(initialPackages);
   const [modules, setModules] = useState(initialModules);
   const [isLoading, setIsLoading] = useState(false);
+  const notify = useNotification();
+
   const handlePackageUpdate = (packageData, operation) => {
     setIsLoading(true);
 
     setTimeout(() => {
       if (operation === 'create') {
         setPackages(prev => [...prev, packageData]);
-        Swal.fire('Success', 'Package created successfully', 'success');
+        notify.success('Package created successfully', 'Success');
       } else if (operation === 'update') {
         setPackages(prev =>
           prev.map(pkg => pkg.id === packageData.id ? packageData : pkg)
         );
-        Swal.fire('Success', 'Package updated successfully', 'success');
+        notify.success('Package updated successfully', 'Success');
       } else if (operation === 'delete') {
         setPackages(prev => prev.filter(pkg => pkg.id !== packageData.id));
-        Swal.fire('Success', 'Package deleted successfully', 'success');
+        notify.success('Package deleted successfully', 'Success');
       }
       setIsLoading(false);
     }, 500);
@@ -188,15 +190,15 @@ const Package = () => {
     setTimeout(() => {
       if (operation === 'create') {
         setModules(prev => [...prev, moduleData]);
-        Swal.fire('Success', 'Module created successfully', 'success');
+        notify.success('Module created successfully', 'Success');
       } else if (operation === 'update') {
         setModules(prev =>
           prev.map(mod => mod.id === moduleData.id ? moduleData : mod)
         );
-        Swal.fire('Success', 'Module updated successfully', 'success');
+        notify.success('Module updated successfully', 'Success');
       } else if (operation === 'delete') {
         setModules(prev => prev.filter(mod => mod.id !== moduleData.id));
-        Swal.fire('Success', 'Module deleted successfully', 'success');
+        notify.success('Module deleted successfully', 'Success');
       }
       setIsLoading(false);
     }, 500);

@@ -6,22 +6,23 @@ import ModuleTable from './ModuleTable';
 import ModuleModal from './ModuleModal';
 import ConfirmationDialog from '../../shared/ConfirmationDialog';
 import PropTypes from 'prop-types';
-import Swal from 'sweetalert2';
+import { useNotification } from '../../../hooks/useNotification';
 const BCrumb = [
   { to: '/', title: 'Home' },
   { title: 'Modules' },
 ];
 
-const ModuleManagement = ({ 
-  modules = [], 
+const ModuleManagement = ({
+  modules = [],
   onModuleUpdate,
-  isLoading = false 
+  isLoading = false
 }) => {
   const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [moduleActionType, setModuleActionType] = useState('create');
   const [selectedModule, setSelectedModule] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [moduleToDelete, setModuleToDelete] = useState(null);
+  const notify = useNotification();
 
   const handleModuleAction = (action, module = null) => {
     switch (action) {
@@ -66,7 +67,7 @@ const ModuleManagement = ({
   const handleConfirmDelete = () => {
     if (moduleToDelete) {
       onModuleUpdate(moduleToDelete, 'delete');
-      Swal.fire('Success', 'Module deleted successfully', 'success');
+      notify.success('Module deleted successfully', 'Success');
     }
     setDeleteDialogOpen(false);
     setModuleToDelete(null);

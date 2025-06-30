@@ -64,7 +64,7 @@ const ModuleForm = ({
             onBlur={formik.handleBlur}
             fullWidth
             multiline
-            rows={4}
+            rows={1}
             variant="outlined"
             error={formik.touched.mod_description && Boolean(formik.errors.mod_description)}
             helperText={formik.touched.mod_description && formik.errors.mod_description}

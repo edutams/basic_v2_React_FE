@@ -24,6 +24,8 @@ import {
   Button,
   TableFooter,
   TablePagination,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import ReusableModal from '../../components/shared/ReusableModal';
@@ -139,6 +141,9 @@ const SchoolDashboard = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   const [filterGroups, setFilterGroups] = useState([
     { mainLabel: 'Agent', mainOptions: ['Agent A', 'Agent B'] },
@@ -165,6 +170,17 @@ const SchoolDashboard = () => {
   const handleActionClose = () => {
     setActionAnchorEl(null);
     setActiveRow(null);
+  };
+
+  const handleDeleteTerm = () => {
+    if (termToDelete) {
+      setTerms((prev) => prev.filter((t) => t.id !== termToDelete.id));
+      setOpenDeleteDialog(false);
+      setSnackbarMessage('Term deleted successfully');
+      setSnackbarබ
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    }
   };
 
   const handleMenuClose = () => setAnchorEl(null);
@@ -283,6 +299,10 @@ const SchoolDashboard = () => {
       }
       return [...prevList, newSchool];
     });
+    handleClose(); // Close the modal after saving
+    setSnackbarMessage('School saved successfully');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
   };
 
   const handleDeactivateSchool = (school) => {
@@ -763,6 +783,9 @@ const SchoolDashboard = () => {
               onConfirm={() => {
                 setSchoolList((prev) => prev.filter((s) => s.id !== schoolToDelete.id));
                 setOpenDeleteDialog(false);
+                setSnackbarMessage('School deleted successfully');
+                setSnackbarSeverity('success');
+                setSnackbarOpen(true);
               }}
               title="Delete School"
               message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
@@ -809,6 +832,20 @@ const SchoolDashboard = () => {
             />
           </Box>
         </TableContainer>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </BlankCard>
     </LocalizationProvider>
   );

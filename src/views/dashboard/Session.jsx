@@ -21,6 +21,7 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
+import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
@@ -116,11 +117,14 @@ const Session = () => {
 
   // Filter sessions based on searchTerm
   const filteredSessions = sessions.filter((session) =>
-    session.sessionName.toLowerCase().includes(searchTerm.toLowerCase())
+    session.sessionName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // Paginate the filtered sessions
-  const paginatedSession = filteredSessions.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedSession = filteredSessions.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   // Reset page on search term change
   useEffect(() => {
@@ -147,9 +151,8 @@ const Session = () => {
           </Box>
         }
       >
-        <Paper variant="outlined">
-          <TableContainer>
-            <TextField
+
+         <TextField
               placeholder="Search sessions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -164,14 +167,27 @@ const Session = () => {
               }}
               sx={{ flexGrow: 1, mb: 2 }}
             />
+        <Paper variant="outlined">
+          <TableContainer>
+           
             <Table aria-label="session table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell><Typography variant="h6">S/N</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Session Name</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Status</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Is Current</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Action</Typography></TableCell>
+                  <TableCell>
+                    <Typography variant="h6">S/N</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Session Name</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Status</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Is Current</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Action</Typography>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -185,10 +201,14 @@ const Session = () => {
                       }}
                     >
                       <TableCell>
-                        <Typography variant="subtitle2">{page * rowsPerPage + index + 1}</Typography>
+                        <Typography variant="subtitle2">
+                          {page * rowsPerPage + index + 1}
+                        </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="h6" fontWeight="400">{session.sessionName}</Typography>
+                        <Typography variant="h6" fontWeight="400">
+                          {session.sessionName}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -221,22 +241,37 @@ const Session = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleOpen('update', session)}>Edit Session</MenuItem>
-                          <MenuItem onClick={() => handleOpenDeleteDialog(session)}>Delete Session</MenuItem>
+                          <MenuItem onClick={() => handleOpen('update', session)}>
+                            Edit Session
+                          </MenuItem>
+                          <MenuItem onClick={() => handleOpenDeleteDialog(session)}>
+                            Delete Session
+                          </MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5}>
-                      <Typography>
-                        {filteredSessions.length === 0 && searchTerm
-                          ? 'No sessions match your search'
-                          : hasActiveSession
-                          ? 'No sessions available on this page'
-                          : 'No active session available'}
-                      </Typography>
+                    <TableCell colSpan={10} sx={{ textAlign: 'center', padding: '40px 0' }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <IconSchool
+                          width={48}
+                          height={48}
+                          color="#757575"
+                          sx={{ marginBottom: '16px' }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 'bold', color: '#757575', marginBottom: '8px' }}
+                        >
+                          No Session available
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
+                          No session have been registered yet. Click 'Register New Session' 
+                            to add a new session.
+                        </Typography>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 )}
@@ -291,7 +326,11 @@ const Session = () => {
           onClose={() => setSnackbarOpen(false)}
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
-          <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
             {snackbarMessage}
           </Alert>
         </Snackbar>

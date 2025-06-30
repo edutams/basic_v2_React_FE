@@ -21,6 +21,7 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
+import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
@@ -115,7 +116,7 @@ const Term = () => {
   };
 
   const filteredTerms = terms.filter((term) =>
-    term.termName.toLowerCase().includes(searchTerm.toLowerCase())
+    term.termName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedTerms = filteredTerms.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -145,9 +146,8 @@ const Term = () => {
           </Box>
         }
       >
-        <Paper variant="outlined">
-          <TableContainer>
-            <TextField
+
+         <TextField
               placeholder="Search terms..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -162,14 +162,27 @@ const Term = () => {
               }}
               sx={{ flexGrow: 1, mb: 2 }}
             />
+        <Paper variant="outlined">
+          <TableContainer>
+           
             <Table aria-label="term table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell><Typography variant="h6">S/N</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Term Name</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Status</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Is Current</Typography></TableCell>
-                  <TableCell><Typography variant="h6">Action</Typography></TableCell>
+                  <TableCell>
+                    <Typography variant="h6">S/N</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Term Name</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Status</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Is Current</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Action</Typography>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -183,10 +196,14 @@ const Term = () => {
                       }}
                     >
                       <TableCell>
-                        <Typography variant="subtitle2">{page * rowsPerPage + index + 1}</Typography>
+                        <Typography variant="subtitle2">
+                          {page * rowsPerPage + index + 1}
+                        </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="h6" fontWeight="400">{term.termName}</Typography>
+                        <Typography variant="h6" fontWeight="400">
+                          {term.termName}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -220,21 +237,34 @@ const Term = () => {
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
                           <MenuItem onClick={() => handleOpen('update', term)}>Edit Term</MenuItem>
-                          <MenuItem onClick={() => handleOpenDeleteDialog(term)}>Delete Term</MenuItem>
+                          <MenuItem onClick={() => handleOpenDeleteDialog(term)}>
+                            Delete Term
+                          </MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5}>
-                      <Typography>
-                        {filteredTerms.length === 0 && searchTerm
-                          ? 'No terms match your search'
-                          : hasActiveTerm
-                          ? 'No terms available on this page'
-                          : 'No active term available'}
-                      </Typography>
+                    <TableCell colSpan={10} sx={{ textAlign: 'center', padding: '40px 0' }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <IconSchool
+                          width={48}
+                          height={48}
+                          color="#757575"
+                          sx={{ marginBottom: '16px' }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 'bold', color: '#757575', marginBottom: '8px' }}
+                        >
+                          No Term available
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
+                          No term have been registered yet. Click 'Register New Term' to add a new
+                          term.
+                        </Typography>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 )}
@@ -289,7 +319,11 @@ const Term = () => {
           onClose={() => setSnackbarOpen(false)}
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
-          <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
             {snackbarMessage}
           </Alert>
         </Snackbar>

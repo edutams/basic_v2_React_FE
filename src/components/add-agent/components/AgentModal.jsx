@@ -1,14 +1,14 @@
 import React from 'react';
 import { useFormik } from 'formik';
-import ReusableModal from './ReusableModal';
-import AgentForm from '../add-agent/components/AgentForm';
-import SchoolsView from '../add-agent/components/SchoolsView';
-import PermissionManager from '../add-agent/components/PermissionManager';
-import SetCommissionModal from '../add-agent/components/SetCommission';
-import ManageReferralModal from '../add-agent/components/ManageReferral';
-import ManageGateway from '../add-agent/components/ManageGateway';
-import ChangeColorScheme from '../add-agent/components/ChangeColorScheme';
-import { agentValidationSchema } from '../add-agent/validation/agentValidationSchema';
+import ReusableModal from '../../shared/ReusableModal';
+import AgentForm from './AgentForm';
+import SchoolsView from './SchoolsView';
+import PermissionManager from './PermissionManager';
+import SetCommissionModal from './SetCommission';
+import ManageReferralModal from './ManageReferral';
+import ManageGateway from './ManageGateway';
+import ChangeColorScheme from './ChangeColorScheme';
+import { agentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 
 const getModalConfig = (actionType) => {

@@ -67,8 +67,18 @@ const SchoolsView = ({ selectedAgent }) => {
       </Typography>
 
       {schools && schools.length > 0 ? (
-        <TableContainer component={Paper} variant="outlined">
-          <Table sx={{ minWidth: 650 }} aria-label="schools table">
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+          sx={{
+            width: '100%',
+            overflowX: 'auto',
+            '& .MuiTable-root': {
+              minWidth: { xs: 300, sm: 650 }
+            }
+          }}
+        >
+          <Table aria-label="schools table">
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>

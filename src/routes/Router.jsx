@@ -17,6 +17,8 @@ const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern'))
 
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
+const Modules = Loadable(lazy(() => import('../views/modules/Modules')));
+const Package = Loadable(lazy(() => import('../views/package/Package')));
 
 /* ****Apps***** */
 const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
@@ -181,6 +183,8 @@ const Router = [
       { path: '/dashboards/school', exact: true, element: <SchoolDashboard /> },
       { path: '/dashboards/session', exact: true, element: <SessionDashboard /> },
       { path: '/dashboards/term', exact: true, element: <TermDashboard /> },
+      { path: '/dashboards/modules', exact: true, element: <Modules /> },
+      { path: '/dashboards/package', exact: true, element: <Package /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },

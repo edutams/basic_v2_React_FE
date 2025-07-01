@@ -79,6 +79,19 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'Modules',
+    icon: IconListTree,
+    href: '/dashboards/modules',
+  },
+  {
+    id: uniqueId(),
+    title: 'Package',
+    icon: IconPackage,
+    href: '/dashboards/package',
+  },
+  /*
+  {
+    id: uniqueId(),
     title: 'School',
     icon: IconSchool,
     href: '/dashboards/school',

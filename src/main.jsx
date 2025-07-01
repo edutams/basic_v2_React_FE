@@ -4,6 +4,7 @@ import App from './App';
 import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
+import { SnackbarProvider } from './context/SnackbarContext';
 import  ErrorBoundary  from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -20,11 +21,13 @@ deferRender().then(() => {
     
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <CustomizerContextProvider>
-        <Suspense fallback={<Spinner />}>
-      <ErrorBoundary>
-          <App />
-    </ErrorBoundary>
-        </Suspense>
+      <SnackbarProvider>
+          <Suspense fallback={<Spinner />}>
+          <ErrorBoundary>
+              <App />
+          </ErrorBoundary>
+          </Suspense>
+      </SnackbarProvider>
       </CustomizerContextProvider>
     </LocalizationProvider>
 

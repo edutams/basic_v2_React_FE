@@ -154,9 +154,9 @@ const PackageTable = ({
                           open={Boolean(anchorEl) && selectedPackage?.id === pkg.id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={() => handleAction('viewModules', pkg)}>
+                          {/* <MenuItem onClick={() => handleAction('viewModules', pkg)}>
                             View Modules
-                          </MenuItem>
+                          </MenuItem> */}
                           <MenuItem onClick={() => handleAction('update', pkg)}>
                             Edit Package
                           </MenuItem>

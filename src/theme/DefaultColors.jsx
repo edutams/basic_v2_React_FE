@@ -62,10 +62,16 @@ const baselightTheme = {
     divider: '#e9e9e9',
 
     background: {
-      default: "#fafbfb",
+      default: "#F1F4F6",
+      // default: "#fafbfb",
       dark: "#fafbfb",
       paper: '#fafbfb',
     },
+
+    header: {
+      bg: "#ffffff", // or your preferred light color
+    },
+    
   },
 };
 
@@ -138,7 +144,10 @@ const baseDarkTheme = {
       paper: '#20242d',
     },
 
-
+    header: {
+      bg: "#1c1f26", // or your preferred dark color
+    },
+    
   },
 };
 

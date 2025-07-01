@@ -34,6 +34,7 @@ const ModuleManagement = ({
   packageModules = [],
   currentPackage,
   onModuleUpdate,
+  onAttachModule = null,
   isLoading = false
 }) => {
   const [modSearch, setModSearch] = useState('');
@@ -135,6 +136,17 @@ const ModuleManagement = ({
               : 'Modules'
             }
           </Typography>
+          {currentPackage && onAttachModule && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAttachModule}
+              sx={{ ml: 2 }}
+            >
+              Attach Module
+            </Button>
+          )}
+
         </Box>
       }
     >
@@ -273,6 +285,7 @@ ModuleManagement.propTypes = {
   packageModules: PropTypes.array,
   currentPackage: PropTypes.object,
   onModuleUpdate: PropTypes.func.isRequired,
+  onAttachModule: PropTypes.func,
   isLoading: PropTypes.bool,
 };
 

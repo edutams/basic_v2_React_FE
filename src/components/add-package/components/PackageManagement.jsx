@@ -58,15 +58,16 @@ const PackageManagement = ({
         setPackageModalOpen(true);
         break;
 
-      case 'viewModules':
+      // case 'viewModules':
+      case 'manageModules':
         setCurrentPackage(package_);
         setPackageModules(modules.filter(m => m.packageId === package_.id));
         break;
 
-      case 'manageModules':
-        setCurrentPackage(package_);
-        setManageModulesOpen(true);
-        break;
+      // case 'manageModules':
+      //   setCurrentPackage(package_);
+      //   setManageModulesOpen(true);
+      //   break;
 
       default:
         break;
@@ -78,6 +79,12 @@ const PackageManagement = ({
     
     if (currentPackage && packageData.id === currentPackage.id) {
       setCurrentPackage(packageData);
+    }
+  };
+
+  const handleAttachModule = () => {
+    if (currentPackage) {
+      setManageModulesOpen(true);
     }
   };
 
@@ -133,6 +140,7 @@ const PackageManagement = ({
             packageModules={packageModules}
             currentPackage={currentPackage}
             onModuleUpdate={handleModuleUpdate}
+            onAttachModule={handleAttachModule}
             isLoading={isLoading}
           />
         </Grid>

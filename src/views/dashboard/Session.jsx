@@ -151,7 +151,7 @@ const Session = () => {
           </Box>
         }
       >
-        
+
          <TextField
               placeholder="Search sessions..."
               value={searchTerm}
@@ -170,8 +170,8 @@ const Session = () => {
         <Paper variant="outlined">
           <TableContainer>
            
-            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap' }}>
-              <TableHead>
+            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap'}}>
+              <TableHead >
                 <TableRow>
                   <TableCell>
                     <Typography variant="h6">S/N</Typography>

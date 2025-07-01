@@ -43,6 +43,7 @@ import ManageSchoolGateway from '../../components/add-school/component/ManageSch
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import BlankCard from '../../components/shared/BlankCard';
+import ChangeColorScheme from '../../components/add-school/component/ChangeColorScheme';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 const ITEM_HEIGHT = 48;
@@ -144,6 +145,8 @@ const SchoolDashboard = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [openColorSchemeModal, setOpenColorSchemeModal] = useState(false);
+  const [selectedSchoolForColor, setSelectedSchoolForColor] = useState(null);
 
   const [filterGroups, setFilterGroups] = useState([
     { mainLabel: 'Agent', mainOptions: ['Agent A', 'Agent B'] },
@@ -177,7 +180,6 @@ const SchoolDashboard = () => {
       setTerms((prev) => prev.filter((t) => t.id !== termToDelete.id));
       setOpenDeleteDialog(false);
       setSnackbarMessage('Term deleted successfully');
-      setSnackbarබ
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     }
@@ -461,7 +463,7 @@ const SchoolDashboard = () => {
             <Grid container spacing={2}>
               {filterGroups.map(({ mainLabel, mainOptions }) => (
                 <Grid item size={{ xs: 12, sm: 6, md: 3 }} key={mainLabel}>
-                  <FormControl fullWidth sx={{ mb: 2 }}>
+                  <FormControl fullWidth sx={{ mb: 1 }}>
                     <InputLabel id={`${mainLabel}-label`}>{mainLabel}</InputLabel>
                     <Select
                       labelId={`${mainLabel}-label`}
@@ -527,12 +529,18 @@ const SchoolDashboard = () => {
                         bgcolor: 'white',
                         mb: 2,
                         '& .MuiOutlinedInput-root': {
-                          height: 56,
+                          minHeight: 40,
+                          height: 40,
                           boxSizing: 'border-box',
+                          alignItems: 'center',
                         },
-                        '& .MuiOutlinedInput-input': {
-                          padding: '16.5px 14px',
+                        '& .MuiInputBase-input': {
+                          minHeight: 40,
+                          height: 40,
+                          padding: '10.5px 14px',
                           boxSizing: 'border-box',
+                          display: 'flex',
+                          alignItems: 'center',
                         },
                       },
                     },
@@ -553,12 +561,18 @@ const SchoolDashboard = () => {
                         bgcolor: 'white',
                         mb: 2,
                         '& .MuiOutlinedInput-root': {
-                          height: 56,
+                          minHeight: 40,
+                          height: 40,
                           boxSizing: 'border-box',
+                          alignItems: 'center',
                         },
-                        '& .MuiOutlinedInput-input': {
-                          padding: '16.5px 14px',
+                        '& .MuiInputBase-input': {
+                          minHeight: 40,
+                          height: 40,
+                          padding: '10.5px 14px',
                           boxSizing: 'border-box',
+                          display: 'flex',
+                          alignItems: 'center',
                         },
                       },
                     },
@@ -686,7 +700,13 @@ const SchoolDashboard = () => {
                               Deactivate School
                             </MenuItem>
                             <MenuItem onClick={handleActionClose}>Details</MenuItem>
-                            <MenuItem onClick={handleActionClose}>
+                            <MenuItem
+                              onClick={() => {
+                                setSelectedSchoolForColor(row);
+                                setOpenColorSchemeModal(true);
+                                handleActionClose();
+                              }}
+                            >
                               Change Color School Scheme
                             </MenuItem>
                             <MenuItem onClick={handleActionClose}>Public Analytics</MenuItem>
@@ -767,10 +787,34 @@ const SchoolDashboard = () => {
               onClose={() => setOpenTenantModal(false)}
               domainData={selectedTenantDomain}
             />
-            <ManageSchoolGateway
+            <ReusableModal
               open={openGatewayModal}
               onClose={() => setOpenGatewayModal(false)}
-            />
+              title="Manage School Gateway"
+              size="medium"
+              showDivider={true}
+              showCloseButton={true}
+            >
+              <ManageSchoolGateway
+                selectedSchool={schoolList.find((s) => s.schoolUrl === selectedTenantDomain) || null}
+                onSave={(updatedSchool) => {
+                  setSchoolList((prevList) => {
+                    const idx = prevList.findIndex((s) => s.id === updatedSchool.id);
+                    if (idx !== -1) {
+                      const newList = [...prevList];
+                      newList[idx] = updatedSchool;
+                      return newList;
+                    }
+                    return prevList;
+                  });
+                  setOpenGatewayModal(false);
+                  setSnackbarMessage('Gateway info saved successfully');
+                  setSnackbarSeverity('success');
+                  setSnackbarOpen(true);
+                }}
+                onClose={() => setOpenGatewayModal(false)}
+              />
+            </ReusableModal>
             <ChangeAgent
               open={openAgentModal}
               onClose={() => setOpenAgentModal(false)}
@@ -802,8 +846,8 @@ const SchoolDashboard = () => {
               message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
               confirmText="Deactivate"
               cancelText="Cancel"
-              confirmColor="warning"
-              severity="warning"
+              confirmColor="error"
+              severity="error"
             />
             <ConfirmationDialog
               open={openClear2FAConfirm}
@@ -816,8 +860,8 @@ const SchoolDashboard = () => {
               message={`Are you sure you want to clear 2FA settings for ${selectedSchoolFor2FA?.institutionName}?`}
               confirmText="Clear"
               cancelText="Cancel"
-              confirmColor="warning"
-              severity="warning"
+              confirmColor="error"
+              severity="error"
             />
             <ConfirmationDialog
               open={openFixImageConfirm}
@@ -830,6 +874,34 @@ const SchoolDashboard = () => {
               confirmColor="error"
               severity="error"
             />
+            <ReusableModal
+              open={openColorSchemeModal}
+              onClose={() => setOpenColorSchemeModal(false)}
+              title="Change School Color Scheme"
+              size="medium"
+              showDivider={true}
+              showCloseButton={true}
+            >
+              <ChangeColorScheme
+                selectedSchool={selectedSchoolForColor}
+                onSave={(updatedSchool) => {
+                  setSchoolList((prevList) => {
+                    const idx = prevList.findIndex((s) => s.id === updatedSchool.id);
+                    if (idx !== -1) {
+                      const newList = [...prevList];
+                      newList[idx] = updatedSchool;
+                      return newList;
+                    }
+                    return prevList;
+                  });
+                  setOpenColorSchemeModal(false);
+                  setSnackbarMessage('Color scheme updated successfully');
+                  setSnackbarSeverity('success');
+                  setSnackbarOpen(true);
+                }}
+                onClose={() => setOpenColorSchemeModal(false)}
+              />
+            </ReusableModal>
           </Box>
         </TableContainer>
         <Snackbar

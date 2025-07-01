@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Grid,
   Box,
   TextField,
   FormControl,
@@ -9,13 +10,13 @@ import {
   FormControlLabel,
   Checkbox,
   Button,
-  Typography,
+  FormHelperText,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 
-// Simple validation schema for terms
+// Validation schema for terms
 const termValidationSchema = Yup.object({
   termName: Yup.string().required('Term name is required'),
   status: Yup.string().required('Status is required'),
@@ -51,65 +52,79 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => 
   });
 
   return (
-    <Box
-      component="form"
-      onSubmit={formik.handleSubmit}
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        p: 2,
-      }}
-    >
-      <Typography variant="h6">{actionType === 'create' ? 'Add New Term' : 'Edit Term'}</Typography>
-
-      <TextField
-        label="Term Name"
-        name="termName"
-        value={formik.values.termName}
-        onChange={formik.handleChange}
-        onBlur={formik.handleBlur}
-        error={formik.touched.termName && !!formik.errors.termName}
-        helperText={formik.touched.termName && formik.errors.termName}
-        fullWidth
-        required
-      />
-
-      <FormControl fullWidth>
-        <InputLabel>Status</InputLabel>
-        <Select
-          name="status"
-          value={formik.values.status}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          label="Status"
-          error={formik.touched.status && !!formik.errors.status}
-        >
-          <MenuItem value="Active">Active</MenuItem>
-          <MenuItem value="Completed">Completed</MenuItem>
-        </Select>
-      </FormControl>
-
-      <FormControlLabel
-        control={
-          <Checkbox
-            name="isCurrent"
-            checked={formik.values.isCurrent}
+    <form onSubmit={formik.handleSubmit}>
+      <Grid container spacing={2} mb={3} direction="column">
+        <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
+          <TextField
+            label="Term Name"
+            name="termName"
+            value={formik.values.termName}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.termName && Boolean(formik.errors.termName)}
+            helperText={formik.touched.termName && formik.errors.termName}
+            fullWidth
+            required
           />
-        }
-        label="Set as Current Term"
-      />
+        </Grid>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Button variant="outlined" color="secondary" onClick={onCancel}>
+        <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
+          <FormControl
+            fullWidth
+            error={formik.touched.status && Boolean(formik.errors.status)}
+          >
+            <InputLabel>Status</InputLabel>
+            <Select
+              name="status"
+              value={formik.values.status}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              label="Status"
+              sx={{
+                '& .MuiOutlinedInput-input': {
+                  boxSizing: 'border-box',
+                  padding: '16.5px 14px',
+                },
+              }}
+            >
+              <MenuItem value="">-- Choose --</MenuItem>
+              <MenuItem value="Active">Active</MenuItem>
+              <MenuItem value="Completed">Completed</MenuItem>
+            </Select>
+            {formik.touched.status && formik.errors.status && (
+              <FormHelperText>{formik.errors.status}</FormHelperText>
+            )}
+          </FormControl>
+        </Grid>
+
+        <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                name="isCurrent"
+                checked={formik.values.isCurrent}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+              />
+            }
+            label="Set as Current Term"
+          />
+        </Grid>
+      </Grid>
+
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit">
           Cancel
         </Button>
-        <Button variant="contained" color="primary" type="submit">
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={formik.isSubmitting}
+        >
           {actionType === 'create' ? 'Add Term' : 'Update Term'}
         </Button>
       </Box>
-    </Box>
+    </form>
   );
 };
 

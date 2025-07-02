@@ -89,7 +89,7 @@ const Menuitems = [
     icon: IconPackage,
     href: '/dashboards/package',
   },
-  /*
+  
   {
     id: uniqueId(),
     title: 'School',
@@ -107,6 +107,18 @@ const Menuitems = [
     title: 'Term',
     icon: IconSchool,
     href: '/dashboards/term',
+  },
+  {
+    id: uniqueId(),
+    title: 'Plan',
+    icon: IconAperture,
+    href: '/dashboards/plan',
+  },
+  {
+    id: uniqueId(),
+    title: 'My Plan',
+    icon: IconAperture,
+    href: '/dashboards/my-plan',
   },
 
   /*

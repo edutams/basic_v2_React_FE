@@ -121,19 +121,23 @@ const ModuleTable = ({
             // sx={{ flexGrow: 1, minWidth: 250 }}
           />
 
-          <FormControl sx={{ minWidth: 120 }}>
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              label="Status"
-              startAdornment={<FilterListIcon sx={{ mr: 1 }} />}
-            >
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
+<FormControl sx={{ minWidth: 120 }} size="small">
+  <Select
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+    displayEmpty
+    startAdornment={<FilterListIcon sx={{ mr: 1 }} />}
+    renderValue={
+      statusFilter !== "" ? undefined : () => <span style={{ color: '#aaa' }}>Select Status</span>
+    }
+  >
+    <MenuItem value="">Select Status</MenuItem>
+    <MenuItem value="all">All Status</MenuItem>
+    <MenuItem value="active">Active</MenuItem>
+    <MenuItem value="inactive">Inactive</MenuItem>
+  </Select>
+</FormControl>
+
 
           {hasActiveFilters && (
             <Button

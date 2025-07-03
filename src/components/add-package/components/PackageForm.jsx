@@ -14,17 +14,24 @@ import { useFormik } from 'formik';
 import { packageValidationSchema } from '../validation/packageValidationSchema';
 import PropTypes from 'prop-types';
 
-const PackageForm = ({ 
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined'; // for Agent
+import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined'; // for Module
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'; // for Package
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'; // for Term
+import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'; // for Session
+
+const PackageForm = ({
   initialValues = {
     pac_name: '',
     pac_description: '',
     pac_status: 'active',
-    pac_icon: 'fas fa-box'
+    pac_icon: 'fas fa-box',
   },
   onSubmit,
   onCancel,
   submitText = 'Create Package',
-  isLoading = false 
+  isLoading = false,
 }) => {
   const formik = useFormik({
     initialValues,
@@ -96,30 +103,51 @@ const PackageForm = ({
               label="Icon"
               error={formik.touched.pac_icon && Boolean(formik.errors.pac_icon)}
             >
-              <MenuItem value="fas fa-box">📦 Box</MenuItem>
+              {/* <MenuItem value="fas fa-box">📦 Box</MenuItem>
               <MenuItem value="fas fa-rocket">🚀 Rocket</MenuItem>
               <MenuItem value="fas fa-building">🏢 Building</MenuItem>
               <MenuItem value="fas fa-star">⭐ Star</MenuItem>
-              <MenuItem value="fas fa-crown">👑 Crown</MenuItem>
+              <MenuItem value="fas fa-crown">👑 Crown</MenuItem> */}
+
+              <MenuItem value="school">
+                <SchoolOutlinedIcon sx={{ mr: 1 }} />
+                School
+              </MenuItem>
+
+              <MenuItem value="agent">
+                <SupervisorAccountOutlinedIcon sx={{ mr: 1 }} />
+                Agent
+              </MenuItem>
+
+              <MenuItem value="module">
+                <ExtensionOutlinedIcon sx={{ mr: 1 }} />
+                Module
+              </MenuItem>
+
+              <MenuItem value="package">
+                <Inventory2OutlinedIcon sx={{ mr: 1 }} />
+                Package
+              </MenuItem>
+
+              <MenuItem value="term">
+                <CalendarTodayOutlinedIcon sx={{ mr: 1 }} />
+                Term
+              </MenuItem>
+
+              <MenuItem value="session">
+                <ScheduleOutlinedIcon sx={{ mr: 1 }} />
+                Session
+              </MenuItem>
             </Select>
           </FormControl>
         </Grid>
 
         <Grid size={{ xs: 12 }}>
           <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
-            <Button
-              variant="outlined"
-              onClick={onCancel}
-              type="button"
-              disabled={isLoading}
-            >
+            <Button variant="outlined" onClick={onCancel} type="button" disabled={isLoading}>
               Cancel
             </Button>
-            <Button
-              variant="contained"
-              type="submit"
-              disabled={isLoading || !formik.isValid}
-            >
+            <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
               {isLoading ? 'Saving...' : submitText}
             </Button>
           </Box>

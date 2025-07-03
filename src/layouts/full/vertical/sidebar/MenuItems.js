@@ -57,13 +57,14 @@ import {
   IconChartArcs3,
   IconChartPie,
   IconListTree,
+  IconWallet,
 
 } from '@tabler/icons-react';
 
 const Menuitems = [
   {
     navlabel: true,
-    subheader: 'Home',
+    subheader: 'Main Navigation',
   },
   {
     id: uniqueId(),
@@ -88,6 +89,12 @@ const Menuitems = [
     title: 'Package',
     icon: IconPackage,
     href: '/dashboards/package',
+  },
+  {
+    id: uniqueId(),
+    title: 'Gateway',
+    icon: IconWallet,
+    href: '/dashboards/gateway',
   },
   /*
   {
@@ -157,18 +164,18 @@ const Menuitems = [
     ],
   },
   */
-  {
-    navlabel: true,
-    subheader: 'Apps',
-  },
-  {
-    id: uniqueId(),
-    title: 'Contacts',
-    icon: IconPackage,
-    chip: '2',
-    chipColor: 'secondary',
-    href: '/apps/contacts',
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Apps',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Contacts',
+  //   icon: IconPackage,
+  //   chip: '2',
+  //   chipColor: 'secondary',
+  //   href: '/apps/contacts',
+  // },
 
   // {
   //   id: uniqueId(),
@@ -336,16 +343,16 @@ const Menuitems = [
   //   ],
   // },
 
-  {
-    navlabel: true,
-    subheader: 'Pages',
-  },
-  {
-    id: uniqueId(),
-    title: 'Pricing',
-    icon: IconCurrencyDollar,
-    href: '/pages/pricing',
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Pages',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Pricing',
+  //   icon: IconCurrencyDollar,
+  //   href: '/pages/pricing',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Account Setting',
@@ -488,16 +495,16 @@ const Menuitems = [
   //   icon: IconEdit,
   //   href: '/forms/form-tiptap',
   // },
-  {
-    navlabel: true,
-    subheader: 'Tables',
-  },
-  {
-    id: uniqueId(),
-    title: 'Basic',
-    icon: IconBorderAll,
-    href: '/tables/basic',
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Tables',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Basic',
+  //   icon: IconBorderAll,
+  //   href: '/tables/basic',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Collapsible',
@@ -608,17 +615,17 @@ const Menuitems = [
   //     },
   //   ],
   // },
-  {
-    navlabel: true,
-    subheader: 'Mui Charts',
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Mui Charts',
+  // },
 
-  {
-    id: uniqueId(),
-    title: 'BarCharts',
-    icon: IconChartHistogram,
-    href: '/muicharts/barcharts',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'BarCharts',
+  //   icon: IconChartHistogram,
+  //   href: '/muicharts/barcharts',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'LineCharts',
@@ -664,143 +671,143 @@ const Menuitems = [
   //   href: '/muicharts/gaugecharts',
   // },
 
-  {
-    navlabel: true,
-    subheader: 'Mui Trees',
-  },
-  {
-    id: uniqueId(),
-    title: 'SimpleTreeView',
-    icon: IconListTree,
-    href: '/mui-trees/simpletree/simpletree-items',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Items',
-        icon: IconPoint,
-        href: '/mui-trees/simpletree/simpletree-items',
-      },
-      {
-        id: uniqueId(),
-        title: 'Selection',
-        icon: IconPoint,
-        href: '/mui-trees/simpletree/simpletree-selection',
-      },
-      {
-        id: uniqueId(),
-        title: 'Expansion',
-        icon: IconPoint,
-        href: '/mui-trees/simpletree/simpletree-expansion',
-      },
-      {
-        id: uniqueId(),
-        title: 'Customization',
-        icon: IconPoint,
-        href: '/mui-trees/simpletree/simpletree-customization',
-      },
-      {
-        id: uniqueId(),
-        title: 'Focus',
-        icon: IconPoint,
-        href: '/mui-trees/simpletree/simpletree-focus',
-      },
-    ],
-  },
-  {
-    navlabel: true,
-    subheader: 'UI',
-  },
-  {
-    id: uniqueId(),
-    title: 'Ui Components',
-    icon: IconBox,
-    href: '/ui-components/alert',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Alert',
-        icon: IconPoint,
-        href: '/ui-components/alert',
-      },
-      {
-        id: uniqueId(),
-        title: 'Accordion',
-        icon: IconPoint,
-        href: '/ui-components/accordion',
-      },
-      {
-        id: uniqueId(),
-        title: 'Avatar',
-        icon: IconPoint,
-        href: '/ui-components/avatar',
-      },
-      {
-        id: uniqueId(),
-        title: 'Chip',
-        icon: IconPoint,
-        href: '/ui-components/chip',
-      },
-      {
-        id: uniqueId(),
-        title: 'Dialog',
-        icon: IconPoint,
-        href: '/ui-components/dialog',
-      },
-      {
-        id: uniqueId(),
-        title: 'List',
-        icon: IconPoint,
-        href: '/ui-components/list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Popover',
-        icon: IconPoint,
-        href: '/ui-components/popover',
-      },
-      {
-        id: uniqueId(),
-        title: 'Rating',
-        icon: IconPoint,
-        href: '/ui-components/rating',
-      },
-      {
-        id: uniqueId(),
-        title: 'Tabs',
-        icon: IconPoint,
-        href: '/ui-components/tabs',
-      },
-      {
-        id: uniqueId(),
-        title: 'Tooltip',
-        icon: IconPoint,
-        href: '/ui-components/tooltip',
-      },
-      {
-        id: uniqueId(),
-        title: 'Transfer List',
-        icon: IconPoint,
-        href: '/ui-components/transfer-list',
-      },
-      {
-        id: uniqueId(),
-        title: 'Typography',
-        icon: IconPoint,
-        href: '/ui-components/typography',
-      },
-    ],
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Mui Trees',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'SimpleTreeView',
+  //   icon: IconListTree,
+  //   href: '/mui-trees/simpletree/simpletree-items',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Items',
+  //       icon: IconPoint,
+  //       href: '/mui-trees/simpletree/simpletree-items',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Selection',
+  //       icon: IconPoint,
+  //       href: '/mui-trees/simpletree/simpletree-selection',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Expansion',
+  //       icon: IconPoint,
+  //       href: '/mui-trees/simpletree/simpletree-expansion',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Customization',
+  //       icon: IconPoint,
+  //       href: '/mui-trees/simpletree/simpletree-customization',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Focus',
+  //       icon: IconPoint,
+  //       href: '/mui-trees/simpletree/simpletree-focus',
+  //     },
+  //   ],
+  // },
+  // {
+  //   navlabel: true,
+  //   subheader: 'UI',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Ui Components',
+  //   icon: IconBox,
+  //   href: '/ui-components/alert',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Alert',
+  //       icon: IconPoint,
+  //       href: '/ui-components/alert',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Accordion',
+  //       icon: IconPoint,
+  //       href: '/ui-components/accordion',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Avatar',
+  //       icon: IconPoint,
+  //       href: '/ui-components/avatar',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Chip',
+  //       icon: IconPoint,
+  //       href: '/ui-components/chip',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Dialog',
+  //       icon: IconPoint,
+  //       href: '/ui-components/dialog',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'List',
+  //       icon: IconPoint,
+  //       href: '/ui-components/list',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Popover',
+  //       icon: IconPoint,
+  //       href: '/ui-components/popover',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Rating',
+  //       icon: IconPoint,
+  //       href: '/ui-components/rating',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Tabs',
+  //       icon: IconPoint,
+  //       href: '/ui-components/tabs',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Tooltip',
+  //       icon: IconPoint,
+  //       href: '/ui-components/tooltip',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Transfer List',
+  //       icon: IconPoint,
+  //       href: '/ui-components/transfer-list',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Typography',
+  //       icon: IconPoint,
+  //       href: '/ui-components/typography',
+  //     },
+  //   ],
+  // },
 
-  {
-    navlabel: true,
-    subheader: 'Charts',
-  },
-  {
-    id: uniqueId(),
-    title: 'Line',
-    icon: IconChartLine,
-    href: '/charts/line-chart',
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Charts',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Line',
+  //   icon: IconChartLine,
+  //   href: '/charts/line-chart',
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Gredient',
@@ -837,31 +844,31 @@ const Menuitems = [
   //   icon: IconChartRadar,
   //   href: '/charts/radialbar-chart',
   // },
-  {
-    navlabel: true,
-    subheader: 'Auth',
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Auth',
+  // },
 
-  {
-    id: uniqueId(),
-    title: 'Login',
-    icon: IconLogin,
-    href: '/auth/login',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Side Login',
-        icon: IconPoint,
-        href: '/auth/login',
-      },
-      {
-        id: uniqueId(),
-        title: 'Boxed Login',
-        icon: IconPoint,
-        href: '/auth/login2',
-      },
-    ],
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Login',
+  //   icon: IconLogin,
+  //   href: '/auth/login',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Side Login',
+  //       icon: IconPoint,
+  //       href: '/auth/login',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Boxed Login',
+  //       icon: IconPoint,
+  //       href: '/auth/login2',
+  //     },
+  //   ],
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Register',
@@ -936,58 +943,58 @@ const Menuitems = [
   //   href: '/auth/maintenance',
   // },
 
-  {
-    navlabel: true,
-    subheader: 'Other',
-  },
-  {
-    id: uniqueId(),
-    title: 'Menu Level',
-    icon: IconBoxMultiple,
-    href: '/menulevel/',
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Level 1',
-        icon: IconPoint,
-        href: '/l1',
-      },
-      {
-        id: uniqueId(),
-        title: 'Level 1.1',
-        icon: IconPoint,
-        href: '/l1.1',
-        children: [
-          {
-            id: uniqueId(),
-            title: 'Level 2',
-            icon: IconPoint,
-            href: '/l2',
-          },
-          {
-            id: uniqueId(),
-            title: 'Level 2.1',
-            icon: IconPoint,
-            href: '/l2.1',
-            children: [
-              {
-                id: uniqueId(),
-                title: 'Level 3',
-                icon: IconPoint,
-                href: '/l3',
-              },
-              {
-                id: uniqueId(),
-                title: 'Level 3.1',
-                icon: IconPoint,
-                href: '/l3.1',
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
+  // {
+  //   navlabel: true,
+  //   subheader: 'Other',
+  // },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Menu Level',
+  //   icon: IconBoxMultiple,
+  //   href: '/menulevel/',
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Level 1',
+  //       icon: IconPoint,
+  //       href: '/l1',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Level 1.1',
+  //       icon: IconPoint,
+  //       href: '/l1.1',
+  //       children: [
+  //         {
+  //           id: uniqueId(),
+  //           title: 'Level 2',
+  //           icon: IconPoint,
+  //           href: '/l2',
+  //         },
+  //         {
+  //           id: uniqueId(),
+  //           title: 'Level 2.1',
+  //           icon: IconPoint,
+  //           href: '/l2.1',
+  //           children: [
+  //             {
+  //               id: uniqueId(),
+  //               title: 'Level 3',
+  //               icon: IconPoint,
+  //               href: '/l3',
+  //             },
+  //             {
+  //               id: uniqueId(),
+  //               title: 'Level 3.1',
+  //               icon: IconPoint,
+  //               href: '/l3.1',
+  //             },
+  //           ],
+  //         },
+  //       ],
+  //     },
+  //   ],
+  // },
   // {
   //   id: uniqueId(),
   //   title: 'Disabled',

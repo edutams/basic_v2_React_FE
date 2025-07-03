@@ -69,7 +69,7 @@ const baselightTheme = {
     },
 
     header: {
-      bg: "#ffffff", // or your preferred light color
+      bg: "#ffffff", 
     },
     
   },
@@ -145,7 +145,7 @@ const baseDarkTheme = {
     },
 
     header: {
-      bg: "#1c1f26", // or your preferred dark color
+      bg: "#1c1f26", 
     },
     
   },

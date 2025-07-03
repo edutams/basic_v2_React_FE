@@ -41,15 +41,15 @@ const ConfirmationDialog = ({
     <Box sx={{ display: 'flex', gap: 1 }}>
       <Button
         onClick={onClose}
-        // color={cancelColor}
-        // variant={cancelVariant}
+        color={cancelColor}
+        variant={cancelVariant}
       >
         {cancelText}
       </Button>
       <Button
         onClick={handleConfirm}
-        // color={getSeverityColor()}
-        // variant={confirmVariant}
+        color={getSeverityColor()}
+        variant={confirmVariant}
         autoFocus
       >
         {confirmText}

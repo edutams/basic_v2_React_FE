@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 
 const GatewayForm = ({
   initialValues = {
-    // gateway_name: '',
+    gateway_name: '',
     gateway_status: 'active',
   },
   onSubmit,
@@ -29,23 +29,22 @@ const GatewayForm = ({
 
   return (
     <Box component="form" onSubmit={formik.handleSubmit}>
-      <Grid container spacing={3}>
+      <Grid container direction="column" spacing={3}>
         <Grid item xs={12}>
           <TextField
             label="Gateway Name"
             name="gateway_name"
-            // value={formik.values.gateway_name}
+            value={formik.values.gateway_name || ''}
             onChange={formik.handleChange}
             fullWidth
-            required
           />
         </Grid>
 
         <Grid item xs={12}>
           <FormControl fullWidth>
             <Select
-            //   name="gateway_status"
-            //   value={formik.values.gateway_status}
+              name="gateway_status"
+              value={formik.values.gateway_status || ''}
               onChange={formik.handleChange}
               displayEmpty
             >
@@ -64,7 +63,7 @@ const GatewayForm = ({
             <Button
               variant="contained"
               type="submit"
-            //   disabled={isLoading || !formik.values.gateway_name}
+              disabled={isLoading || !formik.values.gateway_name}
             >
               {isLoading ? 'Saving...' : submitText}
             </Button>

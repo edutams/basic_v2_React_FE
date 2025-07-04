@@ -27,13 +27,16 @@ const GatewayManagement = ({
 
   const handleGatewayAction = (action, gateway = null) => {
     setActionType(action);
-    setSelectedGateway(gateway);
-
-    if (action === 'delete') {
+    if (action === 'create') {
+      setSelectedGateway(null);
+      setGatewayModalOpen(true);
+    } else if (action === 'update') {
+      setSelectedGateway(gateway);
+      setGatewayModalOpen(true);
+    } else if (action === 'delete') {
+      setSelectedGateway(gateway);
       setGatewayToDelete(gateway);
       setDeleteDialogOpen(true);
-    } else {
-      setGatewayModalOpen(true);
     }
   };
 
@@ -93,4 +96,26 @@ GatewayManagement.propTypes = {
   isLoading: PropTypes.bool,
 };
 
-export default GatewayManagement;
+export default function GatewayPage() {
+  const [gateways, setGateways] = useState([
+    { id: 1, gateway_name: 'Auto_credit', gateway_status: 'active' },
+  ]);
+
+  const handleGatewayUpdate = (gatewayData, operation) => {
+    if (operation === 'create') {
+      setGateways((prev) => [...prev, gatewayData]);
+    } else if (operation === 'update') {
+      setGateways((prev) => prev.map((g) => g.id === gatewayData.id ? gatewayData : g));
+    } else if (operation === 'delete') {
+      setGateways((prev) => prev.filter((g) => g.id !== gatewayData.id));
+    }
+  };
+
+  return (
+    <GatewayManagement
+      gateways={gateways}
+      onGatewayUpdate={handleGatewayUpdate}
+      isLoading={false}
+    />
+  );
+}

@@ -46,9 +46,10 @@ const GatewayModal = ({
       size={modalConfig.size}
     >
       <GatewayForm
+        key={actionType === 'create' ? 'create' : selectedGateway?.id || 'update'}
         onSubmit={handleSubmit}
         onCancel={onClose}
-        initialValues={selectedGateway}
+        initialValues={selectedGateway || { gateway_name: '', gateway_status: 'active' }}
         isLoading={isLoading}
         submitText={actionType === 'create' ? 'Register' : 'Update'}
       />

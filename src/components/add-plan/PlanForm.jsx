@@ -65,9 +65,9 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
     onSubmit({
       ...formData,
       price: parseFloat(formData.price) || 0,
-      // studentLimit is submitted as a string (e.g., '1-50') since it represents a range
+      
     });
-    // Reset form after submission in create mode
+    
     if (actionType === 'create') {
       setFormData({
         name: '',

@@ -30,23 +30,24 @@ import ReusableModal from '../../components/shared/ReusableModal';
 import PlanForm from '../../components/add-plan/PlanForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
-const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'My Plans' }];
 
-const Plan = () => {
+const MyPlan = () => {
   const [open, setOpen] = useState(false);
-  const [plans, setPlans] = useState([]); // Initialize with empty array
+  const [openViewModal, setOpenViewModal] = useState(false);
+  const [plans, setPlans] = useState([]); // Initialize with empty array or mock data
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [actionType, setActionType] = useState('create');
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [planToDelete, setPlanToDelete] = useState(null);
+  const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
+  const [planToDeactivate, setPlanToDeactivate] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [lockSubscription, setLockSubscription] = useState(false); // State for toggle
+  const [lockSubscription, setLockSubscription] = useState(false);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -69,11 +70,16 @@ const Plan = () => {
     setSelectedPlan(null);
   };
 
+  const handleViewClose = () => {
+    setOpenViewModal(false);
+    setSelectedPlan(null);
+  };
+
   const handleAddPlan = (newPlan) => {
     if (actionType === 'update') {
       setPlans(plans.map((plan) => (plan.id === newPlan.id ? newPlan : plan)));
     } else {
-      setPlans([...plans, { ...newPlan, id: plans.length + 1 }]);
+      setPlans([...plans, { ...newPlan, id: plans.length + 1, status: 'Active' }]);
     }
     setSnackbarMessage(`Plan ${actionType === 'create' ? 'added' : 'updated'} successfully`);
     setSnackbarSeverity('success');
@@ -91,22 +97,36 @@ const Plan = () => {
     setActiveRow(null);
   };
 
-  const handleOpenDeleteDialog = (plan) => {
+  const handleOpenDeactivateDialog = (plan) => {
     handleActionClose();
     setTimeout(() => {
-      setPlanToDelete(plan);
-      setOpenDeleteDialog(true);
+      setPlanToDeactivate(plan);
+      setOpenDeactivateDialog(true);
     }, 100);
   };
 
-  const handleDeletePlan = () => {
-    if (planToDelete) {
-      setPlans((prev) => prev.filter((p) => p.id !== planToDelete.id));
-      setOpenDeleteDialog(false);
-      setSnackbarMessage('Plan deleted successfully');
+  const handleDeactivatePlan = () => {
+    if (planToDeactivate) {
+      setPlans((prev) =>
+        prev.map((p) =>
+          p.id === planToDeactivate.id
+            ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' }
+            : p
+        )
+      );
+      setOpenDeactivateDialog(false);
+      setSnackbarMessage(
+        `Plan ${planToDeactivate.status === 'Active' ? 'deactivated' : 'activated'} successfully`
+      );
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     }
+  };
+
+  const handleViewPlan = (plan) => {
+    setSelectedPlan(plan);
+    setOpenViewModal(true);
+    handleActionClose();
   };
 
   const handleLockSubscriptionChange = (event) => {
@@ -119,8 +139,8 @@ const Plan = () => {
   const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <PageContainer title="Plans" description="This is the Plans page">
-      <Breadcrumb title="Plans" items={BCrumb} />
+    <PageContainer title="My Plans" description="This is the My Plans page">
+      <Breadcrumb title="My Plans" items={BCrumb} />
       <ParentCard
         title={
           <Box
@@ -131,7 +151,7 @@ const Plan = () => {
               width: '100%',
             }}
           >
-            <Typography variant="h4">All Plans</Typography>
+            <Typography variant="h4">All My Plans</Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <FormControlLabel
                 control={
@@ -154,7 +174,7 @@ const Plan = () => {
       >
         <Paper variant="outlined">
           <TableContainer>
-            <Table aria-label="plan table" sx={{ whiteSpace: 'nowrap' }}>
+            <Table aria-label="my plan table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
                   <TableCell>
@@ -170,7 +190,7 @@ const Plan = () => {
                     <Typography variant="h6">Base Price (₦)</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="h6">Price (₦)</Typography>
+                    <Typography variant="h6">Additional Price (₦)</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="h6">Student Limit</Typography>
@@ -210,6 +230,11 @@ const Plan = () => {
                         <Typography variant="h6">₦{plan.price.toFixed(2)}</Typography>
                       </TableCell>
                       <TableCell>
+                        <Typography variant="h6">
+                          ₦{(plan.additionalPrice || 0).toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
                         <Typography variant="h6">{plan.studentLimit}</Typography>
                       </TableCell>
                       <TableCell>
@@ -240,17 +265,20 @@ const Plan = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleOpen('update', plan)}>Edit Plan</MenuItem>
-                          <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
-                            Delete Plan
+                          <MenuItem onClick={() => handleOpen('update', plan)}>
+                            Edit Plan Detail
                           </MenuItem>
+                          <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
+                            {plan.status === 'Active' ? 'Deactivate' : 'Activate'}
+                          </MenuItem>
+                          <MenuItem onClick={() => handleViewPlan(plan)}>View Plan</MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center', padding: '40px 0' }}>
+                    <TableCell colSpan={8} sx={{ textAlign: 'center', padding: '40px 0' }}>
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <IconSchool
                           width={48}
@@ -291,7 +319,7 @@ const Plan = () => {
         <ReusableModal
           open={open}
           onClose={handleClose}
-          title={actionType === 'create' ? 'Add New Plan' : 'Edit Plan'}
+          title={actionType === 'create' ? 'Add New Plan' : 'Edit Plan Detail'}
           size="medium"
           showDivider={true}
           showCloseButton={true}
@@ -304,16 +332,53 @@ const Plan = () => {
           />
         </ReusableModal>
 
+        <ReusableModal
+          open={openViewModal}
+          onClose={handleViewClose}
+          title="View Plan Details"
+          size="medium"
+          showDivider={true}
+          showCloseButton={true}
+        >
+          <Box sx={{ p: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Name: {selectedPlan?.name}
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              Description: {selectedPlan?.description}
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Base Price: ₦{selectedPlan?.price?.toFixed(2)}
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Additional Price: ₦{(selectedPlan?.additionalPrice || 0).toFixed(2)}
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Student Limit: {selectedPlan?.studentLimit}
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Status: {selectedPlan?.status}
+            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button onClick={handleViewClose} color="inherit" variant="outlined">
+                Close
+              </Button>
+            </Box>
+          </Box>
+        </ReusableModal>
+
         <ConfirmationDialog
-          open={openDeleteDialog}
-          onClose={() => setOpenDeleteDialog(false)}
-          onConfirm={handleDeletePlan}
-          title="Delete Plan"
-          message={`Are you sure you want to delete ${planToDelete?.name}? This action is irreversible.`}
-          confirmText="Delete"
+          open={openDeactivateDialog}
+          onClose={() => setOpenDeactivateDialog(false)}
+          onConfirm={handleDeactivatePlan}
+          title={planToDeactivate?.status === 'Active' ? 'Deactivate Plan' : 'Activate Plan'}
+          message={`Are you sure you want to ${
+            planToDeactivate?.status === 'Active' ? 'deactivate' : 'activate'
+          } ${planToDeactivate?.name}?`}
+          confirmText={planToDeactivate?.status === 'Active' ? 'Deactivate' : 'Activate'}
           cancelText="Cancel"
-          confirmColor="error"
-          severity="error"
+          confirmColor={planToDeactivate?.status === 'Active' ? 'error' : 'success'}
+          severity={planToDeactivate?.status === 'Active' ? 'error' : 'success'}
         />
 
         <Snackbar
@@ -335,4 +400,4 @@ const Plan = () => {
   );
 };
 
-export default Plan;
+export default MyPlan;

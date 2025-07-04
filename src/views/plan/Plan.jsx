@@ -20,6 +20,7 @@ import {
   Alert,
   Switch,
   FormControlLabel,
+  Grid,
 } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -29,12 +30,15 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ReusableModal from '../../components/shared/ReusableModal';
 import PlanForm from '../../components/add-plan/PlanForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import PackageModal from '../../components/package/PackageModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
 
 const Plan = () => {
   const [open, setOpen] = useState(false);
-  const [plans, setPlans] = useState([]); // Initialize with empty array
+  const [openPackageModal, setOpenPackageModal] = useState(false);
+  const [openManagePackagesModal, setOpenManagePackagesModal] = useState(false);
+  const [plans, setPlans] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [actionType, setActionType] = useState('create');
@@ -46,7 +50,212 @@ const Plan = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [lockSubscription, setLockSubscription] = useState(false); // State for toggle
+  const [lockSubscription, setLockSubscription] = useState(false);
+  const [packagePermissions, setPackagePermissions] = useState({});
+
+  // Combined permission tree in preferred order
+  const combinedPackageTree = [
+    {
+      label: 'Dashboard',
+      children: [{ label: 'Chart' }],
+    },
+    {
+      label: 'Setup',
+      children: [
+        { label: 'Installation Process' },
+        {
+          label: 'Academics',
+          children: [
+            { label: 'School Manager' },
+            { label: 'Class Manager' },
+            { label: 'Division/Programme Manager' },
+            { label: 'Session/Weeks Manager' },
+            { label: 'Class Subject Manager' },
+            { label: 'Scheme Of Work' },
+          ],
+        },
+        {
+          label: 'Subscriptions',
+          children: [
+            { label: 'Manage Subscriptions' },
+            { label: 'Transaction History' },
+          ],
+        },
+        {
+          label: 'User Management',
+          children: [
+            { label: 'Staff Manager' },
+            { label: 'Parents Manager' },
+            { label: 'Student Manager' },
+          ],
+        },
+        { label: 'Roles & Permission' },
+        {
+          label: 'Allocations',
+          children: [
+            { label: 'Position Allocation' },
+            { label: 'Subject-Teacher Allocation' },
+            { label: 'Class-teacher Allocation' },
+          ],
+        },
+        { label: 'Activity Log' },
+        { label: 'Student Registration' },
+      ],
+    },
+    {
+      label: 'Bursary',
+      children: [
+        {
+          label: 'Setup',
+          children: [
+            { label: 'Payment Instalment' },
+            { label: 'Payment Name' },
+            { label: 'Bursary Settings' },
+            { label: 'Student Payment Category' },
+          ],
+        },
+        {
+          label: 'Schedule Fees',
+          children: [
+            { label: 'Pay Fees' },
+            { label: 'Pay Cash' },
+          ],
+        },
+        { label: 'History' },
+        {
+          label: 'Report',
+          children: [
+            { label: 'Payment List' },
+            { label: 'Debtors List' },
+          ],
+        },
+        {
+          label: 'Student Account',
+          children: [
+            { label: 'Class Ledger' },
+            { label: 'Set Schedule' },
+            { label: 'Generate Invoice' },
+            { label: 'Send Invoice' },
+            { label: 'Pay Fees' },
+            { label: 'Pay Cash' },
+            { label: 'Report' },
+          ],
+        },
+        {
+          label: 'Online Transactions',
+          children: [
+            { label: 'Transaction' },
+            { label: 'Revenue' },
+            { label: 'Settlement' },
+            { label: 'Reconciliation' },
+          ],
+        },
+        {
+          label: 'Wallet',
+          children: [
+            { label: 'Student' },
+            { label: 'School' },
+          ],
+        },
+        { label: 'Payment History' },
+      ],
+    },
+    {
+      label: 'Admission',
+      children: [
+        {
+          label: 'Setup',
+          children: [{ label: 'Manage Admission' }],
+        },
+        { label: 'Application Processing' },
+        { label: 'Admission Report' },
+        { label: 'My Application' },
+      ],
+    },
+    {
+      label: 'Digital Class',
+      children: [
+        { label: 'Live Class' },
+        { label: 'Recorded Class' },
+        { label: 'Lesson Note' },
+      ],
+    },
+    {
+      label: 'Forum',
+      children: [{ label: 'Forum' }],
+    },
+    {
+      label: 'Attendance',
+      children: [
+        { label: 'Take Attendance' },
+        { label: 'Attendance Report' },
+        { label: 'Affective & Psychomotor Domains' },
+      ],
+    },
+    {
+      label: 'E-Resources',
+      children: [
+        { label: 'e-Resources' },
+        { label: 'Video Tutorials' },
+        { label: 'Lesson Note (Student)' },
+        { label: 'Lesson Note (Teacher)' },
+      ],
+    },
+    {
+      label: 'Messaging',
+      children: [{ label: 'Manage Messages' }],
+    },
+    {
+      label: 'My Wards',
+      children: [{ label: 'My Wards' }],
+    },
+    {
+      label: 'Result',
+      children: [
+        { label: 'Setup' },
+        { label: 'Upload Scores' },
+        { label: 'Result Consideration' },
+        { label: 'Result Edit' },
+        { label: 'Score Sheet' },
+        { label: 'Broadsheet' },
+        { label: 'Summary Sheet' },
+        { label: 'Continuous Assessment' },
+        { label: 'Report Card' },
+        { label: 'Report Sheet' },
+        { label: 'Comment Bank' },
+      ],
+    },
+    {
+      label: 'Quiz',
+      children: [
+        { label: 'Setup' },
+        { label: 'Quiz Bank' },
+        { label: 'My Quiz' },
+        { label: 'Quiz Report' },
+      ],
+    },
+    {
+      label: 'Homework',
+      children: [
+        { label: 'Setup' },
+        { label: 'Question Bank' },
+        { label: 'My Homework' },
+      ],
+    },
+    {
+      label: 'OGSERA',
+      children: [
+        { label: 'Generate LIN' },
+        { label: 'Sync Registration to OGSERA' },
+        { label: 'Sync Staff to OGSERA' },
+        { label: 'Learners Placement' },
+        { label: 'BECE Result' },
+        { label: 'Subject Mapping' },
+        { label: 'Data Update' },
+        { label: 'Student Transfer' },
+      ],
+    },
+  ];
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -60,11 +269,16 @@ const Plan = () => {
   const handleOpen = (type = 'create', plan = null) => {
     setActionType(type);
     setSelectedPlan(plan);
-    setOpen(true);
+    if (type === 'managePackages') {
+      setOpenPackageModal(true);
+    } else {
+      setOpen(true);
+    }
   };
 
   const handleClose = () => {
     setOpen(false);
+    setOpenPackageModal(false);
     setActionType('create');
     setSelectedPlan(null);
   };
@@ -115,6 +329,52 @@ const Plan = () => {
     setSnackbarSeverity('info');
     setSnackbarOpen(true);
   };
+
+  const handleOpenManagePackages = (plan) => {
+    setSelectedPlan(plan);
+    setOpenManagePackagesModal(true);
+  };
+
+  const handleCloseManagePackages = () => {
+    setOpenManagePackagesModal(false);
+    setSelectedPlan(null);
+  };
+
+  const handleTogglePermission = (path) => {
+    setPackagePermissions((prev) => {
+      const key = path.join('>');
+      const newPermissions = { ...prev };
+      if (newPermissions[key]) {
+        delete newPermissions[key];
+      } else {
+        newPermissions[key] = true;
+      }
+      return newPermissions;
+    });
+  };
+
+  const renderTree = (nodes, path = []) => (
+    <Box sx={{ ml: path.length ? 3 : 0, mt: 1 }}>
+      {nodes.map((node) => {
+        const currentPath = [...path, node.label];
+        const checked = !!packagePermissions[currentPath.join('>')];
+        return (
+          <Box key={currentPath.join('>')} sx={{ mb: 1 }}>
+            <label style={{ fontWeight: path.length === 0 ? 'bold' : 'normal' }}>
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => handleTogglePermission(currentPath)}
+                style={{ marginRight: 8 }}
+              />
+              {node.label}
+            </label>
+            {node.children && renderTree(node.children, currentPath)}
+          </Box>
+        );
+      })}
+    </Box>
+  );
 
   const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -238,6 +498,7 @@ const Plan = () => {
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
                           <MenuItem onClick={() => handleOpen('update', plan)}>Edit Plan</MenuItem>
+                          <MenuItem onClick={() => handleOpenManagePackages(plan)}>Manage Packages</MenuItem>
                           <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
                             Delete Plan
                           </MenuItem>
@@ -327,6 +588,43 @@ const Plan = () => {
             {snackbarMessage}
           </Alert>
         </Snackbar>
+
+        {openPackageModal && (
+          <PackageModal
+            open={openPackageModal}
+            onClose={handleClose}
+            handleRefresh={() => {}}
+            selectedPackage={selectedPlan}
+            actionType="update"
+          />
+        )}
+
+        <ReusableModal
+          open={openManagePackagesModal}
+          onClose={handleCloseManagePackages}
+          title="Manage Basic Plan"
+          size="large"
+          showDivider={true}
+          showCloseButton={true}
+        >
+          <Box sx={{ mt: 4 }}>
+            <Grid container spacing={2}>
+              {combinedPackageTree.map((section) => (
+                <Grid item xs={12} sm={4} key={section.label}>
+                  {renderTree([section])}
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4, gap: 2 }}>
+            <Button onClick={handleCloseManagePackages} color="inherit" variant="outlined">
+              Cancel
+            </Button>
+            <Button onClick={() => {/* handle save logic here */}} color="primary" variant="contained">
+              Save
+            </Button>
+          </Box>
+        </ReusableModal>
       </ParentCard>
     </PageContainer>
   );

@@ -244,7 +244,7 @@ const RegisterSchoolForm = ({ actionType, selectedAgent, onSubmit, onCancel }) =
             >
               <MenuItem value="">-- Choose --</MenuItem>
               <MenuItem value="lagos">Lagos</MenuItem>
-              <MenuItem value="abuja">Abuja</MenuItem>
+              <MenuItem value="ogun">Ogun</MenuItem>
             </Select>
             {formik.touched.stateFilter && formik.errors.stateFilter && (
               <FormHelperText>{formik.errors.stateFilter}</FormHelperText>

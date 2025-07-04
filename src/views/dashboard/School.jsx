@@ -26,6 +26,7 @@ import {
   TablePagination,
   Snackbar,
   Alert,
+  Chip,
 } from '@mui/material';
 import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import ReusableModal from '../../components/shared/ReusableModal';
@@ -345,10 +346,7 @@ const SchoolDashboard = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
-      <BlankCard>
-        <TableContainer>
-          <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
-            <Box
+       <Box
               sx={{
                 display: 'grid',
                 gridTemplateColumns: {
@@ -443,6 +441,10 @@ const SchoolDashboard = () => {
                 </Paper>
               ))}
             </Box>
+      <BlankCard>
+        <TableContainer>
+          <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
+           
 
             <Box
               sx={{
@@ -611,18 +613,59 @@ const SchoolDashboard = () => {
                         <TableCell>
                           <Box
                             sx={{
+                              display: 'inline-block',
                               width: 40,
-                              height: 40,
-                              display: 'flex',
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              backgroundColor: row.colourScheme || '#000000',
-                              borderRadius: 1,
-                              border: '1px solid #ccc',
+                              height: 30,
+                              borderRadius: '5px',
+                              overflow: 'hidden',
                             }}
+                            title={`Header: ${row.headerColor || '#1976d2'} | Sidebar: ${row.sidebarColor || '#2196f3'} | Body: ${row.bodyColor || row.colourScheme || '#f5f5f5'}`}
+                          >
+                            <Box
+                              sx={{
+                                width: '100%',
+                                height: '30%',
+                                backgroundColor: row.headerColor || '#1976d2',
+                                borderRadius: 0,
+                              }}
+                            />
+                            <Box sx={{ display: 'flex', height: '70%' }}>
+                              <Box
+                                sx={{
+                                  width: '50%',
+                                  height: '100%',
+                                  backgroundColor: row.sidebarColor || '#2196f3',
+                                  borderRadius: 0,
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  width: '50%',
+                                  height: '100%',
+                                  backgroundColor: row.bodyColor || row.colourScheme || '#f5f5f5',
+                                  borderRadius: 0,
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            sx={{
+                              bgcolor:
+                                row.status === 'Active'
+                                  ? (theme) => theme.palette.success.light
+                                  : (theme) => theme.palette.primary.light,
+                              color:
+                                row.status === 'Active'
+                                  ? (theme) => theme.palette.success.main
+                                  : (theme) => theme.palette.primary.main,
+                              borderRadius: '8px',
+                            }}
+                            size="small"
+                            label={row.status || 'Unknown'}
                           />
                         </TableCell>
-                        <TableCell>{row.status}</TableCell>
                         <TableCell>
                           <IconButton onClick={(e) => handleActionClick(e, row.id)}>
                             <MoreVertIcon />

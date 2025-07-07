@@ -230,129 +230,146 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
       </Paper>
 
       <Box sx={{ mb: 3 }}>
-  <Typography variant="h6" color="primary" mb={3}>
-    Custom Permission Settings
-  </Typography>
+        <Typography variant="h6" color="primary" mb={3}>
+          Custom Permission Settings
+        </Typography>
 
-  <Box
-    sx={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: 2, 
-      justifyContent: 'space-between',
-    }}
-  >
-    {Object.entries(permissionCategories).map(([category, permissions]) => {
-      const selectedCount = getPermissionCount(permissions);
-      const allSelected = selectedCount === permissions.length;
-
-      return (
-        <Paper
-          key={category}
-          // variant="outlined"
+        <Box
           sx={{
-            mb: 2,
-            overflow: 'hidden',
-            // border: selectedCount > 0 ? '2px solid' : '1px solid',
-            // borderColor: selectedCount > 0 ? 'primary.main' : 'divider',
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              boxShadow: 2,
-              borderColor: 'primary.light',
-            },
-            flex: '1 1 calc(50% - 8px)', 
-            minWidth: 0, 
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            justifyContent: 'space-between',
           }}
         >
+          {Object.entries(permissionCategories).map(([category, permissions]) => {
+            const selectedCount = getPermissionCount(permissions);
+            const allSelected = selectedCount === permissions.length;
 
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: 'primary.light',
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box display="flex" alignItems="center" gap={2}>
-              <Typography variant="h6" color={selectedCount > 0 ? 'primary.dark' : 'text.primary'}>
-                {category}
-              </Typography>
-              <Chip
-                label={`${selectedCount}/${permissions.length}`}
-                size="small"
-                color={selectedCount > 0 ? 'primary' : 'default'}
-                // variant={selectedCount > 0 ? 'filled' : 'outlined'}
-              />
-            </Box>
-            <Button
-              size="small"
-              onClick={() => handleSelectAll(permissions)}
-              // variant={allSelected ? 'contained' : 'outlined'}
-              color="primary"
-              sx={{ minWidth: 120 }}
-            >
-              {allSelected ? 'Deselect All' : 'Select All'}
-            </Button>
-          </Box>
-
-          <Box sx={{ p: 2 }}>
-            {permissions.map((permission, index) => (
-              <Box
-                key={permission.id}
+            return (
+              <Paper
+                key={category}
+                // variant="outlined"
                 sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  p: 1.5,
-                  mb: index < permissions.length - 1 ? 1 : 0,
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: selectedPermissions.includes(permission.id) ? 'primary.main' : 'grey.300',
-                  bgcolor: selectedPermissions.includes(permission.id) ? 'primary.light' : 'background.paper',
-                  cursor: 'pointer',
+                  mb: 2,
+                  overflow: 'hidden',
+                  // border: selectedCount > 0 ? '2px solid' : '1px solid',
+                  // borderColor: selectedCount > 0 ? 'primary.main' : 'divider',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
-                    borderColor: 'primary.main',
-                    bgcolor: selectedPermissions.includes(permission.id) ? 'primary.light' : 'primary.light',
-                    opacity: selectedPermissions.includes(permission.id) ? 1 : 0.8,
+                    boxShadow: 2,
+                    borderColor: 'primary.light',
                   },
+                  flex: '1 1 calc(50% - 8px)',
+                  minWidth: 0,
                 }}
-                onClick={() => handlePermissionChange(permission.id, !selectedPermissions.includes(permission.id))}
               >
-                <Checkbox
-                  checked={selectedPermissions.includes(permission.id)}
-                  onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
-                  color="primary"
-                  size="small"
-                  sx={{ mt: -0.5 }}
-                />
-                <Box sx={{ ml: 1, flex: 1 }}>
-                  <Typography
-                    variant="body2"
-                    fontWeight="medium"
-                    color={selectedPermissions.includes(permission.id) ? 'primary.dark' : 'text.primary'}
-                    sx={{ mb: 0.5 }}
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: 'primary.light',
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Typography
+                      variant="h6"
+                      color={selectedCount > 0 ? 'primary.dark' : 'text.primary'}
+                    >
+                      {category}
+                    </Typography>
+                    <Chip
+                      label={`${selectedCount}/${permissions.length}`}
+                      size="small"
+                      color={selectedCount > 0 ? 'primary' : 'default'}
+                      // variant={selectedCount > 0 ? 'filled' : 'outlined'}
+                    />
+                  </Box>
+                  <Button
+                    size="small"
+                    onClick={() => handleSelectAll(permissions)}
+                    // variant={allSelected ? 'contained' : 'outlined'}
+                    color="primary"
+                    sx={{ minWidth: 120 }}
                   >
-                    {permission.label}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', lineHeight: 1.3 }}
-                  >
-                    {permission.description}
-                  </Typography>
+                    {allSelected ? 'Deselect All' : 'Select All'}
+                  </Button>
                 </Box>
-              </Box>
-            ))}
-          </Box>
-        </Paper>
-      );
-    })}
-  </Box>
-</Box>
+
+                <Box sx={{ p: 2 }}>
+                  {permissions.map((permission, index) => (
+                    <Box
+                      key={permission.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        p: 1.5,
+                        mb: index < permissions.length - 1 ? 1 : 0,
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: selectedPermissions.includes(permission.id)
+                          ? 'primary.main'
+                          : 'grey.300',
+                        bgcolor: selectedPermissions.includes(permission.id)
+                          ? 'primary.light'
+                          : 'background.paper',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease-in-out',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          bgcolor: selectedPermissions.includes(permission.id)
+                            ? 'primary.light'
+                            : 'primary.light',
+                          opacity: selectedPermissions.includes(permission.id) ? 1 : 0.8,
+                        },
+                      }}
+                      onClick={() =>
+                        handlePermissionChange(
+                          permission.id,
+                          !selectedPermissions.includes(permission.id),
+                        )
+                      }
+                    >
+                      <Checkbox
+                        checked={selectedPermissions.includes(permission.id)}
+                        onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
+                        color="primary"
+                        size="small"
+                        sx={{ mt: -0.5 }}
+                      />
+                      <Box sx={{ ml: 1, flex: 1 }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight="medium"
+                          color={
+                            selectedPermissions.includes(permission.id)
+                              ? 'primary.dark'
+                              : 'text.primary'
+                          }
+                          sx={{ mb: 0.5 }}
+                        >
+                          {permission.label}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block', lineHeight: 1.3 }}
+                        >
+                          {permission.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Paper>
+            );
+          })}
+        </Box>
+      </Box>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>

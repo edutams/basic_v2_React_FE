@@ -6,6 +6,8 @@ import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { SnackbarProvider } from './context/SnackbarContext';
 import  ErrorBoundary  from './ErrorBoundary';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 async function deferRender() {
   const { worker } = await import("./api/mocks/browser");
@@ -17,15 +19,17 @@ async function deferRender() {
 deferRender().then(() => {
   ReactDOM.createRoot(document.getElementById('root')).render(
     
-    <CustomizerContextProvider>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <CustomizerContextProvider>
       <SnackbarProvider>
-        <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<Spinner />}>
           <ErrorBoundary>
-            <App />
+              <App />
           </ErrorBoundary>
-        </Suspense>
+          </Suspense>
       </SnackbarProvider>
-    </CustomizerContextProvider>,
+      </CustomizerContextProvider>
+    </LocalizationProvider>
 
-  )
-})
+  );
+});

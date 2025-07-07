@@ -64,14 +64,15 @@ const Plan = () => {
  };
 
  const handleOpen = (type = 'create', plan = null) => {
- setActionType(type);
- setSelectedPlan(plan);
- if (type === 'managePackages') {
- setOpenPackageModal(true);
- } else {
- setOpen(true);
- }
- };
+  handleActionClose();
+  setActionType(type);
+  setSelectedPlan(plan);
+  if (type === 'managePackages') {
+    setOpenPackageModal(true);
+  } else {
+    setOpen(true);
+  }
+};
 
  const handleClose = () => {
  setOpen(false);
@@ -103,12 +104,12 @@ const Plan = () => {
  };
 
  const handleOpenDeleteDialog = (plan) => {
- handleActionClose();
- setTimeout(() => {
- setPlanToDelete(plan);
- setOpenDeleteDialog(true);
- }, 100);
- };
+  handleActionClose();
+  setTimeout(() => {
+    setPlanToDelete(plan);
+    setOpenDeleteDialog(true);
+  }, 100);
+};
 
  const handleDeletePlan = () => {
  if (planToDelete) {
@@ -128,9 +129,10 @@ const Plan = () => {
  };
 
  const handleOpenManagePackages = (plan) => {
- setSelectedPlan(plan);
- setOpenManagePackagesModal(true);
- };
+  handleActionClose();
+  setSelectedPlan(plan);
+  setOpenManagePackagesModal(true);
+};
 
  const handleCloseManagePackages = () => {
  setOpenManagePackagesModal(false);

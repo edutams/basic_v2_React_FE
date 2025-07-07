@@ -26,12 +26,50 @@ import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ReusableModal from '../../components/shared/ReusableModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import FormDialog from '../../components/shared/FormDialog';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'My Plans' }];
 
 const MyPlan = () => {
   const [openViewModal, setOpenViewModal] = useState(false);
-  const [plans, setPlans] = useState([]); // Initialize with empty array
+  const [plans, setPlans] = useState([
+    {
+      id: 1,
+      name: 'Basic Plan',
+      description: 'Entry-level plan for small classes',
+      basePrice: 5000.00,
+      price: 4500.00,
+      studentLimit: '1-50',
+      status: 'Active'
+    },
+    {
+      id: 2,
+      name: 'Basic +',
+      description: 'Mid-tier plan for medium-sized classes',
+      basePrice: 10000.00,
+      price: 9000.00,
+      studentLimit: '51-99',
+      status: 'Active'
+    },
+    {
+      id: 3,
+      name: 'Basic ++',
+      description: 'Advanced plan for large institutions',
+      basePrice: 20000.00,
+      price: 18000.00,
+      studentLimit: '100-199',
+      status: 'Inactive'
+    },
+    {
+      id: 4,
+      name: 'Basic Custom',
+      description: 'Comprehensive plan for custom use',
+      basePrice: 50000.00,
+      price: 45000.00,
+      studentLimit: '200 and Above',
+      status: 'Active'
+    }
+  ]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -42,6 +80,17 @@ const MyPlan = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [editPlan, setEditPlan] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const studentLimitOptions = [
+    '0 - 99 Students',
+    '100 - 199 Students',
+    '200 - 299 Students',
+    '300+ Students',
+  ];
+  const [selectedStudentLimit, setSelectedStudentLimit] = useState(studentLimitOptions[0]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -89,14 +138,34 @@ const MyPlan = () => {
   };
 
   const handleViewPlan = (plan) => {
+    handleActionClose();
     setSelectedPlan(plan);
     setOpenViewModal(true);
-    handleActionClose();
   };
 
   const handleViewClose = () => {
     setOpenViewModal(false);
     setSelectedPlan(null);
+  };
+
+  const handleEditPlan = (plan) => {
+    handleActionClose();
+    setEditPlan(plan);
+    setEditName(plan.name);
+    setEditPrice(plan.price);
+    setOpenEditModal(true);
+  };
+  const handleEditSave = (e) => {
+    e.preventDefault();
+    setPlans((prev) =>
+      prev.map((p) =>
+        p.id === editPlan.id ? { ...p, name: editName, price: parseFloat(editPrice) } : p
+      )
+    );
+    setOpenEditModal(false);
+    setSnackbarMessage('Plan updated successfully');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
   };
 
   const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -198,7 +267,8 @@ const MyPlan = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleViewPlan(plan)}>View Plan Detail</MenuItem>
+                          <MenuItem onClick={() => handleViewPlan(plan)}>View Plan Details</MenuItem>
+                          <MenuItem onClick={() => handleEditPlan(plan)}>Edit Plan Details</MenuItem>
                           <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
                             {plan.status === 'Active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
@@ -222,7 +292,7 @@ const MyPlan = () => {
                         >
                           No Plans Available
                         </Typography>
-                        <Typography variant="body2" Murdoch sx={{ color: '#757575', fontSize: '14px' }}>
+                        <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
                           No plans have been registered yet.
                         </Typography>
                       </Box>
@@ -249,37 +319,92 @@ const MyPlan = () => {
         <ReusableModal
           open={openViewModal}
           onClose={handleViewClose}
-          title="View Plan Details"
+          title="View Details"
           size="medium"
           showDivider={true}
           showCloseButton={true}
         >
           <Box sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Name: {selectedPlan?.name}
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Description: {selectedPlan?.description}
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Base Price: ₦{selectedPlan?.basePrice?.toFixed(2)}
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Price: ₦{(selectedPlan?.price || 0).toFixed(2)}
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Student Limit: {selectedPlan?.studentLimit}
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Status: {selectedPlan?.status}
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <Button onClick={handleViewClose} color="inherit" variant="outlined">
-                Close
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Students Limit
+              </Typography>
+              <Box
+                sx={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 1,
+                  display: 'inline-block',
+                  bgcolor: '#f5f6fa',
+                  px: 2,
+                  py: 1,
+                  minWidth: 180,
+                }}
+              >
+                <Typography variant="body1" sx={{ fontSize: 16 }}>
+                  {selectedPlan?.studentLimit ? `${selectedPlan.studentLimit} Students` : 'N/A'}
+                </Typography>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                border: '1px solid #bada55',
+                borderRadius: 1,
+                p: 3,
+                mb: 2,
+                bgcolor: '#fff',
+                minHeight: 120,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+                {selectedPlan?.name?.toUpperCase()} (₦{selectedPlan?.price?.toLocaleString()})
+              </Typography>
+              <Button
+                variant="text"
+                color="success"
+                sx={{ textTransform: 'none', fontWeight: 500, fontSize: 18 }}
+                onClick={() => alert('Show modules for this plan')}
+              >
+                View Modules
               </Button>
             </Box>
           </Box>
         </ReusableModal>
+
+        <FormDialog
+          open={openEditModal}
+          onClose={() => setOpenEditModal(false)}
+          onSubmit={handleEditSave}
+          title="Edit Plan"
+          submitText="Save"
+          cancelText="Cancel"
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box>
+              <Typography variant="subtitle2">Plan Name</Typography>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                required
+              />
+            </Box>
+            <Box>
+              <Typography variant="subtitle2">Price (₦)</Typography>
+              <input
+                type="number"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+                min={0}
+                required
+              />
+            </Box>
+          </Box>
+        </FormDialog>
 
         <ConfirmationDialog
           open={openDeactivateDialog}

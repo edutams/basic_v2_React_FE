@@ -59,7 +59,7 @@ const ReusableModal = ({
   customStyle = {},
   showCloseButton = true,
   showDivider = true,
-  keepMounted = true,
+  keepMounted = false,
   disableEnforceFocus = false,
   disableAutoFocus = false,
   ...modalProps

@@ -14,13 +14,13 @@ import {
   FormControl,
 } from '@mui/material';
 
-// Define package levels (similar to agentLevels in PermissionManager)
+// Define package levels
 const packageLevels = [
   {
     value: 'Basic',
     label: 'Basic Package',
-    description: 'Basic features for small institutions',
-    defaultPermissions: [
+    description: 'Basic modules for small institutions',
+    defaultModules: [
       'Dashboard>Chart',
       'Setup>Installation Process',
       'Setup>Academics>School Manager',
@@ -30,8 +30,8 @@ const packageLevels = [
   {
     value: 'Standard',
     label: 'Standard Package',
-    description: 'Enhanced features for medium-sized institutions',
-    defaultPermissions: [
+    description: 'Enhanced modules for medium-sized institutions',
+    defaultModules: [
       'Dashboard>Chart',
       'Setup>Installation Process',
       'Setup>Academics>School Manager',
@@ -45,8 +45,8 @@ const packageLevels = [
   {
     value: 'Premium',
     label: 'Premium Package',
-    description: 'Full features for large institutions',
-    defaultPermissions: [
+    description: 'Full modules for large institutions',
+    defaultModules: [
       'Dashboard>Chart',
       'Setup>Installation Process',
       'Setup>Academics>School Manager',
@@ -71,8 +71,8 @@ const packageLevels = [
   },
 ];
 
-// Flatten combinedPackageTree into permissionCategories format
-const permissionCategories = {
+// Define module categories
+const moduleCategories = {
   Dashboard: [
     { id: 'Dashboard>Chart', label: 'Chart', description: 'View dashboard charts' },
   ],
@@ -122,7 +122,7 @@ const permissionCategories = {
     { id: 'Bursary>Payment History', label: 'Payment History', description: 'View detailed payment history' },
   ],
   Admission: [
-    { id: 'Admission>Top>Manage Admission', label: 'Manage Admission', description: 'Manage admission settings' },
+    { id: 'Admission>Setup>Manage Admission', label: 'Manage Admission', description: 'Manage admission settings' },
     { id: 'Admission>Application Processing', label: 'Application Processing', description: 'Process admission applications' },
     { id: 'Admission>Admission Report', label: 'Admission Report', description: 'Generate admission reports' },
     { id: 'Admission>My Application', label: 'My Application', description: 'View own applications' },
@@ -189,33 +189,33 @@ const permissionCategories = {
 };
 
 const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) => {
-  const [selectedPermissions, setSelectedPermissions] = useState(currentPermissions || []);
+  const [selectedModules, setSelectedModules] = useState(currentPermissions || []);
   const [packageLevel, setPackageLevel] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
 
-  const handlePermissionChange = (permissionId, checked) => {
-    let newPermissions;
+  const handleModuleChange = (moduleId, checked) => {
+    let newModules;
     if (checked) {
-      newPermissions = [...selectedPermissions, permissionId];
+      newModules = [...selectedModules, moduleId];
     } else {
-      newPermissions = selectedPermissions.filter((id) => id !== permissionId);
+      newModules = selectedModules.filter((id) => id !== moduleId);
     }
-    setSelectedPermissions(newPermissions);
+    setSelectedModules(newModules);
     setHasChanges(true);
   };
 
-  const handleSelectAll = (categoryPermissions) => {
-    const categoryIds = categoryPermissions.map((p) => p.id);
-    const allSelected = categoryIds.every((id) => selectedPermissions.includes(id));
+  const handleSelectAll = (categoryModules) => {
+    const categoryIds = categoryModules.map((m) => m.id);
+    const allSelected = categoryIds.every((id) => selectedModules.includes(id));
 
-    let newPermissions;
+    let newModules;
     if (allSelected) {
-      newPermissions = selectedPermissions.filter((id) => !categoryIds.includes(id));
+      newModules = selectedModules.filter((id) => !categoryIds.includes(id));
     } else {
-      const toAdd = categoryIds.filter((id) => !selectedPermissions.includes(id));
-      newPermissions = [...selectedPermissions, ...toAdd];
+      const toAdd = categoryIds.filter((id) => !selectedModules.includes(id));
+      newModules = [...selectedModules, ...toAdd];
     }
-    setSelectedPermissions(newPermissions);
+    setSelectedModules(newModules);
     setHasChanges(true);
   };
 
@@ -223,78 +223,34 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
     setPackageLevel(newLevel);
     const levelConfig = packageLevels.find((level) => level.value === newLevel);
     if (levelConfig) {
-      setSelectedPermissions(levelConfig.defaultPermissions);
+      setSelectedModules(levelConfig.defaultModules);
     }
     setHasChanges(true);
   };
 
   const handleSave = () => {
-    onSave(selectedPermissions);
+    onSave(selectedModules);
   };
 
-  const getPermissionCount = (categoryPermissions) => {
-    const categoryIds = categoryPermissions.map((p) => p.id);
-    return selectedPermissions.filter((id) => categoryIds.includes(id)).length;
+  const getModuleCount = (categoryModules) => {
+    const categoryIds = categoryModules.map((m) => m.id);
+    return selectedModules.filter((id) => categoryIds.includes(id)).length;
   };
 
   return (
     <Box>
       <Typography variant="h6" mb={2}>
-        Manage Packages for {selectedPlan?.name || 'Selected Plan'}
+        Manage Modules for {selectedPlan?.name || 'Selected Plan'}
       </Typography>
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        Select the package level and features you want to include in this plan. Changes will take
+        Select the package level and modules you want to include in this plan. Changes will take
         effect immediately after saving.
       </Alert>
 
-      <Paper variant="outlined" sx={{ p: 3, mb: 3 }} fullWidth>
-        <Typography variant="h6" color="primary" mb={2}>
-          Package Level
-        </Typography>
-
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
-              <InputLabel>Package Level</InputLabel>
-              <Select
-                value={packageLevel}
-                label="Package Level"
-                onChange={(e) => handlePackageLevelChange(e.target.value)}
-              >
-                <MenuItem value="">-- Select Level --</MenuItem>
-                {packageLevels.map((level) => (
-                  <MenuItem key={level.value} value={level.value}>
-                    {level.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            {packageLevel && (
-              <Box>
-                <Typography variant="body2" fontWeight="medium" color="primary">
-                  {packageLevels.find((l) => l.value === packageLevel)?.label}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {packageLevels.find((l) => l.value === packageLevel)?.description}
-                </Typography>
-                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                  Default features:{' '}
-                  {packageLevels.find((l) => l.value === packageLevel)?.defaultPermissions.length}{' '}
-                  selected
-                </Typography>
-              </Box>
-            )}
-          </Grid>
-        </Grid>
-      </Paper>
-
       <Box sx={{ mb: 3 }}>
         <Typography variant="h6" color="primary" mb={3}>
-          Custom Feature Settings
+          Custom Module Settings
         </Typography>
 
         <Box
@@ -305,9 +261,11 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
             justifyContent: 'space-between',
           }}
         >
-          {Object.entries(permissionCategories).map(([category, permissions]) => {
-            const selectedCount = getPermissionCount(permissions);
-            const allSelected = selectedCount === permissions.length;
+          {Object.entries(moduleCategories).map(([category, modules]) => {
+            const selectedCount = getModuleCount(modules);
+            const allSelected = selectedCount === modules.length;
+            // Always use scrollable area with fixed height for all categories
+            const fixedHeight = 180; // px, adjust if needed for 3 modules
 
             return (
               <Paper
@@ -343,14 +301,14 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
                       {category}
                     </Typography>
                     <Chip
-                      label={`${selectedCount}/${permissions.length}`}
+                      label={`${selectedCount}/${modules.length}`}
                       size="small"
                       color={selectedCount > 0 ? 'primary' : 'default'}
                     />
                   </Box>
                   <Button
                     size="small"
-                    onClick={() => handleSelectAll(permissions)}
+                    onClick={() => handleSelectAll(modules)}
                     color="primary"
                     sx={{ minWidth: 120 }}
                   >
@@ -358,43 +316,60 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
                   </Button>
                 </Box>
 
-                <Box sx={{ p: 2 }}>
-                  {permissions.map((permission, index) => (
+                <Box
+                  sx={{
+                    p: 2,
+                    maxHeight: `${fixedHeight}px`,
+                    minHeight: `${fixedHeight}px`,
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': {
+                      width: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      background: 'grey.100',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: 'primary.main',
+                      borderRadius: '3px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                      background: 'primary.dark',
+                    },
+                  }}
+                >
+                  {modules.map((module, index) => (
                     <Box
-                      key={permission.id}
+                      key={module.id}
                       sx={{
                         display: 'flex',
                         alignItems: 'flex-start',
                         p: 1.5,
-                        mb: index < permissions.length - 1 ? 1 : 0,
+                        mb: index < modules.length - 1 ? 1 : 0,
                         borderRadius: 1,
                         border: '1px solid',
-                        borderColor: selectedPermissions.includes(permission.id)
+                        borderColor: selectedModules.includes(module.id)
                           ? 'primary.main'
                           : 'grey.300',
-                        bgcolor: selectedPermissions.includes(permission.id)
+                        bgcolor: selectedModules.includes(module.id)
                           ? 'primary.light'
                           : 'background.paper',
                         cursor: 'pointer',
                         transition: 'all 0.2s ease-in-out',
                         '&:hover': {
                           borderColor: 'primary.main',
-                          bgcolor: selectedPermissions.includes(permission.id)
+                          bgcolor: selectedModules.includes(module.id)
                             ? 'primary.light'
                             : 'primary.light',
-                          opacity: selectedPermissions.includes(permission.id) ? 1 : 0.8,
+                          opacity: selectedModules.includes(module.id) ? 1 : 0.8,
                         },
                       }}
                       onClick={() =>
-                        handlePermissionChange(
-                          permission.id,
-                          !selectedPermissions.includes(permission.id)
-                        )
+                        handleModuleChange(module.id, !selectedModules.includes(module.id))
                       }
                     >
                       <Checkbox
-                        checked={selectedPermissions.includes(permission.id)}
-                        onChange={(e) => handlePermissionChange(permission.id, e.target.checked)}
+                        checked={selectedModules.includes(module.id)}
+                        onChange={(e) => handleModuleChange(module.id, e.target.checked)}
                         color="primary"
                         size="small"
                         sx={{ mt: -0.5 }}
@@ -404,20 +379,20 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
                           variant="body2"
                           fontWeight="medium"
                           color={
-                            selectedPermissions.includes(permission.id)
+                            selectedModules.includes(module.id)
                               ? 'primary.dark'
                               : 'text.primary'
                           }
                           sx={{ mb: 0.5 }}
                         >
-                          {permission.label}
+                          {module.label}
                         </Typography>
                         <Typography
                           variant="caption"
                           color="text.secondary"
                           sx={{ display: 'block', lineHeight: 1.3 }}
                         >
-                          {permission.description}
+                          {module.description}
                         </Typography>
                       </Box>
                     </Box>
@@ -435,7 +410,7 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
             Package Level: <strong>{packageLevel || 'Not selected'}</strong>
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Total features selected: <strong>{selectedPermissions.length}</strong>
+            Total modules selected: <strong>{selectedModules.length}</strong>
           </Typography>
         </Box>
 

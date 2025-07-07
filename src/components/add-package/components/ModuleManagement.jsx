@@ -108,7 +108,7 @@ const ModuleManagement = ({
   const renderEmptyState = () => {
     if (!currentPackage) {
       return (
-        <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+        <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
           <Typography variant="body2" color="textSecondary">
             Here is where you can select, add, edit, and manage your package for the existing module
             of your preference.
@@ -144,7 +144,7 @@ const ModuleManagement = ({
               <>
                 Modules in{' '}
                 <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  '{currentPackage.pac_name}'
+                  {currentPackage.pac_name}
                 </Box>
               </>
             ) : (

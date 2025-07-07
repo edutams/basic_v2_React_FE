@@ -11,7 +11,6 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
   });
   const [errors, setErrors] = useState({});
 
-  // Predefined options for studentLimit
   const studentLimitOptions = [
     { value: '1-50', label: '1-50' },
     { value: '51-99', label: '51-99' },
@@ -19,7 +18,6 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
     { value: '200 and Above', label: '200 and Above' },
   ];
 
-  // Predefined options for status
   const statusOptions = [
     { value: 'Active', label: 'Active' },
     { value: 'Inactive', label: 'Inactive' },
@@ -51,7 +49,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error for the field being edited
+
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 

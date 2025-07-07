@@ -10,7 +10,6 @@ import {
   Chip,
   Paper,
   TableContainer,
-  Button,
   IconButton,
   Menu,
   MenuItem,
@@ -18,8 +17,7 @@ import {
   TablePagination,
   Snackbar,
   Alert,
-  Switch,
-  FormControlLabel,
+  Button,
 } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -27,18 +25,15 @@ import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ReusableModal from '../../components/shared/ReusableModal';
-import PlanForm from '../../components/add-plan/PlanForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'My Plans' }];
 
 const MyPlan = () => {
-  const [open, setOpen] = useState(false);
   const [openViewModal, setOpenViewModal] = useState(false);
-  const [plans, setPlans] = useState([]); // Initialize with empty array or mock data
+  const [plans, setPlans] = useState([]); // Initialize with empty array
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
-  const [actionType, setActionType] = useState('create');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
   const [planToDeactivate, setPlanToDeactivate] = useState(null);
@@ -47,7 +42,6 @@ const MyPlan = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [lockSubscription, setLockSubscription] = useState(false);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -56,35 +50,6 @@ const MyPlan = () => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
-  };
-
-  const handleOpen = (type = 'create', plan = null) => {
-    setActionType(type);
-    setSelectedPlan(plan);
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setActionType('create');
-    setSelectedPlan(null);
-  };
-
-  const handleViewClose = () => {
-    setOpenViewModal(false);
-    setSelectedPlan(null);
-  };
-
-  const handleAddPlan = (newPlan) => {
-    if (actionType === 'update') {
-      setPlans(plans.map((plan) => (plan.id === newPlan.id ? newPlan : plan)));
-    } else {
-      setPlans([...plans, { ...newPlan, id: plans.length + 1, status: 'Active' }]);
-    }
-    setSnackbarMessage(`Plan ${actionType === 'create' ? 'added' : 'updated'} successfully`);
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
-    handleClose();
   };
 
   const handleActionClick = (event, id) => {
@@ -129,11 +94,9 @@ const MyPlan = () => {
     handleActionClose();
   };
 
-  const handleLockSubscriptionChange = (event) => {
-    setLockSubscription(event.target.checked);
-    setSnackbarMessage(`Subscription ${event.target.checked ? 'locked' : 'unlocked'}`);
-    setSnackbarSeverity('info');
-    setSnackbarOpen(true);
+  const handleViewClose = () => {
+    setOpenViewModal(false);
+    setSelectedPlan(null);
   };
 
   const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -141,37 +104,7 @@ const MyPlan = () => {
   return (
     <PageContainer title="My Plans" description="This is the My Plans page">
       <Breadcrumb title="My Plans" items={BCrumb} />
-      <ParentCard
-        title={
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            <Typography variant="h4">All My Plans</Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={lockSubscription}
-                    onChange={handleLockSubscriptionChange}
-                    color="primary"
-                    aria-label="Lock subscription toggle"
-                  />
-                }
-                label="Lock Subscription"
-                labelPlacement="start"
-              />
-              <Button variant="contained" color="primary" onClick={() => handleOpen('create')}>
-                Add New Plan
-              </Button>
-            </Box>
-          </Box>
-        }
-      >
+      <ParentCard title={<Typography variant="h4">All My Plans</Typography>}>
         <Paper variant="outlined">
           <TableContainer>
             <Table aria-label="my plan table" sx={{ whiteSpace: 'nowrap' }}>
@@ -190,7 +123,7 @@ const MyPlan = () => {
                     <Typography variant="h6">Base Price (₦)</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="h6">Additional Price (₦)</Typography>
+                    <Typography variant="h6">Price (₦)</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="h6">Student Limit</Typography>
@@ -227,11 +160,11 @@ const MyPlan = () => {
                         <Typography variant="body2">{plan.description}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="h6">₦{plan.price.toFixed(2)}</Typography>
+                        <Typography variant="h6">₦{plan.basePrice.toFixed(2)}</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="h6">
-                          ₦{(plan.additionalPrice || 0).toFixed(2)}
+                          ₦{(plan.price || 0).toFixed(2)}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -265,13 +198,10 @@ const MyPlan = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleOpen('update', plan)}>
-                            Edit Plan Detail
-                          </MenuItem>
+                          <MenuItem onClick={() => handleViewPlan(plan)}>View Plan Detail</MenuItem>
                           <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
                             {plan.status === 'Active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
-                          <MenuItem onClick={() => handleViewPlan(plan)}>View Plan</MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
@@ -292,8 +222,8 @@ const MyPlan = () => {
                         >
                           No Plans Available
                         </Typography>
-                        <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
-                          No plans have been registered yet. Click 'Add New Plan' to create a new plan.
+                        <Typography variant="body2" Murdoch sx={{ color: '#757575', fontSize: '14px' }}>
+                          No plans have been registered yet.
                         </Typography>
                       </Box>
                     </TableCell>
@@ -317,22 +247,6 @@ const MyPlan = () => {
         </Paper>
 
         <ReusableModal
-          open={open}
-          onClose={handleClose}
-          title={actionType === 'create' ? 'Add New Plan' : 'Edit Plan Detail'}
-          size="medium"
-          showDivider={true}
-          showCloseButton={true}
-        >
-          <PlanForm
-            actionType={actionType}
-            selectedPlan={selectedPlan}
-            onSubmit={handleAddPlan}
-            onCancel={handleClose}
-          />
-        </ReusableModal>
-
-        <ReusableModal
           open={openViewModal}
           onClose={handleViewClose}
           title="View Plan Details"
@@ -348,10 +262,10 @@ const MyPlan = () => {
               Description: {selectedPlan?.description}
             </Typography>
             <Typography variant="h6" sx={{ mb: 1 }}>
-              Base Price: ₦{selectedPlan?.price?.toFixed(2)}
+              Base Price: ₦{selectedPlan?.basePrice?.toFixed(2)}
             </Typography>
             <Typography variant="h6" sx={{ mb: 1 }}>
-              Additional Price: ₦{(selectedPlan?.additionalPrice || 0).toFixed(2)}
+              Price: ₦{(selectedPlan?.price || 0).toFixed(2)}
             </Typography>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Student Limit: {selectedPlan?.studentLimit}

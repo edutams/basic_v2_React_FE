@@ -35,7 +35,7 @@ const ModuleManagement = ({
   currentPackage,
   onModuleUpdate,
   onAttachModule = null,
-  isLoading = false
+  isLoading = false,
 }) => {
   const [modSearch, setModSearch] = useState('');
   const [modulePage, setModulePage] = useState(0);
@@ -49,12 +49,12 @@ const ModuleManagement = ({
   const notify = useNotification();
 
   const filteredModules = packageModules.filter((mod) =>
-    mod.mod_name.toLowerCase().includes(modSearch.toLowerCase())
+    mod.mod_name.toLowerCase().includes(modSearch.toLowerCase()),
   );
 
   const paginatedModules = filteredModules.slice(
     modulePage * moduleRowsPerPage,
-    modulePage * moduleRowsPerPage + moduleRowsPerPage
+    modulePage * moduleRowsPerPage + moduleRowsPerPage,
   );
 
   const handleModuleMenuOpen = (event, mod) => {
@@ -98,16 +98,20 @@ const ModuleManagement = ({
   const handleStatusChange = (module, status) => {
     const updatedModule = { ...module, mod_status: status };
     onModuleUpdate(updatedModule, 'update');
-    notify.success(`Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`, 'Success');
+    notify.success(
+      `Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`,
+      'Success',
+    );
     handleModuleMenuClose();
   };
 
   const renderEmptyState = () => {
     if (!currentPackage) {
       return (
-        <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+        <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
           <Typography variant="body2" color="textSecondary">
-            Here is where you can select, add, edit, and manage your package for the existing module of your preference.
+            Here is where you can select, add, edit, and manage your package for the existing module
+            of your preference.
           </Typography>
         </Box>
       );
@@ -127,15 +131,27 @@ const ModuleManagement = ({
   };
 
   return (
-    <ParentCard 
+    <ParentCard
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
+          {/* <Typography variant="h5">
+            {packageModules.length > 0 && currentPackage
+              ? `Modules in '${currentPackage.pac_name}'`
+              : 'Modules'}
+          </Typography> */}
           <Typography variant="h5">
-            {packageModules.length > 0 && currentPackage 
-              ? `Modules in '${currentPackage.pac_name}'` 
-              : 'Modules'
-            }
+            {packageModules.length > 0 && currentPackage ? (
+              <>
+                Modules in{' '}
+                <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  {currentPackage.pac_name}
+                </Box>
+              </>
+            ) : (
+              'Modules'
+            )}
           </Typography>
+
           {currentPackage && onAttachModule && (
             <Button
               variant="contained"
@@ -146,7 +162,6 @@ const ModuleManagement = ({
               Attach Module
             </Button>
           )}
-
         </Box>
       }
     >
@@ -191,20 +206,29 @@ const ModuleManagement = ({
                     <TableRow key={mod.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
                       <TableCell>{modulePage * moduleRowsPerPage + index + 1}</TableCell>
                       <TableCell>
-                        <Typography variant="body2" fontWeight="medium">{mod.mod_name}</Typography>
+                        <Typography variant="body2" fontWeight="medium">
+                          {mod.mod_name}
+                        </Typography>
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="textSecondary">{mod.mod_description}</Typography>
+                      <TableCell
+                        sx={{ whiteSpace: 'normal', wordBreak: 'break-word', maxWidth: 300 }}
+                      >
+                        <Typography variant="body2" color="textSecondary">
+                          {mod.mod_description}
+                        </Typography>
                       </TableCell>
+
                       <TableCell>
                         <Chip
                           sx={{
-                            bgcolor: mod.mod_status === 'active'
-                              ? (theme) => theme.palette.success.light
-                              : (theme) => theme.palette.error.light,
-                            color: mod.mod_status === 'active'
-                              ? (theme) => theme.palette.success.main
-                              : (theme) => theme.palette.error.main,
+                            bgcolor:
+                              mod.mod_status === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              mod.mod_status === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                           }}
                           size="small"

@@ -4,6 +4,9 @@ import ReusableModal from '../../shared/ReusableModal';
 import PackageForm from './PackageForm';
 import PropTypes from 'prop-types';
 
+import ConfirmationDialog from '../../shared/ConfirmationDialog';
+
+
 const getModalConfig = (actionType) => {
   const configs = {
     create: {
@@ -85,83 +88,41 @@ const PackageModal = ({
             isLoading={isLoading}
           />
         );
-
-      case 'activate':
-        return (
-          <Box sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="h6" gutterBottom>
-              Activate Package
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              Are you sure you want to activate "{selectedPackage?.pac_name}"?
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button variant="outlined" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button 
-                variant="contained" 
-                color="success"
-                onClick={() => handleStatusChange('active')}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Activating...' : 'Activate'}
-              </Button>
-            </Box>
-          </Box>
-        );
-
-      case 'deactivate':
-        return (
-          <Box sx={{ p: 2 }}>
-            <Typography variant="h6" >
-              Deactivate Package
-            </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              Are you sure you want to deactivate "{selectedPackage?.pac_name}"?
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button variant="outlined" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button 
-                variant="contained" 
-                color="warning"
-                onClick={() => handleStatusChange('inactive')}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Deactivating...' : 'Deactivate'}
-              </Button>
-            </Box>
-          </Box>
-        );
-
       default:
         return null;
     }
   };
 
   return (
-    <ReusableModal
-      open={open}
-      onClose={onClose}
-      title={modalConfig.title}
-      size={modalConfig.size}
-      disableEnforceFocus
-      disableAutoFocus
-    >
-      {renderContent()}
-    </ReusableModal>
+    <>
+      {actionType === 'activate' || actionType === 'deactivate' ? (
+        <ConfirmationDialog
+          open={open}
+          onClose={onClose}
+          onConfirm={() =>
+            handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')
+          }
+          title={actionType === 'activate' ? 'Activate Package' : 'Deactivate Package'}
+          message={`Are you sure you want to ${actionType} "${selectedPackage?.pac_name}"?`}
+          confirmText={actionType === 'activate' ? 'Activate' : 'Deactivate'}
+          cancelText="Cancel"
+          severity={actionType === 'activate' ? 'theme.palette.primary.main' : 'error'}
+        />
+      ) : (
+        <ReusableModal
+          open={open}
+          onClose={onClose}
+          title={modalConfig.title}
+          size={modalConfig.size}
+          disableEnforceFocus
+          disableAutoFocus
+        >
+          {renderContent()}
+        </ReusableModal> 
+      )}
+    </>
   );
-};
-
-PackageModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  actionType: PropTypes.oneOf(['create', 'update', 'activate', 'deactivate']),
-  selectedPackage: PropTypes.object,
-  onPackageUpdate: PropTypes.func.isRequired,
-  isLoading: PropTypes.bool,
-};
+}; 
+  
 
 export default PackageModal;

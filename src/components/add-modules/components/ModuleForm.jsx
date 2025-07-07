@@ -102,15 +102,17 @@ const ModuleForm = ({
 
         <Grid size={{ xs: 12 }}>
           <FormControl fullWidth variant="outlined">
-            <InputLabel>Status</InputLabel>
+            {/* <InputLabel>Status</InputLabel> */}
             <Select
               name="mod_status"
               value={formik.values.mod_status}
               onChange={formik.handleChange}
+              displayEmpty
               onBlur={formik.handleBlur}
-              label="Status"
+              // label="Status"
               error={formik.touched.mod_status && Boolean(formik.errors.mod_status)}
             >
+               <MenuItem value="">Select Status</MenuItem>
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
             </Select>

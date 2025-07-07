@@ -28,7 +28,7 @@ const Header = () => {
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
 
     boxShadow: "none",
-    background: theme.palette.background.default,
+    // background: "#ffffff",
 
     justifyContent: "center",
     backdropFilter: "blur(4px)",

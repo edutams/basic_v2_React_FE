@@ -41,7 +41,8 @@ const baselightTheme = {
       A200: "#557fb9",
     },
     grey: {
-      100: "#ecf0f2",
+      100: "#FFFFFF",
+      // 100: "#ecf0f2",
       200: "#EAEFF4",
       300: "#DFE5EF",
       400: "#767e89",
@@ -69,7 +70,7 @@ const baselightTheme = {
     },
 
     header: {
-      bg: "#ffffff", // or your preferred light color
+      bg: "#ffffff", 
     },
     
   },
@@ -145,7 +146,7 @@ const baseDarkTheme = {
     },
 
     header: {
-      bg: "#1c1f26", // or your preferred dark color
+      bg: "#1c1f26", 
     },
     
   },

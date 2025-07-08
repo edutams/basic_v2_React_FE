@@ -18,6 +18,7 @@ import {
   Snackbar,
   Alert,
   Button,
+  TextField,
 } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -91,6 +92,12 @@ const MyPlan = () => {
     '300+ Students',
   ];
   const [selectedStudentLimit, setSelectedStudentLimit] = useState(studentLimitOptions[0]);
+  const [showModules, setShowModules] = useState(false);
+  const mockModules = [
+    { id: 1, name: 'Attendance', description: 'Track student attendance' },
+    { id: 2, name: 'Grading', description: 'Manage grades and assessments' },
+    { id: 3, name: 'Communication', description: 'Send messages to students' },
+  ];
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -318,7 +325,7 @@ const MyPlan = () => {
 
         <ReusableModal
           open={openViewModal}
-          onClose={handleViewClose}
+          onClose={() => { handleViewClose(); setShowModules(false); }}
           title="View Details"
           size="medium"
           showDivider={true}
@@ -337,7 +344,7 @@ const MyPlan = () => {
                   bgcolor: '#f5f6fa',
                   px: 2,
                   py: 1,
-                  minWidth: 180,
+                  width: '100%',
                 }}
               >
                 <Typography variant="body1" sx={{ fontSize: 16 }}>
@@ -363,48 +370,67 @@ const MyPlan = () => {
               </Typography>
               <Button
                 variant="text"
-                color="success"
+                color="primary"
                 sx={{ textTransform: 'none', fontWeight: 500, fontSize: 18 }}
-                onClick={() => alert('Show modules for this plan')}
+                onClick={() => setShowModules((prev) => !prev)}
               >
-                View Modules
+                {showModules ? 'Hide Modules' : 'View Modules'}
               </Button>
+              {showModules && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                    Modules
+                  </Typography>
+                  {mockModules.map((module) => (
+                    <Box key={module.id} sx={{ mb: 1, p: 1, border: '1px solid #eee', borderRadius: 1 }}>
+                      <Typography variant="body1" fontWeight={600}>{module.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">{module.description}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </Box>
           </Box>
         </ReusableModal>
 
-        <FormDialog
+        {/* Edit Plan Modal using ReusableModal */}
+        <ReusableModal
           open={openEditModal}
           onClose={() => setOpenEditModal(false)}
-          onSubmit={handleEditSave}
           title="Edit Plan"
-          submitText="Save"
-          cancelText="Cancel"
+          size="medium"
+          showDivider={true}
+          showCloseButton={true}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <Box>
-              <Typography variant="subtitle2">Plan Name</Typography>
-              <input
-                type="text"
+          <form onSubmit={handleEditSave}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <TextField
+                label="Plan Name"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
                 required
+                fullWidth
               />
-            </Box>
-            <Box>
-              <Typography variant="subtitle2">Price (₦)</Typography>
-              <input
+              <TextField
+                label="Price (₦)"
                 type="number"
                 value={editPrice}
                 onChange={(e) => setEditPrice(e.target.value)}
-                style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
-                min={0}
                 required
+                fullWidth
+                inputProps={{ min: 0, step: '0.01' }}
               />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                <Button onClick={() => setOpenEditModal(false)} color="inherit">
+                  Cancel
+                </Button>
+                <Button type="submit" variant="contained" color="primary">
+                  Save
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </FormDialog>
+          </form>
+        </ReusableModal>
 
         <ConfirmationDialog
           open={openDeactivateDialog}

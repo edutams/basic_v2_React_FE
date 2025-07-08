@@ -23,6 +23,11 @@ const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
 const Plan = Loadable(lazy(() => import('../views/plan/Plan')));
 const MyPlan = Loadable(lazy(() => import('../views/my-plan/MyPlan')));
 
+
+/* ****PHET Stimulation***** */
+const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/SubjectAndTopics')));
+
+
 /* ****Apps***** */
 const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
 const Notes = Loadable(lazy(() => import('../views/apps/notes/Notes')));
@@ -191,6 +196,8 @@ const Router = [
       { path: '/dashboards/gateway', exact: true, element: <Gateway /> },
       { path: '/dashboards/plan', exact: true, element: <Plan /> },
       { path: '/dashboards/my-plan', exact: true, element: <MyPlan /> },
+      { path: '/dashboards/phet', exact: true, element: <StimulationLink /> },
+
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },

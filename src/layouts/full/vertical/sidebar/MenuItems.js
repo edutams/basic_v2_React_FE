@@ -96,6 +96,23 @@ const Menuitems = [
     icon: IconWallet,
     href: '/dashboards/gateway',
   },
+
+  {
+    id: uniqueId(),
+    title: 'PHET Stimulation',
+    icon: IconAppWindow,
+    href: '/frontend-pages/',
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Subject & Topics',
+        icon: IconPoint,
+        href: '/dashboards/phet',
+      },
+
+    ]
+  },
+  
   
   {
     id: uniqueId(),

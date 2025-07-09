@@ -6,14 +6,35 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 const Breadcrumb = ({ subtitle, items, title, children }) => (
   <Grid
-    container mb={6} alignItems='center'
+    container mb={6} alignItems='center' justifyContent="space-between"
   >
-    <Grid size={{ xs: 12, sm: 6, lg: 8 }}>
+    <Grid size={{ xs: 12, md: 6 }} order={{ xs: 2, md: 1 }}>
       <Typography color="textSecondary" fontWeight="400" variant="h4">
         {subtitle}
       </Typography>
+      <Typography
+        fontWeight="700"
+        variant="h1"
+        sx={{
+          lineHeight: '1.235',
+        }}
+      >
+        {title}
+      </Typography>
+    </Grid>
 
-      <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb">
+    <Grid
+      size={{ xs: 12, md: 6 }}
+      order={{ xs: 1, md: 2 }}
+      display="flex"
+      flexDirection="column"
+      alignItems={{ xs: 'flex-start', md: 'flex-end' }}
+    >
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
+        aria-label="breadcrumb"
+        sx={{ mb: { xs: 2, md: 0 } }}
+      >
         {items
           ? items.map((item) => (
             <div key={item.title}>
@@ -28,27 +49,21 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
           ))
           : ''}
       </Breadcrumbs>
-      <Typography
-        fontWeight="700"
-        variant="h1"
-        sx={{
-          lineHeight: '1.235',
-        }}
-      >
-        {title}
-      </Typography>
-    </Grid>
-    <Grid size={{ xs: 12, sm: 6, lg: 4 }} display="flex" alignItems="flex-end">
-      <Box gap={1}
-        sx={{
-          display: { xs: 'none', md: 'block', lg: 'flex' },
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          width: '100%',
-        }}
-      >
-        {children}
-      </Box>
+
+      {children && (
+        <Box
+          gap={1}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            width: '100%',
+            mt: 1
+          }}
+        >
+          {children}
+        </Box>
+      )}
     </Grid>
   </Grid>
 );

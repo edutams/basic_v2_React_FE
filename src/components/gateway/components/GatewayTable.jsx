@@ -146,9 +146,9 @@ const GatewayTable = ({
                           <MenuItem onClick={() => handleAction('update', gateway)}>
                             Edit Gateway
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('delete', gateway)}>
+                          {/* <MenuItem onClick={() => handleAction('delete', gateway)}>
                             Delete Gateway
-                          </MenuItem>
+                          </MenuItem> */}
                         </Menu>
                       </TableCell>
                     </TableRow>

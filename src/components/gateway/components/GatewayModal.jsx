@@ -7,11 +7,11 @@ const getModalConfig = (actionType) => {
   const configs = {
     create: {
       title: 'Register Gateway', 
-      size: 'medium'
+      size: 'small'
      },
     update: { 
       title: 'Update Gateway', 
-      size: 'medium' 
+      size: 'small' 
     },
   };
   return configs[actionType] || configs.create;

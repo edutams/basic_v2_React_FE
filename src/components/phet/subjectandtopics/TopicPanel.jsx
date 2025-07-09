@@ -154,11 +154,11 @@ const TopicPanel = ({
                             <MenuItem onClick={() => handleActionClick('update')}>
                               Edit Topic
                             </MenuItem>
-                            <MenuItem onClick={() =>
+                            {/* <MenuItem onClick={() =>
                               handleActionClick(t.status === 'active' ? 'deactivate' : 'activate')
                             }>
                               {t.status === 'active' ? 'Deactivate' : 'Activate'}
-                            </MenuItem>
+                            </MenuItem> */}
                             <MenuItem onClick={() => handleActionClick('delete')}>
                               Delete Topic
                             </MenuItem>

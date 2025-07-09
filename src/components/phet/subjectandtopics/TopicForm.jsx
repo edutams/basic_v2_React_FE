@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, TextField, Button, MenuItem } from '@mui/material';
 import PropTypes from 'prop-types';
+import { topicValidationSchema } from './validation/topicValidationSchema';
 
 const TopicForm = ({
   initialValues = {}, 
@@ -10,22 +11,34 @@ const TopicForm = ({
   isLoading,
   selectedSubject,
 }) => {
-  const safeValues = initialValues || {}; 
- const [form, setForm] = useState({
-  name: initialValues?.name || '',
-  code: initialValues?.code || '',
-  status: initialValues?.status || 'active',
-});
-
+  const [form, setForm] = useState({
+    name: initialValues?.name || '',
+    code: initialValues?.code || '',
+    status: initialValues?.status || 'active',
+  });
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(form);
+    try {
+      await topicValidationSchema.validate(form, { abortEarly: false });
+      setErrors({});
+      onSubmit(form);
+    } catch (validationError) {
+      if (validationError.inner) {
+        const formErrors = {};
+        validationError.inner.forEach((err) => {
+          formErrors[err.path] = err.message;
+        });
+        setErrors(formErrors);
+      }
+    }
   };
 
   return (
@@ -36,12 +49,16 @@ const TopicForm = ({
           name="name"
           value={form.name}
           onChange={handleChange}
+          error={!!errors.name}
+          helperText={errors.name}
         />
         <TextField
           label="Topic Code"
           name="code"
           value={form.code}
           onChange={handleChange}
+          error={!!errors.code}
+          helperText={errors.code}
         />
         <TextField
           select
@@ -49,6 +66,8 @@ const TopicForm = ({
           name="status"
           value={form.status}
           onChange={handleChange}
+          error={!!errors.status}
+          helperText={errors.status}
         >
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>

@@ -26,6 +26,8 @@ import {
 
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
+import StimulationLinkModal from '../../components/phet/stimulation-links/StimulationLinkModal';
+import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 
 const DUMMY_ROWS = [
   {
@@ -76,8 +78,9 @@ const ManagePhETLinks = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState('create'); // 'create' or 'update'
+  const [modalType, setModalType] = useState('create');
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -106,177 +109,179 @@ const ManagePhETLinks = () => {
     setModalOpen(true);
   };
 
-  const handleEditClick = () => {
+  const handleEditClick = (row) => {
+    setSelectedRow(row);
     setModalType('update');
     setModalOpen(true);
-    handleMenuClose();
   };
 
-  const handleDeleteClick = () => {
+  const handleDeleteClick = (row) => {
+    setRowToDelete(row);
     setConfirmOpen(true);
     handleMenuClose();
   };
 
-  // const handleModalSubmit = (data) => {
-  //   if (modalType === 'create') {
-  //     const newLink = { ...data, id: Date.now(), status: 'active' };
-  //     setRows((prev) => [...prev, newLink]);
-  //   } else if (modalType === 'update') {
-  //     setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
-  //   }
-  //   setModalOpen(false);
-  // };
-const handleModalSubmit = (data, action = 'update') => {
-  if (action === 'create') {
-    const newLink = { ...data, id: Date.now(), status: 'active' };
-    setRows((prev) => [...prev, newLink]);
-  } else if (action === 'update') {
-    setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
-  } else if (action === 'delete') {
-    setRows((prev) => prev.filter((row) => row.id !== data.id));
-  }
-  setModalOpen(false);
-};
-
-
+  const handleModalSubmit = (data) => {
+    if (modalType === 'create') {
+      setRows((prev) => [...prev, { ...data, id: Date.now() }]);
+    } else if (modalType === 'update') {
+      setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
+    }
+    setModalOpen(false);
+  };
 
   const handleDeleteConfirm = () => {
-    setRows((prev) => prev.filter((row) => row.id !== selectedRow.id));
+    setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
     setConfirmOpen(false);
-    setSelectedRow(null);
+    setRowToDelete(null);
   };
 
   const handleSimulationUpdate = (data, action) => {
   if (action === 'create') {
-    // add to your state
   } else if (action === 'update') {
-    // update item in state
   } else if (action === 'delete') {
-    // remove item from state
   }
 };
 
   return (
-    <ParentCard
-      title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">Manage PhET Simulation Links</Typography>
-          <Button variant="contained" color="primary" onClick={handleAddClick}>
-            Add New Link
-          </Button>
-        </Box>
-      }
-    >
-      <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            placeholder="Search by title..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(0);
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
+    <>
+      <ParentCard
+        title={
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h5">Manage PhET Simulation Links</Typography>
+            <Button variant="contained" color="primary" onClick={handleAddClick}>
+              Add New Link
+            </Button>
+          </Box>
+        }
+      >
+        <Box sx={{ p: 0 }}>
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              placeholder="Search by title..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(0);
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
 
-        <Paper variant="outlined">
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Topic</TableCell>
-                  <TableCell>Subject</TableCell>
-                  <TableCell>Link</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="center">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedRows.length > 0 ? (
-                  paginatedRows.map((row, index) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                      <TableCell>{row.title}</TableCell>
-                      <TableCell>{row.topic}</TableCell>
-                      <TableCell>{row.subject}</TableCell>
-                      <TableCell>
-                        <a href={row.link} target="_blank" rel="noopener noreferrer">
-                          {row.link}
-                        </a>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.status.toUpperCase()}
-                          size="small"
-                          sx={{
-                            bgcolor:
-                              row.status === 'active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.error.light,
-                            color:
-                              row.status === 'active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.error.main,
-                            borderRadius: '8px',
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                          onClose={handleMenuClose}
-                        >
-                          <MenuItem onClick={handleEditClick}>Edit</MenuItem>
-                          <MenuItem onClick={handleDeleteClick}>Delete</MenuItem>
-                        </Menu>
+          <Paper variant="outlined">
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>#</TableCell>
+                    <TableCell>Title</TableCell>
+                    <TableCell>Topic</TableCell>
+                    <TableCell>Subject</TableCell>
+                    <TableCell>Link</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="center">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedRows.length > 0 ? (
+                    paginatedRows.map((row, index) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>{row.title}</TableCell>
+                        <TableCell>{row.topic}</TableCell>
+                        <TableCell>{row.subject}</TableCell>
+                        <TableCell>
+                          <a href={row.link} target="_blank" rel="noopener noreferrer">
+                            {row.link}
+                          </a>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={row.status.toUpperCase()}
+                            size="small"
+                            sx={{
+                              bgcolor:
+                                row.status === 'active'
+                                  ? (theme) => theme.palette.success.light
+                                  : (theme) => theme.palette.error.light,
+                              color:
+                                row.status === 'active'
+                                  ? (theme) => theme.palette.success.main
+                                  : (theme) => theme.palette.error.main,
+                              borderRadius: '8px',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleEditClick(row)}>Edit</MenuItem>
+                            <MenuItem onClick={() => handleDeleteClick(row)}>Delete</MenuItem>
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        <Typography variant="body2" color="textSecondary">
+                          No records found
+                        </Typography>
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
+                  )}
+                </TableBody>
+                <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <Typography variant="body2" color="textSecondary">
-                        No records found
-                      </Typography>
-                    </TableCell>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25]}
+                      colSpan={7}
+                      count={filteredRows.length}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={(_, newPage) => setPage(newPage)}
+                      onRowsPerPageChange={(e) => {
+                        setRowsPerPage(parseInt(e.target.value, 10));
+                        setPage(0);
+                      }}
+                    />
                   </TableRow>
-                )}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    colSpan={7}
-                    count={filteredRows.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                  />
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Box>
-
-    </ParentCard>
+                </TableFooter>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Box>
+      </ParentCard>
+      <StimulationLinkModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        actionType={modalType}
+        selectedSimulation={selectedRow}
+        onSimulationUpdate={handleModalSubmit}
+      />
+      <ConfirmationDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Simulation Link"
+        message={`Are you sure you want to delete "${rowToDelete?.title}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        severity="error"
+      />
+    </>
   );
 };
 

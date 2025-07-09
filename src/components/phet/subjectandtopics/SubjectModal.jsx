@@ -8,7 +8,7 @@ const getModalConfig = (type) => {
   const config = {
     create: { title: 'Add Subject', size: 'small' },
     edit: { title: 'Edit Subject', size: 'small' },
-    delete: { title: 'Delete Subject', size: 'small' },
+    // delete: { title: 'Delete Subject', size: 'small' },
   };
   return config[type] || config.create;
 };

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, MenuItem } from '@mui/material';
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import ReusableModal from 'src/components/shared/ReusableModal';
+import { subjectValidationSchema } from './validation/subjectValidationSchema';
 
 const AddSubjectModal = ({ open, onClose, onSubmit }) => {
   const [form, setForm] = useState({
@@ -9,16 +10,30 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
     code: '',
     status: 'active',
   });
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(form);
-    setForm({ name: '', code: '', status: 'active' });
+    try {
+      await subjectValidationSchema.validate(form, { abortEarly: false });
+      setErrors({});
+      onSubmit(form);
+      setForm({ name: '', code: '', status: 'active' });
+    } catch (validationError) {
+      if (validationError.inner) {
+        const formErrors = {};
+        validationError.inner.forEach((err) => {
+          formErrors[err.path] = err.message;
+        });
+        setErrors(formErrors);
+      }
+    }
   };
 
   return (
@@ -31,6 +46,8 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           onChange={handleChange}
           fullWidth
           sx={{ mb: 2 }}
+          error={!!errors.name}
+          helperText={errors.name}
         />
         <CustomTextField
           label="Subject Code"
@@ -39,6 +56,8 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           onChange={handleChange}
           fullWidth
           sx={{ mb: 2 }}
+          error={!!errors.code}
+          helperText={errors.code}
         />
         <CustomTextField
           select
@@ -48,6 +67,8 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           onChange={handleChange}
           fullWidth
           sx={{ mb: 2 }}
+          error={!!errors.status}
+          helperText={errors.status}
         >
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>

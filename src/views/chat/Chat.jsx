@@ -2,13 +2,13 @@
 // @ts-ignore
 import React, { useState } from 'react';
 import { Divider, Box } from '@mui/material';
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from 'src/components/container/PageContainer';
-import ChatSidebar from 'src/components/apps/chats/ChatSidebar';
-import ChatContent from 'src/components/apps/chats/ChatContent';
-import ChatMsgSent from 'src/components/apps/chats/ChatMsgSent';
-import AppCard from 'src/components/shared/AppCard';
-import { ChatProvider } from 'src/context/ChatContext';
+import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '../../components/container/PageContainer';
+import ChatSidebar from '../../components/add-chat/component/ChatSidebar';
+import ChatContent from '../../components/add-chat/component/ChatContent';
+import ChatMsgSent from '../../components/add-chat/component/ChatMsgSent';
+import AppCard from '../../components/shared/AppCard';
+import { ChatProvider } from '../../context/ChatContext';
 
 const Chats = () => {
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);

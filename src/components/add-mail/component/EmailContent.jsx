@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import React, { useState, useContext } from 'react';
 import {
   Box,
@@ -10,20 +8,27 @@ import {
   Divider,
   Stack,
   IconButton,
-  Grid,
   Tooltip,
   Paper,
-  useTheme,
+  Grid,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { IconStar, IconAlertCircle, IconTrash } from '@tabler/icons-react';
 import emailIcon from 'src/assets/images/breadcrumb/emailSv.png';
 import { EmailContext } from 'src/context/EmailContext';
 import TiptapEdit from 'src/views/forms/form-tiptap/TiptapEdit';
+import { useTheme } from '@mui/material/styles';
 
 const EmailContent = () => {
-  const { selectedEmail, deleteEmail, toggleStar, toggleImportant, sendEmail } = useContext(EmailContext);
+  const { selectedEmail, deleteEmail, toggleStar, toggleImportant, sendEmail } = useContext(
+    EmailContext
+  );
   const [show, setShow] = useState(false);
-  const [editorContent, setEditorContent] = useState(''); // State to store Tiptap editor content
+  const [editorContent, setEditorContent] = useState('');
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const theme = useTheme();
   const warningColor = theme.palette.warning.main;
   const errorColor = theme.palette.error.light;
@@ -38,61 +43,74 @@ const EmailContent = () => {
     setShow(!show);
   };
 
-  // Handle sending the reply email
   const handleSendReply = () => {
-    if (selectedEmail && editorContent) {
+    if (selectedEmail && editorContent && editorContent.trim() !== '' && editorContent !== '<p></p>') {
       const newEmail = {
-        id: `${Date.now()}`, // Generate unique ID
-        subject: `Re: ${selectedEmail.subject}`,
-        message: editorContent, // Use 'message' to match EmailContext
-        from: selectedEmail.To, // Current user is replying
-        to: selectedEmail.from,
-        toName: selectedEmail.from, // Use 'from' as recipient name
+        id: `${Date.now()}`,
+        subject: `Re: ${selectedEmail.subject || 'No Subject'}`,
+        message: editorContent,
+        from: selectedEmail.to || 'current-user@example.com',
+        to: selectedEmail.from || '',
+        toName: selectedEmail.from || '',
         sent: true,
         inbox: false,
         starred: false,
         important: false,
         label: selectedEmail.label || '',
-        attchments: [], // No attachments for now
+        attachments: [],
         time: new Date().toISOString(),
         emailExcerpt: editorContent.substring(0, 60),
       };
-      console.log('Sending email:', newEmail); // Debug log
-      sendEmail(newEmail); // Call context function
-      setShow(false); // Close editor
-      setEditorContent(''); // Clear editor
+      try {
+        sendEmail(newEmail);
+        setShow(false);
+        setEditorContent('');
+        setSnackbarMessage('Email sent successfully!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+      } catch (error) {
+        setSnackbarMessage('Failed to send email: ' + (error && error.message ? error.message : 'Unknown error'));
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
     } else {
-      console.log('Cannot send: No selected email or empty content');
+      setSnackbarMessage('Failed to send: Please select an email and enter content.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
   };
 
-  // Handle editor content change (assumes TiptapEdit uses onUpdate for @tiptap/react)
   const handleEditorChange = ({ editor }) => {
-    setEditorContent(editor.getHTML()); // Get HTML content from Tiptap
+    const content = editor.getHTML();
+    setEditorContent(content);
   };
 
-  return selectedEmail ? (
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  return (
     <Box>
       <Stack p={2} gap={0} direction="row">
-        <Tooltip title={selectedEmail.starred ? 'Unstar' : 'Star'}>
-          <IconButton onClick={() => toggleStar(selectedEmail.id)}>
+        <Tooltip title={selectedEmail?.starred ? 'Unstar' : 'Star'}>
+          <IconButton onClick={() => selectedEmail && toggleStar(selectedEmail.id)}>
             <IconStar
               stroke={1.3}
               size="18"
               style={{
-                fill: selectedEmail.starred ? warningColor : '',
-                stroke: selectedEmail.starred ? warningColor : '',
+                fill: selectedEmail?.starred ? warningColor : '',
+                stroke: selectedEmail?.starred ? warningColor : '',
               }}
             />
           </IconButton>
         </Tooltip>
-        <Tooltip title={selectedEmail.important ? 'Not Important' : 'Important'}>
-          <IconButton onClick={() => toggleImportant(selectedEmail.id)}>
+        <Tooltip title={selectedEmail?.important ? 'Not Important' : 'Important'}>
+          <IconButton onClick={() => selectedEmail && toggleImportant(selectedEmail.id)}>
             <IconAlertCircle
               size="18"
               stroke={1.3}
               style={{
-                fill: selectedEmail.important ? errorColor : '',
+                fill: selectedEmail?.important ? errorColor : '',
               }}
             />
           </IconButton>
@@ -105,53 +123,53 @@ const EmailContent = () => {
       </Stack>
       <Divider />
       <Box p={3}>
-        {/* Email Detail page */}
         <Box display="flex" alignItems="center" sx={{ pb: 3 }}>
-          <Avatar alt={selectedEmail.from} src={selectedEmail.thumbnail} />
+          <Avatar alt={selectedEmail?.from} src={selectedEmail?.thumbnail} />
           <Box sx={{ ml: 2 }}>
-            <Typography variant="h5">{selectedEmail.from}</Typography>
-            <Typography variant="subtitle2">{selectedEmail.to}</Typography>
+            <Typography variant="h5">{selectedEmail?.from || 'Unknown Sender'}</Typography>
+            <Typography variant="subtitle2">{selectedEmail?.to}</Typography>
           </Box>
           <Chip
-            label={selectedEmail.label}
+            label={selectedEmail?.label || ''}
             sx={{ ml: 'auto', height: '24px' }}
             size="small"
             color="primary"
           />
         </Box>
-        {/* Email Detail page */}
         <Box sx={{ py: 2 }}>
-          <Typography variant="h4">{selectedEmail.subject}</Typography>
+          <Typography variant="h4">{selectedEmail?.subject || 'No Subject'}</Typography>
         </Box>
         <Box sx={{ py: 2 }}>
-          <div dangerouslySetInnerHTML={{ __html: selectedEmail.message || selectedEmail.emailContent }} />
+          <div
+            dangerouslySetInnerHTML={{ __html: selectedEmail?.message || selectedEmail?.emailContent || '' }}
+          />
         </Box>
       </Box>
-      {selectedEmail?.attchments?.length === 0 ? null : (
+      {selectedEmail?.attachments?.length ? (
         <>
           <Divider />
           <Box p={3}>
-            <Typography variant="h5">Attachments ({selectedEmail?.attchments?.length})</Typography>
+            <Typography variant="h5">Attachments ({selectedEmail?.attachments?.length})</Typography>
             <Grid container spacing={3}>
-              {selectedEmail.attchments?.map((attach) => (
-                <Grid key={attach.id} size={{ lg: 4 }}>
+              {selectedEmail?.attachments?.map((attach) => (
+                <Grid key={attach.id || Math.random()} xs={12} lg={4}>
                   <Stack direction="row" gap={2} mt={2}>
                     <Avatar
                       variant="rounded"
-                      sx={{ width: '48px', height: '48px', bgcolor: (theme) => theme.palette.grey[100] }}
+                      sx={{ width: '48px', height: '48px', bgcolor: theme.palette.grey[100] }}
                     >
                       <Avatar
                         src={attach.image}
-                        alt="av"
+                        alt={attach.title}
                         variant="rounded"
                         sx={{ width: '24px', height: '24px' }}
                       />
                     </Avatar>
                     <Box mr="auto">
                       <Typography variant="subtitle1" fontWeight={600}>
-                        {attach.title}
+                        {attach.title || 'Untitled'}
                       </Typography>
-                      <Typography variant="body2">{attach.fileSize}</Typography>
+                      <Typography variant="body2">{attach.fileSize || 'Unknown size'}</Typography>
                     </Box>
                   </Stack>
                 </Grid>
@@ -160,7 +178,7 @@ const EmailContent = () => {
           </Box>
           <Divider />
         </>
-      )}
+      ) : null}
       <Box p={3}>
         <Stack direction="row" gap={2}>
           <Button variant="outlined" size="small" color="primary" onClick={toggleEditor}>
@@ -170,13 +188,19 @@ const EmailContent = () => {
             Forward
           </Button>
         </Stack>
-        {/* Editor */}
         {show ? (
           <Box mt={3}>
-            <Paper variant="outlined">
-              <TiptapEdit onUpdate={handleEditorChange} /> {/* Use onUpdate for Tiptap */}
+            <Paper variant="elevation">
+              <TiptapEdit onUpdate={handleEditorChange} />
               <Box p={2} display="flex" justifyContent="flex-end">
-                <Button variant="contained" color="primary" onClick={handleSendReply}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    console.log('Send button clicked');
+                    handleSendReply();
+                  }}
+                >
                   Send
                 </Button>
               </Box>
@@ -184,14 +208,16 @@ const EmailContent = () => {
           </Box>
         ) : null}
       </Box>
-    </Box>
-  ) : (
-    <Box p={3} height="50vh" display="flex" justifyContent="center" alignItems="center">
-      <Box>
-        <Typography variant="h4">Please Select a Mail</Typography>
-        <br />
-        <img src={emailIcon} alt={emailIcon} width="250px" />
-      </Box>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

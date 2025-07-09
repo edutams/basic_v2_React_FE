@@ -35,7 +35,7 @@ const EmailList = ({ showrightSidebar }) => {
 
   const filteredEmails = searchQuery
     ? emails.filter((email) =>
-      email.from.toLowerCase().includes(searchQuery.toLowerCase())
+      (email.from || '').toLowerCase().includes(searchQuery.toLowerCase())
     )
     : emails.filter((email) => {
       if (filter === 'starred') {
@@ -63,6 +63,7 @@ const EmailList = ({ showrightSidebar }) => {
           <EmailListItem
             key={email.id}
             {...email}
+            displayName={email.sent ? (email.toName || email.to) : email.from}
             onClick={(e) => {
               e.stopPropagation();
               handleSelectEmail(email);

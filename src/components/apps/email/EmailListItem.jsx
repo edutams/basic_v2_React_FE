@@ -23,7 +23,7 @@ const EmailListItem = ({
   onChange,
   onStar,
   onImportant,
-  from,
+  displayName,
   subject,
   time,
   checked,
@@ -54,12 +54,12 @@ const EmailListItem = ({
         <Box onClick={onClick}>
           <Stack direction="row" gap="10px" alignItems="center">
             <Typography variant="h5" mb={0.5}  mr={'auto'}>
-              {from}
+              {displayName}
             </Typography>
             <Chip
               label={label}
               size="small"
-              color={label === 'Promotional' ? 'primary' : label === 'Social' ? 'error' : 'success'}
+              color="primary"
             />
           </Stack>
           <Typography variant="subtitle2" noWrap width={'80%'} color="text.secondary">

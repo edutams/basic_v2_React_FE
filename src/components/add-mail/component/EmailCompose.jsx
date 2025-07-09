@@ -14,16 +14,13 @@ import {
   Typography,
   Grid,
 } from '@mui/material';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { EmailContext } from 'src/context/EmailContext';
 
-
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
-
 
 const EmailCompose = ({ onClose }) => {
   const { sendEmail, setFilter } = useContext(EmailContext); // <-- get setFilter from context
@@ -58,15 +55,13 @@ const EmailCompose = ({ onClose }) => {
       message: form.message,
       attachment: form.attachment,
     };
-    sendEmail(newEmail); // Add the new email to context
-    setFilter('sent'); // Switch filter to 'sent' after sending
+    sendEmail(newEmail);
+    setFilter('sent');
     if (onClose) onClose();
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit}
-      sx={{ bgcolor: 'white', p: 2, borderRadius: 2 }}>
-      <Typography variant="h5" mb={2} fontWeight={600}>Compose e-mail</Typography>
+    <Box component="form" onSubmit={handleSubmit} sx={{ bgcolor: 'white', p: 2, borderRadius: 2 }}>
       <Grid container spacing={2} mb={2}>
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <FormControl fullWidth size="small">
@@ -119,7 +114,7 @@ const EmailCompose = ({ onClose }) => {
         </Grid>
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <FormControl fullWidth size="small">
-            <InputLabel id="level-label">Level 2</InputLabel>
+            <InputLabel id="level2-label">Level 2</InputLabel>
             <Select
               labelId="level2-label"
               id="level2"
@@ -133,7 +128,7 @@ const EmailCompose = ({ onClose }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
           <TextField
             fullWidth
             size="small"
@@ -142,52 +137,68 @@ const EmailCompose = ({ onClose }) => {
             value={form.search}
             onChange={handleChange}
             variant="outlined"
+            sx={{ bgcolor: 'white', mb: 2 }}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <TextField
+            id="to-text"
+            name="to"
+            fullWidth
+            size="small"
+            label="To"
+            value={form.to}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ bgcolor: 'white', mb: 2 }}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <TextField
+            id="subject-text"
+            name="subject"
+            fullWidth
+            size="small"
+            label="Subject"
+            value={form.subject}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ bgcolor: 'white', mb: 2 }}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <TextField
+            id="message-text"
+            name="message"
+            label="Write a message"
+            multiline
+            fullWidth
+            size="small"
+            rows={4}
+            value={form.message}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ bgcolor: 'white', mb: 2 }}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <input
+            type="file"
+            id="upload-text"
+            name="attachment"
+            style={{
+              display: 'block',
+              marginBottom: 16,
+              width: '100%',
+              background: 'white',
+              padding: 8,
+              borderRadius: 4,
+              border: '1px solid #e0e0e0',
+            }}
+            onChange={handleChange}
           />
         </Grid>
       </Grid>
-      <CustomFormLabel htmlFor="to-text">To</CustomFormLabel>
-      <TextField
-        id="to-text"
-        name="to"
-        fullWidth
-        size="small"
-        variant="outlined"
-        value={form.to}
-        onChange={handleChange}
-        sx={{ bgcolor: 'white', mb: 2, '& .MuiOutlinedInput-root': { height: 56, boxSizing: 'border-box' } }}
-      />
-      <CustomFormLabel htmlFor="subject-text">Subject</CustomFormLabel>
-      <TextField
-        id="subject-text"
-        name="subject"
-        fullWidth
-        size="small"
-        variant="outlined"
-        value={form.subject}
-        onChange={handleChange}
-        sx={{ bgcolor: 'white', mb: 2, '& .MuiOutlinedInput-root': { height: 56, boxSizing: 'border-box' } }}
-      />
-      <CustomFormLabel htmlFor="message-text">Message</CustomFormLabel>
-      <TextField
-        id="message-text"
-        name="message"
-        placeholder="Write a message"
-        multiline
-        fullWidth
-        rows={4}
-        variant="outlined"
-        value={form.message}
-        onChange={handleChange}
-        sx={{ bgcolor: 'white', mb: 2, '& .MuiOutlinedInput-root': { boxSizing: 'border-box' } }}
-      />
-      <CustomFormLabel htmlFor="upload-text">Attachment</CustomFormLabel>
-      <input
-        type="file"
-        id="upload-text"
-        name="attachment"
-        style={{ display: 'block', marginBottom: 24, width: '100%', background: 'white', padding: 8, borderRadius: 4, border: '1px solid #e0e0e0' }}
-        onChange={handleChange}
-      />
       <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
         <Button onClick={onClose} variant="outlined">
           Cancel

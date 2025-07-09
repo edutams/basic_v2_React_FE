@@ -130,8 +130,8 @@ const EmailFilter = () => {
         <Button
           variant="contained"
           fullWidth
-          color="success"
-          sx={{ borderRadius: 99, fontWeight: 600, fontSize: 16 }}
+          color="primary"
+          sx={{ fontWeight: 600, fontSize: 16 }}
           onClick={handleOpen}
         >
           Write New Email

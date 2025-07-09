@@ -62,7 +62,7 @@ const InnerEmail = () => {
               <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>Total</Box>
               <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>mail sent</Box>
             </Box>
-            <Box sx={{ fontSize: { xs: 28, sm: 32 }, fontWeight: 700, color: 'success.main', ml: { xs: 1, sm: 2 } }}>
+            <Box sx={{ fontSize: { xs: 28, sm: 32 }, fontWeight: 700, color: 'primary.main', ml: { xs: 1, sm: 2 } }}>
               {totalSent || 0}
             </Box>
           </Box>
@@ -86,7 +86,7 @@ const InnerEmail = () => {
               <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>Total</Box>
               <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>mail received</Box>
             </Box>
-            <Box sx={{ fontSize: { xs: 28, sm: 32 }, fontWeight: 700, color: 'success.main', ml: { xs: 1, sm: 2 } }}>
+            <Box sx={{ fontSize: { xs: 28, sm: 32 }, fontWeight: 700, color: 'primary.main', ml: { xs: 1, sm: 2 } }}>
               {totalReceived || 0}
             </Box>
           </Box>

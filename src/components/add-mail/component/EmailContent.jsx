@@ -116,13 +116,7 @@ const EmailContent = () => {
             label={selectedEmail.label}
             sx={{ ml: 'auto', height: '24px' }}
             size="small"
-            color={
-              selectedEmail.label === 'Promotional'
-                ? 'primary'
-                : selectedEmail.label === 'Social'
-                ? 'error'
-                : 'success'
-            }
+            color="primary"
           />
         </Box>
         {/* Email Detail page */}

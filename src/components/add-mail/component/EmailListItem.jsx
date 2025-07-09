@@ -59,7 +59,7 @@ const EmailListItem = ({
             <Chip
               label={label}
               size="small"
-              color={label === 'Promotional' ? 'primary' : label === 'Social' ? 'error' : 'success'}
+              color="primary"
             />
           </Stack>
           <Typography variant="subtitle2" noWrap width={'80%'} color="text.secondary">

@@ -30,7 +30,6 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           value={form.name}
           onChange={handleChange}
           fullWidth
-          required
           sx={{ mb: 2 }}
         />
         <CustomTextField
@@ -39,7 +38,6 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           value={form.code}
           onChange={handleChange}
           fullWidth
-          required
           sx={{ mb: 2 }}
         />
         <CustomTextField
@@ -55,7 +53,7 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           <MenuItem value="inactive">Inactive</MenuItem>
         </CustomTextField>
         <Box display="flex" justifyContent="flex-end" gap={1} mt={2}>
-          <Button onClick={onClose} color="inherit" variant="outlined" type="button">
+          <Button onClick={onClose}  variant="outlined" type="button">
             Cancel
           </Button>
           <Button type="submit" variant="contained" color="primary">

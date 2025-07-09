@@ -1,26 +1,62 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import {
   Box,
   Typography,
   TextField,
   TableContainer,
   Table,
+  TableHead,
   TableBody,
   TableRow,
   TableCell,
   TableFooter,
   TablePagination,
   Paper,
+  Chip,
+  IconButton,
+  Menu,
+  MenuItem,
   InputAdornment,
+  Button,
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+} from '@mui/icons-material';
+
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import ParentCard from 'src/components/shared/ParentCard'; // ✅ Adjust path as needed
+import ParentCard from 'src/components/shared/ParentCard';
+
+const DUMMY_ROWS = [
+  {
+    id: 1,
+    title: 'The Water Cycle Simulation',
+    topic: 'Water Cycle',
+    subject: 'Science',
+    link: 'https://phet.colorado.edu/en/simulation/water-cycle',
+    status: 'inactive',
+  },
+  {
+    id: 2,
+    title: 'Basic Algebra Balancing',
+    topic: 'Equations',
+    subject: 'Mathematics',
+    link: 'https://phet.colorado.edu/en/simulation/balancing-equations',
+    status: 'active',
+  },
+  {
+    id: 3,
+    title: 'Sound Waves Visualizer',
+    topic: 'Sound',
+    subject: 'Physics',
+    link: 'https://phet.colorado.edu/en/simulation/sound',
+    status: 'active',
+  },
+];
 
 const StimulationLinks = () => {
   return (
-    <Box sx={{ p: 2 }}>
+    <Box>
       <Breadcrumb
         title="Stimulation Links"
         items={[
@@ -35,27 +71,106 @@ const StimulationLinks = () => {
 };
 
 const ManagePhETLinks = () => {
+  const [rows, setRows] = useState(DUMMY_ROWS);
   const [searchTerm, setSearchTerm] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState('create'); // 'create' or 'update'
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // Sample data structure
-  const rows = [
-    // { id: 1, name: 'Motion and Forces', link: 'https://phet.colorado.edu/en/simulation/motion' },
-  ];
-
   const filteredRows = rows.filter((row) =>
-    row.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    row.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedRows = filteredRows.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
+  const handleMenuOpen = (event, row) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedRow(row);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedRow(null);
+  };
+
+  const handleAddClick = () => {
+    setSelectedRow(null);
+    setModalType('create');
+    setModalOpen(true);
+  };
+
+  const handleEditClick = () => {
+    setModalType('update');
+    setModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleDeleteClick = () => {
+    setConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  // const handleModalSubmit = (data) => {
+  //   if (modalType === 'create') {
+  //     const newLink = { ...data, id: Date.now(), status: 'active' };
+  //     setRows((prev) => [...prev, newLink]);
+  //   } else if (modalType === 'update') {
+  //     setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
+  //   }
+  //   setModalOpen(false);
+  // };
+const handleModalSubmit = (data, action = 'update') => {
+  if (action === 'create') {
+    const newLink = { ...data, id: Date.now(), status: 'active' };
+    setRows((prev) => [...prev, newLink]);
+  } else if (action === 'update') {
+    setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
+  } else if (action === 'delete') {
+    setRows((prev) => prev.filter((row) => row.id !== data.id));
+  }
+  setModalOpen(false);
+};
+
+
+
+  const handleDeleteConfirm = () => {
+    setRows((prev) => prev.filter((row) => row.id !== selectedRow.id));
+    setConfirmOpen(false);
+    setSelectedRow(null);
+  };
+
+  const handleSimulationUpdate = (data, action) => {
+  if (action === 'create') {
+    // add to your state
+  } else if (action === 'update') {
+    // update item in state
+  } else if (action === 'delete') {
+    // remove item from state
+  }
+};
 
   return (
-    <ParentCard title={<Typography variant="h5">Manage PhET Simulation Links</Typography>}>
+    <ParentCard
+      title={
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h5">Manage PhET Simulation Links</Typography>
+          <Button variant="contained" color="primary" onClick={handleAddClick}>
+            Add New Link
+          </Button>
+        </Box>
+      }
+    >
       <Box sx={{ p: 0 }}>
         <Box sx={{ mb: 3 }}>
           <TextField
-            placeholder="Search by sub-topic"
+            placeholder="Search by title..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -73,32 +188,69 @@ const ManagePhETLinks = () => {
 
         <Paper variant="outlined">
           <TableContainer>
-            <Table sx={{ whiteSpace: 'nowrap' }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>#</TableCell>
+                  <TableCell>Title</TableCell>
+                  <TableCell>Topic</TableCell>
+                  <TableCell>Subject</TableCell>
+                  <TableCell>Link</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="center">Action</TableCell>
+                </TableRow>
+              </TableHead>
               <TableBody>
                 {paginatedRows.length > 0 ? (
-                  paginatedRows.map((row) => (
+                  paginatedRows.map((row, index) => (
                     <TableRow key={row.id}>
-                      <TableCell sx={{ fontWeight: '500' }}>{row.name}</TableCell>
+                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell>{row.title}</TableCell>
+                      <TableCell>{row.topic}</TableCell>
+                      <TableCell>{row.subject}</TableCell>
                       <TableCell>
                         <a href={row.link} target="_blank" rel="noopener noreferrer">
                           {row.link}
                         </a>
                       </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={row.status.toUpperCase()}
+                          size="small"
+                          sx={{
+                            bgcolor:
+                              row.status === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              row.status === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                          onClose={handleMenuClose}
+                        >
+                          <MenuItem onClick={handleEditClick}>Edit</MenuItem>
+                          <MenuItem onClick={handleDeleteClick}>Delete</MenuItem>
+                        </Menu>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} align="center">
-                      <Box
-                        sx={{
-                          bgcolor: (theme) => theme.palette.info.light,
-                          py: 3,
-                          px: 2,
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Typography variant="body2">No records found</Typography>
-                      </Box>
+                    <TableCell colSpan={7} align="center">
+                      <Typography variant="body2" color="textSecondary">
+                        No records found
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -107,7 +259,7 @@ const ManagePhETLinks = () => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
-                    colSpan={2}
+                    colSpan={7}
                     count={filteredRows.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
@@ -123,12 +275,9 @@ const ManagePhETLinks = () => {
           </TableContainer>
         </Paper>
       </Box>
+
     </ParentCard>
   );
-};
-
-ManagePhETLinks.propTypes = {
-  rows: PropTypes.array,
 };
 
 export default StimulationLinks;

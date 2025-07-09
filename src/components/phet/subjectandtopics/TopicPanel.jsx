@@ -50,7 +50,9 @@ const TopicPanel = ({
   };
 
   const handleActionClick = (action) => {
-    onAction(action, selectedTopic);
+    if (onAction && typeof onAction === 'function') {
+      onAction(action, selectedTopic);
+    }
     handleMenuClose();
   };
 
@@ -98,8 +100,6 @@ const TopicPanel = ({
                 setSearchTerm(e.target.value);
                 setPage(0);
               }}
-              fullWidth
-              size="small"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -152,7 +152,7 @@ const TopicPanel = ({
                             onClose={handleMenuClose}
                           >
                             <MenuItem onClick={() => handleActionClick('update')}>
-                              Edit
+                              Edit Topic
                             </MenuItem>
                             <MenuItem onClick={() =>
                               handleActionClick(t.status === 'active' ? 'deactivate' : 'activate')
@@ -160,7 +160,7 @@ const TopicPanel = ({
                               {t.status === 'active' ? 'Deactivate' : 'Activate'}
                             </MenuItem>
                             <MenuItem onClick={() => handleActionClick('delete')}>
-                              Delete
+                              Delete Topic
                             </MenuItem>
                           </Menu>
                         </TableCell>

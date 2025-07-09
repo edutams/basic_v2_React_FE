@@ -142,10 +142,10 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                           open={Boolean(anchorEl) && selectedSubject?.id === subject.id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem>
-                           Manage Topics
+                          <MenuItem onClick={() => { onSelect(subject); handleMenuClose(); }}>
+                            Manage Topics
                           </MenuItem>
-                          <MenuItem>
+                          <MenuItem onClick={() => handleAction('edit', subject)}>
                             Edit Subject
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('delete', subject)}>

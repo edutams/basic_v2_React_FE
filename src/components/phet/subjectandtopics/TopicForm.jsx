@@ -1,61 +1,78 @@
-import React from 'react';
-import { Box, Grid, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
+import React, { useState } from 'react';
+import { Box, TextField, Button, MenuItem } from '@mui/material';
+import PropTypes from 'prop-types';
 
-const validationSchema = Yup.object({
-  name: Yup.string().required('Topic name is required'),
-  status: Yup.string().required('Status is required'),
+const TopicForm = ({
+  initialValues = {}, 
+  onSubmit,
+  onCancel,
+  submitText,
+  isLoading,
+  selectedSubject,
+}) => {
+  const safeValues = initialValues || {}; 
+ const [form, setForm] = useState({
+  name: initialValues?.name || '',
+  code: initialValues?.code || '',
+  status: initialValues?.status || 'active',
 });
 
-const TopicForm = ({ open, onClose, initialValues, onSubmit, submitText, isLoading }) => {
-  const formik = useFormik({
-    initialValues,
-    validationSchema,
-    onSubmit: (values) => onSubmit(values),
-  });
 
-  if (!open) return null;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(form);
+  };
 
   return (
-    <Box component="form" onSubmit={formik.handleSubmit} sx={{ p: 2 }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Topic Name"
-            name="name"
-            value={formik.values.name}
-            onChange={formik.handleChange}
-            error={formik.touched.name && Boolean(formik.errors.name)}
-            helperText={formik.touched.name && formik.errors.name}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
-            <Select
-              name="status"
-              value={formik.values.status}
-              onChange={formik.handleChange}
-              error={formik.touched.status && Boolean(formik.errors.status)}
-            >
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12}>
-          <Box mt={2} display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined" onClick={onClose} disabled={isLoading}>Cancel</Button>
-            <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
-              {isLoading ? 'Saving...' : submitText}
-            </Button>
-          </Box>
-        </Grid>
-      </Grid>
-    </Box>
+    <form onSubmit={handleSubmit}>
+      <Box display="flex" flexDirection="column" gap={2}>
+        <TextField
+          label="Topic Name"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+        />
+        <TextField
+          label="Topic Code"
+          name="code"
+          value={form.code}
+          onChange={handleChange}
+        />
+        <TextField
+          select
+          label="Status"
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+        >
+          <MenuItem value="active">Active</MenuItem>
+          <MenuItem value="inactive">Inactive</MenuItem>
+        </TextField>
+        <Box display="flex" justifyContent="flex-end" gap={1}>
+          <Button variant="outlined" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant="contained" type="submit" disabled={isLoading}>
+            {submitText}
+          </Button>
+        </Box>
+      </Box>
+    </form>
   );
+};
+
+TopicForm.propTypes = {
+  initialValues: PropTypes.object,
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  submitText: PropTypes.string.isRequired,
+  isLoading: PropTypes.bool,
+  selectedSubject: PropTypes.object,
 };
 
 export default TopicForm;

@@ -10,7 +10,6 @@ import {
   ListItemIcon,
   Box,
   Typography,
-  Button,
 } from '@mui/material';
 
 import { EmailContext } from "src/context/EmailContext";
@@ -28,6 +27,7 @@ import {
 } from '@tabler/icons-react';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import ReusableModal from 'src/components/shared/ReusableModal';
+import Button from '@mui/material/Button';
 
 
 const EmailFilter = () => {
@@ -80,48 +80,48 @@ const EmailFilter = () => {
       id: 6,
       divider: true,
     },
-    {
-      id: 1,
-      filterbyTitle: 'Sort By',
-    },
-    {
-      id: 7,
-      name: 'starred',
-      icon: IconStar,
-      color: 'inherit',
-    },
-    {
-      id: 8,
-      name: 'important',
-      icon: IconAlertCircle,
-      color: 'inherit',
-    },
-    {
-      id: 9,
-      divider: true,
-    },
-    {
-      id: 13,
-      filterbyTitle: 'Labels',
-    },
-    {
-      id: 10,
-      name: 'Promotional',
-      icon: IconFolder,
-      color: 'primary.main',
-    },
-    {
-      id: 11,
-      name: 'Social',
-      icon: IconFolder,
-      color: 'error.main',
-    },
-    {
-      id: 12,
-      name: 'Health',
-      icon: IconFolder,
-      color: 'success.main',
-    },
+    // {
+    //   id: 1,
+    //   filterbyTitle: 'Sort By',
+    // },
+    // {
+    //   id: 7,
+    //   name: 'starred',
+    //   icon: IconStar,
+    //   color: 'inherit',
+    // },
+    // {
+    //   id: 8,
+    //   name: 'important',
+    //   icon: IconAlertCircle,
+    //   color: 'inherit',
+    // },
+    // {
+    //   id: 9,
+    //   divider: true,
+    // },
+    // {
+    //   id: 13,
+    //   filterbyTitle: 'Labels',
+    // },
+    // {
+    //   id: 10,
+    //   name: 'Promotional',
+    //   icon: IconFolder,
+    //   color: 'primary.main',
+    // },
+    // {
+    //   id: 11,
+    //   name: 'Social',
+    //   icon: IconFolder,
+    //   color: 'error.main',
+    // },
+    // {
+    //   id: 12,
+    //   name: 'Health',
+    //   icon: IconFolder,
+    //   color: 'success.main',
+    // },
   ];
 
   return (

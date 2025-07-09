@@ -59,8 +59,13 @@ import {
   IconListTree,
   IconWallet,
   IconSchool,
+  IconTimeline,
 } from '@tabler/icons-react';
 
+
+import EventIcon from '@mui/icons-material/Event';
+import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
+import FolderSharedIcon from '@mui/icons-material/FolderShared';
 const Menuitems = [
   {
     navlabel: true,
@@ -106,27 +111,39 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Session',
-    icon: IconSchool,
+    icon: EventIcon,
     href: '/dashboards/session',
   },
   {
     id: uniqueId(),
     title: 'Term',
-    icon: IconSchool,
+    icon: IconTimeline,
     href: '/dashboards/term',
   },
   {
     id: uniqueId(),
     title: 'Plan',
-    icon: IconAperture,
+    icon: ViewAgendaIcon,
     href: '/dashboards/plan',
   },
   
   {
     id: uniqueId(),
     title: 'My Plan',
-    icon: IconAperture,
+    icon: FolderSharedIcon,
     href: '/dashboards/my-plan',
+  },
+   {
+    id: uniqueId(),
+    title: 'Chat',
+    icon: IconMessage2,
+    href: '/dashboards/chat',
+  },
+   {
+    id: uniqueId(),
+    title: 'Mail',
+    icon: IconMail,
+    href: '/dashboards/mail',
   },
 
   /*

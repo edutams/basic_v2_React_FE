@@ -80,11 +80,11 @@ const EmailCompose = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose} color="primary" variant="contained">
-            Send
-          </Button>
-          <Button onClick={handleClose} color="secondary">
+          <Button onClick={handleClose} variant="outlined">
             Cancel
+          </Button>
+          <Button onClick={handleClose} variant="contained">
+            Send
           </Button>
         </DialogActions>
       </Dialog>

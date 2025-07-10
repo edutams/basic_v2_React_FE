@@ -331,7 +331,7 @@ const MyPlan = () => {
           showDivider={true}
           showCloseButton={true}
         >
-          <Box sx={{ p: 2 }}>
+          <Box sx={{ pt: 2, pr: 0, pb: 2, pl: 0 }}>
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Students Limit
@@ -342,7 +342,7 @@ const MyPlan = () => {
                   borderRadius: 1,
                   display: 'inline-block',
                   bgcolor: '#f5f6fa',
-                  px: 2,
+                  px: 3,
                   py: 1,
                   width: '100%',
                 }}
@@ -356,7 +356,8 @@ const MyPlan = () => {
               sx={{
                 border: '1px solid #bada55',
                 borderRadius: 1,
-                p: 3,
+                px: 3,
+                py: 3,
                 mb: 2,
                 bgcolor: '#fff',
                 minHeight: 120,

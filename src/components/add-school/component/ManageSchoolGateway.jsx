@@ -140,7 +140,7 @@ const ManageSchoolGateway = ({ selectedSchool, onSave, onClose }) => {
             </Grid>
           )}
 
-          <Grid item size={{ xs: 12, sm: 6, md: 6 }}>
+          <Grid item size={{ xs: 12}}>
             <FormControl fullWidth>
               <InputLabel>Select Gateway</InputLabel>
               <Select
@@ -173,7 +173,7 @@ const ManageSchoolGateway = ({ selectedSchool, onSave, onClose }) => {
             </FormControl>
           </Grid>
 
-          <Grid item size={{ xs: 12, sm: 6, md: 6 }}>
+          <Grid item size={{ xs: 12}}>
             <FormControl fullWidth>
               <InputLabel>Select Bank</InputLabel>
               <Select
@@ -199,7 +199,7 @@ const ManageSchoolGateway = ({ selectedSchool, onSave, onClose }) => {
             </FormControl>
           </Grid>
 
-          <Grid item size={{ xs: 12, sm: 6, md: 6 }}>
+          <Grid item size={{ xs: 12}}>
             <TextField
               fullWidth
               label="Account Number"
@@ -212,7 +212,7 @@ const ManageSchoolGateway = ({ selectedSchool, onSave, onClose }) => {
             />
           </Grid>
 
-          <Grid item size={{ xs: 12, sm: 6, md: 6 }}>
+          <Grid item size={{ xs: 12}}>
             <FormControl fullWidth>
               <InputLabel>Currency</InputLabel>
               <Select

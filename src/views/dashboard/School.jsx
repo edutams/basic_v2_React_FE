@@ -454,7 +454,7 @@ const SchoolDashboard = () => {
                 width: '100%',
               }}
             >
-              <Typography variant="h6">All School</Typography>
+              <Typography variant="h5">All School</Typography>
               <Button variant="contained" color="primary" onClick={handleOpen}>
                 Register New School
               </Button>
@@ -834,7 +834,7 @@ const SchoolDashboard = () => {
               open={openGatewayModal}
               onClose={() => setOpenGatewayModal(false)}
               title="Manage School Gateway"
-              size="medium"
+              size="small"
               showDivider={true}
               showCloseButton={true}
             >
@@ -921,7 +921,7 @@ const SchoolDashboard = () => {
               open={openColorSchemeModal}
               onClose={() => setOpenColorSchemeModal(false)}
               title="Change School Color Scheme"
-              size="medium"
+              size="large"
               showDivider={true}
               showCloseButton={true}
             >

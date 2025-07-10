@@ -51,6 +51,11 @@ const GatewayManagement = ({
 
   const handleGatewayUpdate = (gatewayData, operation) => {
     onGatewayUpdate(gatewayData, operation);
+    if (operation === 'create') {
+      notify.success('Gateway registered successfully', 'Success');
+    } else if (operation === 'update') {
+      notify.success('Gateway updated successfully', 'Success');
+    }
   };
 
   return (

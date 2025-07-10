@@ -26,6 +26,7 @@ const Chat = Loadable(lazy(() => import('../views/chat/Chat')))
 const Mail = Loadable(lazy(() => import('../views/mail/Mail')))
 
 
+
 /* ****Apps***** */
 const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
 const Notes = Loadable(lazy(() => import('../views/apps/notes/Notes')));
@@ -178,6 +179,9 @@ const SimpletreeFocus = Loadable(lazy(() => import('../views/mui-trees/simpletre
 const SimpletreeItems = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-items/page')));
 const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')));
 
+const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
+const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
+
 const Router = [
   {
     path: '/',
@@ -291,6 +295,8 @@ const Router = [
       { path: '/mui-trees/simpletree/simpletree-focus', element: <SimpletreeFocus /> },
       { path: '/mui-trees/simpletree/simpletree-items', element: <SimpletreeItems /> },
       { path: '/mui-trees/simpletree/simpletree-selection', element: <SimpletreeSelection /> },
+      { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
+      { path: '/phet/stimulation-links', element: <StimulationLinks /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

@@ -45,6 +45,7 @@ import ChangeAgent from '../../components/add-school/component/ChangeAgent';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import BlankCard from '../../components/shared/BlankCard';
 import ChangeColorScheme from '../../components/add-school/component/ChangeColorScheme';
+import { Link } from 'react-router';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 const ITEM_HEIGHT = 48;
@@ -706,7 +707,7 @@ const SchoolDashboard = () => {
                             >
                               Change Agent
                             </MenuItem>
-                            <MenuItem onClick={handleActionClose}>View School</MenuItem>
+                            <MenuItem component={Link} to={`/dashboards/school/sub-school/${row.schoolUrl}`}>View School</MenuItem>
                             <MenuItem
                               onClick={() => {
                                 setSelectedSchoolFor2FA(row);

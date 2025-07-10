@@ -41,7 +41,8 @@ const baselightTheme = {
       A200: "#557fb9",
     },
     grey: {
-      100: "#ecf0f2",
+      100: "#FFFFFF",
+      // 100: "#ecf0f2",
       200: "#EAEFF4",
       300: "#DFE5EF",
       400: "#767e89",
@@ -62,10 +63,16 @@ const baselightTheme = {
     divider: '#e9e9e9',
 
     background: {
-      default: "#fafbfb",
+      default: "#F1F4F6",
+      // default: "#fafbfb",
       dark: "#fafbfb",
       paper: '#fafbfb',
     },
+
+    header: {
+      bg: "#ffffff", 
+    },
+    
   },
 };
 
@@ -138,7 +145,10 @@ const baseDarkTheme = {
       paper: '#20242d',
     },
 
-
+    header: {
+      bg: "#1c1f26", 
+    },
+    
   },
 };
 

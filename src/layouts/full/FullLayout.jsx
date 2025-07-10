@@ -8,6 +8,7 @@ import Navigation from './horizontal/navbar/Navigation';
 import HorizontalHeader from './horizontal/header/Header';
 import ScrollToTop from '../../components/shared/ScrollToTop';
 import LoadingBar from '../../LoadingBar';
+import DashboardFooter from '../../components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import config from 'src/context/config';
 
@@ -21,7 +22,7 @@ const MainWrapper = styled('div')(() => ({
 const PageWrapper = styled('div')(() => ({
   display: 'flex',
   flexGrow: 1,
-  paddingBottom: '60px',
+  // paddingBottom: '60px',
   flexDirection: 'column',
   zIndex: 1,
   backgroundColor: 'transparent',
@@ -50,6 +51,9 @@ const FullLayout = () => {
         <PageWrapper
           className="page-wrapper"
           sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '100vh',
             ...(isCollapse === "mini-sidebar" && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),
@@ -64,13 +68,16 @@ const FullLayout = () => {
           <Container
             sx={{
               maxWidth: isLayout === 'boxed' ? '1300px !important'  : '100%!important',
-              overflowX: 'auto', // Added to ensure horizontal scrolling
+              overflowX: 'auto',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* ------------------------------------------- */}
             {/* PageContent */}
             {/* ------------------------------------------- */}
-            <Box mt={4} sx={{ minHeight: 'calc(100vh - 170px)', overflowX: 'auto' }}> {/* Added overflowX for responsiveness */}
+            <Box mt={4} sx={{ flex: 1, overflowX: 'auto' }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>
@@ -79,6 +86,12 @@ const FullLayout = () => {
             {/* End Page */}
             {/* ------------------------------------------- */}
           </Container>
+
+          {/* ------------------------------------------- */}
+          {/* Footer */}
+          {/* ------------------------------------------- */}
+          <DashboardFooter />
+
           <Customizer />
         </PageWrapper>
       </MainWrapper>

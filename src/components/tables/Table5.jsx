@@ -30,7 +30,7 @@ const Table5 = () => {
             whiteSpace: 'nowrap',
           }}
         >
-          {/* <TableHead>
+           <TableHead>
             <TableRow>
               <TableCell>
                 <Typography variant="h6">Users</Typography>
@@ -48,7 +48,7 @@ const Table5 = () => {
                 <Typography variant="h6">Budget</Typography>
               </TableCell>
             </TableRow>
-          </TableHead> */}
+          </TableHead> 
           <TableBody>
             {basics.map((basic) => (
               <TableRow key={basic.id}>

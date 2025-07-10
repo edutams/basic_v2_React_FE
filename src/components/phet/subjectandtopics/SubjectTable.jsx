@@ -63,7 +63,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">Manage Subjects</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={onAddSubject}>
+          <Button variant="contained"  onClick={onAddSubject}>
             Add New Subject
           </Button>
         </Box>

@@ -1,42 +1,74 @@
 import React from 'react';
-import { Grid, Typography, Box, Breadcrumbs, Link } from '@mui/material';
+import { Box, Typography, Breadcrumbs, Link } from '@mui/material';
 import { NavLink } from 'react-router';
 import PropTypes from 'prop-types';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 const Breadcrumb = ({ subtitle, items, title, children }) => (
-  <Grid
-    container mb={6} alignItems='center' justifyContent="space-between"
+  <Box
+    mb={6}
+    display="flex"
+    flexDirection="row"
+    alignItems="center"
+    justifyContent="space-between"
+    flexWrap="wrap"
+    gap={2}
   >
-    <Grid size={{ xs: 12, md: 6 }} order={{ xs: 2, md: 1 }}>
-      <Typography color="textSecondary" fontWeight="400" variant="h4">
-        {subtitle}
-      </Typography>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+        flex: 1,
+      }}
+    >
+      {subtitle && (
+        <Typography
+          color="textSecondary"
+          fontWeight="400"
+          variant="subtitle2"
+          sx={{
+            fontSize: { xs: '0.9rem', md: '1.1rem' },
+            mb: 0.5,
+            textAlign: 'left',
+          }}
+        >
+          {subtitle}
+        </Typography>
+      )}
       <Typography
         fontWeight="700"
-        variant="h1"
+        variant="h5"
         sx={{
-          lineHeight: '1.235',
+          fontSize: { xs: '1.1rem', md: '2rem' },
+          lineHeight: 1.2,
+          textAlign: 'left',
         }}
       >
         {title}
       </Typography>
-    </Grid>
+    </Box>
 
-    <Grid
-      size={{ xs: 12, md: 6 }}
-      order={{ xs: 1, md: 2 }}
-      display="flex"
-      flexDirection="column"
-      alignItems={{ xs: 'flex-start', md: 'flex-end' }}
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: { xs: 'flex-end', md: 'flex-end' },
+        minWidth: 0,
+        gap: 1,
+        flexShrink: 0,
+      }}
     >
       <Breadcrumbs
         separator={<NavigateNextIcon fontSize="small" />}
         aria-label="breadcrumb"
-        sx={{ mb: { xs: 2, md: 0 } }}
+        sx={{
+          mb: { xs: children ? 1 : 0, md: 0 },
+          fontSize: { xs: '0.9rem', md: '1rem' },
+        }}
       >
-        {items
-          ? items.map((item) => (
+        {items &&
+          items.map((item) => (
             <div key={item.title}>
               {item.to ? (
                 <Link underline="none" color="inherit" component={NavLink} to={item.to}>
@@ -46,26 +78,24 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
                 <Typography color="textPrimary">{item.title}</Typography>
               )}
             </div>
-          ))
-          : ''}
+          ))}
       </Breadcrumbs>
-
       {children && (
         <Box
-          gap={1}
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: { xs: 'flex-start', md: 'flex-end' },
+            justifyContent: 'flex-end',
             width: '100%',
-            mt: 1
+            mt: 0.5,
+            gap: 1,
           }}
         >
           {children}
         </Box>
       )}
-    </Grid>
-  </Grid>
+    </Box>
+  </Box>
 );
 
 Breadcrumb.propTypes = {

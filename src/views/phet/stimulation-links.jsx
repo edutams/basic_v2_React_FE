@@ -19,10 +19,7 @@ import {
   InputAdornment,
   Button,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  MoreVert as MoreVertIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -85,13 +82,10 @@ const ManagePhETLinks = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const filteredRows = rows.filter((row) =>
-    row.title.toLowerCase().includes(searchTerm.toLowerCase())
+    row.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const paginatedRows = filteredRows.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -137,20 +131,30 @@ const ManagePhETLinks = () => {
   };
 
   const handleSimulationUpdate = (data, action) => {
-  if (action === 'create') {
-  } else if (action === 'update') {
-  } else if (action === 'delete') {
-  }
-};
+    if (action === 'create') {
+    } else if (action === 'update') {
+    } else if (action === 'delete') {
+    }
+  };
 
   return (
     <>
       <ParentCard
         title={
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h5">Manage PhET Simulation Links</Typography>
-            <Button variant="contained" color="primary" onClick={handleAddClick}>
-              Add New Link
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Typography variant="h5">
+              Manage Gateways
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAddClick}
+              sx={{
+                minWidth: 120,
+                fontSize: { xs: '0.95rem', md: '1rem' },
+              }}
+            >
+               Add New Link
             </Button>
           </Box>
         }

@@ -86,12 +86,23 @@ const ModuleTable = ({
   return (
     <ParentCard 
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">Available Modules</Typography>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          mb={2}
+        >
+          <Typography variant="h6">
+            Manage Modules
+          </Typography>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            color="primary"
             onClick={() => onModuleAction('create')}
+            sx={{
+              minWidth: 120,
+              fontSize: { xs: '0.95rem', md: '1rem' },
+            }}
           >
             Add New Module
           </Button>

@@ -90,7 +90,6 @@ const ModuleTable = ({
           display="flex"
           alignItems="center"
           justifyContent="space-between"
-          mb={2}
         >
           <Typography variant="h6">
             Manage Modules

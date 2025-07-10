@@ -107,7 +107,13 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
               <TableBody>
                 {paginatedSubjects.length > 0 ? (
                   paginatedSubjects.map((subject, index) => (
-                    <TableRow>
+                    <TableRow
+                      key={subject.id || index}
+                      hover
+                      selected={selectedId === subject.id}
+                      onClick={() => onSelect(subject)}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>{subject.name}</TableCell>
                       <TableCell>

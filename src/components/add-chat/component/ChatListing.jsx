@@ -23,7 +23,7 @@ import { last } from 'lodash';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
 import user1 from 'src/assets/images/users/1.jpg';
-import { ChatContext } from 'src/context/ChatContext';
+import { ChatContext } from '../../../context/ChatContext';
 
 const ChatListing = () => {
   const {

@@ -2,7 +2,7 @@
 // @ts-ignore
 import React from 'react';
 import { Drawer, useMediaQuery } from '@mui/material';
-import ChatListing from './ChatListing';
+import ChatListing from '../../add-chat/component/ChatListing';
 
 
 const drawerWidth = 320;

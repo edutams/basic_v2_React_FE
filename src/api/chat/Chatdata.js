@@ -18,7 +18,7 @@ const chance = new Chance();
 let ChatData = [
   {
     id: 1,
-    name: 'James Johnson',
+    name: 'Adebayo Seun',
     status: 'online',
     thumb: user1,
     recent: false,
@@ -73,7 +73,7 @@ let ChatData = [
   },
   {
     id: 2,
-    name: 'Maria Hernandez',
+    name: 'Akande Sakiru',
     status: 'away',
     thumb: user2,
     recent: true,
@@ -127,7 +127,7 @@ let ChatData = [
   },
   {
     id: 3,
-    name: 'David Smith',
+    name: 'Adewunmi Opeyemi',
     status: 'busy',
     thumb: user3,
     recent: false,
@@ -172,7 +172,7 @@ let ChatData = [
   },
   {
     id: 4,
-    name: 'Maria Rodriguez',
+    name: 'Oloyede Blessing',
     status: 'offline',
     thumb: user4,
     recent: true,
@@ -225,7 +225,7 @@ let ChatData = [
   },
   {
     id: 5,
-    name: 'Robert Smith',
+    name: 'Habib Abdulsalam',
     status: 'online',
     thumb: user5,
     recent: true,
@@ -280,7 +280,7 @@ let ChatData = [
   },
   {
     id: 6,
-    name: 'Joseph Sarah',
+    name: 'Grace Christopher',
     status: 'busy',
     thumb: user1,
     recent: false,
@@ -323,203 +323,203 @@ let ChatData = [
       },
     ],
   },
-  {
-    id: 7,
-    name: 'Thomas Smith',
-    status: 'away',
-    thumb: user2,
-    recent: true,
-    excerpt: 'Back End Developer',
-    messages: [
-      {
-        createdAt: sub(new Date(), { hours: 10 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 1,
-        type: 'text',
-        attachment: [
-          { icon: adobe, file: 'service-task.pdf', fileSize: '2MB' },
-          { icon: chrome, file: 'homepage-design.fig', fileSize: '3MB' },
-        ],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 1 }),
-        msg: chance.sentence({ words: 10 }),
-        senderId: 1,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { minutes: 15 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 7,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { minutes: 10 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 7,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-    ],
-  },
-  {
-    id: 8,
-    name: 'David Elizabeth',
-    status: 'offline',
-    thumb: user3,
-    recent: false,
-    excerpt: 'Theme Developer',
-    messages: [
-      {
-        createdAt: sub(new Date(), { hours: 10 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 1,
-        type: 'text',
-        attachment: [
-          { icon: adobe, file: 'service-task.pdf', fileSize: '2MB' },
-          { icon: java, file: 'work-project.zip', fileSize: '20MB' },
-          { icon: zip, file: 'custom.js', fileSize: '2MB' },
-        ],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 6 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 3,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 6 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 1,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { minutes: 1 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 8,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-    ],
-  },
-  {
-    id: 9,
-    name: 'Charles Martha',
-    status: 'online',
-    thumb: user4,
-    recent: false,
-    excerpt: 'Administrator',
-    messages: [
-      {
-        createdAt: sub(new Date(), { hours: 10 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 1,
-        type: 'text',
-        attachment: [
-          { icon: java, file: 'work-project.zip', fileSize: '20MB' },
-          { icon: zip, file: 'custom.js', fileSize: '2MB' },
-        ],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 8 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 3,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 8 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 3,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { minutes: 5 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 9,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { minutes: 2 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 9,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-    ],
-  },
-  {
-    id: 10,
-    name: 'Samuel Eliza',
-    status: 'online',
-    thumb: user5,
-    recent: false,
-    excerpt: 'Doctor',
-    messages: [
-      {
-        createdAt: sub(new Date(), { hours: 10 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 1,
-        type: 'text',
-        attachment: [
-          { icon: adobe, file: 'service-task.pdf', fileSize: '2MB' },
-          { icon: zip, file: 'custom.js', fileSize: '2MB' },
-        ],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 11 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 3,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 6 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 3,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { hours: 6 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 3,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-      {
-        createdAt: sub(new Date(), { minutes: 6 }),
-        msg: chance.sentence({ words: 5 }),
-        senderId: 10,
-        type: 'text',
-        attachment: [],
-        id: uniqueId(),
-      },
-    ],
-  },
+  // {
+  //   id: 7,
+  //   name: 'Thomas Smith',
+  //   status: 'away',
+  //   thumb: user2,
+  //   recent: true,
+  //   excerpt: 'Back End Developer',
+  //   messages: [
+  //     {
+  //       createdAt: sub(new Date(), { hours: 10 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 1,
+  //       type: 'text',
+  //       attachment: [
+  //         { icon: adobe, file: 'service-task.pdf', fileSize: '2MB' },
+  //         { icon: chrome, file: 'homepage-design.fig', fileSize: '3MB' },
+  //       ],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 1 }),
+  //       msg: chance.sentence({ words: 10 }),
+  //       senderId: 1,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { minutes: 15 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 7,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { minutes: 10 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 7,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: 8,
+  //   name: 'David Elizabeth',
+  //   status: 'offline',
+  //   thumb: user3,
+  //   recent: false,
+  //   excerpt: 'Theme Developer',
+  //   messages: [
+  //     {
+  //       createdAt: sub(new Date(), { hours: 10 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 1,
+  //       type: 'text',
+  //       attachment: [
+  //         { icon: adobe, file: 'service-task.pdf', fileSize: '2MB' },
+  //         { icon: java, file: 'work-project.zip', fileSize: '20MB' },
+  //         { icon: zip, file: 'custom.js', fileSize: '2MB' },
+  //       ],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 6 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 3,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 6 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 1,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { minutes: 1 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 8,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: 9,
+  //   name: 'Charles Martha',
+  //   status: 'online',
+  //   thumb: user4,
+  //   recent: false,
+  //   excerpt: 'Administrator',
+  //   messages: [
+  //     {
+  //       createdAt: sub(new Date(), { hours: 10 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 1,
+  //       type: 'text',
+  //       attachment: [
+  //         { icon: java, file: 'work-project.zip', fileSize: '20MB' },
+  //         { icon: zip, file: 'custom.js', fileSize: '2MB' },
+  //       ],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 8 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 3,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 8 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 3,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { minutes: 5 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 9,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { minutes: 2 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 9,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //   ],
+  // },
+  // {
+  //   id: 10,
+  //   name: 'Samuel Eliza',
+  //   status: 'online',
+  //   thumb: user5,
+  //   recent: false,
+  //   excerpt: 'Doctor',
+  //   messages: [
+  //     {
+  //       createdAt: sub(new Date(), { hours: 10 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 1,
+  //       type: 'text',
+  //       attachment: [
+  //         { icon: adobe, file: 'service-task.pdf', fileSize: '2MB' },
+  //         { icon: zip, file: 'custom.js', fileSize: '2MB' },
+  //       ],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 11 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 3,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 6 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 3,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { hours: 6 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 3,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //     {
+  //       createdAt: sub(new Date(), { minutes: 6 }),
+  //       msg: chance.sentence({ words: 5 }),
+  //       senderId: 10,
+  //       type: 'text',
+  //       attachment: [],
+  //       id: uniqueId(),
+  //     },
+  //   ],
+  // },
 ];
 
 export default ChatData;
@@ -537,7 +537,8 @@ export const Chathandlers = [
   //  Api endpoint to add message
   http.post('/api/sendMessage', async ({ request }) => {
     try {
-      const { chatId, message } = await request.json();
+      // Accept type and attachment from the request body
+      const { chatId, message, type = 'text', attachment = [] } = await request.json();
       if (!chatId || !message) {
         return HttpResponse.json({
           status: 400,
@@ -546,14 +547,14 @@ export const Chathandlers = [
         });
       }
 
-      // Simulate creating a new message
+      // Simulate creating a new message with type and attachment
       const newMessage = {
-        id: Math.random(), // Use a random ID for simplicity
-        senderId: uniqueId(), // Generate a new senderId
+        id: Math.random(),
+        senderId: uniqueId(),
         msg: message,
         createdAt: new Date().toISOString(),
-        type: 'text', // Assuming the message type is text for simplicity
-        attachment: [], // No attachment initially
+        type, // Use the provided type
+        attachment, // Use the provided attachment
       };
 
       // Find the chat by chatId and push the new message

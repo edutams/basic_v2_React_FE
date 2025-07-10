@@ -14,8 +14,8 @@ import {
 } from '@mui/material';
 import { IconDotsVertical, IconMenu2, IconPhone, IconVideo } from '@tabler/icons-react';
 import { formatDistanceToNowStrict } from 'date-fns';
-import ChatInsideSidebar from './ChatInsideSidebar';
-import { ChatContext } from "src/context/ChatContext";
+import ChatInsideSidebar from '../../add-chat/component/ChatInsideSidebar';
+import { ChatContext } from '../../../context/ChatContext';
 
 const ChatContent = ({
   toggleChatSidebar,

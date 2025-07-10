@@ -174,7 +174,7 @@ const Plan = () => {
          gap: 2,
        }}
      >
-       <Typography variant="h3">All Plans</Typography>
+       <Typography variant="h5">All Plans</Typography>
        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
        
          {!isMobileOrTablet && (

@@ -139,7 +139,7 @@ const Term = () => {
               width: '100%',
             }}
           >
-            <Typography variant="h6">All Terms</Typography>
+            <Typography variant="h5">All Terms</Typography>
             <Button variant="contained" color="primary" onClick={() => handleOpen('create')}>
               Add New Term
             </Button>

@@ -144,7 +144,7 @@ const Session = () => {
               width: '100%',
             }}
           >
-            <Typography variant="h6">All Session</Typography>
+            <Typography variant="h5">All Session</Typography>
             <Button variant="contained" color="primary" onClick={() => handleOpen('create')}>
               Add New Session
             </Button>

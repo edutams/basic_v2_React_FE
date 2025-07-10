@@ -180,7 +180,7 @@ const MyPlan = () => {
   return (
     <PageContainer title="My Plans" description="This is the My Plans page">
       <Breadcrumb title="My Plans" items={BCrumb} />
-      <ParentCard title={<Typography variant="h4">All My Plans</Typography>}>
+      <ParentCard title={<Typography variant="h5">All My Plans</Typography>}>
         <Paper variant="outlined">
           <TableContainer>
             <Table aria-label="my plan table" sx={{ whiteSpace: 'nowrap' }}>

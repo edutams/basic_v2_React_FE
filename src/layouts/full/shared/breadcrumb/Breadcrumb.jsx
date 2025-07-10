@@ -6,7 +6,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 const Breadcrumb = ({ subtitle, items, title, children }) => (
   <Box
-    mb={6}
+    mb={3}
     display="flex"
     flexDirection="row"
     alignItems="center"

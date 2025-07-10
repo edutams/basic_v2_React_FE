@@ -63,7 +63,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
   return (
     <ParentCard
       title={
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h6">
            Available Gateways
           </Typography>

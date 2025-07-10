@@ -96,6 +96,27 @@ const Menuitems = [
     icon: IconWallet,
     href: '/dashboards/gateway',
   },
+
+  {
+    id: uniqueId(),
+    title: 'PHET Stimulation',
+    icon: IconAppWindow,
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Subject & Topics',
+        icon: IconPoint,
+        href: '/phet/subjectandtopics',
+      },
+      {
+        id: uniqueId(),
+        title: 'Stimulation Links',
+        icon: IconPoint,
+        href: '/phet/stimulation-links',
+      },
+    ],
+  },
+  
   
   {
     id: uniqueId(),
@@ -625,12 +646,6 @@ const Menuitems = [
   //       title: 'Sticky',
   //       icon: IconPoint,
   //       href: '/react-tables/sticky',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Empty',
-  //       icon: IconPoint,
-  //       href: '/react-tables/empty',
   //     },
   //     {
   //       id: uniqueId(),

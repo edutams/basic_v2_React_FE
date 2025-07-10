@@ -27,11 +27,7 @@ import {
 import ParentCard from '../../shared/ParentCard';
 import PropTypes from 'prop-types';
 
-const GatewayTable = ({
-  gateways = [],
-  onGatewayAction,
-  isLoading = false,
-}) => {
+const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -40,7 +36,7 @@ const GatewayTable = ({
 
   const filteredGateways = useMemo(() => {
     return gateways.filter((gateway) =>
-      gateway.gateway_name.toLowerCase().includes(searchTerm.toLowerCase())
+      gateway.gateway_name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [gateways, searchTerm]);
 
@@ -67,12 +63,18 @@ const GatewayTable = ({
   return (
     <ParentCard
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">Available Gateways</Typography>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Typography variant="h6">
+           Available Gateways
+          </Typography>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            //  startIcon={<AddIcon />}
             onClick={() => onGatewayAction('create')}
+            sx={{
+              minWidth: 120,
+              fontSize: { xs: '0.95rem', md: '1rem' },
+            }}
           >
             Register Gateway
           </Button>

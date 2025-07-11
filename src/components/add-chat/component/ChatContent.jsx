@@ -72,6 +72,7 @@ const ChatContent = ({
                 />
               </ListItem>
               <Stack direction={"row"}>
+                {/**
                 <IconButton aria-label="phone">
                   <IconPhone stroke={1.5} />
                 </IconButton>
@@ -81,6 +82,7 @@ const ChatContent = ({
                 <IconButton aria-label="sidebar" onClick={() => setOpen(!open)}>
                   <IconDotsVertical stroke={1.5} />
                 </IconButton>
+                */}
               </Stack>
             </Box>
             <Divider />
@@ -202,7 +204,7 @@ const ChatContent = ({
                                   {chat.msg}
                                 </Box>
                               ) : null}
-                              {chat.type === "image" ? (
+                              {/* {chat.type === "image" ? (
                                 <Box
                                   mb={1}
                                   sx={{ overflow: "hidden", lineHeight: "0px" }}
@@ -213,7 +215,7 @@ const ChatContent = ({
                                     width="250" height="165"
                                   />
                                 </Box>
-                              ) : null}
+                              ) : null} */}
                             </Box>
                           </Box>
                         )}

@@ -56,11 +56,18 @@ const EmailListItem = ({
             <Typography variant="h5" mb={0.5}  mr={'auto'}>
               {displayName}
             </Typography>
-            <Chip
-              label={label}
-              size="small"
-              color="primary"
-            />
+            {label && (
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  bgcolor: 'primary.main',
+                  borderRadius: '50%',
+                  display: 'inline-block',
+                  ml: 1
+                }}
+              />
+            )}
           </Stack>
           <Typography variant="subtitle2" noWrap width={'80%'} color="text.secondary">
             {subject}

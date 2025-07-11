@@ -129,12 +129,12 @@ const EmailContent = () => {
             <Typography variant="h5">{selectedEmail?.from || 'Unknown Sender'}</Typography>
             <Typography variant="subtitle2">{selectedEmail?.to}</Typography>
           </Box>
-          <Chip
+          {/* <Chip
             label={selectedEmail?.label || ''}
             sx={{ ml: 'auto', height: '24px' }}
             size="small"
             color="primary"
-          />
+          /> */}
         </Box>
         <Box sx={{ py: 2 }}>
           <Typography variant="h4">{selectedEmail?.subject || 'No Subject'}</Typography>

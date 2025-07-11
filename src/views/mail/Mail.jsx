@@ -116,7 +116,7 @@ const InnerEmail = () => {
             flexShrink: 0,
           }}
         >
-          <EmailSearch onClick={() => setLeftSidebarOpen(true)} />
+          {/* <EmailSearch onClick={() => setLeftSidebarOpen(true)} /> */}
           <EmailLists showrightSidebar={() => setRightSidebarOpen(true)} />
         </Box>
 

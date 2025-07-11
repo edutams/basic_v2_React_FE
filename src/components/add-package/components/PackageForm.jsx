@@ -143,8 +143,8 @@ const PackageForm = ({
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined" onClick={onCancel} type="button" disabled={isLoading}>
+          <Box mt={4} display="flex" justifyContent="flex-end">
+            <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit" type="button" disabled={isLoading}>
               Cancel
             </Button>
             <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>

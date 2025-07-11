@@ -8,6 +8,7 @@ import AddSubjectModal from '../../components/phet/subjectandtopics/AddSubjectMo
 import SubjectModal from '../../components/phet/subjectandtopics/SubjectModal';
 import TopicModal from '../../components/phet/subjectandtopics/TopicModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import useNotification from 'src/hooks/useNotification';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -39,6 +40,8 @@ const SubjectTopicView = () => {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [topicToDelete, setTopicToDelete] = useState(null);
 
+  const notify = useNotification();
+
   const handleSubjectSelect = (subject) => {
     setSelectedSubject(subject);
   };
@@ -49,6 +52,7 @@ const SubjectTopicView = () => {
       { ...newSubject, id: prev.length ? Math.max(...prev.map((s) => s.id)) + 1 : 1 },
     ]);
     setAddModalOpen(false);
+    notify.success('Subject added successfully', 'Success');
   };
 
   const handleSubjectAction = (type, subject) => {
@@ -60,11 +64,13 @@ const SubjectTopicView = () => {
   const handleSubjectUpdate = (updated, type) => {
     if (type === 'edit') {
       setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+      notify.success('Subject updated successfully', 'Success');
     } else if (type === 'delete') {
       setSubjects((prev) => prev.filter((s) => s.id !== updated.id));
       if (selectedSubject?.id === updated.id) {
         setSelectedSubject(null);
       }
+      notify.success('Subject deleted successfully', 'Success');
     }
     setModalOpen(false);
   };
@@ -88,8 +94,10 @@ const SubjectTopicView = () => {
         subjectId: selectedSubject.id,
       };
       setTopics((prev) => [...prev, newTopic]);
+      notify.success('Topic added successfully', 'Success');
     } else if (type === 'update') {
       setTopics((prev) => prev.map((t) => (t.id === data.id ? data : t)));
+      notify.success('Topic updated successfully', 'Success');
     }
     setTopicModalOpen(false);
   };
@@ -97,6 +105,7 @@ const SubjectTopicView = () => {
   const handleDeleteTopicConfirmed = () => {
     if (topicToDelete) {
       setTopics((prev) => prev.filter((t) => t.id !== topicToDelete.id));
+      notify.success('Topic deleted successfully', 'Success');
       setTopicToDelete(null);
     }
     setConfirmDeleteOpen(false);

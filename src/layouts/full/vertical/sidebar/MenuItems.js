@@ -60,12 +60,12 @@ import {
   IconWallet,
   IconSchool,
   IconTimeline,
+  IconMap,
+  IconListCheck,
+  IconCalendarTime
 } from '@tabler/icons-react';
 
 
-import EventIcon from '@mui/icons-material/Event';
-import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
-import FolderSharedIcon from '@mui/icons-material/FolderShared';
 const Menuitems = [
   {
     navlabel: true,
@@ -76,6 +76,12 @@ const Menuitems = [
     title: 'Analytical',
     icon: IconChartPie,
     href: '/dashboards/analytical',
+  },
+   {
+    id: uniqueId(),
+    title: 'School',
+    icon: IconSchool,
+    href: '/dashboards/school',
   },
   {
     id: uniqueId(),
@@ -97,12 +103,48 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'Plan',
+    icon: IconListCheck,
+    href: '/dashboards/plan',
+  },
+  
+  {
+    id: uniqueId(),
+    title: 'My Plan',
+    icon: IconMap,
+    href: '/dashboards/my-plan',
+  },
+ {
+    id: uniqueId(),
+    title: 'Session',
+    icon: IconCalendarTime,
+    href: '/dashboards/session',
+  },
+  {
+    id: uniqueId(),
+    title: 'Term',
+    icon: IconTimeline,
+    href: '/dashboards/term',
+  },
+  {
+    id: uniqueId(),
     title: 'Gateway',
     icon: IconWallet,
     href: '/dashboards/gateway',
   },
-
-  {
+    {
+    id: uniqueId(),
+    title: 'Chat',
+    icon: IconMessage2,
+    href: '/dashboards/chat',
+  },
+   {
+    id: uniqueId(),
+    title: 'Mail',
+    icon: IconMail,
+    href: '/dashboards/mail',
+  },
+   {
     id: uniqueId(),
     title: 'PHET Stimulation',
     icon: IconAppWindow,
@@ -120,51 +162,6 @@ const Menuitems = [
         href: '/phet/stimulation-links',
       },
     ],
-  },
-  
-  
-  {
-    id: uniqueId(),
-    title: 'School',
-    icon: IconSchool,
-    href: '/dashboards/school',
-  },
-  {
-    id: uniqueId(),
-    title: 'Session',
-    icon: EventIcon,
-    href: '/dashboards/session',
-  },
-  {
-    id: uniqueId(),
-    title: 'Term',
-    icon: IconTimeline,
-    href: '/dashboards/term',
-  },
-  {
-    id: uniqueId(),
-    title: 'Plan',
-    icon: ViewAgendaIcon,
-    href: '/dashboards/plan',
-  },
-  
-  {
-    id: uniqueId(),
-    title: 'My Plan',
-    icon: FolderSharedIcon,
-    href: '/dashboards/my-plan',
-  },
-   {
-    id: uniqueId(),
-    title: 'Chat',
-    icon: IconMessage2,
-    href: '/dashboards/chat',
-  },
-   {
-    id: uniqueId(),
-    title: 'Mail',
-    icon: IconMail,
-    href: '/dashboards/mail',
   },
 
   /*

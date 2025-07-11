@@ -26,11 +26,14 @@ const DashboardFooter = () => {
         // border: '2px solid red'
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ marginRight: 0 }}>
         <Box
           display="flex"
           justifyContent="flex-end"
           alignItems="center"
+          sx={{ 
+            // border: '2px solid red',
+           }}
         >
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography variant="body2" color="textSecondary">

@@ -103,7 +103,7 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Plan',
+    title: 'Plans',
     icon: IconListCheck,
     href: '/dashboards/plan',
   },

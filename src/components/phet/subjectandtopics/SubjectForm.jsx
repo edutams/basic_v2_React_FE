@@ -61,8 +61,8 @@ const SubjectForm = ({
           </Select>
         </FormControl>
 
-        <Box display="flex" justifyContent="flex-end" gap={1}>
-          <Button variant="outlined" onClick={onCancel}>
+        <Box display="flex" justifyContent="flex-end">
+          <Button sx={{ mr: 1 }} color="inherit"  onClick={onCancel}>
             Cancel
           </Button>
           <Button

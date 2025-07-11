@@ -56,8 +56,8 @@ const GatewayForm = ({
         </Grid>
 
         <Grid item xs={12}>
-          <Box display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined" onClick={onCancel} disabled={isLoading}>
+          <Box display="flex" justifyContent="flex-end">
+            <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel} disabled={isLoading}>
               Cancel
             </Button>
             <Button

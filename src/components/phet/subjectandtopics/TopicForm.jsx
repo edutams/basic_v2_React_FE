@@ -72,8 +72,8 @@ const TopicForm = ({
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>
         </TextField>
-        <Box display="flex" justifyContent="flex-end" gap={1}>
-          <Button variant="outlined" onClick={onCancel}>
+        <Box display="flex" justifyContent="flex-end">
+          <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
             Cancel
           </Button>
           <Button variant="contained" type="submit" disabled={isLoading}>

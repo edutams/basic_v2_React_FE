@@ -85,8 +85,8 @@ const StimulationLinkModal = ({
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
               Are you sure you want to delete "{selectedSimulation?.title}"?
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button variant="outlined" onClick={onClose} disabled={isLoading}>
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Button onClick={onClose} sx={{ mr: 1 }} color="inherit" disabled={isLoading}>
                 Cancel
               </Button>
               <Button

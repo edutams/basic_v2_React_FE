@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
@@ -24,13 +24,24 @@ import {
 import './Tiptap.css';
 
 
-const TiptapEdit = () => {
+const TiptapEdit = ({ onUpdate }) => {
 
   const editor = useEditor({
     extensions: [StarterKit],
     content: "<p>Type here...</p>",
+    onUpdate: ({ editor }) => {
+      if (onUpdate) {
+        onUpdate({ editor });
+      }
+    },
   });
 
+  // If the editor instance changes (e.g., hot reload), call onUpdate with the current content
+  useEffect(() => {
+    if (editor && onUpdate) {
+      onUpdate({ editor });
+    }
+  }, [editor, onUpdate]);
 
 
   return (

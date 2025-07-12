@@ -45,6 +45,7 @@ import ChangeAgent from '../../components/add-school/component/ChangeAgent';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import BlankCard from '../../components/shared/BlankCard';
 import ChangeColorScheme from '../../components/add-school/component/ChangeColorScheme';
+import { Link } from 'react-router';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 const ITEM_HEIGHT = 48;
@@ -454,7 +455,7 @@ const SchoolDashboard = () => {
                 width: '100%',
               }}
             >
-              <Typography variant="h6">All School</Typography>
+              <Typography variant="h5">All School</Typography>
               <Button variant="contained" color="primary" onClick={handleOpen}>
                 Register New School
               </Button>
@@ -706,7 +707,7 @@ const SchoolDashboard = () => {
                             >
                               Change Agent
                             </MenuItem>
-                            <MenuItem onClick={handleActionClose}>View School</MenuItem>
+                            <MenuItem component={Link} to={`/dashboards/school/sub-school/${row.schoolUrl}`}>View School</MenuItem>
                             <MenuItem
                               onClick={() => {
                                 setSelectedSchoolFor2FA(row);
@@ -834,7 +835,7 @@ const SchoolDashboard = () => {
               open={openGatewayModal}
               onClose={() => setOpenGatewayModal(false)}
               title="Manage School Gateway"
-              size="medium"
+              size="small"
               showDivider={true}
               showCloseButton={true}
             >
@@ -921,7 +922,7 @@ const SchoolDashboard = () => {
               open={openColorSchemeModal}
               onClose={() => setOpenColorSchemeModal(false)}
               title="Change School Color Scheme"
-              size="medium"
+              size="large"
               showDivider={true}
               showCloseButton={true}
             >

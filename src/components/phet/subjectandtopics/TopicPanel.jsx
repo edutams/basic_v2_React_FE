@@ -69,7 +69,16 @@ const TopicPanel = ({
     <ParentCard
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">Manage Topics</Typography>
+          <Typography variant="h5">
+            {selectedSubject ? (
+              <>
+                Manage Topics in{' '}
+                <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  {selectedSubject.name}
+                </Box>
+              </>
+            ) : 'Manage Topics'}
+          </Typography>
           {selectedSubject && (
             <Button
               variant="contained"
@@ -83,7 +92,7 @@ const TopicPanel = ({
       }
     >
       {!selectedSubject ? (
-        <Box sx={{ p: 3, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+        <Box sx={{ p: 3, bgcolor: 'info.light', borderRadius: 1 }}>
           <Typography variant="body2" color="textSecondary">
             You need to select a subject on the left to view its topics.
           </Typography>
@@ -116,7 +125,6 @@ const TopicPanel = ({
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>Topic</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                     <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
                   </TableRow>
@@ -126,7 +134,6 @@ const TopicPanel = ({
                     paginatedTopics.map((t) => (
                       <TableRow key={t.id}>
                         <TableCell>{t.name}</TableCell>
-                        <TableCell>{selectedSubject?.name || 'N/A'}</TableCell>
                         <TableCell>
                           <Chip
                             label={t.status.toUpperCase()}
@@ -168,10 +175,15 @@ const TopicPanel = ({
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        <Typography variant="body2" color="textSecondary">
+                      <TableCell colSpan={3} align="center">
+                        <Box  sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                           <Typography variant="body2" color="textSecondary">
                           No topics found
                         </Typography>
+                        </Box>
+                        
+                       
+                       
                       </TableCell>
                     </TableRow>
                   )}
@@ -180,7 +192,7 @@ const TopicPanel = ({
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      colSpan={4}
+                      colSpan={3}
                       count={filteredTopics.length}
                       rowsPerPage={rowsPerPage}
                       page={page}

@@ -21,6 +21,8 @@ import {
  Switch,
  FormControlLabel,
  Grid,
+ useMediaQuery,
+ useTheme,
 } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -153,39 +155,71 @@ const Plan = () => {
  };
 
  const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+ const theme = useTheme();
+ const isMobileOrTablet = useMediaQuery(theme.breakpoints.down('md'));
 
  return (
  <PageContainer title="Plans" description="This is the Plans page">
  <Breadcrumb title="Plans" items={BCrumb} />
  <ParentCard
  title={
- <Box
- sx={{
- display: 'flex',
- justifyContent: 'space-between',
- alignItems: 'center',
- width: '100%',
- }}
- >
- <Typography variant="h4">All Plans</Typography>
- <Box sx={{ display: 'flex', alignItems: 'center', gap: 5 }}>
- <FormControlLabel
- control={
- <Switch
- checked={lockSubscription}
- onChange={handleLockSubscriptionChange}
- color="primary"
- aria-label="Lock subscription toggle"
- />
- }
- label="Lock Subscription"
- labelPlacement="start"
- />
- <Button variant="contained" color="primary" onClick={() => handleOpen('create')}>
- Add New Plan
- </Button>
- </Box>
- </Box>
+   <Box sx={{ width: '100%' }}>
+     <Box
+       sx={{
+         display: 'flex',
+         flexDirection: 'row',
+         justifyContent: 'space-between',
+         alignItems: 'center',
+         width: '100%',
+         gap: 2,
+       }}
+     >
+       <Typography variant="h5">All Plans</Typography>
+       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+       
+         {!isMobileOrTablet && (
+           <FormControlLabel
+             control={
+               <Switch
+                 checked={lockSubscription}
+                 onChange={handleLockSubscriptionChange}
+                 color="primary"
+                 aria-label="Lock subscription toggle"
+               />
+             }
+             label="Lock Subscription"
+             labelPlacement="start"
+             sx={{ m: 0 }}
+           />
+         )}
+           <Button
+           variant="contained"
+           color="primary"
+           onClick={() => handleOpen('create')}
+           sx={{ minWidth: 120 }}
+         >
+           Add New Plan
+         </Button>
+       </Box>
+     </Box>
+     {isMobileOrTablet && (
+       <Box sx={{ mt: 2, width: '100%' }}>
+         <FormControlLabel
+           control={
+             <Switch
+               checked={lockSubscription}
+               onChange={handleLockSubscriptionChange}
+               color="primary"
+               aria-label="Lock subscription toggle"
+             />
+           }
+           label="Lock Subscription"
+           labelPlacement="start"
+           sx={{ m: 0 }}
+         />
+       </Box>
+     )}
+   </Box>
  }
  >
  <Paper variant="outlined">

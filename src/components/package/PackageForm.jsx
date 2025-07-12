@@ -188,8 +188,9 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
         <Grid item xs={12}>
           <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
             <Button
-              variant="outlined"
               onClick={onCancel}
+              sx={{ mr: 1 }}
+              color="inherit"
               type="button"
             >
               Cancel

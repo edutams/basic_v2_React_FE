@@ -119,7 +119,7 @@ const ModuleManagement = ({
 
     if (packageModules.length === 0) {
       return (
-        <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+        <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
           <Typography variant="body2" color="textSecondary">
             No modules found for this package. Click "Add New Module" to get started.
           </Typography>

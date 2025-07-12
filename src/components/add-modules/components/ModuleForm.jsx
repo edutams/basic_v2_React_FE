@@ -120,9 +120,9 @@ const ModuleForm = ({
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
+          <Box mt={4} display="flex" justifyContent="flex-end">
             <Button
-              variant="outlined"
+              sx={{ mr: 1 }} color="inherit" 
               onClick={onCancel}
               type="button"
               disabled={isLoading}

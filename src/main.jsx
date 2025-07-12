@@ -8,6 +8,8 @@ import { SnackbarProvider } from './context/SnackbarContext';
 import  ErrorBoundary  from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { BrowserRouter } from 'react-router-dom';
+
 
 async function deferRender() {
   const { worker } = await import("./api/mocks/browser");
@@ -24,7 +26,9 @@ deferRender().then(() => {
       <SnackbarProvider>
           <Suspense fallback={<Spinner />}>
           <ErrorBoundary>
+            <BrowserRouter>
               <App />
+            </BrowserRouter>
           </ErrorBoundary>
           </Suspense>
       </SnackbarProvider>

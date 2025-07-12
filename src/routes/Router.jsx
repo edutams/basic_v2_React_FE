@@ -22,6 +22,10 @@ const Package = Loadable(lazy(() => import('../views/package/Package')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
 const Plan = Loadable(lazy(() => import('../views/plan/Plan')));
 const MyPlan = Loadable(lazy(() => import('../views/my-plan/MyPlan')));
+const Chat = Loadable(lazy(() => import('../views/chat/Chat')))
+const Mail = Loadable(lazy(() => import('../views/mail/Mail')))
+const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')))
+
 
 
 /* ****Apps***** */
@@ -195,6 +199,9 @@ const Router = [
       { path: '/dashboards/gateway', exact: true, element: <Gateway /> },
       { path: '/dashboards/plan', exact: true, element: <Plan /> },
       { path: '/dashboards/my-plan', exact: true, element: <MyPlan /> },
+      { path: '/dashboards/chat', exact: true, element: <Chat /> },
+      { path: '/dashboards/mail', exact: true, element: <Mail /> },
+      { path: "/dashboards/school/sub-school/:id", exact: false, element: <ViewSchool /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },

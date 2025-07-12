@@ -94,8 +94,8 @@ const StimulationFormLink = ({ initialValues = {}, onSubmit, onCancel, submitTex
         <MenuItem value="active">Active</MenuItem>
         <MenuItem value="inactive">Inactive</MenuItem>
       </TextField>
-      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-        <Button variant="outlined" onClick={onCancel} disabled={isLoading}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+        <Button sx={{ mr: 1 }} color="inherit"  onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
         <Button type="submit" variant="contained" color="primary" disabled={isLoading}>

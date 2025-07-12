@@ -5,7 +5,7 @@ import { Button, Box, Drawer, useMediaQuery } from '@mui/material';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import EmailLists from 'src/components/apps/email/EmailList';
 import EmailFilter from 'src/components/apps/email/EmailFilter';
-import EmailSearch from 'src/components/apps/email/EmailSearch';
+// import EmailSearch from 'src/components/apps/email/EmailSearch';
 import EmailContent from 'src/components/apps/email/EmailContent';
 import PageContainer from 'src/components/container/PageContainer';
 import AppCard from 'src/components/shared/AppCard';
@@ -57,7 +57,7 @@ const Email = () => {
           {/* Middle part */}
           {/* ------------------------------------------- */}
 
-          <Box
+          {/* <Box
             sx={{
               minWidth: secdrawerWidth,
               width: { xs: '100%', md: secdrawerWidth, lg: secdrawerWidth },
@@ -67,7 +67,7 @@ const Email = () => {
             <EmailSearch onClick={() => setLeftSidebarOpen(true)} />
 
             <EmailLists showrightSidebar={() => setRightSidebarOpen(true)} />
-          </Box>
+          </Box> */}
 
           {/* ------------------------------------------- */}
           {/* Right part */}

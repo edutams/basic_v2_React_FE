@@ -25,6 +25,7 @@ import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import StimulationLinkModal from '../../components/phet/stimulation-links/StimulationLinkModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
+import useNotification from 'src/hooks/useNotification';
 
 const DUMMY_ROWS = [
   {
@@ -80,6 +81,7 @@ const ManagePhETLinks = () => {
   const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const notify = useNotification();
 
   const filteredRows = rows.filter((row) =>
     row.title.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -118,8 +120,10 @@ const ManagePhETLinks = () => {
   const handleModalSubmit = (data) => {
     if (modalType === 'create') {
       setRows((prev) => [...prev, { ...data, id: Date.now() }]);
+      notify.success('Stimulation link added successfully', 'Success');
     } else if (modalType === 'update') {
       setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
+      notify.success('Stimulation link updated successfully', 'Success');
     }
     setModalOpen(false);
   };
@@ -128,6 +132,7 @@ const ManagePhETLinks = () => {
     setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
     setConfirmOpen(false);
     setRowToDelete(null);
+    notify.success('Stimulation link deleted successfully', 'Success');
   };
 
   const handleSimulationUpdate = (data, action) => {

@@ -201,7 +201,7 @@ const Router = [
       { path: '/dashboards/my-plan', exact: true, element: <MyPlan /> },
       { path: '/dashboards/chat', exact: true, element: <Chat /> },
       { path: '/dashboards/mail', exact: true, element: <Mail /> },
-      { path: "/dashboards/school/sub-school/:id", exact: false, element: <ViewSchool /> },
+      { path: "/dashboards/school/sub-school/:schoolUrl", exact: false, element: <ViewSchool /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },

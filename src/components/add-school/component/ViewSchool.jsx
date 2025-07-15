@@ -15,10 +15,19 @@ import {
   MenuItem,
   TableFooter,
   TablePagination,
+  useTheme,
+  Select,
+  MenuItem as MuiMenuItem,
+  FormControl,
+  InputLabel,
+  Button,
 } from '@mui/material';
 import { useParams } from 'react-router';
 import { IconSchool } from '@tabler/icons-react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import BlankCard from '../../../components/shared/BlankCard';
+import ReusableModal from '../../../components/shared/ReusableModal';
+
 
 const ViewSchool = () => {
   const { schoolUrl } = useParams();
@@ -28,6 +37,10 @@ const ViewSchool = () => {
   const [activeRow, setActiveRow] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
+  const [selectedSchoolForSubscription, setSelectedSchoolForSubscription] = useState(null);
+  const [subscriptionMethod, setSubscriptionMethod] = useState('Plan');
+  const theme = useTheme();
 
   useEffect(() => {
     const schoolList = JSON.parse(localStorage.getItem('schoolList')) || [];
@@ -38,16 +51,15 @@ const ViewSchool = () => {
       moduleType: sch?.moduleType || 'N/A',
     });
 
-    // Simulate sub-schools (replace with actual sub-school data if available)
-    // Example: Filter schools with the same agent as sub-schools
-    const relatedSchools = schoolList.filter(
-      (s) => s.agent === sch?.agent && s.schoolUrl !== schoolUrl
+    // Filter sub-schools by parentSchoolUrl
+    const subSchools = schoolList.filter(
+      (s) => s.parentSchoolUrl === schoolUrl
     ).map((s) => ({
       ...s,
       administratorEmail: s?.administratorEmail || 'N/A',
       moduleType: s?.moduleType || 'N/A',
     }));
-    setSubSchools(relatedSchools);
+    setSubSchools(subSchools);
   }, [schoolUrl]);
 
   const handleActionClick = (event, rowId) => {
@@ -69,7 +81,33 @@ const ViewSchool = () => {
     setPage(0);
   };
 
-  const paginatedSchools = subSchools.slice(
+  const handleOpenSubscriptionModal = (school) => {
+    setSelectedSchoolForSubscription(school);
+    setSubscriptionMethod(school.subscriptionMethod || 'Plan');
+    setOpenSubscriptionModal(true);
+  };
+
+  const handleUpdateSubscriptionMethod = () => {
+    // Update in local state and localStorage
+    setSubSchools((prev) => prev.map(s =>
+      s.id === selectedSchoolForSubscription.id ? { ...s, subscriptionMethod } : s
+    ));
+    // Also update main school if needed
+    if (school && school.id === selectedSchoolForSubscription.id) {
+      setSchool({ ...school, subscriptionMethod });
+    }
+    // Update in localStorage
+    const schoolList = JSON.parse(localStorage.getItem('schoolList')) || [];
+    const updatedList = schoolList.map(s =>
+      s.id === selectedSchoolForSubscription.id ? { ...s, subscriptionMethod } : s
+    );
+    localStorage.setItem('schoolList', JSON.stringify(updatedList));
+    setOpenSubscriptionModal(false);
+  };
+
+  // Combine main school and sub-schools for table display
+  const allSchools = school ? [school, ...subSchools] : [];
+  const paginatedSchools = allSchools.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
@@ -85,16 +123,14 @@ const ViewSchool = () => {
   }
 
   return (
-    <Box>
-      {/* <Typography variant="h4" sx={{ mb: 3 }}>
-        View School: {school.institutionName}
-      </Typography> */}
+    <BlankCard>
+    <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
+      <Typography variant="h5" sx={{ mb: 3 }}>
+         All Sub School in {school.institutionName}
+      </Typography>
       <Paper elevation={3}>
         <TableContainer>
           <Box sx={{ p: 2 }}>
-            {/* <Typography variant="h5" gutterBottom>
-              School Details
-            </Typography> */}
             <Table>
               <TableHead>
                 <TableRow>
@@ -108,28 +144,14 @@ const ViewSchool = () => {
               </TableHead>
               <TableBody>
                 {paginatedSchools.length > 0 ? (
-                  paginatedSchools.map((row) => (
-                    <TableRow key={row.id}>
+                  paginatedSchools.map((row, idx) => (
+                    <TableRow key={row.id || idx}>
                       <TableCell>{row.institutionName}</TableCell>
-                      <TableCell>{row.administratorEmail}</TableCell>
-                      <TableCell>{row.moduleType}</TableCell>
-                      <TableCell>{row.moduleType}</TableCell>
+                      <TableCell>{row.administratorEmail || '-'}</TableCell>
+                      <TableCell>{row.moduleType || '-'}</TableCell>
+                      <TableCell>{row.amountPerUser || '-'}</TableCell>
                       <TableCell>
-                        <Chip
-                          sx={{
-                            bgcolor:
-                              row.status === 'Active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.primary.light,
-                            color:
-                              row.status === 'Active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.primary.main,
-                            borderRadius: '8px',
-                          }}
-                          size="small"
-                          label={row.status || 'Unknown'}
-                        />
+                        <Chip label={row.status || '-'} size="small" />
                       </TableCell>
                       <TableCell>
                         <IconButton onClick={(e) => handleActionClick(e, row.id)}>
@@ -144,8 +166,8 @@ const ViewSchool = () => {
                           PaperProps={{ sx: { minWidth: 120, boxShadow: 3 } }}
                         >
                           <MenuItem onClick={handleActionClose}>View School Stage</MenuItem>
-                          <MenuItem onClick={handleActionClose}>Manage Subscription</MenuItem>
-                          <MenuItem onClick={handleActionClose}>Update Subscription Method</MenuItem>
+                          <MenuItem onClick={handleActionClose}>Manage subcription</MenuItem>
+                          <MenuItem onClick={() => { handleActionClose(); handleOpenSubscriptionModal(row); }}>Update Subscription Method</MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
@@ -167,7 +189,7 @@ const ViewSchool = () => {
                           No related schools available
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
-                          No related schools found for {school.institutionName}.
+                          No related schools found for {school?.institutionName || schoolUrl}.
                         </Typography>
                       </Box>
                     </TableCell>
@@ -178,7 +200,7 @@ const ViewSchool = () => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
-                    count={subSchools.length}
+                    count={allSchools.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -191,6 +213,48 @@ const ViewSchool = () => {
         </TableContainer>
       </Paper>
     </Box>
+    <ReusableModal
+      open={openSubscriptionModal}
+      onClose={() => setOpenSubscriptionModal(false)}
+      title={`${selectedSchoolForSubscription?.institutionName || ''}. Subscription Method`}
+      size="medium"
+      showDivider={true}
+      showCloseButton={true}
+    >
+      <Box>
+        <FormControl fullWidth>
+          <InputLabel id="subscription-method-label">Subscription Method</InputLabel>
+          <Select
+            labelId="subscription-method-label"
+            value={subscriptionMethod}
+            label="Subscription Method"
+            onChange={e => setSubscriptionMethod(e.target.value)}
+            sx={{ mb: 3 }}
+          >
+            <MuiMenuItem value="Plan">Plan</MuiMenuItem>
+            <MuiMenuItem value="Per User">Per User</MuiMenuItem>
+          </Select>
+        </FormControl>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+  <Button
+    onClick={() => setOpenSubscriptionModal(false)}
+    sx={{
+      color: theme => theme.palette.primary.main, 
+      '&:hover': {
+        backgroundColor: 'transparent', 
+        color: theme => theme.palette.primary.main, 
+      },
+    }}
+  >
+    Cancel
+  </Button>
+  <Button variant="contained" color="primary" onClick={handleUpdateSubscriptionMethod}>
+    Update
+  </Button>
+</Box>
+      </Box>
+    </ReusableModal>
+    </BlankCard>
   );
 };
 

@@ -14,7 +14,6 @@ import {
   Typography,
   Grid,
 } from '@mui/material';
-import CustomFormLabel from 'src/components/forms/theme-elements/CustomFormLabel';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
@@ -180,50 +179,56 @@ const EmailCompose = ({ onClose }) => {
             />
           </Grid>
         )}
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <TextField
+            id="to-text"
+            name="to"
+            fullWidth
+            size="small"
+            label="To"
+            value={form.to}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ bgcolor: 'white', mb: 2 }}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <TextField
+            id="subject-text"
+            name="subject"
+            fullWidth
+            size="small"
+            label="Subject"
+            value={form.subject}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ bgcolor: 'white', mb: 2 }}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <TextField
+            id="message-text"
+            name="message"
+            label="Write a message"
+            multiline
+            fullWidth
+            rows={4}
+            value={form.message}
+            onChange={handleChange}
+            variant="outlined"
+            sx={{ bgcolor: 'white', mb: 2 }}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+          <input
+            type="file"
+            id="upload-text"
+            name="attachment"
+            style={{ display: 'block', marginBottom: 24, width: '100%', background: 'white', padding: 8, borderRadius: 4, border: '1px solid #e0e0e0' }}
+            onChange={handleChange}
+          />
+        </Grid>
       </Grid>
-      <CustomFormLabel htmlFor="to-text">To</CustomFormLabel>
-      <TextField
-        id="to-text"
-        name="to"
-        fullWidth
-        size="small"
-        variant="outlined"
-        value={form.to}
-        onChange={handleChange}
-        sx={{ bgcolor: 'white', mb: 2, '& .MuiOutlinedInput-root': { height: 56, boxSizing: 'border-box' } }}
-      />
-      <CustomFormLabel htmlFor="subject-text">Subject</CustomFormLabel>
-      <TextField
-        id="subject-text"
-        name="subject"
-        fullWidth
-        size="small"
-        variant="outlined"
-        value={form.subject}
-        onChange={handleChange}
-        sx={{ bgcolor: 'white', mb: 2, '& .MuiOutlinedInput-root': { height: 56, boxSizing: 'border-box' } }}
-      />
-      <CustomFormLabel htmlFor="message-text">Message</CustomFormLabel>
-      <TextField
-        id="message-text"
-        name="message"
-        placeholder="Write a message"
-        multiline
-        fullWidth
-        rows={4}
-        variant="outlined"
-        value={form.message}
-        onChange={handleChange}
-        sx={{ bgcolor: 'white', mb: 2, '& .MuiOutlinedInput-root': { boxSizing: 'border-box' } }}
-      />
-      <CustomFormLabel htmlFor="upload-text">Attachment</CustomFormLabel>
-      <input
-        type="file"
-        id="upload-text"
-        name="attachment"
-        style={{ display: 'block', marginBottom: 24, width: '100%', background: 'white', padding: 8, borderRadius: 4, border: '1px solid #e0e0e0' }}
-        onChange={handleChange}
-      />
       <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
         <Button onClick={onClose} variant="outlined">
           Cancel

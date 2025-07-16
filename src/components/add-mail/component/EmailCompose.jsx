@@ -23,7 +23,7 @@ import { EmailContext } from 'src/context/EmailContext';
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 const EmailCompose = ({ onClose }) => {
-  const { sendEmail, setFilter } = useContext(EmailContext); // <-- get setFilter from context
+  const { sendEmail, setFilter } = useContext(EmailContext);
   const [form, setForm] = useState({
     recipientType: '',
     agent: '',
@@ -39,15 +39,47 @@ const EmailCompose = ({ onClose }) => {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    // Reset subsequent fields when a dropdown changes
+    if (name === 'recipientType') {
+      setForm((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+        agent: '',
+        category: '',
+        level2: '',
+        search: '',
+      }));
+    } else if (name === 'agent') {
+      setForm((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+        category: '',
+        level2: '',
+        search: '',
+      }));
+    } else if (name === 'category') {
+      setForm((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+        level2: '',
+        search: '',
+      }));
+    } else if (name === 'level2') {
+      setForm((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+        search: '',
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+      }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Compose the new email object
     const newEmail = {
       to: form.to,
       toName: form.to,
@@ -61,7 +93,7 @@ const EmailCompose = ({ onClose }) => {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ bgcolor: 'white', p: 2, borderRadius: 2 }}>
+    <Box component="form" onSubmit={handleSubmit} sx={{ bgcolor: 'white', p: 1, borderRadius: 2 }}>
       <Grid container spacing={2} mb={2}>
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <FormControl fullWidth size="small">
@@ -80,66 +112,74 @@ const EmailCompose = ({ onClose }) => {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="agent-label">Agents</InputLabel>
-            <Select
-              labelId="agent-label"
-              id="agent"
-              name="agent"
-              value={form.agent}
-              label="Agents"
+        {form.recipientType && (
+          <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="agent-label">Agents</InputLabel>
+              <Select
+                labelId="agent-label"
+                id="agent"
+                name="agent"
+                value={form.agent}
+                label="Agents"
+                onChange={handleChange}
+              >
+                <MenuItem value="Agent 1">Agent 1</MenuItem>
+                <MenuItem value="Agent 2">Agent 2</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
+        {form.agent && (
+          <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="category-label">Category</InputLabel>
+              <Select
+                labelId="category-label"
+                id="category"
+                name="category"
+                value={form.category}
+                label="Category"
+                onChange={handleChange}
+              >
+                <MenuItem value="Level 1">Level 1</MenuItem>
+                <MenuItem value="Level 2">Level 2</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
+        {form.category && (
+          <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="level2-label">Level 2</InputLabel>
+              <Select
+                labelId="level2-label"
+                id="level2"
+                name="level2"
+                value={form.level2}
+                label="Level 2"
+                onChange={handleChange}
+              >
+                <MenuItem value="Level 2A">Level 2A</MenuItem>
+                <MenuItem value="Level 2B">Level 2B</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
+        {form.level2 && (
+          <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Search for Recipients..."
+              name="search"
+              value={form.search}
               onChange={handleChange}
-            >
-              <MenuItem value="Agent 1">Agent 1</MenuItem>
-              <MenuItem value="Agent 2">Agent 2</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="category-label">Category</InputLabel>
-            <Select
-              labelId="category-label"
-              id="category"
-              name="category"
-              value={form.category}
-              label="Category"
-              onChange={handleChange}
-            >
-              <MenuItem value="Level 1">Level 1</MenuItem>
-              <MenuItem value="Level 2">Level 2</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel id="level2-label">Level 2</InputLabel>
-            <Select
-              labelId="level2-label"
-              id="level2"
-              name="level2"
-              value={form.level2}
-              label="Level 2"
-              onChange={handleChange}
-            >
-              <MenuItem value="Level 2A">Level 2A</MenuItem>
-              <MenuItem value="Level 2B">Level 2B</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Search for Recipients..."
-            name="search"
-            value={form.search}
-            onChange={handleChange}
-            variant="outlined"
-            sx={{ bgcolor: 'white', mb: 2 }}
-          />
-        </Grid>
+              variant="outlined"
+              sx={{ bgcolor: 'white', mb: 2 }}
+            />
+          </Grid>
+        )}
         <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
           <TextField
             id="to-text"

@@ -71,7 +71,19 @@ const EmailContent = () => {
     setEditorContent(editor.getHTML()); 
   };
 
-  return selectedEmail ? (
+  if (!selectedEmail) {
+    return (
+      <Box p={3} height="50vh" display="flex" justifyContent="center" alignItems="center">
+        <Box>
+          <Typography variant="h4">Please Select a Mail</Typography>
+          <br />
+          <img src={emailIcon} alt="No email selected" width="250px" />
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
     <Box>
       <Stack p={2} gap={0} direction="row">
         <Tooltip title={selectedEmail.starred ? 'Unstar' : 'Star'}>
@@ -122,7 +134,22 @@ const EmailContent = () => {
         <Box sx={{ py: 2 }}>
           <Typography variant="h4">{selectedEmail.subject}</Typography>
         </Box>
-        <Box sx={{ py: 2 }}>
+       <Box
+          sx={{
+            py: 2,
+            maxHeight: '400px', 
+            overflowY: 'auto', 
+            wordBreak: 'break-word', 
+            '& img': {
+              maxWidth: '100%', 
+              height: 'auto',
+            },
+            '& pre': {
+              whiteSpace: 'pre-wrap', 
+              overflowX: 'auto', 
+            },
+          }}
+        >
           <div dangerouslySetInnerHTML={{ __html: selectedEmail.message || selectedEmail.emailContent }} />
         </Box>
       </Box>
@@ -182,14 +209,6 @@ const EmailContent = () => {
             </Paper>
           </Box>
         ) : null}
-      </Box>
-    </Box>
-  ) : (
-    <Box p={3} height="50vh" display="flex" justifyContent="center" alignItems="center">
-      <Box>
-        <Typography variant="h4">Please Select a Mail</Typography>
-        <br />
-        <img src={emailIcon} alt={emailIcon} width="250px" />
       </Box>
     </Box>
   );

@@ -347,106 +347,101 @@ const SchoolDashboard = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
-       <Box
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: '1fr 1fr',
+            md: 'repeat(4, 1fr)',
+          },
+          gap: 2,
+          width: '100%',
+          mb: 3,
+        }}
+      >
+        {[
+          {
+            label: 'Total',
+            value: schoolSummary.total,
+            bg: 'primary',
+            icon: <IconSchool width={22} color="#fff" />,
+          },
+          {
+            label: 'My Registered',
+            value: schoolSummary.myRegistered,
+            bg: 'secondary',
+            icon: <IconUserPlus width={22} color="#fff" />,
+          },
+          {
+            label: 'Active',
+            value: schoolSummary.active,
+            bg: 'success',
+            icon: <IconCheck width={22} color="#fff" />,
+          },
+          {
+            label: 'Inactive',
+            value: schoolSummary.inactive,
+            bg: 'warning',
+            icon: <IconX width={22} color="#fff" />,
+          },
+        ].map((item, index) => (
+          <Paper
+            key={index}
+            elevation={2}
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              minHeight: 120,
+              height: '100%',
+              width: '100%',
+              borderRadius: 2,
+              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+              gap: 2,
+              px: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+              <Box
+                width={38}
+                height={38}
+                bgcolor={`${item.bg}.main`}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                borderRadius={1}
+              >
+                {item.icon}
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="body2" sx={{ fontSize: '16px', fontWeight: 'bold' }}>
+                  {item.label}
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: '14px', color: 'text.secondary' }}>
+                  Schools
+                </Typography>
+              </Box>
+            </Box>
+            <Typography
+              variant="h2"
               sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  sm: '1fr 1fr',
-                  md: 'repeat(4, 1fr)',
-                },
-                gap: 2,
-                width: '100%',
-                mb: 3,
+                fontWeight: 'bold',
+                fontSize: '36px',
+                color: '#28a745',
+                minWidth: 56,
+                textAlign: 'center',
               }}
             >
-              {[
-                {
-                  label: 'Total',
-                  value: schoolSummary.total,
-                  bg: 'primary',
-                  icon: <IconSchool width={22} color="#fff" />,
-                },
-                {
-                  label: 'My Registered',
-                  value: schoolSummary.myRegistered,
-                  bg: 'secondary',
-                  icon: <IconUserPlus width={22} color="#fff" />,
-                },
-                {
-                  label: 'Active',
-                  value: schoolSummary.active,
-                  bg: 'success',
-                  icon: <IconCheck width={22} color="#fff" />,
-                },
-                {
-                  label: 'Inactive',
-                  value: schoolSummary.inactive,
-                  bg: 'warning',
-                  icon: <IconX width={22} color="#fff" />,
-                },
-              ].map((item, index) => (
-                <Paper
-                  key={index}
-                  elevation={2}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    minHeight: 120,
-                    height: '100%',
-                    width: '100%',
-                    borderRadius: 2,
-                    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-                    gap: 2,
-                    px: 2,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      width={38}
-                      height={38}
-                      bgcolor={`${item.bg}.main`}
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      borderRadius={1}
-                    >
-                      {item.icon}
-                    </Box>
-                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                      <Typography variant="body2" sx={{ fontSize: '16px', fontWeight: 'bold' }}>
-                        {item.label}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ fontSize: '14px', color: 'text.secondary' }}
-                      >
-                        Schools
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Typography
-                    variant="h2"
-                    sx={{
-                      fontWeight: 'bold',
-                      fontSize: '36px',
-                      color: '#28a745',
-                      minWidth: 56,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {item.value}
-                  </Typography>
-                </Paper>
-              ))}
-            </Box>
+              {item.value}
+            </Typography>
+          </Paper>
+        ))}
+      </Box>
       <BlankCard>
         <TableContainer>
           <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
-           
-
             <Box
               sx={{
                 display: 'flex',
@@ -550,7 +545,6 @@ const SchoolDashboard = () => {
                   }}
                 />
               </Grid>
-
               <Grid item size={{ xs: 12, sm: 6, md: 3 }}>
                 <DatePicker
                   label="To"
@@ -583,7 +577,6 @@ const SchoolDashboard = () => {
                 />
               </Grid>
             </Grid>
-
             <TableContainer component={Paper}>
               <Table>
                 <TableHead>
@@ -620,7 +613,9 @@ const SchoolDashboard = () => {
                               borderRadius: '5px',
                               overflow: 'hidden',
                             }}
-                            title={`Header: ${row.headerColor || '#1976d2'} | Sidebar: ${row.sidebarColor || '#2196f3'} | Body: ${row.bodyColor || row.colourScheme || '#f5f5f5'}`}
+                            title={`Header: ${row.headerColor || '#1976d2'} | Sidebar: ${
+                              row.sidebarColor || '#2196f3'
+                            } | Body: ${row.bodyColor || row.colourScheme || '#f5f5f5'}`}
                           >
                             <Box
                               sx={{
@@ -707,7 +702,12 @@ const SchoolDashboard = () => {
                             >
                               Change Agent
                             </MenuItem>
-                            <MenuItem component={Link} to={`/dashboards/school/sub-school/${row.schoolUrl}`}>View School</MenuItem>
+                            <MenuItem
+                              component={Link}
+                              to={`/dashboards/school/sub-school/${row.schoolUrl}`}
+                            >
+                              View School
+                            </MenuItem>
                             <MenuItem
                               onClick={() => {
                                 setSelectedSchoolFor2FA(row);
@@ -770,7 +770,9 @@ const SchoolDashboard = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={10} sx={{ textAlign: 'center', padding: '40px 0' }}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Box
+                          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                        >
                           <IconSchool
                             width={48}
                             height={48}
@@ -783,10 +785,7 @@ const SchoolDashboard = () => {
                           >
                             No schools available
                           </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{ color: '#757575', fontSize: '14px' }}
-                          >
+                          <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
                             No schools have been registered yet. Click 'Register New School' to add
                             your first school.
                           </Typography>
@@ -809,7 +808,6 @@ const SchoolDashboard = () => {
                 </TableFooter>
               </Table>
             </TableContainer>
-
             <ReusableModal
               open={openRegisterModal || openEditModal}
               onClose={handleClose}
@@ -825,7 +823,6 @@ const SchoolDashboard = () => {
                 onCancel={handleClose}
               />
             </ReusableModal>
-
             <ManageTenantDomain
               open={openTenantModal}
               onClose={() => setOpenTenantModal(false)}
@@ -840,7 +837,9 @@ const SchoolDashboard = () => {
               showCloseButton={true}
             >
               <ManageSchoolGateway
-                selectedSchool={schoolList.find((s) => s.schoolUrl === selectedTenantDomain) || null}
+                selectedSchool={
+                  schoolList.find((s) => s.schoolUrl === selectedTenantDomain) || null
+                }
                 onSave={(updatedSchool) => {
                   setSchoolList((prevList) => {
                     const idx = prevList.findIndex((s) => s.id === updatedSchool.id);

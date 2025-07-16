@@ -57,17 +57,17 @@ const Email = () => {
           {/* Middle part */}
           {/* ------------------------------------------- */}
 
-          {/* <Box
+          <Box
             sx={{
               minWidth: secdrawerWidth,
               width: { xs: '100%', md: secdrawerWidth, lg: secdrawerWidth },
               flexShrink: 0,
             }}
           >
-            <EmailSearch onClick={() => setLeftSidebarOpen(true)} />
+            {/* <EmailSearch onClick={() => setLeftSidebarOpen(true)} /> */}
 
             <EmailLists showrightSidebar={() => setRightSidebarOpen(true)} />
-          </Box> */}
+          </Box>
 
           {/* ------------------------------------------- */}
           {/* Right part */}

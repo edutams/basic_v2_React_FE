@@ -56,11 +56,11 @@ const EmailListItem = ({
             <Typography variant="h5" mb={0.5}  mr={'auto'}>
               {displayName}
             </Typography>
-            <Chip
+            {/* <Chip
               label={label}
               size="small"
               color="primary"
-            />
+            /> */}
           </Stack>
           <Typography variant="subtitle2" noWrap width={'80%'} color="text.secondary">
             {subject}

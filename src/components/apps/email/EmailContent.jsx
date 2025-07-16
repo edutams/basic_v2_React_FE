@@ -44,31 +44,31 @@ const EmailContent = () => {
       const newEmail = {
         id: `${Date.now()}`, // Generate unique ID
         subject: `Re: ${selectedEmail.subject}`,
-        message: editorContent, // Use 'message' to match EmailContext
-        from: selectedEmail.To, // Current user is replying
+        message: editorContent, 
+        from: selectedEmail.To, 
         to: selectedEmail.from,
-        toName: selectedEmail.from, // Use 'from' as recipient name
+        toName: selectedEmail.from, 
         sent: true,
         inbox: false,
         starred: false,
         important: false,
         label: selectedEmail.label || '',
-        attchments: [], // No attachments for now
+        attchments: [], 
         time: new Date().toISOString(),
         emailExcerpt: editorContent.substring(0, 60),
       };
-      console.log('Sending email:', newEmail); // Debug log
-      sendEmail(newEmail); // Call context function
-      setShow(false); // Close editor
-      setEditorContent(''); // Clear editor
+      // console.log('Sending email:', newEmail); // Debug log
+      sendEmail(newEmail); 
+      setShow(false); 
+      setEditorContent(''); 
     } else {
       console.log('Cannot send: No selected email or empty content');
     }
   };
 
-  // Handle editor content change (assumes TiptapEdit uses onUpdate for @tiptap/react)
+  
   const handleEditorChange = ({ editor }) => {
-    setEditorContent(editor.getHTML()); // Get HTML content from Tiptap
+    setEditorContent(editor.getHTML()); 
   };
 
   return selectedEmail ? (
@@ -112,14 +112,13 @@ const EmailContent = () => {
             <Typography variant="h5">{selectedEmail.from}</Typography>
             <Typography variant="subtitle2">{selectedEmail.to}</Typography>
           </Box>
-          <Chip
+          {/* <Chip
             label={selectedEmail.label}
             sx={{ ml: 'auto', height: '24px' }}
             size="small"
             color="primary"
-          />
+          /> */}
         </Box>
-        {/* Email Detail page */}
         <Box sx={{ py: 2 }}>
           <Typography variant="h4">{selectedEmail.subject}</Typography>
         </Box>

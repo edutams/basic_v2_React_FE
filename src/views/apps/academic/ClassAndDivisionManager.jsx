@@ -16,6 +16,8 @@ import {
   Menu,
   MenuItem,
   Chip,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { Add as AddIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
@@ -23,6 +25,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import ParentCard from 'src/components/shared/ParentCard';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import CreateDivision from './component/CreateDivision';
+import CreateCategory from './component/CreateCategory';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -42,7 +45,7 @@ const defaultData = [
 ];
 
 const ClassAndDivisionManager = () => {
-  const [tab, setTab] = useState('emis_central');
+  const [tab, setTab] = useState('category');
   const [classes, setClasses] = useState([]);
   const [openCreateDivision, setOpenCreateDivision] = useState(false);
   const [divisionForm, setDivisionForm] = useState({
@@ -50,6 +53,7 @@ const ClassAndDivisionManager = () => {
     code: '',
     description: '',
     status: '',
+    programme: '', // Added programme to initial state
     categories: {
       Private: false,
       Public: false,
@@ -58,9 +62,12 @@ const ClassAndDivisionManager = () => {
     },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editId, setEditId] = useState(null); // Track the ID of the division being edited
-  const [anchorEl, setAnchorEl] = useState(null); // Menu anchor for Action button
-  const [selectedDivisionId, setSelectedDivisionId] = useState(null); // Track selected division for menu
+  const [editId, setEditId] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedDivisionId, setSelectedDivisionId] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   useEffect(() => {
     try {
@@ -86,12 +93,13 @@ const ClassAndDivisionManager = () => {
 
   const handleCreateDivisionCancel = () => {
     setOpenCreateDivision(false);
-    setEditId(null); // Reset edit ID
+    setEditId(null);
     setDivisionForm({
       name: '',
       code: '',
       description: '',
       status: '',
+      programme: '', // Reset programme
       categories: {
         Private: false,
         Public: false,
@@ -105,9 +113,9 @@ const ClassAndDivisionManager = () => {
     setIsSubmitting(true);
     const updatedClasses = [...classes];
     const newDivision = {
-      id: editId || Date.now(), // Use editId if editing, else generate new ID
-      division: formData.name,
-      programme: formData.programme || '',
+      id: editId || Date.now(),
+      division: formData.name, 
+      programme: formData.categoryName, 
       class: formData.code || '',
       description: formData.description,
       status: formData.status,
@@ -138,6 +146,7 @@ const ClassAndDivisionManager = () => {
       code: '',
       description: '',
       status: '',
+      programme: '',
       categories: {
         Private: false,
         Public: false,
@@ -145,6 +154,9 @@ const ClassAndDivisionManager = () => {
         Community: false,
       },
     });
+    setSnackbarMessage(editId ? 'Category updated successfully' : 'Category added successfully');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
   };
 
   const handleActionMenuOpen = (event, id) => {
@@ -155,6 +167,20 @@ const ClassAndDivisionManager = () => {
   const handleActionMenuClose = () => {
     setAnchorEl(null);
     setSelectedDivisionId(null);
+  };
+
+  const handleDeleteDivision = () => {
+    const updatedClasses = classes.filter((c) => c.id !== selectedDivisionId);
+    setClasses(updatedClasses);
+    try {
+      localStorage.setItem('classes', JSON.stringify(updatedClasses));
+    } catch (error) {
+      console.error('Failed to save classes to localStorage:', error);
+    }
+    setSnackbarMessage('Category deleted successfully');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
+    handleActionMenuClose();
   };
 
   const handleEditDivision = () => {
@@ -172,17 +198,6 @@ const ClassAndDivisionManager = () => {
       setOpenCreateDivision(true);
       handleActionMenuClose();
     }
-  };
-
-  const handleDeleteDivision = () => {
-    const updatedClasses = classes.filter((c) => c.id !== selectedDivisionId);
-    setClasses(updatedClasses);
-    try {
-      localStorage.setItem('classes', JSON.stringify(updatedClasses));
-    } catch (error) {
-      console.error('Failed to save classes to localStorage:', error);
-    }
-    handleActionMenuClose();
   };
 
   return (
@@ -208,9 +223,9 @@ const ClassAndDivisionManager = () => {
                 startIcon={<AddIcon />}
                 onClick={() => setOpenCreateDivision(true)}
                 sx={{ ml: 2 }}
-                aria-label="Create new division"
+                aria-label="Create new category"
               >
-                Create Division
+                Create Category
               </Button>
             </Box>
           }
@@ -318,9 +333,6 @@ const ClassAndDivisionManager = () => {
                     <TableCell sx={{ fontWeight: 'bold' }}>Division</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Programme</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Class/Arms</TableCell>
-                    {/* <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                      Actions
-                    </TableCell> */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -330,14 +342,6 @@ const ClassAndDivisionManager = () => {
                       <TableCell>{c.division}</TableCell>
                       <TableCell>{c.programme}</TableCell>
                       <TableCell>{c.class}</TableCell>
-                      {/* <TableCell align="center">
-                        <IconButton
-                          aria-label="More actions for division"
-                          onClick={(e) => handleActionMenuOpen(e, c.id)}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      </TableCell> */}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -346,8 +350,6 @@ const ClassAndDivisionManager = () => {
           </Paper>
         </ParentCard>
       )}
-
-      
 
       <Menu
         anchorEl={anchorEl}
@@ -362,10 +364,10 @@ const ClassAndDivisionManager = () => {
       <ReusableModal
         open={openCreateDivision}
         onClose={handleCreateDivisionCancel}
-        title={editId ? 'Edit Division' : 'Create Division'}
-        size="large"
+        title={editId ? 'Edit Category' : 'Create Category'}
+        size="medium"
       >
-        <CreateDivision
+        <CreateCategory
           value={divisionForm}
           onChange={handleCreateDivisionChange}
           onCancel={handleCreateDivisionCancel}
@@ -373,6 +375,20 @@ const ClassAndDivisionManager = () => {
           isSubmitting={isSubmitting}
         />
       </ReusableModal>
+      <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
     </PageContainer>
   );
 };

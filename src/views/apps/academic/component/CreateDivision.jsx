@@ -157,14 +157,15 @@ const CreateDivision = ({ actionType = 'create', selectedDivision, onSubmit, onC
             </Grid>
           </Box>
         </Grid>
-        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
-          <Button onClick={onCancel} color="inherit" disabled={formik.isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" color="primary" disabled={!formik.isValid || formik.isSubmitting}>
-            {formik.isSubmitting ? 'Creating...' : (actionType === 'update' ? 'Update Division' : 'Create Division')}
-          </Button>
-        </Grid>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit">
+          Cancel
+        </Button>
+        <Button type="submit" variant="contained" disabled={formik.isSubmitting}>
+          {formik.isSubmitting ? 'Creating...' : (actionType === 'update' ? 'Update Division' : 'Create Division')}
+        </Button>
+      </Box>
+        
       </Grid>
     </form>
   );

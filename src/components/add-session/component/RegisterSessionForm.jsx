@@ -65,12 +65,7 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
               label="Status"
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              sx={{
-                '& .MuiOutlinedInput-input': {
-                  boxSizing: 'border-box',
-                  padding: '16.5px 14px',
-                },
-              }}
+             
             >
               <MenuItem value="">-- Choose --</MenuItem>
               <MenuItem value="Active">Active</MenuItem>
@@ -92,12 +87,7 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
               label="Is Current"
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              sx={{
-                '& .MuiOutlinedInput-input': {
-                  boxSizing: 'border-box',
-                  padding: '16.5px 14px',
-                },
-              }}
+             
             >
               <MenuItem value={true}>Yes</MenuItem>
               <MenuItem value={false}>No</MenuItem>

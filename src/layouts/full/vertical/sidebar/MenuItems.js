@@ -62,7 +62,8 @@ import {
   IconTimeline,
   IconMap,
   IconListCheck,
-  IconCalendarTime
+  IconCalendarTime,
+  IconBook
 } from '@tabler/icons-react';
 
 
@@ -160,6 +161,25 @@ const Menuitems = [
         title: 'Stimulation Links',
         icon: IconPoint,
         href: '/phet/stimulation-links',
+      },
+    ],
+  },
+     {
+    id: uniqueId(),
+    title: 'Academics',
+    icon: IconBook,
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Class & Division Manager',
+        icon: IconPoint,
+        href: 'academic/classanddivision',
+      },
+      {
+        id: uniqueId(),
+        title: 'Session & Week Manager',
+        icon: IconPoint,
+        href: 'academic/sessionandweek',
       },
     ],
   },

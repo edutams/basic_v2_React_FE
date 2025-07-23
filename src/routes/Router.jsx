@@ -182,6 +182,8 @@ const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpl
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
+const SessionAndWeekManager = Loadable(lazy(() => import('../views/apps/academic/SessionAndWeekManager')));
+const ClassAndDivisionManager = Loadable(lazy(() => import('../views/apps/academic/ClassAndDivisionManager')));
 
 const Router = [
   {
@@ -202,6 +204,8 @@ const Router = [
       { path: '/dashboards/chat', exact: true, element: <Chat /> },
       { path: '/dashboards/mail', exact: true, element: <Mail /> },
       { path: "/dashboards/school/sub-school/:schoolUrl", exact: false, element: <ViewSchool /> },
+      { path: '/academic/classanddivision', element: <ClassAndDivisionManager /> },
+      { path: '/academic/sessionandweek', element: <SessionAndWeekManager /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },

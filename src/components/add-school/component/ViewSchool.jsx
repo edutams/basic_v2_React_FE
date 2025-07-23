@@ -134,6 +134,7 @@ const ViewSchool = () => {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>#</TableCell>
                   <TableCell>Sub School Name</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Subscription Plan</TableCell>
@@ -146,6 +147,7 @@ const ViewSchool = () => {
                 {paginatedSchools.length > 0 ? (
                   paginatedSchools.map((row, idx) => (
                     <TableRow key={row.id || idx}>
+                      <TableCell>{row.id}</TableCell>
                       <TableCell>{row.institutionName}</TableCell>
                       <TableCell>{row.administratorEmail || '-'}</TableCell>
                       <TableCell>{row.moduleType || '-'}</TableCell>

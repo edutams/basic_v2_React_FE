@@ -181,6 +181,12 @@ const Menuitems = [
         icon: IconPoint,
         href: 'academic/sessionandweek',
       },
+       {
+        id: uniqueId(),
+        title: 'School Structure',
+        icon: IconPoint,
+        href: 'academic/schoolstructure',
+      },
     ],
   },
 

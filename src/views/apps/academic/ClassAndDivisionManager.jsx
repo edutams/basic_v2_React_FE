@@ -26,6 +26,7 @@ import ParentCard from 'src/components/shared/ParentCard';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import CreateDivision from './component/CreateDivision';
 import CreateCategory from './component/CreateCategory';
+import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -68,6 +69,8 @@ const ClassAndDivisionManager = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  // Add state for delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -180,6 +183,7 @@ const ClassAndDivisionManager = () => {
     setSnackbarMessage('Category deleted successfully');
     setSnackbarSeverity('success');
     setSnackbarOpen(true);
+    setSelectedDivisionId(null); // Reset after deletion
     handleActionMenuClose();
   };
 
@@ -358,7 +362,7 @@ const ClassAndDivisionManager = () => {
         aria-label="Division actions menu"
       >
         <MenuItem onClick={handleEditDivision}>Edit</MenuItem>
-        <MenuItem onClick={handleDeleteDivision}>Delete</MenuItem>
+        <MenuItem onClick={() => { setDeleteDialogOpen(true); setAnchorEl(null); }}>Delete</MenuItem>
       </Menu>
 
       <ReusableModal
@@ -375,6 +379,17 @@ const ClassAndDivisionManager = () => {
           isSubmitting={isSubmitting}
         />
       </ReusableModal>
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={() => { setDeleteDialogOpen(false); setSelectedDivisionId(null); }}
+        onConfirm={() => { handleDeleteDivision(); setDeleteDialogOpen(false); }}
+        title="Delete Category"
+        description="Are you sure you want to delete this category? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmColor="error"
+        severity="error"
+      />
       <Snackbar
           open={snackbarOpen}
           autoHideDuration={3000}

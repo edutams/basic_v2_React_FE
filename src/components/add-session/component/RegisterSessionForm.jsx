@@ -87,7 +87,6 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
               label="Is Current"
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-             
             >
               <MenuItem value={true}>Yes</MenuItem>
               <MenuItem value={false}>No</MenuItem>

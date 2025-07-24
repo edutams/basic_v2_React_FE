@@ -183,6 +183,7 @@ const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpl
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 const SessionAndWeekManager = Loadable(lazy(() => import('../views/apps/academic/SessionAndWeekManager')));
+const SchoolStructure = Loadable(lazy(() => import('../views/apps/academic/SchoolStructure')));
 const ClassAndDivisionManager = Loadable(lazy(() => import('../views/apps/academic/ClassAndDivisionManager')));
 
 const Router = [
@@ -206,6 +207,7 @@ const Router = [
       { path: "/dashboards/school/sub-school/:schoolUrl", exact: false, element: <ViewSchool /> },
       { path: '/academic/classanddivision', element: <ClassAndDivisionManager /> },
       { path: '/academic/sessionandweek', element: <SessionAndWeekManager /> },
+      { path: '/academic/schoolstructure', element: <SchoolStructure /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },

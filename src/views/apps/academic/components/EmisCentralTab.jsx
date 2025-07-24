@@ -25,6 +25,7 @@ import {
   GridView as GridViewIcon,
   Class as ClassIcon,
   School as SchoolIcon,
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import ManageClassesModal from './ManageClassesModal';
@@ -220,6 +221,9 @@ const EmisCentralTab = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedDivision, setSelectedDivision] = useState(null);
   const [manageClassesOpen, setManageClassesOpen] = useState(false);
+  // Add state for programme menu
+  const [programmeAnchorEl, setProgrammeAnchorEl] = useState(null);
+  const [selectedProgramme, setSelectedProgramme] = useState(null);
 
   const toggleProgramme = (divisionId, programmeId) => {
     setSchoolStructure(prev => prev.map(division => 
@@ -249,6 +253,15 @@ const EmisCentralTab = () => {
   const handleManageClasses = () => {
     setManageClassesOpen(true);
     handleMenuClose();
+  };
+
+  const handleProgrammeMenuClick = (event, programme) => {
+    setProgrammeAnchorEl(event.currentTarget);
+    setSelectedProgramme(programme);
+  };
+  const handleProgrammeMenuClose = () => {
+    setProgrammeAnchorEl(null);
+    setSelectedProgramme(null);
   };
 
   const handleUpdateDivision = (updatedDivision) => {
@@ -306,107 +319,89 @@ const EmisCentralTab = () => {
           </StyledTableHead>
           <TableBody>
             {schoolStructure.map((division, divIndex) => (
-              <React.Fragment key={division.id}>
-                {/* Division Row */}
-                <DivisionRow>
-                  <TableCell>{divIndex + 1}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {division.division}
-                      </Typography>
-                      <Chip 
-                        label={division.status}
-                        size="small"
-                        sx={{
-                          backgroundColor: 'primary.main',
-                          color: 'white',
-                          fontSize: '0.7rem',
-                          height: '20px',
-                        }}
-                      />
-                      <Chip 
-                        label={division.type}
-                        size="small"
-                        sx={{
-                          backgroundColor: 'success.main',
-                          color: 'white',
-                          fontSize: '0.7rem',
-                          height: '20px',
-                        }}
-                      />
-                      <IconButton 
-                        size="small"
-                        onClick={(e) => handleMenuClick(e, division)}
+              division.programmes.map((programme, progIdx) => (
+                <TableRow key={division.id + '-' + programme.id}>
+                  {progIdx === 0 && (
+                    <>
+                      <TableCell rowSpan={division.programmes.length}>{divIndex + 1}</TableCell>
+                      <TableCell rowSpan={division.programmes.length}
+                        sx={{ borderRight: '1px solid #e0e0e0' }}
                       >
-                        <GridViewIcon sx={{ fontSize: 16 }} />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell></TableCell>
-                </DivisionRow>
-
-                {/* Programme and Class Rows */}
-                {division.programmes.map((programme) => (
-                  <React.Fragment key={programme.id}>
-                    {/* Programme Row */}
-                    <ProgrammeRow>
-                      <TableCell></TableCell>
-                      <TableCell></TableCell>
-                      <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {programme.name}
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {division.division}
                           </Typography>
+                          <Chip 
+                            label={division.status}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'primary.main',
+                              color: 'white',
+                              fontSize: '0.7rem',
+                              height: '20px',
+                            }}
+                          />
+                          <Chip 
+                            label={division.type}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'success.main',
+                              color: 'white',
+                              fontSize: '0.7rem',
+                              height: '20px',
+                            }}
+                          />
                           <IconButton 
                             size="small"
-                            onClick={() => toggleProgramme(division.id, programme.id)}
+                            onClick={(e) => handleMenuClick(e, division)}
                           >
-                            <GridViewIcon sx={{ fontSize: 16 }} />
+                            <MoreVertIcon sx={{ fontSize: 20 }} />
                           </IconButton>
                         </Box>
                       </TableCell>
-                      <TableCell></TableCell>
-                    </ProgrammeRow>
-
-                    {/* Class Rows */}
-                    {programme.expanded && programme.classes.map((classItem) => (
-                      <ClassRow key={classItem.id}>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell></TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Box sx={{ minWidth: '100px' }}>
-                              <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-                                Class Name
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {classItem.name}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ flex: 1 }}>
-                              <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-                                Class Arms
-                              </Typography>
+                    </>
+                  )}
+                  <TableCell sx={{ borderRight: '1px solid #e0e0e0' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {programme.name}
+                      </Typography>
+                      <IconButton size="small" onClick={(e) => handleProgrammeMenuClick(e, programme)} sx={{ p: 0.5, ml: 0.5 }}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Table size="small" sx={{ borderRadius: 1, width: '100%' }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 600, width: '30%', py: 0.5, fontSize: '0.95em' }}>Class Name</TableCell>
+                          <TableCell sx={{ fontWeight: 600, py: 0.5, fontSize: '0.95em' }}>Class Arms</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {programme.classes.map((classItem) => (
+                          <TableRow key={classItem.id}>
+                            <TableCell sx={{ fontWeight: 500, py: 0.5, fontSize: '0.95em' }}>{classItem.name}</TableCell>
+                            <TableCell sx={{ py: 0.5 }}>
                               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                 {classItem.arms.map((arm) => (
                                   <ClassArmChip 
                                     key={arm}
                                     label={arm}
                                     size="small"
+                                    sx={{ fontSize: '0.85em', height: 22, minWidth: 22 }}
                                   />
                                 ))}
                               </Box>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                      </ClassRow>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </React.Fragment>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableCell>
+                </TableRow>
+              ))
             ))}
           </TableBody>
         </Table>
@@ -446,6 +441,18 @@ const EmisCentralTab = () => {
         division={selectedDivision}
         onUpdateDivision={handleUpdateDivision}
       />
+
+      {/* Programme Action Menu */}
+      <Menu
+        anchorEl={programmeAnchorEl}
+        open={Boolean(programmeAnchorEl)}
+        onClose={handleProgrammeMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={handleProgrammeMenuClose}>Edit Programme</MenuItem>
+        <MenuItem onClick={handleProgrammeMenuClose} sx={{ color: 'error.main' }}>Delete Programme</MenuItem>
+      </Menu>
     </Box>
   );
 };

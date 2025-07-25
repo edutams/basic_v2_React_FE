@@ -29,6 +29,8 @@ import {
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import ManageClassesModal from './ManageClassesModal';
+import ReusableModal from 'src/components/shared/ReusableModal';
+import CreateDivision from '../component/division/CreateDivision';
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -224,6 +226,7 @@ const EmisCentralTab = () => {
   // Add state for programme menu
   const [programmeAnchorEl, setProgrammeAnchorEl] = useState(null);
   const [selectedProgramme, setSelectedProgramme] = useState(null);
+  const [openCreateDivision, setOpenCreateDivision] = useState(false);
 
   const toggleProgramme = (divisionId, programmeId) => {
     setSchoolStructure(prev => prev.map(division => 
@@ -270,6 +273,18 @@ const EmisCentralTab = () => {
     ));
   };
 
+  const handleCreateDivision = (newDivision) => {
+    setSchoolStructure(prev => [
+      ...prev,
+      {
+        ...newDivision,
+        id: Date.now(), // unique id
+        programmes: [],
+      }
+    ]);
+    setOpenCreateDivision(false);
+  };
+
   return (
     <Box sx={{ p: 3, width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mb: 2 }}>
@@ -284,37 +299,16 @@ const EmisCentralTab = () => {
                               Create Division
                             </Button>
                           </Box>
-      {/* <SectionHeader> */}
-        {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SettingsIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
-          <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary' }}>
-            SCHOOL STRUCTURE
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          // startIcon={<AddIcon />}
-          sx={{
-            backgroundColor: 'primary.main',
-            color: 'white',
-            textTransform: 'none',
-            fontWeight: 500,
-            borderRadius: 1,
-             mb: 2,
-          }}
-        >
-          Create Division
-        </Button> */}
 
       {/* Table */}
       <StyledTableContainer component={Paper}>
         <Table sx={{ width: '100%' }}>
           <StyledTableHead>
             <TableRow>
-              <TableCell sx={{ width: '5%' }}>#</TableCell>
-              <TableCell sx={{ width: '25%' }}>Division</TableCell>
-              <TableCell sx={{ width: '25%' }}>Programme</TableCell>
-              <TableCell sx={{ width: '45%' }}>Class / Arms</TableCell>
+              <TableCell sx={{ width: '5%', borderRight: '1px solid #e0e0e0' }}>#</TableCell>
+              <TableCell sx={{ width: '25%', borderRight: '1px solid #e0e0e0' }}>Division</TableCell>
+              <TableCell sx={{ width: '20%', borderRight: '1px solid #e0e0e0' }}>Programme</TableCell>
+              <TableCell sx={{ width: '50%' }}>Class / Arms</TableCell>
             </TableRow>
           </StyledTableHead>
           <TableBody>
@@ -323,9 +317,11 @@ const EmisCentralTab = () => {
                 <TableRow key={division.id + '-' + programme.id}>
                   {progIdx === 0 && (
                     <>
-                      <TableCell rowSpan={division.programmes.length}>{divIndex + 1}</TableCell>
                       <TableCell rowSpan={division.programmes.length}
-                        sx={{ borderRight: '1px solid #e0e0e0' }}
+                      sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
+                      >{divIndex + 1}</TableCell>
+                      <TableCell rowSpan={division.programmes.length}
+                        sx={{borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -337,8 +333,9 @@ const EmisCentralTab = () => {
                             sx={{
                               backgroundColor: 'primary.main',
                               color: 'white',
-                              fontSize: '0.7rem',
-                              height: '20px',
+                              fontSize: '0.5rem',
+                              height: '10px',
+                              borderRadius: 0,
                             }}
                           />
                           <Chip 
@@ -347,8 +344,9 @@ const EmisCentralTab = () => {
                             sx={{
                               backgroundColor: 'success.main',
                               color: 'white',
-                              fontSize: '0.7rem',
-                              height: '20px',
+                              fontSize: '0.5rem',
+                              height: '10px',
+                              borderRadius: 0,
                             }}
                           />
                           <IconButton 
@@ -361,13 +359,17 @@ const EmisCentralTab = () => {
                       </TableCell>
                     </>
                   )}
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1 }}>
                         {programme.name}
                       </Typography>
-                      <IconButton size="small" onClick={(e) => handleProgrammeMenuClick(e, programme)} sx={{ p: 0.5, ml: 0.5 }}>
-                        <MoreVertIcon fontSize="small" />
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleProgrammeMenuClick(e, programme)}
+                        sx={{ p: 0.5, m: 0, lineHeight: 1 }}
+                      >
+                        <MoreVertIcon sx={{ fontSize: 20, verticalAlign: 'middle' }} />
                       </IconButton>
                     </Box>
                   </TableCell>
@@ -375,22 +377,22 @@ const EmisCentralTab = () => {
                     <Table size="small" sx={{ borderRadius: 1, width: '100%' }}>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 600, width: '30%', py: 0.5, fontSize: '0.95em' }}>Class Name</TableCell>
-                          <TableCell sx={{ fontWeight: 600, py: 0.5, fontSize: '0.95em' }}>Class Arms</TableCell>
+                          <TableCell sx={{ fontWeight: 600, width: '30%', py: 0.5, fontSize: '0.95em', border: '1px solid #e0e0e0' }}>Class Name</TableCell>
+                          <TableCell sx={{ fontWeight: 600, py: 0.5, fontSize: '0.95em', border: '1px solid #e0e0e0', }}>Class Arms</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {programme.classes.map((classItem) => (
                           <TableRow key={classItem.id}>
-                            <TableCell sx={{ fontWeight: 500, py: 0.5, fontSize: '0.95em' }}>{classItem.name}</TableCell>
-                            <TableCell sx={{ py: 0.5 }}>
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            <TableCell sx={{ fontWeight: 500, py: 0.5, fontSize: '0.95em', border: '1px solid #e0e0e0' }}>{classItem.name}</TableCell>
+                            <TableCell sx={{ py: 0.5, border: '1px solid #e0e0e0' }}>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', }}>
                                 {classItem.arms.map((arm) => (
                                   <ClassArmChip 
                                     key={arm}
                                     label={arm}
                                     size="small"
-                                    sx={{ fontSize: '0.85em', height: 22, minWidth: 22 }}
+                                    sx={{ fontSize: '0.75em', height: '10px', py: 0., px: 0.5, borderRadius: 0, }}
                                   />
                                 ))}
                               </Box>
@@ -453,6 +455,19 @@ const EmisCentralTab = () => {
         <MenuItem onClick={handleProgrammeMenuClose}>Edit Programme</MenuItem>
         <MenuItem onClick={handleProgrammeMenuClose} sx={{ color: 'error.main' }}>Delete Programme</MenuItem>
       </Menu>
+
+      {/* Create Division Modal */}
+      <ReusableModal
+        open={openCreateDivision}
+        onClose={() => setOpenCreateDivision(false)}
+        title="Create Division"
+      >
+        <CreateDivision
+          actionType="create"
+          onCancel={() => setOpenCreateDivision(false)}
+          onSubmit={handleCreateDivision}
+        />
+      </ReusableModal>
     </Box>
   );
 };

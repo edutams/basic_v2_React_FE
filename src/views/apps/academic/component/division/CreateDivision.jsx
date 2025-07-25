@@ -68,12 +68,12 @@ const CreateDivision = ({ actionType = 'create', selectedDivision, onSubmit, onC
           <TextField
             label="Division Name"
             fullWidth
-            name="divisionName"
-            value={formik.values.divisionName}
+            name="name"
+            value={formik.values.name}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            error={formik.touched.divisionName && Boolean(formik.errors.divisionName)}
-            helperText={formik.touched.divisionName && formik.errors.divisionName}
+            error={formik.touched.name && Boolean(formik.errors.name)}
+            helperText={formik.touched.name && formik.errors.name}
           />
         </Grid>
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>

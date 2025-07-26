@@ -109,11 +109,11 @@ const SchoolStructure = () => {
   const theme = useTheme();
 
   const handleTabChange = useCallback((event, newValue) => {
-    setLoading(true);
     setActiveTab(newValue);
+    setLoading(true);
     setTimeout(() => {
       setLoading(false);
-    }, 300);
+    }, 100);
   }, []);
 
   const tabConfig = [
@@ -163,23 +163,27 @@ const SchoolStructure = () => {
         </Tabs>
       </Box>
 
-      <Grid container spacing={0}>
+       
+
+      
         <Grid item size={{ xs: 12, lg: 12 }}>
           <ContentCard>
-            <Fade in={!loading} timeout={300}>
-              <Box>
-                {loading ? (
-                  <LoadingBox>
-                    <CircularProgress color="primary" size={40} />
-                  </LoadingBox>
-                ) : (
-                  ActiveComponent && <ActiveComponent />
-                )}
-              </Box>
-            </Fade>
+           <Box>
+              {loading ? (
+                <LoadingBox>
+                  <CircularProgress color="primary" size={40} />
+                </LoadingBox>
+              ) : (
+                <Fade in={!loading} timeout={400}>
+                  <Box>
+                    {ActiveComponent && <ActiveComponent />}
+                  </Box>
+                </Fade>
+              )}
+            </Box>
           </ContentCard>
         </Grid>
-      </Grid>
+     
     </PageContainer>
   );
 };

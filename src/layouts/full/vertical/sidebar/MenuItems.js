@@ -169,18 +169,6 @@ const Menuitems = [
     title: 'Academics',
     icon: IconBook,
     children: [
-      {
-        id: uniqueId(),
-        title: 'Class & Division Manager',
-        icon: IconPoint,
-        href: 'academic/classanddivision',
-      },
-      {
-        id: uniqueId(),
-        title: 'Session & Week Manager',
-        icon: IconPoint,
-        href: 'academic/sessionandweek',
-      },
        {
         id: uniqueId(),
         title: 'School Structure',

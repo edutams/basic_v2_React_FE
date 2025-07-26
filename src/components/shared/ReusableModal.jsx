@@ -71,6 +71,9 @@ const ReusableModal = ({
       keepMounted={keepMounted}
       disableEnforceFocus={disableEnforceFocus}
       disableAutoFocus={disableAutoFocus}
+      // BackdropProps={{
+      //   sx: { backgroundColor: 'rgba(0,0,0,1)' }
+      // }}
       {...modalProps}
     >
       <Box sx={getModalStyle(size, customStyle)}>

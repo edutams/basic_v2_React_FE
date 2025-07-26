@@ -13,15 +13,16 @@ import {
   Chip,
   IconButton,
   Alert,
-  Divider
+  Divider,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import {
-  Add as AddIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import ReusableModal from 'src/components/shared/ReusableModal';
-import CreateClassForm from './CreateClassForm';
+import CreateClassArmModal from './CreateClassArmModal';
 
 const StyledAlert = styled(Alert)(({ theme }) => ({
   backgroundColor: '#e0f7fa',
@@ -71,142 +72,131 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const SectionHeader = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginBottom: theme.spacing(2),
-  padding: theme.spacing(1.5),
-  backgroundColor: theme.palette.background.paper,
-  border: `1px solid ${theme.palette.divider}`,
-  borderRadius: theme.shape.borderRadius,
+const ClassArmChip = styled(Chip)(({ theme }) => ({
+  backgroundColor: '#7C3AED',
+  color: 'white',
+  fontSize: '0.5rem',
+  fontWeight: 600,
+  margin: '2px',
+  minWidth: '32px',
+  height: '15px',
+  '& .MuiChip-label': {
+    padding: '0 5px',
+  },
 }));
 
-const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgramme }) => {
-  
-  const divisionObj = Array.isArray(division) ? division[0] : division;
-  
-  // Collect all classes from all programmes in the division
-  const getAllClassesFromDivision = (div) => {
-    if (!div?.programmes) return [];
-    const allClasses = [];
-    div.programmes.forEach(prog => {
-      if (prog.classArms) {
-        allClasses.push(...prog.classArms);
-      }
-    });
-    return allClasses;
-  };
-  
+const ManageClassArm = ({ open, onClose, programme, division, onUpdateClassArms }) => {
   const [classes, setClasses] = React.useState([]);
-  const [createModalOpen, setCreateModalOpen] = React.useState(false);
-
+  
+  // Load existing class arms when modal opens
   React.useEffect(() => {
-    // Load classes directly from division, not from programmes
-    const existingClasses = division?.classes || [];
-    setClasses(existingClasses);
-  }, [division]);
-
-  const handleSave = () => {
-    if (onUpdateProgramme) {
-      onUpdateProgramme(classes);
-    } else {
-      console.error('onUpdateProgramme is not defined!');
+    if (open && programme?.classArms) {
+      setClasses(programme.classArms);
+    } else if (open) {
+      setClasses([]);
     }
-    onClose();
+  }, [open, programme]);
+
+  const [createClassArmOpen, setCreateClassArmOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [selectedClass, setSelectedClass] = React.useState(null);
+
+  const handleMenuOpen = (event, classItem) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedClass(classItem);
   };
 
-  const handleOpenCreate = () => setCreateModalOpen(true);
-  const handleCloseCreate = () => setCreateModalOpen(false);
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedClass(null);
+  };
 
-  const handleCreateClass = (newClass) => {
-    const newClassEntry = {
+  const handleAttachClassArm = () => {
+    setCreateClassArmOpen(true);
+  };
+
+  const handleSaveClassArm = (classArmData) => {
+    // Create new class entry
+    const newClass = {
       id: Date.now(),
-      name: newClass.name,
-      code: newClass.code,
-      description: newClass.description,
-      status: newClass.status,
-      order: newClass.order || classes.length + 1,
+      name: classArmData.class,
+      order: classes.length + 1,
+      arms: classArmData.arms,
+      status: classArmData.status
     };
     
-    const updatedClasses = [...classes, newClassEntry];
+    // Add to classes array
+    const updatedClasses = [...classes, newClass];
     setClasses(updatedClasses);
     
-    // Auto-save to parent immediately
-    if (onUpdateProgramme) {
-      onUpdateProgramme(updatedClasses);
+    // Update parent component
+    if (onUpdateClassArms && programme && division) {
+      onUpdateClassArms(programme.id, division.id, updatedClasses);
     }
     
-    setCreateModalOpen(false);
+    setCreateClassArmOpen(false);
+  };
+
+  const handleEditClass = () => {
+    handleMenuClose();
+  };
+
+  const handleDeleteClass = () => {
+    if (selectedClass) {
+      const updatedClasses = classes.filter(c => c.id !== selectedClass.id);
+      setClasses(updatedClasses);
+      
+      // Update parent component
+      if (onUpdateClassArms && programme && division) {
+        onUpdateClassArms(programme.id, division.id, updatedClasses);
+      }
+    }
+    handleMenuClose();
   };
 
   return (
-    createModalOpen ? (
-      <ReusableModal
-        open={createModalOpen}
-        onClose={handleCloseCreate}
-        title="Create Class"
-        size="medium"
-        maxWidth="md"
-        actions={null}
-      >
-        <Box>
-          <CreateClassForm
-            onSubmit={handleCreateClass}
-            onCancel={handleCloseCreate}
-            actionType="create"
-          />
-        </Box>
-      </ReusableModal>
-    ) : (
+    <>
       <ReusableModal
         open={open}
         onClose={onClose}
         title={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            Manage Class For
+            Manage Class Arm For
             <Chip
-              label={division?.division || division?.name || 'No Division Selected'}
+              label={programme?.name || 'KINDERGARTEN'}
               sx={{
-                backgroundColor: '#00bcd4',
+                backgroundColor: '#fbbf24',
                 color: 'white',
                 fontSize: '0.5rem',
                 fontWeight: 600,
                 height: '15px',
                 borderRadius: 0,
-                padding: '0 1px',
+                padding: '0 8px',
               }}
             />
-            Division
+            Programme
           </Box>
         }
         size="large"
         maxWidth="lg"
-        actions={
-          <Button variant="contained" onClick={handleSave} disabled={!programme}>
-            Save
-          </Button>
-        }
       >
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Box>
-              <Typography variant="body1" sx={{ fontWeight: 400, color: 'text.primary' }}>
-                SCHOOL STRUCTURE CLASS
-              </Typography>
-            </Box>
+            <Typography variant="body1" sx={{ fontWeight: 400, color: 'text.primary' }}>
+              SCHOOL STRUCTURE CLASS
+            </Typography>
             <Button
               variant="contained"
+              onClick={handleAttachClassArm}
               sx={{
-                backgroundColor: 'primary.main',
+                backgroundColor: '#7C3AED',
                 color: 'white',
                 textTransform: 'none',
                 fontWeight: 500,
                 borderRadius: 1,
               }}
-              onClick={handleOpenCreate}
             >
-              Create Class
+              Attach Class Arm
             </Button>
           </Box>
           <Divider sx={{ mb: 2 }} />
@@ -221,9 +211,9 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
                 <TableRow>
                   <TableCell>#</TableCell>
                   <TableCell>Class Name</TableCell>
-                  <TableCell>Class Code</TableCell>
                   <TableCell>Class Order</TableCell>
-                  <TableCell>Description</TableCell>
+                  <TableCell>Class Arms</TableCell>
+                  <TableCell>Status</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </StyledTableHead>
@@ -242,21 +232,31 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {classItem.code}
+                        {classItem.order}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">
-                        {classItem.order || index + 1}
-                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {classItem.arms.map((arm) => (
+                          <ClassArmChip key={arm} label={arm} size="small" />
+                        ))}
+                      </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">
-                        {classItem.description}
-                      </Typography>
+                      <Chip
+                        label={classItem.status}
+                        size="small"
+                        sx={{
+                          backgroundColor: classItem.status === 'Active' ? '#22c55e' : '#9e9e9e',
+                          color: 'white',
+                          fontWeight: 600,
+                          borderRadius: 2,
+                          fontSize: '0.5em',
+                        }}
+                      />
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small">
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, classItem)}>
                         <MoreVertIcon />
                       </IconButton>
                     </TableCell>
@@ -267,8 +267,29 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
           </StyledTableContainer>
         </Box>
       </ReusableModal>
-    )
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={handleEditClass}>
+          Edit Class
+        </MenuItem>
+        <MenuItem onClick={handleDeleteClass}>
+          Delete Class
+        </MenuItem>
+      </Menu>
+
+      <CreateClassArmModal
+        open={createClassArmOpen}
+        onClose={() => setCreateClassArmOpen(false)}
+        onSave={handleSaveClassArm}
+      />
+    </>
   );
 };
 
-export default ManageClassesModal;
+export default ManageClassArm;

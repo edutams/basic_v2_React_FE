@@ -26,13 +26,7 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  MoreVert as MoreVertIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  School as SchoolIcon,
-  GridView as GridViewIcon,  
+  MoreVert as MoreVertIcon,  
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import CreateCategory from '../components/CreateCategory';

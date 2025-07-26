@@ -13,7 +13,9 @@ import {
   Chip,
   IconButton,
   Alert,
-  Divider
+  Divider,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -22,6 +24,7 @@ import {
 import { styled } from '@mui/material/styles';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import CreateClassForm from './CreateClassForm';
+import ManageClassArm from './ManageClassArm';
 
 const StyledAlert = styled(Alert)(({ theme }) => ({
   backgroundColor: '#e0f7fa',
@@ -82,29 +85,42 @@ const SectionHeader = styled(Box)(({ theme }) => ({
   borderRadius: theme.shape.borderRadius,
 }));
 
-const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgramme }) => {
+const ManageProgram = ({ open, onClose, programme, division, onUpdateProgramme }) => {
   
   const divisionObj = Array.isArray(division) ? division[0] : division;
-  
-  // Collect all classes from all programmes in the division
-  const getAllClassesFromDivision = (div) => {
-    if (!div?.programmes) return [];
-    const allClasses = [];
-    div.programmes.forEach(prog => {
-      if (prog.classArms) {
-        allClasses.push(...prog.classArms);
-      }
-    });
-    return allClasses;
-  };
-  
-  const [classes, setClasses] = React.useState([]);
+  const [classes, setClasses] = React.useState(division?.programmes || []);
   const [createModalOpen, setCreateModalOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [selectedProgram, setSelectedProgram] = React.useState(null);
+  const [manageClassArmOpen, setManageClassArmOpen] = React.useState(false);
+
+  const handleMenuOpen = (event, program) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedProgram(program);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedProgram(null);
+  };
+
+  const handleManageClassArm = () => {
+    setManageClassArmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleEditProgramme = () => {
+    // TODO: Open edit programme modal
+    handleMenuClose();
+  };
+
+  const handleDeleteProgramme = () => {
+    // TODO: Handle delete programme
+    handleMenuClose();
+  };
 
   React.useEffect(() => {
-    // Load classes directly from division, not from programmes
-    const existingClasses = division?.classes || [];
-    setClasses(existingClasses);
+    setClasses(division?.programmes || []);
   }, [division]);
 
   const handleSave = () => {
@@ -120,16 +136,17 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
   const handleCloseCreate = () => setCreateModalOpen(false);
 
   const handleCreateClass = (newClass) => {
-    const newClassEntry = {
+    const newProgram = {
       id: Date.now(),
       name: newClass.name,
       code: newClass.code,
       description: newClass.description,
       status: newClass.status,
-      order: newClass.order || classes.length + 1,
+      expanded: false,
+      classes: [],
     };
     
-    const updatedClasses = [...classes, newClassEntry];
+    const updatedClasses = [...classes, newProgram];
     setClasses(updatedClasses);
     
     // Auto-save to parent immediately
@@ -145,7 +162,7 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
       <ReusableModal
         open={createModalOpen}
         onClose={handleCloseCreate}
-        title="Create Class"
+        title="Create Program"
         size="medium"
         maxWidth="md"
         actions={null}
@@ -155,6 +172,7 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
             onSubmit={handleCreateClass}
             onCancel={handleCloseCreate}
             actionType="create"
+            entityName="Program"
           />
         </Box>
       </ReusableModal>
@@ -164,17 +182,17 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
         onClose={onClose}
         title={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            Manage Class For
+            Manage Program For
             <Chip
-              label={division?.division || division?.name || 'No Division Selected'}
+              label={divisionObj?.division || divisionObj?.name || ''}
               sx={{
                 backgroundColor: '#00bcd4',
                 color: 'white',
                 fontSize: '0.5rem',
                 fontWeight: 600,
-                height: '15px',
+                height: '15px', 
                 borderRadius: 0,
-                padding: '0 1px',
+                padding: '0 1px', 
               }}
             />
             Division
@@ -183,8 +201,8 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
         size="large"
         maxWidth="lg"
         actions={
-          <Button variant="contained" onClick={handleSave} disabled={!programme}>
-            Save
+          <Button variant="contained" onClick={handleSave}>
+            Save Programs
           </Button>
         }
       >
@@ -192,7 +210,7 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Box>
               <Typography variant="body1" sx={{ fontWeight: 400, color: 'text.primary' }}>
-                SCHOOL STRUCTURE CLASS
+                SCHOOL STRUCTURE PROGRAMME
               </Typography>
             </Box>
             <Button
@@ -206,24 +224,25 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
               }}
               onClick={handleOpenCreate}
             >
-              Create Class
+              Create Program
             </Button>
           </Box>
           <Divider sx={{ mb: 2 }} />
 
-          <StyledAlert severity="info">
+          {/* <StyledAlert severity="info">
             Drag the rows to reorder class
-          </StyledAlert>
+          </StyledAlert> */}
 
           <StyledTableContainer component={Paper}>
             <Table>
               <StyledTableHead>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>Class Name</TableCell>
-                  <TableCell>Class Code</TableCell>
-                  <TableCell>Class Order</TableCell>
+                  <TableCell>Programme Name</TableCell>
+                  <TableCell>Prog Code</TableCell>
+                  <TableCell>Division</TableCell>
                   <TableCell>Description</TableCell>
+                  <TableCell>Status</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </StyledTableHead>
@@ -247,7 +266,7 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {classItem.order || index + 1}
+                        {division?.name || 'Primary'}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -256,9 +275,22 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small">
-                        <MoreVertIcon />
-                      </IconButton>
+                      {classItem.status && (
+                        <Chip
+                          label={classItem.status}
+                          size="small"
+                          sx={{
+                            backgroundColor: classItem.status === 'Active' ? '#22c55e' : '#9e9e9e',
+                            color: 'white',
+                            fontWeight: 600,
+                            borderRadius: 2,
+                            fontSize: '0.85em',
+                          }}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                        <MoreVertIcon onClick={(e) => handleMenuOpen(e, classItem)}/>
                     </TableCell>
                   </StyledTableRow>
                 ))}
@@ -266,9 +298,32 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
             </Table>
           </StyledTableContainer>
         </Box>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        >
+          <MenuItem onClick={handleManageClassArm}>
+            Manage Class Arms
+          </MenuItem>
+          <MenuItem onClick={handleEditProgramme}>
+            Edit Programme
+          </MenuItem>
+          <MenuItem onClick={handleDeleteProgramme}>
+            Delete
+          </MenuItem>
+        </Menu>
+        <ManageClassArm
+          open={manageClassArmOpen}
+          onClose={() => setManageClassArmOpen(false)}
+          programme={selectedProgram}
+          division={divisionObj}
+        />
       </ReusableModal>
     )
   );
 };
 
-export default ManageClassesModal;
+export default ManageProgram;

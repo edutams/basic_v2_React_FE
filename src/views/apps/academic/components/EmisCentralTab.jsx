@@ -15,22 +15,22 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  Settings as SettingsIcon,
-  GridView as GridViewIcon,
-  Class as ClassIcon,
-  School as SchoolIcon,
   MoreVert as MoreVertIcon,
+  ExpandMore,
+  ExpandLess,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import ManageClassesModal from './ManageClassesModal';
+import ManageProgram from './ManageProgram';
 import ReusableModal from 'src/components/shared/ReusableModal';
-import CreateDivision from '../component/division/CreateDivision';
+import CreateDivision from './CreateDivision';
+import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
+import ManageClassArm from './ManageClassArm';
+import CreateClassForm from './CreateClassForm';
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -94,143 +94,81 @@ const SectionHeader = styled(Box)(({ theme }) => ({
 const ClassArmChip = styled(Chip)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   color: 'white',
-  fontSize: '0.75rem',
-  height: '24px',
-  minWidth: '24px',
+  fontSize: '0.55rem',
+  height: '10px',
+  minWidth: '10px',
   margin: '2px',
+  borderRadius: 0,
   '& .MuiChip-label': {
     padding: '0 6px',
   },
 }));
 
-// Mock data structure matching the image
-const mockSchoolStructure = [
-  {
-    id: 1,
-    division: 'Primary (PRY)',
-    status: 'PRIVATE',
-    type: 'PUBLIC',
-    expanded: true,
-    programmes: [
-      {
-        id: 11,
-        name: 'Kindergarten (KG)',
-        expanded: true,
-        classes: [
-          {
-            id: 111,
-            name: 'KG',
-            code: 'KG',
-            order: 1,
-            description: 'KG',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F', 'G']
-          }
-        ]
-      },
-      {
-        id: 12,
-        name: 'Nursery (NUR)',
-        expanded: true,
-        classes: [
-          {
-            id: 121,
-            name: 'Nursery 1',
-            code: 'NUR1',
-            order: 2,
-            description: 'Nursery 1',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F']
-          },
-          {
-            id: 122,
-            name: 'Nursery 2',
-            code: 'NUR2',
-            order: 3,
-            description: 'Nursery 2',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F']
-          }
-        ]
-      },
-      {
-        id: 13,
-        name: 'Primary (PRY)',
-        expanded: true,
-        classes: [
-          {
-            id: 131,
-            name: 'Primary 1',
-            code: 'PRY1',
-            order: 4,
-            description: 'Primary 1',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-          },
-          {
-            id: 132,
-            name: 'Primary 2',
-            code: 'PRY2',
-            order: 5,
-            description: 'Primary 2',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-          },
-          {
-            id: 133,
-            name: 'Primary 3',
-            code: 'PRY3',
-            order: 6,
-            description: 'Primary 3',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-          },
-          {
-            id: 134,
-            name: 'Primary 4',
-            code: 'PRY4',
-            order: 7,
-            description: 'Primary 4',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-          },
-          {
-            id: 135,
-            name: 'Primary 5',
-            code: 'PRY5',
-            order: 8,
-            description: 'Primary 5',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-          },
-          {
-            id: 136,
-            name: 'Primary 6',
-            code: 'PRY6',
-            order: 9,
-            description: 'Primary 6',
-            status: 'ACTIVE',
-            arms: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-          }
-        ]
-      }
-    ]
-  }
-];
+const LOCAL_STORAGE_KEY = 'schoolStructure';
+
+const categoryConfig = {
+  Private: { label: 'PRIVATE', color: '#7C3AED' },
+  Public: { label: 'PUBLIC', color: '#06D6A0' },
+  Community: { label: 'COMMUNITY', color: '#FF9800' },
+  Unapproved: { label: 'UNAPPROVED', color: '#2196F3' }
+};
+
+const renderCategoryChips = (categories) => {
+  if (!categories) return null;
+  
+  return Object.entries(categories)
+    .filter(([key, isActive]) => isActive && categoryConfig[key])
+    .map(([key]) => (
+      <Chip
+        key={key}
+        label={categoryConfig[key].label}
+        size="small"
+        sx={{
+          backgroundColor: categoryConfig[key].color,
+          color: 'white',
+          fontWeight: 700,
+          borderRadius: 0,
+          fontSize: '0.5rem',
+          height: 15,
+        }}
+      />
+    ));
+};
 
 const EmisCentralTab = () => {
-  const [schoolStructure, setSchoolStructure] = useState(mockSchoolStructure);
+  const [schoolStructure, setSchoolStructure] = useState(() => {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedDivision, setSelectedDivision] = useState(null);
   const [manageClassesOpen, setManageClassesOpen] = useState(false);
-  // Add state for programme menu
   const [programmeAnchorEl, setProgrammeAnchorEl] = useState(null);
   const [selectedProgramme, setSelectedProgramme] = useState(null);
   const [openCreateDivision, setOpenCreateDivision] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [manageProgrammeClassesOpen, setManageProgrammeClassesOpen] = useState(false);
+  const [selectedProgrammeDivision, setSelectedProgrammeDivision] = useState(null);
+  const [manageProgramOpen, setManageProgramOpen] = useState(false);
+  const [modalDivision, setModalDivision] = useState(null);
+  const [manageClassArmOpen, setManageClassArmOpen] = useState(false);
+  const [selectedProgrammeForClassArm, setSelectedProgrammeForClassArm] = useState(null);
+  const [selectedDivisionForClassArm, setSelectedDivisionForClassArm] = useState(null);
+  const [editDivisionOpen, setEditDivisionOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [editProgrammeOpen, setEditProgrammeOpen] = useState(false);
+  const [selectedProgrammeForEdit, setSelectedProgrammeForEdit] = useState(null);
+  const [deleteProgrammeDialogOpen, setDeleteProgrammeDialogOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(schoolStructure));
+  }, [schoolStructure]);
 
   const toggleProgramme = (divisionId, programmeId) => {
-    setSchoolStructure(prev => prev.map(division => 
-      division.id === divisionId 
+    setSchoolStructure(prev => prev.map(division =>
+      division.id === divisionId
         ? {
             ...division,
             programmes: division.programmes.map(programme =>
@@ -254,53 +192,190 @@ const EmisCentralTab = () => {
   };
 
   const handleManageClasses = () => {
+    if (!selectedDivision) {
+      return;
+    }
+    setModalDivision(selectedDivision);
     setManageClassesOpen(true);
-    handleMenuClose();
+    setTimeout(() => {
+      handleMenuClose();
+    }, 100);
   };
 
-  const handleProgrammeMenuClick = (event, programme) => {
+  const handleManageProgram = () => {
+    if (!selectedDivision) {
+      return;
+    }
+    setModalDivision(selectedDivision);
+    setManageProgramOpen(true);
+    setTimeout(() => {
+      handleMenuClose();
+    }, 100);
+  };
+
+  const handleProgrammeMenuClick = (event, programme, division) => {
     setProgrammeAnchorEl(event.currentTarget);
     setSelectedProgramme(programme);
+    setSelectedProgrammeDivision(division);
   };
+
   const handleProgrammeMenuClose = () => {
     setProgrammeAnchorEl(null);
     setSelectedProgramme(null);
+    setSelectedProgrammeDivision(null);
   };
 
-  const handleUpdateDivision = (updatedDivision) => {
-    setSchoolStructure(prev => prev.map(division => 
-      division.id === updatedDivision.id ? updatedDivision : division
+  const handleManageProgrammeClasses = () => {
+    if (!selectedProgrammeDivision || !selectedProgramme) {
+      return;
+    }
+    setSelectedProgrammeForClassArm(selectedProgramme);
+    setSelectedDivisionForClassArm(selectedProgrammeDivision);
+    setManageClassArmOpen(true);
+    handleProgrammeMenuClose();
+  };
+
+  const handleUpdateClassArms = (programmeId, divisionId, classArms) => {
+    setSchoolStructure(prev => prev.map(division =>
+      division.id === divisionId
+        ? {
+            ...division,
+            programmes: division.programmes.map(programme =>
+              programme.id === programmeId
+                ? { ...programme, classArms: classArms }
+                : programme
+            )
+          }
+        : division
     ));
   };
 
+  const handleUpdateDivision = (updatedDivision) => {
+    setSchoolStructure(prev => prev.map(division =>
+      division.id === updatedDivision.id ? updatedDivision : division
+    ));
+    setSnackbarMessage('Division updated successfully');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
+  };
+
   const handleCreateDivision = (newDivision) => {
-    setSchoolStructure(prev => [
-      ...prev,
-      {
-        ...newDivision,
-        id: Date.now(), // unique id
-        programmes: [],
-      }
-    ]);
+    const newDivisionEntry = {
+      ...newDivision,
+      division: newDivision.name, // This ensures the property exists
+      id: Date.now(),
+      programmes: [],
+    };
+    setSchoolStructure(prev => [...prev, newDivisionEntry]);
     setOpenCreateDivision(false);
+    setSnackbarMessage('Division created successfully');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
+  };
+
+  const handleDeleteDivision = () => {
+    if (selectedDivision) {
+      setSchoolStructure(prev => prev.filter(div => div.id !== selectedDivision.id));
+      setSnackbarMessage('Division deleted successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    }
+    setDeleteDialogOpen(false);
+    handleMenuClose();
+  };
+
+  const handleUpdateProgramme = (updatedProgramme) => {
+    setSchoolStructure(prev => prev.map(division => {
+      if (division.id !== selectedProgrammeDivision.id) return division;
+      return {
+        ...division,
+        programmes: division.programmes.map(prog =>
+          prog.id === updatedProgramme.id ? updatedProgramme : prog
+        )
+      };
+    }));
+    setManageProgrammeClassesOpen(false);
+  };
+
+  const handleAddProgramme = (division) => {
+    const newProgramme = {
+      id: Date.now(),
+      name: 'New Programme',
+      expanded: false,
+      classes: [],
+    };
+    setSchoolStructure(prev => prev.map(d =>
+      d.id === division.id ? { ...d, programmes: [...d.programmes, newProgramme] } : d
+    ));
+  };
+
+  const handleEditDivision = () => {
+    if (!selectedDivision) {
+      return;
+    }
+    setModalDivision(selectedDivision);
+    setEditDivisionOpen(true);
+    handleMenuClose();
+  };
+
+  const handleEditProgramme = () => {
+    if (!selectedProgramme || !selectedProgrammeDivision) {
+      return;
+    }
+    setSelectedProgrammeForEdit(selectedProgramme);
+    setModalDivision(selectedProgrammeDivision);
+    setEditProgrammeOpen(true);
+    handleProgrammeMenuClose();
+  };
+
+  const handleDeleteProgramme = () => {
+    if (!selectedProgramme || !selectedProgrammeDivision) {
+      return;
+    }
+    setDeleteProgrammeDialogOpen(true);
+    setProgrammeAnchorEl(null);
+  };
+
+  const handleConfirmDeleteProgramme = () => {
+    if (selectedProgramme && selectedProgrammeDivision) {
+      setSchoolStructure(prev => {
+        const updated = prev.map(division => {
+          if (division.id === selectedProgrammeDivision.id) {
+            const filteredProgrammes = division.programmes.filter(prog => prog.id !== selectedProgramme.id);
+            return {
+              ...division,
+              programmes: filteredProgrammes
+            };
+          }
+          return division;
+        });
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      setSnackbarMessage('Programme deleted successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    }
+    setDeleteProgrammeDialogOpen(false);
+    setSelectedProgramme(null);
+    setSelectedProgrammeDivision(null);
   };
 
   return (
     <Box sx={{ p: 3, width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mb: 2 }}>
-                            <span>Emis Central</span>
-                            <Button
-                              variant="contained"
-                              color="primary"
-                              onClick={() => setOpenCreateDivision(true)}
-                              sx={{ ml: 2, }}
-                              aria-label="Create new division"
-                            >
-                              Create Division
-                            </Button>
-                          </Box>
+        <span>Emis Central</span>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setOpenCreateDivision(true)}
+          sx={{ ml: 2 }}
+          aria-label="Create new division"
+        >
+          Create Division
+        </Button>
+      </Box>
 
-      {/* Table */}
       <StyledTableContainer component={Paper}>
         <Table sx={{ width: '100%' }}>
           <StyledTableHead>
@@ -312,104 +387,171 @@ const EmisCentralTab = () => {
             </TableRow>
           </StyledTableHead>
           <TableBody>
-            {schoolStructure.map((division, divIndex) => (
-              division.programmes.map((programme, progIdx) => (
-                <TableRow key={division.id + '-' + programme.id}>
-                  {progIdx === 0 && (
-                    <>
-                      <TableCell rowSpan={division.programmes.length}
-                      sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
-                      >{divIndex + 1}</TableCell>
-                      <TableCell rowSpan={division.programmes.length}
-                        sx={{borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {division.division}
-                          </Typography>
-                          <Chip 
-                            label={division.status}
-                            size="small"
-                            sx={{
-                              backgroundColor: 'primary.main',
-                              color: 'white',
-                              fontSize: '0.5rem',
-                              height: '10px',
-                              borderRadius: 0,
-                            }}
-                          />
-                          <Chip 
-                            label={division.type}
-                            size="small"
-                            sx={{
-                              backgroundColor: 'success.main',
-                              color: 'white',
-                              fontSize: '0.5rem',
-                              height: '10px',
-                              borderRadius: 0,
-                            }}
-                          />
-                          <IconButton 
-                            size="small"
-                            onClick={(e) => handleMenuClick(e, division)}
+            {schoolStructure.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  No divisions found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              schoolStructure.map((division, divIndex) =>
+                division.programmes && division.programmes.length > 0 ? (
+                  division.programmes.map((programme, progIdx) => (
+                    <TableRow key={division.id + '-' + programme.id}>
+                      {progIdx === 0 && (
+                        <>
+                          <TableCell rowSpan={division.programmes.length}
+                            sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
+                          >{divIndex + 1}</TableCell>
+                          <TableCell rowSpan={division.programmes.length}
+                            sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
                           >
-                            <MoreVertIcon sx={{ fontSize: 20 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 0.5 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', flex: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  {division.division} {division.code && `(${division.code})`}
+                                </Typography>
+                                {renderCategoryChips(division.categories)}
+                              </Box>
+                              
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleMenuClick(e, division)}
+                                  sx={{ p: 0.5, m: 0, lineHeight: 1 }}
+                                >
+                                  <MoreVertIcon sx={{ fontSize: 20, verticalAlign: 'middle' }} />
+                                </IconButton>
+                              
+                            </Box>
+                          </TableCell>
+                        </>
+                      )}
+                      <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top', paddingTop: '10px' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1 }}>
+                            {programme.name}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleProgrammeMenuClick(e, programme, division)}
+                            sx={{ p: 0.5, m: 0, lineHeight: 1 }}
+                          >
+                            <MoreVertIcon sx={{ fontSize: 20, verticalAlign: 'middle' }} />
                           </IconButton>
                         </Box>
                       </TableCell>
-                    </>
-                  )}
-                  <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1 }}>
-                        {programme.name}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleProgrammeMenuClick(e, programme)}
-                        sx={{ p: 0.5, m: 0, lineHeight: 1 }}
-                      >
-                        <MoreVertIcon sx={{ fontSize: 20, verticalAlign: 'middle' }} />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Table size="small" sx={{ borderRadius: 1, width: '100%' }}>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 600, width: '30%', py: 0.5, fontSize: '0.95em', border: '1px solid #e0e0e0' }}>Class Name</TableCell>
-                          <TableCell sx={{ fontWeight: 600, py: 0.5, fontSize: '0.95em', border: '1px solid #e0e0e0', }}>Class Arms</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {programme.classes.map((classItem) => (
-                          <TableRow key={classItem.id}>
-                            <TableCell sx={{ fontWeight: 500, py: 0.5, fontSize: '0.95em', border: '1px solid #e0e0e0' }}>{classItem.name}</TableCell>
-                            <TableCell sx={{ py: 0.5, border: '1px solid #e0e0e0' }}>
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', }}>
-                                {classItem.arms.map((arm) => (
-                                  <ClassArmChip 
-                                    key={arm}
-                                    label={arm}
-                                    size="small"
-                                    sx={{ fontSize: '0.75em', height: '10px', py: 0., px: 0.5, borderRadius: 0, }}
-                                  />
-                                ))}
+                      <TableCell>
+                        {programme.classArms && programme.classArms.length > 0 ? (
+                          <Box sx={{ 
+                            border: '1px solid #e0e0e0',
+                            borderRadius: 0,
+                            overflow: 'hidden'
+                          }}>
+                            {/* Mini table headers */}
+                            <Box sx={{ 
+                              display: 'grid', 
+                              gridTemplateColumns: '1fr 2fr', 
+                              backgroundColor: '#f5f5f5',
+                              borderBottom: '1px solid #e0e0e0',
+                              borderRadius: 0
+                            }}>
+                              <Box sx={{ 
+                                padding: '8px 12px', 
+                                borderRight: '1px solid #e0e0e0',
+                                borderRadius: 0
+                              }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                  Class Name
+                                </Typography>
                               </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableCell>
-                </TableRow>
-              ))
-            ))}
+                              <Box sx={{ padding: '8px 12px', borderRadius: 0 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                                  Class Arms
+                                </Typography>
+                              </Box>
+                            </Box>
+                            
+                            {/* Class data rows */}
+                            {programme.classArms.map((classArm, index) => (
+                              <Box key={classArm.id} sx={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: '1fr 2fr',
+                                borderBottom: index < programme.classArms.length - 1 ? '1px solid #e0e0e0' : 'none',
+                                borderRadius: 0,
+                                '&:nth-of-type(even)': {
+                                  backgroundColor: '#fafafa'
+                                }
+                              }}>
+                                <Box sx={{ 
+                                  padding: '8px 12px', 
+                                  borderRight: '1px solid #e0e0e0',
+                                  alignItems: 'center',
+                                  display: 'flex',
+                                  borderRadius: 0
+                                }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                    {classArm.name}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ 
+                                  padding: '8px 12px',
+                                  display: 'flex', 
+                                  flexWrap: 'wrap', 
+                                  gap: 0.5,
+                                  alignItems: 'center',
+                                  borderRadius: 0
+                                }}>
+                                  {classArm.arms.map((arm) => (
+                                    <ClassArmChip key={arm} label={arm} size="small" />
+                                  ))}
+                                </Box>
+                              </Box>
+                            ))}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No class arms
+                          </Typography>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow key={division.id}>
+                    <TableCell
+                      sx={{
+                        borderRight: '1px solid #e0e0e0',
+                        verticalAlign: 'top',
+                      }}
+                    >
+                      {divIndex + 1}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: '1px solid #e0e0e0',
+                        verticalAlign: 'top',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {division.division} {division.code && `(${division.code})`}
+                        </Typography>
+                        {renderCategoryChips(division.categories)}
+                        <Box sx={{ flexGrow: 1 }} />
+                        <IconButton size="small" onClick={(e) => handleMenuClick(e, division)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                      </Box>
+                      {renderCategoryChips({ Unapproved: division.categories?.Unapproved })}
+                    </TableCell>
+                  </TableRow>
+                )
+              )
+            )}
           </TableBody>
         </Table>
       </StyledTableContainer>
 
-      {/* Action Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -418,33 +560,72 @@ const EmisCentralTab = () => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <MenuItem onClick={handleManageClasses}>
-          <ClassIcon sx={{ mr: 1, fontSize: 18 }} />
           Manage Classes
         </MenuItem>
-        <MenuItem onClick={handleMenuClose}>
-          <SchoolIcon sx={{ mr: 1, fontSize: 18 }} />
-          Manage Programs
+        <MenuItem onClick={handleManageProgram}>
+          Manage Program
         </MenuItem>
-        <MenuItem onClick={handleMenuClose}>
-          <EditIcon sx={{ mr: 1, fontSize: 18 }} />
+        <MenuItem onClick={handleEditDivision}>
           Edit Division
         </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
-          <DeleteIcon sx={{ mr: 1, fontSize: 18 }} />
+        <MenuItem onClick={() => setDeleteDialogOpen(true)}>
           Delete
         </MenuItem>
       </Menu>
 
-      {/* Manage Classes Modal */}
       <ManageClassesModal
         open={manageClassesOpen}
-        onClose={() => setManageClassesOpen(false)}
-        division={selectedDivision}
-        onUpdateDivision={handleUpdateDivision}
+        onClose={() => {
+          setManageClassesOpen(false);
+          setModalDivision(null);
+        }}
+        division={modalDivision || selectedDivision}
+        programme={null}
+        onUpdateProgramme={(updatedClasses) => {
+          const divisionToUpdate = modalDivision || selectedDivision;
+          setSchoolStructure(prev => {
+            const updated = prev.map(division =>
+              division.id === divisionToUpdate?.id
+                ? { ...division, classes: updatedClasses }
+                : division
+            );
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+            return updated;
+          });
+        }}
+      />
+      <ManageProgram
+        open={manageProgramOpen}
+        onClose={() => {
+          setManageProgramOpen(false);
+          setModalDivision(null);
+        }}
+        division={modalDivision || selectedDivision}
+        programme={null}
+        onUpdateProgramme={(programs) => {
+          const divisionToUpdate = modalDivision || selectedDivision;
+          setSchoolStructure(prev => {
+            const updated = prev.map(division =>
+              division.id === divisionToUpdate?.id
+                ? { ...division, programmes: programs }
+                : division
+            );
+            return updated;
+          });
+        }}
       />
 
-      {/* Programme Action Menu */}
+      {/* <ManageProgram
+        open={manageProgramOpen}
+        onClose={() => {
+          setManageProgramOpen(false);
+          setModalDivision(null); // Reset when modal closes
+        }}
+        division={modalDivision} // Use modalDivision instead of selectedDivision
+        programme={null}
+        onUpdateProgramme={() => {}}
+      /> */}
+
       <Menu
         anchorEl={programmeAnchorEl}
         open={Boolean(programmeAnchorEl)}
@@ -452,11 +633,11 @@ const EmisCentralTab = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={handleProgrammeMenuClose}>Edit Programme</MenuItem>
-        <MenuItem onClick={handleProgrammeMenuClose} sx={{ color: 'error.main' }}>Delete Programme</MenuItem>
+        <MenuItem onClick={handleManageProgrammeClasses}>Manage Class Arm</MenuItem>
+        <MenuItem onClick={handleEditProgramme}>Edit Programme</MenuItem>
+        <MenuItem onClick={handleDeleteProgramme}>Delete Programme</MenuItem>
       </Menu>
 
-      {/* Create Division Modal */}
       <ReusableModal
         open={openCreateDivision}
         onClose={() => setOpenCreateDivision(false)}
@@ -468,6 +649,111 @@ const EmisCentralTab = () => {
           onSubmit={handleCreateDivision}
         />
       </ReusableModal>
+
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDeleteDivision}
+        title="Delete Division"
+        message={`Are you sure you want to delete the division "${selectedDivision?.division}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        severity="error"
+      />
+      <ManageClassArm
+        open={manageClassArmOpen}
+        onClose={() => {
+          setManageClassArmOpen(false);
+          setSelectedProgrammeForClassArm(null);
+          setSelectedDivisionForClassArm(null);
+        }}
+        programme={selectedProgrammeForClassArm}
+        division={selectedDivisionForClassArm}
+        onUpdateClassArms={handleUpdateClassArms}
+      />
+      <ReusableModal
+        open={editDivisionOpen}
+        onClose={() => {
+          setEditDivisionOpen(false);
+          setModalDivision(null);
+        }}
+        title="Edit Division"
+      >
+        <CreateDivision
+          actionType="edit"
+          selectedDivision={modalDivision}
+          onCancel={() => {
+            setEditDivisionOpen(false);
+            setModalDivision(null);
+          }}
+          onSubmit={(updatedData) => {
+            handleUpdateDivision({ ...modalDivision, ...updatedData });
+            setEditDivisionOpen(false);
+            setModalDivision(null);
+          }}
+        />
+      </ReusableModal>
+      <ReusableModal
+        open={editProgrammeOpen}
+        onClose={() => {
+          setEditProgrammeOpen(false);
+          setSelectedProgrammeForEdit(null);
+          setModalDivision(null);
+        }}
+        title="Edit Programme"
+      >
+        <CreateClassForm
+          actionType="edit"
+          initialValues={selectedProgrammeForEdit}
+          entityName="Program"
+          onCancel={() => {
+            setEditProgrammeOpen(false);
+            setSelectedProgrammeForEdit(null);
+            setModalDivision(null);
+          }}
+          onSubmit={(updatedData) => {
+            setSchoolStructure(prev => prev.map(division =>
+              division.id === modalDivision?.id
+                ? {
+                    ...division,
+                    programmes: division.programmes.map(prog =>
+                      prog.id === selectedProgrammeForEdit?.id
+                        ? { ...prog, ...updatedData }
+                        : prog
+                    )
+                  }
+                : division
+            ));
+            setEditProgrammeOpen(false);
+            setSelectedProgrammeForEdit(null);
+            setModalDivision(null);
+          }}
+        />
+      </ReusableModal>
+      <ConfirmationDialog
+        open={deleteProgrammeDialogOpen}
+        onClose={() => setDeleteProgrammeDialogOpen(false)}
+        onConfirm={handleConfirmDeleteProgramme}
+        title="Delete Programme"
+        message={`Are you sure you want to delete the programme "${selectedProgramme?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        severity="error"
+      />
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

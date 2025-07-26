@@ -6,6 +6,7 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
+const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 
 /* ****Pages***** */
 const AnalyticalDashboard = Loadable(lazy(() => import('../views/dashboard/Analytical')));
@@ -182,6 +183,10 @@ const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpl
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
+const SchoolDashboardMain = Loadable(lazy(() => import('../views/school/SchoolDashboard')));
+
+// School-specific pages
+// const SchoolStudents = Loadable(lazy(() => import('../views/school/Students')));
 
 const Router = [
   {
@@ -300,6 +305,14 @@ const Router = [
       { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
       { path: '/phet/stimulation-links', element: <StimulationLinks /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
+    ],
+  },
+  {
+    path: '/school-dashboard',
+    element: <SchoolLayout />,
+    children: [
+      { path: '', element: <SchoolDashboardMain /> },
+      // { path: 'students', element: <SchoolStudents /> },
     ],
   },
   {

@@ -361,6 +361,25 @@ const EmisCentralTab = () => {
     setSelectedProgrammeDivision(null);
   };
 
+  const renderDivisionInfo = (division) => (
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 0.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', flex: 1 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          {division.division} {division.code && `(${division.code})`}
+        </Typography>
+        {renderCategoryChips(division.categories)}
+      </Box>
+      
+      <IconButton
+        size="small"
+        onClick={(e) => handleMenuClick(e, division)}
+        sx={{ p: 0.5, m: 0, lineHeight: 1, alignSelf: 'flex-start' }}
+      >
+        <MoreVertIcon sx={{ fontSize: 20 }} />
+      </IconButton>
+    </Box>
+  );
+
   return (
     <Box sx={{ p: 3, width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mb: 2 }}>
@@ -406,23 +425,7 @@ const EmisCentralTab = () => {
                           <TableCell rowSpan={division.programmes.length}
                             sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
                           >
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 0.5 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', flex: 1 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                  {division.division} {division.code && `(${division.code})`}
-                                </Typography>
-                                {renderCategoryChips(division.categories)}
-                              </Box>
-                              
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => handleMenuClick(e, division)}
-                                  sx={{ p: 0.5, m: 0, lineHeight: 1 }}
-                                >
-                                  <MoreVertIcon sx={{ fontSize: 20, verticalAlign: 'middle' }} />
-                                </IconButton>
-                              
-                            </Box>
+                            {renderDivisionInfo(division)}
                           </TableCell>
                         </>
                       )}
@@ -532,17 +535,7 @@ const EmisCentralTab = () => {
                         verticalAlign: 'top',
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {division.division} {division.code && `(${division.code})`}
-                        </Typography>
-                        {renderCategoryChips(division.categories)}
-                        <Box sx={{ flexGrow: 1 }} />
-                        <IconButton size="small" onClick={(e) => handleMenuClick(e, division)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                      </Box>
-                      {renderCategoryChips({ Unapproved: division.categories?.Unapproved })}
+                      {renderDivisionInfo(division)}
                     </TableCell>
                   </TableRow>
                 )

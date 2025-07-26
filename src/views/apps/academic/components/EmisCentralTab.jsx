@@ -432,7 +432,7 @@ const EmisCentralTab = () => {
                       <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top', paddingTop: '10px' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                           <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1 }}>
-                            {programme.name}
+                            {programme.name} {programme.code && `(${programme.code})`}
                           </Typography>
                           <IconButton
                             size="small"

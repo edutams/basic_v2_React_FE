@@ -30,13 +30,50 @@ const StyledInfoBox = styled(Box)(({ theme }) => ({
   color: '#00695c',
 }));
 
-const CreateClassArmModal = ({ open, onClose, onSave }) => {
+const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = false, initialData = null }) => {
   const [selectedClass, setSelectedClass] = React.useState('');
   const [status, setStatus] = React.useState('');
   const [selectedArms, setSelectedArms] = React.useState([]);
   const [selectAll, setSelectAll] = React.useState(false);
 
   const arms = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+
+  // Define class options based on programme type
+  const getClassOptions = () => {
+    const programmeName = programme?.name?.toLowerCase() || '';
+    
+    if (programmeName.includes('primary')) {
+      return [
+        { value: 'Primary 1', label: 'Primary 1' },
+        { value: 'Primary 2', label: 'Primary 2' },
+        { value: 'Primary 3', label: 'Primary 3' },
+        { value: 'Primary 4', label: 'Primary 4' },
+        { value: 'Primary 5', label: 'Primary 5' },
+        { value: 'Primary 6', label: 'Primary 6' },
+      ];
+    } else if (programmeName.includes('junior') || programmeName.includes('jss')) {
+      return [
+        { value: 'Junior Secondary 1', label: 'Junior Secondary 1' },
+        { value: 'Junior Secondary 2', label: 'Junior Secondary 2' },
+        { value: 'Junior Secondary 3', label: 'Junior Secondary 3' },
+      ];
+    } else if (programmeName.includes('senior') || programmeName.includes('sss')) {
+      return [
+        { value: 'Senior Secondary 1', label: 'Senior Secondary 1' },
+        { value: 'Senior Secondary 2', label: 'Senior Secondary 2' },
+        { value: 'Senior Secondary 3', label: 'Senior Secondary 3' },
+      ];
+    } else {
+      // Default options for other programmes
+      return [
+        { value: 'KG', label: 'KG' },
+        { value: 'Nursery', label: 'Nursery' },
+        { value: 'Pre-Nursery', label: 'Pre-Nursery' },
+      ];
+    }
+  };
+
+  const classOptions = getClassOptions();
 
   const handleArmChange = (arm, checked) => {
     if (checked) {
@@ -74,11 +111,26 @@ const CreateClassArmModal = ({ open, onClose, onSave }) => {
     onClose();
   };
 
+  // Initialize form with existing data when editing
+  React.useEffect(() => {
+    if (editMode && initialData) {
+      setSelectedClass(initialData.name || '');
+      setStatus(initialData.status || '');
+      setSelectedArms(initialData.arms || []);
+      setSelectAll(initialData.arms?.length === arms.length);
+    } else if (!editMode) {
+      setSelectedClass('');
+      setStatus('');
+      setSelectedArms([]);
+      setSelectAll(false);
+    }
+  }, [editMode, initialData, open]);
+
   return (
     <ReusableModal
       open={open}
       onClose={handleClose}
-      title="Create Class Arm"
+      title={editMode ? "Edit Class Arm" : "Create Class Arm"}
       size="medium"
       maxWidth="md"
     >
@@ -98,9 +150,11 @@ const CreateClassArmModal = ({ open, onClose, onSave }) => {
               <MenuItem value="" disabled>
                 --Choose--
               </MenuItem>
-              <MenuItem value="KG">KG</MenuItem>
-              <MenuItem value="Nursery">Nursery</MenuItem>
-              <MenuItem value="Primary">Primary</MenuItem>
+              {classOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
             </Select>
           </StyledFormControl>
         </Box>
@@ -200,7 +254,7 @@ const CreateClassArmModal = ({ open, onClose, onSave }) => {
               },
             }}
           >
-            Attach Class Arm
+            {editMode ? "Update Class Arm" : "Attach Class Arm"}
           </Button>
         </Box>
       </Box>

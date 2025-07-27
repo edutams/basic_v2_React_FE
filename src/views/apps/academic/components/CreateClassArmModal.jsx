@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   Grid,
 } from '@mui/material';
+// import { useFormik } from 'formik';
 import { styled } from '@mui/material/styles';
 import ReusableModal from 'src/components/shared/ReusableModal';
 
@@ -64,11 +65,10 @@ const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = fals
         { value: 'Senior Secondary 3', label: 'Senior Secondary 3' },
       ];
     } else {
-      // Default options for other programmes
       return [
         { value: 'KG', label: 'KG' },
-        { value: 'Nursery', label: 'Nursery' },
-        { value: 'Pre-Nursery', label: 'Pre-Nursery' },
+        { value: 'Nursery 1', label: 'Nursery 1' },
+        { value: 'Nursery 2', label: 'Nursery 2' },
       ];
     }
   };
@@ -135,7 +135,6 @@ const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = fals
       maxWidth="md"
     >
       <Box sx={{ p: 3 }}>
-        {/* Attached Class Arm Dropdown */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
             Attached Class Arm
@@ -160,6 +159,26 @@ const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = fals
         </Box>
 
         {/* Status Dropdown */}
+         {/* <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
+          <FormControl fullWidth error={formik.touched.status && Boolean(formik.errors.status)}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              name="status"
+              value={formik.values.status}
+              label="Status"
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+             
+            >
+              <MenuItem value="">-- Choose --</MenuItem>
+              <MenuItem value="Active">Active</MenuItem>
+              <MenuItem value="Inactive">Inactive</MenuItem>
+            </Select>
+            {formik.touched.status && formik.errors.status && (
+              <FormHelperText>{formik.errors.status}</FormHelperText>
+            )}
+          </FormControl>
+        </Grid> */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
             Status
@@ -178,9 +197,8 @@ const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = fals
               <MenuItem value="Inactive">Inactive</MenuItem>
             </Select>
           </StyledFormControl>
-        </Box>
+        </Box> 
 
-        {/* System Arms */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary', fontWeight: 500 }}>
             System Arms
@@ -192,7 +210,6 @@ const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = fals
             </Typography>
           </StyledInfoBox>
 
-          {/* Select All */}
           <FormControlLabel
             control={
               <Checkbox
@@ -204,7 +221,6 @@ const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = fals
             sx={{ mb: 2, fontWeight: 500 }}
           />
 
-          {/* Arms Grid */}
           <Grid container spacing={1}>
             {arms.map((arm) => (
               <Grid item xs={2} key={arm}>
@@ -228,7 +244,6 @@ const CreateClassArmModal = ({ open, onClose, onSave, programme, editMode = fals
           </Grid>
         </Box>
 
-        {/* Action Buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
           <Button
             variant="outlined"

@@ -25,7 +25,6 @@ const BCrumb = [
   { title: 'School Structure' },
 ];
 
-// Styled Components
 const GradientIconBox = styled(Box)(({ theme }) => ({
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   borderRadius: theme.shape.borderRadius,
@@ -142,9 +141,7 @@ const SchoolStructure = () => {
       value: "emis_central",
     },
   ];
-
   const ActiveComponent = tabConfig.find(tab => tab.value === activeTab)?.component;
-
   return (
     <PageContainer title="School Structure" description="Manage School Structure">
       <Breadcrumb title="School Structure" items={BCrumb} />
@@ -162,10 +159,6 @@ const SchoolStructure = () => {
           ))}
         </Tabs>
       </Box>
-
-       
-
-      
         <Grid item size={{ xs: 12, lg: 12 }}>
           <ContentCard>
            <Box>
@@ -183,7 +176,6 @@ const SchoolStructure = () => {
             </Box>
           </ContentCard>
         </Grid>
-     
     </PageContainer>
   );
 };

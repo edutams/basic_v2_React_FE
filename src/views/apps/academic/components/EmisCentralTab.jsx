@@ -20,8 +20,6 @@ import {
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
-  ExpandMore,
-  ExpandLess,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import ManageClassesModal from './ManageClassesModal';
@@ -607,17 +605,6 @@ const EmisCentralTab = () => {
           });
         }}
       />
-
-      {/* <ManageProgram
-        open={manageProgramOpen}
-        onClose={() => {
-          setManageProgramOpen(false);
-          setModalDivision(null); // Reset when modal closes
-        }}
-        division={modalDivision} // Use modalDivision instead of selectedDivision
-        programme={null}
-        onUpdateProgramme={() => {}}
-      /> */}
 
       <Menu
         anchorEl={programmeAnchorEl}

@@ -23,11 +23,8 @@ import {
   InputLabel,
   Select,
   Grid,
-  Divider,
 } from '@mui/material';
-import {
-  MoreVert as MoreVertIcon,  
-} from '@mui/icons-material';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import CreateCategory from '../components/CreateCategory';
 import ConfirmationDialog from '../../../../components/shared/ConfirmationDialog';
@@ -61,55 +58,12 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const SectionHeader = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(1),
-  marginBottom: theme.spacing(2),
-  padding: theme.spacing(1),
-  backgroundColor: theme.palette.grey[50],
-  borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${theme.palette.divider}`,
-}));
-
 const ActionMenuButton = styled(IconButton)(({ theme }) => ({
   color: theme.palette.primary.main,
   '&:hover': {
     backgroundColor: theme.palette.primary.light + '20',
   },
 }));
-
-// Mock data matching the image
-const mockCategories = [
-  {
-    id: 1,
-    sn: 1,
-    programmeName: 'Private',
-    description: 'Approved Private Schools',
-    status: 'ACTIVE',
-  },
-  {
-    id: 2,
-    sn: 2,
-    programmeName: 'Public',
-    description: 'Government Owned Schools',
-    status: 'ACTIVE',
-  },
-  {
-    id: 3,
-    sn: 3,
-    programmeName: 'Unapproved',
-    description: 'Unapproved Private Schools',
-    status: 'ACTIVE',
-  },
-  {
-    id: 4,
-    sn: 4,
-    programmeName: 'Community',
-    description: 'Community Run Schools',
-    status: 'ACTIVE',
-  },
-];
 
 const CategoryTab = () => {
   const [categories, setCategories] = useState(() => {
@@ -140,7 +94,6 @@ const CategoryTab = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    // Do not reset selectedCategory here!
   };
 
   const handleDialogOpen = (mode, category = null) => {
@@ -181,10 +134,14 @@ const CategoryTab = () => {
         ...formData,
       };
       setCategories([...categories, newCategory]);
+      showSuccess('Category created successfully');
     } else if (dialogMode === 'edit') {
       setCategories(
-        categories.map((cat) => (cat.id === selectedCategory.id ? { ...cat, ...formData } : cat)),
+        categories.map((cat) =>
+          cat.id === selectedCategory.id ? { ...cat, ...formData } : cat
+        )
       );
+      showSuccess('Category updated successfully');
     }
     handleDialogClose();
   };
@@ -197,7 +154,7 @@ const CategoryTab = () => {
   };
 
   return (
-    <Box sx={{ p: 3, }}>
+    <Box sx={{ p: 3 }}>
       <Box
         sx={{
           display: 'flex',
@@ -211,7 +168,6 @@ const CategoryTab = () => {
         <Button
           variant="contained"
           color="primary"
-          // startIcon={<AddIcon />}
           onClick={() => handleDialogOpen('create')}
           sx={{ ml: 2 }}
           aria-label="Create new category"
@@ -255,8 +211,9 @@ const CategoryTab = () => {
                     label={category.status}
                     size="small"
                     sx={{
-                      backgroundColor: 'success.main',
-                      color: 'white',
+                      backgroundColor:
+                        category.status === 'ACTIVE' ? 'primary.main' : 'secondary.500',
+                      color: category.status === 'ACTIVE' ? 'white' : 'text.primary',
                       fontWeight: 500,
                       fontSize: '0.75rem',
                       borderRadius: '12px',
@@ -265,9 +222,9 @@ const CategoryTab = () => {
                   />
                 </TableCell>
                 <TableCell align="center">
-                  <IconButton onClick={(e) => handleMenuClick(e, category)}>
+                  <ActionMenuButton onClick={(e) => handleMenuClick(e, category)}>
                     <MoreVertIcon sx={{ fontSize: 25 }} />
-                  </IconButton>
+                  </ActionMenuButton>
                 </TableCell>
               </StyledTableRow>
             ))}
@@ -292,9 +249,7 @@ const CategoryTab = () => {
         <MenuItem onClick={() => handleDialogOpen('edit', selectedCategory)}>
           Edit Category
         </MenuItem>
-        <MenuItem onClick={() => setConfirmDeleteOpen(true)}>
-          Delete
-        </MenuItem>
+        <MenuItem onClick={() => setConfirmDeleteOpen(true)}>Delete</MenuItem>
       </Menu>
       <ConfirmationDialog
         open={confirmDeleteOpen}
@@ -310,9 +265,7 @@ const CategoryTab = () => {
       {/* Dialog */}
       <Dialog open={openDialog} onClose={handleDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {dialogMode === 'create' && 'Add New Category'}
-          {dialogMode === 'edit' && 'Edit Category'}
-          {dialogMode === 'view' && 'Category Details'}
+          {dialogMode === 'create' ? 'Add New Category' : dialogMode === 'edit' ? 'Edit Category' : 'Category Details'}
         </DialogTitle>
         <DialogContent>
           {dialogMode === 'view' ? (
@@ -350,13 +303,12 @@ const CategoryTab = () => {
               value={{
                 categoryName: formData.programmeName || '',
                 description: formData.description || '',
-                status: formData.status === 'ACTIVE' ? 'Active' : (formData.status === 'INACTIVE' ? 'Inactive' : formData.status),
-                id: selectedCategory?.id
+                status: formData.status === 'ACTIVE' ? 'Active' : formData.status === 'INACTIVE' ? 'Inactive' : formData.status,
+                id: selectedCategory?.id,
               }}
               isEditing={dialogMode === 'edit'}
               onSubmit={(data) => {
-                // Convert status back to original format
-                const status = data.status === 'Active' ? 'ACTIVE' : (data.status === 'Inactive' ? 'INACTIVE' : data.status);
+                const status = data.status === 'Active' ? 'ACTIVE' : data.status === 'Inactive' ? 'INACTIVE' : data.status;
                 if (dialogMode === 'create') {
                   const newCategory = {
                     id: Date.now(),
@@ -371,7 +323,7 @@ const CategoryTab = () => {
                   setCategories(
                     categories.map((cat) =>
                       cat.id === selectedCategory.id
-                        ? { ...cat, programmeName: data.categoryName, description: data.description, status, sn: cat.sn }
+                        ? { ...cat, programmeName: data.categoryName, description: data.description, status }
                         : cat
                     )
                   );

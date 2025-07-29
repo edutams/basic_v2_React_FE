@@ -83,35 +83,28 @@ const SectionHeader = styled(Box)(({ theme }) => ({
 }));
 
 const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgramme }) => {
-  
-  const divisionObj = Array.isArray(division) ? division[0] : division;
-  
-  // Collect all classes from all programmes in the division
-  const getAllClassesFromDivision = (div) => {
-    if (!div?.programmes) return [];
-    const allClasses = [];
-    div.programmes.forEach(prog => {
-      if (prog.classArms) {
-        allClasses.push(...prog.classArms);
-      }
-    });
-    return allClasses;
-  };
-  
   const [classes, setClasses] = React.useState([]);
   const [createModalOpen, setCreateModalOpen] = React.useState(false);
 
+  // Reusable function to get division display data
+  const getDivisionDisplayData = (division) => {
+    return {
+      name: division?.name || division?.division || 'Division',
+      id: division?.id || Date.now(),
+      code: division?.code || '-',
+      order: division?.order || 1,
+      description: division?.description || '-'
+    };
+  };
+
   React.useEffect(() => {
-    // Load classes directly from division, not from programmes
-    const existingClasses = division?.classes || [];
-    setClasses(existingClasses);
+    const normalizedClasses = Array.isArray(division?.classes) ? division.classes : [];
+    setClasses(normalizedClasses);
   }, [division]);
 
   const handleSave = () => {
     if (onUpdateProgramme) {
       onUpdateProgramme(classes);
-    } else {
-      console.error('onUpdateProgramme is not defined!');
     }
     onClose();
   };
@@ -228,31 +221,31 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
                 </TableRow>
               </StyledTableHead>
               <TableBody>
-                {classes.map((classItem, index) => (
-                  <StyledTableRow key={classItem.id}>
+                {classes.length === 0 ? (
+                  <StyledTableRow>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {index + 1}
+                        1
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {classItem.name}
+                        {getDivisionDisplayData(division).name}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {classItem.code}
+                        {getDivisionDisplayData(division).code}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {classItem.order || index + 1}
+                        {getDivisionDisplayData(division).order}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {classItem.description}
+                        {getDivisionDisplayData(division).description}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -261,7 +254,42 @@ const ManageClassesModal = ({ open, onClose, programme, division, onUpdateProgra
                       </IconButton>
                     </TableCell>
                   </StyledTableRow>
-                ))}
+                ) : (
+                  classes.map((classItem, index) => (
+                    <StyledTableRow key={classItem.id}>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {index + 1}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {classItem.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {classItem.code}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {classItem.order || index + 1}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {classItem.description}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small">
+                          <MoreVertIcon />
+                        </IconButton>
+                      </TableCell>
+                    </StyledTableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </StyledTableContainer>

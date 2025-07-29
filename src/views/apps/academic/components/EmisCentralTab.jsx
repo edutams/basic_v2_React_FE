@@ -133,11 +133,38 @@ const renderCategoryChips = (categories) => {
     ));
 };
 
+// Add this function to force normalize all divisions
+const normalizeSchoolStructure = (structure) => {
+  return structure.map(division => ({
+    ...division,
+    classes: Array.isArray(division.classes) ? division.classes : [],
+    programmes: Array.isArray(division.programmes) ? division.programmes : []
+  }));
+};
+
 const EmisCentralTab = () => {
   const [schoolStructure, setSchoolStructure] = useState(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const normalized = normalizeSchoolStructure(parsed);
+      // Immediately save the normalized structure back to localStorage
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
+      return normalized;
+    }
+    return [];
   });
+
+  // Update localStorage whenever schoolStructure changes to maintain consistency
+  useEffect(() => {
+    const normalizedStructure = schoolStructure.map(division => ({
+      ...division,
+      classes: division.classes || [],
+      programmes: division.programmes || []
+    }));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalizedStructure));
+  }, [schoolStructure]);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedDivision, setSelectedDivision] = useState(null);
   const [manageClassesOpen, setManageClassesOpen] = useState(false);
@@ -159,10 +186,6 @@ const EmisCentralTab = () => {
   const [editProgrammeOpen, setEditProgrammeOpen] = useState(false);
   const [selectedProgrammeForEdit, setSelectedProgrammeForEdit] = useState(null);
   const [deleteProgrammeDialogOpen, setDeleteProgrammeDialogOpen] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(schoolStructure));
-  }, [schoolStructure]);
 
   const toggleProgramme = (divisionId, programmeId) => {
     setSchoolStructure(prev => prev.map(division =>
@@ -193,7 +216,14 @@ const EmisCentralTab = () => {
     if (!selectedDivision) {
       return;
     }
-    setModalDivision(selectedDivision);
+    
+    // Ensure the division has classes property before opening modal
+    const normalizedDivision = {
+      ...selectedDivision,
+      classes: Array.isArray(selectedDivision.classes) ? selectedDivision.classes : []
+    };
+        
+    setModalDivision(normalizedDivision);
     setManageClassesOpen(true);
     setTimeout(() => {
       handleMenuClose();
@@ -260,9 +290,10 @@ const EmisCentralTab = () => {
   const handleCreateDivision = (newDivision) => {
     const newDivisionEntry = {
       ...newDivision,
-      division: newDivision.name, // This ensures the property exists
+      division: newDivision.name,
       id: Date.now(),
       programmes: [],
+      classes: [], // Every new division gets these properties
     };
     setSchoolStructure(prev => [...prev, newDivisionEntry]);
     setOpenCreateDivision(false);

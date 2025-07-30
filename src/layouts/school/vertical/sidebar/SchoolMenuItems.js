@@ -1,16 +1,11 @@
 import { uniqueId } from 'lodash';
 import {
   IconChartPie,
-  IconSchool,
+  IconCalendarWeek,
   IconUsers,
   IconUserCircle,
   IconBook,
-  IconCalendarTime,
   IconClipboardList,
-  IconReportAnalytics,
-  IconSettings,
-  IconMail,
-  IconMessage2,
 } from '@tabler/icons-react';
 
 const SchoolMenuItems = [
@@ -24,19 +19,36 @@ const SchoolMenuItems = [
     icon: IconChartPie,
     href: '/school-dashboard',
   },
+  
   {
     navlabel: true,
     subheader: 'Module Navigation',
   },
+  
+
+    {
+      id: uniqueId(),
+      title: 'Setup',
+      icon: IconUsers,
+      children: [
+        {
+          id: uniqueId(),
+          title: 'Session/Week Manager',
+          icon: IconUsers,
+          href: '/school-dashboard/session-week-manager',
+        },
+        // {
+        //   id: uniqueId(),
+        //   title: 'Stimulation Links',
+        //   icon: IconPoint,
+        //   href: '/phet/stimulation-links',
+        // },
+      ],
+    },
+
   {
     id: uniqueId(),
-    title: 'Setup',
-    icon: IconUsers,
-    href: '/school-dashboard/students',
-  },
-  {
-    id: uniqueId(),
-    title: 'Addmission',
+    title: 'Admission',
     icon: IconUserCircle,
     href: '/school-dashboard/teachers',
   },
@@ -52,7 +64,6 @@ const SchoolMenuItems = [
     icon: IconClipboardList,
     href: '/school-dashboard/subjects',
   },
-  
 ];
 
 export default SchoolMenuItems;

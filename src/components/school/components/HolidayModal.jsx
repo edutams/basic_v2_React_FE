@@ -99,10 +99,6 @@ const HolidayModal = ({ open, onClose, handleRefresh, actionType }) => {
         <Button 
           variant="contained" 
           onClick={handleSave}
-          // sx={{ 
-          //   backgroundColor: '#8bc34a',
-          //   '&:hover': { backgroundColor: '#7cb342' }
-          // }}
         >
           Save
         </Button>

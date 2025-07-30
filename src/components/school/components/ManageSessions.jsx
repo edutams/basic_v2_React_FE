@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -15,30 +15,61 @@ import {
   Typography,
   TablePagination,
 } from '@mui/material';
-import { IconDots } from '@tabler/icons-react';
 
-const ManageSessions = ({ activeTab, onSessionAction }) => {
+import {
+  MoreVert as MoreVertIcon,
+} from '@mui/icons-material';
+
+const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const sessions = [
+  const [sessions, setSessions] = useState([
     { id: 1, name: '2020/2021', status: 'INACTIVE' },
     { id: 2, name: '2021/2022', status: 'INACTIVE' },
     { id: 3, name: '2022/2023', status: 'INACTIVE' },
     { id: 4, name: '2023/2024', status: 'ACTIVE' },
     { id: 5, name: '2024/2025', status: 'INACTIVE' },
     { id: 6, name: '2025/2026', status: 'ACTIVE' },
-  ];
+  ]);
 
-  const sessionTerms = [
+  const [sessionTerms, setSessionTerms] = useState([
     { id: 1, sessionTerm: '2023/2024 - First Term', status: 'ACTIVE' },
     { id: 2, sessionTerm: '2023/2024 - Second Term', status: 'INACTIVE' },
     { id: 3, sessionTerm: '2023/2024 - Third Term', status: 'INACTIVE' },
     { id: 4, sessionTerm: '2024/2025 - First Term', status: 'INACTIVE' },
     { id: 5, sessionTerm: '2024/2025 - Second Term', status: 'INACTIVE' },
-  ];
+  ]);
+
+  useEffect(() => {
+    if (updatedSession) {
+      if (updatedSession.name) {
+        setSessions(prev => {
+          const existingIndex = prev.findIndex(session => session.id === updatedSession.id);
+          if (existingIndex >= 0) {
+            return prev.map(session => 
+              session.id === updatedSession.id ? updatedSession : session
+            );
+          } else {
+            return [...prev, updatedSession];
+          }
+        });
+      } else if (updatedSession.sessionTerm) {
+        setSessionTerms(prev => {
+          const existingIndex = prev.findIndex(term => term.id === updatedSession.id);
+          if (existingIndex >= 0) {
+            return prev.map(term => 
+              term.id === updatedSession.id ? updatedSession : term
+            );
+          } else {
+            return [...prev, updatedSession];
+          }
+        });
+      }
+    }
+  }, [updatedSession]);
 
   const currentData = activeTab === 0 ? sessions : sessionTerms;
   const paginatedData = currentData.slice(
@@ -100,7 +131,16 @@ const ManageSessions = ({ activeTab, onSessionAction }) => {
                     <TableCell>
                       <Chip
                         label={String(item.status || 'UNKNOWN')}
-                        color={item.status === 'ACTIVE' ? 'success' : 'default'}
+                        // color={item.status === 'ACTIVE' ? 'success' : 'default'}
+                        sx={{
+                          color: item.status === 'ACTIVE'
+                            ? (theme) => theme.palette.success.main
+                            : (theme) => theme.palette.error.main,
+                          bgcolor: item.status === 'ACTIVE'
+                            ? (theme) => theme.palette.success.light
+                            : (theme) => theme.palette.error.light,
+                          borderRadius: '8px',
+                        }}
                         size="small"
                       />
                     </TableCell>
@@ -109,7 +149,7 @@ const ManageSessions = ({ activeTab, onSessionAction }) => {
                         size="small"
                         onClick={(e) => handleMenuClick(e, item)}
                       >
-                        <IconDots size={16} />
+                        <MoreVertIcon size={16} />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -143,18 +183,13 @@ const ManageSessions = ({ activeTab, onSessionAction }) => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={() => handleAction('edit', selectedSession)}>
-          Edit
-        </MenuItem>
-        <MenuItem onClick={() => handleAction('delete', selectedSession)}>
-          Delete
-        </MenuItem>
         <MenuItem onClick={() => handleAction(
           selectedSession?.status === 'ACTIVE' ? 'deactivate' : 'activate', 
           selectedSession
         )}>
           {selectedSession?.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
         </MenuItem>
+        
       </Menu>
     </Box>
   );

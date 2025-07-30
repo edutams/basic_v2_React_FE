@@ -68,10 +68,6 @@ const HolidayForm = ({
             type="submit"
             fullWidth
             disabled={isLoading || !formik.isValid}
-            sx={{ 
-              backgroundColor: '#8bc34a',
-              '&:hover': { backgroundColor: '#7cb342' }
-            }}
           >
             {isLoading ? 'Adding...' : submitText}
           </Button>

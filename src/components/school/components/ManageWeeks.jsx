@@ -13,8 +13,10 @@ import {
   Alert,
   Stack,
 } from '@mui/material';
+import useNotification from '../../../hooks/useNotification';
 
 const ManageWeeks = () => {
+  const notify = useNotification();
   const [firstMonday, setFirstMonday] = useState('');
   const [weeks, setWeeks] = useState([
     { week: 'Week 1', startsOn: '2025-02-24', endsOn: '2025-02-28' },
@@ -32,7 +34,7 @@ const ManageWeeks = () => {
 
   const handleGenerateWeeks = () => {
     if (!firstMonday) {
-      alert('Please select the first Monday of the term');
+      notify.warning('Please select the first Monday of the term', 'Warning');
       return;
     }
     
@@ -44,7 +46,7 @@ const ManageWeeks = () => {
       weekStart.setDate(startDate.getDate() + (i * 7));
       
       const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 4); // Friday
+      weekEnd.setDate(weekStart.getDate() + 4); 
       
       generatedWeeks.push({
         week: `Week ${i + 1}`,
@@ -63,9 +65,8 @@ const ManageWeeks = () => {
   };
 
   const handleSaveAll = () => {
-    console.log('Saving all weeks:', weeks);
-    // Add your save logic here
-    alert('Weeks saved successfully!');
+    // console.log('Saving all weeks:', weeks);
+    notify.success('Weeks saved successfully', 'Success');
   };
 
   return (

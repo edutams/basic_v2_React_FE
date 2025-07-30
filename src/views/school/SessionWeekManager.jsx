@@ -14,8 +14,9 @@ import {
 
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import ManageSessions from 'src/components/school/ManageSessions';
-import ManageWeeks from 'src/components/school/ManageWeeks';
+import ManageSessions from 'src/components/school/components/ManageSessions';
+import ManageWeeks from 'src/components/school/components/ManageWeeks';
+import HolidayModal from 'src/components/school/components/HolidayModal';
 
 const BCrumb = [
   {
@@ -29,6 +30,23 @@ const BCrumb = [
 
 const SessionWeekManager = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [openModal, setOpenModal] = useState(false);
+  const [modalActionType, setModalActionType] = useState('');
+
+  const handleOpenModal = (actionType) => {
+    setModalActionType(actionType);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setModalActionType('');
+  };
+
+  const handleRefresh = () => {
+    // Add your refresh logic here
+    console.log('Refreshing data...');
+  };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -44,7 +62,9 @@ const SessionWeekManager = () => {
             <Typography variant="h4" fontWeight={600}>
               Session/Week Manager
             </Typography>
-            <Button variant="contained" color="secondary" size="small">
+            <Button variant="contained" size="small"   sx={{ backgroundColor: 'black', color: '#fff', '&:hover': { backgroundColor: 'grey.700' } }}
+              onClick={() => handleOpenModal('holiday')}
+            >
               Set Holiday
             </Button>
           </Box>
@@ -88,6 +108,12 @@ const SessionWeekManager = () => {
           </Grid>
         </CardContent>
       </Card>
+      <HolidayModal
+        open={openModal}
+        onClose={handleCloseModal}
+        handleRefresh={handleRefresh}
+        actionType={modalActionType}
+      />
     </PageContainer>
   );
 };

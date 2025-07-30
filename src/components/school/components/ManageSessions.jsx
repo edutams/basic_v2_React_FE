@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { IconDots } from '@tabler/icons-react';
 
-const ManageSessions = ({ activeTab }) => {
+const ManageSessions = ({ activeTab, onSessionAction }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [page, setPage] = useState(0);
@@ -54,6 +54,13 @@ const ManageSessions = ({ activeTab }) => {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedSession(null);
+  };
+
+  const handleAction = (action, session) => {
+    if (onSessionAction) {
+      onSessionAction(action, session);
+    }
+    handleMenuClose();
   };
 
   const handleChangePage = (event, newPage) => {
@@ -136,9 +143,16 @@ const ManageSessions = ({ activeTab }) => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={handleMenuClose}>Edit</MenuItem>
-        <MenuItem onClick={handleMenuClose}>Delete</MenuItem>
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={() => handleAction('edit', selectedSession)}>
+          Edit
+        </MenuItem>
+        <MenuItem onClick={() => handleAction('delete', selectedSession)}>
+          Delete
+        </MenuItem>
+        <MenuItem onClick={() => handleAction(
+          selectedSession?.status === 'ACTIVE' ? 'deactivate' : 'activate', 
+          selectedSession
+        )}>
           {selectedSession?.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
         </MenuItem>
       </Menu>

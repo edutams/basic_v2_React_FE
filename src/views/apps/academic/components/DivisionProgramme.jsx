@@ -412,7 +412,7 @@ const EmisCentralTab = () => {
   return (
     <Box sx={{ p: 3, width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', mb: 2 }}>
-        <span>Emis Central</span>
+        <span>Division/Programme</span>
         <Button
           variant="contained"
           color="primary"

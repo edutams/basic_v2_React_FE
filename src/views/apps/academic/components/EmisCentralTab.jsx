@@ -44,7 +44,7 @@ const StyledTableHead = styled(TableHead)(({ theme }) => ({
     fontWeight: 600,
     color: theme.palette.text.primary,
     fontSize: '0.875rem',
-    padding: theme.spacing(2),
+    padding: theme.spacing(1),
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
@@ -52,7 +52,7 @@ const StyledTableHead = styled(TableHead)(({ theme }) => ({
 const DivisionRow = styled(TableRow)(({ theme }) => ({
   backgroundColor: '#f3f0ff',
   '& .MuiTableCell-root': {
-    padding: theme.spacing(2),
+    padding: theme.spacing(1),
     borderBottom: `1px solid ${theme.palette.divider}`,
     fontWeight: 600,
   },
@@ -61,7 +61,7 @@ const DivisionRow = styled(TableRow)(({ theme }) => ({
 const ProgrammeRow = styled(TableRow)(({ theme }) => ({
   backgroundColor: '#fafafa',
   '& .MuiTableCell-root': {
-    padding: theme.spacing(1.5, 2),
+    padding: theme.spacing(1, 2),
     borderBottom: `1px solid ${theme.palette.divider}`,
     paddingLeft: theme.spacing(4),
   },
@@ -72,7 +72,7 @@ const ClassRow = styled(TableRow)(({ theme }) => ({
     backgroundColor: theme.palette.action.hover,
   },
   '& .MuiTableCell-root': {
-    padding: theme.spacing(1.5, 2),
+    padding: theme.spacing(0.5, 1),
     borderBottom: `1px solid ${theme.palette.divider}`,
     paddingLeft: theme.spacing(6),
   },
@@ -82,7 +82,7 @@ const SectionHeader = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  marginBottom: theme.spacing(3),
+  marginBottom: theme.spacing(1),
   padding: theme.spacing(2),
   backgroundColor: theme.palette.background.paper,
   borderRadius: theme.shape.borderRadius,
@@ -515,7 +515,7 @@ const EmisCentralTab = () => {
                                 }
                               }}>
                                 <Box sx={{ 
-                                  padding: '8px 12px', 
+                                  padding: '4px 12px', 
                                   borderRight: '1px solid #e0e0e0',
                                   alignItems: 'center',
                                   display: 'flex',

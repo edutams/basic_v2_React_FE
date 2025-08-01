@@ -22,7 +22,7 @@ import EmisCentralTab from './components/EmisCentralTab';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { title: 'School Structure' },
+  { title: 'School Manager' },
 ];
 
 const GradientIconBox = styled(Box)(({ theme }) => ({
@@ -102,7 +102,7 @@ const LoadingBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(4),
 }));
 
-const SchoolStructure = () => {
+const SchoolManager = () => {
   const [activeTab, setActiveTab] = useState("category");
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
@@ -143,11 +143,11 @@ const SchoolStructure = () => {
   ];
   const ActiveComponent = tabConfig.find(tab => tab.value === activeTab)?.component;
   return (
-    <PageContainer title="School Structure" description="Manage School Structure">
-      <Breadcrumb title="School Structure" items={BCrumb} />
+    <PageContainer title="School Manager" description="Manage School Manager">
+      <Breadcrumb title="School Manager" items={BCrumb} />
 
       <Box sx={{ borderColor: 'divider', marginBottom: 2 }}>
-        <Tabs value={activeTab} onChange={handleTabChange} aria-label="school structure tabs">
+        <Tabs value={activeTab} onChange={handleTabChange} aria-label="school manager tabs">
           {tabConfig.map((tab, index) => (
             <Tab
               key={index}
@@ -180,4 +180,4 @@ const SchoolStructure = () => {
   );
 };
 
-export default SchoolStructure;
+export default SchoolManager;

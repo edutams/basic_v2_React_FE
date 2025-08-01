@@ -64,7 +64,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
     backgroundColor: theme.palette.grey[50],
   },
   '& .MuiTableCell-root': {
-    padding: theme.spacing(2),
+    padding: theme.spacing(1),
     borderBottom: `1px solid ${theme.palette.divider}`,
     borderRight: `1px solid ${theme.palette.divider}`,
     fontSize: '0.875rem',
@@ -79,12 +79,12 @@ const ClassArmChip = styled(Chip)(({ theme }) => ({
   color: 'white',
   fontSize: '0.5rem',
   fontWeight: 600,
-  margin: '2px',
+  margin: '1px',
   minWidth: '32px',
   height: '15px',
   borderRadius: 0,
   '& .MuiChip-label': {
-    padding: '0 5px',
+    padding: '0 3px',
   },
 }));
 

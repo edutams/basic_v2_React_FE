@@ -40,7 +40,7 @@ const HolidayForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            size="small"
+            // size="small"
             InputLabelProps={{ shrink: true }}
             error={formik.touched.holiday_date && Boolean(formik.errors.holiday_date)}
             helperText={formik.touched.holiday_date && formik.errors.holiday_date}
@@ -55,7 +55,7 @@ const HolidayForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            size="small"
+            // size="small"
             placeholder="Enter holiday description"
             error={formik.touched.holiday_description && Boolean(formik.errors.holiday_description)}
             helperText={formik.touched.holiday_description && formik.errors.holiday_description}

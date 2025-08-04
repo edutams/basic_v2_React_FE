@@ -71,7 +71,7 @@ const ManageWeeks = () => {
 
   return (
     <Box>
-      <Alert severity="warning" sx={{ mb: 2 }} icon={false}>
+      <Alert severity="info" sx={{ mb: 2 }} icon={false}>
         Set the first Monday of the term from the calendar, click generate weeks, then click "Save All".
       </Alert>
 

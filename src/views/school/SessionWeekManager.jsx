@@ -20,6 +20,7 @@ import HolidayModal from 'src/components/school/components/HolidayModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import AddSessionModal from 'src/components/school/components/AddSessionModal';
 import SetSessionTermModal from 'src/components/school/components/SetSessionTermModal';
+import HolidayTab from 'src/components/school/components/HolidayTab';
 
 const BCrumb = [
   {
@@ -32,7 +33,8 @@ const BCrumb = [
 ];
 
 const SessionWeekManager = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [mainTab, setMainTab] = useState(0); 
+  const [sessionTab, setSessionTab] = useState(0);
   const [openModal, setOpenModal] = useState(false);
   const [modalActionType, setModalActionType] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -89,12 +91,16 @@ const SessionWeekManager = () => {
     console.log('Refreshing data...');
   };
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
+  const handleMainTabChange = (event, newValue) => {
+    setMainTab(newValue);
+  };
+
+  const handleSessionTabChange = (event, newValue) => {
+    setSessionTab(newValue);
   };
 
   const handleAddSessionClick = () => {
-    if (activeTab === 0) {
+    if (sessionTab === 0) {
       setAddSessionModalOpen(true);
     } else {
       setSetSessionTermModalOpen(true);
@@ -127,68 +133,68 @@ const SessionWeekManager = () => {
       
       <Card variant="outlined">
         <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Button variant="contained" size="small"   sx={{ backgroundColor: 'black', color: '#fff', '&:hover': { backgroundColor: 'grey.700' } }}
-              onClick={() => handleOpenModal('holiday')}
-            >
-              Set Holiday
-            </Button>
-          </Box>
-          
-          <Grid container spacing={3}>
-            <Grid item size={{ xs: 12, md: 6 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5" fontWeight={600}>
-                      Manage Sessions
-                    </Typography>
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      size="small"
-                      onClick={handleAddSessionClick}
-                    >
-                      {activeTab === 0 ? 'Add Session' : 'Set Session/Term'}
-                    </Button>
-                  </Box>
-                  
-                  <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 2 }}>
-                    <Tab label="All Sessions" />
-                    <Tab label="Session/Term" />
-                  </Tabs>
+          {/* Main Tabs */}
+          <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ mb: 3 }}>
+            <Tab label="Session/Weeks Manager" />
+            <Tab label="Set Holiday" />
+          </Tabs>
 
-                  <ManageSessions 
-                    activeTab={activeTab} 
-                    onSessionAction={handleSessionAction}
-                    updatedSession={sessionsData}
-                  />
-                </CardContent>
-              </Card>
-            </Grid>
+          {mainTab === 0 && (
+            <Grid container spacing={3}>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h5" fontWeight={600}>
+                        Manage Sessions
+                      </Typography>
+                      <Button 
+                        variant="contained" 
+                        color="primary" 
+                        size="small"
+                        onClick={handleAddSessionClick}
+                      >
+                        {sessionTab === 0 ? 'Add Session' : 'Set Session/Term'}
+                      </Button>
+                    </Box>
+                    
+                    <Tabs value={sessionTab} onChange={handleSessionTabChange} sx={{ mb: 2 }}>
+                      <Tab label="All Sessions" />
+                      <Tab label="Session/Term" />
+                    </Tabs>
 
-            <Grid item size={{ xs: 12, md: 6 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5" fontWeight={600}>
-                      Manage Weeks
-                    </Typography>
-                  </Box>
-                  
-                  <ManageWeeks />
-                </CardContent>
-              </Card>
+                    <ManageSessions 
+                      activeTab={sessionTab} 
+                      onSessionAction={handleSessionAction}
+                      updatedSession={sessionsData}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h5" fontWeight={600}>
+                        Manage Weeks
+                      </Typography>
+                    </Box>
+                    
+                    <ManageWeeks />
+                  </CardContent>
+                </Card>
+              </Grid>
             </Grid>
-          </Grid>
+          )}
+
+          {mainTab === 1 && (
+            <HolidayTab handleRefresh={handleRefresh} />
+          )}
         </CardContent>
       </Card>
-      <HolidayModal
-        open={openModal}
-        onClose={handleCloseModal}
-        handleRefresh={handleRefresh}
-        actionType={modalActionType}
-      />
+
+      {/* Keep existing modals */}
       <ConfirmationDialog
         open={confirmDialogOpen}
         onClose={handleCloseConfirmDialog}

@@ -171,9 +171,9 @@ const Menuitems = [
     children: [
        {
         id: uniqueId(),
-        title: 'School Manager',
+        title: 'Class Manager',
         icon: IconPoint,
-        href: 'academic/schoolmanager',
+        href: 'academic/classManager',
       },
     ],
   },

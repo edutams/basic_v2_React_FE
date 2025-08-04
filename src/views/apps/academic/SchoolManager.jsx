@@ -11,7 +11,7 @@ import DivisionProgramme from './components/DivisionProgramme';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { title: 'School Manager' },
+  { title: 'Class Manager' },
 ];
 
 const ContentCard = styled(Card)(({ theme }) => ({

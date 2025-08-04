@@ -217,7 +217,6 @@ const DivisionProgramme = () => {
       return;
     }
     
-    // Ensure the division has classes property before opening modal
     const normalizedDivision = {
       ...selectedDivision,
       classes: Array.isArray(selectedDivision.classes) ? selectedDivision.classes : []
@@ -293,7 +292,7 @@ const DivisionProgramme = () => {
       division: newDivision.name,
       id: Date.now(),
       programmes: [],
-      classes: [], // Every new division gets these properties
+      classes: [], 
     };
     setSchoolStructure(prev => [...prev, newDivisionEntry]);
     setOpenCreateDivision(false);
@@ -393,16 +392,14 @@ const DivisionProgramme = () => {
   const renderDivisionInfo = (division) => (
     <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap', flex: 1, mr: 2 }}>
-        {/* Division name */}
+        
         <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
           {division.division} {division.code && `(${division.code})`}
         </Typography>
         
-        {/* Category chips inline with division name */}
         {renderCategoryChips(division.categories)}
       </Box>
       
-      {/* Icon aligned with first row */}
       <IconButton
         size="small"
         onClick={(e) => handleMenuClick(e, division)}
@@ -412,7 +409,7 @@ const DivisionProgramme = () => {
           lineHeight: 1, 
           alignSelf: 'flex-start',
           height: 'fit-content',
-          marginTop: '-2px' // Fine-tune alignment with text baseline
+          marginTop: '-2px' 
         }}
       >
         <MoreVertIcon sx={{ fontSize: 20 }} />

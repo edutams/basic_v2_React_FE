@@ -44,7 +44,7 @@ const StyledTableHead = styled(TableHead)(({ theme }) => ({
     fontWeight: 600,
     color: theme.palette.text.primary,
     fontSize: '0.875rem',
-    padding: theme.spacing(1),
+    padding: '2px 4px',
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
@@ -391,18 +391,29 @@ const DivisionProgramme = () => {
   };
 
   const renderDivisionInfo = (division) => (
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 0.5 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', flex: 1 }}>
-        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap', flex: 1, mr: 2 }}>
+        {/* Division name */}
+        <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
           {division.division} {division.code && `(${division.code})`}
         </Typography>
+        
+        {/* Category chips inline with division name */}
         {renderCategoryChips(division.categories)}
       </Box>
       
+      {/* Icon aligned with first row */}
       <IconButton
         size="small"
         onClick={(e) => handleMenuClick(e, division)}
-        sx={{ p: 0.5, m: 0, lineHeight: 1, alignSelf: 'flex-start' }}
+        sx={{ 
+          p: 0.5, 
+          m: 0, 
+          lineHeight: 1, 
+          alignSelf: 'flex-start',
+          height: 'fit-content',
+          marginTop: '-2px' // Fine-tune alignment with text baseline
+        }}
       >
         <MoreVertIcon sx={{ fontSize: 20 }} />
       </IconButton>
@@ -469,7 +480,7 @@ const DivisionProgramme = () => {
                       <TableCell sx={{ 
                         borderRight: '1px solid #e0e0e0', 
                         verticalAlign: 'top',
-                        padding: '4px 8px' 
+                        padding: '4px 8px',
                       }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                           <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1 }}>
@@ -567,6 +578,8 @@ const DivisionProgramme = () => {
                       sx={{
                         borderRight: '1px solid #e0e0e0',
                         verticalAlign: 'top',
+                        padding: '8px 4px', 
+                        minHeight: '60px'
                       }}
                     >
                       {divIndex + 1}
@@ -575,9 +588,33 @@ const DivisionProgramme = () => {
                       sx={{
                         borderRight: '1px solid #e0e0e0',
                         verticalAlign: 'top',
+                        padding: '8px 4px', 
+                        minHeight: '60px'
                       }}
                     >
                       {renderDivisionInfo(division)}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        borderRight: '1px solid #e0e0e0',
+                        verticalAlign: 'top',
+                        padding: '8px 4px', 
+                        minHeight: '60px'
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        No programmes
+                      </Typography>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        padding: '8px 4px', 
+                        minHeight: '60px'
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        No class arms
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 )

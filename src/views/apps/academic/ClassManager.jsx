@@ -26,7 +26,7 @@ const ContentCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const SchoolManager = () => {
+const ClassManager = () => {
   return (
     <PageContainer title="School Manager" description="Manage School Manager">
       <Breadcrumb title="School Manager" items={BCrumb} />
@@ -42,4 +42,4 @@ const SchoolManager = () => {
   );
 };
 
-export default SchoolManager;
+export default ClassManager;

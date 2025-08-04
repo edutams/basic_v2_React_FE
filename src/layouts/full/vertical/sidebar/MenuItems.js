@@ -164,19 +164,19 @@ const Menuitems = [
       },
     ],
   },
-     {
-    id: uniqueId(),
-    title: 'Academics',
-    icon: IconBook,
-    children: [
-       {
-        id: uniqueId(),
-        title: 'Class Manager',
-        icon: IconPoint,
-        href: 'academic/classManager',
-      },
-    ],
-  },
+  //    {
+  //   id: uniqueId(),
+  //   title: 'Academics',
+  //   icon: IconBook,
+  //   children: [
+  //      {
+  //       id: uniqueId(),
+  //       title: 'Class Manager',
+  //       icon: IconPoint,
+  //       href: 'academic/classManager',
+  //     },
+  //   ],
+  // },
 
   /*
   {

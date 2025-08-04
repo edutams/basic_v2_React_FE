@@ -2,10 +2,12 @@ import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
+const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 
 /* ****Pages***** */
 const AnalyticalDashboard = Loadable(lazy(() => import('../views/dashboard/Analytical')));
@@ -182,14 +184,24 @@ const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpl
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
-// const SessionAndWeekManager = Loadable(lazy(() => import('../views/apps/academic/SessionAndWeekManager')));
+const SchoolDashboardMain = Loadable(lazy(() => import('../views/school-dashboard/SchoolDashboard')));
 const ClassManager = Loadable(lazy(() => import('../views/apps/academic/ClassManager')));
+const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
+
+// School-specific pages
+// const SchoolStudents = Loadable(lazy(() => import('../views/school/Students')));
+// const SessionAndWeekManager = Loadable(lazy(() => import('../views/apps/academic/SessionAndWeekManager')));
+// const ClassManager = Loadable(lazy(() => import('../views/apps/academic/ClassManager')));
 // const ClassAndDivisionManager = Loadable(lazy(() => import('../views/apps/academic/ClassAndDivisionManager')));
 
 const Router = [
   {
     path: '/',
-    element: <FullLayout />,
+    element: (
+      <ProtectedRoute>
+        <FullLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { path: '/', element: <Navigate to="/dashboards/analytical" /> },
       { path: '/dashboards/analytical', exact: true, element: <AnalyticalDashboard /> },
@@ -207,7 +219,7 @@ const Router = [
       { path: "/dashboards/school/sub-school/:schoolUrl", exact: false, element: <ViewSchool /> },
       // { path: '/academic/classanddivision', element: <ClassAndDivisionManager /> },
       // { path: '/academic/sessionandweek', element: <SessionAndWeekManager /> },
-      { path: '/academic/classmanager', element: <ClassManager /> },
+      // { path: '/academic/classmanager', element: <ClassManager /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
       { path: '/apps/chats', element: <Chats /> },
@@ -306,6 +318,20 @@ const Router = [
       { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
       { path: '/phet/stimulation-links', element: <StimulationLinks /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
+    ],
+  },
+  {
+    path: '/school-dashboard',
+    element: (
+      <ProtectedRoute>
+        <SchoolLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { path: '', element: <SchoolDashboardMain /> },
+      { path: 'classManager', element: <ClassManager /> },
+      { path: 'session-week-manager', element: <SessionWeekManager /> },
+      // { path: 'students', element: <SchoolStudents /> },
     ],
   },
   {

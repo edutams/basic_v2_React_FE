@@ -27,8 +27,7 @@ import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
-import ReusableModal from '../../components/shared/ReusableModal';
-import RegisterSessionForm from '../../components/add-session/component/RegisterSessionForm';
+import SessionModal from '../../components/add-session/component/SessionModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
 const basicsTableData = [
@@ -78,12 +77,15 @@ const Session = () => {
     setSelectedSession(null);
   };
 
-  const handleAddSession = (newSession) => {
-    if (actionType === 'update') {
+  const handleAddSession = (newSession, action) => {
+    if (action === 'update' || actionType === 'update') {
       setSessions(sessions.map((session) => (session.id === newSession.id ? newSession : session)));
     } else {
       setSessions([...sessions, newSession]);
     }
+    setSnackbarMessage(`Session ${action === 'update' ? 'updated' : 'created'} successfully`);
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
     handleClose();
   };
 
@@ -292,21 +294,14 @@ const Session = () => {
           </TableContainer>
         </Paper>
 
-        <ReusableModal
+        <SessionModal
           open={open}
           onClose={handleClose}
-          title={actionType === 'create' ? 'Add New Session' : 'Edit Session'}
-          size="medium"
-          showDivider={true}
-          showCloseButton={true}
-        >
-          <RegisterSessionForm
-            actionType={actionType}
-            selectedAgent={selectedSession}
-            onSubmit={handleAddSession}
-            onCancel={handleClose}
-          />
-        </ReusableModal>
+          actionType={actionType}
+          selectedSession={selectedSession}
+          onSessionUpdate={handleAddSession}
+          isLoading={false}
+        />
 
         <ConfirmationDialog
           open={openDeleteDialog}

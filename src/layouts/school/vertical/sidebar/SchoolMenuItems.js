@@ -1,0 +1,76 @@
+import { uniqueId } from 'lodash';
+import {
+  IconChartPie,
+  IconCalendarWeek,
+  IconUsers,
+  IconUserCircle,
+  IconBook,
+  IconClipboardList,
+  IconPoint,
+} from '@tabler/icons-react';
+
+const SchoolMenuItems = [
+  {
+    navlabel: true,
+    subheader: 'School Dashboard',
+  },
+  {
+    id: uniqueId(),
+    title: 'Dashboard',
+    icon: IconChartPie,
+    href: '/school-dashboard',
+  },
+  
+  {
+    navlabel: true,
+    subheader: 'Module Navigation',
+  },
+  
+
+    {
+      id: uniqueId(),
+      title: 'Setup',
+      icon: IconUsers,
+      children: [
+        {
+          id: uniqueId(),
+          title: 'Class Manager',
+          icon: IconPoint,
+          href: '/school-dashboard/classManager',
+        },
+        {
+          id: uniqueId(),
+          title: 'School Calendar',
+          icon: IconUsers,
+          href: '/school-dashboard/session-week-manager',
+        },
+        // {
+        //   id: uniqueId(),
+        //   title: 'Stimulation Links',
+        //   icon: IconPoint,
+        //   href: '/phet/stimulation-links',
+        // },
+      ],
+    },
+
+  {
+    id: uniqueId(),
+    title: 'Admission',
+    icon: IconUserCircle,
+    href: '/school-dashboard/teachers',
+  },
+  {
+    id: uniqueId(),
+    title: 'Digital Class',
+    icon: IconBook,
+    href: '/school-dashboard/classes',
+  },
+  {
+    id: uniqueId(),
+    title: 'Forum',
+    icon: IconClipboardList,
+    href: '/school-dashboard/subjects',
+  },
+];
+
+export default SchoolMenuItems;

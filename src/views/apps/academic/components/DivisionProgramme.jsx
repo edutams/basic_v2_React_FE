@@ -93,12 +93,12 @@ const ClassArmChip = styled(Chip)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   color: 'white',
   fontSize: '0.55rem',
-  height: '10px',
-  minWidth: '10px',
+  height: '14px',
+  minWidth: '9px',
   margin: '2px',
-  borderRadius: 0,
+  borderRadius: 2,
   '& .MuiChip-label': {
-    padding: '0 6px',
+    padding: '3 6px',
   },
 }));
 
@@ -142,7 +142,7 @@ const normalizeSchoolStructure = (structure) => {
   }));
 };
 
-const EmisCentralTab = () => {
+const DivisionProgramme = () => {
   const [schoolStructure, setSchoolStructure] = useState(() => {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
@@ -449,16 +449,28 @@ const EmisCentralTab = () => {
                       {progIdx === 0 && (
                         <>
                           <TableCell rowSpan={division.programmes.length}
-                            sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
+                            sx={{ 
+                              borderRight: '1px solid #e0e0e0', 
+                              verticalAlign: 'top',
+                              padding: '4px 8px' 
+                            }}
                           >{divIndex + 1}</TableCell>
                           <TableCell rowSpan={division.programmes.length}
-                            sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top' }}
+                            sx={{ 
+                              borderRight: '1px solid #e0e0e0', 
+                              verticalAlign: 'top',
+                              padding: '4px 8px' 
+                            }}
                           >
                             {renderDivisionInfo(division)}
                           </TableCell>
                         </>
                       )}
-                      <TableCell sx={{ borderRight: '1px solid #e0e0e0', verticalAlign: 'top', paddingTop: '10px' }}>
+                      <TableCell sx={{ 
+                        borderRight: '1px solid #e0e0e0', 
+                        verticalAlign: 'top',
+                        padding: '4px 8px' 
+                      }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                           <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1 }}>
                             {programme.name} {programme.code && `(${programme.code})`}
@@ -468,27 +480,28 @@ const EmisCentralTab = () => {
                             onClick={(e) => handleProgrammeMenuClick(e, programme, division)}
                             sx={{ p: 0.5, m: 0, lineHeight: 1 }}
                           >
-                            <MoreVertIcon sx={{ fontSize: 20, verticalAlign: 'middle' }} />
+                            <MoreVertIcon sx={{ fontSize: 20, verticalAlign: 'top' }} />
                           </IconButton>
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ padding: '4px 8px' }}>
                         {programme.classArms && programme.classArms.length > 0 ? (
                           <Box sx={{ 
                             border: '1px solid #e0e0e0',
                             borderRadius: 0,
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            marginBottom: 2 // Ensure no margin on the mini table container
                           }}>
                             {/* Mini table headers */}
                             <Box sx={{ 
                               display: 'grid', 
                               gridTemplateColumns: '1fr 2fr', 
-                              backgroundColor: '#f5f5f5',
+                              // backgroundColor: '#f5f5f5',
                               borderBottom: '1px solid #e0e0e0',
                               borderRadius: 0
                             }}>
                               <Box sx={{ 
-                                padding: '8px 12px', 
+                                padding: '4px 8px', 
                                 borderRight: '1px solid #e0e0e0',
                                 borderRadius: 0
                               }}>
@@ -496,7 +509,7 @@ const EmisCentralTab = () => {
                                   Class Name
                                 </Typography>
                               </Box>
-                              <Box sx={{ padding: '8px 12px', borderRadius: 0 }}>
+                              <Box sx={{ padding: '4px 8px', borderRadius: 0 }}>
                                 <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                                   Class Arms
                                 </Typography>
@@ -515,7 +528,7 @@ const EmisCentralTab = () => {
                                 }
                               }}>
                                 <Box sx={{ 
-                                  padding: '4px 12px', 
+                                  padding: '4px 8px', 
                                   borderRight: '1px solid #e0e0e0',
                                   alignItems: 'center',
                                   display: 'flex',
@@ -769,4 +782,4 @@ const EmisCentralTab = () => {
   );
 };
 
-export default EmisCentralTab;
+export default DivisionProgramme;

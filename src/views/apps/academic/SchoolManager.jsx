@@ -7,7 +7,7 @@ import {
 import { styled } from '@mui/material/styles';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from 'src/components/container/PageContainer';
-import EmisCentralTab from './components/DivisionProgramme';
+import DivisionProgramme from './components/DivisionProgramme';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -34,7 +34,7 @@ const SchoolManager = () => {
       <Grid item size={{ xs: 12, lg: 12 }}>
         <ContentCard>
           <Box>
-            <EmisCentralTab />
+            <DivisionProgramme />
           </Box>
         </ContentCard>
       </Grid>

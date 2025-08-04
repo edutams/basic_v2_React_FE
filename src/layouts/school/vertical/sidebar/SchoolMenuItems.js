@@ -33,7 +33,7 @@ const SchoolMenuItems = [
       children: [
         {
           id: uniqueId(),
-          title: 'Session/Week Manager',
+          title: 'School Calendar',
           icon: IconUsers,
           href: '/school-dashboard/session-week-manager',
         },

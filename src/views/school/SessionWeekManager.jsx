@@ -27,7 +27,7 @@ const BCrumb = [
     title: 'School Dashboard',
   },
   {
-    title: 'Session/Week Manager',
+    title: 'School Calendar',
   },
 ];
 
@@ -86,7 +86,6 @@ const SessionWeekManager = () => {
   };
 
   const handleRefresh = () => {
-    // Add your refresh logic here
     console.log('Refreshing data...');
   };
 
@@ -123,15 +122,12 @@ const SessionWeekManager = () => {
   };
 
   return (
-    <PageContainer title="Session/Week Manager" description="Manage academic sessions and weeks">
-      <Breadcrumb title="Session/Week Manager" items={BCrumb} />
+    <PageContainer title="School Calendar" description="Manage academic sessions and weeks">
+      <Breadcrumb title="School Calendar" items={BCrumb} />
       
       <Card variant="outlined">
         <CardContent>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h4" fontWeight={600}>
-              Session/Week Manager
-            </Typography>
             <Button variant="contained" size="small"   sx={{ backgroundColor: 'black', color: '#fff', '&:hover': { backgroundColor: 'grey.700' } }}
               onClick={() => handleOpenModal('holiday')}
             >

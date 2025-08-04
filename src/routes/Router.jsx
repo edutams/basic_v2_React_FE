@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -192,7 +193,11 @@ const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWe
 const Router = [
   {
     path: '/',
-    element: <FullLayout />,
+    element: (
+      <ProtectedRoute>
+        <FullLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { path: '/', element: <Navigate to="/dashboards/analytical" /> },
       { path: '/dashboards/analytical', exact: true, element: <AnalyticalDashboard /> },
@@ -310,7 +315,11 @@ const Router = [
   },
   {
     path: '/school-dashboard',
-    element: <SchoolLayout />,
+    element: (
+      <ProtectedRoute>
+        <SchoolLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { path: '', element: <SchoolDashboardMain /> },
       { path: 'session-week-manager', element: <SessionWeekManager /> },

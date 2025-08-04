@@ -36,7 +36,6 @@ const HolidayModal = ({ open, onClose, handleRefresh, actionType }) => {
   ]);
 
   const modalConfig = {
-    setHoliday: { title: 'Set Holiday', size: 'large' },
     holiday: { title: 'Set Holiday', size: 'large' },
   };
 

@@ -27,13 +27,15 @@ import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
-import SessionModal from '../../components/add-session/component/SessionModal';
+import RegisterSessionForm from '../../components/add-session/component/RegisterSessionForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import ReusableModal from '../../components/shared/ReusableModal';
 
 const basicsTableData = [
   { id: 1, sessionName: '2023-2024', status: 'Active', isCurrent: true },
   { id: 2, sessionName: '2022-2023', status: 'Completed', isCurrent: false },
   { id: 3, sessionName: '2021-2022', status: 'Completed', isCurrent: false },
+  { id: 4, sessionName: '2021-2022', status: 'Completed', isCurrent: true },
 ];
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Session' }];
@@ -77,7 +79,7 @@ const Session = () => {
     setSelectedSession(null);
   };
 
-  const handleAddSession = (newSession, action) => {
+  const handleAddSession = (newSession, action = actionType) => {
     if (action === 'update' || actionType === 'update') {
       setSessions(sessions.map((session) => (session.id === newSession.id ? newSession : session)));
     } else {
@@ -153,27 +155,25 @@ const Session = () => {
           </Box>
         }
       >
-
-         <TextField
-              placeholder="Search sessions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ flexGrow: 1, mb: 2 }}
-            />
+        <TextField
+          placeholder="Search sessions..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ flexGrow: 1, mb: 2 }}
+        />
         <Paper variant="outlined">
           <TableContainer>
-           
-            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap'}}>
-              <TableHead >
+            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap' }}>
+              <TableHead>
                 <TableRow>
                   <TableCell>
                     <Typography variant="h6">S/N</Typography>
@@ -270,8 +270,8 @@ const Session = () => {
                           No Session available
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
-                          No session have been registered yet. Click 'Register New Session' 
-                            to add a new session.
+                          No session have been registered yet. Click 'Add New Session' 
+                          to add a new session.
                         </Typography>
                       </Box>
                     </TableCell>
@@ -294,14 +294,21 @@ const Session = () => {
           </TableContainer>
         </Paper>
 
-        <SessionModal
+        <ReusableModal
           open={open}
           onClose={handleClose}
-          actionType={actionType}
-          selectedSession={selectedSession}
-          onSessionUpdate={handleAddSession}
-          isLoading={false}
-        />
+          title={actionType === 'update' ? 'Edit Session' : 'Add New Session'}
+          size="medium"
+          disableEnforceFocus
+          disableAutoFocus
+        >
+          <RegisterSessionForm
+            actionType={actionType}
+            selectedAgent={selectedSession} 
+            onSubmit={handleAddSession}
+            onCancel={handleClose}
+          />
+        </ReusableModal>
 
         <ConfirmationDialog
           open={openDeleteDialog}

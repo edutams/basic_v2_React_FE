@@ -34,8 +34,8 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => 
   const formik = useFormik({
     initialValues: {
       termName: selectedAgent?.termName || '',
-      status: selectedAgent?.status || 'Active',
-      isCurrent: selectedAgent?.isCurrent || false,
+      status: selectedAgent?.status || '',
+      // isCurrent: selectedAgent?.isCurrent || '',
     },
     validationSchema: termValidationSchema,
     enableReinitialize: true,
@@ -45,7 +45,7 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => 
         id: actionType === 'update' ? selectedAgent.id : getNextId(),
         termName: values.termName || 'Unnamed Term',
         status: values.status || 'Pending',
-        isCurrent: values.isCurrent ?? false,
+        // isCurrent: values.isCurrent ?? false,
       };
       onSubmit(updatedData);
     },
@@ -55,47 +55,38 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => 
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3} direction="column">
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-          <TextField
-            label="Term Name"
-            name="termName"
-            value={formik.values.termName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.termName && Boolean(formik.errors.termName)}
-            helperText={formik.touched.termName && formik.errors.termName}
-            fullWidth
-            required
-          />
-        </Grid>
+                  <TextField
+                    label="Term Name"
+                    fullWidth
+                    name="termName"
+                    value={formik.values.termName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.termName && Boolean(formik.errors.termName)}
+                    helperText={formik.touched.termName && formik.errors.termName}
+                  />
+                </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-          <FormControl
-            fullWidth
-            error={formik.touched.status && Boolean(formik.errors.status)}
-          >
-            <InputLabel>Status</InputLabel>
-            <Select
-              name="status"
-              value={formik.values.status}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              label="Status"
-              sx={{
-                '& .MuiOutlinedInput-input': {
-                  boxSizing: 'border-box',
-                  padding: '16.5px 14px',
-                },
-              }}
-            >
-              <MenuItem value="">-- Choose --</MenuItem>
-              <MenuItem value="Active">Active</MenuItem>
-              <MenuItem value="Completed">Completed</MenuItem>
-            </Select>
-            {formik.touched.status && formik.errors.status && (
-              <FormHelperText>{formik.errors.status}</FormHelperText>
-            )}
-          </FormControl>
-        </Grid>
+                  <FormControl fullWidth error={formik.touched.status && Boolean(formik.errors.status)}>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      name="status"
+                      value={formik.values.status}
+                      label="Status"
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                     
+                    >
+                      <MenuItem value="">-- Choose --</MenuItem>
+                      <MenuItem value="Active">Active</MenuItem>
+                      <MenuItem value="Completed">Completed</MenuItem>
+                    </Select>
+                    {formik.touched.status && formik.errors.status && (
+                      <FormHelperText>{formik.errors.status}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
           <FormControlLabel

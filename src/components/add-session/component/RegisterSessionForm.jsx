@@ -22,7 +22,7 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
     initialValues: {
       sessionName: selectedAgent?.sessionName || '',
       status: selectedAgent?.status || '',
-      isCurrent: selectedAgent?.isCurrent ?? false,
+      isCurrent: selectedAgent?.isCurrent || '',
     },
     validationSchema: sessionValidationSchema,
     enableReinitialize: true,

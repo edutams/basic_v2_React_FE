@@ -55,38 +55,37 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => 
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3} direction="column">
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-                  <TextField
-                    label="Term Name"
-                    fullWidth
-                    name="termName"
-                    value={formik.values.termName}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    error={formik.touched.termName && Boolean(formik.errors.termName)}
-                    helperText={formik.touched.termName && formik.errors.termName}
-                  />
-                </Grid>
+          <TextField
+            label="Term Name"
+            fullWidth
+            name="termName"
+            value={formik.values.termName}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.termName && Boolean(formik.errors.termName)}
+            helperText={formik.touched.termName && formik.errors.termName}
+          />
+        </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-                  <FormControl fullWidth error={formik.touched.status && Boolean(formik.errors.status)}>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      name="status"
-                      value={formik.values.status}
-                      label="Status"
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                     
-                    >
-                      <MenuItem value="">-- Choose --</MenuItem>
-                      <MenuItem value="Active">Active</MenuItem>
-                      <MenuItem value="Completed">Completed</MenuItem>
-                    </Select>
-                    {formik.touched.status && formik.errors.status && (
-                      <FormHelperText>{formik.errors.status}</FormHelperText>
-                    )}
-                  </FormControl>
-                </Grid>
+          <FormControl fullWidth error={formik.touched.status && Boolean(formik.errors.status)}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              name="status"
+              value={formik.values.status}
+              label="Status"
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            >
+              <MenuItem value="">-- Choose --</MenuItem>
+              <MenuItem value="Active">Active</MenuItem>
+              <MenuItem value="Completed">Completed</MenuItem>
+            </Select>
+            {formik.touched.status && formik.errors.status && (
+              <FormHelperText>{formik.errors.status}</FormHelperText>
+            )}
+          </FormControl>
+        </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
           <FormControlLabel
@@ -107,11 +106,7 @@ const RegisterTermForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => 
         <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit">
           Cancel
         </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={formik.isSubmitting}
-        >
+        <Button type="submit" variant="contained" disabled={formik.isSubmitting}>
           {actionType === 'create' ? 'Add Term' : 'Update Term'}
         </Button>
       </Box>

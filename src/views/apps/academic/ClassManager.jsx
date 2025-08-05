@@ -4,7 +4,6 @@ import {
   Card,
   Grid,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from 'src/components/container/PageContainer';
 import DivisionProgramme from './components/DivisionProgramme';
@@ -14,29 +13,17 @@ const BCrumb = [
   { title: 'Class Manager' },
 ];
 
-const ContentCard = styled(Card)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
-  border: 'none',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
-  '& .MuiCardContent-root': {
-    padding: 0,
-    '&:last-child': {
-      paddingBottom: 0,
-    },
-  },
-}));
-
 const ClassManager = () => {
   return (
     <PageContainer title="School Manager" description="Manage School Manager">
       <Breadcrumb title="School Manager" items={BCrumb} />
 
-      <Grid item size={{ xs: 12, lg: 12 }}>
-        <ContentCard>
+      <Grid item xs={12} lg={12}>
+        <Card>
           <Box>
             <DivisionProgramme />
           </Box>
-        </ContentCard>
+        </Card>
       </Grid>
     </PageContainer>
   );

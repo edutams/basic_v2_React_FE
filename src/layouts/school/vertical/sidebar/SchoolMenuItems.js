@@ -44,6 +44,12 @@ const SchoolMenuItems = [
           icon: IconUsers,
           href: '/school-dashboard/session-week-manager',
         },
+        {
+          id: uniqueId(),
+          title: 'Class Subject Manager',
+          icon: IconUsers,
+          href: '/school-dashboard/class-subject-manager',
+        },
         // {
         //   id: uniqueId(),
         //   title: 'Stimulation Links',

@@ -186,12 +186,12 @@ const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtop
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 const SchoolDashboardMain = Loadable(lazy(() => import('../views/school-dashboard/SchoolDashboard')));
 const ClassManager = Loadable(lazy(() => import('../views/apps/academic/ClassManager')));
+const ClassSubjectManager = Loadable(lazy(() => import('../views/apps/class-subject-manager/ClassSubjectManager')));
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 
 // School-specific pages
 // const SchoolStudents = Loadable(lazy(() => import('../views/school/Students')));
 // const SessionAndWeekManager = Loadable(lazy(() => import('../views/apps/academic/SessionAndWeekManager')));
-// const ClassManager = Loadable(lazy(() => import('../views/apps/academic/ClassManager')));
 // const ClassAndDivisionManager = Loadable(lazy(() => import('../views/apps/academic/ClassAndDivisionManager')));
 
 const Router = [
@@ -331,6 +331,7 @@ const Router = [
       { path: '', element: <SchoolDashboardMain /> },
       { path: 'classManager', element: <ClassManager /> },
       { path: 'session-week-manager', element: <SessionWeekManager /> },
+      { path: 'class-subject-manager', element: <ClassSubjectManager /> },
       // { path: 'students', element: <SchoolStudents /> },
     ],
   },

@@ -90,9 +90,9 @@ const Sidebar = () => {
               {/* ------------------------------------------- */}
               <SidebarItems />
             </Scrollbar>
-            {isCollapse === "full-sidebar" ? <Box sx={{ px: 3, pb: 3 }}>
-              {/* <SidebarProfile /> */}
-            </Box> : ''}
+            {/* {isCollapse === "full-sidebar" ? <Box sx={{ px: 3, pb: 3 }}>
+              <SidebarProfile />
+            </Box> : ''} */}
 
           </Box>
         </Drawer>

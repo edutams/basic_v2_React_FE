@@ -20,7 +20,6 @@ import {
   InputLabel,
   Select,
 } from '@mui/material';
-import { Stack } from '@mui/system';
 import ParentCard from 'src/components/shared/ParentCard';
 import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import ReusableModal from 'src/components/shared/ReusableModal';
@@ -40,14 +39,21 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
   
   // Modal states
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [editCategoryModalOpen, setEditCategoryModalOpen] = useState(false);
   const [subjectModalOpen, setSubjectModalOpen] = useState(false);
+  const [editSubjectModalOpen, setEditSubjectModalOpen] = useState(false);
   const [deleteCategoryDialogOpen, setDeleteCategoryDialogOpen] = useState(false);
   const [deleteSubjectDialogOpen, setDeleteSubjectDialogOpen] = useState(false);
+  const [changeStatusDialogOpen, setChangeStatusDialogOpen] = useState(false);
   
   // Form states
   const [newCategory, setNewCategory] = useState({ name: '', status: 'ACTIVE' });
+  const [editCategory, setEditCategory] = useState({ id: '', name: '', status: 'ACTIVE' });
   const [newSubject, setNewSubject] = useState({ name: '', category: '', status: 'COMPULSORY' });
+  const [editSubject, setEditSubject] = useState({ id: '', name: '', category: '', status: 'COMPULSORY' });
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToChangeStatus, setItemToChangeStatus] = useState(null);
+  const [statusChangeType, setStatusChangeType] = useState(''); // 'category' or 'subject'
   
   // Notification hook
   const notify = useNotification();
@@ -147,8 +153,6 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
   };
 
   // Filter logic
-  const filteredCategories = categoryData;
-  
   const filteredSubjects = subjectData.filter(subject => {
     const matchesCategory = selectedCategory ? subject.category === selectedCategory : true;
     return matchesCategory;
@@ -164,17 +168,39 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
 
   // Menu handlers for Categories
   const handleCategoryEdit = () => {
-    // TODO: Implement edit modal
-    console.log('Edit category:', categoryAnchorEl?.row);
+    if (categoryAnchorEl?.row) {
+      setEditCategory({
+        id: categoryAnchorEl.row.id,
+        name: categoryAnchorEl.row.name,
+        status: categoryAnchorEl.row.status
+      });
+      setEditCategoryModalOpen(true);
+    }
     setCategoryAnchorEl(null);
   };
 
   const handleCategoryStatusChange = () => {
     if (categoryAnchorEl?.row) {
-      const newStatus = categoryAnchorEl.row.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      updateCategory(categoryAnchorEl.row.id, { status: newStatus });
+      setItemToChangeStatus(categoryAnchorEl.row);
+      setStatusChangeType('category');
+      setChangeStatusDialogOpen(true);
     }
     setCategoryAnchorEl(null);
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (itemToChangeStatus && statusChangeType === 'category') {
+      const newStatus = itemToChangeStatus.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      updateCategory(itemToChangeStatus.id, { status: newStatus });
+      notify.success(`Category status changed to ${newStatus.toLowerCase()} successfully!`);
+    } else if (itemToChangeStatus && statusChangeType === 'subject') {
+      const newStatus = itemToChangeStatus.status === 'COMPULSORY' ? 'OPTIONAL' : 'COMPULSORY';
+      updateSubject(itemToChangeStatus.id, { status: newStatus });
+      notify.success(`Subject status changed to ${newStatus.toLowerCase()} successfully!`);
+    }
+    setChangeStatusDialogOpen(false);
+    setItemToChangeStatus(null);
+    setStatusChangeType('');
   };
 
   const handleCategoryDelete = () => {
@@ -196,16 +222,23 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
 
   // Menu handlers for Subjects
   const handleSubjectEdit = () => {
-    // TODO: Implement edit modal
-    console.log('Edit subject:', subjectAnchorEl?.row);
+    if (subjectAnchorEl?.row) {
+      setEditSubject({
+        id: subjectAnchorEl.row.id,
+        name: subjectAnchorEl.row.name,
+        category: subjectAnchorEl.row.category,
+        status: subjectAnchorEl.row.status
+      });
+      setEditSubjectModalOpen(true);
+    }
     setSubjectAnchorEl(null);
   };
 
   const handleSubjectStatusChange = () => {
     if (subjectAnchorEl?.row) {
-      const newStatus = subjectAnchorEl.row.status === 'COMPULSORY' ? 'OPTIONAL' : 'COMPULSORY';
-      updateSubject(subjectAnchorEl.row.id, { status: newStatus });
-      notify.success('Subject status updated successfully!');
+      setItemToChangeStatus(subjectAnchorEl.row);
+      setStatusChangeType('subject');
+      setChangeStatusDialogOpen(true);
     }
     setSubjectAnchorEl(null);
   };
@@ -247,11 +280,34 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
     }
   };
 
+  const handleEditCategorySubmit = () => {
+    if (editCategory.name.trim()) {
+      updateCategory(editCategory.id, {
+        name: editCategory.name,
+        status: editCategory.status
+      });
+      setEditCategoryModalOpen(false);
+      notify.success('Category updated successfully!');
+    }
+  };
+
   const handleSubjectSubmit = () => {
     if (newSubject.name.trim() && newSubject.category) {
       addSubject(newSubject);
       setSubjectModalOpen(false);
       notify.success('Subject added successfully!');
+    }
+  };
+
+  const handleEditSubjectSubmit = () => {
+    if (editSubject.name.trim() && editSubject.category) {
+      updateSubject(editSubject.id, {
+        name: editSubject.name,
+        category: editSubject.category,
+        status: editSubject.status
+      });
+      setEditSubjectModalOpen(false);
+      notify.success('Subject updated successfully!');
     }
   };
 
@@ -289,8 +345,8 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredCategories.length > 0 ? (
-                      filteredCategories.map((category, index) => (
+                    {categoryData.length > 0 ? (
+                      categoryData.map((category, index) => (
                         <TableRow key={category.id}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{category.name}</TableCell>
@@ -466,7 +522,7 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
         open={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
         title="Add New Category"
-        size="small"
+        size="medium"
         showDivider={true}
         showCloseButton={true}
       >
@@ -501,12 +557,52 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
         </Box>
       </ReusableModal>
 
+      {/* Edit Category Modal */}
+      <ReusableModal
+        open={editCategoryModalOpen}
+        onClose={() => setEditCategoryModalOpen(false)}
+        title="Edit Category"
+        size="medium"
+        showDivider={true}
+        showCloseButton={true}
+      >
+        <Box sx={{ pt: 2 }}>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Category Name"
+            fullWidth
+            variant="outlined"
+            value={editCategory.name}
+            onChange={(e) => setEditCategory({ ...editCategory, name: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={editCategory.status}
+              label="Status"
+              onChange={(e) => setEditCategory({ ...editCategory, status: e.target.value })}
+            >
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="INACTIVE">Inactive</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
+          <Button onClick={() => setEditCategoryModalOpen(false)}>Cancel</Button>
+          <Button onClick={handleEditCategorySubmit} variant="contained">
+            Update Category
+          </Button>
+        </Box>
+      </ReusableModal>
+
       {/* Add Subject Modal */}
       <ReusableModal
         open={subjectModalOpen}
         onClose={() => setSubjectModalOpen(false)}
         title="Add New Subject"
-        size="small"
+        size="medium"
         showDivider={true}
         showCloseButton={true}
       >
@@ -555,6 +651,60 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
         </Box>
       </ReusableModal>
 
+      {/* Edit Subject Modal */}
+      <ReusableModal
+        open={editSubjectModalOpen}
+        onClose={() => setEditSubjectModalOpen(false)}
+        title="Edit Subject"
+        size="medium"
+        showDivider={true}
+        showCloseButton={true}
+      >
+        <Box sx={{ pt: 2 }}>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Subject Name"
+            fullWidth
+            variant="outlined"
+            value={editSubject.name}
+            onChange={(e) => setEditSubject({ ...editSubject, name: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={editSubject.category}
+              label="Category"
+              onChange={(e) => setEditSubject({ ...editSubject, category: e.target.value })}
+            >
+              {categoryData.map((category) => (
+                <MenuItem key={category.id} value={category.name}>
+                  {category.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={editSubject.status}
+              label="Status"
+              onChange={(e) => setEditSubject({ ...editSubject, status: e.target.value })}
+            >
+              <MenuItem value="COMPULSORY">Compulsory</MenuItem>
+              <MenuItem value="OPTIONAL">Optional</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
+          <Button onClick={() => setEditSubjectModalOpen(false)}>Cancel</Button>
+          <Button onClick={handleEditSubjectSubmit} variant="contained">
+            Update Subject
+          </Button>
+        </Box>
+      </ReusableModal>
+
       {/* Delete Category Confirmation Dialog */}
       <ConfirmationDialog
         open={deleteCategoryDialogOpen}
@@ -575,6 +725,22 @@ const SubjectCurriculum = ({ selectedTab = 0 }) => {
         title="Delete Subject"
         message={`Are you sure you want to delete "${itemToDelete?.name}"?`}
         confirmText="Delete"
+        cancelText="Cancel"
+        severity="error"
+      />
+
+      {/* Change Status Confirmation Dialog */}
+      <ConfirmationDialog
+        open={changeStatusDialogOpen}
+        onClose={() => setChangeStatusDialogOpen(false)}
+        onConfirm={handleConfirmStatusChange}
+        title={`Change ${statusChangeType === 'category' ? 'Category' : 'Subject'} Status`}
+        message={
+          statusChangeType === 'category' 
+            ? `Are you sure you want to change "${itemToChangeStatus?.name}" status from ${itemToChangeStatus?.status?.toLowerCase()} to ${itemToChangeStatus?.status === 'ACTIVE' ? 'inactive' : 'active'}?`
+            : `Are you sure you want to change "${itemToChangeStatus?.name}" status from ${itemToChangeStatus?.status?.toLowerCase()} to ${itemToChangeStatus?.status === 'COMPULSORY' ? 'optional' : 'compulsory'}?`
+        }
+        confirmText="Change Status"
         cancelText="Cancel"
         severity="error"
       />

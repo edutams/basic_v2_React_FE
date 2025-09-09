@@ -1,23 +1,12 @@
 import React, { useState } from 'react';
 import { 
   Box, 
-  Grid, 
   Card, 
   CardContent, 
-  Typography, 
   Tabs, 
   Tab,
-  TextField,
-  Button,
-  Stack,
-  Fab
 } from '@mui/material';
-import {
-  IconBook2,
-  IconUsers,
-  IconCalendarEvent,
-  IconChartBar,
-} from '@tabler/icons-react';
+
 import { useTheme } from '@mui/material/styles';
 
 import PageContainer from 'src/components/container/PageContainer';
@@ -69,9 +58,6 @@ const ClassSubjectManager = () => {
             onChange={handleMainTabChange} 
             sx={{ 
               mb: 3,
-              '& .MuiTabs-flexContainer': {
-                // justifyContent: 'space-between'
-              },
               '& .MuiTab-root': {
                 flex: 1,
                 maxWidth: 'none',

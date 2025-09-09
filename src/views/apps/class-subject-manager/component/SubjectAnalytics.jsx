@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid } from '@mui/material';
+import { Box,
+ Typography,
+ Grid 
+} from '@mui/material';
 import AppCard from 'src/components/shared/AppCard';
 
 const SubjectAnalytics = ({ selectedTab }) => {
@@ -47,7 +50,7 @@ const SubjectAnalytics = ({ selectedTab }) => {
       }
     };
 
-    // Add event listener
+    
     window.addEventListener('storage', handleStorageChange);
 
     // Also listen for custom events (for same-tab updates)
@@ -64,41 +67,42 @@ const SubjectAnalytics = ({ selectedTab }) => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('localStorageUpdated', handleCustomStorageChange);
     };
-  }, [selectedTab, storageKeys.categories, storageKeys.subjects]); // Re-run when tab changes
+  }, [selectedTab, storageKeys.categories, storageKeys.subjects]); 
 
   // Calculate dynamic analytics data
   const getAnalyticsData = () => {
     const tabNames = ['Pry', 'JS', 'SS', 'TVET'];
     const currentTab = tabNames[selectedTab];
     
-    // Filter subjects based on current tab (you can modify this logic based on your needs)
-    // For now, we'll use all subjects, but you can add tab-specific filtering
-    const filteredSubjects = subjectData; // Add filtering logic here if needed
+    const filteredSubjects = subjectData;
     
     // Calculate totals
     const totalSubjects = filteredSubjects.length;
     const compulsorySubjects = filteredSubjects.filter(subject => subject.status === 'COMPULSORY').length;
     const optionalSubjects = filteredSubjects.filter(subject => subject.status === 'OPTIONAL').length;
-    const totalCategories = categoryData.filter(category => category.status === 'ACTIVE').length;
+    
+    const activeCategories = categoryData.filter(category => category.status === 'ACTIVE');
+    
+    // Map actual categories with their subject counts
+    const displayCategories = activeCategories.map(category => {
+      const categorySubjects = filteredSubjects.filter(subject => {
+        return subject.category === category.name;
+      }).length;
+      
+      return {
+        name: category.name,
+        count: categorySubjects,
+        id: category.id
+      };
+    });
     
     return {
       subjectBank: {
-        digits: totalSubjects.toString(),
-        subtext: 'Subject',
-        title: 'Subject Bank'
+        total: totalSubjects,
+        compulsory: compulsorySubjects,
+        optional: optionalSubjects
       },
-      compulsory: {
-        digits: compulsorySubjects.toString(),
-        subtext: 'Compulsory'
-      },
-      optional: {
-        digits: optionalSubjects.toString(),
-        subtext: 'Optional'
-      },
-      general: {
-        digits: totalCategories.toString(),
-        title: 'General'
-      }
+      categories: displayCategories
     };
   };
 
@@ -106,25 +110,45 @@ const SubjectAnalytics = ({ selectedTab }) => {
 
   return (
     <AppCard>
-      <Box sx={{ display: 'flex', width: '50%' }}>
-        {/* Subject Bank Section */}
-        <Box sx={{ flex: '0 0 60%', p: 2 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        width: '100%', 
+        gap: 2, 
+        padding: '16px',
+        alignItems: 'flex-start',
+        flexDirection: { xs: 'column', md: 'row' }, 
+        overflowX: { xs: 'hidden', md: 'auto' } 
+      }}>
+        <Box sx={{ 
+          flex: { xs: '1 1 100%', md: '0 0 25%' }, 
+          minWidth: 0,
+          width: { xs: '100%', md: 'auto' }
+        }}>
           <Typography 
             variant="h6" 
             sx={{ 
               fontWeight: 600,
               color: 'text.primary',
               fontSize: '0.875rem',
-              mb: 1
+              mb: 1,
+              textAlign: 'center',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'start',
+              justifyContent: 'start'
             }}
           >
             Subject Bank
           </Typography>
-          <Box sx={{ display: 'flex', gap: 0, height: '120px' }}>
-            {/* Main Subject Section - Green */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 0, 
+            height: { xs: '100px', md: '120px' }, 
+            flexDirection: { xs: 'row', md: 'row' } 
+          }}>
             <Box 
               sx={{ 
-                flex: '0 0 120px',
+                flex: '0 0 40%',
                 backgroundColor: '#90C695',
                 display: 'flex',
                 flexDirection: 'column',
@@ -136,36 +160,37 @@ const SubjectAnalytics = ({ selectedTab }) => {
               <Typography 
                 variant="h1" 
                 sx={{ 
-                  fontSize: '2.2rem',
+                  fontSize: { xs: '1.5rem', md: '2rem' }, 
                   fontWeight: 'bold',
                   color: '#333',
-                  mb: 0.5
+                  mb: 0.5,
+                  lineHeight: 1
                 }}
               >
-                {data.subjectBank.digits}
+                {data.subjectBank.total}
               </Typography>
               <Typography 
-                variant="h6" 
+                variant="body2" 
                 sx={{ 
                   fontWeight: 500,
                   color: '#333',
-                  fontSize: '0.9rem'
+                  fontSize: { xs: '0.7rem', md: '0.8rem' }, 
+                  lineHeight: 1
                 }}
               >
-                {data.subjectBank.subtext}
+                Subject
               </Typography>
             </Box>
 
-            {/* Compulsory and Optional Section - Light Green */}
             <Box 
               sx={{ 
-                flex: 1,
+                flex: '0 0 60%',
                 backgroundColor: '#B8E6B8',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'flex-start',
-                px: 2,
+                px: 1,
                 borderRadius: '0 8px 8px 0'
               }}
             >
@@ -174,23 +199,26 @@ const SubjectAnalytics = ({ selectedTab }) => {
                   variant="h4" 
                   component="span"
                   sx={{ 
-                    fontSize: '1.3rem',
+                    fontSize: '1.1rem',
                     fontWeight: 'bold',
                     color: '#333',
-                    mr: 1
+                    mr: 0.5,
+                    lineHeight: 1
                   }}
                 >
-                  {data.compulsory.digits}
+                  {data.subjectBank.compulsory}
                 </Typography>
                 <Typography 
                   variant="body2" 
                   component="span"
                   sx={{ 
                     fontWeight: 500,
-                    color: '#333'
+                    color: '#333',
+                    fontSize: '0.75rem',
+                    lineHeight: 1
                   }}
                 >
-                  {data.compulsory.subtext}
+                  Compulsory
                 </Typography>
               </Box>
               <Box>
@@ -198,64 +226,82 @@ const SubjectAnalytics = ({ selectedTab }) => {
                   variant="h4" 
                   component="span"
                   sx={{ 
-                    fontSize: '1.3rem',
+                    fontSize: '1.1rem',
                     fontWeight: 'bold',
                     color: '#333',
-                    mr: 1
+                    mr: 0.5,
+                    lineHeight: 1
                   }}
                 >
-                  {data.optional.digits}
+                  {data.subjectBank.optional}
                 </Typography>
                 <Typography 
                   variant="body2" 
                   component="span"
                   sx={{ 
                     fontWeight: 500,
-                    color: '#333'
+                    color: '#333',
+                    fontSize: '0.75rem',
+                    lineHeight: 1
                   }}
                 >
-                  {data.optional.subtext}
+                  Optional
                 </Typography>
               </Box>
             </Box>
           </Box>
         </Box>
 
-        {/* General Section */}
-        <Box sx={{ flex: '0 0 40%', p: 2 }}>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              fontWeight: 600,
-              color: 'text.primary',
-              fontSize: '0.875rem',
-              mb: 1
-            }}
-          >
-            General
-          </Typography>
-          <Box 
-            sx={{ 
-              height: '120px',
-              backgroundColor: '#A8B5A8',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: '8px'
-            }}
-          >
+        {data.categories.map((category, index) => (
+          <Box key={category.id} sx={{ 
+            flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)', md: '0 0 180px' }, 
+            minWidth: { xs: '100%', md: '180px' },
+            maxWidth: { xs: '100%', md: '180px' }
+          }}>
             <Typography 
-              variant="h1" 
+              variant="h6" 
               sx={{ 
-                fontSize: '2.2rem',
-                fontWeight: 'bold',
-                color: '#333'
+                fontWeight: 600,
+                color: 'text.primary',
+                fontSize: { xs: '0.8rem', md: '0.875rem' }, 
+                mb: 1,
+                textAlign: 'center',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap'
+              }}
+              title={category.name} 
+            >
+              {category.name}
+            </Typography>
+            <Box 
+              sx={{ 
+                height: { xs: '100px', md: '120px' }, 
+                width: '100%',
+                backgroundColor: '#A8C4A8',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderRadius: '8px'
               }}
             >
-              {data.general.digits}
-            </Typography>
+              <Typography 
+                variant="h1" 
+                sx={{ 
+                  fontSize: { xs: '2rem', md: '2.5rem' }, 
+                  fontWeight: 'bold',
+                  color: '#333',
+                  lineHeight: 1
+                }}
+              >
+                {category.count}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
+        ))}
       </Box>
     </AppCard>
   );

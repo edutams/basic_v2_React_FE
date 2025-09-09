@@ -21,6 +21,9 @@ import {
   MenuItem,
   Button,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 
 import {
@@ -98,8 +101,6 @@ const SchemeOfWork = () => {
   };
 
   const handleAction = (action, row) => {
-    // Placeholder for actions (edit/delete). Replace with real handlers.
-    // eslint-disable-next-line no-console
     console.log(action, row);
     if (action === 'delete') {
       setRows((prev) => prev.filter((r) => r.id !== row.id));
@@ -143,7 +144,7 @@ const SchemeOfWork = () => {
         }
       >
         <Box sx={{ p: 0 }}>
-          <TextField
+          {/* <TextField
             placeholder="Search..."
             value={searchTerm}
             onChange={(e) => {
@@ -158,7 +159,62 @@ const SchemeOfWork = () => {
                 </InputAdornment>
               ),
             }}
-          />
+          /> */}
+
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
+            {/* Term */}
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Term</InputLabel>
+              <Select onChange={(e) => setTerm(e.target.value)} label="Term">
+                <MenuItem value="1st">1st Term</MenuItem>
+                <MenuItem value="2nd">2nd Term</MenuItem>
+                <MenuItem value="3rd">3rd Term</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Programme */}
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Programme</InputLabel>
+              <Select
+                // value={programme}
+                onChange={(e) => setProgramme(e.target.value)}
+                label="Programme"
+              >
+                <MenuItem value="Science">Science</MenuItem>
+                <MenuItem value="Arts">Arts</MenuItem>
+                <MenuItem value="Commercial">Commercial</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Class */}
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Class</InputLabel>
+              <Select
+                // value={classLevel}
+                onChange={(e) => setClassLevel(e.target.value)}
+                label="Class"
+              >
+                <MenuItem value="JSS1">JSS1</MenuItem>
+                <MenuItem value="JSS2">JSS2</MenuItem>
+                <MenuItem value="JSS3">JSS3</MenuItem>
+                <MenuItem value="SSS1">SSS1</MenuItem>
+                <MenuItem value="SSS2">SSS2</MenuItem>
+                <MenuItem value="SSS3">SSS3</MenuItem>
+              </Select>
+            </FormControl>
+
+            {/* Subject */}
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Subject</InputLabel>
+              <Select onChange={(e) => setSubject(e.target.value)} label="Subject">
+                <MenuItem value="Mathematics">Mathematics</MenuItem>
+                <MenuItem value="English">English</MenuItem>
+                <MenuItem value="Physics">Physics</MenuItem>
+                <MenuItem value="Chemistry">Chemistry</MenuItem>
+                <MenuItem value="Biology">Biology</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
           <Paper variant="outlined">
             <TableContainer>

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
-
 import {
   Box,
   Typography,
@@ -27,7 +26,6 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
@@ -44,28 +42,30 @@ const BCrumb = [
 ];
 
 const SchemeOfWork = () => {
-  // Sample rows to demonstrate the table layout
   const [rows, setRows] = useState([
     {
       id: 1,
       week: 1,
       topic: 'Algebra',
       subtopic: 'Introduction to Algebra',
-      resources: ['Textbook', 'Worksheets'],
+      resources: ['https://youtube//xuyWf5fg'],
+      term: 'First',
     },
     {
       id: 2,
       week: 2,
       topic: 'Algebra',
       subtopic: 'Linear Equations',
-      resources: ['Slides', 'Practice Problems'],
+      resources: ['https://youtube//xuyehe5fg'],
+      term: 'Second',
     },
     {
       id: 3,
       week: 3,
       topic: 'Algebra',
       subtopic: 'Quadratic Functions',
-      resources: ['Video', 'Project Task'],
+      resources: ['https://youtube//tuyWf5df'],
+      term: 'Third',
     },
   ]);
 
@@ -74,7 +74,7 @@ const SchemeOfWork = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [termTab, setTermTab] = useState(0);
+  const [activeTerm, setActiveTerm] = useState('First');
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
   const [subject, setSubject] = useState('');
@@ -83,13 +83,14 @@ const SchemeOfWork = () => {
     const term = searchTerm.toLowerCase();
     return rows.filter(
       (r) =>
-        r.subtopic.toLowerCase().includes(term) ||
-        String(r.week).toLowerCase().includes(term) ||
-        (Array.isArray(r.resources)
-          ? r.resources.join(',').toLowerCase().includes(term)
-          : String(r.resources).toLowerCase().includes(term)),
+        r.term === activeTerm &&
+        (r.subtopic.toLowerCase().includes(term) ||
+          String(r.week).toLowerCase().includes(term) ||
+          (Array.isArray(r.resources)
+            ? r.resources.join(',').toLowerCase().includes(term)
+            : String(r.resources).toLowerCase().includes(term))),
     );
-  }, [rows, searchTerm]);
+  }, [rows, searchTerm, activeTerm]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -104,11 +105,6 @@ const SchemeOfWork = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedRow(null);
-  };
-
-  const handleTermTabChange = (event, newValue) => {
-    setTermTab(newValue);
-    setPage(0);
   };
 
   const handleAction = (action, row) => {
@@ -139,24 +135,26 @@ const SchemeOfWork = () => {
     <PageContainer title="Scheme Of Work" description="Manage Scheme of Work">
       <Breadcrumb title="Scheme Of Work" items={BCrumb} />
 
-      <Box sx={{ mb: 2 }}>
+      {/* Tabs for Term Selection */}
+      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
-          value={termTab}
-          onChange={handleTermTabChange}
-          aria-label="Term tabs"
-          textColor="primary"
-          indicatorColor="primary"
+          value={activeTerm}
+          onChange={(e, newValue) => {
+            setActiveTerm(newValue);
+            setPage(0); // Reset pagination on term change
+          }}
+          aria-label="term tabs"
         >
-          <Tab label="1st Term" />
-          <Tab label="2nd Term" />
-          <Tab label="3rd Term" />
+          <Tab label="First Term" value="First" />
+          <Tab label="Second Term" value="Second" />
+          <Tab label="Third Term" value="Third" />
         </Tabs>
       </Box>
 
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">Scheme of Work</Typography>
+            <Typography variant="h6">Scheme Of Work {activeTerm} Term</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -169,23 +167,6 @@ const SchemeOfWork = () => {
         }
       >
         <Box sx={{ p: 0 }}>
-          {/* <TextField
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(0);
-            }}
-            sx={{ mb: 2 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          /> */}
-
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
             {/* Programme */}
             <FormControl sx={{ minWidth: 200 }}>
@@ -270,7 +251,7 @@ const SchemeOfWork = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} align="center">
+                      <TableCell colSpan={6} align="center">
                         <Typography>No items found</Typography>
                       </TableCell>
                     </TableRow>
@@ -288,7 +269,7 @@ const SchemeOfWork = () => {
                         setRowsPerPage(parseInt(e.target.value, 10));
                         setPage(0);
                       }}
-                      colSpan={5}
+                      colSpan={6}
                     />
                   </TableRow>
                 </TableFooter>

@@ -149,7 +149,7 @@ const SubjectAnalytics = ({ selectedTab }) => {
             <Box 
               sx={{ 
                 flex: '0 0 40%',
-                backgroundColor: '#90C695',
+                backgroundColor: '#A8C4A8',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
@@ -190,7 +190,7 @@ const SubjectAnalytics = ({ selectedTab }) => {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'flex-start',
-                px: 1,
+                px: 2,
                 borderRadius: '0 8px 8px 0'
               }}
             >
@@ -214,7 +214,7 @@ const SubjectAnalytics = ({ selectedTab }) => {
                   sx={{ 
                     fontWeight: 500,
                     color: '#333',
-                    fontSize: '0.75rem',
+                    fontSize: '0.85rem',
                     lineHeight: 1
                   }}
                 >
@@ -241,7 +241,7 @@ const SubjectAnalytics = ({ selectedTab }) => {
                   sx={{ 
                     fontWeight: 500,
                     color: '#333',
-                    fontSize: '0.75rem',
+                    fontSize: '0.85rem',
                     lineHeight: 1
                   }}
                 >

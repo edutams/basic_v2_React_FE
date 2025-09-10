@@ -42,7 +42,22 @@ const ClassSubjectManager = () => {
       <Card variant="outlined">
         <CardContent>
           {/* Main Tabs */}
-          <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ mb: 3 }}>
+          <Tabs 
+            value={mainTab} 
+            onChange={handleMainTabChange} 
+            sx={{ 
+              mb: 3,
+              '& .MuiTab-root': {
+                minWidth: { xs: 'auto', sm: 120 },
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontWeight: 600,
+                px: { xs: 1, sm: 2 }
+              }
+            }}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+          >
             <Tab label="Pry" />
             <Tab label="JS" />
             <Tab label="SS" />

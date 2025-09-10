@@ -30,6 +30,7 @@ import {
   Select,
   Tabs,
   Tab,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -55,6 +56,20 @@ const SchemeOfWork = () => {
       subtopic: 'Introduction to Algebra',
       resources: ['https://youtube//xuyWf5fg'],
       term: 'First',
+      programme: 'Science',
+      classLevel: 'JSS1',
+      subject: 'Mathematics',
+    },
+    {
+      id: 1,
+      week: 1,
+      topic: 'Volcabulary',
+      subtopic: 'Speech',
+      resources: ['https://youtube//xuyWf5fg'],
+      term: 'First',
+      programme: 'Science',
+      classLevel: 'JSS2',
+      subject: 'English',
     },
     {
       id: 2,
@@ -63,6 +78,9 @@ const SchemeOfWork = () => {
       subtopic: 'Linear Equations',
       resources: ['https://youtube//xuyehe5fg'],
       term: 'Second',
+      programme: 'Science',
+      classLevel: 'JSS2',
+      subject: 'Mathematics',
     },
     {
       id: 3,
@@ -71,6 +89,9 @@ const SchemeOfWork = () => {
       subtopic: 'Quadratic Functions',
       resources: ['https://youtube//tuyWf5df'],
       term: 'Third',
+      programme: 'Arts',
+      classLevel: 'SSS1',
+      subject: 'Mathematics',
     },
   ]);
 
@@ -90,18 +111,27 @@ const SchemeOfWork = () => {
 
   const { notify } = useNotification();
 
+  const allFiltersSelected = programme !== '' && classLevel !== '' && subject !== '';
+
   const filteredRows = useMemo(() => {
+    if (!allFiltersSelected) {
+      return [];
+    }
+
     const term = searchTerm.toLowerCase();
     return rows.filter(
       (r) =>
         r.term === activeTerm &&
+        r.programme === programme &&
+        r.classLevel === classLevel &&
+        r.subject === subject &&
         (r.subtopic.toLowerCase().includes(term) ||
           String(r.week).toLowerCase().includes(term) ||
           (Array.isArray(r.resources)
             ? r.resources.join(',').toLowerCase().includes(term)
             : String(r.resources).toLowerCase().includes(term))),
     );
-  }, [rows, searchTerm, activeTerm]);
+  }, [rows, searchTerm, activeTerm, programme, classLevel, subject]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -118,6 +148,18 @@ const SchemeOfWork = () => {
     setSelectedRow(null);
   };
 
+  // const handleAction = (action, row) => {
+  //   if (action === 'edit') {
+  //     setModalActionType('update');
+  //     setSelectedRow(row);
+  //     setModalOpen(true);
+  //   } else if (action === 'delete') {
+  //     setRows((prev) => prev.filter((r) => r.id !== row.id));
+  //     notify('Item deleted successfully!', { variant: 'success' });
+  //   }
+  //   handleMenuClose();
+  // };
+
   const handleAction = (action, row) => {
     if (action === 'edit') {
       setModalActionType('update');
@@ -127,7 +169,7 @@ const SchemeOfWork = () => {
       setRows((prev) => prev.filter((r) => r.id !== row.id));
       notify('Item deleted successfully!', { variant: 'success' });
     }
-    handleMenuClose();
+    handleMenuClose(); // ✅ safe now, since it only clears anchorEl
   };
 
   const handleItemUpdate = (updatedItem, actionType) => {
@@ -137,7 +179,7 @@ const SchemeOfWork = () => {
     } else if (actionType === 'create') {
       const newItem = {
         ...updatedItem,
-        id: rows.length + 1, // Simple ID generation; replace with UUID in production
+        id: rows.length + 1,
       };
       setRows((prev) => [...prev, newItem]);
       notify('Item added successfully!', { variant: 'success' });
@@ -161,12 +203,12 @@ const SchemeOfWork = () => {
   const handleModalClose = () => {
     setModalOpen(false);
     setSelectedRow(null);
+    // setModalActionType('create');
     setConfirmDialogOpen(false);
   };
 
   const handleConfirmAdd = () => {
     setConfirmDialogOpen(false);
-    // Proceed with form submission logic in SchemeOfWorkModal
   };
 
   const renderResources = (resources) => {
@@ -189,7 +231,6 @@ const SchemeOfWork = () => {
     <PageContainer title="Scheme Of Work" description="Manage Scheme of Work">
       <Breadcrumb title="Scheme Of Work" items={BCrumb} />
 
-      {/* Tabs for Term Selection */}
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={activeTerm}
@@ -211,7 +252,6 @@ const SchemeOfWork = () => {
             <Typography variant="h6">Scheme Of Work {activeTerm} Term</Typography>
             <Button
               variant="contained"
-              startIcon={<AddIcon />}
               onClick={handleLoadSchemeClick}
               sx={{ minWidth: 120, fontSize: { xs: '0.95rem', md: '1rem' } }}
             >
@@ -222,7 +262,6 @@ const SchemeOfWork = () => {
       >
         <Box sx={{ p: 0 }}>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
-            {/* Programme */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Programme</InputLabel>
               <Select
@@ -236,7 +275,6 @@ const SchemeOfWork = () => {
               </Select>
             </FormControl>
 
-            {/* Class */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Class</InputLabel>
               <Select
@@ -253,7 +291,6 @@ const SchemeOfWork = () => {
               </Select>
             </FormControl>
 
-            {/* Subject */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Subject</InputLabel>
               <Select value={subject} onChange={(e) => setSubject(e.target.value)} label="Subject">
@@ -264,6 +301,17 @@ const SchemeOfWork = () => {
                 <MenuItem value="Biology">Biology</MenuItem>
               </Select>
             </FormControl>
+
+            {allFiltersSelected && (
+              <Button
+                variant="contained"
+                color="primary"
+                // onClick={handleFetchScheme}
+                sx={{ height: 'fit-content' }}
+              >
+                Fetch Scheme of Work
+              </Button>
+            )}
           </Box>
 
           <Paper variant="outlined">
@@ -306,7 +354,21 @@ const SchemeOfWork = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} align="center">
-                        <Typography>No items found</Typography>
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mb: 3,
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            '& .MuiAlert-icon': {
+                              mr: 1.5,
+                            },
+                          }}
+                        >
+                          {allFiltersSelected
+                            ? 'No items found'
+                            : 'Please select Programme, Class, and Subject to view data'}
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   )}
@@ -314,7 +376,7 @@ const SchemeOfWork = () => {
                 <TableFooter>
                   <TableRow>
                     <TablePagination
-                      rowsPerPageOptions={[5, 10, 25]} // Wrap the array in curly braces
+                      rowsPerPageOptions={[5, 10, 25]}
                       count={filteredRows.length}
                       rowsPerPage={rowsPerPage}
                       page={page}

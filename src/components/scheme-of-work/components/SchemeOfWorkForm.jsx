@@ -1,17 +1,24 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TextField, Button, Box } from '@mui/material';
+import PropTypes from 'prop-types';
 
 const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }) => {
-  const safeInitialValues = initialValues || {};
-  const resourcesValue = Array.isArray(safeInitialValues.resources)
-    ? safeInitialValues.resources.join(', ')
-    : (safeInitialValues.resources || '');
-  const [formValues, setFormValues] = React.useState({
-    week: safeInitialValues.week ?? '',
-    topic: safeInitialValues.topic ?? '',
-    subtopic: safeInitialValues.subtopic ?? '',
-    resources: resourcesValue,
-  });
+  // Initialize form values with safe defaults
+  const safeInitialValues = {
+    week: initialValues.week ?? '',
+    topic: initialValues.topic ?? '',
+    subtopic: initialValues.subtopic ?? '',
+    resources: Array.isArray(initialValues.resources)
+      ? initialValues.resources.join(', ')
+      : initialValues.resources || '',
+  };
+
+  const [formValues, setFormValues] = React.useState(safeInitialValues);
+
+  // Reset form values when initialValues changes
+  useEffect(() => {
+    setFormValues(safeInitialValues);
+  }, [initialValues]);
 
   const handleChange = (e) => {
     setFormValues({ ...formValues, [e.target.name]: e.target.value });
@@ -20,7 +27,7 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
   const handleSubmit = () => {
     onSubmit({
       ...formValues,
-      week: parseInt(formValues.week, 10),
+      week: parseInt(formValues.week, 10) || 0, // Fallback to 0 if invalid
       resources: formValues.resources
         .split(',')
         .map((r) => r.trim())
@@ -36,19 +43,28 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
         type="number"
         value={formValues.week}
         onChange={handleChange}
+        fullWidth
       />
-      <TextField label="Topic" name="topic" value={formValues.topic} onChange={handleChange} />
+      <TextField
+        label="Topic"
+        name="topic"
+        value={formValues.topic}
+        onChange={handleChange}
+        fullWidth
+      />
       <TextField
         label="Subtopic"
         name="subtopic"
         value={formValues.subtopic}
         onChange={handleChange}
+        fullWidth
       />
       <TextField
         label="Resources (comma-separated)"
         name="resources"
         value={formValues.resources}
         onChange={handleChange}
+        fullWidth
       />
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
         <Button onClick={onCancel}>Cancel</Button>
@@ -58,6 +74,18 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
       </Box>
     </Box>
   );
+};
+
+SchemeOfWorkForm.propTypes = {
+  initialValues: PropTypes.shape({
+    week: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    topic: PropTypes.string,
+    subtopic: PropTypes.string,
+    resources: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]),
+  }),
+  onSubmit: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  submitText: PropTypes.string.isRequired,
 };
 
 export default SchemeOfWorkForm;

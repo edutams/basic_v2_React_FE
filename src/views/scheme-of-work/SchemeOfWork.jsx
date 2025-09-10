@@ -75,7 +75,7 @@ const SchemeOfWork = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [termTab, setTermTab] = useState(0);
-    const [programme, setProgramme] = useState('');
+  const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
   const [subject, setSubject] = useState('');
 
@@ -140,7 +140,13 @@ const SchemeOfWork = () => {
       <Breadcrumb title="Scheme Of Work" items={BCrumb} />
 
       <Box sx={{ mb: 2 }}>
-        <Tabs value={termTab} onChange={handleTermTabChange} aria-label="Term tabs" textColor="primary" indicatorColor="primary">
+        <Tabs
+          value={termTab}
+          onChange={handleTermTabChange}
+          aria-label="Term tabs"
+          textColor="primary"
+          indicatorColor="primary"
+        >
           <Tab label="1st Term" />
           <Tab label="2nd Term" />
           <Tab label="3rd Term" />
@@ -181,7 +187,6 @@ const SchemeOfWork = () => {
           /> */}
 
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
-            
             {/* Programme */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Programme</InputLabel>

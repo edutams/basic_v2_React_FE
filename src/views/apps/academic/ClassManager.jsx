@@ -15,9 +15,9 @@ const BCrumb = [
 
 const ClassManager = () => {
   return (
-    <PageContainer title="School Manager" description="Manage School Manager">
-      <Breadcrumb title="School Manager" items={BCrumb} />
-
+    <PageContainer title="Class Manager" description="Manage Class Manager">
+      <Breadcrumb title="Class Manager" items={BCrumb} />
+  
       <Grid item xs={12} lg={12}>
         <Card>
           <Box>

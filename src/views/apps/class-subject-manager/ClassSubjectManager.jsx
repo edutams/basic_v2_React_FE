@@ -7,8 +7,6 @@ import {
   Tab,
 } from '@mui/material';
 
-import { useTheme } from '@mui/material/styles';
-
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import SubjectAnalytics from "./component/SubjectAnalytics";
@@ -26,20 +24,11 @@ const BCrumb = [
 ];
 
 const ClassSubjectManager = () => {
-  const [mainTab, setMainTab] = useState(0); 
-  const [sessionTab, setSessionTab] = useState(0);
-  const theme = useTheme();
-  const borderColor = theme.palette.divider;
+  const [mainTab, setMainTab] = useState(0);
   
   const handleMainTabChange = (event, newValue) => {
     setMainTab(newValue);
   };
-
-  const handleSessionTabChange = (event, newValue) => {
-    setSessionTab(newValue);
-  };
-
-
 
   return (
     <PageContainer title="Subject Manager" description="Manage subjects">
@@ -53,21 +42,7 @@ const ClassSubjectManager = () => {
       <Card variant="outlined">
         <CardContent>
           {/* Main Tabs */}
-          <Tabs 
-            value={mainTab} 
-            onChange={handleMainTabChange} 
-            sx={{ 
-              mb: 3,
-              '& .MuiTab-root': {
-                flex: 1,
-                maxWidth: 'none',
-                minWidth: 'auto',
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                fontWeight: 600
-              }
-            }}
-            variant="fullWidth"
-          >
+          <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ mb: 3 }}>
             <Tab label="Pry" />
             <Tab label="JS" />
             <Tab label="SS" />
@@ -76,7 +51,6 @@ const ClassSubjectManager = () => {
 
           {/* Subject Curriculum Content */}
           <SubjectCurriculum selectedTab={mainTab} />
-       
         </CardContent>
       </Card>
     </PageContainer>

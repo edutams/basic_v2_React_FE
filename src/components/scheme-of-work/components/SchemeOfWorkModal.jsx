@@ -5,17 +5,51 @@ import ReusableModal from 'src/components/shared/ReusableModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import SchemeOfWorkForm from './SchemeOfWorkForm';
 
-const getModalConfig = (actionType) => {
+const getModalConfig = (actionType, activeTerm, selectedItem) => {
+  // const configs = {
+  //   create: {
+  //     title: `Create Scheme of Work Item - ${activeTerm} Term`,
+  //     size: 'medium',
+  //   },
+  //   update: {
+  //     title: selectedItem
+  //       ? `Edit For- ${activeTerm} Term (${selectedItem.classLevel} ${selectedItem.subject})`
+  //       : `Edit Scheme of Work - ${activeTerm} Term`,
+  //     size: 'small',
+  //   },
+  // };
   const configs = {
     create: {
-      title: 'Create Scheme of Work Item',
+      title: (
+        <>
+          Create Scheme of Work Item -{' '}
+          <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            {activeTerm} Term
+          </Box>
+        </>
+      ),
       size: 'medium',
     },
     update: {
-      title: 'Edit Scheme of Work',
+      title: selectedItem ? (
+        <>
+          Edit For -{' '}
+          <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            {activeTerm} Term ({selectedItem.classLevel} {selectedItem.subject})
+          </Box>
+        </>
+      ) : (
+        <>
+          Edit Scheme of Work -{' '}
+          <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            {activeTerm} Term
+          </Box>
+        </>
+      ),
       size: 'small',
     },
   };
+
   return configs[actionType] || configs.create;
 };
 
@@ -29,7 +63,7 @@ const SchemeOfWorkModal = ({
   onConfirmAdd,
   activeTerm,
 }) => {
-  const modalConfig = getModalConfig(actionType);
+  const modalConfig = getModalConfig(actionType, activeTerm, selectedItem);
 
   const handleSubmit = (values) => {
     if (actionType === 'create') {

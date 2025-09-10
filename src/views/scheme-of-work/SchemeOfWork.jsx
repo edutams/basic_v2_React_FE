@@ -48,7 +48,8 @@ const BCrumb = [
 ];
 
 const SchemeOfWork = () => {
-  const [rows, setRows] = useState([
+  const [rows, setRows] = useState([]);
+  const [allSchemeData] = useState([
     {
       id: 1,
       week: 1,
@@ -114,24 +115,21 @@ const SchemeOfWork = () => {
   const allFiltersSelected = programme !== '' && classLevel !== '' && subject !== '';
 
   const filteredRows = useMemo(() => {
-    if (!allFiltersSelected) {
+    // Only apply search filtering to the currently loaded rows
+    if (rows.length === 0) {
       return [];
     }
 
     const term = searchTerm.toLowerCase();
     return rows.filter(
       (r) =>
-        r.term === activeTerm &&
-        r.programme === programme &&
-        r.classLevel === classLevel &&
-        r.subject === subject &&
-        (r.subtopic.toLowerCase().includes(term) ||
-          String(r.week).toLowerCase().includes(term) ||
-          (Array.isArray(r.resources)
-            ? r.resources.join(',').toLowerCase().includes(term)
-            : String(r.resources).toLowerCase().includes(term))),
+        r.subtopic.toLowerCase().includes(term) ||
+        String(r.week).toLowerCase().includes(term) ||
+        (Array.isArray(r.resources)
+          ? r.resources.join(',').toLowerCase().includes(term)
+          : String(r.resources).toLowerCase().includes(term)),
     );
-  }, [rows, searchTerm, activeTerm, programme, classLevel, subject]);
+  }, [rows, searchTerm]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -186,6 +184,26 @@ const SchemeOfWork = () => {
     }
   };
 
+  const handleFetchScheme = () => {
+    // Filter data based on selected criteria
+    const fetchedData = allSchemeData.filter(
+      (item) =>
+        item.term === activeTerm &&
+        item.programme === programme &&
+        item.classLevel === classLevel &&
+        item.subject === subject,
+    );
+
+    setRows(fetchedData);
+    setPage(0); // Reset pagination
+
+    if (fetchedData.length > 0) {
+      notify(`Found ${fetchedData.length} scheme of work item(s)`, { variant: 'success' });
+    } else {
+      notify('No scheme of work found for the selected criteria', { variant: 'info' });
+    }
+  };
+
   const handleLoadSchemeClick = () => {
     setOpenDialog(true);
   };
@@ -237,10 +255,11 @@ const SchemeOfWork = () => {
           onChange={(e, newValue) => {
             setActiveTerm(newValue);
             setPage(0);
-            // Clear filters when switching terms
+            // Clear filters and data when switching terms
             setProgramme('');
             setClassLevel('');
             setSubject('');
+            setRows([]); // Clear current data
           }}
           aria-label="term tabs"
         >
@@ -253,7 +272,12 @@ const SchemeOfWork = () => {
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6">Scheme Of Work {activeTerm} Term</Typography>
+            <Typography variant="h6">
+              Scheme Of Work{' '}
+              <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                {activeTerm} Term
+              </Box>
+            </Typography>
             <Button
               variant="contained"
               onClick={handleLoadSchemeClick}
@@ -310,7 +334,7 @@ const SchemeOfWork = () => {
               <Button
                 variant="contained"
                 color="primary"
-                // onClick={handleFetchScheme}
+                onClick={handleFetchScheme}
                 sx={{ height: 'fit-content' }}
               >
                 Fetch Scheme of Work
@@ -369,9 +393,9 @@ const SchemeOfWork = () => {
                             },
                           }}
                         >
-                          {allFiltersSelected
-                            ? 'No items found'
-                            : 'Please select Programme, Class, and Subject to view data'}
+                          {!allFiltersSelected
+                            ? 'Please select Programme, Class, and Subject, then click "Fetch Scheme of Work" to load data'
+                            : 'No scheme of work found. Click "Fetch Scheme of Work" to load data for the selected criteria'}
                         </Alert>
                       </TableCell>
                     </TableRow>

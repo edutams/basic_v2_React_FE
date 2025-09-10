@@ -61,7 +61,7 @@ const SchemeOfWork = () => {
       subject: 'Mathematics',
     },
     {
-      id: 1,
+      id: 2,
       week: 1,
       topic: 'Volcabulary',
       subtopic: 'Speech',
@@ -72,7 +72,7 @@ const SchemeOfWork = () => {
       subject: 'English',
     },
     {
-      id: 2,
+      id: 3,
       week: 2,
       topic: 'Algebra',
       subtopic: 'Linear Equations',
@@ -83,7 +83,7 @@ const SchemeOfWork = () => {
       subject: 'Mathematics',
     },
     {
-      id: 3,
+      id: 4,
       week: 3,
       topic: 'Algebra',
       subtopic: 'Quadratic Functions',
@@ -145,7 +145,7 @@ const SchemeOfWork = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedRow(null);
+    // Don't clear selectedRow here - it's needed for the modal
   };
 
   // const handleAction = (action, row) => {
@@ -179,7 +179,7 @@ const SchemeOfWork = () => {
     } else if (actionType === 'create') {
       const newItem = {
         ...updatedItem,
-        id: rows.length + 1,
+        id: Math.max(...rows.map((r) => r.id), 0) + 1, // Generate unique ID
       };
       setRows((prev) => [...prev, newItem]);
       notify('Item added successfully!', { variant: 'success' });
@@ -203,7 +203,7 @@ const SchemeOfWork = () => {
   const handleModalClose = () => {
     setModalOpen(false);
     setSelectedRow(null);
-    // setModalActionType('create');
+    setModalActionType('create'); // Reset to default
     setConfirmDialogOpen(false);
   };
 
@@ -237,6 +237,10 @@ const SchemeOfWork = () => {
           onChange={(e, newValue) => {
             setActiveTerm(newValue);
             setPage(0);
+            // Clear filters when switching terms
+            setProgramme('');
+            setClassLevel('');
+            setSubject('');
           }}
           aria-label="term tabs"
         >

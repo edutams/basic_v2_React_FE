@@ -4,20 +4,32 @@ import PropTypes from 'prop-types';
 
 const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }) => {
   // Initialize form values with safe defaults
-  const safeInitialValues = {
-    week: initialValues.week ?? '',
-    topic: initialValues.topic ?? '',
-    subtopic: initialValues.subtopic ?? '',
-    resources: Array.isArray(initialValues.resources)
-      ? initialValues.resources.join(', ')
-      : initialValues.resources || '',
+  const getSafeInitialValues = (values) => {
+    // Handle null or undefined values
+    if (!values) {
+      return {
+        week: '',
+        topic: '',
+        subtopic: '',
+        resources: '',
+      };
+    }
+
+    return {
+      week: values.week ?? '',
+      topic: values.topic ?? '',
+      subtopic: values.subtopic ?? '',
+      resources: Array.isArray(values.resources)
+        ? values.resources.join(', ')
+        : values.resources || '',
+    };
   };
 
-  const [formValues, setFormValues] = React.useState(safeInitialValues);
+  const [formValues, setFormValues] = React.useState(() => getSafeInitialValues(initialValues));
 
   // Reset form values when initialValues changes
   useEffect(() => {
-    setFormValues(safeInitialValues);
+    setFormValues(getSafeInitialValues(initialValues));
   }, [initialValues]);
 
   const handleChange = (e) => {

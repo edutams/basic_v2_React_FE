@@ -39,12 +39,15 @@ const SchemeOfWorkModal = ({
       };
       onItemUpdate(newItem, 'create');
     } else if (actionType === 'update') {
+      // Ensure selectedItem exists before spreading
+      const baseItem = selectedItem || {};
       const updatedItem = {
-        ...selectedItem,
+        ...baseItem,
         ...values,
       };
       onItemUpdate(updatedItem, 'update');
     }
+    // Close modal after update/create
     onClose();
   };
 
@@ -63,9 +66,13 @@ const SchemeOfWorkModal = ({
         />
       );
     }
+
+    // Ensure we have valid initial values for update mode
+    const initialValues = actionType === 'update' && selectedItem ? selectedItem : {};
+
     return (
       <SchemeOfWorkForm
-        initialValues={actionType === 'update' ? selectedItem : {}}
+        initialValues={initialValues}
         onSubmit={handleSubmit}
         onCancel={onClose}
         submitText={actionType === 'create' ? 'Create Item' : 'Update Item'}

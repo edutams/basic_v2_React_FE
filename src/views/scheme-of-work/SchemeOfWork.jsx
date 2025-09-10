@@ -24,6 +24,8 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Tabs,
+  Tab,
 } from '@mui/material';
 
 import {
@@ -72,6 +74,10 @@ const SchemeOfWork = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [termTab, setTermTab] = useState(0);
+    const [programme, setProgramme] = useState('');
+  const [classLevel, setClassLevel] = useState('');
+  const [subject, setSubject] = useState('');
 
   const filteredRows = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -98,6 +104,11 @@ const SchemeOfWork = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedRow(null);
+  };
+
+  const handleTermTabChange = (event, newValue) => {
+    setTermTab(newValue);
+    setPage(0);
   };
 
   const handleAction = (action, row) => {
@@ -127,6 +138,14 @@ const SchemeOfWork = () => {
   return (
     <PageContainer title="Scheme Of Work" description="Manage Scheme of Work">
       <Breadcrumb title="Scheme Of Work" items={BCrumb} />
+
+      <Box sx={{ mb: 2 }}>
+        <Tabs value={termTab} onChange={handleTermTabChange} aria-label="Term tabs" textColor="primary" indicatorColor="primary">
+          <Tab label="1st Term" />
+          <Tab label="2nd Term" />
+          <Tab label="3rd Term" />
+        </Tabs>
+      </Box>
 
       <ParentCard
         title={
@@ -162,21 +181,12 @@ const SchemeOfWork = () => {
           /> */}
 
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
-            {/* Term */}
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Term</InputLabel>
-              <Select onChange={(e) => setTerm(e.target.value)} label="Term">
-                <MenuItem value="1st">1st Term</MenuItem>
-                <MenuItem value="2nd">2nd Term</MenuItem>
-                <MenuItem value="3rd">3rd Term</MenuItem>
-              </Select>
-            </FormControl>
-
+            
             {/* Programme */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Programme</InputLabel>
               <Select
-                // value={programme}
+                value={programme}
                 onChange={(e) => setProgramme(e.target.value)}
                 label="Programme"
               >
@@ -190,7 +200,7 @@ const SchemeOfWork = () => {
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Class</InputLabel>
               <Select
-                // value={classLevel}
+                value={classLevel}
                 onChange={(e) => setClassLevel(e.target.value)}
                 label="Class"
               >
@@ -206,7 +216,7 @@ const SchemeOfWork = () => {
             {/* Subject */}
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Subject</InputLabel>
-              <Select onChange={(e) => setSubject(e.target.value)} label="Subject">
+              <Select value={subject} onChange={(e) => setSubject(e.target.value)} label="Subject">
                 <MenuItem value="Mathematics">Mathematics</MenuItem>
                 <MenuItem value="English">English</MenuItem>
                 <MenuItem value="Physics">Physics</MenuItem>

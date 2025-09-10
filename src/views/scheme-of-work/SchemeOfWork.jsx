@@ -50,6 +50,7 @@ const BCrumb = [
 const SchemeOfWork = () => {
   const [rows, setRows] = useState([]);
   const [allSchemeData] = useState([
+    // First Term - JSS1 Mathematics (15 weeks, only week 1 has content)
     {
       id: 1,
       week: 1,
@@ -61,20 +62,46 @@ const SchemeOfWork = () => {
       classLevel: 'JSS1',
       subject: 'Mathematics',
     },
+    ...Array.from({ length: 14 }, (_, i) => ({
+      id: i + 2,
+      week: i + 2,
+      topic: '',
+      subtopic: '',
+      resources: [],
+      term: 'First',
+      programme: 'Science',
+      classLevel: 'JSS1',
+      subject: 'Mathematics',
+    })),
+
+    // First Term - JSS2 English (15 weeks, only week 1 has content)
     {
-      id: 2,
+      id: 16,
       week: 1,
-      topic: 'Volcabulary',
-      subtopic: 'Speech',
+      topic: 'Vocabulary',
+      subtopic: 'Speech and Communication',
       resources: ['https://youtube//xuyWf5fg'],
       term: 'First',
       programme: 'Science',
       classLevel: 'JSS2',
       subject: 'English',
     },
+    ...Array.from({ length: 14 }, (_, i) => ({
+      id: i + 17,
+      week: i + 2,
+      topic: '',
+      subtopic: '',
+      resources: [],
+      term: 'First',
+      programme: 'Science',
+      classLevel: 'JSS2',
+      subject: 'English',
+    })),
+
+    // Second Term - JSS2 Mathematics (15 weeks, only week 1 has content)
     {
-      id: 3,
-      week: 2,
+      id: 31,
+      week: 1,
       topic: 'Algebra',
       subtopic: 'Linear Equations',
       resources: ['https://youtube//xuyehe5fg'],
@@ -83,9 +110,22 @@ const SchemeOfWork = () => {
       classLevel: 'JSS2',
       subject: 'Mathematics',
     },
+    ...Array.from({ length: 14 }, (_, i) => ({
+      id: i + 32,
+      week: i + 2,
+      topic: '',
+      subtopic: '',
+      resources: [],
+      term: 'Second',
+      programme: 'Science',
+      classLevel: 'JSS2',
+      subject: 'Mathematics',
+    })),
+
+    // Third Term - SSS1 Mathematics (15 weeks, only week 1 has content)
     {
-      id: 4,
-      week: 3,
+      id: 46,
+      week: 1,
       topic: 'Algebra',
       subtopic: 'Quadratic Functions',
       resources: ['https://youtube//tuyWf5df'],
@@ -94,6 +134,17 @@ const SchemeOfWork = () => {
       classLevel: 'SSS1',
       subject: 'Mathematics',
     },
+    ...Array.from({ length: 14 }, (_, i) => ({
+      id: i + 47,
+      week: i + 2,
+      topic: '',
+      subtopic: '',
+      resources: [],
+      term: 'Third',
+      programme: 'Arts',
+      classLevel: 'SSS1',
+      subject: 'Mathematics',
+    })),
   ]);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,12 +161,11 @@ const SchemeOfWork = () => {
   const [modalActionType, setModalActionType] = useState('create');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-  const { notify } = useNotification();
+  const notify = useNotification();
 
   const allFiltersSelected = programme !== '' && classLevel !== '' && subject !== '';
 
   const filteredRows = useMemo(() => {
-    // Only apply search filtering to the currently loaded rows
     if (rows.length === 0) {
       return [];
     }
@@ -143,7 +193,6 @@ const SchemeOfWork = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    // Don't clear selectedRow here - it's needed for the modal
   };
 
   // const handleAction = (action, row) => {
@@ -165,27 +214,26 @@ const SchemeOfWork = () => {
       setModalOpen(true);
     } else if (action === 'delete') {
       setRows((prev) => prev.filter((r) => r.id !== row.id));
-      notify('Item deleted successfully!', { variant: 'success' });
+      notify.success('Item deleted successfully!');
     }
-    handleMenuClose(); // ✅ safe now, since it only clears anchorEl
+    handleMenuClose();
   };
 
   const handleItemUpdate = (updatedItem, actionType) => {
     if (actionType === 'update') {
       setRows((prev) => prev.map((row) => (row.id === updatedItem.id ? updatedItem : row)));
-      notify('Item updated successfully!', { variant: 'success' });
+      notify.success('updated successfully!');
     } else if (actionType === 'create') {
       const newItem = {
         ...updatedItem,
-        id: Math.max(...rows.map((r) => r.id), 0) + 1, // Generate unique ID
+        id: Math.max(...rows.map((r) => r.id), 0) + 1,
       };
       setRows((prev) => [...prev, newItem]);
-      notify('Item added successfully!', { variant: 'success' });
+      notify.success('Item added successfully!');
     }
   };
 
   const handleFetchScheme = () => {
-    // Filter data based on selected criteria
     const fetchedData = allSchemeData.filter(
       (item) =>
         item.term === activeTerm &&
@@ -195,12 +243,12 @@ const SchemeOfWork = () => {
     );
 
     setRows(fetchedData);
-    setPage(0); // Reset pagination
+    setPage(0);
 
     if (fetchedData.length > 0) {
-      notify(`Found ${fetchedData.length} scheme of work item(s)`, { variant: 'success' });
-    } else {
-      notify('No scheme of work found for the selected criteria', { variant: 'info' });
+      const filledWeeks = fetchedData.filter(
+        (item) => item.topic || item.subtopic || item.resources.length > 0,
+      ).length;
     }
   };
 
@@ -210,7 +258,7 @@ const SchemeOfWork = () => {
 
   const handleConfirmLoad = () => {
     console.log('Loading Scheme of Work...');
-    notify('Scheme of Work loaded successfully!', { variant: 'success' });
+    notify.success('Scheme of Work loaded successfully!');
     setOpenDialog(false);
   };
 
@@ -221,7 +269,7 @@ const SchemeOfWork = () => {
   const handleModalClose = () => {
     setModalOpen(false);
     setSelectedRow(null);
-    setModalActionType('create'); // Reset to default
+    setModalActionType('create');
     setConfirmDialogOpen(false);
   };
 
@@ -255,11 +303,10 @@ const SchemeOfWork = () => {
           onChange={(e, newValue) => {
             setActiveTerm(newValue);
             setPage(0);
-            // Clear filters and data when switching terms
             setProgramme('');
             setClassLevel('');
             setSubject('');
-            setRows([]); // Clear current data
+            setRows([]);
           }}
           aria-label="term tabs"
         >
@@ -357,28 +404,31 @@ const SchemeOfWork = () => {
                 </TableHead>
                 <TableBody>
                   {paginatedRows.length > 0 ? (
-                    paginatedRows.map((row, index) => (
-                      <TableRow key={row.id} hover>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{`Week ${row.week}`}</TableCell>
-                        <TableCell>{row.topic}</TableCell>
-                        <TableCell>{row.subtopic}</TableCell>
-                        <TableCell>{renderResources(row.resources)}</TableCell>
-                        <TableCell align="center">
-                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                            <MoreVertIcon />
-                          </IconButton>
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                            onClose={handleMenuClose}
-                          >
-                            <MenuItem onClick={() => handleAction('edit', row)}>Edit</MenuItem>
-                            {/* <MenuItem onClick={() => handleAction('delete', row)}>Delete</MenuItem> */}
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    paginatedRows.map((row, index) => {
+                      const isEmpty = !row.topic && !row.subtopic && row.resources.length === 0;
+                      return (
+                        <TableRow key={row.id} hover>
+                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                          <TableCell>{`Week ${row.week}`}</TableCell>
+                          <TableCell>{row.topic}</TableCell>
+                          <TableCell>{row.subtopic}</TableCell>
+                          <TableCell>{row.resources}</TableCell>
+                          <TableCell align="center">
+                            <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                              <MoreVertIcon />
+                            </IconButton>
+                            <Menu
+                              anchorEl={anchorEl}
+                              open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                              onClose={handleMenuClose}
+                            >
+                              <MenuItem onClick={() => handleAction('edit', row)}>Edit</MenuItem>
+                              {/* <MenuItem onClick={() => handleAction('delete', row)}>Delete</MenuItem> */}
+                            </Menu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} align="center">

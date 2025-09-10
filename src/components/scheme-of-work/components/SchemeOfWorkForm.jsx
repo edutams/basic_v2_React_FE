@@ -39,7 +39,7 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
   const handleSubmit = () => {
     onSubmit({
       ...formValues,
-      week: parseInt(formValues.week, 10) || 0, // Fallback to 0 if invalid
+      week: parseInt(formValues.week, 10) || 0,
       resources: formValues.resources
         .split(',')
         .map((r) => r.trim())

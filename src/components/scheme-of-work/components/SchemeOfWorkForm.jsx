@@ -3,12 +3,9 @@ import { TextField, Button, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }) => {
-  // Track if form has been modified
   const [isFormModified, setIsFormModified] = React.useState(false);
 
-  // Initialize form values with safe defaults
   const getSafeInitialValues = (values) => {
-    // Handle null or undefined values
     if (!values) {
       return {
         week: '',
@@ -30,7 +27,6 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
 
   const [formValues, setFormValues] = React.useState(() => getSafeInitialValues(initialValues));
 
-  // Reset form values when initialValues changes
   useEffect(() => {
     const safeValues = getSafeInitialValues(initialValues);
     setFormValues(safeValues);
@@ -41,7 +37,6 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
     const newValues = { ...formValues, [e.target.name]: e.target.value };
     setFormValues(newValues);
 
-    // Check if form has been modified
     const safeInitial = getSafeInitialValues(initialValues);
     const hasChanges = Object.keys(newValues).some((key) => newValues[key] !== safeInitial[key]);
     setIsFormModified(hasChanges);

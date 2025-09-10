@@ -43,7 +43,7 @@ const BCrumb = [
 const SchemeOfWork = () => {
   const [rows, setRows] = useState([]);
   const [allSchemeData] = useState([
-    // First Term - JSS1 Mathematics (15 weeks, only week 1 has content)
+    // First Term - JSS1 Mathematics
     {
       id: 1,
       week: 1,
@@ -67,7 +67,7 @@ const SchemeOfWork = () => {
       subject: 'Mathematics',
     })),
 
-    // First Term - JSS2 English (15 weeks, only week 1 has content)
+    // First Term - JSS2 English
     {
       id: 16,
       week: 1,
@@ -91,7 +91,7 @@ const SchemeOfWork = () => {
       subject: 'English',
     })),
 
-    // Second Term - JSS2 Mathematics (15 weeks, only week 1 has content)
+    // Second Term - JSS2 Mathematics
     {
       id: 31,
       week: 1,
@@ -115,7 +115,7 @@ const SchemeOfWork = () => {
       subject: 'Mathematics',
     })),
 
-    // Third Term - SSS1 Mathematics (15 weeks, only week 1 has content)
+    // Third Term - SSS1 Mathematics
     {
       id: 46,
       week: 1,
@@ -186,7 +186,7 @@ const SchemeOfWork = () => {
   const handleItemUpdate = (updatedItem, actionType) => {
     if (actionType === 'update') {
       setRows((prev) => prev.map((row) => (row.id === updatedItem.id ? updatedItem : row)));
-      notify.success('Item updated successfully!');
+      notify.success('updated successfully!');
     } else if (actionType === 'create') {
       const newItem = {
         ...updatedItem,
@@ -213,8 +213,8 @@ const SchemeOfWork = () => {
       const filledWeeks = fetchedData.filter(
         (item) => item.topic || item.subtopic || item.resources.length > 0,
       ).length;
-      const totalWeeks = fetchedData.length;
-      notify.success(`Found ${totalWeeks}-week scheme (${filledWeeks} weeks with content)`);
+      // const totalWeeks = fetchedData.length;
+      // notify.success(`Found ${totalWeeks}-week scheme (${filledWeeks} weeks with content)`);
     } else {
       notify.info('No scheme of work found for the selected criteria');
     }

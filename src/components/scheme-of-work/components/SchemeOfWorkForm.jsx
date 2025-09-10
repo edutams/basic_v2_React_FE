@@ -3,6 +3,9 @@ import { TextField, Button, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }) => {
+  // Track if form has been modified
+  const [isFormModified, setIsFormModified] = React.useState(false);
+
   // Initialize form values with safe defaults
   const getSafeInitialValues = (values) => {
     // Handle null or undefined values
@@ -29,11 +32,19 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
 
   // Reset form values when initialValues changes
   useEffect(() => {
-    setFormValues(getSafeInitialValues(initialValues));
+    const safeValues = getSafeInitialValues(initialValues);
+    setFormValues(safeValues);
+    setIsFormModified(false);
   }, [initialValues]);
 
   const handleChange = (e) => {
-    setFormValues({ ...formValues, [e.target.name]: e.target.value });
+    const newValues = { ...formValues, [e.target.name]: e.target.value };
+    setFormValues(newValues);
+
+    // Check if form has been modified
+    const safeInitial = getSafeInitialValues(initialValues);
+    const hasChanges = Object.keys(newValues).some((key) => newValues[key] !== safeInitial[key]);
+    setIsFormModified(hasChanges);
   };
 
   const handleSubmit = () => {
@@ -80,7 +91,7 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
       />
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" onClick={handleSubmit}>
+        <Button variant="contained" onClick={handleSubmit} disabled={!isFormModified}>
           {submitText}
         </Button>
       </Box>

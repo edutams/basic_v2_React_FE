@@ -1,23 +1,11 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import SchemeOfWorkForm from './SchemeOfWorkForm';
 
 const getModalConfig = (actionType, activeTerm, selectedItem) => {
-  // const configs = {
-  //   create: {
-  //     title: `Create Scheme of Work Item - ${activeTerm} Term`,
-  //     size: 'medium',
-  //   },
-  //   update: {
-  //     title: selectedItem
-  //       ? `Edit For- ${activeTerm} Term (${selectedItem.classLevel} ${selectedItem.subject})`
-  //       : `Edit Scheme of Work - ${activeTerm} Term`,
-  //     size: 'small',
-  //   },
-  // };
   const configs = {
     create: {
       title: (

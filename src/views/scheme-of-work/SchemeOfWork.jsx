@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
-import PropTypes from 'prop-types';
 import { useNotification } from '../../hooks/useNotification';
 import SchemeOfWorkModal from '../../components/scheme-of-work/components/SchemeOfWorkModal';
 
@@ -18,8 +17,6 @@ import {
   TableFooter,
   TablePagination,
   Paper,
-  TextField,
-  InputAdornment,
   IconButton,
   Menu,
   MenuItem,
@@ -32,11 +29,7 @@ import {
   Tab,
   Alert,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  MoreVert as MoreVertIcon,
-  Add as AddIcon,
-} from '@mui/icons-material';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from '../../components/shared/ParentCard';
 
 const BCrumb = [
@@ -147,7 +140,6 @@ const SchemeOfWork = () => {
     })),
   ]);
 
-  const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -165,26 +157,10 @@ const SchemeOfWork = () => {
 
   const allFiltersSelected = programme !== '' && classLevel !== '' && subject !== '';
 
-  const filteredRows = useMemo(() => {
-    if (rows.length === 0) {
-      return [];
-    }
-
-    const term = searchTerm.toLowerCase();
-    return rows.filter(
-      (r) =>
-        r.subtopic.toLowerCase().includes(term) ||
-        String(r.week).toLowerCase().includes(term) ||
-        (Array.isArray(r.resources)
-          ? r.resources.join(',').toLowerCase().includes(term)
-          : String(r.resources).toLowerCase().includes(term)),
-    );
-  }, [rows, searchTerm]);
-
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
-    return filteredRows.slice(start, start + rowsPerPage);
-  }, [filteredRows, page, rowsPerPage]);
+    return rows.slice(start, start + rowsPerPage);
+  }, [rows, page, rowsPerPage]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -194,18 +170,6 @@ const SchemeOfWork = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-
-  // const handleAction = (action, row) => {
-  //   if (action === 'edit') {
-  //     setModalActionType('update');
-  //     setSelectedRow(row);
-  //     setModalOpen(true);
-  //   } else if (action === 'delete') {
-  //     setRows((prev) => prev.filter((r) => r.id !== row.id));
-  //     notify('Item deleted successfully!', { variant: 'success' });
-  //   }
-  //   handleMenuClose();
-  // };
 
   const handleAction = (action, row) => {
     if (action === 'edit') {
@@ -222,7 +186,7 @@ const SchemeOfWork = () => {
   const handleItemUpdate = (updatedItem, actionType) => {
     if (actionType === 'update') {
       setRows((prev) => prev.map((row) => (row.id === updatedItem.id ? updatedItem : row)));
-      notify.success('updated successfully!');
+      notify.success('Item updated successfully!');
     } else if (actionType === 'create') {
       const newItem = {
         ...updatedItem,
@@ -249,6 +213,10 @@ const SchemeOfWork = () => {
       const filledWeeks = fetchedData.filter(
         (item) => item.topic || item.subtopic || item.resources.length > 0,
       ).length;
+      const totalWeeks = fetchedData.length;
+      notify.success(`Found ${totalWeeks}-week scheme (${filledWeeks} weeks with content)`);
+    } else {
+      notify.info('No scheme of work found for the selected criteria');
     }
   };
 
@@ -257,7 +225,6 @@ const SchemeOfWork = () => {
   };
 
   const handleConfirmLoad = () => {
-    console.log('Loading Scheme of Work...');
     notify.success('Scheme of Work loaded successfully!');
     setOpenDialog(false);
   };
@@ -404,31 +371,28 @@ const SchemeOfWork = () => {
                 </TableHead>
                 <TableBody>
                   {paginatedRows.length > 0 ? (
-                    paginatedRows.map((row, index) => {
-                      const isEmpty = !row.topic && !row.subtopic && row.resources.length === 0;
-                      return (
-                        <TableRow key={row.id} hover>
-                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                          <TableCell>{`Week ${row.week}`}</TableCell>
-                          <TableCell>{row.topic}</TableCell>
-                          <TableCell>{row.subtopic}</TableCell>
-                          <TableCell>{row.resources}</TableCell>
-                          <TableCell align="center">
-                            <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                              <MoreVertIcon />
-                            </IconButton>
-                            <Menu
-                              anchorEl={anchorEl}
-                              open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                              onClose={handleMenuClose}
-                            >
-                              <MenuItem onClick={() => handleAction('edit', row)}>Edit</MenuItem>
-                              {/* <MenuItem onClick={() => handleAction('delete', row)}>Delete</MenuItem> */}
-                            </Menu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
+                    paginatedRows.map((row, index) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>{`Week ${row.week}`}</TableCell>
+                        <TableCell>{row.topic}</TableCell>
+                        <TableCell>{row.subtopic}</TableCell>
+                        <TableCell>{renderResources(row.resources)}</TableCell>
+                        <TableCell align="center">
+                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleAction('edit', row)}>Edit</MenuItem>
+                            {/* <MenuItem onClick={() => handleAction('delete', row)}>Delete</MenuItem> */}
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} align="center">
@@ -455,7 +419,7 @@ const SchemeOfWork = () => {
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      count={filteredRows.length}
+                      count={rows.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={(_, newPage) => setPage(newPage)}

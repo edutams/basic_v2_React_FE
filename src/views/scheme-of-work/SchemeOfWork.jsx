@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
+import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import PropTypes from 'prop-types';
+import { useNotification } from '../../hooks/useNotification';
+import SchemeOfWorkModal from '../../components/scheme-of-work/components/SchemeOfWorkModal';
+
 import {
   Box,
   Typography,
@@ -78,6 +83,12 @@ const SchemeOfWork = () => {
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
   const [subject, setSubject] = useState('');
+  const [openDialog, setOpenDialog] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalActionType, setModalActionType] = useState('create');
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  const { notify } = useNotification();
 
   const filteredRows = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -108,11 +119,54 @@ const SchemeOfWork = () => {
   };
 
   const handleAction = (action, row) => {
-    console.log(action, row);
-    if (action === 'delete') {
+    if (action === 'edit') {
+      setModalActionType('update');
+      setSelectedRow(row);
+      setModalOpen(true);
+    } else if (action === 'delete') {
       setRows((prev) => prev.filter((r) => r.id !== row.id));
+      notify('Item deleted successfully!', { variant: 'success' });
     }
     handleMenuClose();
+  };
+
+  const handleItemUpdate = (updatedItem, actionType) => {
+    if (actionType === 'update') {
+      setRows((prev) => prev.map((row) => (row.id === updatedItem.id ? updatedItem : row)));
+      notify('Item updated successfully!', { variant: 'success' });
+    } else if (actionType === 'create') {
+      const newItem = {
+        ...updatedItem,
+        id: rows.length + 1, // Simple ID generation; replace with UUID in production
+      };
+      setRows((prev) => [...prev, newItem]);
+      notify('Item added successfully!', { variant: 'success' });
+    }
+  };
+
+  const handleLoadSchemeClick = () => {
+    setOpenDialog(true);
+  };
+
+  const handleConfirmLoad = () => {
+    console.log('Loading Scheme of Work...');
+    notify('Scheme of Work loaded successfully!', { variant: 'success' });
+    setOpenDialog(false);
+  };
+
+  const handleCancelLoad = () => {
+    setOpenDialog(false);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedRow(null);
+    setConfirmDialogOpen(false);
+  };
+
+  const handleConfirmAdd = () => {
+    setConfirmDialogOpen(false);
+    // Proceed with form submission logic in SchemeOfWorkModal
   };
 
   const renderResources = (resources) => {
@@ -141,7 +195,7 @@ const SchemeOfWork = () => {
           value={activeTerm}
           onChange={(e, newValue) => {
             setActiveTerm(newValue);
-            setPage(0); // Reset pagination on term change
+            setPage(0);
           }}
           aria-label="term tabs"
         >
@@ -158,10 +212,10 @@ const SchemeOfWork = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => handleAction('create')}
+              onClick={handleLoadSchemeClick}
               sx={{ minWidth: 120, fontSize: { xs: '0.95rem', md: '1rem' } }}
             >
-              Add Item
+              Load Scheme Of Work
             </Button>
           </Box>
         }
@@ -244,7 +298,7 @@ const SchemeOfWork = () => {
                             onClose={handleMenuClose}
                           >
                             <MenuItem onClick={() => handleAction('edit', row)}>Edit</MenuItem>
-                            <MenuItem onClick={() => handleAction('delete', row)}>Delete</MenuItem>
+                            {/* <MenuItem onClick={() => handleAction('delete', row)}>Delete</MenuItem> */}
                           </Menu>
                         </TableCell>
                       </TableRow>
@@ -260,7 +314,7 @@ const SchemeOfWork = () => {
                 <TableFooter>
                   <TableRow>
                     <TablePagination
-                      rowsPerPageOptions={[5, 10, 25]}
+                      rowsPerPageOptions={[5, 10, 25]} // Wrap the array in curly braces
                       count={filteredRows.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
@@ -278,6 +332,26 @@ const SchemeOfWork = () => {
           </Paper>
         </Box>
       </ParentCard>
+
+      <ConfirmationDialog
+        open={openDialog}
+        onConfirm={handleConfirmLoad}
+        onClose={handleCancelLoad}
+        title="Confirm Load Scheme of Work"
+        confirmText="Load"
+        cancelText="Cancel"
+      />
+
+      <SchemeOfWorkModal
+        open={modalOpen}
+        onClose={handleModalClose}
+        actionType={modalActionType}
+        selectedItem={selectedRow}
+        onItemUpdate={handleItemUpdate}
+        confirmDialogOpen={confirmDialogOpen}
+        onConfirmAdd={handleConfirmAdd}
+        activeTerm={activeTerm}
+      />
     </PageContainer>
   );
 };

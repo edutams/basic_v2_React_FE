@@ -40,7 +40,6 @@ const SubjectAnalytics = ({ selectedTab }) => {
       }
     };
 
-    // Load data initially
     loadData();
 
     // Listen for localStorage changes
@@ -76,7 +75,6 @@ const SubjectAnalytics = ({ selectedTab }) => {
     
     const filteredSubjects = subjectData;
     
-    // Calculate totals
     const totalSubjects = filteredSubjects.length;
     const compulsorySubjects = filteredSubjects.filter(subject => subject.status === 'COMPULSORY').length;
     const optionalSubjects = filteredSubjects.filter(subject => subject.status === 'OPTIONAL').length;

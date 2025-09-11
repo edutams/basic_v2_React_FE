@@ -39,16 +39,13 @@ const CategorySection = ({ selectedTab = 0 }) => {
   const [deleteCategoryDialogOpen, setDeleteCategoryDialogOpen] = useState(false);
   const [changeStatusDialogOpen, setChangeStatusDialogOpen] = useState(false);
   
-  // Form states
   const [newCategory, setNewCategory] = useState({ name: '', status: 'ACTIVE' });
   const [editCategory, setEditCategory] = useState({ id: '', name: '', status: 'ACTIVE' });
   const [itemToDelete, setItemToDelete] = useState(null);
   const [itemToChangeStatus, setItemToChangeStatus] = useState(null);
   
-  // Notification hook
   const notify = useNotification();
 
-  // Get localStorage keys based on selected tab
   const getStorageKeys = (tabIndex) => {
     const tabNames = ['Pry', 'JS', 'SS', 'TVET'];
     const currentTab = tabNames[tabIndex];
@@ -71,11 +68,9 @@ const CategorySection = ({ selectedTab = 0 }) => {
     }
   }, [selectedTab, storageKeys.categories]);
 
-  // Save categories to localStorage
   const saveCategories = (categories) => {
     setCategoryData(categories);
     localStorage.setItem(storageKeys.categories, JSON.stringify(categories));
-    // Dispatch custom event to notify analytics component
     window.dispatchEvent(new CustomEvent('localStorageUpdated', { detail: { tabIndex: selectedTab } }));
   };
 
@@ -99,14 +94,12 @@ const CategorySection = ({ selectedTab = 0 }) => {
     const updatedCategories = categoryData.filter(cat => cat.id !== id);
     saveCategories(updatedCategories);
     
-    // Also remove subjects that belong to this category
     const savedSubjects = localStorage.getItem(storageKeys.subjects);
     if (savedSubjects && categoryToDelete) {
       const subjectData = JSON.parse(savedSubjects);
       const updatedSubjects = subjectData.filter(subject => subject.category !== categoryToDelete.name);
       localStorage.setItem(storageKeys.subjects, JSON.stringify(updatedSubjects));
       
-      // Dispatch custom event to notify analytics and other components
       window.dispatchEvent(new CustomEvent('localStorageUpdated', { detail: { tabIndex: selectedTab } }));
     }
   };
@@ -169,7 +162,6 @@ const CategorySection = ({ selectedTab = 0 }) => {
     setCategoryModalOpen(true);
   };
 
-  // Modal handlers
   const handleCategorySubmit = () => {
     if (newCategory.name.trim()) {
       addCategory(newCategory);
@@ -267,7 +259,6 @@ const CategorySection = ({ selectedTab = 0 }) => {
         </ParentCard>
       </Grid>
 
-      {/* Context Menu */}
       <Menu
         anchorEl={categoryAnchorEl?.element}
         open={Boolean(categoryAnchorEl)}
@@ -278,7 +269,6 @@ const CategorySection = ({ selectedTab = 0 }) => {
         <MenuItem onClick={handleCategoryDelete}>Delete</MenuItem>
       </Menu>
 
-      {/* Add Category Modal */}
       <ReusableModal
         open={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
@@ -318,7 +308,6 @@ const CategorySection = ({ selectedTab = 0 }) => {
         </Box>
       </ReusableModal>
 
-      {/* Edit Category Modal */}
       <ReusableModal
         open={editCategoryModalOpen}
         onClose={() => setEditCategoryModalOpen(false)}

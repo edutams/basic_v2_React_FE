@@ -95,15 +95,19 @@ const CategorySection = ({ selectedTab = 0 }) => {
   };
 
   const deleteCategory = (id) => {
+    const categoryToDelete = categoryData.find(cat => cat.id === id);
     const updatedCategories = categoryData.filter(cat => cat.id !== id);
     saveCategories(updatedCategories);
+    
     // Also remove subjects that belong to this category
     const savedSubjects = localStorage.getItem(storageKeys.subjects);
-    if (savedSubjects) {
+    if (savedSubjects && categoryToDelete) {
       const subjectData = JSON.parse(savedSubjects);
-      const categoryToDelete = categoryData.find(cat => cat.id === id);
-      const updatedSubjects = subjectData.filter(subject => subject.category !== categoryToDelete?.name);
+      const updatedSubjects = subjectData.filter(subject => subject.category !== categoryToDelete.name);
       localStorage.setItem(storageKeys.subjects, JSON.stringify(updatedSubjects));
+      
+      // Dispatch custom event to notify analytics and other components
+      window.dispatchEvent(new CustomEvent('localStorageUpdated', { detail: { tabIndex: selectedTab } }));
     }
   };
 

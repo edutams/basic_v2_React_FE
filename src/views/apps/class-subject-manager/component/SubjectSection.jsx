@@ -83,6 +83,32 @@ const SubjectSection = ({ selectedTab = 0 }) => {
     }
   }, [selectedTab, storageKeys.categories, storageKeys.subjects]);
 
+  // Listen for localStorage updates from other components
+  useEffect(() => {
+    const handleStorageUpdate = (event) => {
+      if (event.detail?.tabIndex === selectedTab) {
+        // Reload categories
+        const savedCategories = localStorage.getItem(storageKeys.categories);
+        if (savedCategories) {
+          setCategoryData(JSON.parse(savedCategories));
+        } else {
+          setCategoryData([]);
+        }
+
+        // Reload subjects
+        const savedSubjects = localStorage.getItem(storageKeys.subjects);
+        if (savedSubjects) {
+          setSubjectData(JSON.parse(savedSubjects));
+        } else {
+          setSubjectData([]);
+        }
+      }
+    };
+
+    window.addEventListener('localStorageUpdated', handleStorageUpdate);
+    return () => window.removeEventListener('localStorageUpdated', handleStorageUpdate);
+  }, [selectedTab, storageKeys.categories, storageKeys.subjects]);
+
   // Save subjects to localStorage
   const saveSubjects = (subjects) => {
     setSubjectData(subjects);

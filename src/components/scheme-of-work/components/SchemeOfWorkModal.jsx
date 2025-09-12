@@ -96,6 +96,7 @@ const SchemeOfWorkModal = ({
         onSubmit={handleSubmit}
         onCancel={onClose}
         submitText={actionType === 'create' ? 'Create' : 'Save'}
+        weekEditable={false}
       />
     );
   };

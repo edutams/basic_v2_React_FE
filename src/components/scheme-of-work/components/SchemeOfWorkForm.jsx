@@ -2,7 +2,13 @@ import React, { useEffect } from 'react';
 import { TextField, Button, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }) => {
+const SchemeOfWorkForm = ({
+  initialValues = {},
+  onSubmit,
+  onCancel,
+  submitText,
+  weekEditable = true,
+}) => {
   const [isFormModified, setIsFormModified] = React.useState(false);
 
   const getSafeInitialValues = (values) => {
@@ -62,6 +68,10 @@ const SchemeOfWorkForm = ({ initialValues = {}, onSubmit, onCancel, submitText }
         value={formValues.week}
         onChange={handleChange}
         fullWidth
+        disabled={!weekEditable}
+        InputProps={{
+          readOnly: !weekEditable,
+        }}
       />
       <TextField
         label="Topic"
@@ -104,6 +114,7 @@ SchemeOfWorkForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   submitText: PropTypes.string.isRequired,
+  weekEditable: PropTypes.bool,
 };
 
 export default SchemeOfWorkForm;

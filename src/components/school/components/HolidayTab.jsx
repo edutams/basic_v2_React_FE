@@ -11,10 +11,12 @@ import {
   MenuItem,
   Tabs,
   Tab,
+  Paper,
 } from '@mui/material';
 import HolidayTable from './HolidayTable';
 import HolidayModal from './HolidayModal';
 import PropTypes from 'prop-types';
+import { IconCalendar, IconCalendarX, IconSchool, IconCheck, IconX } from '@tabler/icons-react';
 
 const HolidayTab = ({ handleRefresh }) => {
   const [holidayModalOpen, setHolidayModalOpen] = useState(false);
@@ -138,14 +140,93 @@ const HolidayTab = ({ handleRefresh }) => {
 
   return (
     <Grid container spacing={3}>
+      <Card sx={{ p: 2 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: '1fr 1fr',
+              md: 'repeat(2, 1fr)',
+            },
+            gap: 2,
+            Width: '100%',
+            mb: 3,
+          }}
+        >
+          {[
+            {
+              label: 'Term Weeks',
+              value: 0,
+              bg: 'primary',
+              icon: <IconCalendar width={22} color="#fff" />,
+            },
+            {
+              label: 'Holidays For the Term',
+              value: 0,
+              bg: 'secondary',
+              icon: <IconCalendarX width={22} color="#fff" />,
+            },
+          ].map((item, index) => (
+            <Paper
+              key={index}
+              elevation={2}
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 120,
+                height: '100%',
+                width: '100%',
+                borderRadius: 2,
+                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+                gap: 2,
+                px: 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <Box
+                  width={38}
+                  height={38}
+                  bgcolor={`${item.bg}.main`}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  borderRadius={1}
+                >
+                  {item.icon}
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="body2" sx={{ fontSize: '16px', fontWeight: 'bold' }}>
+                    {item.label}
+                  </Typography>
+                  {/* <Typography variant="body2" sx={{ fontSize: '14px', color: 'text.secondary' }}>
+                    Schools
+                  </Typography> */}
+                </Box>
+              </Box>
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: '36px',
+                  color: '#28a745',
+                  minWidth: 56,
+                  textAlign: 'center',
+                }}
+              >
+                {item.value}
+              </Typography>
+            </Paper>
+          ))}
+        </Box>
+      </Card>
       <Card variant="outlined" sx={{ p: 3, width: '100%' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h6" fontWeight={600}>
             Set Holiday
           </Typography>
-          <Button variant="contained" color="primary" onClick={handleSetHolidayClick}>
-            Set Holiday
-          </Button>
         </Box>
 
         {/* Term Tabs */}
@@ -169,13 +250,19 @@ const HolidayTab = ({ handleRefresh }) => {
               <MenuItem value="">
                 <em>All Sessions</em>
               </MenuItem>
-              {availableSessions.map((session) => (
-                <MenuItem key={session} value={session}>
-                  {session}
-                </MenuItem>
-              ))}
+              <MenuItem value="">2025/2026</MenuItem>
+              <MenuItem value="">2024/2025</MenuItem>
             </Select>
           </FormControl>
+
+          <Button
+            sx={{ ml: 2 }}
+            variant="contained"
+            color="primary"
+            onClick={handleSetHolidayClick}
+          >
+            Set Holiday
+          </Button>
         </Box>
 
         <HolidayTable holidays={filteredHolidays} onHolidayAction={handleHolidayAction} />

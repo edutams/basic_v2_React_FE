@@ -206,17 +206,36 @@ const SchemeOfWork = () => {
         item.subject === subject,
     );
 
-    setRows(fetchedData);
+    const weeksData = Array.from({ length: 15 }, (_, i) => {
+      const weekNumber = i + 1;
+      const existingWeek = fetchedData.find((item) => item.week === weekNumber);
+
+      if (existingWeek) {
+        return existingWeek;
+      } else {
+        return {
+          id: `${activeTerm}-${programme}-${classLevel}-${subject}-week-${weekNumber}`,
+          week: weekNumber,
+          topic: '',
+          subtopic: '',
+          resources: [],
+          term: activeTerm,
+          programme: programme,
+          classLevel: classLevel,
+          subject: subject,
+        };
+      }
+    });
+
+    setRows(weeksData);
     setPage(0);
 
-    if (fetchedData.length > 0) {
-      const filledWeeks = fetchedData.filter(
-        (item) => item.topic || item.subtopic || item.resources.length > 0,
-      ).length;
-      // const totalWeeks = fetchedData.length;
-      // notify.success(`Found ${totalWeeks}-week scheme (${filledWeeks} weeks with content)`);
-    } else {
-      notify.info('No scheme of work found for the selected criteria');
+    const filledWeeks = weeksData.filter(
+      (item) => item.topic || item.subtopic || item.resources.length > 0,
+    ).length;
+
+    if (filledWeeks > 0) {
+      notify.success(`Loaded 15-week scheme (${filledWeeks} weeks with content)`);
     }
   };
 
@@ -396,21 +415,22 @@ const SchemeOfWork = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} align="center">
-                        <Alert
-                          severity="info"
-                          sx={{
-                            mb: 3,
-                            justifyContent: 'center',
-                            textAlign: 'center',
-                            '& .MuiAlert-icon': {
-                              mr: 1.5,
-                            },
-                          }}
-                        >
-                          {!allFiltersSelected
-                            ? 'Please select Programme, Class, and Subject, then click "Fetch Scheme of Work" to load data'
-                            : 'No scheme of work found. Click "Fetch Scheme of Work" to load data for the selected criteria'}
-                        </Alert>
+                        {!allFiltersSelected && (
+                          <Alert
+                            severity="info"
+                            sx={{
+                              mb: 3,
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              '& .MuiAlert-icon': {
+                                mr: 1.5,
+                              },
+                            }}
+                          >
+                            Please select Programme, Class, and Subject, then click "Fetch Scheme of
+                            Work"
+                          </Alert>
+                        )}
                       </TableCell>
                     </TableRow>
                   )}

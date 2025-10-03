@@ -6,12 +6,10 @@ import {
   Tabs, 
   Tab,
 } from '@mui/material';
-
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import SubjectAnalytics from "./component/SubjectAnalytics";
 import SubjectCurriculum from "./component/SubjectCurriculum";
-
 
 const BCrumb = [
   {
@@ -34,14 +32,12 @@ const ClassSubjectManager = () => {
     <PageContainer title="Subject Manager" description="Manage subjects">
       <Breadcrumb title="Subject Manager" items={BCrumb} />
       
-      {/* Analytics Cards */}
       <Box sx={{ mb: 3 }}>
         <SubjectAnalytics selectedTab={mainTab} />
       </Box>
       
       <Card variant="outlined">
         <CardContent>
-          {/* Main Tabs */}
           <Tabs 
             value={mainTab} 
             onChange={handleMainTabChange} 
@@ -64,7 +60,6 @@ const ClassSubjectManager = () => {
             <Tab label="TVET" />
           </Tabs>
 
-          {/* Subject Curriculum Content */}
           <SubjectCurriculum selectedTab={mainTab} />
         </CardContent>
       </Card>

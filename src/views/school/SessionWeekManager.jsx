@@ -192,7 +192,6 @@ const SessionWeekManager = () => {
         </CardContent>
       </Card>
 
-      {/* Keep existing modals */}
       <ConfirmationDialog
         open={confirmDialogOpen}
         onClose={handleCloseConfirmDialog}

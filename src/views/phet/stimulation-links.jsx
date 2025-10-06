@@ -147,9 +147,7 @@ const ManagePhETLinks = () => {
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-            <Typography variant="h5">
-              Manage Gateways
-            </Typography>
+            <Typography variant="h5">Manage Gateways</Typography>
             <Button
               variant="contained"
               color="primary"
@@ -159,7 +157,7 @@ const ManagePhETLinks = () => {
                 fontSize: { xs: '0.95rem', md: '1rem' },
               }}
             >
-               Add New Link
+              Add New Link
             </Button>
           </Box>
         }
@@ -200,7 +198,7 @@ const ManagePhETLinks = () => {
                 <TableBody>
                   {paginatedRows.length > 0 ? (
                     paginatedRows.map((row, index) => (
-                      <TableRow key={row.id}>
+                      <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>{row.title}</TableCell>
                         <TableCell>{row.topic}</TableCell>

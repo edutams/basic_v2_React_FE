@@ -37,24 +37,24 @@ const ManageWeeks = () => {
       notify.warning('Please select the first Monday of the term', 'Warning');
       return;
     }
-    
+
     const startDate = new Date(firstMonday);
     const generatedWeeks = [];
-    
+
     for (let i = 0; i < 11; i++) {
       const weekStart = new Date(startDate);
-      weekStart.setDate(startDate.getDate() + (i * 7));
-      
+      weekStart.setDate(startDate.getDate() + i * 7);
+
       const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 4); 
-      
+      weekEnd.setDate(weekStart.getDate() + 4);
+
       generatedWeeks.push({
         week: `Week ${i + 1}`,
         startsOn: weekStart.toISOString().split('T')[0],
         endsOn: weekEnd.toISOString().split('T')[0],
       });
     }
-    
+
     setWeeks(generatedWeeks);
   };
 
@@ -72,7 +72,8 @@ const ManageWeeks = () => {
   return (
     <Box>
       <Alert severity="info" sx={{ mb: 2 }} icon={false}>
-        Set the first Monday of the term from the calendar, click generate weeks, then click "Save All".
+        Set the first Monday of the term from the calendar, click generate weeks, then click "Save
+        All".
       </Alert>
 
       <Stack direction="row" spacing={2} mb={3} alignItems="center">
@@ -82,19 +83,14 @@ const ManageWeeks = () => {
           onChange={(e) => setFirstMonday(e.target.value)}
           sx={{ minWidth: 200 }}
         />
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleGenerateWeeks}
-          size="small"
-        >
+        <Button variant="contained" color="primary" onClick={handleGenerateWeeks} size="small">
           Generate Weeks
         </Button>
       </Stack>
 
       <Paper variant="outlined">
         <TableContainer sx={{ maxHeight: 400 }}>
-          <Table sx={{ whiteSpace: 'nowrap' }} stickyHeader>
+          <Table sx={{ whiteSpace: 'nowrap' }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
@@ -104,7 +100,7 @@ const ManageWeeks = () => {
             </TableHead>
             <TableBody>
               {weeks.map((week, index) => (
-                <TableRow key={index} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                <TableRow key={index} hover>
                   <TableCell>{week.week}</TableCell>
                   <TableCell>
                     <TextField

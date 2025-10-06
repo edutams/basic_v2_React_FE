@@ -27,12 +27,7 @@ import {
 } from '@mui/icons-material';
 import ParentCard from '../../shared/ParentCard';
 
-const TopicPanel = ({
-  selectedSubject,
-  topics = [],
-  onAction,
-  isLoading = false,
-}) => {
+const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -57,12 +52,12 @@ const TopicPanel = ({
   };
 
   const filteredTopics = topics.filter((topic) =>
-    topic.name.toLowerCase().includes(searchTerm.toLowerCase())
+    topic.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedTopics = filteredTopics.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    page * rowsPerPage + rowsPerPage,
   );
 
   return (
@@ -77,14 +72,12 @@ const TopicPanel = ({
                   {selectedSubject.name}
                 </Box>
               </>
-            ) : 'Manage Topics'}
+            ) : (
+              'Manage Topics'
+            )}
           </Typography>
           {selectedSubject && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => onAction('create')}
-            >
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => onAction('create')}>
               Add New Topic
             </Button>
           )}
@@ -126,25 +119,29 @@ const TopicPanel = ({
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>Topic</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                      Action
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {paginatedTopics.length > 0 ? (
                     paginatedTopics.map((t) => (
-                      <TableRow key={t.id}>
+                      <TableRow key={t.id} hover>
                         <TableCell>{t.name}</TableCell>
                         <TableCell>
                           <Chip
                             label={t.status.toUpperCase()}
                             size="small"
                             sx={{
-                              bgcolor: t.status === 'active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.error.light,
-                              color: t.status === 'active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.error.main,
+                              bgcolor:
+                                t.status === 'active'
+                                  ? (theme) => theme.palette.success.light
+                                  : (theme) => theme.palette.error.light,
+                              color:
+                                t.status === 'active'
+                                  ? (theme) => theme.palette.success.main
+                                  : (theme) => theme.palette.error.main,
                               borderRadius: '8px',
                             }}
                           />
@@ -176,14 +173,11 @@ const TopicPanel = ({
                   ) : (
                     <TableRow>
                       <TableCell colSpan={3} align="center">
-                        <Box  sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
-                           <Typography variant="body2" color="textSecondary">
-                          No topics found
-                        </Typography>
+                        <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                          <Typography variant="body2" color="textSecondary">
+                            No topics found
+                          </Typography>
                         </Box>
-                        
-                       
-                       
                       </TableCell>
                     </TableRow>
                   )}

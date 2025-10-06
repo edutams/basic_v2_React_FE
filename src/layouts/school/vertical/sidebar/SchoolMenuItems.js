@@ -42,12 +42,6 @@ const SchoolMenuItems = [
         icon: IconUsers,
         href: '/school-dashboard/scheme-of-work',
       },
-      // {
-      //   id: uniqueId(),
-      //   title: 'Stimulation Links',
-      //   icon: IconPoint,
-      //   href: '/phet/stimulation-links',
-      // },
     ],
   },
 

@@ -142,7 +142,13 @@ const HolidayTab = ({ handleRefresh }) => {
 
   return (
     <Grid container spacing={3}>
-      <Card sx={{ p: 2 }}>
+      <Card
+        sx={{
+          p: 2,
+          // backgroundColor: (theme) =>
+          //   theme.palette.mode === 'dark' ? '#1e293b' : 'background.paper',
+        }}
+      >
         <Box
           sx={{
             display: 'grid',
@@ -151,7 +157,7 @@ const HolidayTab = ({ handleRefresh }) => {
               sm: '1fr 1fr',
               md: 'repeat(2, 1fr)',
             },
-            gap: 2,
+            gap: 3,
             Width: '100%',
             mb: 3,
           }}

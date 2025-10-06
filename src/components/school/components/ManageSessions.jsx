@@ -16,9 +16,7 @@ import {
   TablePagination,
 } from '@mui/material';
 
-import {
-  MoreVert as MoreVertIcon,
-} from '@mui/icons-material';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -46,23 +44,21 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
   useEffect(() => {
     if (updatedSession) {
       if (updatedSession.name) {
-        setSessions(prev => {
-          const existingIndex = prev.findIndex(session => session.id === updatedSession.id);
+        setSessions((prev) => {
+          const existingIndex = prev.findIndex((session) => session.id === updatedSession.id);
           if (existingIndex >= 0) {
-            return prev.map(session => 
-              session.id === updatedSession.id ? updatedSession : session
+            return prev.map((session) =>
+              session.id === updatedSession.id ? updatedSession : session,
             );
           } else {
             return [...prev, updatedSession];
           }
         });
       } else if (updatedSession.sessionTerm) {
-        setSessionTerms(prev => {
-          const existingIndex = prev.findIndex(term => term.id === updatedSession.id);
+        setSessionTerms((prev) => {
+          const existingIndex = prev.findIndex((term) => term.id === updatedSession.id);
           if (existingIndex >= 0) {
-            return prev.map(term => 
-              term.id === updatedSession.id ? updatedSession : term
-            );
+            return prev.map((term) => (term.id === updatedSession.id ? updatedSession : term));
           } else {
             return [...prev, updatedSession];
           }
@@ -72,10 +68,7 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
   }, [updatedSession]);
 
   const currentData = activeTab === 0 ? sessions : sessionTerms;
-  const paginatedData = currentData.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const paginatedData = currentData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleMenuClick = (event, session) => {
     setAnchorEl(event.currentTarget);
@@ -117,38 +110,37 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
                   {activeTab === 0 ? 'Session Name' : 'Session/Term'}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginatedData.length > 0 ? (
                 paginatedData.map((item, index) => (
-                  <TableRow key={item.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                  <TableRow key={item.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      {activeTab === 0 ? item.name : item.sessionTerm}
-                    </TableCell>
+                    <TableCell>{activeTab === 0 ? item.name : item.sessionTerm}</TableCell>
                     <TableCell>
                       <Chip
                         label={String(item.status || 'UNKNOWN')}
                         // color={item.status === 'ACTIVE' ? 'success' : 'default'}
                         sx={{
-                          color: item.status === 'ACTIVE'
-                            ? (theme) => theme.palette.success.main
-                            : (theme) => theme.palette.error.main,
-                          bgcolor: item.status === 'ACTIVE'
-                            ? (theme) => theme.palette.success.light
-                            : (theme) => theme.palette.error.light,
+                          color:
+                            item.status === 'ACTIVE'
+                              ? (theme) => theme.palette.success.main
+                              : (theme) => theme.palette.error.main,
+                          bgcolor:
+                            item.status === 'ACTIVE'
+                              ? (theme) => theme.palette.success.light
+                              : (theme) => theme.palette.error.light,
                           borderRadius: '8px',
                         }}
                         size="small"
                       />
                     </TableCell>
                     <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleMenuClick(e, item)}
-                      >
+                      <IconButton size="small" onClick={(e) => handleMenuClick(e, item)}>
                         <MoreVertIcon size={16} />
                       </IconButton>
                     </TableCell>
@@ -166,7 +158,7 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         <TablePagination
           component="div"
           count={currentData.length}
@@ -178,18 +170,17 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
         />
       </Paper>
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={() => handleAction(
-          selectedSession?.status === 'ACTIVE' ? 'deactivate' : 'activate', 
-          selectedSession
-        )}>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+        <MenuItem
+          onClick={() =>
+            handleAction(
+              selectedSession?.status === 'ACTIVE' ? 'deactivate' : 'activate',
+              selectedSession,
+            )
+          }
+        >
           {selectedSession?.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
         </MenuItem>
-        
       </Menu>
     </Box>
   );

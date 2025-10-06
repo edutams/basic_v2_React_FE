@@ -24,8 +24,6 @@ import {
   IconButton,
   Button,
   Badge,
-
-
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -37,8 +35,6 @@ import useTableEmptyState from '../../hooks/useTableEmptyState';
 
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-
-
 
 import {
   flexRender,
@@ -101,7 +97,7 @@ const Agent = () => {
       'Remo North',
       'Sagamu',
       'Yewa North',
-      'Yewa South'
+      'Yewa South',
     ],
     'Lagos State': [
       'Agege',
@@ -123,8 +119,8 @@ const Agent = () => {
       'Ojo',
       'Oshodi-Isolo',
       'Shomolu',
-      'Surulere'
-    ]
+      'Surulere',
+    ],
   };
 
   const availableLgas = useMemo(() => {
@@ -179,20 +175,16 @@ const Agent = () => {
     });
   }, [data, agentLevel, country, state, lga, referer, search]);
 
-  const emptyState = useTableEmptyState(
-    filteredData,
-    hasActiveFilters,
-    !!search,
-    search,
-    {
-      defaultMessage: "No agents found",
-      defaultDescription: "No agents have been registered yet. Click 'Register Agent' to add your first agent.",
-      filterMessage: "No agents match your filters",
-      filterDescription: "No agents match your current filters. Try adjusting your search criteria or clearing the filters.",
-      searchMessage: `No agents found for "${search}"`,
-      searchDescription: "Try adjusting your search terms or clearing the search to see all agents."
-    }
-  );
+  const emptyState = useTableEmptyState(filteredData, hasActiveFilters, !!search, search, {
+    defaultMessage: 'No agents found',
+    defaultDescription:
+      "No agents have been registered yet. Click 'Register Agent' to add your first agent.",
+    filterMessage: 'No agents match your filters',
+    filterDescription:
+      'No agents match your current filters. Try adjusting your search criteria or clearing the filters.',
+    searchMessage: `No agents found for "${search}"`,
+    searchDescription: 'Try adjusting your search terms or clearing the search to see all agents.',
+  });
 
   const handleAddAgent = (newAgent) => {
     setData((prevData) => [...prevData, newAgent]);
@@ -287,7 +279,6 @@ const Agent = () => {
       prevData.map((agent) => (agent.s_n === updatedAgent.s_n ? updatedAgent : agent)),
     );
   };
-
 
   const [editRowId, setEditRowId] = useState(null);
   const [editedData, setEditedData] = useState(null);
@@ -766,7 +757,7 @@ const Agent = () => {
               <TableBody>
                 {!emptyState.isEmpty ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
+                    <TableRow key={row.id} hover>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}

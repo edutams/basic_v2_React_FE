@@ -58,7 +58,7 @@ const HolidayTable = ({ holidays = [], onHolidayAction, isLoading = false }) => 
             </TableRow>
           ) : holidays.length > 0 ? (
             holidays.map((holiday, index) => (
-              <TableRow key={holiday.id} sx={{ '&:hover': { backgroundColor: 'grey.50' } }}>
+              <TableRow key={holiday.id} hover>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{holiday.sessionTerm}</TableCell>
                 <TableCell>{holiday.weekName}</TableCell>

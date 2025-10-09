@@ -20,12 +20,11 @@ const SchoolMenuItems = [
     icon: IconChartPie,
     href: '/school-dashboard',
   },
-  
+
   {
     navlabel: true,
     subheader: 'Module Navigation',
   },
-  
 
     {
       id: uniqueId(),
@@ -50,6 +49,18 @@ const SchoolMenuItems = [
           icon: IconUsers,
           href: '/school-dashboard/class-subject-manager',
         },
+      //   {
+      //   id: uniqueId(),
+      //   title: 'School Calendar',
+      //   icon: IconUsers,
+      //   href: '/school-dashboard/session-week-manager',
+      // },
+          {
+        id: uniqueId(),
+        title: 'Scheme Of Work',
+        icon: IconUsers,
+        href: '/school-dashboard/scheme-of-work',
+      },
         // {
         //   id: uniqueId(),
         //   title: 'Stimulation Links',
@@ -58,6 +69,21 @@ const SchoolMenuItems = [
         // },
       ],
     },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Setup',
+  //   icon: IconUsers,
+  //   children: [
+      
+    
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Stimulation Links',
+  //       icon: IconPoint,
+  //       href: '/phet/stimulation-links',
+  //     },
+  //   ],
+  // },
 
   {
     id: uniqueId(),

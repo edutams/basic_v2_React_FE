@@ -33,39 +33,39 @@ const SchoolLayout = () => {
   return (
     <>
       {/* <LoadingBar /> */}
-    
-    <MainWrapper>
-      <SchoolSidebar />
-      <PageWrapper
-        className="page-wrapper"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '100vh',
-          ...(isCollapse === "mini-sidebar" && {
-            [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
-          }),
-        }}
-      >
-        <SchoolHeader />
-        <Container
+
+      <MainWrapper>
+        <SchoolSidebar />
+        <PageWrapper
+          className="page-wrapper"
           sx={{
-            maxWidth: '100%!important',
-            overflowX: 'auto',
-            flex: 1,
             display: 'flex',
             flexDirection: 'column',
+            minHeight: '100vh',
+            ...(isCollapse === 'mini-sidebar' && {
+              [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
+            }),
           }}
         >
-          <Box mt={4} sx={{ flex: 1, overflowX: 'auto' }}>
-            <Outlet />
-          </Box>
-        </Container>
-        <DashboardFooter />
-      </PageWrapper>
-      {/* <Customizer /> */}
-    </MainWrapper>
-      </>
+          <SchoolHeader />
+          <Container
+            sx={{
+              maxWidth: '100%!important',
+              overflowX: 'auto',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Box mt={4} sx={{ flex: 1, overflowX: 'auto' }}>
+              <Outlet />
+            </Box>
+          </Container>
+          <DashboardFooter />
+        </PageWrapper>
+        {/* <Customizer /> */}
+      </MainWrapper>
+    </>
   );
 };
 

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Tabs, 
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Tabs,
   Tab,
   TextField,
   Button,
-  Stack
+  Stack,
 } from '@mui/material';
 
 import PageContainer from 'src/components/container/PageContainer';
@@ -33,7 +33,7 @@ const BCrumb = [
 ];
 
 const SessionWeekManager = () => {
-  const [mainTab, setMainTab] = useState(0); 
+  const [mainTab, setMainTab] = useState(0);
   const [sessionTab, setSessionTab] = useState(0);
   const [openModal, setOpenModal] = useState(false);
   const [modalActionType, setModalActionType] = useState('');
@@ -53,18 +53,18 @@ const SessionWeekManager = () => {
   const handleConfirmStatusChange = () => {
     if (selectedSession && confirmAction) {
       const newStatus = confirmAction === 'activate' ? 'ACTIVE' : 'INACTIVE';
-      
+
       // Update the session status
       const updatedSession = {
         ...selectedSession,
-        status: newStatus
+        status: newStatus,
       };
-      
+
       console.log(`${confirmAction} session:`, updatedSession);
-      
+
       // Trigger refresh to update the data
       setSessionsData(updatedSession);
-      
+
       setConfirmDialogOpen(false);
       setConfirmAction('');
       setSelectedSession(null);
@@ -130,7 +130,7 @@ const SessionWeekManager = () => {
   return (
     <PageContainer title="School Calendar" description="Manage academic sessions and weeks">
       <Breadcrumb title="School Calendar" items={BCrumb} />
-      
+
       <Card variant="outlined">
         <CardContent>
           {/* Main Tabs */}
@@ -148,23 +148,23 @@ const SessionWeekManager = () => {
                       <Typography variant="h5" fontWeight={600}>
                         Manage Sessions
                       </Typography>
-                      <Button 
-                        variant="contained" 
-                        color="primary" 
+                      <Button
+                        variant="contained"
+                        color="primary"
                         size="small"
                         onClick={handleAddSessionClick}
                       >
                         {sessionTab === 0 ? 'Add Session' : 'Set Session/Term'}
                       </Button>
                     </Box>
-                    
+
                     <Tabs value={sessionTab} onChange={handleSessionTabChange} sx={{ mb: 2 }}>
                       <Tab label="All Sessions" />
                       <Tab label="Session/Term" />
                     </Tabs>
 
-                    <ManageSessions 
-                      activeTab={sessionTab} 
+                    <ManageSessions
+                      activeTab={sessionTab}
                       onSessionAction={handleSessionAction}
                       updatedSession={sessionsData}
                     />
@@ -180,7 +180,7 @@ const SessionWeekManager = () => {
                         Manage Weeks
                       </Typography>
                     </Box>
-                    
+
                     <ManageWeeks />
                   </CardContent>
                 </Card>
@@ -188,19 +188,18 @@ const SessionWeekManager = () => {
             </Grid>
           )}
 
-          {mainTab === 1 && (
-            <HolidayTab handleRefresh={handleRefresh} />
-          )}
+          {mainTab === 1 && <HolidayTab handleRefresh={handleRefresh} />}
         </CardContent>
       </Card>
 
-      {/* Keep existing modals */}
       <ConfirmationDialog
         open={confirmDialogOpen}
         onClose={handleCloseConfirmDialog}
         onConfirm={handleConfirmStatusChange}
         title={confirmAction === 'activate' ? 'Activate Session' : 'Deactivate Session'}
-        message={`Are you sure you want to ${confirmAction} "${selectedSession?.name || selectedSession?.sessionTerm}"?`}
+        message={`Are you sure you want to ${confirmAction} "${
+          selectedSession?.name || selectedSession?.sessionTerm
+        }"?`}
         confirmText={confirmAction === 'activate' ? 'Activate' : 'Deactivate'}
         cancelText="Cancel"
         severity={confirmAction === 'activate' ? 'primary' : 'error'}

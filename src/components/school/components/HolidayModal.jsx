@@ -1,105 +1,152 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  Chip
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Button, TextField, Grid, IconButton, Card, Chip } from '@mui/material';
+import { IconTrash } from '@tabler/icons';
 import ReusableModal from '../../shared/ReusableModal';
-import HolidayForm from './HolidayForm';
-import HolidayTable from './HolidayTable';
 import PropTypes from 'prop-types';
 
-const HolidayModal = ({ open, onClose, handleRefresh, actionType }) => {
-  const [holidays, setHolidays] = useState([
+const HolidayModal = ({
+  open,
+  onClose,
+  onSubmit,
+  initialValues = {},
+  mode = 'create',
+  activeTerm = 'First',
+}) => {
+  useEffect(() => {
+    console.log('HolidayModal activeTerm changed:', activeTerm);
+  }, [activeTerm]);
+
+  React.useEffect(() => {
+    if (mode === 'edit' && initialValues && Object.keys(initialValues).length > 0) {
+      setHolidayForms([
+        {
+          id: 1,
+          holiday_date: initialValues.holiday_date || '',
+          holiday_description: initialValues.holiday_description || '',
+        },
+      ]);
+    } else if (mode === 'create') {
+      setHolidayForms([
+        {
+          id: 1,
+          holiday_date: '',
+          holiday_description: '',
+        },
+      ]);
+    }
+  }, [initialValues, mode, open]);
+
+  const [holidayForms, setHolidayForms] = useState([
     {
       id: 1,
-      sessionTerm: '2023/2024 - First Term',
-      weekName: 'Week 2',
-      holiday_description: 'Maulud Nabiyyu',
-      holiday_date: '2023-09-27'
+      holiday_date: initialValues.holiday_date || '',
+      holiday_description: initialValues.holiday_description || '',
     },
-    {
-      id: 2,
-      sessionTerm: '2023/2024 - First Term',
-      weekName: 'Week 3',
-      holiday_description: 'Independence Day',
-      holiday_date: '2023-10-02'
-    },
-    {
-      id: 3,
-      sessionTerm: '2023/2024 - First Term',
-      weekName: 'Week 3',
-      holiday_description: 'Teachers Day',
-      holiday_date: '2023-10-05'
-    }
   ]);
 
-  const modalConfig = {
-    holiday: { title: 'Set Holiday', size: 'large' },
-  };
-
-  const config = modalConfig[actionType] || { title: 'Set Holiday', size: 'large' };
-
-  const handleHolidaySubmit = (values) => {
-    const newHoliday = {
+  const handleAddMore = () => {
+    const newForm = {
       id: Date.now(),
-      sessionTerm: '2023/2024 - First Term',
-      weekName: 'Week 4',
-      holiday_description: values.holiday_description,
-      holiday_date: values.holiday_date
+      holiday_date: '',
+      holiday_description: '',
     };
-    setHolidays([...holidays, newHoliday]);
+    setHolidayForms([...holidayForms, newForm]);
   };
 
-  const handleHolidayAction = (action, holiday) => {
-    if (action === 'delete') {
-      setHolidays(holidays.filter(h => h.id !== holiday.id));
+  const handleRemoveForm = (formId) => {
+    if (holidayForms.length > 1) {
+      setHolidayForms(holidayForms.filter((form) => form.id !== formId));
     }
+  };
+
+  const handleFormChange = (formId, field, value) => {
+    setHolidayForms(
+      holidayForms.map((form) => (form.id === formId ? { ...form, [field]: value } : form)),
+    );
   };
 
   const handleSave = () => {
-    console.log('Saving holidays:', holidays);
-    handleRefresh();
+    const validForms = holidayForms.filter((form) => form.holiday_date && form.holiday_description);
+
+    if (validForms.length > 0) {
+      if (mode === 'edit') {
+        // For edit
+        onSubmit(validForms[0]);
+      } else {
+        // For create
+        validForms.forEach((form) => {
+          onSubmit(form);
+        });
+      }
+    }
+  };
+
+  const handleCancel = () => {
     onClose();
   };
 
   const renderHolidayContent = () => (
     <Box sx={{ p: 3 }}>
-      <Box display="flex" alignItems="center" gap={1} mb={3}>
-        <Typography variant="h6" fontWeight={600}>
-          Set Holiday
-        </Typography>
-        <Chip 
-          label="?" 
-          size="small" 
-          sx={{ 
-            backgroundColor: '#2196f3', 
-            color: 'white',
-            minWidth: '24px',
-            height: '24px'
-          }} 
-        />
-      </Box>
+      <Typography>{mode === 'edit'}</Typography>
 
-      <Box sx={{ mb: 3, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
-        <HolidayForm onSubmit={handleHolidaySubmit} />
-      </Box>
+      {mode === 'create' && (
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="contained" onClick={handleAddMore}>
+            Add More
+          </Button>
+        </Box>
+      )}
 
-      <HolidayTable 
-        holidays={holidays}
-        onHolidayAction={handleHolidayAction}
-      />
+      <Card variant="outlined" sx={{ p: 2, width: '100%' }}>
+        {holidayForms.map((form, index) => (
+          <Box key={form.id} sx={{ mb: index < holidayForms.length - 1 ? 2 : 0 }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} sm={12}>
+                <TextField
+                  label="Date"
+                  type="date"
+                  value={form.holiday_date}
+                  onChange={(e) => handleFormChange(form.id, 'holiday_date', e.target.value)}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={8}>
+                <TextField
+                  label="Description"
+                  value={form.holiday_description}
+                  onChange={(e) => handleFormChange(form.id, 'holiday_description', e.target.value)}
+                  fullWidth
+                  placeholder="Enter holiday description"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={2}>
+                {holidayForms.length > 1 && (
+                  <IconButton
+                    onClick={() => handleRemoveForm(form.id)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <IconTrash size={16} />
+                  </IconButton>
+                )}
+              </Grid>
+            </Grid>
+          </Box>
+        ))}
+      </Card>
 
       <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-        <Button variant="outlined" onClick={onClose}>
+        <Button variant="outlined" onClick={handleCancel}>
           Cancel
         </Button>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           onClick={handleSave}
+          disabled={holidayForms.every((form) => !form.holiday_date || !form.holiday_description)}
         >
-          Save
+          {mode === 'edit' ? 'Update' : 'Save'}
         </Button>
       </Box>
     </Box>
@@ -109,14 +156,50 @@ const HolidayModal = ({ open, onClose, handleRefresh, actionType }) => {
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={config.title}
-      size={config.size}
+      title={
+        mode === 'edit' ? (
+          <>
+            Edit Holiday -{' '}
+            <Box
+              component="span"
+              sx={{
+                color: 'primary.main',
+                fontWeight: 'bold',
+                fontSize: '0.9rem',
+              }}
+            >
+              {activeTerm} Term
+            </Box>
+          </>
+        ) : (
+          <>
+            Set Holiday -{' '}
+            <Typography
+              component="span"
+              color="primary.main"
+              sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
+            >
+              {activeTerm} Term
+            </Typography>
+          </>
+        )
+      }
+      size="medium"
       disableEnforceFocus
       disableAutoFocus
     >
       {renderHolidayContent()}
     </ReusableModal>
   );
+};
+
+HolidayModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  initialValues: PropTypes.object,
+  mode: PropTypes.oneOf(['create', 'edit']),
+  activeTerm: PropTypes.string,
 };
 
 export default HolidayModal;

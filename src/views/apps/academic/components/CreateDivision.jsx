@@ -161,7 +161,7 @@ const CreateDivision = ({ actionType = 'create', selectedDivision, onSubmit, onC
           Cancel
         </Button>
         <Button type="submit" variant="contained" disabled={formik.isSubmitting}>
-          {formik.isSubmitting ? 'Creating...' : (actionType === 'update' ? 'Update Division' : 'Create Division')}
+          {formik.isSubmitting ? 'Creating...' : (actionType === 'edit' ? 'Update Division' : 'Create Division')}
         </Button>
       </Box>
         

@@ -63,7 +63,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">Manage Subjects</Typography>
-          <Button variant="contained"  onClick={onAddSubject}>
+          <Button variant="contained" onClick={onAddSubject}>
             Add New Subject
           </Button>
         </Box>
@@ -107,9 +107,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
               <TableBody>
                 {paginatedSubjects.length > 0 ? (
                   paginatedSubjects.map((subject, index) => (
-                    <TableRow
-                      key={subject.id || index}     
-                    >
+                    <TableRow key={subject.id || index} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>{subject.name}</TableCell>
                       <TableCell>
@@ -144,7 +142,12 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                           open={Boolean(anchorEl) && selectedSubject?.id === subject.id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={() => { onSelect(subject); handleMenuClose(); }}>
+                          <MenuItem
+                            onClick={() => {
+                              onSelect(subject);
+                              handleMenuClose();
+                            }}
+                          >
                             Manage Topics
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('edit', subject)}>

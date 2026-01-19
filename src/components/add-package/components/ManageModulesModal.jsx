@@ -265,7 +265,8 @@ const ManageModulesModal = ({
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 2,
               p: 2,
-              backgroundColor: '#f9f9f9',
+              // backgroundColor: '#f9f9f9',
+              backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f9f9f9'),
               borderRadius: 2,
             }}
           >

@@ -31,11 +31,7 @@ import {
 import ParentCard from '../../shared/ParentCard';
 import PropTypes from 'prop-types';
 
-const ModuleTable = ({ 
-  modules = [], 
-  onModuleAction,
-  isLoading = false 
-}) => {
+const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
@@ -45,12 +41,12 @@ const ModuleTable = ({
 
   const filteredModules = useMemo(() => {
     return modules.filter((module) => {
-      const matchesSearch = 
+      const matchesSearch =
         module.mod_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         module.mod_description.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesStatus = statusFilter === 'all' || module.mod_status === statusFilter;
-      
+
       return matchesSearch && matchesStatus;
     });
   }, [modules, searchTerm, statusFilter]);
@@ -84,16 +80,10 @@ const ModuleTable = ({
   const hasActiveFilters = searchTerm !== '' || statusFilter !== 'all';
 
   return (
-    <ParentCard 
+    <ParentCard
       title={
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Typography variant="h6">
-            Manage Modules
-          </Typography>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Typography variant="h6">Manage Modules</Typography>
           <Button
             variant="contained"
             color="primary"
@@ -109,12 +99,7 @@ const ModuleTable = ({
       }
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3,
-           display: 'flex',
-           flexWrap: 'wrap',
-           gap: 2,
-           alignItems: 'center',
-        }}>
+        <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="Search modules..."
             value={searchTerm}
@@ -131,30 +116,27 @@ const ModuleTable = ({
             // sx={{ flexGrow: 1, minWidth: 250 }}
           />
 
-<FormControl sx={{ minWidth: 120 }} size="small">
-  <Select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-    displayEmpty
-    startAdornment={<FilterListIcon sx={{ mr: 1 }} />}
-    renderValue={
-      statusFilter !== "" ? undefined : () => <span style={{ color: '#aaa' }}>Select Status</span>
-    }
-  >
-    <MenuItem value="">Select Status</MenuItem>
-    <MenuItem value="all">All Status</MenuItem>
-    <MenuItem value="active">Active</MenuItem>
-    <MenuItem value="inactive">Inactive</MenuItem>
-  </Select>
-</FormControl>
-
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              displayEmpty
+              startAdornment={<FilterListIcon sx={{ mr: 1 }} />}
+              renderValue={
+                statusFilter !== ''
+                  ? undefined
+                  : () => <span style={{ color: '#aaa' }}>Select Status</span>
+              }
+            >
+              <MenuItem value="">Select Status</MenuItem>
+              <MenuItem value="all">All Status</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </Select>
+          </FormControl>
 
           {hasActiveFilters && (
-            <Button
-              variant="outlined"
-              onClick={clearFilters}
-              sx={{ whiteSpace: 'nowrap' }}
-            >
+            <Button variant="outlined" onClick={clearFilters} sx={{ whiteSpace: 'nowrap' }}>
               Clear Filters
             </Button>
           )}
@@ -171,7 +153,9 @@ const ModuleTable = ({
                   <TableCell sx={{ fontWeight: 'bold' }}>Link</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Permission</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -183,7 +167,7 @@ const ModuleTable = ({
                   </TableRow>
                 ) : paginatedModules.length > 0 ? (
                   paginatedModules.map((module, index) => (
-                    <TableRow key={module.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                    <TableRow hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight="medium">
@@ -208,12 +192,14 @@ const ModuleTable = ({
                       <TableCell>
                         <Chip
                           sx={{
-                            bgcolor: module.mod_status === 'active'
-                              ? (theme) => theme.palette.success.light
-                              : (theme) => theme.palette.error.light,
-                            color: module.mod_status === 'active'
-                              ? (theme) => theme.palette.success.main
-                              : (theme) => theme.palette.error.main,
+                            bgcolor:
+                              module.mod_status === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              module.mod_status === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                           }}
                           size="small"
@@ -232,13 +218,17 @@ const ModuleTable = ({
                           <MenuItem onClick={() => handleAction('update', module)}>
                             Edit Module
                           </MenuItem>
-                          <MenuItem 
-                            onClick={() => handleAction(
-                              module.mod_status === 'active' ? 'deactivate' : 'activate', 
-                              module
-                            )}
+                          <MenuItem
+                            onClick={() =>
+                              handleAction(
+                                module.mod_status === 'active' ? 'deactivate' : 'activate',
+                                module,
+                              )
+                            }
                           >
-                            {module.mod_status === 'active' ? 'Deactivate Module' : 'Activate Module'}
+                            {module.mod_status === 'active'
+                              ? 'Deactivate Module'
+                              : 'Activate Module'}
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('delete', module)}>
                             Delete Module

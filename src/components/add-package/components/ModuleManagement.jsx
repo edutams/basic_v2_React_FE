@@ -203,7 +203,7 @@ const ModuleManagement = ({
                 </TableHead>
                 <TableBody>
                   {paginatedModules.map((mod, index) => (
-                    <TableRow key={mod.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                    <TableRow key={mod.id} hover>
                       <TableCell>{modulePage * moduleRowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight="medium">

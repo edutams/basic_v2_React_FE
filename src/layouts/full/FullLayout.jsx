@@ -39,8 +39,7 @@ const FullLayout = () => {
     <>
       <LoadingBar />
 
-      <MainWrapper
-      >
+      <MainWrapper>
         {/* ------------------------------------------- */}
         {/* Sidebar */}
         {/* ------------------------------------------- */}
@@ -54,7 +53,7 @@ const FullLayout = () => {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            ...(isCollapse === "mini-sidebar" && {
+            ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),
           }}
@@ -67,7 +66,7 @@ const FullLayout = () => {
           {activeLayout === 'horizontal' ? <Navigation /> : ''}
           <Container
             sx={{
-              maxWidth: isLayout === 'boxed' ? '1300px !important'  : '100%!important',
+              maxWidth: isLayout === 'boxed' ? '1300px !important' : '100%!important',
               overflowX: 'auto',
               flex: 1,
               display: 'flex',
@@ -92,11 +91,10 @@ const FullLayout = () => {
           {/* ------------------------------------------- */}
           <DashboardFooter />
 
-          {/* <Customizer /> */}
+          <Customizer />
         </PageWrapper>
       </MainWrapper>
     </>
-
   );
 };
 

@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext } from 'react';
 import {
   Fab,
   Drawer,
@@ -10,28 +10,24 @@ import {
   Typography,
   Tooltip,
   Stack,
-} from "@mui/material";
+} from '@mui/material';
 
-import Box from "@mui/material/Box";
-import { IconX, IconSettings, IconCheck } from "@tabler/icons-react";
+import Box from '@mui/material/Box';
+import { IconX, IconSettings, IconCheck } from '@tabler/icons-react';
 
-import { CustomizerContext } from "../../../../context/CustomizerContext";
-import Scrollbar from "../../../../components/custom-scroll/Scrollbar";
-import WbSunnyTwoToneIcon from "@mui/icons-material/WbSunnyTwoTone";
-import DarkModeTwoToneIcon from "@mui/icons-material/DarkModeTwoTone";
-import SwipeLeftAltTwoToneIcon from "@mui/icons-material/SwipeLeftAltTwoTone";
-import SwipeRightAltTwoToneIcon from "@mui/icons-material/SwipeRightAltTwoTone";
-import AspectRatioTwoToneIcon from "@mui/icons-material/AspectRatioTwoTone";
-import CallToActionTwoToneIcon from "@mui/icons-material/CallToActionTwoTone";
-import ViewSidebarTwoToneIcon from "@mui/icons-material/ViewSidebarTwoTone";
-import WebAssetTwoToneIcon from "@mui/icons-material/WebAssetTwoTone";
-import {
-  ViewComfyTwoTone,
-  PaddingTwoTone,
-  BorderOuter,
-} from "@mui/icons-material";
+import { CustomizerContext } from '../../../../context/CustomizerContext';
+import Scrollbar from '../../../../components/custom-scroll/Scrollbar';
+import WbSunnyTwoToneIcon from '@mui/icons-material/WbSunnyTwoTone';
+import DarkModeTwoToneIcon from '@mui/icons-material/DarkModeTwoTone';
+import SwipeLeftAltTwoToneIcon from '@mui/icons-material/SwipeLeftAltTwoTone';
+import SwipeRightAltTwoToneIcon from '@mui/icons-material/SwipeRightAltTwoTone';
+import AspectRatioTwoToneIcon from '@mui/icons-material/AspectRatioTwoTone';
+import CallToActionTwoToneIcon from '@mui/icons-material/CallToActionTwoTone';
+import ViewSidebarTwoToneIcon from '@mui/icons-material/ViewSidebarTwoTone';
+import WebAssetTwoToneIcon from '@mui/icons-material/WebAssetTwoTone';
+import { ViewComfyTwoTone, PaddingTwoTone, BorderOuter } from '@mui/icons-material';
 
-const SidebarWidth = "320px";
+const SidebarWidth = '320px';
 
 const Customizer = () => {
   const [showDrawer, setShowDrawer] = useState(false);
@@ -51,62 +47,62 @@ const Customizer = () => {
     setIsLayout,
     isBorderRadius,
     setIsBorderRadius,
-    setActiveTheme
+    setActiveTheme,
   } = useContext(CustomizerContext);
 
   const StyledBox = styled(Box)(({ theme }) => ({
     boxShadow: theme.shadows[8],
-    padding: "20px",
-    cursor: "pointer",
-    justifyContent: "center",
-    display: "flex",
-    transition: "0.1s ease-in",
+    padding: '20px',
+    cursor: 'pointer',
+    justifyContent: 'center',
+    display: 'flex',
+    transition: '0.1s ease-in',
     fontSize: '15px',
-    border: "1px solid rgba(145, 158, 171, 0.12)",
-    "&:hover": {
-      transform: "scale(1.05)",
+    border: '1px solid rgba(145, 158, 171, 0.12)',
+    '&:hover': {
+      transform: 'scale(1.05)',
     },
   }));
 
   const thColors = [
     {
       id: 1,
-      bgColor: "#1e4db7",
-      disp: "BLUE_THEME",
+      bgColor: '#1e4db7',
+      disp: 'BLUE_THEME',
     },
     {
       id: 2,
-      bgColor: "#0074BA",
-      disp: "AQUA_THEME",
+      bgColor: '#0074BA',
+      disp: 'AQUA_THEME',
     },
     {
       id: 3,
-      bgColor: "#763EBD",
-      disp: "PURPLE_THEME",
+      bgColor: '#763EBD',
+      disp: 'PURPLE_THEME',
     },
     {
       id: 4,
-      bgColor: "#ff5c8e",
-      disp: "PINK_THEME",
+      bgColor: '#ff5c8e',
+      disp: 'PINK_THEME',
     },
     {
       id: 5,
-      bgColor: "#01C0C8",
-      disp: "CYAN_THEME",
+      bgColor: '#01C0C8',
+      disp: 'CYAN_THEME',
     },
     {
       id: 6,
-      bgColor: "#FA896B",
-      disp: "ORANGE_THEME",
+      bgColor: '#FA896B',
+      disp: 'ORANGE_THEME',
     },
   ];
 
   const addAttributeToBody = (cvalue) => {
-    document.body.setAttribute("data-color-theme", cvalue);
+    document.body.setAttribute('data-color-theme', cvalue);
   };
 
   return (
-    (<div>
+    <div>
       {/* ------------------------------------------- */}
       {/* --Floating Button to open customizer ------ */}
       {/* ------------------------------------------- */}
@@ -114,7 +110,7 @@ const Customizer = () => {
         <Fab
           color="primary"
           aria-label="settings"
-          sx={{ position: "fixed", right: "25px", bottom: "15px" }}
+          sx={{ position: 'fixed', right: '25px', bottom: '15px' }}
           onClick={() => setShowDrawer(true)}
         >
           <IconSettings stroke={1.5} />
@@ -129,20 +125,17 @@ const Customizer = () => {
             sx: {
               width: SidebarWidth,
             },
-          }
+          },
         }}
       >
         {/* ------------------------------------------- */}
         {/* ------------ Customizer Sidebar ------------- */}
         {/* ------------------------------------------- */}
-        <Scrollbar sx={{ height: "calc(100vh - 5px)" }}>
-          <Box
-            p={2}
-            display="flex"
-            justifyContent={"space-between"}
-            alignItems="center"
-          >
-            <Typography variant="h4" fontWeight={600}>Settings</Typography>
+        <Scrollbar sx={{ height: 'calc(100vh - 5px)' }}>
+          <Box p={2} display="flex" justifyContent={'space-between'} alignItems="center">
+            <Typography variant="h4" fontWeight={600}>
+              Settings
+            </Typography>
 
             <IconButton color="inherit" onClick={() => setShowDrawer(false)}>
               <IconX size="1rem" />
@@ -156,29 +149,13 @@ const Customizer = () => {
             <Typography variant="h5" fontWeight={500} gutterBottom>
               Theme Option
             </Typography>
-            <Stack direction={"row"} gap={2} my={2}>
-              <StyledBox
-                onClick={() => setActiveMode("light")}
-                display="flex"
-                gap={1}
-              >
-                <WbSunnyTwoToneIcon
-                  color={
-                    activeMode === "light" ? "primary" : "inherit"
-                  }
-                />
+            <Stack direction={'row'} gap={2} my={2}>
+              <StyledBox onClick={() => setActiveMode('light')} display="flex" gap={1}>
+                <WbSunnyTwoToneIcon color={activeMode === 'light' ? 'primary' : 'inherit'} />
                 Light
               </StyledBox>
-              <StyledBox
-                onClick={() => setActiveMode("dark")}
-                display="flex"
-                gap={1}
-              >
-                <DarkModeTwoToneIcon
-                  color={
-                    activeMode === "dark" ? "primary" : "inherit"
-                  }
-                />
+              <StyledBox onClick={() => setActiveMode('dark')} display="flex" gap={1}>
+                <DarkModeTwoToneIcon color={activeMode === 'dark' ? 'primary' : 'inherit'} />
                 Dark
               </StyledBox>
             </Stack>
@@ -190,27 +167,12 @@ const Customizer = () => {
             <Typography variant="h5" fontWeight={500} gutterBottom>
               Theme Direction
             </Typography>
-            <Stack direction={"row"} gap={2} my={2}>
-              <StyledBox
-                onClick={() => setActiveDir("ltr")}
-                display="flex"
-                gap={1}
-              >
-                <SwipeLeftAltTwoToneIcon
-                  color={activeDir === "ltr" ? "primary" : "inherit"}
-                />{" "}
-                LTR
+            <Stack direction={'row'} gap={2} my={2}>
+              <StyledBox onClick={() => setActiveDir('ltr')} display="flex" gap={1}>
+                <SwipeLeftAltTwoToneIcon color={activeDir === 'ltr' ? 'primary' : 'inherit'} /> LTR
               </StyledBox>
-              <StyledBox
-                onClick={() => setActiveDir("rtl")}
-
-                display="flex"
-                gap={1}
-              >
-                <SwipeRightAltTwoToneIcon
-                  color={activeDir === "rtl" ? "primary" : "inherit"}
-                />{" "}
-                RTL
+              <StyledBox onClick={() => setActiveDir('rtl')} display="flex" gap={1}>
+                <SwipeRightAltTwoToneIcon color={activeDir === 'rtl' ? 'primary' : 'inherit'} /> RTL
               </StyledBox>
             </Stack>
 
@@ -229,23 +191,18 @@ const Customizer = () => {
                       <Box
                         sx={{
                           backgroundColor: thcolor.bgColor,
-                          width: "25px",
-                          height: "25px",
-                          borderRadius: "60px !important",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          display: "flex",
-                          color: "white",
+                          width: '25px',
+                          height: '25px',
+                          borderRadius: '60px !important',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          display: 'flex',
+                          color: 'white',
                         }}
                         aria-label={`${thcolor.bgColor}`}
                         onClick={() => setActiveTheme(thcolor.disp)}
-
                       >
-                        {activeTheme === thcolor.disp ? (
-                          <IconCheck width={13} />
-                        ) : (
-                          ""
-                        )}
+                        {activeTheme === thcolor.disp ? <IconCheck width={13} /> : ''}
                       </Box>
                     </Tooltip>
                   </StyledBox>
@@ -259,30 +216,13 @@ const Customizer = () => {
             <Typography variant="h5" fontWeight={500} gutterBottom>
               Layout Type
             </Typography>
-            <Stack direction={"row"} gap={2} my={2}>
-              <StyledBox
-                onClick={() => setActiveLayout("vertical")}
-                display="flex"
-                gap={1}
-              >
-                <ViewComfyTwoTone
-                  color={
-                    activeLayout === 'vertical' ? "primary" : "inherit"
-                  }
-                />
+            <Stack direction={'row'} gap={2} my={2}>
+              <StyledBox onClick={() => setActiveLayout('vertical')} display="flex" gap={1}>
+                <ViewComfyTwoTone color={activeLayout === 'vertical' ? 'primary' : 'inherit'} />
                 Vertical
               </StyledBox>
-              <StyledBox
-                onClick={() => setActiveLayout("horizontal")}
-
-                display="flex"
-                gap={1}
-              >
-                <PaddingTwoTone
-                  color={
-                    activeLayout === 'horizontal' ? "primary" : "inherit"
-                  }
-                />
+              <StyledBox onClick={() => setActiveLayout('horizontal')} display="flex" gap={1}>
+                <PaddingTwoTone color={activeLayout === 'horizontal' ? 'primary' : 'inherit'} />
                 Horizontal
               </StyledBox>
             </Stack>
@@ -293,29 +233,13 @@ const Customizer = () => {
             <Typography variant="h5" fontWeight={500} gutterBottom>
               Container Option
             </Typography>
-            <Stack direction={"row"} gap={2} my={2}>
-              <StyledBox
-                onClick={() => setIsLayout("boxed")}
-
-                display="flex"
-                gap={1}
-              >
-                <CallToActionTwoToneIcon
-                  color={
-                    isLayout === "boxed" ? "primary" : "inherit"
-                  }
-                />
+            <Stack direction={'row'} gap={2} my={2}>
+              <StyledBox onClick={() => setIsLayout('boxed')} display="flex" gap={1}>
+                <CallToActionTwoToneIcon color={isLayout === 'boxed' ? 'primary' : 'inherit'} />
                 Boxed
               </StyledBox>
-              <StyledBox
-                onClick={() => setIsLayout("full")}
-
-                display="flex"
-                gap={1}
-              >
-                <AspectRatioTwoToneIcon
-                  color={isLayout === "full" ? "primary" : "inherit"}
-                />
+              <StyledBox onClick={() => setIsLayout('full')} display="flex" gap={1}>
+                <AspectRatioTwoToneIcon color={isLayout === 'full' ? 'primary' : 'inherit'} />
                 Full
               </StyledBox>
             </Stack>
@@ -327,34 +251,29 @@ const Customizer = () => {
             {/* ------------------------------------------- */}
             {/* ------------ Theme Color setting ------------- */}
             {/* ------------------------------------------- */}
-            {activeLayout === "horizontal" ? (
-              ""
+            {activeLayout === 'horizontal' ? (
+              ''
             ) : (
               <>
                 <Typography variant="h5" fontWeight={500} gutterBottom>
                   Sidebar Type
                 </Typography>
-                <Stack direction={"row"} gap={2} my={2}>
+                <Stack direction={'row'} gap={2} my={2}>
                   <StyledBox
                     onClick={() => {
-                      setIsCollapse('full-sidebar')
+                      setIsCollapse('full-sidebar');
                     }}
                     display="flex"
                     gap={1}
                   >
                     <WebAssetTwoToneIcon
-                      color={isCollapse === "full-sidebar" ? "primary" : "inherit"}
+                      color={isCollapse === 'full-sidebar' ? 'primary' : 'inherit'}
                     />
                     Full
                   </StyledBox>
-                  <StyledBox
-                    onClick={() => setIsCollapse("mini-sidebar")}
-
-                    display="flex"
-                    gap={1}
-                  >
+                  <StyledBox onClick={() => setIsCollapse('mini-sidebar')} display="flex" gap={1}>
                     <ViewSidebarTwoToneIcon
-                      color={isCollapse === "mini-sidebar" ? "primary" : "inherit"}
+                      color={isCollapse === 'mini-sidebar' ? 'primary' : 'inherit'}
                     />
                     mini
                   </StyledBox>
@@ -365,27 +284,13 @@ const Customizer = () => {
             <Typography variant="h5" fontWeight={500} gutterBottom>
               Card With
             </Typography>
-            <Stack direction={"row"} gap={2} my={2}>
-              <StyledBox
-                onClick={() => setIsCardShadow(false)}
-
-                display="flex"
-                gap={1}
-              >
-                <BorderOuter
-                  color={!isCardShadow ? "primary" : "inherit"}
-                />
+            <Stack direction={'row'} gap={2} my={2}>
+              <StyledBox onClick={() => setIsCardShadow(false)} display="flex" gap={1}>
+                <BorderOuter color={!isCardShadow ? 'primary' : 'inherit'} />
                 Border
               </StyledBox>
-              <StyledBox
-                onClick={() => setIsCardShadow(true)}
-
-                display="flex"
-                gap={1}
-              >
-                <CallToActionTwoToneIcon
-                  color={isCardShadow ? "primary" : "inherit"}
-                />
+              <StyledBox onClick={() => setIsCardShadow(true)} display="flex" gap={1}>
+                <CallToActionTwoToneIcon color={isCardShadow ? 'primary' : 'inherit'} />
                 Shadow
               </StyledBox>
             </Stack>
@@ -409,7 +314,7 @@ const Customizer = () => {
           </Box>
         </Scrollbar>
       </Drawer>
-    </div>)
+    </div>
   );
 };
 

@@ -64,9 +64,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
     <ParentCard
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6">
-           Available Gateways
-          </Typography>
+          <Typography variant="h6">Available Gateways</Typography>
           <Button
             variant="contained"
             //  startIcon={<AddIcon />}
@@ -116,7 +114,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                   </TableRow>
                 ) : paginatedGateways.length > 0 ? (
                   paginatedGateways.map((gateway, index) => (
-                    <TableRow key={gateway.id}>
+                    <TableRow key={gateway.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>{gateway.gateway_name}</TableCell>
                       <TableCell>

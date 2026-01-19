@@ -27,11 +27,7 @@ import {
 import ParentCard from '../../shared/ParentCard';
 import PropTypes from 'prop-types';
 
-const PackageTable = ({ 
-  packages = [], 
-  onPackageAction,
-  isLoading = false 
-}) => {
+const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => {
   const [pacSearch, setPacSearch] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -41,12 +37,12 @@ const PackageTable = ({
   const filteredPackages = packages.filter(
     (pkg) =>
       pkg.pac_name.toLowerCase().includes(pacSearch.toLowerCase()) ||
-      pkg.pac_description.toLowerCase().includes(pacSearch.toLowerCase())
+      pkg.pac_description.toLowerCase().includes(pacSearch.toLowerCase()),
   );
 
   const paginatedPackages = filteredPackages.slice(
     page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
+    page * rowsPerPage + rowsPerPage,
   );
 
   const handleMenuOpen = (event, pkg) => {
@@ -65,7 +61,7 @@ const PackageTable = ({
   };
 
   return (
-    <ParentCard 
+    <ParentCard
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">All Packages</Typography>
@@ -107,7 +103,9 @@ const PackageTable = ({
                   <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -119,26 +117,35 @@ const PackageTable = ({
                   </TableRow>
                 ) : paginatedPackages.length > 0 ? (
                   paginatedPackages.map((pkg, index) => (
-                    <TableRow key={pkg.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                    <TableRow key={pkg.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <i className={pkg.pac_icon} style={{ fontSize: '18px', marginRight: '8px' }} />
-                          <Typography variant="body2" fontWeight="medium">{pkg.pac_name}</Typography>
+                          <i
+                            className={pkg.pac_icon}
+                            style={{ fontSize: '18px', marginRight: '8px' }}
+                          />
+                          <Typography variant="body2" fontWeight="medium">
+                            {pkg.pac_name}
+                          </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="textSecondary">{pkg.pac_description}</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          {pkg.pac_description}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
                           sx={{
-                            bgcolor: pkg.pac_status === 'active'
-                              ? (theme) => theme.palette.success.light
-                              : (theme) => theme.palette.error.light,
-                            color: pkg.pac_status === 'active'
-                              ? (theme) => theme.palette.success.main
-                              : (theme) => theme.palette.error.main,
+                            bgcolor:
+                              pkg.pac_status === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              pkg.pac_status === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                           }}
                           size="small"
@@ -163,13 +170,17 @@ const PackageTable = ({
                           <MenuItem onClick={() => handleAction('manageModules', pkg)}>
                             Manage Modules
                           </MenuItem>
-                          <MenuItem 
-                            onClick={() => handleAction(
-                              pkg.pac_status === 'active' ? 'deactivate' : 'activate', 
-                              pkg
-                            )}
+                          <MenuItem
+                            onClick={() =>
+                              handleAction(
+                                pkg.pac_status === 'active' ? 'deactivate' : 'activate',
+                                pkg,
+                              )
+                            }
                           >
-                            {pkg.pac_status === 'active' ? 'Deactivate Package' : 'Activate Package'}
+                            {pkg.pac_status === 'active'
+                              ? 'Deactivate Package'
+                              : 'Activate Package'}
                           </MenuItem>
                         </Menu>
                       </TableCell>
@@ -178,7 +189,9 @@ const PackageTable = ({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      <Typography variant="body1" color="textSecondary">No packages found</Typography>
+                      <Typography variant="body1" color="textSecondary">
+                        No packages found
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 )}

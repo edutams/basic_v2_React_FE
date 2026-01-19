@@ -2,7 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
-import PackageManager from '../views/pages/package-manager/PackageManager';
+import PackageManager from '../views/package-manager/PackageManager';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -210,6 +210,7 @@ const Router = [
       { path: '/dashboards/school/sub-school/:id', exact: false, element: <ViewSchool /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
+      { path: '/dashboards/package-manager', element: <PackageManager /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/notes', element: <Notes /> },
       { path: '/apps/calendar', element: <Calendar /> },
@@ -234,7 +235,6 @@ const Router = [
       { path: '/pages/casl', element: <RollbaseCASL /> },
       { path: '/pages/pricing', element: <Pricing /> },
       { path: '/pages/account-settings', element: <AccountSetting /> },
-      { path: '/pages/package-manager', element: <PackageManager /> },
       { path: '/pages/faq', element: <Faq /> },
       { path: '/forms/form-elements/autocomplete', element: <MuiAutoComplete /> },
       { path: '/forms/form-elements/button', element: <MuiButton /> },

@@ -11,10 +11,10 @@ import Divider from '@mui/material/Divider';
 
 // components
 import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons';
-import BlankCard from '../../../components/shared/BlankCard';
-import ModulesTab from '../../modules/Modules';
-import PackageTab from '../../package/Package';
-import PlanTab from '../../plan/Plan';
+import BlankCard from '../../components/shared/BlankCard';
+import ModulesTab from '../modules/Modules';
+import PackageTab from '../package/Package';
+import PlanTab from '../plan/Plan';
 
 const BCrumb = [
   {

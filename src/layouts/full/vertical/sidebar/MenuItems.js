@@ -93,7 +93,7 @@ const Menuitems = [
     id: uniqueId(),
     title: 'Package Manager',
     icon: IconListTree,
-    href: '/pages/package-manager',
+    href: '/dashboards/package-manager',
   },
   {
     id: uniqueId(),

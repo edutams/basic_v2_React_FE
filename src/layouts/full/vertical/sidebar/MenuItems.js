@@ -77,7 +77,7 @@ const Menuitems = [
     icon: IconChartPie,
     href: '/dashboards/analytical',
   },
-   {
+  {
     id: uniqueId(),
     title: 'School',
     icon: IconSchool,
@@ -91,30 +91,17 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Modules',
+    title: 'Package Manager',
     icon: IconListTree,
-    href: '/dashboards/modules',
+    href: '/pages/package-manager',
   },
-  {
-    id: uniqueId(),
-    title: 'Package',
-    icon: IconPackage,
-    href: '/dashboards/package',
-  },
-  {
-    id: uniqueId(),
-    title: 'Plan',
-    icon: IconListCheck,
-    href: '/dashboards/plan',
-  },
-  
   {
     id: uniqueId(),
     title: 'My Plan',
     icon: IconMap,
     href: '/dashboards/my-plan',
   },
- {
+  {
     id: uniqueId(),
     title: 'Session',
     icon: IconCalendarTime,
@@ -132,19 +119,19 @@ const Menuitems = [
     icon: IconWallet,
     href: '/dashboards/gateway',
   },
-    {
+  {
     id: uniqueId(),
     title: 'Chat',
     icon: IconMessage2,
     href: '/dashboards/chat',
   },
-   {
+  {
     id: uniqueId(),
     title: 'Mail',
     icon: IconMail,
     href: '/dashboards/mail',
   },
-   {
+  {
     id: uniqueId(),
     title: 'PHET Stimulation',
     icon: IconAppWindow,

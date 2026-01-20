@@ -4,14 +4,12 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 
-// Validation schema for sessions (minimal, as original has no validation)
 const sessionValidationSchema = Yup.object({
   sessionName: Yup.string().required('Session name is required'),
   status: Yup.string().required('Status is required'),
   isCurrent: Yup.boolean().nullable(),
 });
 
-// Generate incremental ID for sessions
 const getNextId = () => {
   const lastId = parseInt(localStorage.getItem('lastSessionId')) || 0;
   const newId = lastId + 1;

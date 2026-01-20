@@ -1,32 +1,34 @@
 import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
+const SchoolDashboardMain = Loadable(
+  lazy(() => import('../views/school-dashboard/SchoolDashboard')),
+);
+const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
+const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
+import PackageManager from '../views/package-manager/PackageManager';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
-
+const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 /* ****Pages***** */
 const AnalyticalDashboard = Loadable(lazy(() => import('../views/dashboard/Analytical')));
 const SchoolDashboard = Loadable(lazy(() => import('../views/dashboard/School')));
 const SessionDashboard = Loadable(lazy(() => import('../views/dashboard/Session')));
 const TermDashboard = Loadable(lazy(() => import('../views/dashboard/Term')));
 const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
-const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern'))); 
+const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
-const Modules = Loadable(lazy(() => import('../views/modules/Modules')));
-const Package = Loadable(lazy(() => import('../views/package/Package')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
-const Plan = Loadable(lazy(() => import('../views/plan/Plan')));
 const MyPlan = Loadable(lazy(() => import('../views/my-plan/MyPlan')));
-const Chat = Loadable(lazy(() => import('../views/chat/Chat')))
-const Mail = Loadable(lazy(() => import('../views/mail/Mail')))
-const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')))
-
-
+const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
+const Mail = Loadable(lazy(() => import('../views/mail/Mail')));
+const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
 
 /* ****Apps***** */
 const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
@@ -39,8 +41,12 @@ const Tickets = Loadable(lazy(() => import('../views/apps/tickets/Tickets')));
 const Contacts = Loadable(lazy(() => import('../views/apps/contacts/Contacts')));
 const Ecommerce = Loadable(lazy(() => import('../views/apps/eCommerce/Ecommerce')));
 const EcommerceDetail = Loadable(lazy(() => import('../views/apps/eCommerce/EcommerceDetail')));
-const EcommerceAddProduct = Loadable(lazy(() => import('../views/apps/eCommerce/EcommerceAddProduct')));
-const EcommerceEditProduct = Loadable(lazy(() => import('../views/apps/eCommerce/EcommerceEditProduct')));
+const EcommerceAddProduct = Loadable(
+  lazy(() => import('../views/apps/eCommerce/EcommerceAddProduct')),
+);
+const EcommerceEditProduct = Loadable(
+  lazy(() => import('../views/apps/eCommerce/EcommerceEditProduct')),
+);
 const EcomProductList = Loadable(lazy(() => import('../views/apps/eCommerce/EcomProductList')));
 const EcomProductCheckout = Loadable(
   lazy(() => import('../views/apps/eCommerce/EcommerceCheckout')),
@@ -163,7 +169,6 @@ const PagePricing = Loadable(lazy(() => import('../views/pages/frontend-pages/Pr
 const BlogPage = Loadable(lazy(() => import('../views/pages/frontend-pages/Blog')));
 const BlogPost = Loadable(lazy(() => import('../views/pages/frontend-pages/BlogPost')));
 
-
 //mui charts
 const BarCharts = Loadable(lazy(() => import('../views/muicharts/barcharts/page')));
 const GaugeCharts = Loadable(lazy(() => import('../views/muicharts/gaugecharts/page')));
@@ -174,11 +179,21 @@ const ScatterCharts = Loadable(lazy(() => import('../views/muicharts/scatterchar
 const SparklineCharts = Loadable(lazy(() => import('../views/muicharts/sparklinecharts/page')));
 
 //mui tree
-const SimpletreeCustomization = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-customization/page')));
-const SimpletreeExpansion = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-expansion/page')));
-const SimpletreeFocus = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-focus/page')));
-const SimpletreeItems = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-items/page')));
-const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')));
+const SimpletreeCustomization = Loadable(
+  lazy(() => import('../views/mui-trees/simpletree/simpletree-customization/page')),
+);
+const SimpletreeExpansion = Loadable(
+  lazy(() => import('../views/mui-trees/simpletree/simpletree-expansion/page')),
+);
+const SimpletreeFocus = Loadable(
+  lazy(() => import('../views/mui-trees/simpletree/simpletree-focus/page')),
+);
+const SimpletreeItems = Loadable(
+  lazy(() => import('../views/mui-trees/simpletree/simpletree-items/page')),
+);
+const SimpletreeSelection = Loadable(
+  lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')),
+);
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
@@ -194,16 +209,14 @@ const Router = [
       { path: '/dashboards/school', exact: true, element: <SchoolDashboard /> },
       { path: '/dashboards/session', exact: true, element: <SessionDashboard /> },
       { path: '/dashboards/term', exact: true, element: <TermDashboard /> },
-      { path: '/dashboards/modules', exact: true, element: <Modules /> },
-      { path: '/dashboards/package', exact: true, element: <Package /> },
       { path: '/dashboards/gateway', exact: true, element: <Gateway /> },
-      { path: '/dashboards/plan', exact: true, element: <Plan /> },
       { path: '/dashboards/my-plan', exact: true, element: <MyPlan /> },
       { path: '/dashboards/chat', exact: true, element: <Chat /> },
       { path: '/dashboards/mail', exact: true, element: <Mail /> },
-      { path: "/dashboards/school/sub-school/:id", exact: false, element: <ViewSchool /> },
+      { path: '/dashboards/school/sub-school/:id', exact: false, element: <ViewSchool /> },
       { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
+      { path: '/dashboards/package-manager', element: <PackageManager /> },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/notes', element: <Notes /> },
       { path: '/apps/calendar', element: <Calendar /> },
@@ -292,7 +305,10 @@ const Router = [
       { path: '/muicharts/piecharts', element: <PieCharts /> },
       { path: '/muicharts/scattercharts', element: <ScatterCharts /> },
       { path: '/muicharts/sparklinecharts', element: <SparklineCharts /> },
-      { path: '/mui-trees/simpletree/simpletree-customization', element: <SimpletreeCustomization /> },
+      {
+        path: '/mui-trees/simpletree/simpletree-customization',
+        element: <SimpletreeCustomization />,
+      },
       { path: '/mui-trees/simpletree/simpletree-expansion', element: <SimpletreeExpansion /> },
       { path: '/mui-trees/simpletree/simpletree-focus', element: <SimpletreeFocus /> },
       { path: '/mui-trees/simpletree/simpletree-items', element: <SimpletreeItems /> },
@@ -300,6 +316,20 @@ const Router = [
       { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
       { path: '/phet/stimulation-links', element: <StimulationLinks /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
+    ],
+  },
+  {
+    path: '/school-dashboard',
+    element: (
+      <ProtectedRoute>
+        <SchoolLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { path: '', element: <SchoolDashboardMain /> },
+      { path: 'session-week-manager', element: <SessionWeekManager /> },
+      { path: 'scheme-of-work', element: <SchemeOfWork /> },
+      // { path: 'students', element: <SchoolStudents /> },
     ],
   },
   {

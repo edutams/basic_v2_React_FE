@@ -44,7 +44,7 @@ const Menuitems = [
         title: 'Modern',
         icon: IconPoint,
         href: '/dashboards/modern',
-      },      
+      },
     ],
   },
   {

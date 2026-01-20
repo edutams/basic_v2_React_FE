@@ -6,7 +6,6 @@ import PropTypes from 'prop-types';
 
 import ConfirmationDialog from '../../shared/ConfirmationDialog';
 
-
 const getModalConfig = (actionType) => {
   const configs = {
     create: {
@@ -36,7 +35,7 @@ const ModuleModal = ({
   actionType,
   selectedModule,
   onModuleUpdate,
-  isLoading = false
+  isLoading = false,
 }) => {
   const modalConfig = getModalConfig(actionType);
 
@@ -88,7 +87,7 @@ const ModuleModal = ({
             isLoading={isLoading}
           />
         );
-        
+
       default:
         return null;
     }
@@ -103,37 +102,33 @@ const ModuleModal = ({
       disableEnforceFocus
       disableAutoFocus
     >
-      {/* {renderContent()} */}
       return (
-  <>
-    {actionType === 'activate' || actionType === 'deactivate' ? (
-      <ConfirmationDialog
-        open={open}
-        onClose={onClose}
-        onConfirm={() =>
-          handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')
-        }
-        title={actionType === 'activate' ? 'Activate Module' : 'Deactivate Module'}
-        message={`Are you sure you want to ${actionType} "${selectedModule?.mod_name}"?`}
-        confirmText={actionType === 'activate' ? 'Activate' : 'Deactivate'}
-        cancelText="Cancel"
-        severity={actionType === 'activate' ? 'theme.palette.primary.main' : 'error'}
-      />
-    ) : (
-      <ReusableModal
-        open={open}
-        onClose={onClose}
-        title={modalConfig.title}
-        size={modalConfig.size}
-        disableEnforceFocus
-        disableAutoFocus
-      >
-        {renderContent()}
-      </ReusableModal>
-    )}
-  </>
-);
-
+      <>
+        {actionType === 'activate' || actionType === 'deactivate' ? (
+          <ConfirmationDialog
+            open={open}
+            onClose={onClose}
+            onConfirm={() => handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')}
+            title={actionType === 'activate' ? 'Activate Module' : 'Deactivate Module'}
+            message={`Are you sure you want to ${actionType} "${selectedModule?.mod_name}"?`}
+            confirmText={actionType === 'activate' ? 'Activate' : 'Deactivate'}
+            cancelText="Cancel"
+            severity={actionType === 'activate' ? 'theme.palette.primary.main' : 'error'}
+          />
+        ) : (
+          <ReusableModal
+            open={open}
+            onClose={onClose}
+            title={modalConfig.title}
+            size={modalConfig.size}
+            disableEnforceFocus
+            disableAutoFocus
+          >
+            {renderContent()}
+          </ReusableModal>
+        )}
+      </>
+      );
     </ReusableModal>
   );
 };

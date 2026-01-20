@@ -73,81 +73,269 @@ const packageLevels = [
 
 // Define module categories
 const moduleCategories = {
-  Dashboard: [
-    { id: 'Dashboard>Chart', label: 'Chart', description: 'View dashboard charts' },
-  ],
+  Dashboard: [{ id: 'Dashboard>Chart', label: 'Chart', description: 'View dashboard charts' }],
   Setup: [
-    { id: 'Setup>Installation Process', label: 'Installation Process', description: 'Manage installation settings' },
-    { id: 'Setup>Academics>School Manager', label: 'School Manager', description: 'Manage school settings' },
-    { id: 'Setup>Academics>Class Manager', label: 'Class Manager', description: 'Manage class settings' },
-    { id: 'Setup>Academics>Division/Programme Manager', label: 'Division/Programme Manager', description: 'Manage divisions or programs' },
-    { id: 'Setup>Academics>Session/Weeks Manager', label: 'Session/Weeks Manager', description: 'Manage sessions and weeks' },
-    { id: 'Setup>Academics>Class Subject Manager', label: 'Class Subject Manager', description: 'Manage class subjects' },
-    { id: 'Setup>Academics>Scheme Of Work', label: 'Scheme Of Work', description: 'Manage scheme of work' },
-    { id: 'Setup>Subscriptions>Manage Subscriptions', label: 'Manage Subscriptions', description: 'Manage subscription plans' },
-    { id: 'Setup>Subscriptions>Transaction History', label: 'Transaction History', description: 'View transaction history' },
-    { id: 'Setup>User Management>Staff Manager', label: 'Staff Manager', description: 'Manage staff accounts' },
-    { id: 'Setup>User Management>Parents Manager', label: 'Parents Manager', description: 'Manage parent accounts' },
-    { id: 'Setup>User Management>Student Manager', label: 'Student Manager', description: 'Manage student accounts' },
-    { id: 'Setup>Roles & Permission', label: 'Roles & Permission', description: 'Manage roles and permissions' },
-    { id: 'Setup>Allocations>Position Allocation', label: 'Position Allocation', description: 'Manage position allocations' },
-    { id: 'Setup>Allocations>Subject-Teacher Allocation', label: 'Subject-Teacher Allocation', description: 'Manage subject-teacher assignments' },
-    { id: 'Setup>Allocations>Class-teacher Allocation', label: 'Class-teacher Allocation', description: 'Manage class-teacher assignments' },
+    {
+      id: 'Setup>Installation Process',
+      label: 'Installation Process',
+      description: 'Manage installation settings',
+    },
+    {
+      id: 'Setup>Academics>School Manager',
+      label: 'School Manager',
+      description: 'Manage school settings',
+    },
+    {
+      id: 'Setup>Academics>Class Manager',
+      label: 'Class Manager',
+      description: 'Manage class settings',
+    },
+    {
+      id: 'Setup>Academics>Division/Programme Manager',
+      label: 'Division/Programme Manager',
+      description: 'Manage divisions or programs',
+    },
+    {
+      id: 'Setup>Academics>Session/Weeks Manager',
+      label: 'Session/Weeks Manager',
+      description: 'Manage sessions and weeks',
+    },
+    {
+      id: 'Setup>Academics>Class Subject Manager',
+      label: 'Class Subject Manager',
+      description: 'Manage class subjects',
+    },
+    {
+      id: 'Setup>Academics>Scheme Of Work',
+      label: 'Scheme Of Work',
+      description: 'Manage scheme of work',
+    },
+    {
+      id: 'Setup>Subscriptions>Manage Subscriptions',
+      label: 'Manage Subscriptions',
+      description: 'Manage subscription plans',
+    },
+    {
+      id: 'Setup>Subscriptions>Transaction History',
+      label: 'Transaction History',
+      description: 'View transaction history',
+    },
+    {
+      id: 'Setup>User Management>Staff Manager',
+      label: 'Staff Manager',
+      description: 'Manage staff accounts',
+    },
+    {
+      id: 'Setup>User Management>Parents Manager',
+      label: 'Parents Manager',
+      description: 'Manage parent accounts',
+    },
+    {
+      id: 'Setup>User Management>Student Manager',
+      label: 'Student Manager',
+      description: 'Manage student accounts',
+    },
+    {
+      id: 'Setup>Roles & Permission',
+      label: 'Roles & Permission',
+      description: 'Manage roles and permissions',
+    },
+    {
+      id: 'Setup>Allocations>Position Allocation',
+      label: 'Position Allocation',
+      description: 'Manage position allocations',
+    },
+    {
+      id: 'Setup>Allocations>Subject-Teacher Allocation',
+      label: 'Subject-Teacher Allocation',
+      description: 'Manage subject-teacher assignments',
+    },
+    {
+      id: 'Setup>Allocations>Class-teacher Allocation',
+      label: 'Class-teacher Allocation',
+      description: 'Manage class-teacher assignments',
+    },
     { id: 'Setup>Activity Log', label: 'Activity Log', description: 'View activity logs' },
-    { id: 'Setup>Student Registration', label: 'Student Registration', description: 'Manage student registrations' },
+    {
+      id: 'Setup>Student Registration',
+      label: 'Student Registration',
+      description: 'Manage student registrations',
+    },
   ],
   Bursary: [
-    { id: 'Bursary>Setup>Payment Instalment', label: 'Payment Instalment', description: 'Manage payment instalments' },
-    { id: 'Bursary>Setup>Payment Name', label: 'Payment Name', description: 'Manage payment names' },
-    { id: 'Bursary>Setup>Bursary Settings', label: 'Bursary Settings', description: 'Configure bursary settings' },
-    { id: 'Bursary>Setup>Student Payment Category', label: 'Student Payment Category', description: 'Manage student payment categories' },
-    { id: 'Bursary>Schedule Fees>Pay Fees', label: 'Pay Fees', description: 'Process fee payments' },
-    { id: 'Bursary>Schedule Fees>Pay Cash', label: 'Pay Cash', description: 'Process cash payments' },
+    {
+      id: 'Bursary>Setup>Payment Instalment',
+      label: 'Payment Instalment',
+      description: 'Manage payment instalments',
+    },
+    {
+      id: 'Bursary>Setup>Payment Name',
+      label: 'Payment Name',
+      description: 'Manage payment names',
+    },
+    {
+      id: 'Bursary>Setup>Bursary Settings',
+      label: 'Bursary Settings',
+      description: 'Configure bursary settings',
+    },
+    {
+      id: 'Bursary>Setup>Student Payment Category',
+      label: 'Student Payment Category',
+      description: 'Manage student payment categories',
+    },
+    {
+      id: 'Bursary>Schedule Fees>Pay Fees',
+      label: 'Pay Fees',
+      description: 'Process fee payments',
+    },
+    {
+      id: 'Bursary>Schedule Fees>Pay Cash',
+      label: 'Pay Cash',
+      description: 'Process cash payments',
+    },
     { id: 'Bursary>History', label: 'History', description: 'View payment history' },
     { id: 'Bursary>Report>Payment List', label: 'Payment List', description: 'View payment lists' },
     { id: 'Bursary>Report>Debtors List', label: 'Debtors List', description: 'View debtors list' },
-    { id: 'Bursary>Student Account>Class Ledger', label: 'Class Ledger', description: 'Manage class ledgers' },
-    { id: 'Bursary>Student Account>Set Schedule', label: 'Set Schedule', description: 'Set payment schedules' },
-    { id: 'Bursary>Student Account>Generate Invoice', label: 'Generate Invoice', description: 'Generate invoices' },
-    { id: 'Bursary>Student Account>Send Invoice', label: 'Send Invoice', description: 'Send invoices to users' },
-    { id: 'Bursary>Student Account>Pay Fees', label: 'Pay Fees', description: 'Process student fee payments' },
-    { id: 'Bursary>Student Account>Pay Cash', label: 'Pay Cash', description: 'Process student cash payments' },
-    { id: 'Bursary>Student Account>Report', label: 'Report', description: 'Generate student account reports' },
-    { id: 'Bursary>Online Transactions>Transaction', label: 'Transaction', description: 'Manage online transactions' },
-    { id: 'Bursary>Online Transactions>Revenue', label: 'Revenue', description: 'View revenue reports' },
-    { id: 'Bursary>Online Transactions>Settlement', label: 'Settlement', description: 'Manage settlements' },
-    { id: 'Bursary>Online Transactions>Reconciliation', label: 'Reconciliation', description: 'Perform reconciliations' },
-    { id: 'Bursary>Wallet>Student', label: 'Student Wallet', description: 'Manage student wallets' },
+    {
+      id: 'Bursary>Student Account>Class Ledger',
+      label: 'Class Ledger',
+      description: 'Manage class ledgers',
+    },
+    {
+      id: 'Bursary>Student Account>Set Schedule',
+      label: 'Set Schedule',
+      description: 'Set payment schedules',
+    },
+    {
+      id: 'Bursary>Student Account>Generate Invoice',
+      label: 'Generate Invoice',
+      description: 'Generate invoices',
+    },
+    {
+      id: 'Bursary>Student Account>Send Invoice',
+      label: 'Send Invoice',
+      description: 'Send invoices to users',
+    },
+    {
+      id: 'Bursary>Student Account>Pay Fees',
+      label: 'Pay Fees',
+      description: 'Process student fee payments',
+    },
+    {
+      id: 'Bursary>Student Account>Pay Cash',
+      label: 'Pay Cash',
+      description: 'Process student cash payments',
+    },
+    {
+      id: 'Bursary>Student Account>Report',
+      label: 'Report',
+      description: 'Generate student account reports',
+    },
+    {
+      id: 'Bursary>Online Transactions>Transaction',
+      label: 'Transaction',
+      description: 'Manage online transactions',
+    },
+    {
+      id: 'Bursary>Online Transactions>Revenue',
+      label: 'Revenue',
+      description: 'View revenue reports',
+    },
+    {
+      id: 'Bursary>Online Transactions>Settlement',
+      label: 'Settlement',
+      description: 'Manage settlements',
+    },
+    {
+      id: 'Bursary>Online Transactions>Reconciliation',
+      label: 'Reconciliation',
+      description: 'Perform reconciliations',
+    },
+    {
+      id: 'Bursary>Wallet>Student',
+      label: 'Student Wallet',
+      description: 'Manage student wallets',
+    },
     { id: 'Bursary>Wallet>School', label: 'School Wallet', description: 'Manage school wallets' },
-    { id: 'Bursary>Payment History', label: 'Payment History', description: 'View detailed payment history' },
+    {
+      id: 'Bursary>Payment History',
+      label: 'Payment History',
+      description: 'View detailed payment history',
+    },
   ],
   Admission: [
-    { id: 'Admission>Setup>Manage Admission', label: 'Manage Admission', description: 'Manage admission settings' },
-    { id: 'Admission>Application Processing', label: 'Application Processing', description: 'Process admission applications' },
-    { id: 'Admission>Admission Report', label: 'Admission Report', description: 'Generate admission reports' },
-    { id: 'Admission>My Application', label: 'My Application', description: 'View own applications' },
+    {
+      id: 'Admission>Setup>Manage Admission',
+      label: 'Manage Admission',
+      description: 'Manage admission settings',
+    },
+    {
+      id: 'Admission>Application Processing',
+      label: 'Application Processing',
+      description: 'Process admission applications',
+    },
+    {
+      id: 'Admission>Admission Report',
+      label: 'Admission Report',
+      description: 'Generate admission reports',
+    },
+    {
+      id: 'Admission>My Application',
+      label: 'My Application',
+      description: 'View own applications',
+    },
   ],
   'Digital Class': [
     { id: 'Digital Class>Live Class', label: 'Live Class', description: 'Manage live classes' },
-    { id: 'Digital Class>Recorded Class', label: 'Recorded Class', description: 'Manage recorded classes' },
+    {
+      id: 'Digital Class>Recorded Class',
+      label: 'Recorded Class',
+      description: 'Manage recorded classes',
+    },
     { id: 'Digital Class>Lesson Note', label: 'Lesson Note', description: 'Manage lesson notes' },
   ],
-  Forum: [
-    { id: 'Forum>Forum', label: 'Forum', description: 'Manage discussion forums' },
-  ],
+  Forum: [{ id: 'Forum>Forum', label: 'Forum', description: 'Manage discussion forums' }],
   Attendance: [
-    { id: 'Attendance>Take Attendance', label: 'Take Attendance', description: 'Record attendance' },
-    { id: 'Attendance>Attendance Report', label: 'Attendance Report', description: 'Generate attendance reports' },
-    { id: 'Attendance>Affective & Psychomotor Domains', label: 'Affective & Psychomotor Domains', description: 'Manage affective and psychomotor assessments' },
+    {
+      id: 'Attendance>Take Attendance',
+      label: 'Take Attendance',
+      description: 'Record attendance',
+    },
+    {
+      id: 'Attendance>Attendance Report',
+      label: 'Attendance Report',
+      description: 'Generate attendance reports',
+    },
+    {
+      id: 'Attendance>Affective & Psychomotor Domains',
+      label: 'Affective & Psychomotor Domains',
+      description: 'Manage affective and psychomotor assessments',
+    },
   ],
   'E-Resources': [
     { id: 'E-Resources>e-Resources', label: 'e-Resources', description: 'Manage e-resources' },
-    { id: 'E-Resources>Video Tutorials', label: 'Video Tutorials', description: 'Manage video tutorials' },
-    { id: 'E-Resources>Lesson Note (Student)', label: 'Lesson Note (Student)', description: 'Manage student lesson notes' },
-    { id: 'E-Resources>Lesson Note (Teacher)', label: 'Lesson Note (Teacher)', description: 'Manage teacher lesson notes' },
+    {
+      id: 'E-Resources>Video Tutorials',
+      label: 'Video Tutorials',
+      description: 'Manage video tutorials',
+    },
+    {
+      id: 'E-Resources>Lesson Note (Student)',
+      label: 'Lesson Note (Student)',
+      description: 'Manage student lesson notes',
+    },
+    {
+      id: 'E-Resources>Lesson Note (Teacher)',
+      label: 'Lesson Note (Teacher)',
+      description: 'Manage teacher lesson notes',
+    },
   ],
   Messaging: [
-    { id: 'Messaging>Manage Messages', label: 'Manage Messages', description: 'Manage messaging system' },
+    {
+      id: 'Messaging>Manage Messages',
+      label: 'Manage Messages',
+      description: 'Manage messaging system',
+    },
   ],
   'My Wards': [
     { id: 'My Wards>My Wards', label: 'My Wards', description: 'Manage ward information' },
@@ -155,12 +343,20 @@ const moduleCategories = {
   Result: [
     { id: 'Result>Setup', label: 'Setup', description: 'Configure result settings' },
     { id: 'Result>Upload Scores', label: 'Upload Scores', description: 'Upload student scores' },
-    { id: 'Result>Result Consideration', label: 'Result Consideration', description: 'Manage result considerations' },
+    {
+      id: 'Result>Result Consideration',
+      label: 'Result Consideration',
+      description: 'Manage result considerations',
+    },
     { id: 'Result>Result Edit', label: 'Result Edit', description: 'Edit student results' },
     { id: 'Result>Score Sheet', label: 'Score Sheet', description: 'Generate score sheets' },
     { id: 'Result>Broadsheet', label: 'Broadsheet', description: 'Generate broadsheets' },
     { id: 'Result>Summary Sheet', label: 'Summary Sheet', description: 'Generate summary sheets' },
-    { id: 'Result>Continuous Assessment', label: 'Continuous Assessment', description: 'Manage continuous assessments' },
+    {
+      id: 'Result>Continuous Assessment',
+      label: 'Continuous Assessment',
+      description: 'Manage continuous assessments',
+    },
     { id: 'Result>Report Card', label: 'Report Card', description: 'Generate report cards' },
     { id: 'Result>Report Sheet', label: 'Report Sheet', description: 'Generate report sheets' },
     { id: 'Result>Comment Bank', label: 'Comment Bank', description: 'Manage comment banks' },
@@ -177,14 +373,38 @@ const moduleCategories = {
     { id: 'Homework>My Homework', label: 'My Homework', description: 'Manage personal homework' },
   ],
   OGSERA: [
-    { id: 'OGSERA>Generate LIN', label: 'Generate LIN', description: 'Generate learner identification numbers' },
-    { id: 'OGSERA>Sync Registration to OGSERA', label: 'Sync Registration to OGSERA', description: 'Sync registrations to OGSERA' },
-    { id: 'OGSERA>Sync Staff to OGSERA', label: 'Sync Staff to OGSERA', description: 'Sync staff to OGSERA' },
-    { id: 'OGSERA>Learners Placement', label: 'Learners Placement', description: 'Manage learner placements' },
+    {
+      id: 'OGSERA>Generate LIN',
+      label: 'Generate LIN',
+      description: 'Generate learner identification numbers',
+    },
+    {
+      id: 'OGSERA>Sync Registration to OGSERA',
+      label: 'Sync Registration to OGSERA',
+      description: 'Sync registrations to OGSERA',
+    },
+    {
+      id: 'OGSERA>Sync Staff to OGSERA',
+      label: 'Sync Staff to OGSERA',
+      description: 'Sync staff to OGSERA',
+    },
+    {
+      id: 'OGSERA>Learners Placement',
+      label: 'Learners Placement',
+      description: 'Manage learner placements',
+    },
     { id: 'OGSERA>BECE Result', label: 'BECE Result', description: 'Manage BECE results' },
-    { id: 'OGSERA>Subject Mapping', label: 'Subject Mapping', description: 'Manage subject mappings' },
+    {
+      id: 'OGSERA>Subject Mapping',
+      label: 'Subject Mapping',
+      description: 'Manage subject mappings',
+    },
     { id: 'OGSERA>Data Update', label: 'Data Update', description: 'Update OGSERA data' },
-    { id: 'OGSERA>Student Transfer', label: 'Student Transfer', description: 'Manage student transfers' },
+    {
+      id: 'OGSERA>Student Transfer',
+      label: 'Student Transfer',
+      description: 'Manage student transfers',
+    },
   ],
 };
 
@@ -379,9 +599,7 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
                           variant="body2"
                           fontWeight="medium"
                           color={
-                            selectedModules.includes(module.id)
-                              ? 'primary.dark'
-                              : 'text.primary'
+                            selectedModules.includes(module.id) ? 'primary.dark' : 'text.primary'
                           }
                           sx={{ mb: 0.5 }}
                         >

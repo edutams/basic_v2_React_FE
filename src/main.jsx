@@ -5,6 +5,7 @@ import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { SnackbarProvider } from './context/SnackbarContext';
+import { AuthProvider } from './context/AuthContext';
 import  ErrorBoundary  from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -20,19 +21,21 @@ async function deferRender() {
 
 deferRender().then(() => {
   ReactDOM.createRoot(document.getElementById('root')).render(
-    
+
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <CustomizerContextProvider>
-      <SnackbarProvider>
-          <Suspense fallback={<Spinner />}>
-          <ErrorBoundary>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
-          </ErrorBoundary>
-          </Suspense>
-      </SnackbarProvider>
-      </CustomizerContextProvider>
+      <AuthProvider>
+        <CustomizerContextProvider>
+        <SnackbarProvider>
+            <Suspense fallback={<Spinner />}>
+            <ErrorBoundary>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </ErrorBoundary>
+            </Suspense>
+        </SnackbarProvider>
+        </CustomizerContextProvider>
+      </AuthProvider>
     </LocalizationProvider>
 
   );

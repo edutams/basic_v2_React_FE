@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import React, { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import {
   Box,
   Menu,
@@ -10,10 +10,13 @@ import {
   Divider,
   Button,
   IconButton,
-  Stack, useMediaQuery
+  Stack,
+  useMediaQuery
 } from '@mui/material';
 import * as dropdownData from './data';
 import { useTheme } from "@mui/material/styles";
+import { useAuth } from '../../../../hooks/useAuth';
+import { useNotification } from '../../../../hooks/useNotification';
 import user1 from '../../../../assets/images/users/1.jpg'
 import bgLearn from '../../../../assets/images/backgrounds/unlimited-bg.png'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -25,15 +28,35 @@ import {
   IconCurrencyDollar,
   IconMail,
   IconShield,
+  IconLogout,
 } from "@tabler/icons-react";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const notify = useNotification();
+
   const handleClick2 = (event) => {
     setAnchorEl2(event.currentTarget);
   };
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const result = logout();
+      if (result.success) {
+        notify.success('Logged out successfully', 'Goodbye!');
+        navigate('/auth/login');
+      } else {
+        notify.error('Logout failed', 'Error');
+      }
+    } catch (error) {
+      notify.error('An error occurred during logout', 'Error');
+    }
+    handleClose2();
   };
 
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
@@ -74,6 +97,12 @@ const Profile = () => {
     },
   ];
 
+  // Get user display name and email
+  const displayName = user?.name || 'User';
+  const firstName = displayName.split(' ')[0];
+  const userEmail = user?.email || 'user@example.com';
+  const userAvatar = user?.avatar || user1;
+
   return (
     <Box display='flex' gap={1}>
       {lgUp ? <Divider orientation="vertical" variant="middle" /> : null}
@@ -93,7 +122,7 @@ const Profile = () => {
         onClick={handleClick2}
       >
         <Avatar
-          src={user1}
+          src={userAvatar}
           alt={"ProfileImg"}
           sx={{
             width: 30,
@@ -124,7 +153,7 @@ const Profile = () => {
               ml: 1,
             }}
           >
-            Johnathan
+            {firstName}
           </Typography>
           <IconChevronDown width="20" height="20" />
         </Box>
@@ -151,16 +180,16 @@ const Profile = () => {
         <Typography variant="h4">User Profile</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
           <Avatar
-            src={user1}
+            src={userAvatar}
             alt={"ProfileImg"}
             sx={{ width: 95, height: 95 }}
           />
           <Box>
             <Typography variant="h4" fontWeight={500} color="textPrimary">
-              Johnathan Doe
+              {displayName}
             </Typography>
             <Typography variant="h6" color="textSecondary">
-              Administrator
+              {user?.role || 'User'}
             </Typography>
             <Typography
               variant="subtitle2"
@@ -170,7 +199,7 @@ const Profile = () => {
               gap={1}
             >
               <IconMail width="18" height="18" />
-              info@flexy.com
+              {userEmail}
             </Typography>
           </Box>
         </Stack>
@@ -257,11 +286,11 @@ const Profile = () => {
 
         <Box mt={2}>
           <Button
-            to="/auth/login"
             variant="outlined"
             color="secondary"
-            component={Link}
             fullWidth
+            onClick={handleLogout}
+            startIcon={<IconLogout width="18" height="18" />}
           >
             Logout
           </Button>

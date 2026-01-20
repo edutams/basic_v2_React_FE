@@ -27,8 +27,9 @@ import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SearchIcon from '@mui/icons-material/Search';
-import SessionModal from '../../components/add-session/component/SessionModal';
+// import SessionModal from '../../components/add-session/component/SessionModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import AddSessionModal from '../../components/school/components/AddSessionModal';
 
 const basicsTableData = [
   { id: 1, sessionName: '2023-2024', status: 'Active', isCurrent: true },
@@ -153,27 +154,25 @@ const Session = () => {
           </Box>
         }
       >
-
-         <TextField
-              placeholder="Search sessions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ flexGrow: 1, mb: 2 }}
-            />
+        <TextField
+          placeholder="Search sessions..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ flexGrow: 1, mb: 2 }}
+        />
         <Paper variant="outlined">
           <TableContainer>
-           
-            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap'}}>
-              <TableHead >
+            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap' }}>
+              <TableHead>
                 <TableRow>
                   <TableCell>
                     <Typography variant="h6">S/N</Typography>
@@ -270,8 +269,8 @@ const Session = () => {
                           No Session available
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
-                          No session have been registered yet. Click 'Register New Session' 
-                            to add a new session.
+                          No session have been registered yet. Click 'Register New Session' to add a
+                          new session.
                         </Typography>
                       </Box>
                     </TableCell>
@@ -294,7 +293,7 @@ const Session = () => {
           </TableContainer>
         </Paper>
 
-        <SessionModal
+        <AddSessionModal
           open={open}
           onClose={handleClose}
           actionType={actionType}

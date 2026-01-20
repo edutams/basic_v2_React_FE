@@ -90,23 +90,10 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Modules',
+    title: 'Package Manager',
     icon: IconListTree,
-    href: '/dashboards/modules',
+    href: '/dashboards/package-manager',
   },
-  {
-    id: uniqueId(),
-    title: 'Package',
-    icon: IconPackage,
-    href: '/dashboards/package',
-  },
-  {
-    id: uniqueId(),
-    title: 'Plan',
-    icon: IconListCheck,
-    href: '/dashboards/plan',
-  },
-
   {
     id: uniqueId(),
     title: 'My Plan',

@@ -21,7 +21,7 @@ const initialModules = [
     id: 3,
     mod_name: 'Academics',
     mod_description: 'Academics',
-    mod_links: { link: 'academics', permission: 'academics.view'},
+    mod_links: { link: 'academics', permission: 'academics.view' },
     mod_status: 'active',
   },
   {
@@ -45,19 +45,25 @@ const initialModules = [
     mod_links: { link: 'academics.division', permission: 'setup.academics.division.view' },
     mod_status: 'active',
   },
-  
+
   {
     id: 7,
     mod_name: 'Session/Weeks Manager',
     mod_description: 'Manage weeks and term/session',
-    mod_links: { link: 'academics.session-week-term', permission: 'setup.academics.session-week-term' },
+    mod_links: {
+      link: 'academics.session-week-term',
+      permission: 'setup.academics.session-week-term',
+    },
     mod_status: 'active',
   },
   {
     id: 8,
     mod_name: 'Class Subject Manager',
     mod_description: 'Manage subjects',
-    mod_links: { link: 'academics.class-subject-manager', permission: 'setup.academics.class-subject-manager' },
+    mod_links: {
+      link: 'academics.class-subject-manager',
+      permission: 'setup.academics.class-subject-manager',
+    },
     mod_status: 'active',
   },
   {
@@ -71,9 +77,9 @@ const initialModules = [
     id: 10,
     mod_name: 'Subscriptions',
     mod_description: 'Subscriptions',
-    mod_links: {link: 'subscriptions', permission: 'subscriptions.view' },
+    mod_links: { link: 'subscriptions', permission: 'subscriptions.view' },
     mod_status: 'active',
-  }
+  },
 ];
 
 const Modules = () => {
@@ -86,15 +92,13 @@ const Modules = () => {
 
     setTimeout(() => {
       if (operation === 'create') {
-        setModules(prev => [...prev, moduleData]);
+        setModules((prev) => [...prev, moduleData]);
         notify.success('Module created successfully', 'Success');
       } else if (operation === 'update') {
-        setModules(prev =>
-          prev.map(mod => mod.id === moduleData.id ? moduleData : mod)
-        );
+        setModules((prev) => prev.map((mod) => (mod.id === moduleData.id ? moduleData : mod)));
         notify.success('Module updated successfully', 'Success');
       } else if (operation === 'delete') {
-        setModules(prev => prev.filter(mod => mod.id !== moduleData.id));
+        setModules((prev) => prev.filter((mod) => mod.id !== moduleData.id));
         notify.success('Module deleted successfully', 'Success');
       }
       setIsLoading(false);
@@ -102,11 +106,7 @@ const Modules = () => {
   };
 
   return (
-    <ModuleManagement
-      modules={modules}
-      onModuleUpdate={handleModuleUpdate}
-      isLoading={isLoading}
-    />
+    <ModuleManagement modules={modules} onModuleUpdate={handleModuleUpdate} isLoading={isLoading} />
   );
 };
 

@@ -62,9 +62,8 @@ import {
   IconTimeline,
   IconMap,
   IconListCheck,
-  IconCalendarTime
+  IconCalendarTime,
 } from '@tabler/icons-react';
-
 
 const Menuitems = [
   {
@@ -103,16 +102,41 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Session',
+    title: 'Calendar',
     icon: IconCalendarTime,
     href: '/dashboards/session',
   },
-  {
-    id: uniqueId(),
-    title: 'Term',
-    icon: IconTimeline,
-    href: '/dashboards/term',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Calendar',
+  //   icon: IconAppWindow,
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Session',
+  //       icon: IconCalendarTime,
+  //       href: '/dashboards/session',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Term',
+  //       icon: IconTimeline,
+  //       href: '/dashboards/term',
+  //     },
+  //   ],
+  // },
+  //  {
+  //     id: uniqueId(),
+  //     title: 'Session',
+  //     icon: IconCalendarTime,
+  //     href: '/dashboards/session',
+  //   },
+  //   {
+  //     id: uniqueId(),
+  //     title: 'Term',
+  //     icon: IconTimeline,
+  //     href: '/dashboards/term',
+  //   },
   {
     id: uniqueId(),
     title: 'Gateway',

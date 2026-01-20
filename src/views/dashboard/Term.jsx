@@ -37,7 +37,7 @@ const basicsTableData = [
   { id: 3, termName: 'Third Term 2023', status: 'Completed', isCurrent: false },
 ];
 
-const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Term' }];
+// const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Term' }];
 
 const Term = () => {
   const [open, setOpen] = useState(false);
@@ -128,7 +128,7 @@ const Term = () => {
 
   return (
     <PageContainer title="Term" description="This is Term page">
-      <Breadcrumb title="Term" items={BCrumb} />
+      {/* <Breadcrumb title="Term" items={BCrumb} /> */}
       <ParentCard
         title={
           <Box
@@ -146,25 +146,23 @@ const Term = () => {
           </Box>
         }
       >
-
-         <TextField
-              placeholder="Search terms..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ flexGrow: 1, mb: 2 }}
-            />
+        <TextField
+          placeholder="Search terms..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ flexGrow: 1, mb: 2 }}
+        />
         <Paper variant="outlined">
           <TableContainer>
-           
             <Table aria-label="term table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>

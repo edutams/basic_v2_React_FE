@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import {
   Typography,
   Box,
+  Tabs,
+  Tab,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   Chip,
-  Paper,
   TableContainer,
   Button,
   IconButton,
@@ -20,27 +22,30 @@ import {
   Alert,
   TextField,
   InputAdornment,
+  Card,
+  CardContent,
 } from '@mui/material';
-import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
+import { IconSchool } from '@tabler/icons-react';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import SearchIcon from '@mui/icons-material/Search';
+
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import SearchIcon from '@mui/icons-material/Search';
-import SessionModal from '../../components/add-session/component/SessionModal';
+import SessionModal from 'src/components/school/components/AddSessionModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
-
-const basicsTableData = [
-  { id: 1, sessionName: '2023-2024', status: 'Active', isCurrent: true },
-  { id: 2, sessionName: '2022-2023', status: 'Completed', isCurrent: false },
-  { id: 3, sessionName: '2021-2022', status: 'Completed', isCurrent: false },
-];
+import Term from 'src/views/dashboard/Term';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Session' }];
 
 const Session = () => {
+  const [mainTab, setMainTab] = useState(0);
   const [open, setOpen] = useState(false);
-  const [sessions, setSessions] = useState(basicsTableData);
+  const [sessions, setSessions] = useState([
+    { id: 1, sessionName: '2023-2024', status: 'Active', isCurrent: true },
+    { id: 2, sessionName: '2022-2023', status: 'Completed', isCurrent: false },
+    { id: 3, sessionName: '2021-2022', status: 'Completed', isCurrent: false },
+  ]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [actionType, setActionType] = useState('create');
@@ -54,12 +59,11 @@ const Session = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  const hasActiveSession = sessions.some((session) => session.status === 'Active');
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+  const handleMainTabChange = (event, newValue) => {
+    setMainTab(newValue);
   };
 
+  const handleChangePage = (event, newPage) => setPage(newPage);
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -79,7 +83,7 @@ const Session = () => {
 
   const handleAddSession = (newSession, action) => {
     if (action === 'update' || actionType === 'update') {
-      setSessions(sessions.map((session) => (session.id === newSession.id ? newSession : session)));
+      setSessions(sessions.map((s) => (s.id === newSession.id ? newSession : s)));
     } else {
       setSessions([...sessions, newSession]);
     }
@@ -117,219 +121,185 @@ const Session = () => {
     }
   };
 
-  // Filter sessions based on searchTerm
   const filteredSessions = sessions.filter((session) =>
     session.sessionName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // Paginate the filtered sessions
   const paginatedSession = filteredSessions.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
   );
 
-  // Reset page on search term change
-  useEffect(() => {
-    setPage(0);
-  }, [searchTerm]);
+  useEffect(() => setPage(0), [searchTerm]);
 
   return (
     <PageContainer title="Session" description="This is Session page">
-      <Breadcrumb title="Session" items={BCrumb} />
-      <ParentCard
-        title={
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            <Typography variant="h5">All Session</Typography>
-            <Button variant="contained" color="primary" onClick={() => handleOpen('create')}>
-              Add New Session
-            </Button>
-          </Box>
-        }
-      >
+      <Breadcrumb title="Calendar" items={BCrumb} />
 
-         <TextField
-              placeholder="Search sessions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              slotProps={{
-                input: {
+      <Card variant="outlined">
+        <CardContent>
+          <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ mb: 3 }}>
+            <Tab label="Sessions" />
+            <Tab label="Term" />
+          </Tabs>
+
+          {mainTab === 0 && (
+            <Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h5">All Sessions</Typography>
+                <Button variant="contained" color="primary" onClick={() => handleOpen('create')}>
+                  Add New Session
+                </Button>
+              </Box>
+
+              <TextField
+                placeholder="Search sessions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
                       <SearchIcon />
                     </InputAdornment>
                   ),
-                },
-              }}
-              sx={{ flexGrow: 1, mb: 2 }}
-            />
-        <Paper variant="outlined">
-          <TableContainer>
-           
-            <Table aria-label="session table" sx={{ whiteSpace: 'nowrap'}}>
-              <TableHead >
-                <TableRow>
-                  <TableCell>
-                    <Typography variant="h6">S/N</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Session Name</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Status</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Is Current</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Action</Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedSession.length > 0 ? (
-                  paginatedSession.map((session, index) => (
-                    <TableRow
-                      key={session.id}
-                      sx={{
-                        '&:hover': { bgcolor: 'grey.50' },
-                        '&:last-child td, &:last-child th': { border: 0 },
-                      }}
-                    >
-                      <TableCell>
-                        <Typography variant="subtitle2">
-                          {page * rowsPerPage + index + 1}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6" fontWeight="400">
-                          {session.sessionName}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          sx={{
-                            bgcolor:
-                              session.status === 'Active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.primary.light,
-                            color:
-                              session.status === 'Active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.primary.main,
-                            borderRadius: '8px',
-                          }}
-                          size="small"
-                          label={session.status || 'Unknown'}
+                }}
+                sx={{ flexGrow: 1, mb: 2 }}
+              />
+
+              <Paper variant="outlined">
+                <TableContainer>
+                  <Table aria-label="session table" sx={{ whiteSpace: 'nowrap' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>S/N</TableCell>
+                        <TableCell>Session Name</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Is Current</TableCell>
+                        <TableCell>Action</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedSession.length > 0 ? (
+                        paginatedSession.map((session, index) => (
+                          <TableRow key={session.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
+                            <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                            <TableCell>{session.sessionName}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={session.status}
+                                size="small"
+                                sx={{
+                                  bgcolor:
+                                    session.status === 'Active'
+                                      ? (theme) => theme.palette.success.light
+                                      : (theme) => theme.palette.primary.light,
+                                  color:
+                                    session.status === 'Active'
+                                      ? (theme) => theme.palette.success.main
+                                      : (theme) => theme.palette.primary.main,
+                                  borderRadius: '8px',
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>{session.isCurrent ? 'Yes' : 'No'}</TableCell>
+                            <TableCell>
+                              <IconButton onClick={(e) => handleActionClick(e, session.id)}>
+                                <MoreVertIcon />
+                              </IconButton>
+                              <Menu
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl) && activeRow === session.id}
+                                onClose={handleActionClose}
+                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                              >
+                                <MenuItem onClick={() => handleOpen('update', session)}>
+                                  Edit Session
+                                </MenuItem>
+                                <MenuItem onClick={() => handleOpenDeleteDialog(session)}>
+                                  Delete Session
+                                </MenuItem>
+                              </Menu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} sx={{ textAlign: 'center', p: 4 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <IconSchool width={48} height={48} color="#757575" />
+                              <Typography variant="h6" sx={{ fontWeight: 'bold', mt: 2 }}>
+                                No Session available
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: '#757575' }}>
+                                No session have been registered yet. Click 'Add New Session' to add
+                                one.
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                    <TableFooter>
+                      <TableRow>
+                        <TablePagination
+                          rowsPerPageOptions={[5, 10, 25]}
+                          count={filteredSessions.length}
+                          rowsPerPage={rowsPerPage}
+                          page={page}
+                          onPageChange={handleChangePage}
+                          onRowsPerPageChange={handleChangeRowsPerPage}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6">{session.isCurrent ? 'Yes' : 'No'}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton onClick={(e) => handleActionClick(e, session.id)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && activeRow === session.id}
-                          onClose={handleActionClose}
-                          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                        >
-                          <MenuItem onClick={() => handleOpen('update', session)}>
-                            Edit Session
-                          </MenuItem>
-                          <MenuItem onClick={() => handleOpenDeleteDialog(session)}>
-                            Delete Session
-                          </MenuItem>
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={10} sx={{ textAlign: 'center', padding: '40px 0' }}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <IconSchool
-                          width={48}
-                          height={48}
-                          color="#757575"
-                          sx={{ marginBottom: '16px' }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 'bold', color: '#757575', marginBottom: '8px' }}
-                        >
-                          No Session available
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
-                          No session have been registered yet. Click 'Register New Session' 
-                            to add a new session.
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredSessions.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                  />
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </TableContainer>
-        </Paper>
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </TableContainer>
+              </Paper>
 
-        <SessionModal
-          open={open}
-          onClose={handleClose}
-          actionType={actionType}
-          selectedSession={selectedSession}
-          onSessionUpdate={handleAddSession}
-          isLoading={false}
-        />
+              <SessionModal
+                open={open}
+                onClose={handleClose}
+                actionType={actionType}
+                selectedSession={selectedSession}
+                onSessionUpdate={handleAddSession}
+                isLoading={false}
+              />
 
-        <ConfirmationDialog
-          open={openDeleteDialog}
-          onClose={() => setOpenDeleteDialog(false)}
-          onConfirm={handleDeleteSession}
-          title="Delete Session"
-          message={`Are you sure you want to delete ${sessionToDelete?.sessionName}? This action is irreversible.`}
-          confirmText="Delete"
-          cancelText="Cancel"
-          confirmColor="error"
-          severity="error"
-        />
+              <ConfirmationDialog
+                open={openDeleteDialog}
+                onClose={() => setOpenDeleteDialog(false)}
+                onConfirm={handleDeleteSession}
+                title="Delete Session"
+                message={`Are you sure you want to delete ${sessionToDelete?.sessionName}?`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                confirmColor="error"
+                severity="error"
+              />
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => setSnackbarOpen(false)}
-            severity={snackbarSeverity}
-            sx={{ width: '100%' }}
-          >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </ParentCard>
+              <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={() => setSnackbarOpen(false)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+              >
+                <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity}>
+                  {snackbarMessage}
+                </Alert>
+              </Snackbar>
+            </Box>
+          )}
+
+          {/* Second Tab */}
+          {mainTab === 1 && <Term />}
+        </CardContent>
+      </Card>
     </PageContainer>
   );
 };

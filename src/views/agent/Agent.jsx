@@ -76,6 +76,18 @@ const Agent = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
 
+  const [hasFiltered, setHasFiltered] = useState(false);
+  const [showAllFilters, setShowAllFilters] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Filter function
+  const applyFilters = () => {
+    // Do your filtering logic here
+    console.log({ agentLevel, country, state, lga, referer, search });
+
+    setHasFiltered(true); // Mark that the filter button has been clicked
+  };
+
   const stateLgaData = {
     'Ogun State': [
       'Abeokuta North',
@@ -635,77 +647,7 @@ const Agent = () => {
           }
         >
           <Grid container spacing={3} mb={3}>
-            <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Agent Level</InputLabel>
-                <Select
-                  value={agentLevel}
-                  label="Agent Level"
-                  onChange={(e) => setAgentLevel(e.target.value)}
-                >
-                  <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="Level 1">Level 1</MenuItem>
-                  <MenuItem value="Level 2">Level 2</MenuItem>
-                  <MenuItem value="Level 3">Level 3</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Country</InputLabel>
-                <Select
-                  value={country}
-                  label="Country"
-                  onChange={(e) => setCountry(e.target.value)}
-                >
-                  <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="optionA">Nigeria</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>State</InputLabel>
-                <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
-                  <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="Ogun State">Ogun State</MenuItem>
-                  <MenuItem value="Lagos State">Lagos State</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>LGA</InputLabel>
-                <Select
-                  value={lga}
-                  label="LGA"
-                  onChange={(e) => setLga(e.target.value)}
-                  disabled={!state}
-                >
-                  <MenuItem value="">-- Choose LGA --</MenuItem>
-                  {availableLgas.map((lgaOption) => (
-                    <MenuItem key={lgaOption} value={lgaOption}>
-                      {lgaOption}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Referer</InputLabel>
-                <Select
-                  value={referer}
-                  label="Referer"
-                  onChange={(e) => setReferer(e.target.value)}
-                >
-                  <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="data1">Odeda</MenuItem>
-                  <MenuItem value="data2">Yewa</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
+            {/* Basic Filters - Always Visible */}
             <Grid size={{ xs: 12, md: 3, sm: 4 }}>
               <TextField
                 fullWidth
@@ -715,12 +657,114 @@ const Agent = () => {
                 variant="outlined"
               />
             </Grid>
+
+            {/* Advanced Filters - Conditionally Visible */}
+            {showAdvancedFilters && (
+              <>
+                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>Agent Level</InputLabel>
+                    <Select
+                      value={agentLevel}
+                      label="Agent Level"
+                      onChange={(e) => setAgentLevel(e.target.value)}
+                    >
+                      <MenuItem value="">-- Select --</MenuItem>
+                      <MenuItem value="Level 1">Level 1</MenuItem>
+                      <MenuItem value="Level 2">Level 2</MenuItem>
+                      <MenuItem value="Level 3">Level 3</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>Country</InputLabel>
+                    <Select
+                      value={country}
+                      label="Country"
+                      onChange={(e) => setCountry(e.target.value)}
+                    >
+                      <MenuItem value="">-- Select --</MenuItem>
+                      <MenuItem value="optionA">Nigeria</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>State</InputLabel>
+                    <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
+                      <MenuItem value="">-- Select --</MenuItem>
+                      <MenuItem value="Ogun State">Ogun State</MenuItem>
+                      <MenuItem value="Lagos State">Lagos State</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>LGA</InputLabel>
+                    <Select
+                      value={lga}
+                      label="LGA"
+                      onChange={(e) => setLga(e.target.value)}
+                      disabled={!state}
+                    >
+                      <MenuItem value="">-- Choose LGA --</MenuItem>
+                      {availableLgas.map((lgaOption) => (
+                        <MenuItem key={lgaOption} value={lgaOption}>
+                          {lgaOption}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>Referer</InputLabel>
+                    <Select
+                      value={referer}
+                      label="Referer"
+                      onChange={(e) => setReferer(e.target.value)}
+                    >
+                      <MenuItem value="">-- Select --</MenuItem>
+                      <MenuItem value="data1">Odeda</MenuItem>
+                      <MenuItem value="data2">Yewa</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </>
+            )}
+
+            {/* Show clickable text when filters are active */}
+            {!showAdvancedFilters && (
+              <Grid>
+                <Button
+                  variant="body2"
+                  color="primary"
+                  sx={{
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    // lineHeight: '48px',
+                    textAlign: 'center',
+                  }}
+                  onClick={() => setShowAdvancedFilters(true)}
+                >
+                  View All Filters
+                </Button>
+              </Grid>
+            )}
+
+            <Grid>
+              <Button variant="contained" color="primary" sx={{ justifyContent: 'center' }}>
+                Filter
+              </Button>
+            </Grid>
+
             {hasActiveFilters && (
-              <Grid size={{ xs: 12, md: 3, sm: 4 }}>
+              <Grid>
                 <Button
                   variant="outlined"
                   color="secondary"
-                  fullWidth
+                  // fullWidth
                   onClick={() => {
                     setAgentLevel('');
                     setCountry('');
@@ -729,7 +773,7 @@ const Agent = () => {
                     setReferer('');
                     setSearch('');
                   }}
-                  sx={{ height: '48px' }}
+                  // sx={{ height: '48px' }}
                 >
                   Clear Filters
                 </Button>

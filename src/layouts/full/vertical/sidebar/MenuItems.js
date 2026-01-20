@@ -62,9 +62,8 @@ import {
   IconTimeline,
   IconMap,
   IconListCheck,
-  IconCalendarTime
+  IconCalendarTime,
 } from '@tabler/icons-react';
-
 
 const Menuitems = [
   {
@@ -77,7 +76,7 @@ const Menuitems = [
     icon: IconChartPie,
     href: '/dashboards/analytical',
   },
-   {
+  {
     id: uniqueId(),
     title: 'School',
     icon: IconSchool,
@@ -107,44 +106,69 @@ const Menuitems = [
     icon: IconListCheck,
     href: '/dashboards/plan',
   },
-  
+
   {
     id: uniqueId(),
     title: 'My Plan',
     icon: IconMap,
     href: '/dashboards/my-plan',
   },
- {
+  {
     id: uniqueId(),
-    title: 'Session',
+    title: 'Calendar',
     icon: IconCalendarTime,
     href: '/dashboards/session',
   },
-  {
-    id: uniqueId(),
-    title: 'Term',
-    icon: IconTimeline,
-    href: '/dashboards/term',
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Calendar',
+  //   icon: IconAppWindow,
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Session',
+  //       icon: IconCalendarTime,
+  //       href: '/dashboards/session',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Term',
+  //       icon: IconTimeline,
+  //       href: '/dashboards/term',
+  //     },
+  //   ],
+  // },
+  //  {
+  //     id: uniqueId(),
+  //     title: 'Session',
+  //     icon: IconCalendarTime,
+  //     href: '/dashboards/session',
+  //   },
+  //   {
+  //     id: uniqueId(),
+  //     title: 'Term',
+  //     icon: IconTimeline,
+  //     href: '/dashboards/term',
+  //   },
   {
     id: uniqueId(),
     title: 'Gateway',
     icon: IconWallet,
     href: '/dashboards/gateway',
   },
-    {
+  {
     id: uniqueId(),
     title: 'Chat',
     icon: IconMessage2,
     href: '/dashboards/chat',
   },
-   {
+  {
     id: uniqueId(),
     title: 'Mail',
     icon: IconMail,
     href: '/dashboards/mail',
   },
-   {
+  {
     id: uniqueId(),
     title: 'PHET Stimulation',
     icon: IconAppWindow,

@@ -78,14 +78,13 @@ const Agent = () => {
 
   const [hasFiltered, setHasFiltered] = useState(false);
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const [filterClicked, setFilterClicked] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Filter function
   const applyFilters = () => {
-    // Do your filtering logic here
     console.log({ agentLevel, country, state, lga, referer, search });
 
-    setHasFiltered(true); // Mark that the filter button has been clicked
+    setHasFiltered(true);
   };
 
   const stateLgaData = {
@@ -658,8 +657,8 @@ const Agent = () => {
               />
             </Grid>
 
-            {/* Advanced Filters - Conditionally Visible */}
-            {showAdvancedFilters && (
+            {/* Advanced Filters */}
+            {filterClicked && showAdvancedFilters && (
               <>
                 <Grid size={{ xs: 12, md: 3, sm: 3 }}>
                   <FormControl fullWidth variant="outlined">
@@ -734,27 +733,23 @@ const Agent = () => {
               </>
             )}
 
-            {/* Show clickable text when filters are active */}
-            {!showAdvancedFilters && (
-              <Grid>
-                <Button
-                  variant="body2"
-                  color="primary"
-                  sx={{
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    // lineHeight: '48px',
-                    textAlign: 'center',
-                  }}
-                  onClick={() => setShowAdvancedFilters(true)}
-                >
+            {filterClicked && !showAdvancedFilters && (
+              <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', alignItems: 'center' }}>
+                <Button variant="text" onClick={() => setShowAdvancedFilters(true)}>
                   View All Filters
                 </Button>
               </Grid>
             )}
 
             <Grid>
-              <Button variant="contained" color="primary" sx={{ justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setFilterClicked(true);
+                }}
+                color="primary"
+                sx={{ justifyContent: 'center' }}
+              >
                 Filter
               </Button>
             </Grid>

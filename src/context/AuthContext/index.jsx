@@ -1,9 +1,8 @@
 import React, { createContext, useState, useEffect } from 'react';
+import api from '../../api/auth'; // Axios instance with withCredentials:true
 
-// Create the AuthContext
 export const AuthContext = createContext(undefined);
 
-// Default auth state
 const defaultAuthState = {
   user: null,
   isAuthenticated: false,
@@ -11,143 +10,113 @@ const defaultAuthState = {
   error: null,
 };
 
-// AuthProvider component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(defaultAuthState.user);
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
 
-  // Check for existing authentication on app load
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
-  // Check if user is already authenticated (from localStorage or token)
-  const checkAuthStatus = () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const userData = localStorage.getItem('userData');
-      
-      if (token && userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-      // Clear invalid data
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // ---------------- Auth functions ----------------
 
-  // Login function
-  const login = async (credentials) => {
+  const checkAuthStatus = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-
-      // Simulate API call - replace with your actual API endpoint
-      const response = await simulateLoginAPI(credentials);
-      
-      if (response.success) {
-        const { user: userData, token } = response.data;
-        
-        // Store auth data
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify(userData));
-        
-        // Update state
-        setUser(userData);
-        setIsAuthenticated(true);
-        
-        return { success: true, user: userData };
-      } else {
-        throw new Error(response.message || 'Login failed');
-      }
-    } catch (error) {
-      const errorMessage = error.message || 'An error occurred during login';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Logout function
-  const logout = () => {
-    try {
-      // Clear storage
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      
-      // Reset state
+      const userData = await api.get('/get-user'); // cookie sent automatically
+      setUser(userData.data);
+      setIsAuthenticated(true);
+    } catch {
       setUser(null);
       setIsAuthenticated(false);
-      setError(null);
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Error during logout:', error);
-      return { success: false, error: error.message };
-    }
-  };
-
-  // Register function
-  const register = async (userData) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Simulate API call - replace with your actual API endpoint
-      const response = await simulateRegisterAPI(userData);
-      
-      if (response.success) {
-        const { user: newUser, token } = response.data;
-        
-        // Store auth data
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify(newUser));
-        
-        // Update state
-        setUser(newUser);
-        setIsAuthenticated(true);
-        
-        return { success: true, user: newUser };
-      } else {
-        throw new Error(response.message || 'Registration failed');
-      }
-    } catch (error) {
-      const errorMessage = error.message || 'An error occurred during registration';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Update user profile
-  const updateUser = (updatedUserData) => {
+  const login = async (credentials) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const updatedUser = { ...user, ...updatedUserData };
-      localStorage.setItem('userData', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      return { success: true, user: updatedUser };
-    } catch (error) {
-      console.error('Error updating user:', error);
-      return { success: false, error: error.message };
+      await api.post('/login', credentials); // backend sets HttpOnly cookie
+      const userData = await api.get('/get-user'); // fetch user
+      setUser(userData.data);
+      setIsAuthenticated(true);
+      return { success: true, user: userData.data };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Login failed';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Clear error
-  const clearError = () => {
+  const register = async (userData) => {
+    setIsLoading(true);
     setError(null);
+    try {
+      await api.post('/register', userData); // backend sets HttpOnly cookie
+      const currentUser = await api.get('/get-user'); // fetch newly created user
+      setUser(currentUser.data);
+      setIsAuthenticated(true);
+      return { success: true, user: currentUser.data };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Registration failed';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Context value
+  const logout = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await api.post('/logout'); // backend deletes cookie
+      setUser(null);
+      setIsAuthenticated(false);
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Logout failed';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUser = async (updatedData) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await api.put('/update-user', updatedData);
+      setUser(res.data);
+      return { success: true, user: res.data };
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Update failed';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshToken = async () => {
+    try {
+      await api.post('/refresh-token'); // backend sets new cookie
+      await checkAuthStatus(); // refresh user info
+    } catch (err) {
+      console.error('Token refresh failed', err);
+    }
+  };
+
+  const clearError = () => setError(null);
+
+  // ---------------- Context value ----------------
   const contextValue = {
     user,
     isAuthenticated,
@@ -157,65 +126,10 @@ export const AuthProvider = ({ children }) => {
     logout,
     register,
     updateUser,
+    refreshToken,
     clearError,
     checkAuthStatus,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-// Simulate API calls - Replace these with your actual API calls
-const simulateLoginAPI = async (credentials) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulate successful login
-      if (credentials.username === 'admin' && credentials.password === 'password') {
-        resolve({
-          success: true,
-          data: {
-            user: {
-              id: 1,
-              username: credentials.username,
-              email: 'admin@example.com',
-              name: 'Admin User',
-              role: 'administrator',
-              avatar: '/images/users/1.jpg',
-            },
-            token: 'mock-jwt-token-' + Date.now(),
-          },
-        });
-      } else {
-        resolve({
-          success: false,
-          message: 'Invalid username or password',
-        });
-      }
-    }, 1000); // Simulate network delay
-  });
-};
-
-const simulateRegisterAPI = async (userData) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulate successful registration
-      resolve({
-        success: true,
-        data: {
-          user: {
-            id: Date.now(),
-            username: userData.username,
-            email: userData.email,
-            name: userData.name,
-            role: 'user',
-            avatar: '/images/users/default.jpg',
-          },
-          token: 'mock-jwt-token-' + Date.now(),
-        },
-      });
-    }, 1000); // Simulate network delay
-  });
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

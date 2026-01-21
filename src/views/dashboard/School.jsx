@@ -555,6 +555,26 @@ const SchoolDashboard = () => {
                   Filter
                 </Button>
 
+                {showAdvancedFilters && (
+                  <Grid
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      // textDecoration: 'underline',
+                      padding: 0,
+                      minWidth: 'auto',
+                      '&:hover': {
+                        backgroundColor: 'transparent',
+                        // textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    <Button variant="text" onClick={() => setShowAdvancedFilters(false)}>
+                      Show Less Filters
+                    </Button>
+                  </Grid>
+                )}
+
                 {hasActiveFilters && (
                   <Button
                     variant="outlined"

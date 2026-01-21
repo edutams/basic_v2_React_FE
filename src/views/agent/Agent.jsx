@@ -754,6 +754,20 @@ const Agent = () => {
               </Button>
             </Grid>
 
+            {showAdvancedFilters && (
+              <Grid
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  // textDecoration: 'underline',
+                }}
+              >
+                <Button variant="text" onClick={() => setShowAdvancedFilters(false)}>
+                  Show Less Filters
+                </Button>
+              </Grid>
+            )}
+
             {hasActiveFilters && (
               <Grid>
                 <Button

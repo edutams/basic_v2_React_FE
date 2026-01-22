@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import api from '../../api/auth'; // Axios instance with withCredentials:true
+import api from '../../api/auth';
 
 export const AuthContext = createContext(undefined);
 
@@ -40,8 +40,8 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/login', credentials); // backend sets HttpOnly cookie
-      const userData = await api.get('/get-user'); // fetch user
+      await api.post('/login', credentials);
+      const userData = await api.get('/get-user');
       setUser(userData.data);
       setIsAuthenticated(true);
       return { success: true, user: userData.data };
@@ -58,8 +58,8 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/register', userData); // backend sets HttpOnly cookie
-      const currentUser = await api.get('/get-user'); // fetch newly created user
+      await api.post('/register', userData);
+      const currentUser = await api.get('/get-user');
       setUser(currentUser.data);
       setIsAuthenticated(true);
       return { success: true, user: currentUser.data };
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/logout'); // backend deletes cookie
+      await api.post('/logout');
       setUser(null);
       setIsAuthenticated(false);
       return { success: true };
@@ -107,8 +107,8 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      await api.post('/refresh-token'); // backend sets new cookie
-      await checkAuthStatus(); // refresh user info
+      await api.post('/refresh-token');
+      await checkAuthStatus();
     } catch (err) {
       console.error('Token refresh failed', err);
     }

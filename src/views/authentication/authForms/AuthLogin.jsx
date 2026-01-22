@@ -122,7 +122,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
       )}
 
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={2}>
+        <Stack spacing={0}>
           <Box>
             <CustomFormLabel htmlFor="email">Email</CustomFormLabel>
             <CustomTextField
@@ -199,9 +199,9 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
         <Typography variant="body2" color="textSecondary" align="center">
           <strong>Demo Credentials:</strong>
           <br />
-          Email: admin
+          Email: crownbirth@gmail.com
           <br />
-          Password: password
+          Password: 12345
         </Typography>
       </Box>
 

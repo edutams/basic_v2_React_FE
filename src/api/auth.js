@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://' + window.location.host,
+    baseURL: 'http://' + window.location.host + '/api',
     withCredentials: true,
 });
 
@@ -12,7 +12,7 @@ api.interceptors.response.use(
             try {
                 // Try to refresh token
                 await api.post('/refresh-token');
-                return api.request(error.config); // retry original request
+                return api.request(error.config);
             } catch (refreshError) {
                 console.error('Refresh token failed:', refreshError);
                 window.location.href = '/login';

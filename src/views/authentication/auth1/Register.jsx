@@ -77,7 +77,7 @@ const Register = () => (
                 </Typography>
                 <Typography
                   component={Link}
-                  to="/auth/login"
+                  to="/agent/login"
                   fontWeight="500"
                   sx={{
                     textDecoration: 'none',

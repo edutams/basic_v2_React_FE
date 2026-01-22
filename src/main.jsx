@@ -6,37 +6,34 @@ import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { AuthProvider } from './context/AuthContext';
-import  ErrorBoundary  from './ErrorBoundary';
+import ErrorBoundary from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { BrowserRouter } from 'react-router-dom';
 
+// async function deferRender() {
+//   const { worker } = await import("./api/mocks/browser");
+//   return worker.start({
+//     onUnhandledRequest: 'bypass',
+//   });
+// }
 
-async function deferRender() {
-  const { worker } = await import("./api/mocks/browser");
-  return worker.start({
-    onUnhandledRequest: 'bypass',
-  });
-}
-
-deferRender().then(() => {
-  ReactDOM.createRoot(document.getElementById('root')).render(
-
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <AuthProvider>
-        <CustomizerContextProvider>
+// deferRender().then(() => {
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <AuthProvider>
+      <CustomizerContextProvider>
         <SnackbarProvider>
-            <Suspense fallback={<Spinner />}>
+          <Suspense fallback={<Spinner />}>
             <ErrorBoundary>
               <BrowserRouter>
                 <App />
               </BrowserRouter>
             </ErrorBoundary>
-            </Suspense>
+          </Suspense>
         </SnackbarProvider>
-        </CustomizerContextProvider>
-      </AuthProvider>
-    </LocalizationProvider>
-
-  );
-});
+      </CustomizerContextProvider>
+    </AuthProvider>
+  </LocalizationProvider>,
+);
+// });

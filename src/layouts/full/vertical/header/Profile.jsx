@@ -49,7 +49,7 @@ const Profile = () => {
       const result = await logout();
       if (result.success) {
         notify.success('Logged out successfully', 'Goodbye!');
-        navigate('/auth/login');
+        navigate('/agent/login');
       } else {
         notify.error('Logout failed', 'Error');
       }

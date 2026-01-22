@@ -203,7 +203,7 @@ const Router = [
     path: '/',
     element: <FullLayout />,
     children: [
-      { path: '/', element: <Navigate to="/dashboards/analytical" /> },
+      { path: '/', element: <Navigate to="/agent/login" /> },
       { path: '/dashboards/analytical', exact: true, element: <AnalyticalDashboard /> },
       { path: '/dashboards/agent', exact: true, element: <Agent /> },
       { path: '/dashboards/school', exact: true, element: <SchoolDashboard /> },
@@ -337,7 +337,7 @@ const Router = [
     element: <BlankLayout />,
     children: [
       { path: '/auth/404', element: <Error /> },
-      { path: '/auth/login', element: <Login /> },
+      { path: '/agent/login', element: <Login /> },
       { path: '/auth/login2', element: <Login2 /> },
       { path: '/auth/register', element: <Register /> },
       { path: '/auth/register2', element: <Register2 /> },

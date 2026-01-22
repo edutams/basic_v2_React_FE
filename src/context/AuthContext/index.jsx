@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const checkAuthStatus = async () => {
     setIsLoading(true);
     try {
-      const userData = await api.get('/get-user'); // cookie sent automatically
+      const userData = await api.get('/agent/get-agent'); // cookie sent automatically
       setUser(userData.data);
       setIsAuthenticated(true);
     } catch {
@@ -40,14 +40,20 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/login', credentials);
-      const userData = await api.get('/get-user');
+      const loginRes = await api.post('/agent/login', credentials);
+      const { access_token, data: userData } = loginRes.data;
+
+      localStorage.setItem('access_token', access_token);
+
       setUser(userData.data);
       setIsAuthenticated(true);
+
       return { success: true, user: userData.data };
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed';
+
       setError(msg);
+
       return { success: false, error: msg };
     } finally {
       setIsLoading(false);
@@ -58,8 +64,8 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/register', userData);
-      const currentUser = await api.get('/get-user');
+      await api.post('/agent/register', userData);
+      const currentUser = await api.get('/agent/get-agent');
       setUser(currentUser.data);
       setIsAuthenticated(true);
       return { success: true, user: currentUser.data };
@@ -76,7 +82,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/logout');
+      await api.post('/agent/logout');
       setUser(null);
       setIsAuthenticated(false);
       return { success: true };
@@ -93,7 +99,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.put('/update-user', updatedData);
+      const res = await api.put('/agent/update-user', updatedData);
       setUser(res.data);
       return { success: true, user: res.data };
     } catch (err) {
@@ -107,7 +113,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      await api.post('/refresh-token');
+      await api.post('/agent/refresh-token');
       await checkAuthStatus();
     } catch (err) {
       console.error('Token refresh failed', err);

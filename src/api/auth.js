@@ -1,23 +1,36 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://' + window.location.host + '/api',
-    withCredentials: true,
+    baseURL: import.meta.env.VITE_API_BASE_URL + '/api',
+});
+
+api.interceptors.request.use(config => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
 });
 
 api.interceptors.response.use(
     (res) => res,
     async (error) => {
-        if (error.response && error.response.status === 401) {
-            try {
-                // Try to refresh token
-                await api.post('/refresh-token');
-                return api.request(error.config);
-            } catch (refreshError) {
-                console.error('Refresh token failed:', refreshError);
-                window.location.href = '/login';
-            }
-        }
+        const originalRequest = error.config;
+        // if (error.response?.status === 401 && !originalRequest._retry) {
+        //     originalRequest._retry = true;
+        //     try {
+        //         const refreshRes = await api.post('/agent/refresh-token');
+        //         const newToken = refreshRes.data.access_token;
+        //         localStorage.setItem('access_token', newToken);
+        //         originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        //         return api(originalRequest);
+        //     } catch (refreshError) {
+        //         console.error('Refresh token failed:', refreshError);
+        //         localStorage.removeItem('access_token');
+        //         window.location.href = '/agent/login';
+        //     }
+        // }
+
         return Promise.reject(error);
     }
 );

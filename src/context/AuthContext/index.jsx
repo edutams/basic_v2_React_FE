@@ -16,59 +16,37 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  // ---------------- Auth functions ----------------
-
-  const checkAuthStatus = async () => {
-    setIsLoading(true);
-    try {
-      const userData = await api.get('/agent/get-agent'); // cookie sent automatically
-      setUser(userData.data);
-      setIsAuthenticated(true);
-    } catch {
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const login = async (credentials) => {
     setIsLoading(true);
     setError(null);
     try {
-      const loginRes = await api.post('/agent/login', credentials);
-      const { access_token, data: userData } = loginRes.data;
+      const res = await api.post('/agent/login', credentials);
+
+      const { access_token, data: user } = res.data;
 
       localStorage.setItem('access_token', access_token);
 
-      setUser(userData.data);
+      setUser(user);
       setIsAuthenticated(true);
 
-      return { success: true, user: userData.data };
+      return { success: true, user };
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed';
-
       setError(msg);
-
       return { success: false, error: msg };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (userData) => {
+  const register = async (credentials) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/agent/register', userData);
-      const currentUser = await api.get('/agent/get-agent');
-      setUser(currentUser.data);
+      await api.post('/agent/register', credentials);
+      setUser(credentials);
       setIsAuthenticated(true);
-      return { success: true, user: currentUser.data };
+      return { success: true, user: credentials };
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed';
       setError(msg);
@@ -114,7 +92,6 @@ export const AuthProvider = ({ children }) => {
   const refreshToken = async () => {
     try {
       await api.post('/agent/refresh-token');
-      await checkAuthStatus();
     } catch (err) {
       console.error('Token refresh failed', err);
     }
@@ -134,7 +111,6 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     refreshToken,
     clearError,
-    checkAuthStatus,
   };
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

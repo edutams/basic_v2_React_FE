@@ -34,6 +34,7 @@ import {
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const { user, logout } = useAuth();
+
   const navigate = useNavigate();
   const notify = useNotification();
 
@@ -101,7 +102,7 @@ const Profile = () => {
   const displayName = user?.name || 'User';
   const firstName = displayName.split(' ')[0];
   const userEmail = user?.email || 'user@example.com';
-  const userAvatar = user?.avatar || user1;
+  const userAvatar = user?.image || user1;
 
   return (
     <Box display="flex" gap={1}>
@@ -178,9 +179,9 @@ const Profile = () => {
             <Typography variant="h4" fontWeight={500} color="textPrimary">
               {displayName}
             </Typography>
-            <Typography variant="h6" color="textSecondary">
+            {/* <Typography variant="h6" color="textSecondary">
               {user?.role || 'User'}
-            </Typography>
+            </Typography> */}
             <Typography
               variant="subtitle2"
               color="textSecondary"

@@ -16,6 +16,33 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
 
+  useEffect(() => {
+    const restoreUser = async () => {
+      const token = localStorage.getItem('access_token');
+
+      if (!token) {
+        setIsLoading(false);
+        setIsAuthenticated(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const res = await api.get('/agent/get-user');
+        setUser(res.data?.data);
+        setIsAuthenticated(true);
+      } catch (err) {
+        localStorage.removeItem('access_token');
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    restoreUser();
+  }, []);
+
   const login = async (credentials) => {
     setIsLoading(true);
     setError(null);
@@ -61,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       await api.post('/agent/logout');
+      localStorage.removeItem('access_token');
       setUser(null);
       setIsAuthenticated(false);
       return { success: true };

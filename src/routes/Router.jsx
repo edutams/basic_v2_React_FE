@@ -8,7 +8,7 @@ const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWe
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
-import PackageManager from '../views/package-manager/PackageManager';
+import DashboardsLayout from '../layouts/dashboard/DashboardsLayout';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -21,6 +21,7 @@ const SessionDashboard = Loadable(lazy(() => import('../views/dashboard/Session'
 const TermDashboard = Loadable(lazy(() => import('../views/dashboard/Term')));
 const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
+const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
 
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
@@ -204,19 +205,25 @@ const Router = [
     element: <FullLayout />,
     children: [
       { path: '/', element: <Navigate to="/agent/login" /> },
-      { path: '/dashboards/analytical', exact: true, element: <AnalyticalDashboard /> },
-      { path: '/dashboards/agent', exact: true, element: <Agent /> },
-      { path: '/dashboards/school', exact: true, element: <SchoolDashboard /> },
-      { path: '/dashboards/session', exact: true, element: <SessionDashboard /> },
-      { path: '/dashboards/term', exact: true, element: <TermDashboard /> },
-      { path: '/dashboards/gateway', exact: true, element: <Gateway /> },
-      { path: '/dashboards/my-plan', exact: true, element: <MyPlan /> },
-      { path: '/dashboards/chat', exact: true, element: <Chat /> },
-      { path: '/dashboards/mail', exact: true, element: <Mail /> },
-      { path: '/dashboards/school/sub-school/:id', exact: false, element: <ViewSchool /> },
-      { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
-      { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
-      { path: '/dashboards/package-manager', element: <PackageManager /> },
+      {
+        path: '/dashboards',
+        element: <DashboardsLayout />,
+        children: [
+          { path: 'analytical', element: <AnalyticalDashboard /> },
+          { path: 'agent', element: <Agent /> },
+          { path: 'school', element: <SchoolDashboard /> },
+          { path: 'session', element: <SessionDashboard /> },
+          { path: 'term', element: <TermDashboard /> },
+          { path: 'gateway', element: <Gateway /> },
+          { path: 'my-plan', element: <MyPlan /> },
+          { path: 'chat', element: <Chat /> },
+          { path: 'mail', element: <Mail /> },
+          { path: 'school/sub-school/:id', element: <ViewSchool /> },
+          { path: 'ecommerce', element: <ECommerceDashboard /> },
+          { path: 'modern', element: <ModernDashboard /> },
+          { path: 'package-manager', element: <PackageManager /> },
+        ],
+      },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/notes', element: <Notes /> },
       { path: '/apps/calendar', element: <Calendar /> },

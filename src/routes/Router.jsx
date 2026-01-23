@@ -146,15 +146,10 @@ const MuiTypography = Loadable(lazy(() => import('../views/ui-components/MuiTypo
 
 // authentication
 const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
-const Login2 = Loadable(lazy(() => import('../views/authentication/auth2/Login2')));
-const Register = Loadable(lazy(() => import('../views/authentication/auth1/Register')));
-const Register2 = Loadable(lazy(() => import('../views/authentication/auth2/Register2')));
 const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
-const ForgotPassword2 = Loadable(
-  lazy(() => import('../views/authentication/auth2/ForgotPassword2')),
-);
+const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/ResetPassword')));
+
 const TwoSteps = Loadable(lazy(() => import('../views/authentication/auth1/TwoSteps')));
-const TwoSteps2 = Loadable(lazy(() => import('../views/authentication/auth2/TwoSteps2')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 const Maintenance = Loadable(lazy(() => import('../views/authentication/Maintenance')));
 
@@ -224,6 +219,28 @@ const Router = [
           { path: 'package-manager', element: <PackageManager /> },
         ],
       },
+      {
+        path: '/pages/account-settings',
+        element: (
+          <ProtectedRoute>
+            <AccountSetting />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/school-dashboard',
+        element: (
+          <ProtectedRoute>
+            <SchoolLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: '', element: <SchoolDashboardMain /> },
+          { path: 'session-week-manager', element: <SessionWeekManager /> },
+          { path: 'scheme-of-work', element: <SchemeOfWork /> },
+          // { path: 'students', element: <SchoolStudents /> },
+        ],
+      },
       { path: '/apps/chats', element: <Chats /> },
       { path: '/apps/notes', element: <Notes /> },
       { path: '/apps/calendar', element: <Calendar /> },
@@ -247,7 +264,7 @@ const Router = [
       { path: '/user-profile', element: <UserProfile /> },
       { path: '/pages/casl', element: <RollbaseCASL /> },
       { path: '/pages/pricing', element: <Pricing /> },
-      { path: '/pages/account-settings', element: <AccountSetting /> },
+
       { path: '/pages/faq', element: <Faq /> },
       { path: '/forms/form-elements/autocomplete', element: <MuiAutoComplete /> },
       { path: '/forms/form-elements/button', element: <MuiButton /> },
@@ -325,33 +342,16 @@ const Router = [
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },
-  {
-    path: '/school-dashboard',
-    element: (
-      <ProtectedRoute>
-        <SchoolLayout />
-      </ProtectedRoute>
-    ),
-    children: [
-      { path: '', element: <SchoolDashboardMain /> },
-      { path: 'session-week-manager', element: <SessionWeekManager /> },
-      { path: 'scheme-of-work', element: <SchemeOfWork /> },
-      // { path: 'students', element: <SchoolStudents /> },
-    ],
-  },
+
   {
     path: '/',
     element: <BlankLayout />,
     children: [
       { path: '/auth/404', element: <Error /> },
       { path: '/agent/login', element: <Login /> },
-      { path: '/auth/login2', element: <Login2 /> },
-      { path: '/auth/register', element: <Register /> },
-      { path: '/auth/register2', element: <Register2 /> },
-      { path: '/auth/forgot-password', element: <ForgotPassword /> },
-      { path: '/auth/forgot-password2', element: <ForgotPassword2 /> },
+      { path: '/agent/forgot-password', element: <ForgotPassword /> },
+      { path: '/agent/reset-password', element: <ResetPassword /> },
       { path: '/auth/two-steps', element: <TwoSteps /> },
-      { path: '/auth/two-steps2', element: <TwoSteps2 /> },
       { path: '/auth/maintenance', element: <Maintenance /> },
       { path: '/landingpage', element: <Landingpage /> },
       { path: '/frontend-pages/homepage', element: <Homepage /> },

@@ -80,26 +80,26 @@ const Profile = () => {
       color: primary,
       lightcolor: primarylight,
     },
-    {
-      to: '/apps/email',
-      title: 'My Inbox',
-      subtitle: 'Messages & Emails',
-      icon: <IconShield width="20" height="20" />,
-      color: success,
-      lightcolor: successlight,
-    },
-    {
-      to: '/apps/kanban',
-      title: 'My Tasks',
-      subtitle: 'To-do and Daily Tasks',
-      icon: <IconCreditCard width="20" height="20" />,
-      color: error,
-      lightcolor: errorlight,
-    },
+    // {
+    //   to: '/apps/email',
+    //   title: 'My Inbox',
+    //   subtitle: 'Messages & Emails',
+    //   icon: <IconShield width="20" height="20" />,
+    //   color: success,
+    //   lightcolor: successlight,
+    // },
+    // {
+    //   to: '/apps/kanban',
+    //   title: 'My Tasks',
+    //   subtitle: 'To-do and Daily Tasks',
+    //   icon: <IconCreditCard width="20" height="20" />,
+    //   color: error,
+    //   lightcolor: errorlight,
+    // },
   ];
 
   // Get user display name and email
-  const displayName = user?.name || 'User';
+  const displayName = user?.name || 'Guest User';
   const firstName = displayName.split(' ')[0];
   const userEmail = user?.email || 'user@example.com';
   const userAvatar = user?.image || user1;

@@ -18,7 +18,7 @@ import CustomFormLabel from '../../../components/forms/theme-elements/CustomForm
 import { useAuth } from '../../../hooks/useAuth';
 import { useNotification } from '../../../hooks/useNotification';
 
-import AuthSocialButtons from './AuthSocialButtons';
+// import AuthSocialButtons from './AuthSocialButtons';
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({
@@ -31,6 +31,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   const { login, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const successMessage = location.state?.message;
   const notify = useNotification();
 
   const from = location.state?.from?.pathname || '/dashboards/analytical';
@@ -99,8 +100,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
       {subtext}
 
-      <AuthSocialButtons title="Sign in with" />
-      <Box mt={3}>
+      {/* <AuthSocialButtons title="Sign in with" /> */}
+      {/* <Box mt={3}>
         <Divider>
           <Typography
             component="span"
@@ -113,14 +114,18 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             or sign in with
           </Typography>
         </Divider>
-      </Box>
+      </Box> */}
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMessage}
+        </Alert>
+      )}
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={0}>
           <Box>
@@ -168,7 +173,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             </FormGroup>
             <Typography
               component={Link}
-              to="/auth/forgot-password"
+              to="/agent/forgot-password"
               fontWeight="500"
               sx={{
                 textDecoration: 'none',
@@ -195,7 +200,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
       </Box>
 
       {/* Demo credentials info */}
-      <Box mt={2} p={2} bgcolor="grey.100" borderRadius={1}>
+      {/* <Box mt={2} p={2} bgcolor="grey.100" borderRadius={1}>
         <Typography variant="body2" color="textSecondary" align="center">
           <strong>Demo Credentials:</strong>
           <br />
@@ -203,7 +208,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           <br />
           Password: 12345
         </Typography>
-      </Box>
+      </Box> */}
 
       {subtitle}
     </>

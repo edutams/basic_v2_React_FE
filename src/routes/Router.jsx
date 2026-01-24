@@ -148,6 +148,7 @@ const MuiTypography = Loadable(lazy(() => import('../views/ui-components/MuiTypo
 const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
 const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
 const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/ResetPassword')));
+const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
 
 const TwoSteps = Loadable(lazy(() => import('../views/authentication/auth1/TwoSteps')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
@@ -350,6 +351,7 @@ const Router = [
       { path: '/auth/404', element: <Error /> },
       { path: '/agent/login', element: <Login /> },
       { path: '/agent/forgot-password', element: <ForgotPassword /> },
+      { path: '/agent/verify-otp', element: <VerifyOtp /> },
       { path: '/agent/reset-password', element: <ResetPassword /> },
       { path: '/auth/two-steps', element: <TwoSteps /> },
       { path: '/auth/maintenance', element: <Maintenance /> },

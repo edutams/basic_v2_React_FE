@@ -11,14 +11,14 @@ import {
   Button,
   IconButton,
   Stack,
-  useMediaQuery
+  useMediaQuery,
 } from '@mui/material';
 import * as dropdownData from './data';
-import { useTheme } from "@mui/material/styles";
+import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useNotification } from '../../../../hooks/useNotification';
-import user1 from '../../../../assets/images/users/1.jpg'
-import bgLearn from '../../../../assets/images/backgrounds/unlimited-bg.png'
+import user1 from '../../../../assets/images/users/1.jpg';
+import bgLearn from '../../../../assets/images/backgrounds/unlimited-bg.png';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 
@@ -29,11 +29,12 @@ import {
   IconMail,
   IconShield,
   IconLogout,
-} from "@tabler/icons-react";
+} from '@tabler/icons-react';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const { user, logout } = useAuth();
+
   const navigate = useNavigate();
   const notify = useNotification();
 
@@ -46,10 +47,10 @@ const Profile = () => {
 
   const handleLogout = async () => {
     try {
-      const result = logout();
+      const result = await logout();
       if (result.success) {
         notify.success('Logged out successfully', 'Goodbye!');
-        navigate('/auth/login');
+        navigate('/agent/login');
       } else {
         notify.error('Logout failed', 'Error');
       }
@@ -72,39 +73,39 @@ const Profile = () => {
   /*profile data*/
   const profiledata = [
     {
-      to: "/pages/account-settings",
-      title: "My Profile",
-      subtitle: "Account Settings",
+      to: '/pages/account-settings',
+      title: 'My Profile',
+      subtitle: 'Account Settings',
       icon: <IconCurrencyDollar width="20" height="20" />,
       color: primary,
       lightcolor: primarylight,
     },
-    {
-      to: "/apps/email",
-      title: "My Inbox",
-      subtitle: "Messages & Emails",
-      icon: <IconShield width="20" height="20" />,
-      color: success,
-      lightcolor: successlight,
-    },
-    {
-      to: "/apps/kanban",
-      title: "My Tasks",
-      subtitle: "To-do and Daily Tasks",
-      icon: <IconCreditCard width="20" height="20" />,
-      color: error,
-      lightcolor: errorlight,
-    },
+    // {
+    //   to: '/apps/email',
+    //   title: 'My Inbox',
+    //   subtitle: 'Messages & Emails',
+    //   icon: <IconShield width="20" height="20" />,
+    //   color: success,
+    //   lightcolor: successlight,
+    // },
+    // {
+    //   to: '/apps/kanban',
+    //   title: 'My Tasks',
+    //   subtitle: 'To-do and Daily Tasks',
+    //   icon: <IconCreditCard width="20" height="20" />,
+    //   color: error,
+    //   lightcolor: errorlight,
+    // },
   ];
 
   // Get user display name and email
-  const displayName = user?.name || 'User';
+  const displayName = user?.name || 'Guest User';
   const firstName = displayName.split(' ')[0];
   const userEmail = user?.email || 'user@example.com';
-  const userAvatar = user?.avatar || user1;
+  const userAvatar = user?.image || user1;
 
   return (
-    <Box display='flex' gap={1}>
+    <Box display="flex" gap={1}>
       {lgUp ? <Divider orientation="vertical" variant="middle" /> : null}
 
       <Button
@@ -114,16 +115,15 @@ const Profile = () => {
         aria-controls="msgs-menu"
         aria-haspopup="true"
         sx={{
-          ...(typeof anchorEl2 === "object" && {
-            borderRadius: "9px",
+          ...(typeof anchorEl2 === 'object' && {
+            borderRadius: '9px',
           }),
-
         }}
         onClick={handleClick2}
       >
         <Avatar
           src={userAvatar}
-          alt={"ProfileImg"}
+          alt={'ProfileImg'}
           sx={{
             width: 30,
             height: 30,
@@ -132,18 +132,13 @@ const Profile = () => {
         <Box
           sx={{
             display: {
-              xs: "none",
-              sm: "flex",
+              xs: 'none',
+              sm: 'flex',
             },
-            alignItems: "center",
+            alignItems: 'center',
           }}
         >
-          <Typography
-            color="textprimary"
-            variant="h5"
-            fontWeight="400"
-            sx={{ ml: 1 }}
-          >
+          <Typography color="textprimary" variant="h5" fontWeight="400" sx={{ ml: 1 }}>
             Hi,
           </Typography>
           <Typography
@@ -167,11 +162,11 @@ const Profile = () => {
         keepMounted
         open={Boolean(anchorEl2)}
         onClose={handleClose2}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         sx={{
-          "& .MuiMenu-paper": {
-            width: "360px",
+          '& .MuiMenu-paper': {
+            width: '360px',
             p: 4,
             pb: 2,
           },
@@ -179,18 +174,14 @@ const Profile = () => {
       >
         <Typography variant="h4">User Profile</Typography>
         <Stack direction="row" py={3} spacing={2} alignItems="center">
-          <Avatar
-            src={userAvatar}
-            alt={"ProfileImg"}
-            sx={{ width: 95, height: 95 }}
-          />
+          <Avatar src={userAvatar} alt={'ProfileImg'} sx={{ width: 95, height: 95 }} />
           <Box>
             <Typography variant="h4" fontWeight={500} color="textPrimary">
               {displayName}
             </Typography>
-            <Typography variant="h6" color="textSecondary">
+            {/* <Typography variant="h6" color="textSecondary">
               {user?.role || 'User'}
-            </Typography>
+            </Typography> */}
             <Typography
               variant="subtitle2"
               color="textSecondary"
@@ -218,11 +209,11 @@ const Profile = () => {
                     sx={{
                       bgcolor: prf.lightcolor,
                       color: prf.color,
-                      boxShadow: "none",
-                      minWidth: "50px",
-                      width: "45px",
-                      height: "45px",
-                      borderRadius: "10px",
+                      boxShadow: 'none',
+                      minWidth: '50px',
+                      width: '45px',
+                      height: '45px',
+                      borderRadius: '10px',
                     }}
                   >
                     {prf.icon}
@@ -234,7 +225,7 @@ const Profile = () => {
                       color="textPrimary"
                       noWrap
                       sx={{
-                        width: "240px",
+                        width: '240px',
                       }}
                     >
                       {prf.title}
@@ -243,7 +234,7 @@ const Profile = () => {
                       color="textSecondary"
                       variant="h6"
                       sx={{
-                        width: "240px",
+                        width: '240px',
                       }}
                       noWrap
                     >
@@ -253,36 +244,8 @@ const Profile = () => {
                 </Stack>
               </Link>
             </Box>
-
           </Box>
         ))}
-
-        {/* <Box sx={{
-          backgroundColor: (theme) => theme.palette.primary.light
-        }} overflow='hidden'>
-
-          <Stack direction='row' spacing={1} justifyContent='space-between'>
-            <Box py={3} pl={3}>
-              <Typography variant="h5" fontWeight={600} mb={2} color="textPrimary">
-                Unlimited <br /> Access
-              </Typography>
-              <Button
-                to="/auth/login"
-                variant="contained"
-                color="primary"
-                component={Link}
-              >
-                Upgrade
-              </Button>
-            </Box>
-
-            <img src={bgLearn} alt='bg-img' className='unlimited-img' />
-          </Stack>
-
-
-
-
-        </Box> */}
 
         <Box mt={2}>
           <Button
@@ -301,5 +264,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-

@@ -101,15 +101,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // const updateAgentProfile = async (data, isMultipart = false) => {
-  //   const res = await api.post('/agent/profile/update', data, {
-  //     headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
-  //   });
-
-  //   setUser(res.data.data);
-  //   return res.data;
-  // };
-
   const updateAgentProfile = async (data, isMultipart = false) => {
     setError(null);
     try {

@@ -101,19 +101,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateUser = async (updatedData) => {
-    setIsLoading(true);
+  // const updateAgentProfile = async (data, isMultipart = false) => {
+  //   const res = await api.post('/agent/profile/update', data, {
+  //     headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
+  //   });
+
+  //   setUser(res.data.data);
+  //   return res.data;
+  // };
+
+  const updateAgentProfile = async (data, isMultipart = false) => {
     setError(null);
     try {
-      const res = await api.put('/agent/update-user', updatedData);
-      setUser(res.data);
-      return { success: true, user: res.data };
+      const res = await api.post('/agent/update-agent-profile', data, {
+        headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
+      });
+      setUser(res.data?.data);
+      return { success: true, user: res.data?.data };
     } catch (err) {
       const msg = err.response?.data?.message || 'Update failed';
       setError(msg);
       return { success: false, error: msg };
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  const changePassword = async (passwordData) => {
+    setError(null);
+    try {
+      await api.put('/agent/change-password', passwordData);
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Password change failed';
+      setError(msg);
+      return { success: false, error: msg };
     }
   };
 
@@ -136,7 +156,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     register,
-    updateUser,
+    updateAgentProfile,
+    changePassword,
     refreshToken,
     clearError,
   };

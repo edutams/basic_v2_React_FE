@@ -80,6 +80,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
     const result = await login({
       email: formData.email,
       password: formData.password,
+      remember: formData.rememberMe,
     });
 
     if (result.success) {

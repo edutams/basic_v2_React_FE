@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoading(true);
       try {
-        const res = await api.get('/agent/get-user');
+        const res = await api.get('/agent/get-agent');
         setUser(res.data?.data);
         setIsAuthenticated(true);
       } catch (err) {
@@ -49,16 +49,16 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.post('/agent/login', credentials);
 
-      const { access_token, data: user } = res.data;
+      const { access_token, expires_in, data: user } = res.data;
 
       localStorage.setItem('access_token', access_token);
-
+      localStorage.setItem('token_expires_in', expires_in.toString());
       setUser(user);
       setIsAuthenticated(true);
 
       return { success: true, user };
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed';
+      const msg = err.response?.data?.error || 'Login failed';
       setError(msg);
       return { success: false, error: msg };
     } finally {
@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true, user: credentials };
     } catch (err) {
-      const msg = err.response?.data?.message || 'Registration failed';
+      const msg = err.response?.data?.error || 'Registration failed';
       setError(msg);
       return { success: false, error: msg };
     } finally {
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       return { success: true };
     } catch (err) {
-      const msg = err.response?.data?.message || 'Logout failed';
+      const msg = err.response?.data?.error || 'Logout failed';
       setError(msg);
       return { success: false, error: msg };
     } finally {
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data?.data);
       return { success: true, user: res.data?.data };
     } catch (err) {
-      const msg = err.response?.data?.message || 'Update failed';
+      const msg = err.response?.data?.error || 'Update failed';
       setError(msg);
       return { success: false, error: msg };
     }

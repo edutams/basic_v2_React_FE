@@ -19,7 +19,7 @@ api.interceptors.response.use(
         // if (error.response?.status === 401 && !originalRequest._retry) {
         //     originalRequest._retry = true;
         //     try {
-        //         const refreshRes = await api.post('/agent/refresh-token');
+        //         const refreshRes = await api.post('/agent/refresh_token');
         //         const newToken = refreshRes.data.access_token;
         //         localStorage.setItem('access_token', newToken);
         //         originalRequest.headers.Authorization = `Bearer ${newToken}`;

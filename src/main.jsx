@@ -5,7 +5,7 @@ import Spinner from './views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { SnackbarProvider } from './context/SnackbarContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/AgentContext/auth';
 import ErrorBoundary from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';

@@ -23,7 +23,7 @@ export const getLgasByState = async (state_id) => {
 export const createSchool = async (schoolData) => {
     try {
         const res = await api.post('/agent/create-tenant', schoolData);
-        return res.data;
+        return res.data?.data;
     } catch (error) {
         console.error('Error creating school:', error);
         throw error.response?.data || error;

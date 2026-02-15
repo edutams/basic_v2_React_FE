@@ -80,7 +80,7 @@ const Menuitems = [
     id: uniqueId(),
     title: 'ALC Manager',
     icon: IconChartPie,
-    href: '/dashboards/analytical',
+    href: '/dashboards/alc-manager',
   },
   {
     id: uniqueId(),

@@ -22,6 +22,8 @@ const TermDashboard = Loadable(lazy(() => import('../views/dashboard/Term')));
 const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 
+const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')));
+
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
@@ -205,6 +207,7 @@ const Router = [
     children: [
       { path: '/', element: <Navigate to="/dashboards/analytical" /> },
       { path: '/dashboards/analytical', exact: true, element: <AnalyticalDashboard /> },
+      { path: '/dashboards/alc-manager', exact: true, element: <AlcManager /> },
       { path: '/dashboards/agent', exact: true, element: <Agent /> },
       { path: '/dashboards/school', exact: true, element: <SchoolDashboard /> },
       { path: '/dashboards/session', exact: true, element: <SessionDashboard /> },

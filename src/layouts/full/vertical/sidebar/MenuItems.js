@@ -78,6 +78,12 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'ALC Manager',
+    icon: IconChartPie,
+    href: '/dashboards/analytical',
+  },
+  {
+    id: uniqueId(),
     title: 'School',
     icon: IconSchool,
     href: '/dashboards/school',

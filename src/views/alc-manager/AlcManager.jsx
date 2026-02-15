@@ -69,7 +69,7 @@ const AlcManager = () => {
     },
     {
       id: 4,
-      roleName: 'Suoer_Agent',
+      roleName: 'Super_Agent',
       guardName: 'web',
       description: 'Super Agent',
     },
@@ -125,10 +125,38 @@ const AlcManager = () => {
 
   const hasFilters = roleType !== '' || roleLevel !== '' || roleCategory !== '';
 
+  const filteredRows = useMemo(() => {
+    if (!roleType && !roleLevel && !roleCategory) {
+      return rows;
+    }
+
+    return rows.filter((item) => {
+      const matchesRoleName = roleType
+        ? item.roleName.toLowerCase().includes(roleType.toLowerCase())
+        : true;
+      const matchesGuardName = roleLevel
+        ? item.guardName.toLowerCase().includes(roleLevel.toLowerCase())
+        : true;
+      const matchesDescription = roleCategory
+        ? item.description.toLowerCase().includes(roleCategory.toLowerCase())
+        : true;
+
+      if (roleType && !roleLevel && !roleCategory) {
+        return (
+          item.roleName.toLowerCase().includes(roleType.toLowerCase()) ||
+          item.guardName.toLowerCase().includes(roleType.toLowerCase()) ||
+          item.description.toLowerCase().includes(roleType.toLowerCase())
+        );
+      }
+
+      return matchesRoleName && matchesGuardName && matchesDescription;
+    });
+  }, [rows, roleType, roleLevel, roleCategory]);
+
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
-    return rows.slice(start, start + rowsPerPage);
-  }, [rows, page, rowsPerPage]);
+    return filteredRows.slice(start, start + rowsPerPage);
+  }, [filteredRows, page, rowsPerPage]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -171,12 +199,27 @@ const AlcManager = () => {
       return;
     }
 
-    const fetchedData = allRolesData.filter(
-      (item) =>
-        (roleType ? item.roleName.toLowerCase().includes(roleType.toLowerCase()) : true) &&
-        (roleLevel ? item.guardName.toLowerCase().includes(roleLevel.toLowerCase()) : true) &&
-        (roleCategory ? item.description.toLowerCase().includes(roleCategory.toLowerCase()) : true),
-    );
+    const fetchedData = allRolesData.filter((item) => {
+      const matchesRoleName = roleType
+        ? item.roleName.toLowerCase().includes(roleType.toLowerCase())
+        : true;
+      const matchesGuardName = roleLevel
+        ? item.guardName.toLowerCase().includes(roleLevel.toLowerCase())
+        : true;
+      const matchesDescription = roleCategory
+        ? item.description.toLowerCase().includes(roleCategory.toLowerCase())
+        : true;
+
+      if (roleType && !roleLevel && !roleCategory) {
+        return (
+          item.roleName.toLowerCase().includes(roleType.toLowerCase()) ||
+          item.guardName.toLowerCase().includes(roleType.toLowerCase()) ||
+          item.description.toLowerCase().includes(roleType.toLowerCase())
+        );
+      }
+
+      return matchesRoleName && matchesGuardName && matchesDescription;
+    });
 
     setRows(fetchedData);
     setPage(0);
@@ -249,7 +292,6 @@ const AlcManager = () => {
     setConfirmDialogOpen(false);
   };
 
-  // Functions for permission attachment
   const handleAttachPermission = (row) => {
     setSelectedRow(row);
     const existingPermissions = row.permissions || [];
@@ -279,7 +321,6 @@ const AlcManager = () => {
     setSelectedPermissions([]);
   };
 
-  // Function for viewing permissions
   const handleViewPermission = (row) => {
     setPermissionsToView(row.permissions || []);
     setViewPermissionModalOpen(true);
@@ -328,12 +369,11 @@ const AlcManager = () => {
         </Tabs>
       </Box>
 
-      {/* Conditional rendering based on active tab */}
       {activeTab === 'Assignment Management' && <AssignmentManagement />}
 
       {activeTab === 'Analysis Report' && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Access Analysis report coming soon.
+          Access Analysis report.
         </Alert>
       )}
 
@@ -356,9 +396,8 @@ const AlcManager = () => {
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
               <TextField
                 placeholder="Search by Role name"
-                //   value={searchTerm}
-                //   onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ mb: 2 }}
+                value={roleType}
+                onChange={(e) => setRoleType(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -370,12 +409,17 @@ const AlcManager = () => {
 
               {hasFilters && (
                 <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleFetchRoles}
+                  variant="outlined"
+                  onClick={() => {
+                    setRoleType('');
+                    setRoleLevel('');
+                    setRoleCategory('');
+                    setRows([...allRolesData]);
+                    setPage(0);
+                  }}
                   sx={{ height: 'fit-content' }}
                 >
-                  Fetch Roles
+                  Clear Filters
                 </Button>
               )}
             </Box>
@@ -465,7 +509,6 @@ const AlcManager = () => {
         </ParentCard>
       )}
 
-      {/* New Role Modal */}
       <NewRoleModal
         open={newRoleModalOpen}
         onClose={handleCancelNewRole}

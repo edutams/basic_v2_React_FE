@@ -15,21 +15,21 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
     (res) => res,
     async (error) => {
-        // const originalRequest = error.config;
-        // if (error.response?.status === 401 && !originalRequest._retry) {
-        //     originalRequest._retry = true;
-        //     try {
-        //         const refreshRes = await api.post('/agent/refresh-token');
-        //         const newToken = refreshRes.data.access_token;
-        //         localStorage.setItem('access_token', newToken);
-        //         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        //         return api(originalRequest);
-        //     } catch (refreshError) {
-        //         console.error('Refresh token failed:', refreshError);
-        //         localStorage.removeItem('access_token');
-        //         window.location.href = '/agent/login';
-        //     }
-        // }
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            try {
+                const refreshRes = await api.post('/agent/refresh_token');
+                const newToken = refreshRes.data.access_token;
+                localStorage.setItem('access_token', newToken);
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                console.error('Refresh token failed:', refreshError);
+                localStorage.removeItem('access_token');
+                window.location.href = '/agent/login';
+            }
+        }
 
         return Promise.reject(error);
     }

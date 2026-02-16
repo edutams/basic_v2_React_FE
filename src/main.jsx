@@ -9,8 +9,6 @@ import { AuthProvider } from './context/AuthContext';
 import ErrorBoundary from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { BrowserRouter } from 'react-router-dom';
-
 // async function deferRender() {
 //   const { worker } = await import("./api/mocks/browser");
 //   return worker.start({
@@ -26,9 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <SnackbarProvider>
           <Suspense fallback={<Spinner />}>
             <ErrorBoundary>
-              <BrowserRouter>
-                <App />
-              </BrowserRouter>
+              <App />
             </ErrorBoundary>
           </Suspense>
         </SnackbarProvider>

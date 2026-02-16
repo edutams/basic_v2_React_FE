@@ -28,8 +28,8 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoading(true);
       try {
-        const res = await api.get('/agent/get-agent');
-        setUser(res.data?.data);
+        // const res = await api.get('/agent/get-agent');
+        // setUser(res.data?.data);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('access_token');

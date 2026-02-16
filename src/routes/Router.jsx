@@ -23,6 +23,8 @@ const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecomme
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
 
+const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')));
+
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
@@ -200,6 +202,21 @@ const Router = [
     path: '/',
     element: <FullLayout />,
     children: [
+      { path: '/', element: <Navigate to="/dashboards/analytical" /> },
+      { path: '/dashboards/analytical', exact: true, element: <AnalyticalDashboard /> },
+      { path: '/dashboards/alc-manager', exact: true, element: <AlcManager /> },
+      { path: '/dashboards/agent', exact: true, element: <Agent /> },
+      { path: '/dashboards/school', exact: true, element: <SchoolDashboard /> },
+      { path: '/dashboards/session', exact: true, element: <SessionDashboard /> },
+      { path: '/dashboards/term', exact: true, element: <TermDashboard /> },
+      { path: '/dashboards/gateway', exact: true, element: <Gateway /> },
+      { path: '/dashboards/my-plan', exact: true, element: <MyPlan /> },
+      { path: '/dashboards/chat', exact: true, element: <Chat /> },
+      { path: '/dashboards/mail', exact: true, element: <Mail /> },
+      { path: '/dashboards/school/sub-school/:id', exact: false, element: <ViewSchool /> },
+      { path: '/dashboards/ecommerce', exact: true, element: <ECommerceDashboard /> },
+      { path: '/dashboards/modern', exact: true, element: <ModernDashboard /> },
+      { path: '/dashboards/package-manager', element: <PackageManager /> },
       { path: '/', element: <Navigate to="/agent/login" /> },
       {
         path: '/dashboards',

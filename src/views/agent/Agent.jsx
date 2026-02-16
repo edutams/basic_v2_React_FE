@@ -32,6 +32,7 @@ import AgentModal from '../../components/add-agent/components/AgentModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import EmptyTableState from '../../components/shared/EmptyTableState';
 import useTableEmptyState from '../../hooks/useTableEmptyState';
+import agentApi from '../../api/agent';
 
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -60,6 +61,8 @@ const statusOptions = [
 
 const columnHelper = createColumnHelper();
 
+// ... (imports remain)
+
 const Agent = () => {
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
@@ -73,6 +76,50 @@ const Agent = () => {
   const [actionType, setActionType] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await agentApi.getAll();
+        // Assuming response.data is the array of agents, or response.data.data
+        if(response.success){
+             const mappedData = response.data.map((agent, index) => {
+                 let parsedColor = agent.color;
+                 if (typeof agent.color === 'string') {
+                     try {
+                         parsedColor = JSON.parse(agent.color);
+                     } catch (e) {
+                         console.error("Error parsing color JSON", e);
+                         parsedColor = {};
+                     }
+                 }
+
+                 return {
+                     s_n: agent.id,
+                     agentDetails: agent.name,
+                     organizationName: agent.org_name,
+                     organizationTitle: agent.org_title,
+                     contactDetails: agent.email,
+                     phoneNumber: agent.phone,
+                    //  level: agent.access_level,
+                     imgsrc: agent.image,
+                     performance: 'School: ' + (agent.tenants_count || 0),
+                     gateway: 'No Gateway',
+                     headerColor: parsedColor?.headcolor,
+                     sidebarColor: parsedColor?.sidecolor,
+                     bodyColor: parsedColor?.bodycolor,
+                     status: agent.status ? (agent.status.charAt(0).toUpperCase() + agent.status.slice(1)) : 'Inactive',
+                 };
+             });
+             setData(mappedData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch agents", error);
+      }
+    };
+    fetchData();
+  }, [refreshKey]);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
 

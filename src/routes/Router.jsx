@@ -369,9 +369,9 @@ const Router = [
     children: [
       { path: '/auth/404', element: <Error /> },
       { path: '/agent/login', element: <Login /> },
-      { path: '/agent/forgot-password', element: <ForgotPassword /> },
-      { path: '/agent/verify-otp', element: <VerifyOtp /> },
-      { path: '/agent/reset-password', element: <ResetPassword /> },
+      { path: '/agent/forgot_password', element: <ForgotPassword /> },
+      { path: '/agent/verify_otp', element: <VerifyOtp /> },
+      { path: '/agent/reset_password', element: <ResetPassword /> },
       { path: '/auth/two-steps', element: <TwoSteps /> },
       { path: '/auth/maintenance', element: <Maintenance /> },
       { path: '/landingpage', element: <Landingpage /> },

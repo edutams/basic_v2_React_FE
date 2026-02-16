@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Grid,
   Box,
   Button,
   TextField,
@@ -9,327 +8,360 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  Grid,
+  CircularProgress,
 } from '@mui/material';
-import { useFormik } from 'formik';
-import { schoolValidationScheme } from '../validation/schoolValidationScheme';
 import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
+import {
+  createSchool,
+  getAllStates,
+  getLgasByState,
+} from '../../../context/AgentContext/services/school.service';
+import useNotification from '../../../hooks/useNotification';
 
-const lgaData = {
-  lagos: [
-    'Agege',
-    'Ajeromi-Ifelodun',
-    'Alimosho',
-    'Amuwo-Odofin',
-    'Apapa',
-    'Badagry',
-    'Epe',
-    'Eti Osa',
-    'Ibeju-Lekki',
-    'Ifako-Ijaiye',
-    'Ikeja',
-    'Ikorodu',
-    'Kosofe',
-    'Lagos Island',
-    'Lagos Mainland',
-    'Mushin',
-    'Ojo',
-    'Oshodi-Isolo',
-    'Shomolu',
-    'Surulere',
-  ],
-  ogun: [
-    'Abeokuta North',
-    'Abeokuta South',
-    'Ado-Odo/Ota',
-    'Ewekoro',
-    'Ifo',
-    'Ijebu East',
-    'Ijebu North',
-    'Ijebu North East',
-    'Ijebu Ode',
-    'Ikenne',
-    'Imeko Afon',
-    'Ipokia',
-    'Obafemi Owode',
-    'Odeda',
-    'Odogbolu',
-    'Ogun Waterside',
-    'Remo North',
-    'Sagamu',
-    'Yewa North',
-    'Yewa South',
-  ],
-};
+const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCancel }) => {
+  const [states, setStates] = useState([]);
+  const [lgas, setLgas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const notify = useNotification();
 
-// Generate incremental ID for schools
-const getNextId = () => {
-  const lastId = parseInt(localStorage.getItem('lastSchoolId')) || 0;
-  const newId = lastId + 1;
-  localStorage.setItem('lastSchoolId', newId);
-  return newId;
-};
-
-const RegisterSchoolForm = ({ actionType, selectedAgent, onSubmit, onCancel }) => {
-  const [lgaOptions, setLgaOptions] = useState([]);
-
-  const formik = useFormik({
-    initialValues: {
-      institutionName: selectedAgent?.institutionName || '',
-      institutionShortName: selectedAgent?.institutionShortName || '',
-      institutionAddress: selectedAgent?.institutionAddress || '',
-      administratorFirstName: selectedAgent?.administratorFirstName || '',
-      administratorLastName: selectedAgent?.administratorLastName || '',
-      administratorEmail: selectedAgent?.administratorEmail || '',
-      administratorPhone: selectedAgent?.administratorPhone || '',
-      stateFilter: selectedAgent?.stateFilter || '',
-      lga: selectedAgent?.lga || '',
-      moduleType: selectedAgent?.moduleType || '',
-      headerColor: selectedAgent?.headerColor || '#ffffff',
-      sidebarColor: selectedAgent?.sidebarColor || '#ffffff',
-      bodyColor: selectedAgent?.bodyColor || '#ffffff',
-      registerSchool: selectedAgent?.registerSchool || '',
-      permissions: selectedAgent?.permissions || [],
-    },
-    validationSchema: schoolValidationScheme,
-    enableReinitialize: true,
-    onSubmit: (values) => {
-      const updatedData = {
-        ...values,
-        id: actionType === 'update' ? selectedAgent.id : getNextId(),
-        schoolUrl: `${values.institutionShortName.toLowerCase()}.edu`,
-        gateway: 'No Gateway',
-        colourScheme: values.bodyColor,
-        headerColor: values.headerColor,
-        sidebarColor: values.sidebarColor,
-        status: 'Inactive',
-        action: 'Edit',
-        date: new Date().toISOString(),
-        State: values.stateFilter, // Match SchoolDashboard.jsx field
-        LGA: values.lga, // Match SchoolDashboard.jsx field
-      };
-      onSubmit(updatedData);
-    },
+  const [formData, setFormData] = useState({
+    tenant_name: selectedSchool?.tenant_name || '',
+    tenant_short_name: selectedSchool?.tenant_short_name || '',
+    admin_fname: selectedSchool?.admin_fname || '',
+    admin_lname: selectedSchool?.admin_lname || '',
+    admin_email: selectedSchool?.admin_email || '',
+    admin_phone: selectedSchool?.admin_phone || '',
+    address: selectedSchool?.address || '',
+    state_id: selectedSchool?.state_id || '',
+    lga_id: selectedSchool?.lga_id || '',
+    social_link: selectedSchool?.social_link || '',
+    payModuleType: selectedSchool?.payModuleType || '',
+    headcolor: selectedSchool?.color?.headcolor || 'bg-night-sky text-lighter',
+    sidecolor: selectedSchool?.color?.sidecolor || 'bg-dark text-lighter',
+    bodycolor: selectedSchool?.color?.bodycolor || 'null',
   });
 
-  // Update LGA options when stateFilter changes
+  const [errors, setErrors] = useState({});
+
+  // Fetch states on mount
   useEffect(() => {
-    const selectedState = formik.values.stateFilter;
-    const normalizedState = selectedState ? selectedState.toLowerCase() : '';
-    const newLgaOptions = normalizedState && lgaData[normalizedState] ? lgaData[normalizedState] : [];
+    const fetchStates = async () => {
+      try {
+        const data = await getAllStates();
+        setStates(data || []);
+      } catch (err) {
+        notify.error('Failed to load states');
+      }
+    };
+    fetchStates();
+  }, []);
 
-    // Only update state if necessary to prevent infinite loop
-    if (JSON.stringify(newLgaOptions) !== JSON.stringify(lgaOptions)) {
-      setLgaOptions(newLgaOptions);
+  // Fetch LGAs when state changes
+  useEffect(() => {
+    if (formData.state_id) {
+      const fetchLgas = async () => {
+        try {
+          const data = await getLgasByState(formData.state_id);
+          setLgas(data || []);
+        } catch (err) {
+          notify.error(err.error || 'Failed to load LGAs');
+        }
+      };
+      fetchLgas();
+    } else {
+      setLgas([]);
+      setFormData((prev) => ({ ...prev, lga_id: '' }));
+    }
+  }, [formData.state_id]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+  };
+
+  const handleColorChange = (colorType, value) => {
+    setFormData({ ...formData, [colorType]: value });
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.tenant_name.trim()) {
+      newErrors.tenant_name = 'Institution name is required';
+    }
+    if (!formData.tenant_short_name.trim()) {
+      newErrors.tenant_short_name = 'Institution short name is required';
+    }
+    if (!formData.admin_fname.trim()) {
+      newErrors.admin_fname = 'Administrator first name is required';
+    }
+    if (!formData.admin_lname.trim()) {
+      newErrors.admin_lname = 'Administrator last name is required';
+    }
+    if (!formData.admin_email.trim()) {
+      newErrors.admin_email = 'Administrator email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.admin_email)) {
+      newErrors.admin_email = 'Invalid email format';
+    }
+    if (!formData.admin_phone.trim()) {
+      newErrors.admin_phone = 'Administrator phone is required';
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = 'Institution address is required';
+    }
+    if (!formData.state_id) {
+      newErrors.state_id = 'State is required';
+    }
+    if (!formData.lga_id) {
+      newErrors.lga_id = 'LGA is required';
+    }
+    if (!formData.payModuleType) {
+      newErrors.payModuleType = 'Module type is required';
     }
 
-    // Reset lga if it's not valid for the new state
-    if (normalizedState && formik.values.lga && !newLgaOptions.includes(formik.values.lga)) {
-      formik.setFieldValue('lga', '');
-    } else if (!normalizedState && formik.values.lga !== '') {
-      formik.setFieldValue('lga', '');
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      notify.error('Please fill all required fields');
+      return;
     }
-  }, [formik.values.stateFilter, formik.values.lga]);
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        ...formData,
+        headcolor: formData.headcolor,
+        sidecolor: formData.sidecolor,
+        bodycolor: formData.bodycolor,
+      };
+
+      const res = await createSchool(payload);
+
+      notify.success(res.message || 'School registered successfully');
+      onSubmit(res.tenant || res.data);
+
+      // Reset form
+      setFormData({
+        tenant_name: '',
+        tenant_short_name: '',
+        admin_fname: '',
+        admin_lname: '',
+        admin_email: '',
+        admin_phone: '',
+        address: '',
+        state_id: '',
+        lga_id: '',
+        social_link: '',
+        payModuleType: '',
+        headcolor: 'bg-night-sky text-lighter',
+        sidecolor: 'bg-dark text-lighter',
+        bodycolor: 'null',
+      });
+      setErrors({});
+    } catch (err) {
+      notify.error(err.error || 'Failed to register school');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <form onSubmit={formik.handleSubmit}>
-      <Grid container spacing={2} mb={3}>
-        {/* RegisterSchoolFormFields */}
+    <Box component="form" onSubmit={handleSubmit}>
+      <Grid container spacing={2}>
+        {/* Institution Details */}
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
-            label="Institution Name"
             fullWidth
-            name="institutionName"
-            value={formik.values.institutionName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.institutionName && Boolean(formik.errors.institutionName)}
-            helperText={formik.touched.institutionName && formik.errors.institutionName}
+            label="Institution Name"
+            name="tenant_name"
+            value={formData.tenant_name}
+            onChange={handleChange}
+            error={Boolean(errors.tenant_name)}
+            helperText={errors.tenant_name}
           />
         </Grid>
 
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
-            label="Institution Short Name"
             fullWidth
-            name="institutionShortName"
-            value={formik.values.institutionShortName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.institutionShortName && Boolean(formik.errors.institutionShortName)}
-            helperText={formik.touched.institutionShortName && formik.errors.institutionShortName}
+            label="Institution Short Name"
+            name="tenant_short_name"
+            value={formData.tenant_short_name}
+            onChange={handleChange}
+            error={Boolean(errors.tenant_short_name)}
+            helperText={errors.tenant_short_name}
           />
         </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 4 }}>
           <TextField
-            label="Institution Address"
             fullWidth
-            name="institutionAddress"
+            label="Institution Address"
+            name="address"
             multiline
             rows={2}
-            value={formik.values.institutionAddress}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.institutionAddress && Boolean(formik.errors.institutionAddress)}
-            helperText={formik.touched.institutionAddress && formik.errors.institutionAddress}
+            value={formData.address}
+            onChange={handleChange}
+            error={Boolean(errors.address)}
+            helperText={errors.address}
           />
         </Grid>
 
+        {/* Admin Details */}
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
+            fullWidth
             label="Administrator First Name"
-            fullWidth
-            name="administratorFirstName"
-            value={formik.values.administratorFirstName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.administratorFirstName && Boolean(formik.errors.administratorFirstName)}
-            helperText={formik.touched.administratorFirstName && formik.errors.administratorFirstName}
+            name="admin_fname"
+            value={formData.admin_fname}
+            onChange={handleChange}
+            error={Boolean(errors.admin_fname)}
+            helperText={errors.admin_fname}
           />
         </Grid>
 
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
+            fullWidth
             label="Administrator Last Name"
-            fullWidth
-            name="administratorLastName"
-            value={formik.values.administratorLastName}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.administratorLastName && Boolean(formik.errors.administratorLastName)}
-            helperText={formik.touched.administratorLastName && formik.errors.administratorLastName}
+            name="admin_lname"
+            value={formData.admin_lname}
+            onChange={handleChange}
+            error={Boolean(errors.admin_lname)}
+            helperText={errors.admin_lname}
           />
         </Grid>
 
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
+            fullWidth
             label="Administrator Email"
-            fullWidth
-            name="administratorEmail"
-            value={formik.values.administratorEmail}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.administratorEmail && Boolean(formik.errors.administratorEmail)}
-            helperText={formik.touched.administratorEmail && formik.errors.administratorEmail}
+            name="admin_email"
+            type="email"
+            value={formData.admin_email}
+            onChange={handleChange}
+            error={Boolean(errors.admin_email)}
+            helperText={errors.admin_email}
           />
         </Grid>
 
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
           <TextField
-            label="Administrator Phone"
             fullWidth
-            name="administratorPhone"
-            value={formik.values.administratorPhone}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            error={formik.touched.administratorPhone && Boolean(formik.errors.administratorPhone)}
-            helperText={formik.touched.administratorPhone && formik.errors.administratorPhone}
+            label="Administrator Phone"
+            name="admin_phone"
+            value={formData.admin_phone}
+            onChange={handleChange}
+            error={Boolean(errors.admin_phone)}
+            helperText={errors.admin_phone}
           />
         </Grid>
 
-        {/* RegisterSchoolLocationFields */}
+        {/* Location */}
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <FormControl
-            fullWidth
-            error={formik.touched.stateFilter && Boolean(formik.errors.stateFilter)}
-          >
-            <InputLabel>State Filter</InputLabel>
-            <Select
-              name="stateFilter"
-              value={formik.values.stateFilter}
-              label="State Filter"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-            >
-              <MenuItem value="">-- Choose --</MenuItem>
-              <MenuItem value="lagos">Lagos</MenuItem>
-              <MenuItem value="ogun">Ogun</MenuItem>
-            </Select>
-            {formik.touched.stateFilter && formik.errors.stateFilter && (
-              <FormHelperText>{formik.errors.stateFilter}</FormHelperText>
-            )}
-          </FormControl>
-        </Grid>
-
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <FormControl
-            fullWidth
-            error={formik.touched.lga && Boolean(formik.errors.lga)}
-          >
-            <InputLabel>LGA</InputLabel>
-            <Select
-              name="lga"
-              value={formik.values.lga}
-              label="LGA"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              disabled={!lgaOptions.length}
-            >
-              <MenuItem value="">-- Choose --</MenuItem>
-              {lgaOptions.map((lga) => (
-                <MenuItem key={lga} value={lga}>
-                  {lga}
+          <FormControl fullWidth error={Boolean(errors.state_id)}>
+            <InputLabel>State</InputLabel>
+            <Select name="state_id" value={formData.state_id} label="State" onChange={handleChange}>
+              <MenuItem value="">-- Select State --</MenuItem>
+              {states.map((state) => (
+                <MenuItem key={state.id} value={state.id}>
+                  {state.stname}
                 </MenuItem>
               ))}
             </Select>
-            {formik.touched.lga && formik.errors.lga && (
-              <FormHelperText>{formik.errors.lga}</FormHelperText>
-            )}
+            {errors.state_id && <FormHelperText>{errors.state_id}</FormHelperText>}
           </FormControl>
         </Grid>
 
+        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.lga_id)}>
+            <InputLabel>LGA</InputLabel>
+            <Select name="lga_id" value={formData.lga_id} label="LGA" onChange={handleChange}>
+              <MenuItem value="">-- Select LGA --</MenuItem>
+              {lgas.map((lga) => (
+                <MenuItem key={lga.id} value={lga.id}>
+                  {lga.lganame}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.lga_id && <FormHelperText>{errors.lga_id}</FormHelperText>}
+          </FormControl>
+        </Grid>
+
+        {/* Module Type */}
         <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
-          <FormControl
-            fullWidth
-            error={formik.touched.moduleType && Boolean(formik.errors.moduleType)}
-          >
+          <FormControl fullWidth error={Boolean(errors.payModuleType)}>
             <InputLabel>Module Type</InputLabel>
             <Select
-              name="moduleType"
-              value={formik.values.moduleType}
+              name="payModuleType"
+              value={formData.payModuleType}
               label="Module Type"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              onChange={handleChange}
             >
-              <MenuItem value="">-- Choose --</MenuItem>
-              <MenuItem value="school-manager">School Manager</MenuItem>
-              <MenuItem value="school-payment">School Payment</MenuItem>
-              <MenuItem value="school-portal">School Portal</MenuItem>
+              <MenuItem value="">-- Select --</MenuItem>
+              <MenuItem value="mini">Mini Pay</MenuItem>
+              <MenuItem value="full">Full Pay</MenuItem>
             </Select>
-            {formik.touched.moduleType && formik.errors.moduleType && (
-              <FormHelperText>{formik.errors.moduleType}</FormHelperText>
-            )}
+            {errors.payModuleType && <FormHelperText>{errors.payModuleType}</FormHelperText>}
           </FormControl>
         </Grid>
 
-        {/* ColorSchemeSelector */}
+        {/* Color Scheme */}
         <Grid item xs={12}>
-          <ColorSchemeSelector formik={formik} />
+          <ColorSchemeSelector formData={formData} onColorChange={handleColorChange} />
+        </Grid>
+
+        {/* Social Link */}
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Social Link (optional)"
+            name="social_link"
+            value={formData.social_link}
+            onChange={handleChange}
+            error={Boolean(errors.social_link)}
+            helperText={errors.social_link}
+          />
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit">
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        <Button onClick={onCancel} color="inherit" variant="outlined" disabled={loading}>
           Cancel
         </Button>
-        {actionType !== 'viewSchools' && (
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!formik.isValid || formik.isSubmitting}
-          >
-            {actionType === 'update' ? 'Update Register School' : 'Save'}
-          </Button>
-        )}
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+        >
+          {loading
+            ? 'Processing...'
+            : actionType === 'update'
+              ? 'Update School'
+              : 'Register School'}
+        </Button>
       </Box>
-    </form>
+    </Box>
   );
 };
 
 RegisterSchoolForm.propTypes = {
-  actionType: PropTypes.oneOf(['create', 'update', 'viewSchools']).isRequired,
-  selectedAgent: PropTypes.object,
+  actionType: PropTypes.oneOf(['create', 'update']).isRequired,
+  selectedSchool: PropTypes.object,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
 };

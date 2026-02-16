@@ -78,21 +78,21 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'ALC Manager',
-    icon: IconChartPie,
+    title: 'ACL Manager',
+    icon: IconSettings,
     href: '/dashboards/alc-manager',
-  },
-  {
-    id: uniqueId(),
-    title: 'School',
-    icon: IconSchool,
-    href: '/dashboards/school',
   },
   {
     id: uniqueId(),
     title: 'Agent',
     icon: IconUserCircle,
     href: '/dashboards/agent',
+  },
+  {
+    id: uniqueId(),
+    title: 'School',
+    icon: IconSchool,
+    href: '/dashboards/school',
   },
   {
     id: uniqueId(),
@@ -964,19 +964,19 @@ const Menuitems = [
   //   id: uniqueId(),
   //   title: 'Forgot Password',
   //   icon: IconRotate,
-  //   href: '/agent/forgot-password',
+  //   href: '/agent/forgot_password',
   //   children: [
   //     {
   //       id: uniqueId(),
   //       title: 'Side Forgot Password',
   //       icon: IconPoint,
-  //       href: '/agent/forgot-password',
+  //       href: '/agent/forgot_password',
   //     },
   //     {
   //       id: uniqueId(),
   //       title: 'Boxed Forgot Password',
   //       icon: IconPoint,
-  //       href: '/agent/forgot-password2',
+  //       href: '/agent/forgot_password2',
   //     },
   //   ],
   // },

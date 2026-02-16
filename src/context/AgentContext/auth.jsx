@@ -28,6 +28,8 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoading(true);
       try {
+        // const res = await api.get('/agent/get-agent');
+        // setUser(res.data?.data);
         const res = await api.get('/agent/get_agent');
         setUser(res.data?.data);
         setIsAuthenticated(true);

@@ -11,7 +11,7 @@ import ChangeColorScheme from './ChangeColorScheme';
 import { agentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 import agentApi from '../../../api/agent';
-import { AuthContext } from '../../../context/AuthContext';
+import { AuthContext } from "../../../context/AgentContext/auth";
 
 const getModalConfig = (actionType) => {
   const configs = {

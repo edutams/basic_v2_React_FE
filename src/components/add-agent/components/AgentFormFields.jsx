@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Grid,
   TextField,
@@ -8,71 +8,42 @@ import {
   MenuItem,
   FormHelperText,
 } from '@mui/material';
-
-const statesAndLGAs = {
-  lagos: {
-    name: 'Lagos',
-    lgas: [
-      'Agege', 'Ajeromi-Ifelodun', 'Alimosho', 'Amuwo-Odofin', 'Apapa',
-      'Badagry', 'Epe', 'Eti-Osa', 'Ibeju-Lekki', 'Ifako-Ijaiye',
-      'Ikeja', 'Ikorodu', 'Kosofe', 'Lagos Island', 'Lagos Mainland',
-      'Mushin', 'Ojo', 'Oshodi-Isolo', 'Shomolu', 'Surulere'
-    ]
-  },
-  abuja: {
-    name: 'Abuja (FCT)',
-    lgas: [
-      'Abaji', 'Bwari', 'Gwagwalada', 'Kuje', 'Kwali', 'Municipal Area Council'
-    ]
-  },
-  kano: {
-    name: 'Kano',
-    lgas: [
-      'Ajingi', 'Albasu', 'Bagwai', 'Bebeji', 'Bichi', 'Bunkure',
-      'Dala', 'Dambatta', 'Dawakin Kudu', 'Dawakin Tofa', 'Doguwa',
-      'Fagge', 'Gabasawa', 'Garko', 'Garun Mallam', 'Gaya', 'Gezawa',
-      'Gwale', 'Gwarzo', 'Kabo', 'Kano Municipal', 'Karaye', 'Kibiya',
-      'Kiru', 'Kumbotso', 'Kunchi', 'Kura', 'Madobi', 'Makoda',
-      'Minjibir', 'Nasarawa', 'Rano', 'Rimin Gado', 'Rogo', 'Shanono',
-      'Sumaila', 'Takai', 'Tarauni', 'Tofa', 'Tsanyawa', 'Tudun Wada',
-      'Ungogo', 'Warawa', 'Wudil'
-    ]
-  },
-  rivers: {
-    name: 'Rivers',
-    lgas: [
-      'Abua/Odual', 'Ahoada East', 'Ahoada West', 'Akuku-Toru', 'Andoni',
-      'Asari-Toru', 'Bonny', 'Degema', 'Eleme', 'Emuoha', 'Etche',
-      'Gokana', 'Ikwerre', 'Khana', 'Obio/Akpor', 'Ogba/Egbema/Ndoni',
-      'Ogu/Bolo', 'Okrika', 'Omuma', 'Opobo/Nkoro', 'Oyigbo',
-      'Port Harcourt', 'Tai'
-    ]
-  },
-  ogun: {
-    name: 'Ogun',
-    lgas: [
-      'Abeokuta North', 'Abeokuta South', 'Ado-Odo/Ota', 'Egbado North',
-      'Egbado South', 'Ewekoro', 'Ifo', 'Ijebu East', 'Ijebu North',
-      'Ijebu North East', 'Ijebu Ode', 'Ikenne', 'Imeko Afon',
-      'Ipokia', 'Obafemi Owode', 'Odeda', 'Odogbolu', 'Ogun Waterside',
-      'Remo North', 'Shagamu'
-    ]
-  }
-};
+import locationApi from '../../../api/location';
 
 const AgentFormFields = ({ formik }) => {
-  const availableLGAs = useMemo(() => {
-    const selectedState = formik.values.stateFilter;
-    if (selectedState && statesAndLGAs[selectedState]) {
-      return statesAndLGAs[selectedState].lgas;
-    }
-    return [];
-  }, [formik.values.stateFilter]);
+  const [states, setStates] = useState([]);
+  const [lgas, setLgas] = useState([]);
 
-  const handleStateChange = (event) => {
-    const newState = event.target.value;
-    formik.setFieldValue('stateFilter', newState);
+  useEffect(() => {
+    const fetchStates = async () => {
+      try {
+        const response = await locationApi.getStates();
+        if(response.status === 'success'){
+           setStates(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch states", error);
+      }
+    };
+    fetchStates();
+  }, []);
+
+  const handleStateChange = async (event) => {
+    const newStateId = event.target.value;
+    formik.setFieldValue('stateFilter', newStateId);
     formik.setFieldValue('lga', '');
+    setLgas([]);
+
+    if(newStateId){
+        try {
+            const response = await locationApi.getLgas(newStateId);
+            if(response.status === 'success'){
+                setLgas(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch LGAs", error);
+        }
+    }
   };
 
   return (
@@ -163,9 +134,9 @@ const AgentFormFields = ({ formik }) => {
             onBlur={formik.handleBlur}
           >
             <MenuItem value="">-- Choose State --</MenuItem>
-            {Object.entries(statesAndLGAs).map(([key, state]) => (
-              <MenuItem key={key} value={key}>
-                {state.name}
+            {states.map((state) => (
+              <MenuItem key={state.id} value={state.id}>
+                {state.stname}
               </MenuItem>
             ))}
           </Select>
@@ -179,7 +150,7 @@ const AgentFormFields = ({ formik }) => {
         <FormControl
           fullWidth
           error={formik.touched.lga && Boolean(formik.errors.lga)}
-          disabled={!formik.values.stateFilter || availableLGAs.length === 0}
+          disabled={!formik.values.stateFilter || lgas.length === 0}
         >
           <InputLabel>LGA</InputLabel>
           <Select
@@ -190,9 +161,9 @@ const AgentFormFields = ({ formik }) => {
             onBlur={formik.handleBlur}
           >
             <MenuItem value="">-- Choose LGA --</MenuItem>
-            {availableLGAs.map((lga) => (
-              <MenuItem key={lga} value={lga}>
-                {lga}
+            {lgas.map((lga) => (
+              <MenuItem key={lga.id} value={lga.id}>
+                {lga.lganame}
               </MenuItem>
             ))}
           </Select>

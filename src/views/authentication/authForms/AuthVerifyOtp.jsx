@@ -27,12 +27,12 @@ const AuthVerifyOtp = () => {
     setError('');
 
     api
-      .post('/agent/verify-otp', formData)
+      .post('/agent/verify_otp', formData)
       .then((res) => {
         const reset_token = res.data.reset_token;
 
         navigate(
-          `/agent/reset-password?token=${reset_token}&email=${encodeURIComponent(formData.email)}`,
+          `/agent/reset_password?token=${reset_token}&email=${encodeURIComponent(formData.email)}`,
           {
             replace: true,
             state: {
@@ -42,7 +42,7 @@ const AuthVerifyOtp = () => {
         );
 
         setTimeout(() => {
-          window.location.href = `/agent/reset-password?token=${reset_token}&email=${encodeURIComponent(formData.email)}`;
+          window.location.href = `/agent/reset_password?token=${reset_token}&email=${encodeURIComponent(formData.email)}`;
         }, 1000);
       })
       .catch((err) => {

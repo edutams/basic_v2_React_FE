@@ -46,7 +46,6 @@ const BCrumb = [
   },
   { title: 'ALC Manager' },
 ];
-
 const AlcManager = () => {
   const [rows, setRows] = useState([]);
   const [allRolesData] = useState([
@@ -425,7 +424,7 @@ const AlcManager = () => {
                 <Table sx={{ tableLayout: 'fixed' }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: '10%' }}>#</TableCell>
+                      <TableCell sx={{ width: '10%' }}>S/N</TableCell>
                       <TableCell sx={{ width: '25%' }}>Role Name</TableCell>
                       <TableCell sx={{ width: '25%' }}>Guard Name</TableCell>
                       <TableCell sx={{ width: '30%' }}>Description</TableCell>

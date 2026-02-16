@@ -32,9 +32,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
-import SessionModal from 'src/components/school/components/AddSessionModal';
+import SessionModal from '../../components/school/components/AddSessionModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
-import Term from 'src/views/dashboard/Term';
+import Term from '../../views/dashboard/Term';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Session' }];
 

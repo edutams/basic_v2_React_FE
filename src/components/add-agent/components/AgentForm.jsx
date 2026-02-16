@@ -7,7 +7,7 @@ import {
 import AgentFormFields from './AgentFormFields';
 import ColorSchemeSelector from './ColorSchemeSelector';
 
-const AgentForm = ({ formik, onCancel, actionType }) => {
+const AgentForm = ({ formik, onCancel, actionType, loading }) => {
   return (
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3}>
@@ -16,16 +16,16 @@ const AgentForm = ({ formik, onCancel, actionType }) => {
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit">
+        <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit" disabled={loading}>
           Cancel
         </Button>
         {actionType !== 'viewSchools' && (
           <Button
             type="submit"
             variant="contained"
-            disabled={!formik.isValid || formik.isSubmitting}
+            disabled={!formik.isValid || formik.isSubmitting || loading}
           >
-            {actionType === 'update' ? 'Update Agent' : 'Save'}
+            {loading ? 'Saving...' : (actionType === 'update' ? 'Update Agent' : 'Save')}
           </Button>
         )}
       </Box>

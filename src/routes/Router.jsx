@@ -23,6 +23,8 @@ const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecomme
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
 
+const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')));
+
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
 const ViewAgent = Loadable(lazy(() => import('../views/agent/ViewAgent')));

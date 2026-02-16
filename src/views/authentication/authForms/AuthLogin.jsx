@@ -18,11 +18,11 @@ import CustomFormLabel from '../../../components/forms/theme-elements/CustomForm
 import { useAuth } from '../../../hooks/useAuth';
 import { useNotification } from '../../../hooks/useNotification';
 
-import AuthSocialButtons from './AuthSocialButtons';
+// import AuthSocialButtons from './AuthSocialButtons';
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
     rememberMe: false,
   });
@@ -31,21 +31,22 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   const { login, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const successMessage = location.state?.message;
   const notify = useNotification();
 
   const from = location.state?.from?.pathname || '/dashboards/analytical';
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
 
     if (formErrors[name]) {
-      setFormErrors(prev => ({
+      setFormErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: '',
       }));
     }
   };
@@ -54,8 +55,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   const validateForm = () => {
     const errors = {};
 
-    if (!formData.username.trim()) {
-      errors.username = 'Username is required';
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
     }
 
     if (!formData.password.trim()) {
@@ -77,8 +78,9 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
     clearError();
 
     const result = await login({
-      username: formData.username,
+      email: formData.email,
       password: formData.password,
+      remember: formData.rememberMe,
     });
 
     if (result.success) {
@@ -99,8 +101,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
       {subtext}
 
-      <AuthSocialButtons title="Sign in with" />
-      <Box mt={3}>
+      {/* <AuthSocialButtons title="Sign in with" /> */}
+      {/* <Box mt={3}>
         <Divider>
           <Typography
             component="span"
@@ -113,27 +115,31 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             or sign in with
           </Typography>
         </Divider>
-      </Box>
+      </Box> */}
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {successMessage}
+        </Alert>
+      )}
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={2}>
+        <Stack spacing={0}>
           <Box>
-            <CustomFormLabel htmlFor="username">Username</CustomFormLabel>
+            <CustomFormLabel htmlFor="email">Email</CustomFormLabel>
             <CustomTextField
-              id="username"
-              name="username"
+              id="email"
+              name="email"
               variant="outlined"
               fullWidth
-              value={formData.username}
+              value={formData.email}
               onChange={handleInputChange}
-              error={!!formErrors.username}
-              helperText={formErrors.username}
+              error={!!formErrors.email}
+              helperText={formErrors.email}
               disabled={isLoading}
             />
           </Box>
@@ -168,7 +174,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             </FormGroup>
             <Typography
               component={Link}
-              to="/auth/forgot-password"
+              to="/agent/forgot-password"
               fontWeight="500"
               sx={{
                 textDecoration: 'none',
@@ -195,13 +201,15 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
       </Box>
 
       {/* Demo credentials info */}
-      <Box mt={2} p={2} bgcolor="grey.100" borderRadius={1}>
+      {/* <Box mt={2} p={2} bgcolor="grey.100" borderRadius={1}>
         <Typography variant="body2" color="textSecondary" align="center">
-          <strong>Demo Credentials:</strong><br />
-          Username: admin<br />
-          Password: password
+          <strong>Demo Credentials:</strong>
+          <br />
+          Email: crownbirth@gmail.com
+          <br />
+          Password: 12345
         </Typography>
-      </Box>
+      </Box> */}
 
       {subtitle}
     </>

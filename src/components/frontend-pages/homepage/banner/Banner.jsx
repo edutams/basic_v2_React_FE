@@ -1,5 +1,4 @@
-
-import React from "react";
+import React from 'react';
 import {
   Box,
   Stack,
@@ -10,13 +9,13 @@ import {
   Grid,
   Button,
   Link,
-} from "@mui/material";
-import useMediaQuery from "@mui/material/useMediaQuery";
+} from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
-import Tooltip from "@mui/material/Tooltip";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
+import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
 
 import iconPlay from 'src/assets/images/frontend-pages/homepage/icon-play.svg';
 // icons
@@ -29,33 +28,32 @@ import BannerTopLeft from 'src/assets/images/frontend-pages/homepage/banner-top-
 import BannerBottomPart from 'src/assets/images/frontend-pages/homepage/bottom-part.svg';
 import BannerTopRight from 'src/assets/images/frontend-pages/homepage/banner-top-right.svg';
 
-
 import user1 from 'src/assets/images/profile/user-1.jpg';
 import user2 from 'src/assets/images/profile/user-2.jpg';
 import user3 from 'src/assets/images/profile/user-3.jpg';
 
 const Frameworks = [
   {
-    name: "React",
+    name: 'React',
     icon: icon1,
   },
   {
-    name: "Material Ui",
+    name: 'Material Ui',
     icon: icon2,
   },
   {
-    name: "swr",
+    name: 'swr',
     icon: icon5,
   },
   {
-    name: "Tabler Icon",
+    name: 'Tabler Icon',
     icon: icon6,
   },
 ];
 
 const Banner = () => {
   //   sidebar
-  const lgUp = useMediaQuery((theme) => theme.breakpoints.up("lg"));
+  const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
 
   const [open, setOpen] = React.useState(false);
 
@@ -68,11 +66,11 @@ const Banner = () => {
   };
 
   return (
-    (<Box bgcolor="primary.light" pt={7}>
+    <Box bgcolor="primary.light" pt={7}>
       <Container
         sx={{
-          maxWidth: "1400px !important",
-          position: "relative",
+          maxWidth: '1400px !important',
+          position: 'relative',
         }}
       >
         <Grid container spacing={3} justifyContent="center" mb={4}>
@@ -82,8 +80,9 @@ const Banner = () => {
               display="flex"
               size={{
                 xs: 12,
-                lg: 2
-              }}>
+                lg: 2,
+              }}
+            >
               <img
                 src={BannerTopLeft}
                 className="animted-img-2"
@@ -91,13 +90,13 @@ const Banner = () => {
                 width={360}
                 height={200}
                 style={{
-                  borderRadius: "16px",
-                  position: "absolute",
-                  left: "24px",
-                  boxShadow: "0px 6px 12px rgba(127, 145, 156, 0.12)",
-                  height: "auto",
-                  width: "auto",
-                  maxWidth: '340px'
+                  borderRadius: '16px',
+                  position: 'absolute',
+                  left: '24px',
+                  boxShadow: '0px 6px 12px rgba(127, 145, 156, 0.12)',
+                  height: 'auto',
+                  width: 'auto',
+                  maxWidth: '340px',
                 }}
               />
             </Grid>
@@ -107,26 +106,27 @@ const Banner = () => {
             textAlign="center"
             size={{
               xs: 12,
-              lg: 7
-            }}>
+              lg: 7,
+            }}
+          >
             <Typography
               variant="h1"
               fontWeight={700}
               lineHeight="1.2"
               sx={{
                 fontSize: {
-                  xs: "40px",
-                  sm: "56px",
+                  xs: '40px',
+                  sm: '56px',
                 },
               }}
             >
-              Most powerful &{" "}
+              Most powerful &{' '}
               <Typography
                 variant="h1"
                 sx={{
                   fontSize: {
-                    xs: "40px",
-                    sm: "56px",
+                    xs: '40px',
+                    sm: '56px',
                   },
                 }}
                 fontWeight={700}
@@ -134,50 +134,33 @@ const Banner = () => {
                 color="primary.main"
               >
                 developer friendly
-              </Typography>{" "}
+              </Typography>{' '}
               dashboard
             </Typography>
             <Stack
               my={3}
-              direction={{ xs: "column", sm: "row" }}
+              direction={{ xs: 'column', sm: 'row' }}
               spacing="20px"
               alignItems="center"
               justifyContent="center"
             >
               <AvatarGroup>
-                <Avatar
-                  alt="Remy Sharp"
-                  src={user1}
-                  sx={{ width: 40, height: 40 }}
-                />
-                <Avatar
-                  alt="Travis Howard"
-                  src={user2}
-                  sx={{ width: 40, height: 40 }}
-                />
-                <Avatar
-                  alt="Cindy Baker"
-                  src={user3}
-                  sx={{ width: 40, height: 40 }}
-                />
+                <Avatar alt="Remy Sharp" src={user1} sx={{ width: 40, height: 40 }} />
+                <Avatar alt="Travis Howard" src={user2} sx={{ width: 40, height: 40 }} />
+                <Avatar alt="Cindy Baker" src={user3} sx={{ width: 40, height: 40 }} />
               </AvatarGroup>
               <Typography variant="h6" fontWeight={500}>
                 52,589+ developers & agencies using our templates
               </Typography>
             </Stack>
             <Stack
-              direction={{ xs: "column", sm: "row" }}
+              direction={{ xs: 'column', sm: 'row' }}
               alignItems="center"
               spacing={3}
               mb={4}
               justifyContent="center"
             >
-              <Button
-                color="primary"
-                size="large"
-                variant="contained"
-                href="/auth/login"
-              >
+              <Button color="primary" size="large" variant="contained" href="/auth/login">
                 Log In
               </Button>
               <Button
@@ -185,25 +168,19 @@ const Banner = () => {
                 color="inherit"
                 onClick={handleClickOpen}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 2,
-                  color: "text.primary",
+                  color: 'text.primary',
                   fontWeight: 500,
-                  fontSize: "15px",
-                  "&:hover": {
-                    color: "primary.main",
+                  fontSize: '15px',
+                  '&:hover': {
+                    color: 'primary.main',
                   },
                 }}
               >
-                <img
-                  src={iconPlay}
-                  alt="icon"
-                  width={40}
-                  height={40}
-                />{" "}
-                See how it works
+                <img src={iconPlay} alt="icon" width={40} height={40} /> See how it works
               </Button>
             </Stack>
             <Stack
@@ -222,11 +199,9 @@ const Banner = () => {
                     display="flex"
                     sx={{
                       boxShadow: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? null
-                          : theme.shadows[9],
+                        theme.palette.mode === 'dark' ? null : theme.shadows[9],
                       backgroundColor: (theme) =>
-                        theme.palette.mode === "dark" ? theme.palette.background.paper : "white",
+                        theme.palette.mode === 'dark' ? theme.palette.background.paper : 'white',
                     }}
                     alignItems="center"
                     justifyContent="center"
@@ -270,8 +245,9 @@ const Banner = () => {
               display="flex"
               size={{
                 xs: 12,
-                lg: 2
-              }}>
+                lg: 2,
+              }}
+            >
               <img
                 src={BannerTopRight}
                 className="animted-img-2"
@@ -279,13 +255,13 @@ const Banner = () => {
                 width={350}
                 height={220}
                 style={{
-                  borderRadius: "16px",
-                  position: "absolute",
-                  right: "24px",
-                  boxShadow: "0px 6px 12px rgba(127, 145, 156, 0.12)",
-                  height: "auto",
-                  width: "auto",
-                  maxWidth: '340px'
+                  borderRadius: '16px',
+                  position: 'absolute',
+                  right: '24px',
+                  boxShadow: '0px 6px 12px rgba(127, 145, 156, 0.12)',
+                  height: 'auto',
+                  width: 'auto',
+                  maxWidth: '340px',
                 }}
               />
             </Grid>
@@ -299,13 +275,13 @@ const Banner = () => {
             width={500}
             height={300}
             style={{
-              width: "100%",
-              marginBottom: "-11px",
+              width: '100%',
+              marginBottom: '-11px',
             }}
           />
         ) : null}
       </Container>
-    </Box>)
+    </Box>
   );
 };
 

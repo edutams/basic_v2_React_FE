@@ -79,7 +79,7 @@ const FVRegister = () => {
         </FormGroup>
         <Typography
           component={Link}
-          to="/auth/forgot-password"
+          to="/agent/forgot-password"
           fontWeight={600}
           sx={{
             textDecoration: 'none',

@@ -964,19 +964,19 @@ const Menuitems = [
   //   id: uniqueId(),
   //   title: 'Forgot Password',
   //   icon: IconRotate,
-  //   href: '/auth/forgot-password',
+  //   href: '/agent/forgot-password',
   //   children: [
   //     {
   //       id: uniqueId(),
   //       title: 'Side Forgot Password',
   //       icon: IconPoint,
-  //       href: '/auth/forgot-password',
+  //       href: '/agent/forgot-password',
   //     },
   //     {
   //       id: uniqueId(),
   //       title: 'Boxed Forgot Password',
   //       icon: IconPoint,
-  //       href: '/auth/forgot-password2',
+  //       href: '/agent/forgot-password2',
   //     },
   //   ],
   // },

@@ -29,7 +29,7 @@ const AuthResetPassword = () => {
     setError('');
 
     try {
-      const res = await api.post('/agent/reset-password', formData);
+      const res = await api.post('/agent/reset_password', formData);
       setMessage(res.data.message || 'Password reset successfully! Redirecting to login...');
       localStorage.removeItem('access_token');
       setFormData({

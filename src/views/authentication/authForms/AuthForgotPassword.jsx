@@ -21,16 +21,16 @@ const AuthForgotPassword = () => {
     setError('');
 
     try {
-      const res = await api.post('/agent/forgot-password', { email });
+      const res = await api.post('/agent/forgot_password', { email });
       setMessage(res.data.message || 'Reset link sent to your email!');
 
-      navigate(`/agent/verify-otp?email=${encodeURIComponent(email)}`, {
+      navigate(`/agent/verify_otp?email=${encodeURIComponent(email)}`, {
         replace: true,
         state: { message: 'Reset link sent to your email. Please verify your OTP.' },
       });
 
       setTimeout(() => {
-        window.location.href = `/agent/verify-otp?email=${encodeURIComponent(email)}`;
+        window.location.href = `/agent/verify_otp?email=${encodeURIComponent(email)}`;
       }, 1000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset link');

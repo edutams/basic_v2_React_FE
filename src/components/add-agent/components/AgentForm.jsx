@@ -7,12 +7,12 @@ import {
 import AgentFormFields from './AgentFormFields';
 import ColorSchemeSelector from './ColorSchemeSelector';
 
-const AgentForm = ({ formik, onCancel, actionType, loading }) => {
+const AgentForm = ({ formik, onCancel, actionType, loading, canSelectColor = true }) => {
   return (
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3}>
         <AgentFormFields formik={formik} />
-        {actionType !== 'update' && <ColorSchemeSelector formik={formik} />}
+        {actionType !== 'update' && canSelectColor && <ColorSchemeSelector formik={formik} />}
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

@@ -11,6 +11,14 @@ const agentApi = {
     const response = await api.get('/agent/get_all_agents', { params }); 
     return response.data;
   },
+  update: async (data) => {
+    const response = await api.post(`/agent/update_agent_profile`, data);
+    return response.data;
+  },
+  getDetails: async (id) => {
+      const response = await api.get(`/agent/get_agent_details/${id}`);
+      return response.data;
+  }
   // Add other methods as needed
 };
 

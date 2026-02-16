@@ -11,6 +11,7 @@ import ChangeColorScheme from './ChangeColorScheme';
 import { agentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 import agentApi from '../../../api/agent';
+import { AuthContext } from '../../../context/AuthContext';
 
 const getModalConfig = (actionType) => {
   const configs = {
@@ -60,6 +61,9 @@ const AgentModal = ({
 }) => {
   console.log('selectedAgent:', selectedAgent);
   console.log('actionType:', actionType);
+
+  const { user } = React.useContext(AuthContext);
+  const canSelectColor = user?.access_level < 2;
 
   const shouldPrefillForm = actionType === 'update' || actionType === 'changeColorScheme';
   const modalConfig = getModalConfig(actionType);
@@ -150,19 +154,53 @@ const AgentModal = ({
     }
   };
 
-  const handleUpdate = (values) => {
-    const updatedData = {
-      ...selectedAgent,
-      ...values,
-      phoneNumber: values.agentPhone,
-      colourScheme: formik.values.bodyColor,
-      headerColor: formik.values.headerColor,
-      sidebarColor: formik.values.sidebarColor,
-    };
+  const handleUpdate = async (values) => {
+    setLoading(true);
+    try {
+        const payload = {
+            org_name: values.organizationName,
+            org_title: values.organizationTitle,
+            name: values.agentDetails,
+            email: values.contactDetails,
+            phone: values.agentPhone,
+            address: values.contactAddress,
+            lga_id: values.lga,
+            color: {
+                headcolor: values.headerColor || 'default',
+                sidecolor: values.sidebarColor || 'default',
+                bodycolor: values.bodyColor || 'default',
+            },
+            status: selectedAgent.status === 'Active' ? 'active' : 'inactive', // or handle status update logic separately
+        };
 
-    handleRefresh(updatedData);
-    resetForm();
-    onClose();
+        const response = await agentApi.update(selectedAgent.s_n, payload);
+
+        if(response.data){ // Check if data exists or success flag
+             handleRefresh(response.data);
+             resetForm();
+             onClose();
+        } else {
+             console.error("Update returned invalid response", response);
+        }
+    } catch (error) {
+        console.error("Agent update failed:", error);
+         if (error.response && error.response.status === 422) {
+            const backendErrors = error.response.data.errors;
+            const mappedErrors = {};
+            
+            if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
+            if (backendErrors.org_title) mappedErrors.organizationTitle = backendErrors.org_title[0];
+            if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
+            if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
+            if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
+            if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
+            if (backendErrors.lga_id) mappedErrors.lga = backendErrors.lga_id[0];
+
+            formik.setErrors(mappedErrors);
+        }
+    } finally {
+        setLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -228,6 +266,7 @@ const AgentModal = ({
             onCancel={handleClose}
             actionType={actionType}
             loading={loading}
+            canSelectColor={canSelectColor}
           />
         );
     }

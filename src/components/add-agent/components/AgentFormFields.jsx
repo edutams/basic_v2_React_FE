@@ -17,10 +17,8 @@ const AgentFormFields = ({ formik }) => {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const response = await locationApi.getStates();
-        if(response.status === 'success'){
-           setStates(response.data);
-        }
+        const states = await locationApi.getStates();
+        setStates(states);
       } catch (error) {
         console.error("Failed to fetch states", error);
       }
@@ -36,10 +34,8 @@ const AgentFormFields = ({ formik }) => {
 
     if(newStateId){
         try {
-            const response = await locationApi.getLgas(newStateId);
-            if(response.status === 'success'){
-                setLgas(response.data);
-            }
+            const lgas = await locationApi.getLgas(newStateId);
+            setLgas(lgas);
         } catch (error) {
             console.error("Failed to fetch LGAs", error);
         }

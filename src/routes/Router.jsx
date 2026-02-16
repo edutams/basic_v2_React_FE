@@ -25,6 +25,7 @@ const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageMan
 
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
+const ViewAgent = Loadable(lazy(() => import('../views/agent/ViewAgent')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
 const MyPlan = Loadable(lazy(() => import('../views/my-plan/MyPlan')));
 const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
@@ -207,6 +208,7 @@ const Router = [
         children: [
           { path: 'analytical', element: <AnalyticalDashboard /> },
           { path: 'agent', element: <Agent /> },
+          { path: 'view-agent/:id', element: <ViewAgent /> },
           { path: 'school', element: <SchoolDashboard /> },
           { path: 'session', element: <SessionDashboard /> },
           { path: 'term', element: <TermDashboard /> },

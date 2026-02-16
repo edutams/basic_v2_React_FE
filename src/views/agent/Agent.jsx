@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { useContext } from 'react';
 
 import {
@@ -36,6 +37,7 @@ import agentApi from '../../api/agent';
 
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 import {
   flexRender,
@@ -61,15 +63,21 @@ const statusOptions = [
 
 const columnHelper = createColumnHelper();
 
-// ... (imports remain)
+import locationApi from '../../api/location';
 
 const Agent = () => {
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
   const [lga, setLga] = useState('');
-  const [referer, setReferer] = useState('');
+  const [status, setStatus] = useState('');
+  // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
+  
+  const [states, setStates] = useState([]);
+  const [lgas, setLgas] = useState([]);
+
+  const navigate = useNavigate();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
@@ -80,8 +88,14 @@ const Agent = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await agentApi.getAll();
-        // Assuming response.data is the array of agents, or response.data.data
+        const params = {
+             state: state || undefined,
+             lga: lga || undefined,
+             status: status || undefined,
+             search: search || undefined,
+             access_level: agentLevel || undefined
+        };
+        const response = await agentApi.getAll(params);
         if(response.success){
              const mappedData = response.data.map((agent, index) => {
                  let parsedColor = agent.color;
@@ -101,14 +115,14 @@ const Agent = () => {
                      organizationTitle: agent.org_title,
                      contactDetails: agent.email,
                      phoneNumber: agent.phone,
-                    //  level: agent.access_level,
                      imgsrc: agent.image,
                      performance: 'School: ' + (agent.tenants_count || 0),
-                     gateway: 'No Gateway',
                      headerColor: parsedColor?.headcolor,
                      sidebarColor: parsedColor?.sidecolor,
                      bodyColor: parsedColor?.bodycolor,
                      status: agent.status ? (agent.status.charAt(0).toUpperCase() + agent.status.slice(1)) : 'Inactive',
+                     lga: agent.lga_id,
+                     stateFilter: agent.state_lga?.state_id,
                  };
              });
              setData(mappedData);
@@ -129,109 +143,61 @@ const Agent = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const applyFilters = () => {
-    console.log({ agentLevel, country, state, lga, referer, search });
-
+    setRefreshKey(prev => prev + 1);
     setHasFiltered(true);
   };
 
-  const stateLgaData = {
-    'Ogun State': [
-      'Abeokuta North',
-      'Abeokuta South',
-      'Ado-Odo/Ota',
-      'Ewekoro',
-      'Ifo',
-      'Ijebu East',
-      'Ijebu North',
-      'Ijebu North East',
-      'Ijebu Ode',
-      'Ikenne',
-      'Imeko Afon',
-      'Ipokia',
-      'Obafemi Owode',
-      'Odeda',
-      'Odogbolu',
-      'Ogun Waterside',
-      'Remo North',
-      'Sagamu',
-      'Yewa North',
-      'Yewa South',
-    ],
-    'Lagos State': [
-      'Agege',
-      'Ajeromi-Ifelodun',
-      'Alimosho',
-      'Amuwo-Odofin',
-      'Apapa',
-      'Badagry',
-      'Epe',
-      'Eti Osa',
-      'Ibeju-Lekki',
-      'Ifako-Ijaiye',
-      'Ikeja',
-      'Ikorodu',
-      'Kosofe',
-      'Lagos Island',
-      'Lagos Mainland',
-      'Mushin',
-      'Ojo',
-      'Oshodi-Isolo',
-      'Shomolu',
-      'Surulere',
-    ],
-  };
-
-  const availableLgas = useMemo(() => {
-    return state ? stateLgaData[state] || [] : [];
-  }, [state]);
-
+  // Fetch States on Mount
   useEffect(() => {
-    if (state && !availableLgas.includes(lga)) {
-      setLga('');
-    }
-  }, [state, availableLgas, lga]);
+    const fetchStates = async () => {
+      try {
+        const response = await locationApi.getStates();
+        setStates(response); 
+      } catch (error) {
+        console.error("Failed to fetch states", error);
+      }
+    };
+    fetchStates();
+  }, []);
+
+  // Fetch LGAs when State changes
+  useEffect(() => {
+    setLga('');
+    const fetchLgas = async () => {
+      if (state) {
+        try {
+            // Find state object to get ID if state is stored as name, or use state directly if ID
+            // The API likely returns objects with id and name. 
+            // The filters currently use state name (string). 
+            // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
+            // Based on previous code, state filter uses names. 
+            const selectedState = states.find(s => (s.stname || s.name) === state);
+            if(selectedState){
+                const response = await locationApi.getLgas(selectedState.id);
+                setLgas(response);
+            } else {
+                setLgas([]);
+            }
+        } catch (error) {
+            console.error("Failed to fetch LGAs", error);
+            setLgas([]);
+        }
+      } else {
+        setLgas([]);
+        setLga('');
+      }
+    };
+    fetchLgas();
+  }, [state, states]);
+
 
   const hasActiveFilters = useMemo(() => {
-    return agentLevel || country || state || lga || referer || search;
-  }, [agentLevel, country, state, lga, referer, search]);
+    return agentLevel || country || state || lga || search;
+  }, [agentLevel, country, state, lga, search]);
 
   const filteredData = useMemo(() => {
-    return data.filter((agent) => {
-      if (agentLevel && agent.level !== agentLevel) {
-        return false;
-      }
-
-      if (country && agent.country !== country) {
-        return false;
-      }
-
-      if (state && agent.stateFilter !== state) {
-        return false;
-      }
-
-      if (lga && agent.lga !== lga) {
-        return false;
-      }
-
-      if (referer && agent.referer !== referer) {
-        return false;
-      }
-
-      if (search) {
-        const searchLower = search.toLowerCase();
-        const matchesSearch =
-          agent.agentDetails?.toLowerCase().includes(searchLower) ||
-          agent.organizationName?.toLowerCase().includes(searchLower) ||
-          agent.contactDetails?.toLowerCase().includes(searchLower);
-
-        if (!matchesSearch) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [data, agentLevel, country, state, lga, referer, search]);
+    return data;
+  }, [data]);
 
   const emptyState = useTableEmptyState(filteredData, hasActiveFilters, !!search, search, {
     defaultMessage: 'No agents found',
@@ -418,22 +384,7 @@ const Agent = () => {
           </Typography>
         ),
     }),
-    columnHelper.accessor('gateway', {
-      header: () => 'Gateway',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Typography color="textSecondary" variant="h6" fontWeight="400">
-            {info.getValue()}
-          </Typography>
-        ),
-    }),
+    // Gateway column removed
     columnHelper.accessor('colourScheme', {
       header: () => 'Colour Scheme',
       cell: (info) => {
@@ -572,6 +523,14 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
+                  navigate(`/dashboards/view-agent/${row.original.s_n}`);
+                }}
+              >
+                View Profile
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleClose();
                   handleUpdateAgent(row.original, 'update');
                 }}
               >
@@ -679,7 +638,7 @@ const Agent = () => {
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="h5" fontWeight={200}>
-                All Agent
+                My Agent List
               </Typography>
               <Button
                 variant="contained"
@@ -693,7 +652,7 @@ const Agent = () => {
           }
         >
           <Grid container spacing={3} mb={3}>
-            {/* Basic Filters - Always Visible */}
+            {/* Basic Search - Always Visible */}
             <Grid size={{ xs: 12, md: 3, sm: 4 }}>
               <TextField
                 fullWidth
@@ -704,9 +663,24 @@ const Agent = () => {
               />
             </Grid>
 
+             {/* Filter Icon Toggle */}
+             {!showAdvancedFilters && (
+              <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                 <IconButton onClick={() => setShowAdvancedFilters(true)} color="primary">
+                    <FilterListIcon />
+                 </IconButton>
+              </Grid>
+            )}
+
+
             {/* Advanced Filters */}
-            {filterClicked && showAdvancedFilters && (
+            {showAdvancedFilters && (
               <>
+                 <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                 <IconButton onClick={() => setShowAdvancedFilters(false)} color="secondary">
+                    <FilterListIcon />
+                 </IconButton>
+              </Grid>
                 <Grid size={{ xs: 12, md: 3, sm: 3 }}>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel>Agent Level</InputLabel>
@@ -716,22 +690,25 @@ const Agent = () => {
                       onChange={(e) => setAgentLevel(e.target.value)}
                     >
                       <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="Level 1">Level 1</MenuItem>
-                      <MenuItem value="Level 2">Level 2</MenuItem>
-                      <MenuItem value="Level 3">Level 3</MenuItem>
+                      <MenuItem value="1">Level 1</MenuItem>
+                      <MenuItem value="2">Level 2</MenuItem>
+                      <MenuItem value="3">Level 3</MenuItem>
+                      <MenuItem value="4">Level 4</MenuItem>
+                      <MenuItem value="5">Level 5</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3, sm: 3 }}>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel>Country</InputLabel>
+                    <InputLabel>Status</InputLabel>
                     <Select
-                      value={country}
-                      label="Country"
-                      onChange={(e) => setCountry(e.target.value)}
+                      value={status}
+                      label="Status"
+                      onChange={(e) => setStatus(e.target.value)}
                     >
                       <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="optionA">Nigeria</MenuItem>
+                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="inactive">Inactive</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -740,8 +717,11 @@ const Agent = () => {
                     <InputLabel>State</InputLabel>
                     <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
                       <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="Ogun State">Ogun State</MenuItem>
-                      <MenuItem value="Lagos State">Lagos State</MenuItem>
+                      {states.map((s) => (
+                        <MenuItem key={s.id} value={s.stname || s.name}>
+                          {s.stname || s.name}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -755,49 +735,27 @@ const Agent = () => {
                       disabled={!state}
                     >
                       <MenuItem value="">-- Choose LGA --</MenuItem>
-                      {availableLgas.map((lgaOption) => (
-                        <MenuItem key={lgaOption} value={lgaOption}>
-                          {lgaOption}
+                      {lgas.map((l) => (
+                        <MenuItem key={l.id} value={l.lganame || l.name}>
+                          {l.lganame || l.name}
                         </MenuItem>
                       ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Referer</InputLabel>
-                    <Select
-                      value={referer}
-                      label="Referer"
-                      onChange={(e) => setReferer(e.target.value)}
-                    >
-                      <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="data1">Odeda</MenuItem>
-                      <MenuItem value="data2">Yewa</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
               </>
             )}
 
-            {filterClicked && !showAdvancedFilters && (
-              <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                <Button variant="text" onClick={() => setShowAdvancedFilters(true)}>
-                  View All Filters
-                </Button>
-              </Grid>
-            )}
-
             <Grid>
               <Button
                 variant="contained"
                 onClick={() => {
-                  setFilterClicked(true);
+                  applyFilters();
                 }}
                 color="primary"
                 sx={{ justifyContent: 'center' }}
               >
-                Filter
+                Search
               </Button>
             </Grid>
 
@@ -826,7 +784,6 @@ const Agent = () => {
                     setCountry('');
                     setState('');
                     setLga('');
-                    setReferer('');
                     setSearch('');
                   }}
                   // sx={{ height: '48px' }}

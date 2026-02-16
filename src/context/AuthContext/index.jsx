@@ -28,8 +28,8 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoading(true);
       try {
-        // const res = await api.get('/agent/get-agent');
-        // setUser(res.data?.data);
+        const res = await api.get('/agent/get_agent');
+        setUser(res.data?.data);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('access_token');
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }) => {
   const updateAgentProfile = async (data, isMultipart = false) => {
     setError(null);
     try {
-      const res = await api.post('/agent/update-agent-profile', data, {
+      const res = await api.post('/agent/update_agent_profile', data, {
         headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
       });
       setUser(res.data?.data);
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
   const changePassword = async (passwordData) => {
     setError(null);
     try {
-      await api.put('/agent/change-password', passwordData);
+      await api.put('/agent/change_password', passwordData);
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.error || 'Password change failed';
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      await api.post('/agent/refresh-token');
+      await api.post('/agent/refresh_token');
     } catch (err) {
       console.error('Token refresh failed', err);
     }

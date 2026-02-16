@@ -37,6 +37,7 @@ import PermissionAttachmentModal from 'src/components/alc-manager/components/Per
 import ViewPermissionModal from 'src/components/alc-manager/components/ViewPermissionModal';
 import NewRoleModal from 'src/components/alc-manager/components/NewRoleModal';
 import AssignmentManagement from 'src/components/alc-manager/components/AssignmentManagement';
+import AccessAnalysis from 'src/components/alc-manager/components/AccessAnalysis';
 
 const BCrumb = [
   {
@@ -371,11 +372,7 @@ const AlcManager = () => {
 
       {activeTab === 'Assignment Management' && <AssignmentManagement />}
 
-      {activeTab === 'Analysis Report' && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Access Analysis report.
-        </Alert>
-      )}
+      {activeTab === 'Analysis Report' && <AccessAnalysis />}
 
       {(activeTab === 'Role Management' || !activeTab) && (
         <ParentCard

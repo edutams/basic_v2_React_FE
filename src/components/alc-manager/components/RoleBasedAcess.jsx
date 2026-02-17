@@ -226,7 +226,7 @@ const AssignmentManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '10%' }}>S/N</TableCell>
-                  <TableCell sx={{ width: '35%' }}>Permission</TableCell>
+                  <TableCell sx={{ width: '35%' }}>Roles</TableCell>
                   <TableCell sx={{ width: '35%' }} align="center">
                     Total Role
                   </TableCell>

@@ -28,21 +28,25 @@ const PermissionAttachmentModal = ({
   onPermissionChange,
   onSave,
 }) => {
+  // safe default to avoid undefined errors
+  const safeAvailablePermissions = availablePermissions || [];
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         Attach Permissions to{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-          "{selectedRow?.roleName}"
-        </Box>{' '}
+          "{selectedRow?.name}"
+        </Box>
       </DialogTitle>
+
       <DialogContent dividers>
         <Typography variant="body1" gutterBottom>
           Select permissions to attach to this role:
         </Typography>
+
         <TextField
           autoFocus
-          // margin="dense"
           placeholder="Search Permissions"
           type="text"
           fullWidth
@@ -62,21 +66,22 @@ const PermissionAttachmentModal = ({
         <Typography variant="caption" color="textSecondary" sx={{ mb: 2 }}>
           Selected: {selectedPermissions.length} of{' '}
           {
-            availablePermissions.filter((permission) =>
-              permission.toLowerCase().includes(permissionSearch.toLowerCase()),
+            safeAvailablePermissions.filter((permission) =>
+              permission?.name?.toLowerCase()?.includes(permissionSearch.toLowerCase()),
             ).length
           }{' '}
           permissions
         </Typography>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-          {availablePermissions
+          {safeAvailablePermissions
             .filter((permission) =>
-              permission.toLowerCase().includes(permissionSearch.toLowerCase()),
+              permission?.name?.toLowerCase()?.includes(permissionSearch.toLowerCase()),
             )
+
             .map((permission) => (
               <ListItem
-                key={permission}
+                key={permission.id}
                 disablePadding
                 sx={{ padding: '4px 8px', display: 'flex', alignItems: 'center' }}
               >
@@ -91,12 +96,13 @@ const PermissionAttachmentModal = ({
                 >
                   <Checkbox
                     size="small"
-                    checked={selectedPermissions.includes(permission)}
+                    // checked={selectedPermissions.includes(permission)}
+                    checked={selectedPermissions.some((p) => p.id === permission.id)}
                     onChange={() => onPermissionChange(permission)}
                     sx={{ marginRight: 1 }}
                   />
                   <ListItemText
-                    primary={permission}
+                    primary={permission.name}
                     primaryTypographyProps={{ variant: 'body2' }}
                   />
                 </ListItemButton>
@@ -104,6 +110,7 @@ const PermissionAttachmentModal = ({
             ))}
         </Box>
       </DialogContent>
+
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={onSave} variant="contained" color="primary">

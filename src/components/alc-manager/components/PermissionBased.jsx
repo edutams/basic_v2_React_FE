@@ -51,12 +51,6 @@ const AssignmentManagement = () => {
       totalPermission: '1',
       totalUser: '1',
     },
-    {
-      id: 5,
-      role: 'censis.aci.user.manage.permission',
-      totalPermission: '1',
-      totalUser: '1',
-    },
   ]);
 
   const [page, setPage] = useState(0);
@@ -196,7 +190,7 @@ const AssignmentManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '10%' }}>S/N</TableCell>
-                  <TableCell sx={{ width: '35%' }}>Roles</TableCell>
+                  <TableCell sx={{ width: '35%' }}>Permissions</TableCell>
                   <TableCell sx={{ width: '35%' }} align="center">
                     Total Permission
                   </TableCell>

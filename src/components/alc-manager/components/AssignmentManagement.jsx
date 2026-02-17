@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,56 +19,17 @@ import {
   Menu,
   MenuItem,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
+import aclApi from 'src/api/aclApi';
 
 const AssignmentManagement = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'Adesola Joy',
-      email: 'adesola@gmail.com',
-      userType: 'Admin',
-      assignedRoles: ['User', 'Admin'],
-      avatar: '/src/assets/images/users/user1.jpg',
-    },
-    {
-      id: 2,
-      name: 'Abuldkareem Ramadan ',
-      email: 'ramadan@gmail.com',
-      userType: 'User',
-      assignedRoles: ['User', 'Customer'],
-      avatar: '/src/assets/images/users/user32.jpg',
-    },
-    {
-      id: 3,
-      name: 'Afolabi John',
-      email: 'john@gmail.com',
-      userType: 'Manager',
-      assignedRoles: ['User', 'Manager'],
-      avatar: '/src/assets/images/users/user3.jpg',
-    },
-    {
-      id: 4,
-      name: 'Alice Williams',
-      email: 'alice@gmail.com',
-      userType: 'User',
-      assignedRoles: ['User', 'Agent'],
-      avatar: '/src/assets/images/users/user4.jpg',
-    },
-    {
-      id: 5,
-      name: 'Hassan Kamil',
-      email: 'kamil@gmail.com',
-      userType: 'Admin',
-      assignedRoles: ['User', 'Super_Admin'],
-      avatar: '/src/assets/images/users/user5.jpg',
-    },
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -76,10 +37,44 @@ const AssignmentManagement = () => {
   const [nameFilter, setNameFilter] = useState('');
   const [userTypeFilter, setUserTypeFilter] = useState('');
 
-  const paginatedUsers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return users.slice(start, start + rowsPerPage);
-  }, [users, page, rowsPerPage]);
+  const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
+  const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
+  const [currentAgentForRole, setCurrentAgentForRole] = useState(null);
+
+  // // Fetch users from backend
+  // const fetchUsers = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const res = await aclApi.getUsers();
+  //     setUsers(res.data || []);
+  //   } catch (err) {
+  //     console.error('Failed to fetch users:', err);
+  //     setUsers([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await aclApi.getUsers();
+      const normalized = (res.data || []).map((u) => ({
+        ...u,
+        assignedRoles: u.assignedRoles || [], // ensure array
+      }));
+      setUsers(normalized);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -120,45 +115,46 @@ const AssignmentManagement = () => {
     return roleStyles[role] || {};
   };
 
-  const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
-  const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
-  const [currentUserForRole, setCurrentUserForRole] = useState(null);
+  const handleRoleSelection = async (rolesArray) => {
+    if (!currentAgentForRole) return;
 
-  const handleRoleSelection = (selectedRole) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => {
-        if (user.id === currentUserForRole.id) {
-          if (!user.assignedRoles.includes(selectedRole)) {
-            return {
-              ...user,
-              assignedRoles: [...user.assignedRoles, selectedRole],
-            };
+    try {
+      // await aclApi.assignAgentRole(currentAgentForRole.id, rolesArray);
+      await aclApi.assignAgentRole(currentAgentForRole.id, roles);
+
+      setUsers((prev) =>
+        prev.map((agent) => {
+          if (agent.id === currentAgentForRole.id) {
+            return { ...agent, assignedRoles: rolesArray };
           }
-          return user;
-        }
-        return user;
-      }),
-    );
+          return agent;
+        }),
+      );
 
-    setRoleAttachmentModalOpen(false);
+      setRoleAttachmentModalOpen(false);
+    } catch (err) {
+      console.error('Failed to assign roles:', err);
+    }
   };
 
   const handleAction = (action, row) => {
     if (action === 'edit') {
-      setCurrentUserForRole(row);
+      setCurrentAgentForRole(row);
       setRoleAttachmentModalOpen(true);
     } else if (action === 'view') {
-      setCurrentUserForRole(row);
+      setCurrentAgentForRole(row);
       setViewRoleModalOpen(true);
     }
     handleMenuClose();
   };
 
   const filteredUsers = users.filter((user) => {
-    const matchesName = user.name.toLowerCase().includes(nameFilter.toLowerCase());
-    const matchesEmail = user.email.toLowerCase().includes(nameFilter.toLowerCase());
-    const matchesUserType = user.userType.toLowerCase().includes(nameFilter.toLowerCase());
-    return matchesName || matchesEmail || matchesUserType;
+    const term = nameFilter.toLowerCase();
+    return (
+      user.name?.toLowerCase().includes(term) ||
+      user.email?.toLowerCase().includes(term) ||
+      user.userType?.toLowerCase().includes(term)
+    );
   });
 
   const paginatedFilteredUsers = useMemo(() => {
@@ -185,7 +181,7 @@ const AssignmentManagement = () => {
       <Box sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
           <TextField
-            placeholder="Search by name or email or user type"
+            placeholder="Search by name, email, or user type"
             value={nameFilter}
             onChange={(e) => {
               setNameFilter(e.target.value);
@@ -200,7 +196,6 @@ const AssignmentManagement = () => {
               ),
             }}
           />
-
           {hasFilters && (
             <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters
@@ -222,7 +217,13 @@ const AssignmentManagement = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedFilteredUsers.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center">
+                      <CircularProgress size={24} />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => (
                     <TableRow key={user.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
@@ -246,19 +247,14 @@ const AssignmentManagement = () => {
                           </Box>
                         </Box>
                       </TableCell>
-
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {user.assignedRoles.map((role, index) => (
+                          {user.assignedRoles?.map((role, i) => (
                             <Chip
-                              key={index}
+                              key={i}
                               label={role}
                               size="small"
-                              // variant="filled"
-                              sx={{
-                                borderRadius: '8px',
-                                ...getRoleSx(role),
-                              }}
+                              sx={{ borderRadius: '8px', ...getRoleSx(role) }}
                             />
                           ))}
                         </Box>
@@ -283,17 +279,7 @@ const AssignmentManagement = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      <Alert
-                        severity="info"
-                        sx={{
-                          mb: 3,
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          '& .MuiAlert-icon': {
-                            mr: 1.5,
-                          },
-                        }}
-                      >
+                      <Alert severity="info">
                         {hasFilters
                           ? 'No users match the current filters.'
                           : 'No users available. Add new users or adjust filters.'}
@@ -326,13 +312,13 @@ const AssignmentManagement = () => {
       <RoleAttachmentModal
         open={roleAttachmentModalOpen}
         onClose={() => setRoleAttachmentModalOpen(false)}
-        currentUser={currentUserForRole}
+        currentAgent={currentAgentForRole}
         onRoleSelection={handleRoleSelection}
       />
       <ViewRoleModal
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
-        currentUser={currentUserForRole}
+        currentAgent={currentAgentForRole}
       />
     </ParentCard>
   );

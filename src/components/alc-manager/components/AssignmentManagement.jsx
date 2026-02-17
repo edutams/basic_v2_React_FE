@@ -41,27 +41,13 @@ const AssignmentManagement = () => {
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [currentAgentForRole, setCurrentAgentForRole] = useState(null);
 
-  // // Fetch users from backend
-  // const fetchUsers = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const res = await aclApi.getUsers();
-  //     setUsers(res.data || []);
-  //   } catch (err) {
-  //     console.error('Failed to fetch users:', err);
-  //     setUsers([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const res = await aclApi.getUsers();
       const normalized = (res.data || []).map((u) => ({
         ...u,
-        assignedRoles: u.assignedRoles || [], // ensure array
+        assignedRoles: u.roles || [],
       }));
       setUsers(normalized);
     } catch (err) {
@@ -115,17 +101,20 @@ const AssignmentManagement = () => {
     return roleStyles[role] || {};
   };
 
-  const handleRoleSelection = async (rolesArray) => {
+  const handleRoleSelection = async (roleIds) => {
     if (!currentAgentForRole) return;
 
     try {
-      // await aclApi.assignAgentRole(currentAgentForRole.id, rolesArray);
-      await aclApi.assignAgentRole(currentAgentForRole.id, roles);
+      await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
+
+      // After successful assignment, fetch updated roles from response or refetch users
+      const res = await aclApi.getUsers();
+      const updatedAgent = res.data?.find((u) => u.id === currentAgentForRole.id);
 
       setUsers((prev) =>
         prev.map((agent) => {
           if (agent.id === currentAgentForRole.id) {
-            return { ...agent, assignedRoles: rolesArray };
+            return { ...agent, assignedRoles: updatedAgent?.roles || [] };
           }
           return agent;
         }),

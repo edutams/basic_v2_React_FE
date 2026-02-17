@@ -13,25 +13,50 @@ import {
   ListItemText,
   ListItem,
   ListItemButton,
+  CircularProgress,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
+import aclApi from 'src/api/aclApi';
 
 const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) => {
-  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [selectedRoleIds, setSelectedRoleIds] = useState([]);
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
 
   useEffect(() => {
-    setSelectedRoles(currentAgent?.assignedRoles || []);
-  }, [currentAgent]);
+    if (open) {
+      // Set initial selected IDs from the agent's assigned roles
+      const initialSelectedIds = currentAgent?.assignedRoles?.map((r) => r.id) || [];
+      setSelectedRoleIds(initialSelectedIds);
+      fetchRoles();
+    }
+  }, [currentAgent, open]);
 
-  const toggleRole = (role) => {
-    if (selectedRoles.includes(role)) {
-      setSelectedRoles(selectedRoles.filter((r) => r !== role));
-    } else {
-      setSelectedRoles([...selectedRoles, role]);
+  const fetchRoles = async () => {
+    setLoadingRoles(true);
+    try {
+      const res = await aclApi.getRolesList();
+      setAvailableRoles(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch roles:', err);
+    } finally {
+      setLoadingRoles(false);
     }
   };
 
-  const allRoles = ['Admin', 'Customer', 'Manager', 'Agent', 'Super_Admin'];
+  const toggleRole = (role) => {
+    const roleId = role.id;
+    if (selectedRoleIds.includes(roleId)) {
+      setSelectedRoleIds(selectedRoleIds.filter((id) => id !== roleId));
+    } else {
+      setSelectedRoleIds([...selectedRoleIds, roleId]);
+    }
+  };
+
+  const handleAttach = () => {
+    // Pass role IDs to parent
+    onRoleSelection(selectedRoleIds);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -63,30 +88,36 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
         />
 
         <Typography variant="caption" color="textSecondary" sx={{ mb: 2 }}>
-          Current roles: {selectedRoles.length} roles assigned
+          Current roles: {selectedRoleIds.length} roles assigned
         </Typography>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-          {allRoles.map((role) => (
-            <ListItem key={role} disablePadding sx={{ padding: '4px 8px' }}>
-              <ListItemButton
-                onClick={() => toggleRole(role)}
-                sx={{ padding: '4px 8px', display: 'flex', alignItems: 'center', width: '100%' }}
-              >
-                <Checkbox
-                  size="small"
-                  checked={selectedRoles.includes(role)}
-                  sx={{ marginRight: 1 }}
-                />
-                <ListItemText primary={role} primaryTypographyProps={{ variant: 'body2' }} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </Box>
+        {loadingRoles ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : (
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+            {availableRoles.map((role) => (
+              <ListItem key={role.id} disablePadding sx={{ padding: '4px 8px' }}>
+                <ListItemButton
+                  onClick={() => toggleRole(role)}
+                  sx={{ padding: '4px 8px', display: 'flex', alignItems: 'center', width: '100%' }}
+                >
+                  <Checkbox
+                    size="small"
+                    checked={selectedRoleIds.includes(role.id)}
+                    sx={{ marginRight: 1 }}
+                  />
+                  <ListItemText primary={role.name} primaryTypographyProps={{ variant: 'body2' }} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" color="primary" onClick={() => onRoleSelection(selectedRoles)}>
+        <Button variant="contained" color="primary" onClick={handleAttach}>
           Attach Roles
         </Button>
       </DialogActions>

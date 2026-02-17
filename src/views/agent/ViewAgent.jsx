@@ -213,37 +213,25 @@ const ViewAgent = () => {
             {/* Overview Tab */}
             <TabPanel value="1" sx={{ p: 0, pt: 3 }}>
                 <Grid container spacing={3}>
-                    {/* Stats Row */}
-                    <Grid item xs={12} sm={6} lg={3}>
-                        <Purchases />
-                    </Grid>
+                    
                     <Grid item xs={12} sm={6} lg={3}>
                         <TotalEarnings />
                     </Grid>
+                    
                     <Grid item xs={12} sm={6} lg={3}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <MonthlyEarnings />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Customers />
-                            </Grid>
-                        </Grid>
-                    </Grid>
-                    <Grid item xs={12} sm={6} lg={3}>
-                        <TotalSales />
+                        <RevenueUpdates />
                     </Grid>
 
                     {/* Charts Row */}
-                    <Grid item xs={12} lg={4}>
+                    {/* <Grid item xs={12} lg={4}>
                         <DailyActivities />
-                    </Grid>
+                    </Grid> */}
                     <Grid item xs={12} lg={8}>
                         <RecentTransactions />
                     </Grid>
-                    <Grid item xs={12} lg={12}>
+                    {/* <Grid item xs={12} lg={12}>
                         <RevenueUpdates />
-                    </Grid>
+                    </Grid> */}
                 </Grid>
             </TabPanel>
 
@@ -304,7 +292,7 @@ const ViewAgent = () => {
             {/* Settings/Profile Tab */}
             <TabPanel value="4" sx={{ p: 0, pt: 3 }}>
                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={4}>
+                    {/* <Grid item xs={12} md={4}>
                          <Card>
                             <CardContent>
                                 <Stack direction="column" alignItems="center" spacing={2} textAlign="center">
@@ -321,7 +309,7 @@ const ViewAgent = () => {
                                 </Stack>
                             </CardContent>
                          </Card>
-                    </Grid>
+                    </Grid> */}
                     <Grid item xs={12} md={8}>
                         <Card>
                             <CardContent>

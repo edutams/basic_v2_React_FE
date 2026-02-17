@@ -59,6 +59,16 @@ const aclApi = {
     const response = await api.post(`/acl/assignments/users/${agentId}/unassign`, data);
     return response.data;
   },
+
+  getRoleAnalytics: async (params) => {
+    const response = await api.get('/acl', { params });
+    return response.data;
+  },
+
+  getPermissionAnalytics: async (params) => {
+    const response = await api.get('/acl/permissions/analytics', { params });
+    return response.data;
+  },
 };
 
 export default aclApi;

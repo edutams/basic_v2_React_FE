@@ -8,7 +8,7 @@ const agentApi = {
   getAll: async (params) => {
     // Modify based on actual backend implementation if needed (currently using mock data in component)
     // Assuming we need an endpoint to fetch agents
-    const response = await api.get('/agent/get_all_agents', { params }); 
+    const response = await api.get('/agent/get_all_agents', { params });
     return response.data;
   },
   update: async (data) => {
@@ -16,9 +16,9 @@ const agentApi = {
     return response.data;
   },
   getDetails: async (id) => {
-      const response = await api.get(`/agent/get_agent_details/${id}`);
-      return response.data;
-  }
+    const response = await api.get(`/agent/get_agent_details/${id}`);
+    return response.data;
+  },
   // Add other methods as needed
 };
 

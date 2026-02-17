@@ -36,7 +36,7 @@ const AssignmentManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
-  
+
   // Fetch roles on mount and when filters/page change
   useEffect(() => {
     fetchRoles();
@@ -50,12 +50,12 @@ const AssignmentManagement = () => {
         search: nameFilter,
       };
       const res = await aclApi.getRoleAnalytics(params);
-      
+
       if (res?.data) {
-          setRoles(res.data.data || []);
-          setTotalRows(res.data.total || 0);
-          // Backend might be hardcoded to 10 per page, but ideally it returns per_page
-          setRowsPerPage(res.data.per_page || 10); 
+        setRoles(res.data.data || []);
+        setTotalRows(res.data.total || 0);
+        // Backend might be hardcoded to 10 per page, but ideally it returns per_page
+        setRowsPerPage(res.data.per_page || 10);
       }
     } catch (error) {
       console.error('Failed to fetch roles:', error);
@@ -139,8 +139,6 @@ const AssignmentManagement = () => {
 
   const filteredUsers = roles; // Already filtered by backend
 
-
-
   const resetFilters = () => {
     setNameFilter('');
     setPage(0);
@@ -184,7 +182,7 @@ const AssignmentManagement = () => {
                   <TableCell sx={{ width: '10%' }}>S/N</TableCell>
                   <TableCell sx={{ width: '35%' }}>Roles</TableCell>
                   <TableCell sx={{ width: '35%' }} align="center">
-                    Total Role
+                    Total Permission
                   </TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Total User
@@ -194,9 +192,9 @@ const AssignmentManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                     <TableCell colSpan={4} align="center">
-                        <CircularProgress />
-                     </TableCell>
+                    <TableCell colSpan={4} align="center">
+                      <CircularProgress />
+                    </TableCell>
                   </TableRow>
                 ) : roles.length > 0 ? (
                   roles.map((row, index) => (

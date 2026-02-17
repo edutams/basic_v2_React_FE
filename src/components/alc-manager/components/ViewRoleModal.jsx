@@ -10,13 +10,13 @@ import {
   Chip,
 } from '@mui/material';
 
-const ViewRoleModal = ({ open, onClose, currentUser }) => {
+const ViewRoleModal = ({ open, onClose, currentAgent }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle>
         Roles for{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-          "{currentUser?.name}"
+          "{currentAgent?.name}"
         </Box>{' '}
       </DialogTitle>
       <DialogContent dividers>
@@ -65,9 +65,9 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
           )}
         </Box> */}
         <Box sx={{ mt: 1 }}>
-          {currentUser?.assignedRoles?.length > 0 ? (
+          {currentAgent?.assignedRoles?.length > 0 ? (
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
-              {currentUser.assignedRoles.map((role, index) => (
+              {currentAgent.assignedRoles.map((role, index) => (
                 <li key={index}>
                   <Typography variant="body2">
                     {typeof role === 'object' ? role.name : role}

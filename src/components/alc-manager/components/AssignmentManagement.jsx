@@ -241,9 +241,9 @@ const AssignmentManagement = () => {
                           {user.assignedRoles?.map((role, i) => (
                             <Chip
                               key={i}
-                              label={role}
+                              label={typeof role === 'object' ? role.name : role}
                               size="small"
-                              sx={{ borderRadius: '8px', ...getRoleSx(role) }}
+                              sx={{ borderRadius: '8px', ...getRoleSx(typeof role === 'object' ? role.name : role) }}
                             />
                           ))}
                         </Box>

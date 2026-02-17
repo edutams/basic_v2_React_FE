@@ -69,7 +69,9 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
               {currentUser.assignedRoles.map((role, index) => (
                 <li key={index}>
-                  <Typography variant="body2">{role}</Typography>
+                  <Typography variant="body2">
+                    {typeof role === 'object' ? role.name : role}
+                  </Typography>
                 </li>
               ))}
             </ul>

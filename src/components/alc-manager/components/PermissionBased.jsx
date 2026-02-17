@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,51 +19,58 @@ import {
   Menu,
   MenuItem,
   Alert,
+  CircularProgress,
 } from '@mui/material';
+import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 
 const AssignmentManagement = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      role: 'Agent',
-      totalPermission: '1',
-      totalUser: '1',
-    },
-    {
-      id: 2,
-      role: 'Customer',
-      totalPermission: '1',
-      totalUser: '1',
-    },
-    {
-      id: 3,
-      role: 'Super_Admin',
-      totalPermission: '1',
-      totalUser: '1',
-    },
-    {
-      id: 4,
-      role: '	Super_Agent',
-      totalPermission: '1',
-      totalUser: '1',
-    },
-  ]);
-
+  const [permissions, setPermissions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
-  const [userTypeFilter, setUserTypeFilter] = useState('');
+  
+  // Fetch permissions on mount and when filters/page change
+  useEffect(() => {
+    fetchPermissions();
+  }, [page, nameFilter]);
 
-  const paginatedUsers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return users.slice(start, start + rowsPerPage);
-  }, [users, page, rowsPerPage]);
+  const fetchPermissions = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: page + 1,
+        search: nameFilter,
+      };
+      const res = await aclApi.getPermissionAnalytics(params);
+      
+      if (res?.data?.data) {
+          // res.data is the paginator object. Its 'data' property contains the array of items.
+          setPermissions(res.data.data || []); 
+          setTotalRows(res.data.total || 0);
+          setRowsPerPage(res.data.per_page || 10);
+      } else if (res?.current_page) {
+           // Fallback if response structure is different (flat paginator)
+           setPermissions(res.data || []);
+           setTotalRows(res.total || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -138,23 +145,14 @@ const AssignmentManagement = () => {
     handleMenuClose();
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesRole = user.role.toLowerCase().includes(nameFilter.toLowerCase());
-    return matchesRole;
-  });
-
-  const paginatedFilteredUsers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredUsers.slice(start, start + rowsPerPage);
-  }, [filteredUsers, page, rowsPerPage]);
+  const filteredUsers = permissions; // Backend handles filtering
 
   const resetFilters = () => {
     setNameFilter('');
-    setUserTypeFilter('');
     setPage(0);
   };
 
-  const hasFilters = nameFilter !== '' || userTypeFilter !== '';
+  const hasFilters = nameFilter !== '';
 
   return (
     <Box>
@@ -192,7 +190,7 @@ const AssignmentManagement = () => {
                   <TableCell sx={{ width: '10%' }}>S/N</TableCell>
                   <TableCell sx={{ width: '35%' }}>Permissions</TableCell>
                   <TableCell sx={{ width: '35%' }} align="center">
-                    Total Permission
+                    Total Role
                   </TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Total User
@@ -200,26 +198,32 @@ const AssignmentManagement = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedFilteredUsers.length > 0 ? (
-                  paginatedFilteredUsers.map((user, index) => (
+                {loading ? (
+                    <TableRow>
+                        <TableCell colSpan={4} align="center">
+                        <CircularProgress />
+                        </TableCell>
+                    </TableRow>
+                ) : permissions.length > 0 ? (
+                  permissions.map((user, index) => (
                     <TableRow key={user.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box>
-                          <Typography variant="subtitle2">{user.role}</Typography>
+                          <Typography variant="subtitle2">{user.name}</Typography>
                         </Box>
                       </TableCell>
 
                       <TableCell>
                         <Box>
                           <Typography variant="subtitle2" align="center">
-                            {user.totalPermission}
+                            {user.roles_count}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="subtitle2" align="center">
-                          {user.totalUser}
+                          {user.users_count}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -249,15 +253,11 @@ const AssignmentManagement = () => {
               <TableFooter>
                 <TableRow>
                   <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredUsers.length}
+                    rowsPerPageOptions={[10]}
+                    count={totalRows}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
                     colSpan={5}
                   />
                 </TableRow>

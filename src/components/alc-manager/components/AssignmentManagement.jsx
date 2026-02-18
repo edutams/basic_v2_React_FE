@@ -82,6 +82,7 @@ const AssignmentManagement = () => {
   };
 
   const handleMenuClose = () => {
+
     setAnchorEl(null);
   };
 
@@ -213,7 +214,7 @@ const AssignmentManagement = () => {
       <Box sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
           <TextField
-            placeholder="Search by name or email"
+            placeholder="Search by name..."
             value={nameFilter}
             onChange={(e) => {
               setNameFilter(e.target.value);
@@ -271,6 +272,7 @@ const AssignmentManagement = () => {
                               objectFit: 'cover',
                             }}
                           />
+
                           <Box>
                             <Typography variant="subtitle2">{user.name}</Typography>
                             <Typography variant="caption" color="textSecondary">

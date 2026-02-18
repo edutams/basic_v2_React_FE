@@ -28,7 +28,6 @@ const PermissionAttachmentModal = ({
   onPermissionChange,
   onSave,
 }) => {
-  // safe default to avoid undefined errors
   const safeAvailablePermissions = availablePermissions || [];
 
   return (

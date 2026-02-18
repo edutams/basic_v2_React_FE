@@ -24,18 +24,8 @@ const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) => {
             variant="outlined"
             value={formData.roleName}
             onChange={(e) => onFieldChange('roleName', e.target.value)}
-            // required
           />
-          {/* <TextField
-            margin="dense"
-            label="Guard Name"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={formData.guardName}
-            onChange={(e) => onFieldChange('guardName', e.target.value)}
-            // required
-          /> */}
+
           <TextField
             margin="dense"
             label="Description"

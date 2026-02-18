@@ -22,12 +22,13 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
   const [selectedRoleIds, setSelectedRoleIds] = useState([]);
   const [availableRoles, setAvailableRoles] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (open) {
-      // Set initial selected IDs from the agent's assigned roles
       const initialSelectedIds = currentAgent?.assignedRoles?.map((r) => r.id) || [];
       setSelectedRoleIds(initialSelectedIds);
+      setSearchTerm('');
       fetchRoles();
     }
   }, [currentAgent, open]);
@@ -54,7 +55,6 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
   };
 
   const handleAttach = () => {
-    // Pass role IDs to parent
     onRoleSelection(selectedRoleIds);
   };
 
@@ -78,6 +78,8 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
           fullWidth
           variant="outlined"
           sx={{ mb: 2 }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -97,21 +99,31 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
           </Box>
         ) : (
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-            {availableRoles.map((role) => (
-              <ListItem key={role.id} disablePadding sx={{ padding: '4px 8px' }}>
-                <ListItemButton
-                  onClick={() => toggleRole(role)}
-                  sx={{ padding: '4px 8px', display: 'flex', alignItems: 'center', width: '100%' }}
-                >
-                  <Checkbox
-                    size="small"
-                    checked={selectedRoleIds.includes(role.id)}
-                    sx={{ marginRight: 1 }}
-                  />
-                  <ListItemText primary={role.name} primaryTypographyProps={{ variant: 'body2' }} />
-                </ListItemButton>
-              </ListItem>
-            ))}
+            {availableRoles
+              .filter((role) => role.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((role) => (
+                <ListItem key={role.id} disablePadding sx={{ padding: '4px 8px' }}>
+                  <ListItemButton
+                    onClick={() => toggleRole(role)}
+                    sx={{
+                      padding: '4px 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '100%',
+                    }}
+                  >
+                    <Checkbox
+                      size="small"
+                      checked={selectedRoleIds.includes(role.id)}
+                      sx={{ marginRight: 1 }}
+                    />
+                    <ListItemText
+                      primary={role.name}
+                      primaryTypographyProps={{ variant: 'body2' }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
           </Box>
         )}
       </DialogContent>

@@ -36,8 +36,7 @@ const AssignmentManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
-  
-  // Fetch permissions on mount and when filters/page change
+
   useEffect(() => {
     fetchPermissions();
   }, [page, nameFilter]);
@@ -50,16 +49,14 @@ const AssignmentManagement = () => {
         search: nameFilter,
       };
       const res = await aclApi.getPermissionAnalytics(params);
-      
+
       if (res?.data?.data) {
-          // res.data is the paginator object. Its 'data' property contains the array of items.
-          setPermissions(res.data.data || []); 
-          setTotalRows(res.data.total || 0);
-          setRowsPerPage(res.data.per_page || 10);
+        setPermissions(res.data.data || []);
+        setTotalRows(res.data.total || 0);
+        setRowsPerPage(res.data.per_page || 10);
       } else if (res?.current_page) {
-           // Fallback if response structure is different (flat paginator)
-           setPermissions(res.data || []);
-           setTotalRows(res.total || 0);
+        setPermissions(res.data || []);
+        setTotalRows(res.total || 0);
       }
     } catch (error) {
       console.error('Failed to fetch permissions:', error);
@@ -67,10 +64,6 @@ const AssignmentManagement = () => {
       setLoading(false);
     }
   };
-
-
-
-
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -145,7 +138,7 @@ const AssignmentManagement = () => {
     handleMenuClose();
   };
 
-  const filteredUsers = permissions; // Backend handles filtering
+  const filteredUsers = permissions;
 
   const resetFilters = () => {
     setNameFilter('');
@@ -193,17 +186,17 @@ const AssignmentManagement = () => {
                     Total Role
                   </TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
-                    Total User
+                    Total Agents
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
-                    <TableRow>
-                        <TableCell colSpan={4} align="center">
-                        <CircularProgress />
-                        </TableCell>
-                    </TableRow>
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      <CircularProgress />
+                    </TableCell>
+                  </TableRow>
                 ) : permissions.length > 0 ? (
                   permissions.map((user, index) => (
                     <TableRow key={user.id} hover>

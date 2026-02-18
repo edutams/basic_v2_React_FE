@@ -47,9 +47,16 @@ const AssignmentManagement = () => {
       const res = await aclApi.getUsers();
       console.log('fetchUsers response:', res);
 
-      // The API returns { status, data: [...users], meta, links } - normalize accordingly
-      const usersData = res.data?.data || res.data || [];
+      // Handle different response formats safely
+      let usersData = [];
+      if (Array.isArray(res.data)) {
+        usersData = res.data;
+      } else if (res.data?.data && Array.isArray(res.data.data)) {
+        usersData = res.data.data;
+      }
+
       console.log('Users data:', usersData);
+      console.log('Sample user from API:', usersData[0]);
 
       const normalized = (usersData || []).map((u) => ({
         ...u,
@@ -80,37 +87,54 @@ const AssignmentManagement = () => {
   };
 
   const getRoleSx = (role) => {
+    // Normalize role name to handle case variations
+    const normalizedRole = role?.toString().toLowerCase();
+
     const roleStyles = {
-      User: {
+      user: {
         backgroundColor: (theme) => theme.palette.success.light,
         color: (theme) => theme.palette.success.main,
       },
-      Admin: {
+      admin: {
         backgroundColor: (theme) => theme.palette.error.light,
         color: (theme) => theme.palette.error.main,
       },
-      Customer: {
+      customer: {
         backgroundColor: (theme) => theme.palette.info.light,
         color: (theme) => theme.palette.info.main,
       },
-      Manager: {
+      manager: {
         backgroundColor: (theme) => theme.palette.warning.light,
         color: (theme) => theme.palette.warning.main,
       },
-      Agent: {
+      agent: {
         backgroundColor: (theme) => theme.palette.secondary.light,
         color: (theme) => theme.palette.secondary.main,
       },
-      Super_Admin: {
+      super_admin: {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.main,
+      },
+      superadmin: {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
     };
-    return roleStyles[role] || {};
+
+    return (
+      roleStyles[normalizedRole] || {
+        backgroundColor: (theme) => theme.palette.grey[200],
+        color: (theme) => theme.palette.grey[700],
+      }
+    );
   };
 
   const handleRoleSelection = async (roleIds) => {
     if (!currentAgentForRole) return;
+
+    console.log('Current agent for role:', currentAgentForRole);
+    console.log('Agent ID being sent:', currentAgentForRole.id);
+    console.log('Role IDs being attached:', roleIds);
 
     try {
       // Attach roles via API
@@ -121,8 +145,13 @@ const AssignmentManagement = () => {
       const res = await aclApi.getUsers();
       console.log('Get users response:', res);
 
-      // The API returns { status, data: [...users], meta, links } - data is under res.data.data
-      const usersData = res.data?.data || res.data || [];
+      // Handle different response formats safely
+      let usersData = [];
+      if (Array.isArray(res.data)) {
+        usersData = res.data;
+      } else if (res.data?.data && Array.isArray(res.data.data)) {
+        usersData = res.data.data;
+      }
       console.log('Users data after assignment:', usersData);
 
       const normalized = (usersData || []).map((u) => ({
@@ -130,6 +159,7 @@ const AssignmentManagement = () => {
         assignedRoles: u.roles || [],
       }));
 
+      console.log('Sample user from API:', usersData[0]);
       console.log('Normalized users:', normalized);
 
       setUsers(normalized);
@@ -190,7 +220,7 @@ const AssignmentManagement = () => {
       <Box sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
           <TextField
-            placeholder="Search by name, email, or user type"
+            placeholder="Search by name or email"
             value={nameFilter}
             onChange={(e) => {
               setNameFilter(e.target.value);
@@ -218,7 +248,7 @@ const AssignmentManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '10%' }}>#</TableCell>
-                  <TableCell sx={{ width: '35%' }}>User Details</TableCell>
+                  <TableCell sx={{ width: '35%' }}>Agent Details</TableCell>
                   <TableCell sx={{ width: '35%' }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Action
@@ -291,7 +321,17 @@ const AssignmentManagement = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      <Alert severity="info">
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 3,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
                         {hasFilters
                           ? 'No users match the current filters.'
                           : 'No users available. Add new users or adjust filters.'}

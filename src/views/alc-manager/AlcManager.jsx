@@ -302,18 +302,6 @@ const AlcManager = () => {
         </ParentCard>
       )}
 
-      {/* <PermissionAttachmentModal
-        open={permissionModalOpen}
-        onClose={() => setPermissionModalOpen(false)}
-        selectedRow={selectedRow}
-        selectedPermissions={selectedPermissions}
-        availablePermissions={selectedRow?.permissions || []}
-        permissionSearch={permissionSearch}
-        onPermissionSearchChange={setPermissionSearch}
-        onPermissionChange={handlePermissionChange}
-        onSave={handleSavePermissions}
-      /> */}
-
       <PermissionAttachmentModal
         open={permissionModalOpen}
         onClose={() => setPermissionModalOpen(false)}

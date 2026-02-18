@@ -37,7 +37,6 @@ const AssignmentManagement = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
 
-  // Fetch roles on mount and when filters/page change
   useEffect(() => {
     fetchRoles();
   }, [page, nameFilter]);
@@ -54,7 +53,6 @@ const AssignmentManagement = () => {
       if (res?.data) {
         setRoles(res.data.data || []);
         setTotalRows(res.data.total || 0);
-        // Backend might be hardcoded to 10 per page, but ideally it returns per_page
         setRowsPerPage(res.data.per_page || 10);
       }
     } catch (error) {
@@ -137,8 +135,7 @@ const AssignmentManagement = () => {
     handleMenuClose();
   };
 
-  const filteredUsers = roles; // Already filtered by backend
-
+  const filteredUsers = roles;
   const resetFilters = () => {
     setNameFilter('');
     setPage(0);
@@ -151,7 +148,7 @@ const AssignmentManagement = () => {
       <Box sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
           <TextField
-            placeholder="Search by permission"
+            placeholder="Search by role"
             value={nameFilter}
             onChange={(e) => {
               setNameFilter(e.target.value);
@@ -185,7 +182,7 @@ const AssignmentManagement = () => {
                     Total Permission
                   </TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
-                    Total User
+                    Total Agents
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -250,7 +247,6 @@ const AssignmentManagement = () => {
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
-                    // onRowsPerPageChange not needed if fixed by backend
                     colSpan={5}
                   />
                 </TableRow>

@@ -38,8 +38,8 @@ const aclApi = {
     return response.data;
   },
 
-  getUsers: async () => {
-    const response = await api.get('/acl/assignments/users/list');
+  getAgents: async () => {
+    const response = await api.get('/acl/assignments/agents/list');
     return response.data;
   },
 
@@ -49,14 +49,16 @@ const aclApi = {
   },
 
   assignAgentRole: async (agentId, roleIds) => {
-    const response = await api.post(`/acl/assignments/users/${agentId}/assign`, {
+    const response = await api.post(`/acl/assignments/agent/${agentId}/assign`, {
       roles: roleIds,
     });
     return response.data;
   },
 
-  unassignUserRole: async (userId, data) => {
-    const response = await api.post(`/acl/assignments/users/${agentId}/unassign`, data);
+  unassignAgentRole: async (agentId, roleIds) => {
+    const response = await api.post(`/acl/assignments/agent/${agentId}/unassign`, {
+      roles: roleIds,
+    });
     return response.data;
   },
 

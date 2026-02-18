@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,87 +19,50 @@ import {
   Menu,
   MenuItem,
   Alert,
+  CircularProgress,
 } from '@mui/material';
+import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 
 const AssignmentManagement = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      permission: 'censis.aci.index',
-      totalRole: '1',
-      totalUser: '1',
-    },
-    {
-      id: 2,
-      permission: 'censis.aci.role.create',
-      totalRole: '1',
-      totalUser: '1',
-    },
-    {
-      id: 3,
-      permission: 'censis.aci.role.delete',
-      totalRole: '1',
-      totalUser: '1',
-    },
-    {
-      id: 4,
-      permission: 'censis.aci.role.update',
-      totalRole: '1',
-      totalUser: '1',
-    },
-    {
-      id: 5,
-      permission: 'censis.aci.user.manage.permission',
-      totalRole: '1',
-      totalUser: '1',
-    },
-    {
-      id: 6,
-      permission: 'censis.aci.user.manage.role',
-      totalRole: '1',
-      totalUser: '1',
-    },
-    {
-      id: 7,
-      permission: 'censis.auth.profile.edit',
-      totalRole: '1',
-      totalUser: '5894',
-    },
-    {
-      id: 8,
-      permission: 'censis.auth.profile.view',
-      totalRole: '1',
-      totalUser: '5894',
-    },
-    {
-      id: 9,
-      permission: 'censis.dashboard',
-      totalRole: '1',
-      totalUser: '5894',
-    },
-    {
-      id: 9,
-      permission: 'censis.users.update_user.info',
-      totalRole: '1',
-      totalUser: '1',
-    },
-  ]);
-
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
-  const [userTypeFilter, setUserTypeFilter] = useState('');
 
-  const paginatedUsers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return users.slice(start, start + rowsPerPage);
-  }, [users, page, rowsPerPage]);
+  // Fetch roles on mount and when filters/page change
+  useEffect(() => {
+    fetchRoles();
+  }, [page, nameFilter]);
+
+  const fetchRoles = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: page + 1,
+        search: nameFilter,
+      };
+      const res = await aclApi.getRoleAnalytics(params);
+
+      if (res?.data) {
+        setRoles(res.data.data || []);
+        setTotalRows(res.data.total || 0);
+        // Backend might be hardcoded to 10 per page, but ideally it returns per_page
+        setRowsPerPage(res.data.per_page || 10);
+      }
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -174,23 +137,14 @@ const AssignmentManagement = () => {
     handleMenuClose();
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesPermission = user.permission.toLowerCase().includes(nameFilter.toLowerCase());
-    return matchesPermission;
-  });
-
-  const paginatedFilteredUsers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredUsers.slice(start, start + rowsPerPage);
-  }, [filteredUsers, page, rowsPerPage]);
+  const filteredUsers = roles; // Already filtered by backend
 
   const resetFilters = () => {
     setNameFilter('');
-    setUserTypeFilter('');
     setPage(0);
   };
 
-  const hasFilters = nameFilter !== '' || userTypeFilter !== '';
+  const hasFilters = nameFilter !== '';
 
   return (
     <Box>
@@ -226,9 +180,9 @@ const AssignmentManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '10%' }}>S/N</TableCell>
-                  <TableCell sx={{ width: '35%' }}>Permission</TableCell>
+                  <TableCell sx={{ width: '35%' }}>Roles</TableCell>
                   <TableCell sx={{ width: '35%' }} align="center">
-                    Total Role
+                    Total Permission
                   </TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Total User
@@ -236,26 +190,32 @@ const AssignmentManagement = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedFilteredUsers.length > 0 ? (
-                  paginatedFilteredUsers.map((user, index) => (
-                    <TableRow key={user.id} hover>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      <CircularProgress />
+                    </TableCell>
+                  </TableRow>
+                ) : roles.length > 0 ? (
+                  roles.map((row, index) => (
+                    <TableRow key={row.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box>
-                          <Typography variant="subtitle2">{user.permission}</Typography>
+                          <Typography variant="subtitle2">{row.role}</Typography>
                         </Box>
                       </TableCell>
 
                       <TableCell>
                         <Box>
                           <Typography variant="subtitle2" align="center">
-                            {user.totalRole}
+                            {row.totalPermissions}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="subtitle2" align="center">
-                          {user.totalUser}
+                          {row.totalUsers}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -285,15 +245,12 @@ const AssignmentManagement = () => {
               <TableFooter>
                 <TableRow>
                   <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredUsers.length}
+                    rowsPerPageOptions={[10]}
+                    count={totalRows}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
+                    // onRowsPerPageChange not needed if fixed by backend
                     colSpan={5}
                   />
                 </TableRow>

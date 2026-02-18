@@ -10,18 +10,13 @@ import {
   Chip,
 } from '@mui/material';
 
-const ViewPermissionModal = ({
-  open,
-  onClose,
-  selectedRow,
-  permissionsToView,
-}) => {
+const ViewPermissionModal = ({ open, onClose, selectedRow, permissionsToView }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         Permissions for{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-          "{selectedRow?.roleName}"
+          "{selectedRow?.name}"
         </Box>{' '}
       </DialogTitle>
       <DialogContent dividers>
@@ -31,9 +26,9 @@ const ViewPermissionModal = ({
         <Box sx={{ mt: 1 }}>
           {permissionsToView && permissionsToView.length > 0 ? (
             <ul style={{ margin: 0, paddingLeft: '16px' }}>
-              {permissionsToView.map((permission, index) => (
-                <li key={index}>
-                  <Typography variant="body2">{permission}</Typography>
+              {permissionsToView.map((permission) => (
+                <li key={permission.id}>
+                  <Typography variant="body2">{permission.name}</Typography>
                 </li>
               ))}
             </ul>

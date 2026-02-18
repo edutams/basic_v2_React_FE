@@ -44,7 +44,7 @@ const AssignmentManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await aclApi.getUsers();
+      const res = await aclApi.getAgents();
       console.log('fetchUsers response:', res);
 
       let usersData = [];
@@ -82,7 +82,6 @@ const AssignmentManagement = () => {
   };
 
   const handleMenuClose = () => {
-
     setAnchorEl(null);
   };
 
@@ -139,7 +138,7 @@ const AssignmentManagement = () => {
       const assignRes = await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
       // console.log('Role assignment response:', assignRes);
 
-      const res = await aclApi.getUsers();
+      const res = await aclApi.getAgents();
       // console.log('Get users response:', res);
       let usersData = [];
       if (Array.isArray(res.data)) {

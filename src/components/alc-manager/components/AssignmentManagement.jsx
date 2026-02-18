@@ -47,7 +47,6 @@ const AssignmentManagement = () => {
       const res = await aclApi.getUsers();
       console.log('fetchUsers response:', res);
 
-      // Handle different response formats safely
       let usersData = [];
       if (Array.isArray(res.data)) {
         usersData = res.data;
@@ -87,7 +86,6 @@ const AssignmentManagement = () => {
   };
 
   const getRoleSx = (role) => {
-    // Normalize role name to handle case variations
     const normalizedRole = role?.toString().toLowerCase();
 
     const roleStyles = {
@@ -137,22 +135,18 @@ const AssignmentManagement = () => {
     console.log('Role IDs being attached:', roleIds);
 
     try {
-      // Attach roles via API
       const assignRes = await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
-      console.log('Role assignment response:', assignRes);
+      // console.log('Role assignment response:', assignRes);
 
-      // After successful assignment, fetch updated users (API returns paginated response)
       const res = await aclApi.getUsers();
-      console.log('Get users response:', res);
-
-      // Handle different response formats safely
+      // console.log('Get users response:', res);
       let usersData = [];
       if (Array.isArray(res.data)) {
         usersData = res.data;
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         usersData = res.data.data;
       }
-      console.log('Users data after assignment:', usersData);
+      // console.log('Users data after assignment:', usersData);
 
       const normalized = (usersData || []).map((u) => ({
         ...u,
@@ -164,7 +158,6 @@ const AssignmentManagement = () => {
 
       setUsers(normalized);
 
-      // Update currentAgentForRole with the fresh data so modals show correct info
       const updatedCurrentAgent = normalized.find((u) => u.id === currentAgentForRole.id);
       if (updatedCurrentAgent) {
         setCurrentAgentForRole(updatedCurrentAgent);

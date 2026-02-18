@@ -31,6 +31,8 @@ export const AuthProvider = ({ children }) => {
         // const res = await api.get('/agent/get-agent');
         // setUser(res.data?.data);
         const res = await api.get('/agent/get_agent');
+        console.log('restoreUser res:', res);
+        console.log('restoreUser user data:', res.data?.data);
         setUser(res.data?.data);
         setIsAuthenticated(true);
       } catch (err) {
@@ -52,6 +54,8 @@ export const AuthProvider = ({ children }) => {
       const res = await api.post('/agent/login', credentials);
 
       const { access_token, expires_in, data: user } = res.data;
+      console.log('login res.data:', res.data);
+      console.log('login user:', user);
 
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('token_expires_in', expires_in.toString());

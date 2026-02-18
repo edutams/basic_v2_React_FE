@@ -262,7 +262,7 @@ const AssignmentManagement = () => {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <img
-                            src={user.avatar || '/src/assets/images/users/default-avatar.png'}
+                            src={user.image || '/src/assets/images/users/default_avatar.png'}
                             alt={user.name}
                             style={{
                               width: 32,

@@ -45,10 +45,18 @@ const AssignmentManagement = () => {
     try {
       setLoading(true);
       const res = await aclApi.getUsers();
-      const normalized = (res.data || []).map((u) => ({
+      console.log('fetchUsers response:', res);
+
+      // The API returns { status, data: [...users], meta, links } - normalize accordingly
+      const usersData = res.data?.data || res.data || [];
+      console.log('Users data:', usersData);
+
+      const normalized = (usersData || []).map((u) => ({
         ...u,
         assignedRoles: u.roles || [],
       }));
+      console.log('Normalized users:', normalized);
+
       setUsers(normalized);
     } catch (err) {
       console.error('Failed to fetch users:', err);
@@ -105,20 +113,32 @@ const AssignmentManagement = () => {
     if (!currentAgentForRole) return;
 
     try {
-      await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
+      // Attach roles via API
+      const assignRes = await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
+      console.log('Role assignment response:', assignRes);
 
-      // After successful assignment, fetch updated roles from response or refetch users
+      // After successful assignment, fetch updated users (API returns paginated response)
       const res = await aclApi.getUsers();
-      const updatedAgent = res.data?.find((u) => u.id === currentAgentForRole.id);
+      console.log('Get users response:', res);
 
-      setUsers((prev) =>
-        prev.map((agent) => {
-          if (agent.id === currentAgentForRole.id) {
-            return { ...agent, assignedRoles: updatedAgent?.roles || [] };
-          }
-          return agent;
-        }),
-      );
+      // The API returns { status, data: [...users], meta, links } - data is under res.data.data
+      const usersData = res.data?.data || res.data || [];
+      console.log('Users data after assignment:', usersData);
+
+      const normalized = (usersData || []).map((u) => ({
+        ...u,
+        assignedRoles: u.roles || [],
+      }));
+
+      console.log('Normalized users:', normalized);
+
+      setUsers(normalized);
+
+      // Update currentAgentForRole with the fresh data so modals show correct info
+      const updatedCurrentAgent = normalized.find((u) => u.id === currentAgentForRole.id);
+      if (updatedCurrentAgent) {
+        setCurrentAgentForRole(updatedCurrentAgent);
+      }
 
       setRoleAttachmentModalOpen(false);
     } catch (err) {
@@ -243,7 +263,10 @@ const AssignmentManagement = () => {
                               key={i}
                               label={typeof role === 'object' ? role.name : role}
                               size="small"
-                              sx={{ borderRadius: '8px', ...getRoleSx(typeof role === 'object' ? role.name : role) }}
+                              sx={{
+                                borderRadius: '8px',
+                                ...getRoleSx(typeof role === 'object' ? role.name : role),
+                              }}
                             />
                           ))}
                         </Box>

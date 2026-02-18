@@ -201,7 +201,11 @@ const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-l
 const Router = [
   {
     path: '/',
-    element: <FullLayout />,
+    element: (
+      <ProtectedRoute>
+        <FullLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { path: '/', element: <Navigate to="/analytical" /> },
       { path: '/analytical', exact: true, element: <AnalyticalDashboard /> },

@@ -49,7 +49,7 @@ const aclApi = {
   },
 
   assignAgentRole: async (agentId, roleIds) => {
-    const response = await api.post(`/acl/assignments/users/${agentId}/assign`, {
+    const response = await api.post(`/acl/assignments/agents/${agentId}/assign`, {
       roles: roleIds,
     });
     return response.data;

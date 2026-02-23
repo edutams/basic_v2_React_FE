@@ -34,6 +34,10 @@ const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
 const Mail = Loadable(lazy(() => import('../views/mail/Mail')));
 const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
 
+const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
+const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
+const Subcriptions = Loadable(lazy(() => import('../views/subcriptions/manage-subcription')));
+
 /* ****Apps***** */
 const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
 const Notes = Loadable(lazy(() => import('../views/apps/notes/Notes')));
@@ -195,9 +199,6 @@ const SimpletreeSelection = Loadable(
   lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')),
 );
 
-const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
-const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
-
 const Router = [
   {
     path: '/',
@@ -222,6 +223,9 @@ const Router = [
       { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/modern', exact: true, element: <ModernDashboard /> },
       { path: '/package-manager', element: <PackageManager /> },
+      { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
+      { path: '/phet/stimulation-links', element: <StimulationLinks /> },
+      { path: '/subcriptions/manage-subcription', element: <Subcriptions /> },
       { path: '/', element: <Navigate to="/agent/login" /> },
       // {
       //   path: '/',
@@ -359,8 +363,6 @@ const Router = [
       { path: '/mui-trees/simpletree/simpletree-focus', element: <SimpletreeFocus /> },
       { path: '/mui-trees/simpletree/simpletree-items', element: <SimpletreeItems /> },
       { path: '/mui-trees/simpletree/simpletree-selection', element: <SimpletreeSelection /> },
-      { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
-      { path: '/phet/stimulation-links', element: <StimulationLinks /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

@@ -18,38 +18,46 @@ import {
   MenuItem,
   InputAdornment,
   Button,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
-import StimulationLinkModal from '../../components/phet/stimulation-links/StimulationLinkModal';
+import SubcriptionModal from '../../components/subcription/SubcriptionModal';
+import UpgradePlanModal from '../../components/subcription/UpgradePlanModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
 
 const DUMMY_ROWS = [
   {
     id: 1,
-    title: 'The Water Cycle Simulation',
-    topic: 'Water Cycle',
-    subject: 'Science',
-    link: 'https://phet.colorado.edu/en/simulation/water-cycle',
+    sessionterm: '2023/2024 - First Term',
+    plandetails: 'OBASIC++ (200 and above Students)',
+    amount: '155,000',
+    gatewaycharges: '500',
+    discount: '0',
+    amountdue: '155,500',
     status: 'inactive',
   },
   {
     id: 2,
-    title: 'Basic Algebra Balancing',
-    topic: 'Equations',
-    subject: 'Mathematics',
-    link: 'https://phet.colorado.edu/en/simulation/balancing-equations',
+    sessionterm: '2023/2024 - First Term',
+    plandetails: 'OBASIC++ (200 and above Students)',
+    amount: '155,000',
+    gatewaycharges: '500',
+    discount: '0',
+    amountdue: '155,500',
     status: 'active',
   },
   {
     id: 3,
-    title: 'Sound Waves Visualizer',
-    topic: 'Sound',
-    subject: 'Physics',
-    link: 'https://phet.colorado.edu/en/simulation/sound',
+    sessionterm: '2023/2024 - First Term',
+    plandetails: 'OBASIC++ (200 and above Students)',
+    amount: '155,000',
+    gatewaycharges: '500',
+    discount: '0',
+    amountdue: '155,500',
     status: 'active',
   },
 ];
@@ -58,11 +66,11 @@ const StimulationLinks = () => {
   return (
     <Box>
       <Breadcrumb
-        title="Stimulation Links"
+        title="Manage Subscription"
         items={[
           { title: 'Home', to: '/' },
-          { title: 'PHET Stimulation' },
-          { title: 'Stimulation Links' },
+          { title: 'Manage Subscription' },
+          // { title: 'Stimulation Links' },
         ]}
       />
       <ManagePhETLinks />
@@ -77,6 +85,7 @@ const ManagePhETLinks = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState('create');
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
@@ -84,7 +93,7 @@ const ManagePhETLinks = () => {
   const notify = useNotification();
 
   const filteredRows = rows.filter((row) =>
-    row.title.toLowerCase().includes(searchTerm.toLowerCase()),
+    row.sessionterm.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -106,9 +115,38 @@ const ManagePhETLinks = () => {
   };
 
   const handleEditClick = (row) => {
-    setSelectedRow(row);
+    // Parse sessionterm to extract session and term
+    const sessionTermParts = row.sessionterm ? row.sessionterm.split(' - ') : ['', ''];
+    const session = sessionTermParts[0] || '';
+    const term = sessionTermParts[1] || '';
+
+    // Parse plandetails to extract plan and student population
+    const planDetails = row.plandetails || '';
+    const planMatch = planDetails.match(/^(OBASIC\+*)\s*\(([^)]+)\)/);
+    const availableplan = planMatch ? planMatch[1] : '';
+    const studentpopulation = planMatch ? planMatch[2] : '';
+
+    // Determine subscription mode based on term presence
+    const subscriptionMode = term ? 'perTerm' : 'perSession';
+
+    const transformedRow = {
+      ...row,
+      session,
+      term,
+      availableplan,
+      studentpopulation,
+      subscriptionMode,
+    };
+
+    setSelectedRow(transformedRow);
     setModalType('update');
     setModalOpen(true);
+  };
+
+  const handleUpgradePlanClick = (row) => {
+    setSelectedRow(row);
+    setUpgradeModalOpen(true);
+    handleMenuClose();
   };
 
   const handleDeleteClick = (row) => {
@@ -120,19 +158,25 @@ const ManagePhETLinks = () => {
   const handleModalSubmit = (data) => {
     if (modalType === 'create') {
       setRows((prev) => [...prev, { ...data, id: Date.now() }]);
-      notify.success('Stimulation link added successfully', 'Success');
+      notify.success('Subcription plan successfully added', 'Success');
     } else if (modalType === 'update') {
       setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
-      notify.success('Stimulation link updated successfully', 'Success');
+      notify.success('Subcription plan updated successfully', 'Success');
     }
     setModalOpen(false);
+  };
+
+  const handleUpgradeSubmit = (upgradedData) => {
+    setRows((prev) => prev.map((row) => (row.id === upgradedData.id ? upgradedData : row)));
+    notify.success('Plan upgraded successfully', 'Success');
+    setUpgradeModalOpen(false);
   };
 
   const handleDeleteConfirm = () => {
     setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
     setConfirmOpen(false);
     setRowToDelete(null);
-    notify.success('Stimulation link deleted successfully', 'Success');
+    notify.success('Subcription plan deleted successfully', 'Success');
   };
 
   const handleSimulationUpdate = (data, action) => {
@@ -147,7 +191,7 @@ const ManagePhETLinks = () => {
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h5">Manage Gateways</Typography>
+            <Typography variant="h5">Manage Subcription</Typography>
             <Button
               variant="contained"
               color="primary"
@@ -157,7 +201,7 @@ const ManagePhETLinks = () => {
                 fontSize: { xs: '0.95rem', md: '1rem' },
               }}
             >
-              Add New Link
+              Add New Subcription
             </Button>
           </Box>
         }
@@ -165,7 +209,7 @@ const ManagePhETLinks = () => {
         <Box sx={{ p: 0 }}>
           <Box sx={{ mb: 3 }}>
             <TextField
-              placeholder="Search by title..."
+              placeholder="Search by session term..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -183,16 +227,20 @@ const ManagePhETLinks = () => {
 
           <Paper variant="outlined">
             <TableContainer>
-              <Table>
+              <Table sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>#</TableCell>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Topic</TableCell>
-                    <TableCell>Subject</TableCell>
-                    <TableCell>Link</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="center">Action</TableCell>
+                    <TableCell sx={{ width: '5%' }}>#</TableCell>
+                    <TableCell sx={{ width: '18%' }}>Session/Term</TableCell>
+                    <TableCell sx={{ width: '22%' }}>Plan Details</TableCell>
+                    <TableCell sx={{ width: '12' }}> Amount (₦)</TableCell>
+                    <TableCell sx={{ width: '14' }}>Gateway charges(₦)</TableCell>
+                    <TableCell sx={{ width: '10' }}>Discount (%)</TableCell>
+                    <TableCell sx={{ width: '10' }}>Amount Due (₦)</TableCell>
+                    <TableCell sx={{ width: '5' }}>Status</TableCell>
+                    <TableCell sx={{ width: '5%' }} align="center">
+                      Action
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -200,14 +248,12 @@ const ManagePhETLinks = () => {
                     paginatedRows.map((row, index) => (
                       <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{row.title}</TableCell>
-                        <TableCell>{row.topic}</TableCell>
-                        <TableCell>{row.subject}</TableCell>
-                        <TableCell>
-                          <a href={row.link} target="_blank" rel="noopener noreferrer">
-                            {row.link}
-                          </a>
-                        </TableCell>
+                        <TableCell>{row.sessionterm}</TableCell>
+                        <TableCell>{row.plandetails}</TableCell>
+                        <TableCell>{row.amount}</TableCell>
+                        <TableCell>{row.gatewaycharges}</TableCell>
+                        <TableCell>{row.discount}</TableCell>
+                        <TableCell>{row.amountdue}</TableCell>
                         <TableCell>
                           <Chip
                             label={row.status.toUpperCase()}
@@ -234,7 +280,13 @@ const ManagePhETLinks = () => {
                             open={Boolean(anchorEl) && selectedRow?.id === row.id}
                             onClose={handleMenuClose}
                           >
-                            <MenuItem onClick={() => handleEditClick(row)}>Edit</MenuItem>
+                            <MenuItem onClick={() => handleUpgradePlanClick(row)}>
+                              Upgrade Plan
+                            </MenuItem>
+                            <MenuItem onClick={() => handleEditClick(row)}>
+                              View Transaction
+                            </MenuItem>
+                            <MenuItem onClick={() => handleEditClick(row)}>View Invoice</MenuItem>
                             <MenuItem onClick={() => handleDeleteClick(row)}>Delete</MenuItem>
                           </Menu>
                         </TableCell>
@@ -243,9 +295,22 @@ const ManagePhETLinks = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
-                        <Typography variant="body2" color="textSecondary">
-                          No records found
-                        </Typography>
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mb: 3,
+                            width: '100%',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            '& .MuiAlert-icon': {
+                              mr: 1.5,
+                            },
+                          }}
+                        >
+                          <Typography variant="body2" color="textSecondary">
+                            No records found
+                          </Typography>
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   )}
@@ -271,19 +336,25 @@ const ManagePhETLinks = () => {
           </Paper>
         </Box>
       </ParentCard>
-      <StimulationLinkModal
+      <SubcriptionModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         actionType={modalType}
         selectedSimulation={selectedRow}
         onSimulationUpdate={handleModalSubmit}
       />
+      <UpgradePlanModal
+        open={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        selectedRow={selectedRow}
+        onUpgrade={handleUpgradeSubmit}
+      />
       <ConfirmationDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Simulation Link"
-        message={`Are you sure you want to delete "${rowToDelete?.title}"?`}
+        title="Delete Subcription plan"
+        message={`Are you sure you want to delete "${rowToDelete?.sessionterm}"?`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

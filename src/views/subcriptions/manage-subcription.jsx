@@ -26,6 +26,7 @@ import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import SubcriptionModal from '../../components/subcription/SubcriptionModal';
 import UpgradePlanModal from '../../components/subcription/UpgradePlanModal';
+import TransactionModal from '../../components/subcription/TransactionModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
 
@@ -86,6 +87,7 @@ const ManagePhETLinks = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState('create');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [transactionModalOpen, setTransactionModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
@@ -146,6 +148,12 @@ const ManagePhETLinks = () => {
   const handleUpgradePlanClick = (row) => {
     setSelectedRow(row);
     setUpgradeModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleViewTransactionClick = (row) => {
+    setSelectedRow(row);
+    setTransactionModalOpen(true);
     handleMenuClose();
   };
 
@@ -283,7 +291,7 @@ const ManagePhETLinks = () => {
                             <MenuItem onClick={() => handleUpgradePlanClick(row)}>
                               Upgrade Plan
                             </MenuItem>
-                            <MenuItem onClick={() => handleEditClick(row)}>
+                            <MenuItem onClick={() => handleViewTransactionClick(row)}>
                               View Transaction
                             </MenuItem>
                             <MenuItem onClick={() => handleEditClick(row)}>View Invoice</MenuItem>
@@ -348,6 +356,11 @@ const ManagePhETLinks = () => {
         onClose={() => setUpgradeModalOpen(false)}
         selectedRow={selectedRow}
         onUpgrade={handleUpgradeSubmit}
+      />
+      <TransactionModal
+        open={transactionModalOpen}
+        onClose={() => setTransactionModalOpen(false)}
+        selectedRow={selectedRow}
       />
       <ConfirmationDialog
         open={confirmOpen}

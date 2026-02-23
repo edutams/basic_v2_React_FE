@@ -1,6 +1,7 @@
 import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
 const SchoolDashboardMain = Loadable(
   lazy(() => import('../views/school-dashboard/SchoolDashboard')),
 );
@@ -17,8 +18,6 @@ const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout'
 /* ****Pages***** */
 const AnalyticalDashboard = Loadable(lazy(() => import('../views/dashboard/Analytical')));
 const SchoolDashboard = Loadable(lazy(() => import('../views/dashboard/School')));
-const SessionDashboard = Loadable(lazy(() => import('../views/dashboard/Session')));
-const TermDashboard = Loadable(lazy(() => import('../views/dashboard/Term')));
 const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
@@ -154,6 +153,7 @@ const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/
 const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
 
 const TwoSteps = Loadable(lazy(() => import('../views/authentication/auth1/TwoSteps')));
+const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 const Maintenance = Loadable(lazy(() => import('../views/authentication/Maintenance')));
 
@@ -198,7 +198,41 @@ const SimpletreeSelection = Loadable(
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 
-const Router = [
+const hostname = window.location.hostname;
+const parts = hostname.split('.');
+const isTenantSubdomain = parts.length > 2;
+
+const Router = isTenantSubdomain ? [
+  {
+    path: '/',
+    element: (
+      <TenantProtectedRoute>
+        <SchoolLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [
+      { path: '/', element: <Navigate to="/school-dashboard" /> },
+      {
+        path: '/school-dashboard',
+        children: [
+          { path: '', element: <SchoolDashboardMain /> },
+          { path: 'session-week-manager', element: <SessionWeekManager /> },
+          { path: 'scheme-of-work', element: <SchemeOfWork /> },
+        ],
+      },
+      { path: '*', element: <Navigate to="/auth/404" /> },
+    ],
+  },
+  {
+    path: '/',
+    element: <BlankLayout />,
+    children: [
+      { path: '/login', element: <TenantLogin /> },
+      { path: '/auth/404', element: <Error /> },
+      { path: '*', element: <Navigate to="/login" /> },
+    ],
+  },
+] : [
   {
     path: '/',
     element: (
@@ -212,8 +246,6 @@ const Router = [
       { path: '/alc-manager', exact: true, element: <AlcManager /> },
       { path: '/agent', exact: true, element: <Agent /> },
       { path: '/school', exact: true, element: <SchoolDashboard /> },
-      { path: '/session', exact: true, element: <SessionDashboard /> },
-      { path: '/term', exact: true, element: <TermDashboard /> },
       { path: '/gateway', exact: true, element: <Gateway /> },
       { path: '/my-plan', exact: true, element: <MyPlan /> },
       { path: '/chat', exact: true, element: <Chat /> },

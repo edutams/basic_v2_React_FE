@@ -91,7 +91,7 @@ const FullLayout = () => {
           {/* ------------------------------------------- */}
           <DashboardFooter />
 
-          <Customizer />
+          {/* <Customizer /> */}
         </PageWrapper>
       </MainWrapper>
     </>

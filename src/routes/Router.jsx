@@ -23,8 +23,11 @@ const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecomme
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
 
+const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')));
+
 /* ****Pages***** */
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
+const ViewAgent = Loadable(lazy(() => import('../views/agent/ViewAgent')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
 const MyPlan = Loadable(lazy(() => import('../views/my-plan/MyPlan')));
 const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
@@ -198,28 +201,46 @@ const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-l
 const Router = [
   {
     path: '/',
-    element: <FullLayout />,
+    element: (
+      <ProtectedRoute>
+        <FullLayout />
+      </ProtectedRoute>
+    ),
     children: [
+      { path: '/', element: <Navigate to="/analytical" /> },
+      { path: '/analytical', exact: true, element: <AnalyticalDashboard /> },
+      { path: '/alc-manager', exact: true, element: <AlcManager /> },
+      { path: '/agent', exact: true, element: <Agent /> },
+      { path: '/school', exact: true, element: <SchoolDashboard /> },
+      { path: '/session', exact: true, element: <SessionDashboard /> },
+      { path: '/term', exact: true, element: <TermDashboard /> },
+      { path: '/gateway', exact: true, element: <Gateway /> },
+      { path: '/my-plan', exact: true, element: <MyPlan /> },
+      { path: '/chat', exact: true, element: <Chat /> },
+      { path: '/mail', exact: true, element: <Mail /> },
+      { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
+      { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
+      { path: '/modern', exact: true, element: <ModernDashboard /> },
+      { path: '/package-manager', element: <PackageManager /> },
       { path: '/', element: <Navigate to="/agent/login" /> },
-      {
-        path: '/dashboards',
-        element: <DashboardsLayout />,
-        children: [
-          { path: 'analytical', element: <AnalyticalDashboard /> },
-          { path: 'agent', element: <Agent /> },
-          { path: 'school', element: <SchoolDashboard /> },
-          { path: 'session', element: <SessionDashboard /> },
-          { path: 'term', element: <TermDashboard /> },
-          { path: 'gateway', element: <Gateway /> },
-          { path: 'my-plan', element: <MyPlan /> },
-          { path: 'chat', element: <Chat /> },
-          { path: 'mail', element: <Mail /> },
-          { path: 'school/sub-school/:id', element: <ViewSchool /> },
-          { path: 'ecommerce', element: <ECommerceDashboard /> },
-          { path: 'modern', element: <ModernDashboard /> },
-          { path: 'package-manager', element: <PackageManager /> },
-        ],
-      },
+      // {
+      //   path: '/',
+      //   element: <DashboardsLayout />,
+      //   children: [
+      //     { path: 'agent', element: <Agent /> },
+      //     { path: 'school', element: <SchoolDashboard /> },
+      //     { path: 'session', element: <SessionDashboard /> },
+      //     { path: 'term', element: <TermDashboard /> },
+      //     { path: 'gateway', element: <Gateway /> },
+      //     { path: 'my-plan', element: <MyPlan /> },
+      //     { path: 'chat', element: <Chat /> },
+      //     { path: 'mail', element: <Mail /> },
+      //     { path: 'school/sub-school/:id', element: <ViewSchool /> },
+      //     { path: 'ecommerce', element: <ECommerceDashboard /> },
+      //     { path: 'modern', element: <ModernDashboard /> },
+      //     { path: 'package-manager', element: <PackageManager /> },
+      //   ],
+      // },
       {
         path: '/pages/account-settings',
         element: (

@@ -34,6 +34,7 @@ import {
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const { user, logout } = useAuth();
+  console.log('Profile user:', user);
 
   const navigate = useNavigate();
   const notify = useNotification();

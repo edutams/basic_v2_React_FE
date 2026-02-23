@@ -19,29 +19,53 @@ class ErrorBoundary extends React.Component {
   };
 
   render() {
-    try {
-      if (this.state.hasError) {
-        return (
-          <div style={{ padding: '2rem', color: 'red' }}>
-            <h2>Something went wrong.</h2>
-            <p>{this.state.error?.message}</p>
-            <button onClick={this.handleReset} style={{ marginTop: '1rem' }}>
+    if (this.state.hasError) {
+      return (
+        <div style={{ 
+          padding: '2rem', 
+          textAlign: 'center', 
+          height: '100vh', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center', 
+          alignItems: 'center' 
+        }}>
+          <h2>Something went wrong.</h2>
+          <p style={{ color: 'red', maxWidth: '600px' }}>{this.state.error?.message}</p>
+          <div style={{ marginTop: '1rem' }}>
+            <button 
+              onClick={this.handleReset} 
+              style={{ 
+                padding: '10px 20px', 
+                marginRight: '10px', 
+                cursor: 'pointer',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px'
+              }}
+            >
               Try Again
             </button>
+            <button 
+              onClick={() => window.location.reload()} 
+              style={{ 
+                padding: '10px 20px', 
+                cursor: 'pointer',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px'
+              }}
+            >
+              Reload Page
+            </button>
           </div>
-        );
-      }
-
-      return this.props.children;
-    } catch (error) {
-      console.error("❌ Caught error during render:", error);
-      return (
-        <div style={{ padding: '2rem', color: 'red' }}>
-          <h2>Render failure.</h2>
-          <p>{error.message}</p>
         </div>
       );
     }
+
+    return this.props.children;
   }
 }
 

@@ -15,6 +15,7 @@ import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
 import {
   createSchool,
+  updateSchool,
   getAllStates,
   getLgasByState,
 } from '../../../context/AgentContext/services/school.service';
@@ -142,15 +143,20 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     try {
       const payload = {
         ...formData,
-        headcolor: formData.headcolor,
-        sidecolor: formData.sidecolor,
-        bodycolor: formData.bodycolor,
       };
 
-      const res = await createSchool(payload);
+      let res;
+      if (actionType === 'update') {
+        res = await updateSchool(selectedSchool.id, payload);
+      } else {
+        delete payload.headcolor;
+        delete payload.sidecolor;
+        delete payload.bodycolor;
+        res = await createSchool(payload);
+      }
 
-      notify.success(res.message || 'School registered successfully');
-      onSubmit(res.tenant || res.data);
+      notify.success(res.message || 'School processed successfully');
+      onSubmit(res.tenant || res.data || res);
 
       // Reset form
       setFormData({
@@ -171,7 +177,13 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
       });
       setErrors({});
     } catch (err) {
-      notify.error(err.error || 'Failed to register school');
+      console.error('Registration error:', err);
+      if (err.errors) {
+        setErrors(err.errors);
+        notify.error(err.message || 'Validation error occurred');
+      } else {
+        notify.error(err.error || err.message || 'Failed to register school');
+      }
     } finally {
       setLoading(false);
     }
@@ -189,7 +201,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.tenant_name}
             onChange={handleChange}
             error={Boolean(errors.tenant_name)}
-            helperText={errors.tenant_name}
+            helperText={errors.tenant_name?.[0] || errors.tenant_name}
           />
         </Grid>
 
@@ -201,7 +213,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.tenant_short_name}
             onChange={handleChange}
             error={Boolean(errors.tenant_short_name)}
-            helperText={errors.tenant_short_name}
+            helperText={errors.tenant_short_name?.[0] || errors.tenant_short_name}
           />
         </Grid>
 
@@ -215,7 +227,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.address}
             onChange={handleChange}
             error={Boolean(errors.address)}
-            helperText={errors.address}
+            helperText={errors.address?.[0] || errors.address}
           />
         </Grid>
 
@@ -228,7 +240,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.admin_fname}
             onChange={handleChange}
             error={Boolean(errors.admin_fname)}
-            helperText={errors.admin_fname}
+            helperText={errors.admin_fname?.[0] || errors.admin_fname}
           />
         </Grid>
 
@@ -240,7 +252,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.admin_lname}
             onChange={handleChange}
             error={Boolean(errors.admin_lname)}
-            helperText={errors.admin_lname}
+            helperText={errors.admin_lname?.[0] || errors.admin_lname}
           />
         </Grid>
 
@@ -253,7 +265,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.admin_email}
             onChange={handleChange}
             error={Boolean(errors.admin_email)}
-            helperText={errors.admin_email}
+            helperText={errors.admin_email?.[0] || errors.admin_email}
           />
         </Grid>
 
@@ -265,7 +277,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.admin_phone}
             onChange={handleChange}
             error={Boolean(errors.admin_phone)}
-            helperText={errors.admin_phone}
+            helperText={errors.admin_phone?.[0] || errors.admin_phone}
           />
         </Grid>
 
@@ -319,9 +331,11 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
         </Grid>
 
         {/* Color Scheme */}
-        <Grid item xs={12}>
-          <ColorSchemeSelector formData={formData} onColorChange={handleColorChange} />
-        </Grid>
+        {actionType === 'update' && (
+          <Grid item xs={12}>
+            <ColorSchemeSelector formData={formData} onColorChange={handleColorChange} />
+          </Grid>
+        )}
 
         {/* Social Link */}
         <Grid item xs={12}>
@@ -332,7 +346,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             value={formData.social_link}
             onChange={handleChange}
             error={Boolean(errors.social_link)}
-            helperText={errors.social_link}
+            helperText={errors.social_link?.[0] || errors.social_link}
           />
         </Grid>
       </Grid>

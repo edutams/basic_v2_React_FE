@@ -9,7 +9,6 @@ import {
   TableRow,
   Paper,
   Box,
-  Container,
   useTheme,
   OutlinedInput,
   InputLabel,
@@ -27,6 +26,7 @@ import {
   Snackbar,
   Alert,
   Chip,
+  CircularProgress,
 } from '@mui/material';
 import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
 import ReusableModal from '../../components/shared/ReusableModal';
@@ -37,8 +37,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
-import ListIcon from '@mui/icons-material/List';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ManageTenantDomain from '../../components/add-school/component/ManageSchoolDomain';
 import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
 import ChangeAgent from '../../components/add-school/component/ChangeAgent';
@@ -46,81 +44,25 @@ import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import BlankCard from '../../components/shared/BlankCard';
 import ChangeColorScheme from '../../components/add-school/component/ChangeColorScheme';
 import { Link } from 'react-router';
+import {
+  getSchools,
+  updateSchool,
+  deleteSchool,
+} from '../../context/AgentContext/services/school.service';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
-
-const getStyles = (name, selected, theme) => ({
-  fontWeight: selected.includes(name)
-    ? theme.typography.fontWeightMedium
-    : theme.typography.fontWeightRegular,
-});
-
-const lgaData = {
-  Ogun: [
-    'Abeokuta North',
-    'Abeokuta South',
-    'Ado-Odo/Ota',
-    'Ewekoro',
-    'Ifo',
-    'Ijebu East',
-    'Ijebu North',
-    'Ijebu North East',
-    'Ijebu Ode',
-    'Ikenne',
-    'Imeko Afon',
-    'Ipokia',
-    'Obafemi Owode',
-    'Odeda',
-    'Odogbolu',
-    'Ogun Waterside',
-    'Remo North',
-    'Sagamu',
-    'Yewa North',
-    'Yewa South',
-  ],
-  Lagos: [
-    'Agege',
-    'Ajeromi-Ifelodun',
-    'Alimosho',
-    'Amuwo-Odofin',
-    'Apapa',
-    'Badagry',
-    'Epe',
-    'Eti Osa',
-    'Ibeju-Lekki',
-    'Ifako-Ijaiye',
-    'Ikeja',
-    'Ikorodu',
-    'Kosofe',
-    'Lagos Island',
-    'Lagos Mainland',
-    'Mushin',
-    'Ojo',
-    'Oshodi-Isolo',
-    'Shomolu',
-    'Surulere',
-  ],
-};
 
 const SchoolDashboard = () => {
   const theme = useTheme();
+  const [schoolList, setSchoolList] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [filterValues, setFilterValues] = useState({});
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
   const [nameValue, setNameValue] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [schoolList, setSchoolList] = useState([]);
+  
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editSchoolData, setEditSchoolData] = useState(null);
@@ -131,59 +73,76 @@ const SchoolDashboard = () => {
   const [selectedAgent, setSelectedAgent] = useState('');
   const [agentList] = useState([
     { label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' },
-    { label: 'Agent B', value: 'agentB' },
   ]);
+  
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
   const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
+  
   const [openClear2FAConfirm, setOpenClear2FAConfirm] = useState(false);
   const [selectedSchoolFor2FA, setSelectedSchoolFor2FA] = useState(null);
   const [openFixImageConfirm, setOpenFixImageConfirm] = useState(false);
-  const [lgaOptions, setLgaOptions] = useState([]);
-  const [anchorEl, setAnchorEl] = useState(null);
+  
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+  
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  
   const [openColorSchemeModal, setOpenColorSchemeModal] = useState(false);
   const [selectedSchoolForColor, setSelectedSchoolForColor] = useState(null);
 
   const [filterClicked, setFilterClicked] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  const hasActiveFilters =
-    Object.values(filterValues).some(Boolean) || nameValue || fromDate || toDate;
+  const fetchSchools = async () => {
+    setLoading(true);
+    try {
+      const data = await getSchools();
+      // Map backend data to frontend field names
+      const mappedData = data.map((t) => {
+        let colors = {};
+        try {
+          colors = typeof t.color === 'string' ? JSON.parse(t.color) : (t.color || {});
+        } catch (e) {
+          console.error('Error parsing color for tenant', t.id);
+        }
 
-  const [filterGroups, setFilterGroups] = useState([
-    { mainLabel: 'Agent', mainOptions: ['Agent A', 'Agent B'] },
-    { mainLabel: 'Country', mainOptions: ['Nigeria', 'Ghana'] },
-    { mainLabel: 'State', mainOptions: ['Ogun', 'Lagos'] },
-    { mainLabel: 'LGA', mainOptions: [] },
-  ]);
-
-  // const inputSx = {
-  //   bgcolor: 'white',
-  //   width: 56,
-  //   '& .MuiOutlinedInput-root': {
-  //     height: 56,
-  //   },
-  // };
-
-  const handleFixImage = () => {
-    setOpenFixImageConfirm(false);
+        return {
+          id: t.id,
+          institutionName: t.tenant_name,
+          schoolUrl: t.domains?.[0]?.domain || '',
+          agent: t.agent?.name || 'My Agency',
+          gateway: t.tenant_gateway?.name || 'Default',
+          date: t.created_at,
+          socialLink: t.social_link,
+          headerColor: colors.headcolor,
+          sidebarColor: colors.sidecolor,
+          bodyColor: colors.bodycolor,
+          status: t.status === 'active' ? 'Active' : 'Inactive',
+          raw: t, // Keep raw data for editing
+        };
+      });
+      setSchoolList(mappedData);
+    } catch (err) {
+      console.error('Failed to fetch schools', err);
+      setSnackbarMessage('Failed to fetch schools');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchSchools();
+  }, []);
 
   const handleActionClick = (event, rowId) => {
     setActionAnchorEl(event.currentTarget);
     setActiveRow(rowId);
-  };
-
-  const handleOpen = () => setOpenRegisterModal(true);
-  const handleClose = () => {
-    setOpenRegisterModal(false);
-    setOpenEditModal(false);
   };
 
   const handleActionClose = () => {
@@ -191,111 +150,19 @@ const SchoolDashboard = () => {
     setActiveRow(null);
   };
 
-  const handleDeleteTerm = () => {
-    if (termToDelete) {
-      setTerms((prev) => prev.filter((t) => t.id !== termToDelete.id));
-      setOpenDeleteDialog(false);
-      setSnackbarMessage('Term deleted successfully');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-    }
+  const handleOpen = () => setOpenRegisterModal(true);
+  const handleClose = () => {
+    setOpenRegisterModal(false);
+    setOpenEditModal(false);
+    setEditSchoolData(null);
   };
 
-  const handleMenuClose = () => setAnchorEl(null);
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  useEffect(() => {
-    const savedList = localStorage.getItem('schoolList');
-    const savedFilters = localStorage.getItem('schoolFilters');
-    const savedPage = localStorage.getItem('currentPage');
-
-    if (savedList) {
-      setSchoolList(JSON.parse(savedList));
-    } else {
-      const initialSchools = [
-        {
-          id: 1,
-          institutionName: 'Test School 1',
-          schoolUrl: 'test1.com',
-          agent: 'Agent A',
-          gateway: 'Gateway 1',
-          date: '2025-01-01',
-          socialLink: 'social1.com',
-          colourScheme: 'Blue',
-          status: 'Active',
-          State: 'Ogun',
-          LGA: 'Abeokuta',
-        },
-        {
-          id: 2,
-          institutionName: 'Test School 2',
-          schoolUrl: 'test2.com',
-          agent: 'Agent B',
-          gateway: 'Gateway 2',
-          date: '2025-02-01',
-          socialLink: 'social2.com',
-          colourScheme: 'Red',
-          status: 'Inactive',
-          State: 'Lagos',
-          LGA: 'Ikeja',
-        },
-      ];
-      setSchoolList(initialSchools);
-      localStorage.setItem('schoolList', JSON.stringify(initialSchools));
-    }
-
-    if (savedFilters) {
-      const { filterValues, nameValue, fromDate, toDate } = JSON.parse(savedFilters);
-      setFilterValues(filterValues || {});
-      setNameValue(nameValue || '');
-      setFromDate(fromDate ? dayjs(fromDate) : null);
-      setToDate(toDate ? dayjs(toDate) : null);
-      if (filterValues?.State) {
-        setLgaOptions(lgaData[filterValues.State] || []);
-      }
-    }
-
-    if (savedPage) setPage(parseInt(savedPage, 10));
-  }, []);
-
-  useEffect(() => {
-    setFilterGroups((prev) =>
-      prev.map((group) =>
-        group.mainLabel === 'LGA' ? { ...group, mainOptions: lgaOptions } : group,
-      ),
-    );
-  }, [lgaOptions]);
-
-  useEffect(() => {
-    localStorage.setItem('schoolList', JSON.stringify(schoolList));
-  }, [schoolList]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      'schoolFilters',
-      JSON.stringify({ filterValues, nameValue, fromDate, toDate }),
-    );
-  }, [filterValues, nameValue, fromDate, toDate]);
-
-  useEffect(() => {
-    localStorage.setItem('currentPage', page);
-  }, [page]);
-
-  const handleChange = (key) => (event) => {
-    const value = event.target.value;
-
-    setFilterValues((prev) => {
-      const newFilters = { ...prev, [key]: value };
-      if (key === 'State') {
-        delete newFilters['LGA'];
-        const lgas = lgaData[value] || [];
-        setLgaOptions(lgas);
-      }
-      return newFilters;
-    });
+  const handleRefresh = async () => {
+    await fetchSchools();
+    handleClose();
+    setSnackbarMessage('Action completed successfully');
+    setSnackbarSeverity('success');
+    setSnackbarOpen(true);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -307,27 +174,32 @@ const SchoolDashboard = () => {
     setPage(0);
   };
 
-  const handleRefresh = (newSchool) => {
-    setSchoolList((prevList) => {
-      const existingIndex = prevList.findIndex((s) => s.id === newSchool.id);
-      if (existingIndex !== -1) {
-        const updatedList = [...prevList];
-        updatedList[existingIndex] = newSchool;
-        return updatedList;
-      }
-      return [...prevList, newSchool];
-    });
-    handleClose(); // Close the modal after saving
-    setSnackbarMessage('School saved successfully');
-    setSnackbarSeverity('success');
+  const handleDeactivateSchool = async (school) => {
+    try {
+      await updateSchool(school.id, { status: 'inactive' });
+      await fetchSchools();
+      setOpenDeactivateDialog(false);
+      setSnackbarMessage('School deactivated successfully');
+      setSnackbarSeverity('success');
+    } catch (err) {
+      setSnackbarMessage('Failed to deactivate school');
+      setSnackbarSeverity('error');
+    }
     setSnackbarOpen(true);
   };
 
-  const handleDeactivateSchool = (school) => {
-    setSchoolList((prevList) =>
-      prevList.map((s) => (s.id === school.id ? { ...s, status: 'Inactive' } : s)),
-    );
-    setOpenDeactivateDialog(false);
+  const handleDeleteSchool = async (school) => {
+    try {
+      await deleteSchool(school.id);
+      await fetchSchools();
+      setOpenDeleteDialog(false);
+      setSnackbarMessage('School deleted successfully');
+      setSnackbarSeverity('success');
+    } catch (err) {
+      setSnackbarMessage('Failed to delete school');
+      setSnackbarSeverity('error');
+    }
+    setSnackbarOpen(true);
   };
 
   const filteredSchools = schoolList.filter((school) => {
@@ -335,15 +207,11 @@ const SchoolDashboard = () => {
       ? school.institutionName?.toLowerCase().includes(nameValue.toLowerCase())
       : true;
 
-    const matchesFilters = Object.entries(filterValues).every(([key, value]) => {
-      return !value || school[key] === value;
-    });
-
     const matchesDateRange =
       (!fromDate || dayjs(school.date).isAfter(fromDate.subtract(1, 'day'))) &&
       (!toDate || dayjs(school.date).isBefore(toDate.add(1, 'day')));
 
-    return matchesName && matchesFilters && matchesDateRange;
+    return matchesName && matchesDateRange;
   });
 
   const paginatedSchools = filteredSchools.slice(
@@ -361,623 +229,154 @@ const SchoolDashboard = () => {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: '1fr 1fr',
-            md: 'repeat(4, 1fr)',
-          },
-          gap: 2,
-          width: '100%',
-          mb: 3,
-        }}
-      >
+      
+      {/* Summary Stats */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
         {[
-          {
-            label: 'Total',
-            value: schoolSummary.total,
-            bg: 'primary',
-            icon: <IconSchool width={22} color="#fff" />,
-          },
-          {
-            label: 'My Registered',
-            value: schoolSummary.myRegistered,
-            bg: 'secondary',
-            icon: <IconUserPlus width={22} color="#fff" />,
-          },
-          {
-            label: 'Active',
-            value: schoolSummary.active,
-            bg: 'success',
-            icon: <IconCheck width={22} color="#fff" />,
-          },
-          {
-            label: 'Inactive',
-            value: schoolSummary.inactive,
-            bg: 'warning',
-            icon: <IconX width={22} color="#fff" />,
-          },
+          { label: 'Total', value: schoolSummary.total, bg: 'primary', icon: <IconSchool width={22} color="#fff" /> },
+          { label: 'My Registered', value: schoolSummary.myRegistered, bg: 'secondary', icon: <IconUserPlus width={22} color="#fff" /> },
+          { label: 'Active', value: schoolSummary.active, bg: 'success', icon: <IconCheck width={22} color="#fff" /> },
+          { label: 'Inactive', value: schoolSummary.inactive, bg: 'warning', icon: <IconX width={22} color="#fff" /> },
         ].map((item, index) => (
-          <Paper
-            key={index}
-            elevation={2}
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              minHeight: 120,
-              height: '100%',
-              width: '100%',
-              borderRadius: 2,
-              boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
-              gap: 2,
-              px: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-              <Box
-                width={38}
-                height={38}
-                bgcolor={`${item.bg}.main`}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                borderRadius={1}
-              >
+          <Paper key={index} elevation={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderRadius: 2, minHeight: 120 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box width={38} height={38} bgcolor={`${item.bg}.main`} display="flex" alignItems="center" justifyContent="center" borderRadius={1}>
                 {item.icon}
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="body2" sx={{ fontSize: '16px', fontWeight: 'bold' }}>
-                  {item.label}
-                </Typography>
-                <Typography variant="body2" sx={{ fontSize: '14px', color: 'text.secondary' }}>
-                  Schools
-                </Typography>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{item.label}</Typography>
+                <Typography variant="body2" color="text.secondary">Schools</Typography>
               </Box>
             </Box>
-            <Typography
-              variant="h2"
-              sx={{
-                fontWeight: 'bold',
-                fontSize: '36px',
-                color: '#28a745',
-                minWidth: 56,
-                textAlign: 'center',
-              }}
-            >
-              {item.value}
-            </Typography>
+            <Typography variant="h2" sx={{ fontWeight: 'bold', fontSize: '36px', color: '#28a745' }}>{item.value}</Typography>
           </Paper>
         ))}
       </Box>
+
       <BlankCard>
-        <TableContainer>
-          <Box sx={{ mb: 3, bgcolor: '#F5F7FA', p: 2, borderRadius: 1 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-              }}
-            >
-              <Typography variant="h5">All School</Typography>
-              <Button variant="contained" color="primary" onClick={handleOpen}>
-                Register New School
-              </Button>
-            </Box>
+        <Box sx={{ p: 3 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+            <Typography variant="h5">All Schools</Typography>
+            <Button variant="contained" color="primary" onClick={handleOpen} startIcon={<IconUserPlus size={18} />}>
+              Register New School
+            </Button>
+          </Stack>
 
-            <Box component="hr" sx={{ mb: 3 }} />
-
-            <Grid container spacing={2} mb={3}>
-              {/* BASIC FILTER */}
-              <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                <TextField
-                  fullWidth
-                  label="Name"
-                  value={nameValue}
-                  onChange={(e) => setNameValue(e.target.value)}
-                />
-              </Grid>
-
-              {filterClicked && !showAdvancedFilters && (
-                <Grid sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Button variant="text" onClick={() => setShowAdvancedFilters(true)}>
-                    View All Filters
-                  </Button>
-                </Grid>
-              )}
-
-              {/* ADVANCED FILTERS */}
-              {showAdvancedFilters && (
-                <>
-                  {filterGroups.map(({ mainLabel, mainOptions }) => (
-                    <Grid size={{ xs: 12, md: 3, sm: 3 }} key={mainLabel}>
-                      <FormControl fullWidth>
-                        <InputLabel>{mainLabel}</InputLabel>
-                        <Select
-                          value={filterValues[mainLabel] || ''}
-                          onChange={handleChange(mainLabel)}
-                          input={<OutlinedInput label={mainLabel} />}
-                        >
-                          <MenuItem value="">
-                            <em>None</em>
-                          </MenuItem>
-                          {mainOptions.map((option) => (
-                            <MenuItem key={option} value={option}>
-                              {option}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                  ))}
-
-                  <Grid item xs={12} sm={6} md={3}>
-                    <DatePicker
-                      label="From"
-                      value={fromDate}
-                      onChange={setFromDate}
-                      slotProps={{ textField: { fullWidth: true } }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6} md={3}>
-                    <DatePicker
-                      label="To"
-                      value={toDate}
-                      onChange={setToDate}
-                      slotProps={{ textField: { fullWidth: true } }}
-                    />
-                  </Grid>
-                </>
-              )}
-
-              <Grid
-                item
-                // xs={12}
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  justifyContent: 'flex-end',
-                  mt: 1,
-                }}
-              >
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setFilterClicked(true);
-                  }}
-                >
-                  Filter
-                </Button>
-
-                {showAdvancedFilters && (
-                  <Grid
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      // textDecoration: 'underline',
-                      padding: 0,
-                      minWidth: 'auto',
-                      '&:hover': {
-                        backgroundColor: 'transparent',
-                        // textDecoration: 'underline',
-                      },
-                    }}
-                  >
-                    <Button variant="text" onClick={() => setShowAdvancedFilters(false)}>
-                      Show Less Filters
-                    </Button>
-                  </Grid>
-                )}
-
-                {hasActiveFilters && (
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      setFilterValues({});
-                      setNameValue('');
-                      setFromDate(null);
-                      setToDate(null);
-                    }}
-                  >
-                    Clear Filters
-                  </Button>
-                )}
-              </Grid>
+          <Grid container spacing={2} mb={3} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <TextField fullWidth label="Search School Name" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
             </Grid>
+            <Grid item xs={12} md={2}>
+              <Button variant="contained" fullWidth onClick={fetchSchools} disabled={loading}>
+                {loading ? <CircularProgress size={24} /> : 'Refresh'}
+              </Button>
+            </Grid>
+          </Grid>
 
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>S/N</TableCell>
-                    <TableCell>School Name</TableCell>
-                    <TableCell>School Url</TableCell>
-                    <TableCell>Agent</TableCell>
-                    <TableCell>Gateway</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Social Link</TableCell>
-                    <TableCell>Colour Scheme</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedSchools.length > 0 ? (
-                    paginatedSchools.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{row.id}</TableCell>
-                        <TableCell>{row.institutionName}</TableCell>
-                        <TableCell>{row.schoolUrl || '-'}</TableCell>
-                        <TableCell>{row.agent || '-'}</TableCell>
-                        <TableCell>{row.gateway}</TableCell>
-                        <TableCell>{dayjs(row.date).format('MM/DD/YYYY')}</TableCell>
-                        <TableCell>{row.socialLink || '-'}</TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: 'inline-block',
-                              width: 40,
-                              height: 30,
-                              borderRadius: '5px',
-                              overflow: 'hidden',
-                            }}
-                            title={`Header: ${row.headerColor || '#1976d2'} | Sidebar: ${
-                              row.sidebarColor || '#2196f3'
-                            } | Body: ${row.bodyColor || row.colourScheme || '#f5f5f5'}`}
-                          >
-                            <Box
-                              sx={{
-                                width: '100%',
-                                height: '30%',
-                                backgroundColor: row.headerColor || '#1976d2',
-                                borderRadius: 0,
-                              }}
-                            />
-                            <Box sx={{ display: 'flex', height: '70%' }}>
-                              <Box
-                                sx={{
-                                  width: '50%',
-                                  height: '100%',
-                                  backgroundColor: row.sidebarColor || '#2196f3',
-                                  borderRadius: 0,
-                                }}
-                              />
-                              <Box
-                                sx={{
-                                  width: '50%',
-                                  height: '100%',
-                                  backgroundColor: row.bodyColor || row.colourScheme || '#f5f5f5',
-                                  borderRadius: 0,
-                                }}
-                              />
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            sx={{
-                              bgcolor:
-                                row.status === 'Active'
-                                  ? (theme) => theme.palette.success.light
-                                  : (theme) => theme.palette.primary.light,
-                              color:
-                                row.status === 'Active'
-                                  ? (theme) => theme.palette.success.main
-                                  : (theme) => theme.palette.primary.main,
-                              borderRadius: '8px',
-                            }}
-                            size="small"
-                            label={row.status || 'Unknown'}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton onClick={(e) => handleActionClick(e, row.id)}>
-                            <MoreVertIcon />
-                          </IconButton>
-                          <Menu
-                            anchorEl={actionAnchorEl}
-                            open={Boolean(actionAnchorEl) && activeRow === row.id}
-                            onClose={handleActionClose}
-                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                            PaperProps={{ sx: { minWidth: 120, boxShadow: 3 } }}
-                          >
-                            <MenuItem
-                              onClick={() => {
-                                const selectedSchool = schoolList.find((s) => s.id === row.id);
-                                setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
-                                setOpenTenantModal(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Manage School Domain
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                const selectedSchool = schoolList.find((s) => s.id === row.id);
-                                setSelectedTenantDomain(selectedSchool?.schoolUrl || '');
-                                setOpenGatewayModal(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Manage School Gateway
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setOpenAgentModal(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Change Agent
-                            </MenuItem>
-                            <MenuItem
-                              component={Link}
-                              to={`/dashboards/school/sub-school/${row.schoolUrl}`}
-                            >
-                              View School
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setSelectedSchoolFor2FA(row);
-                                setOpenClear2FAConfirm(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Clear 2fa Setting
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setOpenFixImageConfirm(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Fix User Images
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setEditSchoolData(row);
-                                setOpenEditModal(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Edit School Details
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setSchoolToDeactivate(row);
-                                setOpenDeactivateDialog(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Deactivate School
-                            </MenuItem>
-                            <MenuItem onClick={handleActionClose}>Details</MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setSelectedSchoolForColor(row);
-                                setOpenColorSchemeModal(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Change Color School Scheme
-                            </MenuItem>
-                            <MenuItem onClick={handleActionClose}>Public Analytics</MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setSchoolToDelete(row);
-                                setOpenDeleteDialog(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Delete School
-                            </MenuItem>
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={10} sx={{ textAlign: 'center', padding: '40px 0' }}>
-                        <Box
-                          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                        >
-                          <IconSchool
-                            width={48}
-                            height={48}
-                            color="#757575"
-                            sx={{ marginBottom: '16px' }}
-                          />
-                          <Typography
-                            variant="h6"
-                            sx={{ fontWeight: 'bold', color: '#757575', marginBottom: '8px' }}
-                          >
-                            No schools available
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
-                            No schools have been registered yet. Click 'Register New School' to add
-                            your first school.
-                          </Typography>
+          <TableContainer component={Paper} elevation={0} variant="outlined">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>School Name</TableCell>
+                  <TableCell>Url</TableCell>
+                  <TableCell>Date Created</TableCell>
+                  <TableCell>Colors</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedSchools.length > 0 ? (
+                  paginatedSchools.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight={600}>{row.institutionName}</Typography>
+                      </TableCell>
+                      <TableCell>{row.schoolUrl || '-'}</TableCell>
+                      <TableCell>{dayjs(row.date).format('DD MMM YYYY')}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', width: 40, height: 20, borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                          <Box sx={{ flex: 1, bgcolor: row.headerColor || '#eee' }} />
+                          <Box sx={{ flex: 1, bgcolor: row.sidebarColor || '#ddd' }} />
                         </Box>
                       </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={row.status} 
+                          size="small"
+                          color={row.status === 'Active' ? 'success' : 'default'}
+                          variant="light"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton onClick={(e) => handleActionClick(e, row.id)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={actionAnchorEl}
+                          open={Boolean(actionAnchorEl) && activeRow === row.id}
+                          onClose={handleActionClose}
+                        >
+                          <MenuItem onClick={() => { setEditSchoolData(row.raw); setOpenEditModal(true); handleActionClose(); }}>Edit Details</MenuItem>
+                          <MenuItem onClick={() => { setSchoolToDeactivate(row); setOpenDeactivateDialog(true); handleActionClose(); }}>Deactivate</MenuItem>
+                          <MenuItem onClick={() => { setSchoolToDelete(row); setOpenDeleteDialog(true); handleActionClose(); }} sx={{ color: 'error.main' }}>Delete</MenuItem>
+                        </Menu>
+                      </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-                <TableFooter>
+                  ))
+                ) : (
                   <TableRow>
-                    <TablePagination
-                      rowsPerPageOptions={[5, 10, 25]}
-                      count={filteredSchools.length}
-                      rowsPerPage={rowsPerPage}
-                      page={page}
-                      onPageChange={handleChangePage}
-                      onRowsPerPageChange={handleChangeRowsPerPage}
-                    />
+                    <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                      <Typography variant="body1" color="textSecondary">No schools found.</Typography>
+                    </TableCell>
                   </TableRow>
-                </TableFooter>
-              </Table>
-            </TableContainer>
-
-            <ReusableModal
-              open={openRegisterModal || openEditModal}
-              onClose={handleClose}
-              title={openEditModal ? 'Edit School' : 'Register School'}
-              size="large"
-              showDivider={true}
-              showCloseButton={true}
-            >
-              <RegisterSchoolForm
-                actionType={openEditModal ? 'update' : 'create'}
-                selectedAgent={editSchoolData}
-                onSubmit={handleRefresh}
-                onCancel={handleClose}
-              />
-            </ReusableModal>
-
-            <ManageTenantDomain
-              open={openTenantModal}
-              onClose={() => setOpenTenantModal(false)}
-              domainData={selectedTenantDomain}
-            />
-            <ReusableModal
-              open={openGatewayModal}
-              onClose={() => setOpenGatewayModal(false)}
-              title="Manage School Gateway"
-              size="small"
-              showDivider={true}
-              showCloseButton={true}
-            >
-              <ManageSchoolGateway
-                selectedSchool={
-                  schoolList.find((s) => s.schoolUrl === selectedTenantDomain) || null
-                }
-                onSave={(updatedSchool) => {
-                  setSchoolList((prevList) => {
-                    const idx = prevList.findIndex((s) => s.id === updatedSchool.id);
-                    if (idx !== -1) {
-                      const newList = [...prevList];
-                      newList[idx] = updatedSchool;
-                      return newList;
-                    }
-                    return prevList;
-                  });
-                  setOpenGatewayModal(false);
-                  setSnackbarMessage('Gateway info saved successfully');
-                  setSnackbarSeverity('success');
-                  setSnackbarOpen(true);
-                }}
-                onClose={() => setOpenGatewayModal(false)}
-              />
-            </ReusableModal>
-            <ChangeAgent
-              open={openAgentModal}
-              onClose={() => setOpenAgentModal(false)}
-              selectedAgent={selectedAgent}
-              agentList={agentList}
-            />
-            <ConfirmationDialog
-              open={openDeleteDialog}
-              onClose={() => setOpenDeleteDialog(false)}
-              onConfirm={() => {
-                setSchoolList((prev) => prev.filter((s) => s.id !== schoolToDelete.id));
-                setOpenDeleteDialog(false);
-                setSnackbarMessage('School deleted successfully');
-                setSnackbarSeverity('success');
-                setSnackbarOpen(true);
-              }}
-              title="Delete School"
-              message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
-              confirmText="Delete"
-              cancelText="Cancel"
-              confirmColor="error"
-              severity="error"
-            />
-            <ConfirmationDialog
-              open={openDeactivateDialog}
-              onClose={() => setOpenDeactivateDialog(false)}
-              onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
-              title="Deactivate School"
-              message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
-              confirmText="Deactivate"
-              cancelText="Cancel"
-              confirmColor="error"
-              severity="error"
-            />
-            <ConfirmationDialog
-              open={openClear2FAConfirm}
-              onClose={() => setOpenClear2FAConfirm(false)}
-              onConfirm={() => {
-                console.log(`2FA settings cleared for ${selectedSchoolFor2FA?.institutionName}`);
-                setOpenClear2FAConfirm(false);
-              }}
-              title="Clear 2FA for Admin Account"
-              message={`Are you sure you want to clear 2FA settings for ${selectedSchoolFor2FA?.institutionName}?`}
-              confirmText="Clear"
-              cancelText="Cancel"
-              confirmColor="error"
-              severity="error"
-            />
-            <ConfirmationDialog
-              open={openFixImageConfirm}
-              onClose={() => setOpenFixImageConfirm(false)}
-              onConfirm={handleFixImage}
-              title="Fix User Images"
-              message={`Are you sure you want to replace user images with new URL? This action is irreversible.`}
-              confirmText="Confirm"
-              cancelText="Cancel"
-              confirmColor="error"
-              severity="error"
-            />
-            <ReusableModal
-              open={openColorSchemeModal}
-              onClose={() => setOpenColorSchemeModal(false)}
-              title="Change School Color Scheme"
-              size="large"
-              showDivider={true}
-              showCloseButton={true}
-            >
-              <ChangeColorScheme
-                selectedSchool={selectedSchoolForColor}
-                onSave={(updatedSchool) => {
-                  setSchoolList((prevList) => {
-                    const idx = prevList.findIndex((s) => s.id === updatedSchool.id);
-                    if (idx !== -1) {
-                      const newList = [...prevList];
-                      newList[idx] = updatedSchool;
-                      return newList;
-                    }
-                    return prevList;
-                  });
-                  setOpenColorSchemeModal(false);
-                  setSnackbarMessage('Color scheme updated successfully');
-                  setSnackbarSeverity('success');
-                  setSnackbarOpen(true);
-                }}
-                onClose={() => setOpenColorSchemeModal(false)}
-              />
-            </ReusableModal>
-          </Box>
-        </TableContainer>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => setSnackbarOpen(false)}
-            severity={snackbarSeverity}
-            sx={{ width: '100%' }}
-          >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
+                )}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    count={filteredSchools.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                  />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </TableContainer>
+        </Box>
       </BlankCard>
+
+      {/* Modals & Dialogs */}
+      <ReusableModal open={openRegisterModal || openEditModal} onClose={handleClose} title={openEditModal ? 'Edit School' : 'Register School'} size="large">
+        <RegisterSchoolForm actionType={openEditModal ? 'update' : 'create'} selectedAgent={editSchoolData} onSubmit={handleRefresh} onCancel={handleClose} />
+      </ReusableModal>
+
+      <ConfirmationDialog 
+        open={openDeleteDialog} 
+        onClose={() => setOpenDeleteDialog(false)} 
+        onConfirm={() => handleDeleteSchool(schoolToDelete)} 
+        title="Delete School" 
+        message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
+        confirmText="Delete"
+        severity="error"
+      />
+
+      <ConfirmationDialog 
+        open={openDeactivateDialog} 
+        onClose={() => setOpenDeactivateDialog(false)} 
+        onConfirm={() => handleDeactivateSchool(schoolToDeactivate)} 
+        title="Deactivate School" 
+        message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
+        confirmText="Deactivate"
+        severity="warning"
+      />
+
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>{snackbarMessage}</Alert>
+      </Snackbar>
     </LocalizationProvider>
   );
 };

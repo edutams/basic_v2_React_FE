@@ -40,4 +40,9 @@ export default defineConfig({
   // })],
 
   plugins: [svgr(), react()],
+  server: {
+    host: true,
+    strictPort: true,
+    allowedHosts: true,
+  },
 });

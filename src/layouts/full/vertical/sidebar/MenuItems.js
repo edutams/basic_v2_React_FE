@@ -106,12 +106,6 @@ const Menuitems = [
     icon: IconMap,
     href: '/my-plan',
   },
-  {
-    id: uniqueId(),
-    title: 'Calendar',
-    icon: IconCalendarTime,
-    href: '/session',
-  },
   // {
   //   id: uniqueId(),
   //   title: 'Calendar',

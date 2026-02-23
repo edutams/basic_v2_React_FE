@@ -23,9 +23,39 @@ export const getLgasByState = async (state_id) => {
 export const createSchool = async (schoolData) => {
     try {
         const res = await api.post('/agent/create-tenant', schoolData);
-        return res.data?.data;
+        return res.data?.data || res.data;
     } catch (error) {
         console.error('Error creating school:', error);
+        throw error.response?.data || error;
+    }
+};
+
+export const getSchools = async () => {
+    try {
+        const res = await api.get('/agent/get-tenants');
+        return res.data?.data;
+    } catch (error) {
+        console.error('Error fetching schools:', error);
+        throw error.response?.data || error;
+    }
+};
+
+export const updateSchool = async (id, schoolData) => {
+    try {
+        const res = await api.put(`/agent/update-tenant/${id}`, schoolData);
+        return res.data?.data;
+    } catch (error) {
+        console.error('Error updating school:', error);
+        throw error.response?.data || error;
+    }
+};
+
+export const deleteSchool = async (id) => {
+    try {
+        const res = await api.delete(`/agent/delete-tenant/${id}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error deleting school:', error);
         throw error.response?.data || error;
     }
 };

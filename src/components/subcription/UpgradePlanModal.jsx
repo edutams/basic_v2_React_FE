@@ -12,7 +12,6 @@ const UpgradePlanModal = ({ open, onClose, selectedRow, onUpgrade, isLoading = f
 
   useEffect(() => {
     if (selectedRow) {
-      // Parse plandetails to extract current plan and student population
       const planDetails = selectedRow.plandetails || '';
       const planMatch = planDetails.match(/^(OBASIC\+*)\s*\(([^)]+)\)/);
       const currentPlan = planMatch ? planMatch[1] : '';
@@ -46,7 +45,6 @@ const UpgradePlanModal = ({ open, onClose, selectedRow, onUpgrade, isLoading = f
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      // Create the upgraded plan details string
       const planDetails = `${form.availableplan} (${form.studentpopulation})`;
 
       const upgradedData = {

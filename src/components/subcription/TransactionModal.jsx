@@ -15,7 +15,6 @@ import { Print as PrintIcon, Update as UpdateIcon } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import PropTypes from 'prop-types';
 
-// Dummy transaction data
 const DUMMY_TRANSACTIONS = [
   {
     id: 1,
@@ -68,12 +67,10 @@ const TransactionModal = ({ open, onClose, selectedRow }) => {
   };
 
   const handleUpdateStatus = (transaction) => {
-    // Handle update status action
     console.log('Update status for:', transaction);
   };
 
   const handlePrintReceipt = (transaction) => {
-    // Handle print receipt action
     console.log('Print receipt for:', transaction);
   };
 

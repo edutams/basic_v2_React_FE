@@ -36,6 +36,9 @@ const ViewSchool = Loadable(lazy(() => import('../components/add-school/componen
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 const Subcriptions = Loadable(lazy(() => import('../views/subcriptions/manage-subcription')));
+const SubscriptionHistory = Loadable(
+  lazy(() => import('../views/subcriptions/subscription-history')),
+);
 
 /* ****Apps***** */
 const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
@@ -224,6 +227,7 @@ const Router = [
       { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
       { path: '/phet/stimulation-links', element: <StimulationLinks /> },
       { path: '/subcriptions/manage-subcription', element: <Subcriptions /> },
+      { path: '/subcriptions/subscription-history', element: <SubscriptionHistory /> },
       { path: '/', element: <Navigate to="/agent/login" /> },
       // {
       //   path: '/',

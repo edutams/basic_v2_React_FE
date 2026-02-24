@@ -27,6 +27,7 @@ import ParentCard from 'src/components/shared/ParentCard';
 import SubcriptionModal from '../../components/subcription/SubcriptionModal';
 import UpgradePlanModal from '../../components/subcription/UpgradePlanModal';
 import TransactionModal from '../../components/subcription/TransactionModal';
+import InvoiceModal from '../../components/subcription/InvoiceModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
 
@@ -68,11 +69,7 @@ const StimulationLinks = () => {
     <Box>
       <Breadcrumb
         title="Manage Subscription"
-        items={[
-          { title: 'Home', to: '/' },
-          { title: 'Manage Subscription' },
-          // { title: 'Stimulation Links' },
-        ]}
+        items={[{ title: 'Home', to: '/' }, { title: 'Manage Subscription' }]}
       />
       <ManagePhETLinks />
     </Box>
@@ -88,6 +85,7 @@ const ManagePhETLinks = () => {
   const [modalType, setModalType] = useState('create');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [transactionModalOpen, setTransactionModalOpen] = useState(false);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rowToDelete, setRowToDelete] = useState(null);
   const [page, setPage] = useState(0);
@@ -117,18 +115,15 @@ const ManagePhETLinks = () => {
   };
 
   const handleEditClick = (row) => {
-    // Parse sessionterm to extract session and term
     const sessionTermParts = row.sessionterm ? row.sessionterm.split(' - ') : ['', ''];
     const session = sessionTermParts[0] || '';
     const term = sessionTermParts[1] || '';
 
-    // Parse plandetails to extract plan and student population
     const planDetails = row.plandetails || '';
     const planMatch = planDetails.match(/^(OBASIC\+*)\s*\(([^)]+)\)/);
     const availableplan = planMatch ? planMatch[1] : '';
     const studentpopulation = planMatch ? planMatch[2] : '';
 
-    // Determine subscription mode based on term presence
     const subscriptionMode = term ? 'perTerm' : 'perSession';
 
     const transformedRow = {
@@ -154,6 +149,18 @@ const ManagePhETLinks = () => {
   const handleViewTransactionClick = (row) => {
     setSelectedRow(row);
     setTransactionModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleViewInvoiceClick = (row) => {
+    setSelectedRow(row);
+    setInvoiceModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleRevertPlanClick = (row) => {
+    // Handle revert plan action
+    console.log('Revert plan for:', row);
     handleMenuClose();
   };
 
@@ -240,12 +247,12 @@ const ManagePhETLinks = () => {
                   <TableRow>
                     <TableCell sx={{ width: '5%' }}>#</TableCell>
                     <TableCell sx={{ width: '18%' }}>Session/Term</TableCell>
-                    <TableCell sx={{ width: '22%' }}>Plan Details</TableCell>
-                    <TableCell sx={{ width: '12' }}> Amount (₦)</TableCell>
-                    <TableCell sx={{ width: '14' }}>Gateway charges(₦)</TableCell>
-                    <TableCell sx={{ width: '10' }}>Discount (%)</TableCell>
-                    <TableCell sx={{ width: '10' }}>Amount Due (₦)</TableCell>
-                    <TableCell sx={{ width: '5' }}>Status</TableCell>
+                    <TableCell sx={{ width: '20%' }}>Plan Details</TableCell>
+                    <TableCell sx={{ width: '12%' }}> Amount (₦)</TableCell>
+                    <TableCell sx={{ width: '11%' }}>Gateway charges(₦)</TableCell>
+                    <TableCell sx={{ width: '10%' }}>Discount (%)</TableCell>
+                    <TableCell sx={{ width: '10%' }}>Amount Due (₦)</TableCell>
+                    <TableCell sx={{ width: '10%' }}>Status</TableCell>
                     <TableCell sx={{ width: '5%' }} align="center">
                       Action
                     </TableCell>
@@ -288,21 +295,44 @@ const ManagePhETLinks = () => {
                             open={Boolean(anchorEl) && selectedRow?.id === row.id}
                             onClose={handleMenuClose}
                           >
-                            <MenuItem onClick={() => handleUpgradePlanClick(row)}>
-                              Upgrade Plan
-                            </MenuItem>
-                            <MenuItem onClick={() => handleViewTransactionClick(row)}>
-                              View Transaction
-                            </MenuItem>
-                            <MenuItem onClick={() => handleEditClick(row)}>View Invoice</MenuItem>
-                            <MenuItem onClick={() => handleDeleteClick(row)}>Delete</MenuItem>
+                            {row.status === 'pending' ? (
+                              <>
+                                <MenuItem onClick={() => handleRevertPlanClick(row)}>
+                                  Revert Plan
+                                </MenuItem>
+                                <MenuItem onClick={() => handleUpgradePlanClick(row)}>
+                                  Change Plan
+                                </MenuItem>
+                                <MenuItem onClick={() => handleViewTransactionClick(row)}>
+                                  View Transaction
+                                </MenuItem>
+                                <MenuItem onClick={() => handleViewInvoiceClick(row)}>
+                                  View Invoice
+                                </MenuItem>
+                                <MenuItem onClick={() => handleDeleteClick(row)}>
+                                  Delete Subscription
+                                </MenuItem>
+                              </>
+                            ) : (
+                              <>
+                                <MenuItem onClick={() => handleUpgradePlanClick(row)}>
+                                  Upgrade Plan
+                                </MenuItem>
+                                <MenuItem onClick={() => handleViewTransactionClick(row)}>
+                                  View Transaction
+                                </MenuItem>
+                                <MenuItem onClick={() => handleViewInvoiceClick(row)}>
+                                  View Invoice
+                                </MenuItem>
+                              </>
+                            )}
                           </Menu>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} align="center">
+                      <TableCell colSpan={9} align="center">
                         <Alert
                           severity="info"
                           sx={{
@@ -327,7 +357,7 @@ const ManagePhETLinks = () => {
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      colSpan={7}
+                      colSpan={9}
                       count={filteredRows.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
@@ -335,6 +365,11 @@ const ManagePhETLinks = () => {
                       onRowsPerPageChange={(e) => {
                         setRowsPerPage(parseInt(e.target.value, 10));
                         setPage(0);
+                      }}
+                      sx={{
+                        '& .MuiTablePagination-actions': {
+                          marginLeft: 'auto',
+                        },
                       }}
                     />
                   </TableRow>
@@ -360,6 +395,11 @@ const ManagePhETLinks = () => {
       <TransactionModal
         open={transactionModalOpen}
         onClose={() => setTransactionModalOpen(false)}
+        selectedRow={selectedRow}
+      />
+      <InvoiceModal
+        open={invoiceModalOpen}
+        onClose={() => setInvoiceModalOpen(false)}
         selectedRow={selectedRow}
       />
       <ConfirmationDialog

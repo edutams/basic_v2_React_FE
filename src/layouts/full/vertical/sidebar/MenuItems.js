@@ -190,7 +190,7 @@ const Menuitems = [
         id: uniqueId(),
         title: 'Subcription History',
         icon: IconPoint,
-        // href: '/phet/stimulation-links',
+        href: '/subcriptions/subscription-history',
       },
     ],
   },

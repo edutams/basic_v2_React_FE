@@ -75,7 +75,6 @@ const SubcriptionFormLink = ({
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      {/* Subscription Mode Selector */}
       <FormControl component="fieldset" sx={{ mb: 2, width: '100%' }}>
         <FormLabel component="legend">Subscription Mode</FormLabel>
         <RadioGroup
@@ -89,7 +88,6 @@ const SubcriptionFormLink = ({
         </RadioGroup>
       </FormControl>
 
-      {/* Alert for Per Session Mode */}
       {form.subscriptionMode === 'perSession' && (
         <Alert severity="info" sx={{ mb: 2 }}>
           This subscription mode allows for automatic creation of all terms (e.g First Term, Second
@@ -114,7 +112,6 @@ const SubcriptionFormLink = ({
         <MenuItem value="2025/2026">2025/2026</MenuItem>
       </TextField>
 
-      {/* Term Field - Only show for Per Term mode */}
       {form.subscriptionMode === 'perTerm' && (
         <TextField
           fullWidth

@@ -1,239 +1,149 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Checkbox,
   Button,
   Paper,
   Chip,
-  Alert,
-  Select,
-  MenuItem,
-  InputLabel,
   Grid,
-  FormControl,
-  Tabs,
-  Tab,
   Divider,
   List,
   ListItem,
   ListItemText,
-  ListItemIcon,
-  LinearProgress,
   Avatar,
-  Fade,
-  Zoom,
   CircularProgress,
 } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   IconSearch,
-  IconSparkles,
   IconCircleCheck,
   IconCircleDashed,
   IconTerminal2,
-  IconCommand,
   IconFocus2,
-  IconRefresh,
-  IconBolt
 } from '@tabler/icons-react';
 import { styled, alpha } from '@mui/material/styles';
 
-// Glassmorphism effect
-const GlassBox = styled(Box)(({ theme }) => ({
-  background: 'rgba(255, 255, 255, 0.7)',
-  backdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255, 255, 255, 0.3)',
-  borderRadius: '24px',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
-}));
+// Internal Category Mapping (Consistent with ManageModulesModal)
+const categoryMap = {
+  1: 'Dashboard',
+  2: 'Setup',
+  3: 'Academics Management',
+  4: 'Class Management',
+  5: 'Subscriptions',
+};
 
+const getCategoryName = (mod) => {
+  if (mod.category) return mod.category;
+  return categoryMap[mod.packageId] || `Package ${mod.packageId || 'General'}`;
+};
+
+// Simplified Search Input
 const SearchInput = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: '16px',
-  backgroundColor: 'rgba(241, 245, 249, 0.6)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  '&:hover': {
-    backgroundColor: 'rgba(241, 245, 249, 0.9)',
-    boxShadow: '0 0 0 2px rgba(93, 135, 255, 0.1)',
-  },
-  '&:focus-within': {
-    backgroundColor: '#fff',
-    boxShadow: '0 0 0 3px rgba(93, 135, 255, 0.2)',
-    width: '100%',
-  },
-  width: '100%',
-  maxWidth: '400px',
   display: 'flex',
   alignItems: 'center',
+  backgroundColor: '#fff',
+  borderRadius: '12px',
   padding: '8px 16px',
+  border: '1px solid #e2e8f0',
+  width: '100%',
+  transition: 'all 0.2s ease',
+  '&:focus-within': {
+    borderColor: theme.palette.primary.main,
+    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}`,
+  }
 }));
 
-const ManageModule = ({ selectedPlan, currentPermissions, modules = [], packages = [], onSave, onCancel }) => {
-  // 1. Stable Keys and Presets (move up for state init)
-  const permissionsKey = React.useMemo(() => 
-    (currentPermissions || []).map(id => String(id)).sort().join(','),
-    [currentPermissions]
-  );
-
-  const dynamicPackagePresets = React.useMemo(() => {
-    return packages.map((pkg, index) => {
-      const colors = ['#5D87FF', '#FFAE1F', '#13DEB9', '#FA896B'];
-      return {
-        value: String(pkg.id),
-        label: pkg.package_name || pkg.pac_name,
-        description: pkg.package_description || pkg.pac_description,
-        moduleIds: (pkg.modules || []).map(m => String(m.id)),
-        color: colors[index % colors.length]
-      };
-    });
-  }, [packages]);
-
-  // 2. Initialize state directly from props to prevent mount flicker
-  const initialNormalized = React.useMemo(() => (currentPermissions || []).map(id => String(id)), [permissionsKey]);
-  
-  const [selectedModules, setSelectedModules] = useState(initialNormalized);
-  const [packageLevel, setPackageLevel] = useState(() => {
-    const currentSorted = [...initialNormalized].sort();
-    const pkg = dynamicPackagePresets.find(p => {
-      const pkgSorted = [...p.moduleIds].sort();
-      return currentSorted.length === pkgSorted.length && 
-             currentSorted.every((val, index) => val === pkgSorted[index]);
-    });
-    return pkg ? pkg.value : '';
-  });
-
+const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCancel }) => {
+  const [selectedModules, setSelectedModules] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showMatchCelebration, setShowMatchCelebration] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const isInitialMount = React.useRef(true);
 
-  // 3. Sync Logic (Only run after mount)
+  // Initialize selected modules from currentPermissions or selectedPlan
+  useEffect(() => {
+    if (currentPermissions && Array.isArray(currentPermissions)) {
+      setSelectedModules(currentPermissions.map(String));
+    } else if (selectedPlan?.modules && Array.isArray(selectedPlan.modules)) {
+      setSelectedModules(selectedPlan.modules.map(m => String(m.id || m)));
+    }
+  }, [selectedPlan, currentPermissions]);
+
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    const normalized = (currentPermissions || []).map(id => String(id));
-    if (JSON.stringify(normalized.sort()) !== JSON.stringify([...selectedModules].sort())) {
-      setSelectedModules(normalized);
-      setHasChanges(false);
-    }
-  }, [permissionsKey, selectedPlan?.id]);
+    setHasChanges(true);
+  }, [selectedModules]);
 
-  // Group modules dynamically
-  const moduleCategories = React.useMemo(() => {
-    const groups = {};
-    const isRoot = (m) => m.parent_id == null || m.parent_id === 0 || m.parent_id === "0";
-    const roots = modules.filter(m => isRoot(m));
-    
-    if (roots.length > 0) {
-      roots.forEach(root => {
-        const rootIdStr = String(root.id);
-        const children = modules.filter(m => String(m.parent_id) === rootIdStr);
-        if (children.length > 0) {
-          groups[root.module_name] = children.map(c => ({
-            id: String(c.id),
-            label: c.module_name,
-            description: c.module_description
-          }));
-        } else {
-          if (!groups['General']) groups['General'] = [];
-          groups['General'].push({
-            id: String(root.id),
-            label: root.module_name,
-            description: root.module_description
-          });
-        }
-      });
-    } else {
-      groups['Modules'] = modules.map(m => ({
-        id: String(m.id),
-        label: m.module_name,
-        description: m.module_description
-      }));
-    }
-    return groups;
+  const moduleCategories = useMemo(() => {
+    const cats = (modules || []).reduce((acc, mod) => {
+      const catName = getCategoryName(mod);
+      if (!acc[catName]) acc[catName] = [];
+      acc[catName].push(mod);
+      return acc;
+    }, {});
+    return cats;
   }, [modules]);
 
-  const categories = React.useMemo(() => Object.keys(moduleCategories), [moduleCategories]);
+  const categories = Object.keys(moduleCategories);
 
-  // Highlight matching package and trigger celebration
-  useEffect(() => {
-    const currentSorted = [...selectedModules].sort();
-    const matchingPackage = dynamicPackagePresets.find(pkg => {
-      const pkgSorted = [...pkg.moduleIds].sort();
-      return currentSorted.length === pkgSorted.length && 
-             currentSorted.every((val, index) => val === pkgSorted[index]);
-    });
+  const currentCategoryModules = useMemo(() => {
+    const cat = categories[activeTab];
+    return moduleCategories[cat] || [];
+  }, [activeTab, moduleCategories, categories]);
+
+  const filteredModules = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+    const allModules = modules || [];
     
-    const newLevel = matchingPackage ? matchingPackage.value : '';
-    if (newLevel !== packageLevel) {
-      if (!isInitialMount.current && matchingPackage) {
-        setShowMatchCelebration(true);
-        setTimeout(() => setShowMatchCelebration(false), 2000);
-      }
-      setPackageLevel(newLevel);
-    }
-  }, [selectedModules, dynamicPackagePresets]);
+    if (!query) return currentCategoryModules;
+    
+    return allModules.filter(m => {
+      const name = (m.module_name || m.mod_name || m.label || '').toLowerCase();
+      const desc = (m.module_description || m.mod_description || m.description || '').toLowerCase();
+      const cat = getCategoryName(m).toLowerCase();
+      return name.includes(query) || desc.includes(query) || cat.includes(query);
+    });
+  }, [searchQuery, currentCategoryModules, modules]);
+
+  const allCurrentModules = useMemo(() => {
+    return searchQuery ? filteredModules : currentCategoryModules;
+  }, [searchQuery, filteredModules, currentCategoryModules]);
 
   const handleModuleChange = (moduleId, checked) => {
-    const sId = String(moduleId);
-    setSelectedModules(prev => checked ? [...prev, sId] : prev.filter(id => id !== sId));
-    setHasChanges(true);
+    const idStr = String(moduleId);
+    setSelectedModules(prev => {
+      const isPresent = prev.includes(idStr);
+      if (checked && !isPresent) return [...prev, idStr];
+      if (!checked && isPresent) return prev.filter(id => id !== idStr);
+      return prev;
+    });
   };
 
-  const handleSelectAll = (categoryModules) => {
-    const categoryIds = categoryModules.map((m) => String(m.id));
-    const allSelected = categoryIds.every((id) => selectedModules.includes(id));
-    let newModules;
+  const handleSelectAll = (moduleList) => {
+    const listIds = moduleList.map(m => String(m.id));
+    const allSelected = listIds.every(id => selectedModules.includes(id));
+    
     if (allSelected) {
-      newModules = selectedModules.filter((id) => !categoryIds.includes(id));
+      setSelectedModules(prev => prev.filter(id => !listIds.includes(id)));
     } else {
-      const toAdd = categoryIds.filter((id) => !selectedModules.includes(id));
-      newModules = [...selectedModules, ...toAdd];
+      setSelectedModules(prev => Array.from(new Set([...prev, ...listIds])));
     }
-    setSelectedModules(newModules);
-    setHasChanges(true);
-  };
-
-  const handlePackageLevelChange = (newLevelId) => {
-    const sLevelId = String(newLevelId);
-    setPackageLevel(sLevelId);
-    const levelConfig = dynamicPackagePresets.find((level) => level.value === sLevelId);
-    if (levelConfig) {
-      setSelectedModules(levelConfig.moduleIds);
-    }
-    setHasChanges(true);
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await onSave(selectedModules);
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Save failed:', error);
     } finally {
       setIsSaving(false);
     }
   };
-
-  const activeCategory = categories[activeTab];
-  const allCurrentModules = moduleCategories[activeCategory] || [];
-  
-  const filteredModules = React.useMemo(() => {
-    if (!searchQuery) return allCurrentModules;
-    const lowerQuery = searchQuery.toLowerCase();
-    return modules.filter(m => 
-      m.module_name.toLowerCase().includes(lowerQuery) || 
-      (m.module_description && m.module_description.toLowerCase().includes(lowerQuery))
-    ).map(m => ({
-      id: String(m.id),
-      label: m.module_name,
-      description: m.module_description,
-      category: categories.find(cat => moduleCategories[cat].some(cm => String(cm.id) === String(m.id)))
-    }));
-  }, [searchQuery, allCurrentModules, modules, categories, moduleCategories]);
 
   const getModuleCount = (categoryModules) => {
     const categoryIds = categoryModules.map((m) => String(m.id));
@@ -241,439 +151,249 @@ const ManageModule = ({ selectedPlan, currentPermissions, modules = [], packages
   };
 
   return (
-    <Box sx={{ position: 'relative', pb: 12, minHeight: '800px' }}>
-      {/* Immersive Animated Background */}
-      <Box sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 0,
-        overflow: 'hidden',
-        background: '#f8fafc',
-        borderRadius: '24px',
-      }}>
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 10, 0],
-            opacity: [0.3, 0.4, 0.3],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute',
-            top: '-20%',
-            left: '-20%',
-            width: '60%',
-            height: '60%',
-            background: 'radial-gradient(circle, #5D87FF30 0%, transparent 70%)',
-            filter: 'blur(80px)',
-          }}
-        />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [10, 0, 10],
-            opacity: [0.2, 0.3, 0.2],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute',
-            bottom: '-10%',
-            right: '-10%',
-            width: '50%',
-            height: '50%',
-            background: 'radial-gradient(circle, #FFAE1F20 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-        />
-      </Box>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '90vh',
+      bgcolor: '#f8fafc',
+      borderRadius: '24px',
+      overflow: 'hidden',
+    }}>
+      {/* Scrollable Content Area */}
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
+        {/* Header Section */}
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" color="text.primary">
+                {selectedPlan?.name} <Typography component="span" variant="h4" color="text.secondary">Plan</Typography>
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                Configure the modules and capabilities for this plan tier.
+              </Typography>
+            </Box>
 
-      {/* Hero Glass Header */}
-      <motion.div
-        initial={false}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        style={{ position: 'relative', zIndex: 2 }}
-      >
-        <GlassBox sx={{ 
-          p: 4, 
-          mb: 5, 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          {/* Match Celebration Effect */}
-          <AnimatePresence>
-            {showMatchCelebration && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1.2 }}
-                exit={{ opacity: 0, scale: 1.5 }}
-                style={{
-                  position: 'absolute',
-                  top: 0, left: 0, right: 0, bottom: 0,
-                  background: 'rgba(93, 135, 255, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 10
-                }}
-              >
-                <IconSparkles size={120} color="#5D87FF" style={{ opacity: 0.3 }} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <Box>
-            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 3 }}>
-              ULTIMATE CONFIGURATOR
-            </Typography>
-            <Typography variant="h3" fontWeight="900" sx={{ mt: 1, color: '#0f172a', letterSpacing: -1 }}>
-              {selectedPlan?.name} <span style={{ fontWeight: 300, color: '#94a3b8' }}>Tier</span>
-            </Typography>
-            <Typography variant="body1" sx={{ color: '#64748b', mt: 1, maxWidth: 450, fontWeight: 500, lineHeight: 1.6, position: 'relative', zIndex: 2 }}>
-              Define the architectural capabilities of this revenue tier with precision engineering.
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <GlassBox sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: 'white' }}>
-                <Avatar sx={{ bgcolor: alpha('#5D87FF', 0.1), color: '#5D87FF' }}>
-                  <IconTerminal2 size={24} />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Paper variant="outlined" sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: 'white' }}>
+                <Avatar sx={{ bgcolor: alpha('#5D87FF', 0.1), color: '#5D87FF', width: 32, height: 32 }}>
+                  <IconTerminal2 size={18} />
                 </Avatar>
                 <Box>
-                  <Typography variant="caption" sx={{ fontWeight: 800, color: '#94a3b8' }}>CAPABILITIES</Typography>
-                  <Typography variant="h6" fontWeight="900" sx={{ color: '#1e293b' }}>{selectedModules.length} Active</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Active Modules</Typography>
+                  <Typography variant="subtitle2" fontWeight="bold">{selectedModules.length}</Typography>
                 </Box>
-              </GlassBox>
-            </motion.div>
-          </Box>
-        </GlassBox>
-      </motion.div>
-
-      {/* Package Horizontal Slider */}
-      <motion.div
-        initial={false}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        style={{ position: 'relative', zIndex: 2 }}
-      >
-        <Box sx={{ mb: 6 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5" fontWeight="900" sx={{ color: '#1e293b' }}>Architectural Templates</Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <IconCommand size={18} color="#94a3b8" />
-              <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8' }}>SELECT TEMPLATE TO AUTO-CONFIGURE</Typography>
+              </Paper>
             </Box>
           </Box>
-          <Grid container spacing={3}>
-            {dynamicPackagePresets.map((pkg, idx) => (
-              <Grid item xs={12} sm={3} key={pkg.value}>
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  whileHover={{ y: -10 }}
-                >
-                  <Paper
-                    onClick={() => handlePackageLevelChange(pkg.value)}
-                    sx={{
-                      p: 3,
-                      cursor: 'pointer',
-                      borderRadius: '24px',
-                      height: '100%',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      border: '2px solid',
-                      borderColor: packageLevel === pkg.value ? pkg.color : 'transparent',
-                      background: packageLevel === pkg.value 
-                        ? `linear-gradient(135deg, ${alpha(pkg.color, 0.05)} 0%, white 100%)`
-                        : 'white',
-                      boxShadow: packageLevel === pkg.value 
-                        ? `0 20px 40px ${alpha(pkg.color, 0.15)}` 
-                        : '0 4px 20px rgba(0,0,0,0.02)',
-                      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                      <Box sx={{ 
-                        p: 1.5, 
-                        borderRadius: '12px', 
-                        bgcolor: alpha(pkg.color, 0.1), 
-                        color: pkg.color,
-                        display: 'flex'
-                      }}>
-                        <IconBolt size={24} />
-                      </Box>
-                      {packageLevel === pkg.value && (
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                          <IconCircleCheck size={28} color={pkg.color} />
-                        </motion.div>
-                      )}
-                    </Box>
-                    <Typography variant="h6" fontWeight="900" sx={{ mb: 1, color: '#0f172a' }}>
-                      {pkg.label}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, lineHeight: 1.5, height: 45, overflow: 'hidden' }}>
-                      {pkg.description}
-                    </Typography>
-                  </Paper>
-                </motion.div>
-              </Grid>
-            ))}
-          </Grid>
         </Box>
-      </motion.div>
 
-      {/* Main Grid View */}
-      <motion.div
-        initial={false}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        style={{ position: 'relative', zIndex: 2 }}
-      >
-        <Grid container spacing={4}>
+        {/* Main Content Grid */}
+        <Grid container spacing={3}>
+          {/* Sidebar */}
           <Grid item xs={12} md={3}>
-            <GlassBox sx={{ overflow: 'hidden', p: 1 }}>
-              <Box sx={{ p: 2, mb: 1 }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#94a3b8', letterSpacing: 2 }}>MODULE SUITES</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Paper 
+              variant="outlined"
+              sx={{ 
+                p: 1.5,
+                borderRadius: '12px',
+                bgcolor: 'white',
+                position: 'sticky',
+                top: 0,
+              }}
+            >
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', px: 1, mb: 1.5, display: 'block', letterSpacing: 1 }}>
+                MODULE SUITES
+              </Typography>
+              <List sx={{ p: 0 }}>
                 {categories.map((cat, idx) => {
                   const total = moduleCategories[cat].length;
                   const count = getModuleCount(moduleCategories[cat]);
                   const isActive = activeTab === idx;
                   
                   return (
-                    <motion.div key={cat} whileHover={{ x: 5 }}>
-                      <Box
-                        onClick={() => setActiveTab(idx)}
-                        sx={{
-                          p: 2,
-                          borderRadius: '16px',
-                          cursor: 'pointer',
-                          bgcolor: isActive ? alpha('#5D87FF', 0.06) : 'transparent',
-                          border: '1px solid',
-                          borderColor: isActive ? alpha('#5D87FF', 0.1) : 'transparent',
-                          transition: 'all 0.2s ease',
+                    <ListItem
+                      key={cat}
+                      disablePadding
+                      onClick={() => setActiveTab(idx)}
+                      sx={{
+                        mb: 0.5,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        bgcolor: isActive ? alpha('#5D87FF', 0.1) : 'transparent',
+                        color: isActive ? 'primary.main' : 'text.primary',
+                        '&:hover': { bgcolor: alpha('#5D87FF', 0.05) }
+                      }}
+                    >
+                      <ListItemText 
+                        primary={cat}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontWeight: isActive ? 'bold' : 'medium' 
                         }}
-                      >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                          <Typography variant="body2" fontWeight={isActive ? 800 : 600} sx={{ color: isActive ? 'primary.main' : '#475569' }}>
-                            {cat}
-                          </Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.6 }}>{count}/{total}</Typography>
-                        </Box>
-                        <Box sx={{ width: '100%', height: 4, borderRadius: 2, bgcolor: '#f1f5f9', overflow: 'hidden' }}>
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(count / total) * 100}%` }}
-                            style={{
-                              height: '100%',
-                              background: count === total ? '#13DEB9' : count > 0 ? '#5D87FF' : '#cbd5e1',
-                              borderRadius: 2
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                    </motion.div>
+                        sx={{ px: 1 }}
+                      />
+                      <Typography variant="caption" sx={{ pr: 1, fontWeight: 'bold' }}>
+                        {count}/{total}
+                      </Typography>
+                    </ListItem>
                   );
                 })}
-              </Box>
-            </GlassBox>
+              </List>
+            </Paper>
           </Grid>
 
+          {/* Module Grid */}
           <Grid item xs={12} md={9}>
-            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
               <SearchInput>
-                <IconSearch size={20} color="#94a3b8" />
+                <IconSearch size={18} color="#94a3b8" />
                 <input 
-                  placeholder="Search capabilities..." 
+                  placeholder="Search modules..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ 
                     border: 'none', 
                     background: 'transparent', 
                     outline: 'none', 
-                    marginLeft: '12px',
+                    marginLeft: '8px',
                     width: '100%',
-                    fontWeight: 600,
-                    fontSize: '15px'
+                    fontSize: '14px'
                   }}
                 />
               </SearchInput>
-              <motion.div whileHover={{ scale: 1.05 }}>
-                <Button 
-                  variant="outlined" 
-                  onClick={() => handleSelectAll(allCurrentModules)}
-                  sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 800, px: 3 }}
-                >
-                  {getModuleCount(allCurrentModules) === allCurrentModules.length ? 'Deselect Suite' : 'Configure Full Suite'}
-                </Button>
-              </motion.div>
+              <Button 
+                size="small"
+                variant="outlined" 
+                onClick={() => handleSelectAll(allCurrentModules)}
+                sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+              >
+                {getModuleCount(allCurrentModules) === allCurrentModules.length ? 'Deselect Suite' : 'Select Suite'}
+              </Button>
             </Box>
 
-            <AnimatePresence>
-              <motion.div
-                key={activeTab + searchQuery}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
-              >
-                <Grid container spacing={2}>
-                  {filteredModules.map((module) => {
-                    const isSelected = selectedModules.includes(module.id);
-                    return (
-                      <Grid item xs={12} sm={6} key={module.id}>
-                        <motion.div layout>
-                          <Paper
-                            onClick={() => handleModuleChange(module.id, !isSelected)}
-                            sx={{
-                              p: 3,
-                              borderRadius: '20px',
-                              cursor: 'pointer',
-                              border: '2px solid',
-                              borderColor: isSelected ? 'primary.main' : '#f1f5f9',
-                              background: 'white',
-                              boxShadow: isSelected ? '0 15px 30px rgba(93, 135, 255, 0.1)' : 'none',
-                              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                              '&:hover': {
-                                borderColor: 'primary.main',
-                                transform: isSelected ? 'none' : 'translateY(-4px)',
-                                boxShadow: '0 10px 25px rgba(0,0,0,0.05)'
-                              }
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', gap: 2 }}>
-                              <Box sx={{ mt: 0.5 }}>
-                                {isSelected ? (
-                                  <IconCircleCheck size={28} color="#5D87FF" />
-                                ) : (
-                                  <IconCircleDashed size={28} color="#cbd5e1" />
-                                )}
-                              </Box>
-                              <Box>
-                                <Typography variant="subtitle1" fontWeight="900" sx={{ color: '#0f172a' }}>
-                                  {module.label || 'Unnamed Module'}
-                                  {searchQuery && module.category && (
-                                    <Chip label={module.category} size="small" sx={{ ml: 1, height: 20, fontSize: '10px', fontWeight: 800 }} />
-                                  )}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, fontWeight: 500, lineHeight: 1.4 }}>
-                                  {module.description || 'No description provided'}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Paper>
-                        </motion.div>
-                      </Grid>
-                    );
-                  })}
-                  {filteredModules.length === 0 && modules.length > 0 && (
-                    <Box sx={{ width: '100%', py: 10, textAlign: 'center' }}>
-                      <IconFocus2 size={64} color="#e2e8f0" />
-                      <Typography variant="h6" sx={{ color: '#94a3b8', mt: 2 }}>No architectural matches found</Typography>
-                    </Box>
-                  )}
-                  {modules.length === 0 && (
-                    <Box sx={{ width: '100%', py: 10, textAlign: 'center' }}>
-                      <CircularProgress size={40} sx={{ color: '#5D87FF', mb: 2 }} />
-                      <Typography variant="h6" sx={{ color: '#94a3b8' }}>Assembling core architecture...</Typography>
-                    </Box>
-                  )}
-                </Grid>
-              </motion.div>
-            </AnimatePresence>
+            <Grid container spacing={1.5}>
+              {filteredModules.map((module) => {
+                const isSelected = selectedModules.includes(String(module.id));
+                const name = module.module_name || module.mod_name || module.label || 'Unnamed Module';
+                const description = module.module_description || module.mod_description || module.description || 'No description available';
+                const status = module.module_status || module.mod_status || 'active';
+
+                return (
+                  <Grid item xs={12} sm={6} key={module.id}>
+                    <Paper
+                      variant="outlined"
+                      onClick={() => status === 'active' && handleModuleChange(module.id, !isSelected)}
+                      sx={{
+                        p: 2,
+                        borderRadius: '12px',
+                        cursor: status === 'active' ? 'pointer' : 'default',
+                        borderColor: isSelected ? 'primary.main' : 'divider',
+                        bgcolor: isSelected ? alpha('#5D87FF', 0.02) : 'white',
+                        opacity: status === 'active' ? 1 : 0.6,
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1.5,
+                        transition: 'all 0.2s',
+                        '&:hover': status === 'active' ? {
+                          borderColor: isSelected ? 'primary.main' : alpha('#5D87FF', 0.5),
+                        } : {}
+                      }}
+                    >
+                      <Box sx={{ mt: 0.2 }}>
+                        {isSelected ? (
+                          <IconCircleCheck size={20} color="#5D87FF" />
+                        ) : (
+                          <IconCircleDashed size={20} color="#cbd5e1" />
+                        )}
+                      </Box>
+
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">
+                          {name}
+                          {searchQuery && (
+                            <Chip 
+                              label={getCategoryName(module)} 
+                              size="small" 
+                              sx={{ ml: 1, height: 16, fontSize: '10px' }} 
+                            />
+                          )}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
+                          {description}
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                );
+              })}
+
+              {filteredModules.length === 0 && (modules || []).length > 0 && (
+                <Box sx={{ width: '100%', py: 8, textAlign: 'center' }}>
+                  <IconFocus2 size={48} color="#cbd5e1" />
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
+                    No modules found matching your search.
+                  </Typography>
+                </Box>
+              )}
+
+              {(modules || []).length === 0 && (
+                <Box sx={{ width: '100%', py: 8, textAlign: 'center' }}>
+                  <CircularProgress size={32} sx={{ mb: 2 }} />
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Loading modules...
+                  </Typography>
+                </Box>
+              )}
+            </Grid>
           </Grid>
         </Grid>
-      </motion.div>
+      </Box>
 
-      {/* Extreme Floating Action Bar */}
-      <motion.div
-        initial={{ y: 100, x: '-50%', opacity: 0 }}
-        animate={{ y: 0, x: '-50%', opacity: 1 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 120, delay: 0.2 }}
-        style={{
-          position: 'fixed',
-          bottom: 30,
-          left: '50%',
-          width: 'calc(100% - 80px)',
-          maxWidth: 1200,
-          zIndex: 1100,
+      {/* Persistent Action Bar */}
+      <Box 
+        sx={{
+          bgcolor: 'white',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          p: 2,
+          display: 'flex',
+          justifyContent: 'center',
         }}
       >
-        <Box>
-          <GlassBox sx={{ 
-            p: 2.5, 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            bgcolor: 'rgba(255, 255, 255, 0.9)',
-            boxShadow: '0 30px 60px rgba(0,0,0,0.15)',
-            border: '1px solid rgba(255,255,255,0.5)',
-            width: '100%'
-          }}>
-            <Box sx={{ display: 'flex', gap: 6, ml: 4 }}>
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5 }}>PLAN VALUE</Typography>
-                <Typography variant="h4" fontWeight="950" color="primary" sx={{ letterSpacing: -1 }}>₦{parseFloat(selectedPlan?.price || 0).toLocaleString()}</Typography>
-              </Box>
-              <Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />
-              <Box>
-                <Typography variant="caption" sx={{ fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5 }}>ACTIVE CONFIG</Typography>
-                <Typography variant="h5" fontWeight="950" sx={{ color: '#0f172a' }}>
-                  {dynamicPackagePresets.find(p => p.value === packageLevel)?.label || 'CUSTOM BUILD'}
-                </Typography>
-              </Box>
+        <Box sx={{ maxWidth: 1200, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 4 }}>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}>PLAN PRICE</Typography>
+              <Typography variant="h6" fontWeight="bold" color="primary">₦{parseFloat(selectedPlan?.price || 0).toLocaleString()}</Typography>
             </Box>
+          </Box>
 
-            <Box sx={{ display: 'flex', gap: 3, mr: 2 }}>
-              <Button 
-                onClick={onCancel} 
-                sx={{ 
-                  px: 4, 
-                  borderRadius: '16px', 
-                  fontWeight: 800, 
-                  color: '#64748b', 
-                  textTransform: 'none',
-                  '&:hover': { bgcolor: alpha('#64748b', 0.05) }
-                }}
-              >
-                Discard Changes
-              </Button>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button 
-                  variant="contained" 
-                  onClick={handleSave} 
-                  disabled={!hasChanges || isSaving}
-                  endIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <IconRefresh size={18} />}
-                  sx={{ 
-                    px: 6, 
-                    py: 2, 
-                    borderRadius: '18px', 
-                    fontWeight: 900, 
-                    textTransform: 'none',
-                    fontSize: '16px',
-                    boxShadow: '0 10px 30px rgba(93, 135, 255, 0.3)',
-                    background: 'linear-gradient(135deg, #5D87FF 0%, #4671e6 100%)',
-                    '&:hover': { 
-                      boxShadow: '0 15px 40px rgba(93, 135, 255, 0.4)',
-                      background: 'linear-gradient(135deg, #4671e6 0%, #3a60d1 100%)'
-                    }
-                  }}
-                >
-                  {isSaving ? 'Deploying...' : 'Deploy Architecture'}
-                </Button>
-              </motion.div>
-            </Box>
-          </GlassBox>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button 
+              onClick={onCancel} 
+              sx={{ textTransform: 'none', fontWeight: 'bold' }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              onClick={handleSave} 
+              disabled={!hasChanges || isSaving}
+              startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : null}
+              sx={{ 
+                px: 4, 
+                borderRadius: '8px', 
+                fontWeight: 'bold', 
+                textTransform: 'none',
+                boxShadow: 'none',
+                '&:hover': { boxShadow: 'none' }
+              }}
+            >
+              {isSaving ? 'Saving...' : 'Save Configuration'}
+            </Button>
+          </Box>
         </Box>
-      </motion.div>
+      </Box>
     </Box>
   );
 };

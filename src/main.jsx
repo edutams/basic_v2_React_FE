@@ -6,6 +6,7 @@ import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { AuthProvider } from './context/AgentContext/auth';
+import { TenantAuthProvider } from './context/TenantContext/auth';
 import ErrorBoundary from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -20,7 +21,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <LocalizationProvider dateAdapter={AdapterDayjs}>
     <AuthProvider>
-      <CustomizerContextProvider>
+      <TenantAuthProvider>
+        <CustomizerContextProvider>
         <SnackbarProvider>
           <Suspense fallback={<Spinner />}>
             <ErrorBoundary>
@@ -29,7 +31,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           </Suspense>
         </SnackbarProvider>
       </CustomizerContextProvider>
-    </AuthProvider>
-  </LocalizationProvider>,
+    </TenantAuthProvider>
+  </AuthProvider>
+</LocalizationProvider>,
 );
 // });

@@ -12,8 +12,11 @@ const TenantProtectedRoute = ({ children }) => {
   }
 
   const hostname = window.location.hostname;
-  const centralDomain = 'basic_v2.test';
-  const isTenantSubdomain = hostname.endsWith(centralDomain) && hostname !== centralDomain;
+  const centralHost = import.meta.env.VITE_API_BASE_URL 
+    ? new URL(import.meta.env.VITE_API_BASE_URL).hostname 
+    : 'basic_v2.test';
+    
+  const isTenantSubdomain = hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;

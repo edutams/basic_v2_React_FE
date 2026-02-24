@@ -29,6 +29,13 @@ const SchoolMenuItems = [
 
   {
     id: uniqueId(),
+    title: 'ALC Manager',
+    icon: IconUsers,
+    href: '/school-dashboard/alc-manager',
+  },
+
+  {
+    id: uniqueId(),
     title: 'Setup',
     icon: IconUsers,
     children: [

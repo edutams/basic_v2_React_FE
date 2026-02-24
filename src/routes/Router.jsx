@@ -11,6 +11,9 @@ const Subcriptions = Loadable(lazy(() => import('../views/subcriptions/manage-su
 const SubscriptionHistory = Loadable(
   lazy(() => import('../views/subcriptions/subscription-history')),
 );
+const SchoolAlcManager = Loadable(
+  lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
+);
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import DashboardsLayout from '../layouts/dashboard/DashboardsLayout';
@@ -231,6 +234,7 @@ const Router = isTenantSubdomain
               { path: 'scheme-of-work', element: <SchemeOfWork /> },
               { path: 'manage-subcription', element: <Subcriptions /> },
               { path: 'subscription-history', element: <SubscriptionHistory /> },
+              { path: 'alc-manager', element: <SchoolAlcManager /> },
             ],
           },
           // { path: '*', element: <Navigate to="/auth/404" /> },

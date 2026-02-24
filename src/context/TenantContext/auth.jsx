@@ -30,7 +30,8 @@ export const TenantAuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const res = await api.get('/get-user');
-        setUser(res.data?.data);
+        // The backend returns the user object directly
+        setUser(res.data);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('tenant_access_token');

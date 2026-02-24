@@ -11,6 +11,7 @@ const defaultAuthState = {
 };
 
 export const TenantAuthProvider = ({ children }) => {
+  console.log('TenantAuthProvider rendering');
   const [user, setUser] = useState(defaultAuthState.user);
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
@@ -94,6 +95,8 @@ export const TenantAuthProvider = ({ children }) => {
     logout,
     clearError,
   };
+
+  console.log('TenantAuthProvider contextValue:', contextValue);
 
   return <TenantAuthContext.Provider value={contextValue}>{children}</TenantAuthContext.Provider>;
 };

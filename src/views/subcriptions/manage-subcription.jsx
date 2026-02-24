@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,6 +19,7 @@ import {
   InputAdornment,
   Button,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
@@ -30,6 +31,7 @@ import TransactionModal from '../../components/subcription/TransactionModal';
 import InvoiceModal from '../../components/subcription/InvoiceModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
+import tenantApi from 'src/api/tenant_api';
 
 const DUMMY_ROWS = [
   {
@@ -64,20 +66,15 @@ const DUMMY_ROWS = [
   },
 ];
 
-const StimulationLinks = () => {
+const ManageSubscriptions = () => {
   return (
-    <Box>
-      <Breadcrumb
-        title="Manage Subscription"
-        items={[{ title: 'Home', to: '/' }, { title: 'Manage Subscription' }]}
-      />
-      <ManagePhETLinks />
-    </Box>
+    <ManageSubscriptionList />
   );
 };
 
-const ManagePhETLinks = () => {
-  const [rows, setRows] = useState(DUMMY_ROWS);
+const ManageSubscriptionList = () => {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -91,6 +88,29 @@ const ManagePhETLinks = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const notify = useNotification();
+
+  const fetchSubscriptions = async () => {
+    try {
+      setLoading(true);
+      const res = await tenantApi.get('/subscription-status');
+      // For now, status endpoint returns current subscription. 
+      // If we want history, we might need another endpoint, but let's adapt to what we have.
+      if (res.data.data) {
+        setRows([res.data.data]);
+      } else {
+        setRows([]);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      notify.error('Failed to fetch subscription status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
 
   const filteredRows = rows.filter((row) =>
     row.sessionterm.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -170,15 +190,28 @@ const ManagePhETLinks = () => {
     handleMenuClose();
   };
 
-  const handleModalSubmit = (data) => {
-    if (modalType === 'create') {
-      setRows((prev) => [...prev, { ...data, id: Date.now() }]);
-      notify.success('Subcription plan successfully added', 'Success');
-    } else if (modalType === 'update') {
-      setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
-      notify.success('Subcription plan updated successfully', 'Success');
+  const handleModalSubmit = async (data) => {
+    try {
+      if (modalType === 'create') {
+        const payload = {
+          agent_plan_id: data.availableplan,
+          session_id: data.session,
+          term_id: data.term,
+          subscription_mode: data.subscriptionMode === 'perSession' ? 'online' : 'online', // adapt as needed
+        };
+        
+        await tenantApi.post('/subscribe', payload);
+        notify.success('Subscription plan successfully initiated', 'Success');
+        fetchSubscriptions();
+      } else if (modalType === 'update') {
+        // Handle update if implemented on backend
+        notify.success('Subscription plan updated successfully', 'Success');
+      }
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error submitting subscription:', error);
+      notify.error(error.response?.data?.message || 'Failed to initiate subscription');
     }
-    setModalOpen(false);
   };
 
   const handleUpgradeSubmit = (upgradedData) => {
@@ -259,16 +292,26 @@ const ManagePhETLinks = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedRows.length > 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
+                        <CircularProgress />
+                      </TableCell>
+                    </TableRow>
+                  ) : paginatedRows.length > 0 ? (
                     paginatedRows.map((row, index) => (
                       <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{row.sessionterm}</TableCell>
-                        <TableCell>{row.plandetails}</TableCell>
+                        <TableCell>
+                          {row.sessions?.sesname} / {row.terms?.term_name}
+                        </TableCell>
+                        <TableCell>
+                          {row.my_plans?.display_name} ({row.plans?.description})
+                        </TableCell>
                         <TableCell>{row.amount}</TableCell>
-                        <TableCell>{row.gatewaycharges}</TableCell>
+                        <TableCell>0</TableCell>
                         <TableCell>{row.discount}</TableCell>
-                        <TableCell>{row.amountdue}</TableCell>
+                        <TableCell>{row.amount}</TableCell>
                         <TableCell>
                           <Chip
                             label={row.status.toUpperCase()}
@@ -416,4 +459,4 @@ const ManagePhETLinks = () => {
   );
 };
 
-export default StimulationLinks;
+export default ManageSubscriptions;

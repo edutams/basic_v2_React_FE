@@ -7,9 +7,8 @@ const SchoolDashboardMain = Loadable(
 );
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
-const Subcriptions = Loadable(lazy(() => import('../views/subcriptions/manage-subcription')));
-const SubscriptionHistory = Loadable(
-  lazy(() => import('../views/subcriptions/subscription-history')),
+const SubscriptionIndex = Loadable(
+  lazy(() => import('../views/subcriptions/SubscriptionIndex')),
 );
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
@@ -222,18 +221,11 @@ const Router = isTenantSubdomain
           </TenantProtectedRoute>
         ),
         children: [
-          { path: '/', element: <Navigate to="/school-dashboard" /> },
-          {
-            path: '/school-dashboard',
-            children: [
-              { path: '', element: <SchoolDashboardMain /> },
-              { path: 'session-week-manager', element: <SessionWeekManager /> },
-              { path: 'scheme-of-work', element: <SchemeOfWork /> },
-              { path: 'manage-subcription', element: <Subcriptions /> },
-              { path: 'subscription-history', element: <SubscriptionHistory /> },
-            ],
-          },
-          // { path: '*', element: <Navigate to="/auth/404" /> },
+          { path: '/', element: <SchoolDashboardMain /> },
+          { path: '/session-week-manager', element: <SessionWeekManager /> },
+          { path: '/scheme-of-work', element: <SchemeOfWork /> },
+          { path: '/manage-subscription', element: <SubscriptionIndex /> },
+          { path: '/subscription-history', element: <SubscriptionIndex /> },
         ],
       },
       {
@@ -267,7 +259,8 @@ const Router = isTenantSubdomain
           { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
           { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
           { path: '/modern', exact: true, element: <ModernDashboard /> },
-          { path: '/package-manager', element: <PackageManager /> },
+          // { path: '/package-manager', element: <PackageManager /> },
+          { path: '/edutier', element: <PackageManager /> },
           { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
           { path: '/phet/stimulation-links', element: <StimulationLinks /> },
           { path: '/', element: <Navigate to="/agent/login" /> },

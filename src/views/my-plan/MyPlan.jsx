@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Typography,
   Box,
@@ -19,7 +19,9 @@ import {
   Alert,
   Button,
   TextField,
+  CircularProgress,
 } from '@mui/material';
+import api from '../../api/auth';
 import { IconSchool } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../components/container/PageContainer';
@@ -33,44 +35,9 @@ const BCrumb = [{ to: '/', title: 'Home' }, { title: 'My Plans' }];
 
 const MyPlan = () => {
   const [openViewModal, setOpenViewModal] = useState(false);
-  const [plans, setPlans] = useState([
-    {
-      id: 1,
-      name: 'Basic Plan',
-      description: 'Entry-level plan for small classes',
-      basePrice: 5000.00,
-      price: 4500.00,
-      studentLimit: '1-50',
-      status: 'Active'
-    },
-    {
-      id: 2,
-      name: 'Basic +',
-      description: 'Mid-tier plan for medium-sized classes',
-      basePrice: 10000.00,
-      price: 9000.00,
-      studentLimit: '51-99',
-      status: 'Active'
-    },
-    {
-      id: 3,
-      name: 'Basic ++',
-      description: 'Advanced plan for large institutions',
-      basePrice: 20000.00,
-      price: 18000.00,
-      studentLimit: '100-199',
-      status: 'Inactive'
-    },
-    {
-      id: 4,
-      name: 'Basic Custom',
-      description: 'Comprehensive plan for custom use',
-      basePrice: 50000.00,
-      price: 45000.00,
-      studentLimit: '200 and Above',
-      status: 'Active'
-    }
-  ]);
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModules, setShowModules] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -92,12 +59,24 @@ const MyPlan = () => {
     '300+ Students',
   ];
   const [selectedStudentLimit, setSelectedStudentLimit] = useState(studentLimitOptions[0]);
-  const [showModules, setShowModules] = useState(false);
-  const mockModules = [
-    { id: 1, name: 'Attendance', description: 'Track student attendance' },
-    { id: 2, name: 'Grading', description: 'Manage grades and assessments' },
-    { id: 3, name: 'Communication', description: 'Send messages to students' },
-  ];
+  const fetchPlans = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/agent/edu-tier/my-plans');
+      setPlans(res.data);
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      setSnackbarMessage('Failed to fetch plans');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -126,21 +105,33 @@ const MyPlan = () => {
     }, 100);
   };
 
-  const handleDeactivatePlan = () => {
+  const handleDeactivatePlan = async () => {
     if (planToDeactivate) {
-      setPlans((prev) =>
-        prev.map((p) =>
-          p.id === planToDeactivate.id
-            ? { ...p, status: p.status === 'Active' ? 'Inactive' : 'Active' }
-            : p
-        )
-      );
-      setOpenDeactivateDialog(false);
-      setSnackbarMessage(
-        `Plan ${planToDeactivate.status === 'Active' ? 'deactivated' : 'activated'} successfully`
-      );
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
+      try {
+        const newStatus = planToDeactivate.status === 'active' ? 'inactive' : 'active';
+        await api.patch(`/agent/edu-tier/my-plans/${planToDeactivate.id}/status`, {
+          status: newStatus
+        });
+        
+        setPlans((prev) =>
+          prev.map((p) =>
+            p.id === planToDeactivate.id
+              ? { ...p, status: newStatus }
+              : p
+          )
+        );
+        setOpenDeactivateDialog(false);
+        setSnackbarMessage(
+          `Plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`
+        );
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+      } catch (error) {
+        console.error('Error updating status:', error);
+        setSnackbarMessage(error.response?.data?.message || 'Failed to update plan status');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
     }
   };
 
@@ -162,17 +153,29 @@ const MyPlan = () => {
     setEditPrice(plan.price);
     setOpenEditModal(true);
   };
-  const handleEditSave = (e) => {
+  const handleEditSave = async (e) => {
     e.preventDefault();
-    setPlans((prev) =>
-      prev.map((p) =>
-        p.id === editPlan.id ? { ...p, name: editName, price: parseFloat(editPrice) } : p
-      )
-    );
-    setOpenEditModal(false);
-    setSnackbarMessage('Plan updated successfully');
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
+    try {
+      const res = await api.put(`/agent/edu-tier/my-plans/${editPlan.id}`, {
+        display_name: editName,
+        price: parseFloat(editPrice),
+      });
+      
+      setPlans((prev) =>
+        prev.map((p) =>
+          p.id === editPlan.id ? res.data : p
+        )
+      );
+      setOpenEditModal(false);
+      setSnackbarMessage('Plan updated successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      setSnackbarMessage(error.response?.data?.message || 'Failed to update plan');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
   };
 
   const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -213,76 +216,85 @@ const MyPlan = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedPlans.length > 0 ? (
-                  paginatedPlans.map((plan, index) => (
-                    <TableRow
-                      key={plan.id}
-                      sx={{
-                        '&:hover': { bgcolor: 'grey.50' },
-                        '&:last-child td, &:last-child th': { border: 0 },
-                      }}
-                    >
-                      <TableCell>
-                        <Typography variant="subtitle2">
-                          {page * rowsPerPage + index + 1}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6" fontWeight="400">
-                          {plan.name}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">{plan.description}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6">₦{plan.basePrice.toFixed(2)}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6">
-                          ₦{(plan.price || 0).toFixed(2)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6">{plan.studentLimit}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          sx={{
-                            bgcolor:
-                              plan.status === 'Active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.primary.light,
-                            color:
-                              plan.status === 'Active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.primary.main,
-                            borderRadius: '8px',
-                          }}
-                          size="small"
-                          label={plan.status || 'Unknown'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton onClick={(e) => handleActionClick(e, plan.id)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && activeRow === plan.id}
-                          onClose={handleActionClose}
-                          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                        >
-                          <MenuItem onClick={() => handleViewPlan(plan)}>View Plan Details</MenuItem>
-                          <MenuItem onClick={() => handleEditPlan(plan)}>Edit Plan Details</MenuItem>
-                          <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
-                            {plan.status === 'Active' ? 'Deactivate' : 'Activate'}
-                          </MenuItem>
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} sx={{ textAlign: 'center', py: 5 }}>
+                      <CircularProgress size={40} />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedPlans.length > 0 ? (
+                  paginatedPlans.map((plan, index) => {
+                    const planData = plan.plan?.data ? JSON.parse(plan.plan.data) : {};
+                    return (
+                      <TableRow
+                        key={plan.id}
+                        sx={{
+                          '&:hover': { bgcolor: 'grey.50' },
+                          '&:last-child td, &:last-child th': { border: 0 },
+                        }}
+                      >
+                        <TableCell>
+                          <Typography variant="subtitle2">
+                            {page * rowsPerPage + index + 1}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="h6" fontWeight="400">
+                            {plan.display_name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{plan.plan?.description}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="h6">₦{parseFloat(plan.plan?.price || 0).toFixed(2)}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="h6">
+                            ₦{parseFloat(plan.price || 0).toFixed(2)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="h6">{planData.students_limit || 'N/A'}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            sx={{
+                              bgcolor:
+                                plan.status === 'active'
+                                  ? (theme) => theme.palette.success.light
+                                  : (theme) => theme.palette.primary.light,
+                              color:
+                                plan.status === 'active'
+                                  ? (theme) => theme.palette.success.main
+                                  : (theme) => theme.palette.primary.main,
+                              borderRadius: '8px',
+                            }}
+                            size="small"
+                            label={plan.status ? plan.status.charAt(0).toUpperCase() + plan.status.slice(1) : 'Unknown'}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={(e) => handleActionClick(e, plan.id)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && activeRow === plan.id}
+                            onClose={handleActionClose}
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                          >
+                            <MenuItem onClick={() => handleViewPlan(plan)}>View Plan Details</MenuItem>
+                            <MenuItem onClick={() => handleEditPlan(plan)}>Edit Plan Details</MenuItem>
+                            <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
+                              {plan.status === 'active' ? 'Deactivate' : 'Activate'}
+                            </MenuItem>
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} sx={{ textAlign: 'center', padding: '40px 0' }}>
@@ -348,7 +360,7 @@ const MyPlan = () => {
                 }}
               >
                 <Typography variant="body1" sx={{ fontSize: 16 }}>
-                  {selectedPlan?.studentLimit ? `${selectedPlan.studentLimit} Students` : 'N/A'}
+                  {selectedPlan?.plan?.data ? JSON.parse(selectedPlan.plan.data).students_limit : 'N/A'} Students
                 </Typography>
               </Box>
             </Box>
@@ -367,7 +379,7 @@ const MyPlan = () => {
               }}
             >
               <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
-                {selectedPlan?.name?.toUpperCase()} (₦{selectedPlan?.price?.toLocaleString()})
+                {selectedPlan?.display_name?.toUpperCase()} (₦{parseFloat(selectedPlan?.price || 0).toLocaleString()})
               </Typography>
               <Button
                 variant="text"
@@ -382,12 +394,15 @@ const MyPlan = () => {
                   <Typography variant="subtitle1" sx={{ mb: 1 }}>
                     Modules
                   </Typography>
-                  {mockModules.map((module) => (
+                  {selectedPlan?.plan?.modules?.map((module) => (
                     <Box key={module.id} sx={{ mb: 1, p: 1, border: '1px solid #eee', borderRadius: 1 }}>
-                      <Typography variant="body1" fontWeight={600}>{module.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">{module.description}</Typography>
+                      <Typography variant="body1" fontWeight={600}>{module.module_name}</Typography>
+                      <Typography variant="body2" color="text.secondary">{module.module_description}</Typography>
                     </Box>
                   ))}
+                  {(!selectedPlan?.plan?.modules || selectedPlan.plan.modules.length === 0) && (
+                    <Typography variant="body2">No modules assigned to this plan.</Typography>
+                  )}
                 </Box>
               )}
             </Box>

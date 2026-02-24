@@ -96,9 +96,9 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Package Manager',
+    title: 'EduTier',
     icon: IconListTree,
-    href: '/package-manager',
+    href: '/edutier',
   },
   {
     id: uniqueId(),
@@ -175,25 +175,25 @@ const Menuitems = [
     ],
   },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Subcriptions',
-  //   icon: IconAppWindow,
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Manage Subcription',
-  //       icon: IconPoint,
-  //       href: '/subcriptions/manage-subcription',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Subcription History',
-  //       icon: IconPoint,
-  //       href: '/subcriptions/subscription-history',
-  //     },
-  //   ],
-  // },
+  {
+    id: uniqueId(),
+    title: 'Subscriptions',
+    icon: IconAppWindow,
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Manage Subscription',
+        icon: IconPoint,
+        href: '/subcriptions/manage-subcription',
+      },
+      {
+        id: uniqueId(),
+        title: 'Subscription History',
+        icon: IconPoint,
+        href: '/subcriptions/subscription-history',
+      },
+    ],
+  },
 
   /*
   {

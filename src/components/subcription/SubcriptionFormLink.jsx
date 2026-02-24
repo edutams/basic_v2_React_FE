@@ -10,9 +10,11 @@ import {
   FormControlLabel,
   Radio,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { stimulationLinkValidationSchema } from './validation/subcriptionValidationSchema';
+import tenantApi from 'src/api/tenant_api';
 
 const SubcriptionFormLink = ({
   initialValues = {},
@@ -31,6 +33,27 @@ const SubcriptionFormLink = ({
     ...initialValues,
   });
   const [errors, setErrors] = useState({});
+  const [options, setOptions] = useState({
+    sessions: [],
+    terms: [],
+    plans: [],
+  });
+  const [fetchingOptions, setFetchingOptions] = useState(true);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setFetchingOptions(true);
+        const res = await tenantApi.get('/get-form-options');
+        setOptions(res.data);
+      } catch (error) {
+        console.error('Error fetching options:', error);
+      } finally {
+        setFetchingOptions(false);
+      }
+    };
+    fetchOptions();
+  }, []);
 
   useEffect(() => {
     if (initialValues && Object.keys(initialValues).length > 0) {
@@ -61,6 +84,8 @@ const SubcriptionFormLink = ({
     try {
       await stimulationLinkValidationSchema.validate(form, { abortEarly: false });
       setErrors({});
+      // Ensure we map student population correctly if needed, 
+      // but for now let's just send the form
       onSubmit(form);
     } catch (validationError) {
       if (validationError.inner) {
@@ -72,6 +97,14 @@ const SubcriptionFormLink = ({
       }
     }
   };
+
+  if (fetchingOptions) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -107,9 +140,11 @@ const SubcriptionFormLink = ({
         select
       >
         <MenuItem value="">Select Session</MenuItem>
-        <MenuItem value="2023/2024">2023/2024</MenuItem>
-        <MenuItem value="2024/2025">2024/2025</MenuItem>
-        <MenuItem value="2025/2026">2025/2026</MenuItem>
+        {options.sessions.map((session) => (
+          <MenuItem key={session.id} value={session.id.toString()}>
+            {session.sesname}
+          </MenuItem>
+        ))}
       </TextField>
 
       {form.subscriptionMode === 'perTerm' && (
@@ -125,9 +160,11 @@ const SubcriptionFormLink = ({
           select
         >
           <MenuItem value="">Select Term</MenuItem>
-          <MenuItem value="First Term">First Term</MenuItem>
-          <MenuItem value="Second Term">Second Term</MenuItem>
-          <MenuItem value="Third Term">Third Term</MenuItem>
+          {options.terms.map((term) => (
+            <MenuItem key={term.id} value={term.id.toString()}>
+              {term.term_name}
+            </MenuItem>
+          ))}
         </TextField>
       )}
 
@@ -161,9 +198,11 @@ const SubcriptionFormLink = ({
         select
       >
         <MenuItem value="">Select Plan</MenuItem>
-        <MenuItem value="OBASIC">OBASIC</MenuItem>
-        <MenuItem value="OBASIC+">OBASIC+</MenuItem>
-        <MenuItem value="OBASIC++">OBASIC++</MenuItem>
+        {options.plans.map((plan) => (
+          <MenuItem key={plan.id} value={plan.id.toString()}>
+            {plan.display_name} (₦{parseFloat(plan.price).toLocaleString()})
+          </MenuItem>
+        ))}
       </TextField>
 
       <TextField

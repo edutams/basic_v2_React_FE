@@ -146,7 +146,7 @@ const ManagePhETLinks = () => {
     <>
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Manage Gateways</Typography>
             <Button
               variant="contained"

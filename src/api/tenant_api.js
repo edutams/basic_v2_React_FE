@@ -36,7 +36,16 @@ tenantApi.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthRequest = originalRequest.url.includes('/login') || originalRequest.url.includes('/refresh-token');
+
+    console.log('Tenant Interceptor 401 check:', {
+      url: originalRequest.url,
+      status: error.response?.status,
+      _retry: originalRequest._retry,
+      isAuthRequest: isAuthRequest
+    });
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
       try {
         const refreshRes = await tenantApi.post('/refresh-token');

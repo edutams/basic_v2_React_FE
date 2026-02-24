@@ -16,7 +16,16 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthRequest = originalRequest.url.includes('/agent/login') || originalRequest.url.includes('/agent/refresh_token');
+
+    console.log('Interceptor 401 check:', {
+      url: originalRequest.url,
+      status: error.response?.status,
+      _retry: originalRequest._retry,
+      isAuthRequest: isAuthRequest
+    });
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
       try {
         const refreshRes = await api.post('/agent/refresh_token');
@@ -27,10 +36,13 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.error('Refresh token failed:', refreshError);
         localStorage.removeItem('access_token');
-        window.location.href = '/agent/login';
+        if (window.location.pathname !== '/agent/login') {
+          window.location.href = '/agent/login';
+        }
       }
     }
 
+    // If it's a 401 on an auth request, or refresh failed, just reject it
     return Promise.reject(error);
   },
 );

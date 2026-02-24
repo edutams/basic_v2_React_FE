@@ -100,10 +100,11 @@ const Profile = () => {
   ];
 
   // Get user display name and email
-  const displayName = user?.name || 'Guest User';
+  const displayUser = user?.user || user;
+  const displayName = displayUser?.name || 'Guest User';
   const firstName = displayName.split(' ')[0];
-  const userEmail = user?.email || 'user@example.com';
-  const userAvatar = user?.image || user1;
+  const userEmail = displayUser?.email || 'user@example.com';
+  const userAvatar = displayUser?.image || user1;
 
   return (
     <Box display="flex" gap={1}>

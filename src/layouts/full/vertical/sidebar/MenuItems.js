@@ -96,9 +96,9 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Package Manager',
+    title: 'EduTier',
     icon: IconListTree,
-    href: '/package-manager',
+    href: '/edutier',
   },
   {
     id: uniqueId(),

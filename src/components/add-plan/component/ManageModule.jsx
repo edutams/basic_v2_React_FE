@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,422 +12,182 @@ import {
   InputLabel,
   Grid,
   FormControl,
+  Tabs,
+  Tab,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  LinearProgress,
+  Avatar,
+  Fade,
+  Zoom,
+  CircularProgress,
 } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  IconSearch,
+  IconSparkles,
+  IconCircleCheck,
+  IconCircleDashed,
+  IconTerminal2,
+  IconCommand,
+  IconFocus2,
+  IconRefresh,
+  IconBolt
+} from '@tabler/icons-react';
+import { styled, alpha } from '@mui/material/styles';
 
-// Define package levels
-const packageLevels = [
-  {
-    value: 'Basic',
-    label: 'Basic Package',
-    description: 'Basic modules for small institutions',
-    defaultModules: [
-      'Dashboard>Chart',
-      'Setup>Installation Process',
-      'Setup>Academics>School Manager',
-      'Setup>Academics>Class Manager',
-    ],
-  },
-  {
-    value: 'Standard',
-    label: 'Standard Package',
-    description: 'Enhanced modules for medium-sized institutions',
-    defaultModules: [
-      'Dashboard>Chart',
-      'Setup>Installation Process',
-      'Setup>Academics>School Manager',
-      'Setup>Academics>Class Manager',
-      'Setup>Academics>Division/Programme Manager',
-      'Setup>Academics>Session/Weeks Manager',
-      'Setup>Subscriptions>Manage Subscriptions',
-      'Setup>User Management>Student Manager',
-    ],
-  },
-  {
-    value: 'Premium',
-    label: 'Premium Package',
-    description: 'Full modules for large institutions',
-    defaultModules: [
-      'Dashboard>Chart',
-      'Setup>Installation Process',
-      'Setup>Academics>School Manager',
-      'Setup>Academics>Class Manager',
-      'Setup>Academics>Division/Programme Manager',
-      'Setup>Academics>Session/Weeks Manager',
-      'Setup>Academics>Class Subject Manager',
-      'Setup>Academics>Scheme Of Work',
-      'Setup>Subscriptions>Manage Subscriptions',
-      'Setup>Subscriptions>Transaction History',
-      'Setup>User Management>Staff Manager',
-      'Setup>User Management>Parents Manager',
-      'Setup>User Management>Student Manager',
-      'Setup>Roles & Permission',
-      'Setup>Activity Log',
-      'Setup>Student Registration',
-      'Bursary>Setup>Payment Instalment',
-      'Bursary>Setup>Payment Name',
-      'Bursary>Schedule Fees>Pay Fees',
-      'Bursary>History',
-    ],
-  },
-];
+// Glassmorphism effect
+const GlassBox = styled(Box)(({ theme }) => ({
+  background: 'rgba(255, 255, 255, 0.7)',
+  backdropFilter: 'blur(20px)',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  borderRadius: '24px',
+  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+}));
 
-// Define module categories
-const moduleCategories = {
-  Dashboard: [{ id: 'Dashboard>Chart', label: 'Chart', description: 'View dashboard charts' }],
-  Setup: [
-    {
-      id: 'Setup>Installation Process',
-      label: 'Installation Process',
-      description: 'Manage installation settings',
-    },
-    {
-      id: 'Setup>Academics>School Manager',
-      label: 'School Manager',
-      description: 'Manage school settings',
-    },
-    {
-      id: 'Setup>Academics>Class Manager',
-      label: 'Class Manager',
-      description: 'Manage class settings',
-    },
-    {
-      id: 'Setup>Academics>Division/Programme Manager',
-      label: 'Division/Programme Manager',
-      description: 'Manage divisions or programs',
-    },
-    {
-      id: 'Setup>Academics>Session/Weeks Manager',
-      label: 'Session/Weeks Manager',
-      description: 'Manage sessions and weeks',
-    },
-    {
-      id: 'Setup>Academics>Class Subject Manager',
-      label: 'Class Subject Manager',
-      description: 'Manage class subjects',
-    },
-    {
-      id: 'Setup>Academics>Scheme Of Work',
-      label: 'Scheme Of Work',
-      description: 'Manage scheme of work',
-    },
-    {
-      id: 'Setup>Subscriptions>Manage Subscriptions',
-      label: 'Manage Subscriptions',
-      description: 'Manage subscription plans',
-    },
-    {
-      id: 'Setup>Subscriptions>Transaction History',
-      label: 'Transaction History',
-      description: 'View transaction history',
-    },
-    {
-      id: 'Setup>User Management>Staff Manager',
-      label: 'Staff Manager',
-      description: 'Manage staff accounts',
-    },
-    {
-      id: 'Setup>User Management>Parents Manager',
-      label: 'Parents Manager',
-      description: 'Manage parent accounts',
-    },
-    {
-      id: 'Setup>User Management>Student Manager',
-      label: 'Student Manager',
-      description: 'Manage student accounts',
-    },
-    {
-      id: 'Setup>Roles & Permission',
-      label: 'Roles & Permission',
-      description: 'Manage roles and permissions',
-    },
-    {
-      id: 'Setup>Allocations>Position Allocation',
-      label: 'Position Allocation',
-      description: 'Manage position allocations',
-    },
-    {
-      id: 'Setup>Allocations>Subject-Teacher Allocation',
-      label: 'Subject-Teacher Allocation',
-      description: 'Manage subject-teacher assignments',
-    },
-    {
-      id: 'Setup>Allocations>Class-teacher Allocation',
-      label: 'Class-teacher Allocation',
-      description: 'Manage class-teacher assignments',
-    },
-    { id: 'Setup>Activity Log', label: 'Activity Log', description: 'View activity logs' },
-    {
-      id: 'Setup>Student Registration',
-      label: 'Student Registration',
-      description: 'Manage student registrations',
-    },
-  ],
-  Bursary: [
-    {
-      id: 'Bursary>Setup>Payment Instalment',
-      label: 'Payment Instalment',
-      description: 'Manage payment instalments',
-    },
-    {
-      id: 'Bursary>Setup>Payment Name',
-      label: 'Payment Name',
-      description: 'Manage payment names',
-    },
-    {
-      id: 'Bursary>Setup>Bursary Settings',
-      label: 'Bursary Settings',
-      description: 'Configure bursary settings',
-    },
-    {
-      id: 'Bursary>Setup>Student Payment Category',
-      label: 'Student Payment Category',
-      description: 'Manage student payment categories',
-    },
-    {
-      id: 'Bursary>Schedule Fees>Pay Fees',
-      label: 'Pay Fees',
-      description: 'Process fee payments',
-    },
-    {
-      id: 'Bursary>Schedule Fees>Pay Cash',
-      label: 'Pay Cash',
-      description: 'Process cash payments',
-    },
-    { id: 'Bursary>History', label: 'History', description: 'View payment history' },
-    { id: 'Bursary>Report>Payment List', label: 'Payment List', description: 'View payment lists' },
-    { id: 'Bursary>Report>Debtors List', label: 'Debtors List', description: 'View debtors list' },
-    {
-      id: 'Bursary>Student Account>Class Ledger',
-      label: 'Class Ledger',
-      description: 'Manage class ledgers',
-    },
-    {
-      id: 'Bursary>Student Account>Set Schedule',
-      label: 'Set Schedule',
-      description: 'Set payment schedules',
-    },
-    {
-      id: 'Bursary>Student Account>Generate Invoice',
-      label: 'Generate Invoice',
-      description: 'Generate invoices',
-    },
-    {
-      id: 'Bursary>Student Account>Send Invoice',
-      label: 'Send Invoice',
-      description: 'Send invoices to users',
-    },
-    {
-      id: 'Bursary>Student Account>Pay Fees',
-      label: 'Pay Fees',
-      description: 'Process student fee payments',
-    },
-    {
-      id: 'Bursary>Student Account>Pay Cash',
-      label: 'Pay Cash',
-      description: 'Process student cash payments',
-    },
-    {
-      id: 'Bursary>Student Account>Report',
-      label: 'Report',
-      description: 'Generate student account reports',
-    },
-    {
-      id: 'Bursary>Online Transactions>Transaction',
-      label: 'Transaction',
-      description: 'Manage online transactions',
-    },
-    {
-      id: 'Bursary>Online Transactions>Revenue',
-      label: 'Revenue',
-      description: 'View revenue reports',
-    },
-    {
-      id: 'Bursary>Online Transactions>Settlement',
-      label: 'Settlement',
-      description: 'Manage settlements',
-    },
-    {
-      id: 'Bursary>Online Transactions>Reconciliation',
-      label: 'Reconciliation',
-      description: 'Perform reconciliations',
-    },
-    {
-      id: 'Bursary>Wallet>Student',
-      label: 'Student Wallet',
-      description: 'Manage student wallets',
-    },
-    { id: 'Bursary>Wallet>School', label: 'School Wallet', description: 'Manage school wallets' },
-    {
-      id: 'Bursary>Payment History',
-      label: 'Payment History',
-      description: 'View detailed payment history',
-    },
-  ],
-  Admission: [
-    {
-      id: 'Admission>Setup>Manage Admission',
-      label: 'Manage Admission',
-      description: 'Manage admission settings',
-    },
-    {
-      id: 'Admission>Application Processing',
-      label: 'Application Processing',
-      description: 'Process admission applications',
-    },
-    {
-      id: 'Admission>Admission Report',
-      label: 'Admission Report',
-      description: 'Generate admission reports',
-    },
-    {
-      id: 'Admission>My Application',
-      label: 'My Application',
-      description: 'View own applications',
-    },
-  ],
-  'Digital Class': [
-    { id: 'Digital Class>Live Class', label: 'Live Class', description: 'Manage live classes' },
-    {
-      id: 'Digital Class>Recorded Class',
-      label: 'Recorded Class',
-      description: 'Manage recorded classes',
-    },
-    { id: 'Digital Class>Lesson Note', label: 'Lesson Note', description: 'Manage lesson notes' },
-  ],
-  Forum: [{ id: 'Forum>Forum', label: 'Forum', description: 'Manage discussion forums' }],
-  Attendance: [
-    {
-      id: 'Attendance>Take Attendance',
-      label: 'Take Attendance',
-      description: 'Record attendance',
-    },
-    {
-      id: 'Attendance>Attendance Report',
-      label: 'Attendance Report',
-      description: 'Generate attendance reports',
-    },
-    {
-      id: 'Attendance>Affective & Psychomotor Domains',
-      label: 'Affective & Psychomotor Domains',
-      description: 'Manage affective and psychomotor assessments',
-    },
-  ],
-  'E-Resources': [
-    { id: 'E-Resources>e-Resources', label: 'e-Resources', description: 'Manage e-resources' },
-    {
-      id: 'E-Resources>Video Tutorials',
-      label: 'Video Tutorials',
-      description: 'Manage video tutorials',
-    },
-    {
-      id: 'E-Resources>Lesson Note (Student)',
-      label: 'Lesson Note (Student)',
-      description: 'Manage student lesson notes',
-    },
-    {
-      id: 'E-Resources>Lesson Note (Teacher)',
-      label: 'Lesson Note (Teacher)',
-      description: 'Manage teacher lesson notes',
-    },
-  ],
-  Messaging: [
-    {
-      id: 'Messaging>Manage Messages',
-      label: 'Manage Messages',
-      description: 'Manage messaging system',
-    },
-  ],
-  'My Wards': [
-    { id: 'My Wards>My Wards', label: 'My Wards', description: 'Manage ward information' },
-  ],
-  Result: [
-    { id: 'Result>Setup', label: 'Setup', description: 'Configure result settings' },
-    { id: 'Result>Upload Scores', label: 'Upload Scores', description: 'Upload student scores' },
-    {
-      id: 'Result>Result Consideration',
-      label: 'Result Consideration',
-      description: 'Manage result considerations',
-    },
-    { id: 'Result>Result Edit', label: 'Result Edit', description: 'Edit student results' },
-    { id: 'Result>Score Sheet', label: 'Score Sheet', description: 'Generate score sheets' },
-    { id: 'Result>Broadsheet', label: 'Broadsheet', description: 'Generate broadsheets' },
-    { id: 'Result>Summary Sheet', label: 'Summary Sheet', description: 'Generate summary sheets' },
-    {
-      id: 'Result>Continuous Assessment',
-      label: 'Continuous Assessment',
-      description: 'Manage continuous assessments',
-    },
-    { id: 'Result>Report Card', label: 'Report Card', description: 'Generate report cards' },
-    { id: 'Result>Report Sheet', label: 'Report Sheet', description: 'Generate report sheets' },
-    { id: 'Result>Comment Bank', label: 'Comment Bank', description: 'Manage comment banks' },
-  ],
-  Quiz: [
-    { id: 'Quiz>Setup', label: 'Setup', description: 'Configure quiz settings' },
-    { id: 'Quiz>Quiz Bank', label: 'Quiz Bank', description: 'Manage quiz banks' },
-    { id: 'Quiz>My Quiz', label: 'My Quiz', description: 'Manage personal quizzes' },
-    { id: 'Quiz>Quiz Report', label: 'Quiz Report', description: 'Generate quiz reports' },
-  ],
-  Homework: [
-    { id: 'Homework>Setup', label: 'Setup', description: 'Configure homework settings' },
-    { id: 'Homework>Question Bank', label: 'Question Bank', description: 'Manage question banks' },
-    { id: 'Homework>My Homework', label: 'My Homework', description: 'Manage personal homework' },
-  ],
-  OGSERA: [
-    {
-      id: 'OGSERA>Generate LIN',
-      label: 'Generate LIN',
-      description: 'Generate learner identification numbers',
-    },
-    {
-      id: 'OGSERA>Sync Registration to OGSERA',
-      label: 'Sync Registration to OGSERA',
-      description: 'Sync registrations to OGSERA',
-    },
-    {
-      id: 'OGSERA>Sync Staff to OGSERA',
-      label: 'Sync Staff to OGSERA',
-      description: 'Sync staff to OGSERA',
-    },
-    {
-      id: 'OGSERA>Learners Placement',
-      label: 'Learners Placement',
-      description: 'Manage learner placements',
-    },
-    { id: 'OGSERA>BECE Result', label: 'BECE Result', description: 'Manage BECE results' },
-    {
-      id: 'OGSERA>Subject Mapping',
-      label: 'Subject Mapping',
-      description: 'Manage subject mappings',
-    },
-    { id: 'OGSERA>Data Update', label: 'Data Update', description: 'Update OGSERA data' },
-    {
-      id: 'OGSERA>Student Transfer',
-      label: 'Student Transfer',
-      description: 'Manage student transfers',
-    },
-  ],
-};
+const SearchInput = styled('div')(({ theme }) => ({
+  position: 'relative',
+  borderRadius: '16px',
+  backgroundColor: 'rgba(241, 245, 249, 0.6)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    backgroundColor: 'rgba(241, 245, 249, 0.9)',
+    boxShadow: '0 0 0 2px rgba(93, 135, 255, 0.1)',
+  },
+  '&:focus-within': {
+    backgroundColor: '#fff',
+    boxShadow: '0 0 0 3px rgba(93, 135, 255, 0.2)',
+    width: '100%',
+  },
+  width: '100%',
+  maxWidth: '400px',
+  display: 'flex',
+  alignItems: 'center',
+  padding: '8px 16px',
+}));
 
-const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) => {
-  const [selectedModules, setSelectedModules] = useState(currentPermissions || []);
-  const [packageLevel, setPackageLevel] = useState('');
+const ManageModule = ({ selectedPlan, currentPermissions, modules = [], packages = [], onSave, onCancel }) => {
+  // 1. Stable Keys and Presets (move up for state init)
+  const permissionsKey = React.useMemo(() => 
+    (currentPermissions || []).map(id => String(id)).sort().join(','),
+    [currentPermissions]
+  );
+
+  const dynamicPackagePresets = React.useMemo(() => {
+    return packages.map((pkg, index) => {
+      const colors = ['#5D87FF', '#FFAE1F', '#13DEB9', '#FA896B'];
+      return {
+        value: String(pkg.id),
+        label: pkg.package_name || pkg.pac_name,
+        description: pkg.package_description || pkg.pac_description,
+        moduleIds: (pkg.modules || []).map(m => String(m.id)),
+        color: colors[index % colors.length]
+      };
+    });
+  }, [packages]);
+
+  // 2. Initialize state directly from props to prevent mount flicker
+  const initialNormalized = React.useMemo(() => (currentPermissions || []).map(id => String(id)), [permissionsKey]);
+  
+  const [selectedModules, setSelectedModules] = useState(initialNormalized);
+  const [packageLevel, setPackageLevel] = useState(() => {
+    const currentSorted = [...initialNormalized].sort();
+    const pkg = dynamicPackagePresets.find(p => {
+      const pkgSorted = [...p.moduleIds].sort();
+      return currentSorted.length === pkgSorted.length && 
+             currentSorted.every((val, index) => val === pkgSorted[index]);
+    });
+    return pkg ? pkg.value : '';
+  });
+
   const [hasChanges, setHasChanges] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showMatchCelebration, setShowMatchCelebration] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const isInitialMount = React.useRef(true);
+
+  // 3. Sync Logic (Only run after mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const normalized = (currentPermissions || []).map(id => String(id));
+    if (JSON.stringify(normalized.sort()) !== JSON.stringify([...selectedModules].sort())) {
+      setSelectedModules(normalized);
+      setHasChanges(false);
+    }
+  }, [permissionsKey, selectedPlan?.id]);
+
+  // Group modules dynamically
+  const moduleCategories = React.useMemo(() => {
+    const groups = {};
+    const isRoot = (m) => m.parent_id == null || m.parent_id === 0 || m.parent_id === "0";
+    const roots = modules.filter(m => isRoot(m));
+    
+    if (roots.length > 0) {
+      roots.forEach(root => {
+        const rootIdStr = String(root.id);
+        const children = modules.filter(m => String(m.parent_id) === rootIdStr);
+        if (children.length > 0) {
+          groups[root.module_name] = children.map(c => ({
+            id: String(c.id),
+            label: c.module_name,
+            description: c.module_description
+          }));
+        } else {
+          if (!groups['General']) groups['General'] = [];
+          groups['General'].push({
+            id: String(root.id),
+            label: root.module_name,
+            description: root.module_description
+          });
+        }
+      });
+    } else {
+      groups['Modules'] = modules.map(m => ({
+        id: String(m.id),
+        label: m.module_name,
+        description: m.module_description
+      }));
+    }
+    return groups;
+  }, [modules]);
+
+  const categories = React.useMemo(() => Object.keys(moduleCategories), [moduleCategories]);
+
+  // Highlight matching package and trigger celebration
+  useEffect(() => {
+    const currentSorted = [...selectedModules].sort();
+    const matchingPackage = dynamicPackagePresets.find(pkg => {
+      const pkgSorted = [...pkg.moduleIds].sort();
+      return currentSorted.length === pkgSorted.length && 
+             currentSorted.every((val, index) => val === pkgSorted[index]);
+    });
+    
+    const newLevel = matchingPackage ? matchingPackage.value : '';
+    if (newLevel !== packageLevel) {
+      if (!isInitialMount.current && matchingPackage) {
+        setShowMatchCelebration(true);
+        setTimeout(() => setShowMatchCelebration(false), 2000);
+      }
+      setPackageLevel(newLevel);
+    }
+  }, [selectedModules, dynamicPackagePresets]);
 
   const handleModuleChange = (moduleId, checked) => {
-    let newModules;
-    if (checked) {
-      newModules = [...selectedModules, moduleId];
-    } else {
-      newModules = selectedModules.filter((id) => id !== moduleId);
-    }
-    setSelectedModules(newModules);
+    const sId = String(moduleId);
+    setSelectedModules(prev => checked ? [...prev, sId] : prev.filter(id => id !== sId));
     setHasChanges(true);
   };
 
   const handleSelectAll = (categoryModules) => {
-    const categoryIds = categoryModules.map((m) => m.id);
+    const categoryIds = categoryModules.map((m) => String(m.id));
     const allSelected = categoryIds.every((id) => selectedModules.includes(id));
-
     let newModules;
     if (allSelected) {
       newModules = selectedModules.filter((id) => !categoryIds.includes(id));
@@ -439,208 +199,481 @@ const ManageModule = ({ selectedPlan, currentPermissions, onSave, onCancel }) =>
     setHasChanges(true);
   };
 
-  const handlePackageLevelChange = (newLevel) => {
-    setPackageLevel(newLevel);
-    const levelConfig = packageLevels.find((level) => level.value === newLevel);
+  const handlePackageLevelChange = (newLevelId) => {
+    const sLevelId = String(newLevelId);
+    setPackageLevel(sLevelId);
+    const levelConfig = dynamicPackagePresets.find((level) => level.value === sLevelId);
     if (levelConfig) {
-      setSelectedModules(levelConfig.defaultModules);
+      setSelectedModules(levelConfig.moduleIds);
     }
     setHasChanges(true);
   };
 
-  const handleSave = () => {
-    onSave(selectedModules);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(selectedModules);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
+  const activeCategory = categories[activeTab];
+  const allCurrentModules = moduleCategories[activeCategory] || [];
+  
+  const filteredModules = React.useMemo(() => {
+    if (!searchQuery) return allCurrentModules;
+    const lowerQuery = searchQuery.toLowerCase();
+    return modules.filter(m => 
+      m.module_name.toLowerCase().includes(lowerQuery) || 
+      (m.module_description && m.module_description.toLowerCase().includes(lowerQuery))
+    ).map(m => ({
+      id: String(m.id),
+      label: m.module_name,
+      description: m.module_description,
+      category: categories.find(cat => moduleCategories[cat].some(cm => String(cm.id) === String(m.id)))
+    }));
+  }, [searchQuery, allCurrentModules, modules, categories, moduleCategories]);
+
   const getModuleCount = (categoryModules) => {
-    const categoryIds = categoryModules.map((m) => m.id);
+    const categoryIds = categoryModules.map((m) => String(m.id));
     return selectedModules.filter((id) => categoryIds.includes(id)).length;
   };
 
   return (
-    <Box>
-      <Typography variant="h6" mb={2}>
-        Manage Modules for {selectedPlan?.name || 'Selected Plan'}
-      </Typography>
-
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Select the package level and modules you want to include in this plan. Changes will take
-        effect immediately after saving.
-      </Alert>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" color="primary" mb={3}>
-          Custom Module Settings
-        </Typography>
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-            justifyContent: 'space-between',
+    <Box sx={{ position: 'relative', pb: 12, minHeight: '800px' }}>
+      {/* Immersive Animated Background */}
+      <Box sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 0,
+        overflow: 'hidden',
+        background: '#f8fafc',
+        borderRadius: '24px',
+      }}>
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 10, 0],
+            opacity: [0.3, 0.4, 0.3],
           }}
-        >
-          {Object.entries(moduleCategories).map(([category, modules]) => {
-            const selectedCount = getModuleCount(modules);
-            const allSelected = selectedCount === modules.length;
-            // Always use scrollable area with fixed height for all categories
-            const fixedHeight = 180; // px, adjust if needed for 3 modules
+          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute',
+            top: '-20%',
+            left: '-20%',
+            width: '60%',
+            height: '60%',
+            background: 'radial-gradient(circle, #5D87FF30 0%, transparent 70%)',
+            filter: 'blur(80px)',
+          }}
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            rotate: [10, 0, 10],
+            opacity: [0.2, 0.3, 0.2],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute',
+            bottom: '-10%',
+            right: '-10%',
+            width: '50%',
+            height: '50%',
+            background: 'radial-gradient(circle, #FFAE1F20 0%, transparent 70%)',
+            filter: 'blur(100px)',
+          }}
+        />
+      </Box>
 
-            return (
-              <Paper
-                key={category}
-                sx={{
-                  mb: 2,
-                  overflow: 'hidden',
-                  transition: 'all 0.2s ease-in-out',
-                  '&:hover': {
-                    boxShadow: 2,
-                    borderColor: 'primary.light',
-                  },
-                  flex: '1 1 calc(50% - 8px)',
-                  minWidth: 0,
+      {/* Hero Glass Header */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{ position: 'relative', zIndex: 2 }}
+      >
+        <GlassBox sx={{ 
+          p: 4, 
+          mb: 5, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Match Celebration Effect */}
+          <AnimatePresence>
+            {showMatchCelebration && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1.2 }}
+                exit={{ opacity: 0, scale: 1.5 }}
+                style={{
+                  position: 'absolute',
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  background: 'rgba(93, 135, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10
                 }}
               >
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: 'primary.light',
-                    borderBottom: '1px solid',
-                    borderColor: 'divider',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
+                <IconSparkles size={120} color="#5D87FF" style={{ opacity: 0.3 }} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <Box>
+            <Typography variant="overline" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: 3 }}>
+              ULTIMATE CONFIGURATOR
+            </Typography>
+            <Typography variant="h3" fontWeight="900" sx={{ mt: 1, color: '#0f172a', letterSpacing: -1 }}>
+              {selectedPlan?.name} <span style={{ fontWeight: 300, color: '#94a3b8' }}>Tier</span>
+            </Typography>
+            <Typography variant="body1" sx={{ color: '#64748b', mt: 1, maxWidth: 450, fontWeight: 500, lineHeight: 1.6, position: 'relative', zIndex: 2 }}>
+              Define the architectural capabilities of this revenue tier with precision engineering.
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <GlassBox sx={{ px: 3, py: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: 'white' }}>
+                <Avatar sx={{ bgcolor: alpha('#5D87FF', 0.1), color: '#5D87FF' }}>
+                  <IconTerminal2 size={24} />
+                </Avatar>
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 800, color: '#94a3b8' }}>CAPABILITIES</Typography>
+                  <Typography variant="h6" fontWeight="900" sx={{ color: '#1e293b' }}>{selectedModules.length} Active</Typography>
+                </Box>
+              </GlassBox>
+            </motion.div>
+          </Box>
+        </GlassBox>
+      </motion.div>
+
+      {/* Package Horizontal Slider */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        style={{ position: 'relative', zIndex: 2 }}
+      >
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h5" fontWeight="900" sx={{ color: '#1e293b' }}>Architectural Templates</Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <IconCommand size={18} color="#94a3b8" />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#94a3b8' }}>SELECT TEMPLATE TO AUTO-CONFIGURE</Typography>
+            </Box>
+          </Box>
+          <Grid container spacing={3}>
+            {dynamicPackagePresets.map((pkg, idx) => (
+              <Grid item xs={12} sm={3} key={pkg.value}>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  whileHover={{ y: -10 }}
                 >
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <Typography
-                      variant="h6"
-                      color={selectedCount > 0 ? 'primary.dark' : 'text.primary'}
-                    >
-                      {category}
-                    </Typography>
-                    <Chip
-                      label={`${selectedCount}/${modules.length}`}
-                      size="small"
-                      color={selectedCount > 0 ? 'primary' : 'default'}
-                    />
-                  </Box>
-                  <Button
-                    size="small"
-                    onClick={() => handleSelectAll(modules)}
-                    color="primary"
-                    sx={{ minWidth: 120 }}
+                  <Paper
+                    onClick={() => handlePackageLevelChange(pkg.value)}
+                    sx={{
+                      p: 3,
+                      cursor: 'pointer',
+                      borderRadius: '24px',
+                      height: '100%',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      border: '2px solid',
+                      borderColor: packageLevel === pkg.value ? pkg.color : 'transparent',
+                      background: packageLevel === pkg.value 
+                        ? `linear-gradient(135deg, ${alpha(pkg.color, 0.05)} 0%, white 100%)`
+                        : 'white',
+                      boxShadow: packageLevel === pkg.value 
+                        ? `0 20px 40px ${alpha(pkg.color, 0.15)}` 
+                        : '0 4px 20px rgba(0,0,0,0.02)',
+                      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
                   >
-                    {allSelected ? 'Deselect All' : 'Select All'}
-                  </Button>
-                </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                      <Box sx={{ 
+                        p: 1.5, 
+                        borderRadius: '12px', 
+                        bgcolor: alpha(pkg.color, 0.1), 
+                        color: pkg.color,
+                        display: 'flex'
+                      }}>
+                        <IconBolt size={24} />
+                      </Box>
+                      {packageLevel === pkg.value && (
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                          <IconCircleCheck size={28} color={pkg.color} />
+                        </motion.div>
+                      )}
+                    </Box>
+                    <Typography variant="h6" fontWeight="900" sx={{ mb: 1, color: '#0f172a' }}>
+                      {pkg.label}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, lineHeight: 1.5, height: 45, overflow: 'hidden' }}>
+                      {pkg.description}
+                    </Typography>
+                  </Paper>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </motion.div>
 
-                <Box
-                  sx={{
-                    p: 2,
-                    maxHeight: `${fixedHeight}px`,
-                    minHeight: `${fixedHeight}px`,
-                    overflowY: 'auto',
-                    '&::-webkit-scrollbar': {
-                      width: '6px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                      background: 'grey.100',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      background: 'primary.main',
-                      borderRadius: '3px',
-                    },
-                    '&::-webkit-scrollbar-thumb:hover': {
-                      background: 'primary.dark',
-                    },
+      {/* Main Grid View */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        style={{ position: 'relative', zIndex: 2 }}
+      >
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={3}>
+            <GlassBox sx={{ overflow: 'hidden', p: 1 }}>
+              <Box sx={{ p: 2, mb: 1 }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#94a3b8', letterSpacing: 2 }}>MODULE SUITES</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {categories.map((cat, idx) => {
+                  const total = moduleCategories[cat].length;
+                  const count = getModuleCount(moduleCategories[cat]);
+                  const isActive = activeTab === idx;
+                  
+                  return (
+                    <motion.div key={cat} whileHover={{ x: 5 }}>
+                      <Box
+                        onClick={() => setActiveTab(idx)}
+                        sx={{
+                          p: 2,
+                          borderRadius: '16px',
+                          cursor: 'pointer',
+                          bgcolor: isActive ? alpha('#5D87FF', 0.06) : 'transparent',
+                          border: '1px solid',
+                          borderColor: isActive ? alpha('#5D87FF', 0.1) : 'transparent',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                          <Typography variant="body2" fontWeight={isActive ? 800 : 600} sx={{ color: isActive ? 'primary.main' : '#475569' }}>
+                            {cat}
+                          </Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 700, opacity: 0.6 }}>{count}/{total}</Typography>
+                        </Box>
+                        <Box sx={{ width: '100%', height: 4, borderRadius: 2, bgcolor: '#f1f5f9', overflow: 'hidden' }}>
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(count / total) * 100}%` }}
+                            style={{
+                              height: '100%',
+                              background: count === total ? '#13DEB9' : count > 0 ? '#5D87FF' : '#cbd5e1',
+                              borderRadius: 2
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    </motion.div>
+                  );
+                })}
+              </Box>
+            </GlassBox>
+          </Grid>
+
+          <Grid item xs={12} md={9}>
+            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <SearchInput>
+                <IconSearch size={20} color="#94a3b8" />
+                <input 
+                  placeholder="Search capabilities..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ 
+                    border: 'none', 
+                    background: 'transparent', 
+                    outline: 'none', 
+                    marginLeft: '12px',
+                    width: '100%',
+                    fontWeight: 600,
+                    fontSize: '15px'
+                  }}
+                />
+              </SearchInput>
+              <motion.div whileHover={{ scale: 1.05 }}>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => handleSelectAll(allCurrentModules)}
+                  sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 800, px: 3 }}
+                >
+                  {getModuleCount(allCurrentModules) === allCurrentModules.length ? 'Deselect Suite' : 'Configure Full Suite'}
+                </Button>
+              </motion.div>
+            </Box>
+
+            <AnimatePresence>
+              <motion.div
+                key={activeTab + searchQuery}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+              >
+                <Grid container spacing={2}>
+                  {filteredModules.map((module) => {
+                    const isSelected = selectedModules.includes(module.id);
+                    return (
+                      <Grid item xs={12} sm={6} key={module.id}>
+                        <motion.div layout>
+                          <Paper
+                            onClick={() => handleModuleChange(module.id, !isSelected)}
+                            sx={{
+                              p: 3,
+                              borderRadius: '20px',
+                              cursor: 'pointer',
+                              border: '2px solid',
+                              borderColor: isSelected ? 'primary.main' : '#f1f5f9',
+                              background: 'white',
+                              boxShadow: isSelected ? '0 15px 30px rgba(93, 135, 255, 0.1)' : 'none',
+                              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                              '&:hover': {
+                                borderColor: 'primary.main',
+                                transform: isSelected ? 'none' : 'translateY(-4px)',
+                                boxShadow: '0 10px 25px rgba(0,0,0,0.05)'
+                              }
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                              <Box sx={{ mt: 0.5 }}>
+                                {isSelected ? (
+                                  <IconCircleCheck size={28} color="#5D87FF" />
+                                ) : (
+                                  <IconCircleDashed size={28} color="#cbd5e1" />
+                                )}
+                              </Box>
+                              <Box>
+                                <Typography variant="subtitle1" fontWeight="900" sx={{ color: '#0f172a' }}>
+                                  {module.label || 'Unnamed Module'}
+                                  {searchQuery && module.category && (
+                                    <Chip label={module.category} size="small" sx={{ ml: 1, height: 20, fontSize: '10px', fontWeight: 800 }} />
+                                  )}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, fontWeight: 500, lineHeight: 1.4 }}>
+                                  {module.description || 'No description provided'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Paper>
+                        </motion.div>
+                      </Grid>
+                    );
+                  })}
+                  {filteredModules.length === 0 && modules.length > 0 && (
+                    <Box sx={{ width: '100%', py: 10, textAlign: 'center' }}>
+                      <IconFocus2 size={64} color="#e2e8f0" />
+                      <Typography variant="h6" sx={{ color: '#94a3b8', mt: 2 }}>No architectural matches found</Typography>
+                    </Box>
+                  )}
+                  {modules.length === 0 && (
+                    <Box sx={{ width: '100%', py: 10, textAlign: 'center' }}>
+                      <CircularProgress size={40} sx={{ color: '#5D87FF', mb: 2 }} />
+                      <Typography variant="h6" sx={{ color: '#94a3b8' }}>Assembling core architecture...</Typography>
+                    </Box>
+                  )}
+                </Grid>
+              </motion.div>
+            </AnimatePresence>
+          </Grid>
+        </Grid>
+      </motion.div>
+
+      {/* Extreme Floating Action Bar */}
+      <motion.div
+        initial={{ y: 100, x: '-50%', opacity: 0 }}
+        animate={{ y: 0, x: '-50%', opacity: 1 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 120, delay: 0.2 }}
+        style={{
+          position: 'fixed',
+          bottom: 30,
+          left: '50%',
+          width: 'calc(100% - 80px)',
+          maxWidth: 1200,
+          zIndex: 1100,
+        }}
+      >
+        <Box>
+          <GlassBox sx={{ 
+            p: 2.5, 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            bgcolor: 'rgba(255, 255, 255, 0.9)',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.15)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            width: '100%'
+          }}>
+            <Box sx={{ display: 'flex', gap: 6, ml: 4 }}>
+              <Box>
+                <Typography variant="caption" sx={{ fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5 }}>PLAN VALUE</Typography>
+                <Typography variant="h4" fontWeight="950" color="primary" sx={{ letterSpacing: -1 }}>₦{parseFloat(selectedPlan?.price || 0).toLocaleString()}</Typography>
+              </Box>
+              <Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />
+              <Box>
+                <Typography variant="caption" sx={{ fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5 }}>ACTIVE CONFIG</Typography>
+                <Typography variant="h5" fontWeight="950" sx={{ color: '#0f172a' }}>
+                  {dynamicPackagePresets.find(p => p.value === packageLevel)?.label || 'CUSTOM BUILD'}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 3, mr: 2 }}>
+              <Button 
+                onClick={onCancel} 
+                sx={{ 
+                  px: 4, 
+                  borderRadius: '16px', 
+                  fontWeight: 800, 
+                  color: '#64748b', 
+                  textTransform: 'none',
+                  '&:hover': { bgcolor: alpha('#64748b', 0.05) }
+                }}
+              >
+                Discard Changes
+              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button 
+                  variant="contained" 
+                  onClick={handleSave} 
+                  disabled={!hasChanges || isSaving}
+                  endIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <IconRefresh size={18} />}
+                  sx={{ 
+                    px: 6, 
+                    py: 2, 
+                    borderRadius: '18px', 
+                    fontWeight: 900, 
+                    textTransform: 'none',
+                    fontSize: '16px',
+                    boxShadow: '0 10px 30px rgba(93, 135, 255, 0.3)',
+                    background: 'linear-gradient(135deg, #5D87FF 0%, #4671e6 100%)',
+                    '&:hover': { 
+                      boxShadow: '0 15px 40px rgba(93, 135, 255, 0.4)',
+                      background: 'linear-gradient(135deg, #4671e6 0%, #3a60d1 100%)'
+                    }
                   }}
                 >
-                  {modules.map((module, index) => (
-                    <Box
-                      key={module.id}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        p: 1.5,
-                        mb: index < modules.length - 1 ? 1 : 0,
-                        borderRadius: 1,
-                        border: '1px solid',
-                        borderColor: selectedModules.includes(module.id)
-                          ? 'primary.main'
-                          : 'grey.300',
-                        bgcolor: selectedModules.includes(module.id)
-                          ? 'primary.light'
-                          : 'background.paper',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          borderColor: 'primary.main',
-                          bgcolor: selectedModules.includes(module.id)
-                            ? 'primary.light'
-                            : 'primary.light',
-                          opacity: selectedModules.includes(module.id) ? 1 : 0.8,
-                        },
-                      }}
-                      onClick={() =>
-                        handleModuleChange(module.id, !selectedModules.includes(module.id))
-                      }
-                    >
-                      <Checkbox
-                        checked={selectedModules.includes(module.id)}
-                        onChange={(e) => handleModuleChange(module.id, e.target.checked)}
-                        color="primary"
-                        size="small"
-                        sx={{ mt: -0.5 }}
-                      />
-                      <Box sx={{ ml: 1, flex: 1 }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight="medium"
-                          color={
-                            selectedModules.includes(module.id) ? 'primary.dark' : 'text.primary'
-                          }
-                          sx={{ mb: 0.5 }}
-                        >
-                          {module.label}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ display: 'block', lineHeight: 1.3 }}
-                        >
-                          {module.description}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Paper>
-            );
-          })}
+                  {isSaving ? 'Deploying...' : 'Deploy Architecture'}
+                </Button>
+              </motion.div>
+            </Box>
+          </GlassBox>
         </Box>
-      </Box>
-
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="body2" color="textSecondary">
-            Package Level: <strong>{packageLevel || 'Not selected'}</strong>
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Total modules selected: <strong>{selectedModules.length}</strong>
-          </Typography>
-        </Box>
-
-        <Box display="flex" gap={2}>
-          <Button onClick={onCancel} color="inherit">
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleSave} disabled={!hasChanges}>
-            Save Changes
-          </Button>
-        </Box>
-      </Box>
+      </motion.div>
     </Box>
   );
 };

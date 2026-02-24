@@ -256,7 +256,7 @@ const Router = isTenantSubdomain ? [
       { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
       { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/modern', exact: true, element: <ModernDashboard /> },
-      { path: '/package-manager', element: <PackageManager /> },
+      { path: '/edutier', element: <PackageManager /> },
       { path: '/', element: <Navigate to="/agent/login" /> },
       // {
       //   path: '/',

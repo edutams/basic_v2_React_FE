@@ -70,7 +70,6 @@ const AgentModal = ({
 
   const initialValues = {
     organizationName: shouldPrefillForm ? (selectedAgent?.organizationName || '') : '',
-    organizationTitle: shouldPrefillForm ? (selectedAgent?.organizationTitle || '') : '',
     agentDetails: shouldPrefillForm ? (selectedAgent?.agentDetails || '') : '',
     contactDetails: shouldPrefillForm ? (selectedAgent?.contactDetails || '') : '',
     agentPhone: shouldPrefillForm ? (selectedAgent?.phoneNumber || '') : '',
@@ -110,7 +109,6 @@ const AgentModal = ({
     try {
         const payload = {
             org_name: values.organizationName,
-            org_title: values.organizationTitle,
             name: values.agentDetails,
             email: values.contactDetails,
             phone: values.agentPhone,
@@ -140,7 +138,6 @@ const AgentModal = ({
             
             // Map backend fields to formik fields
             if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
-            if (backendErrors.org_title) mappedErrors.organizationTitle = backendErrors.org_title[0];
             if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
             if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
             if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
@@ -159,7 +156,6 @@ const AgentModal = ({
     try {
         const payload = {
             org_name: values.organizationName,
-            org_title: values.organizationTitle,
             name: values.agentDetails,
             email: values.contactDetails,
             phone: values.agentPhone,
@@ -189,7 +185,6 @@ const AgentModal = ({
             const mappedErrors = {};
             
             if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
-            if (backendErrors.org_title) mappedErrors.organizationTitle = backendErrors.org_title[0];
             if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
             if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
             if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];

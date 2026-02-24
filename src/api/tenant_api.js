@@ -2,15 +2,14 @@ import axios from 'axios';
 
 const getTenantBaseURL = () => {
     const hostname = window.location.hostname;
-    const parts = hostname.split('.');
+    const centralHost = import.meta.env.VITE_API_BASE_URL 
+        ? new URL(import.meta.env.VITE_API_BASE_URL).hostname 
+        : 'basic_v2.test';
     
-    // Dynamically detect the central domain (e.g., 'basic_v2.test')
-    // For local dev like 'basic_v2.test', it's the last two parts.
-    // For 'olamide.basic_v2.test', it's also the last two parts.
-    const centralDomain = parts.slice(-2).join('.');
+    const isTenantSubdomain = hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
     
     // Check if we are on a subdomain
-    if (parts.length > 2) {
+    if (isTenantSubdomain) {
         // Use the protocol from the current page
         const protocol = window.location.protocol;
         return `${protocol}//${hostname}/api/v1`;
@@ -18,7 +17,7 @@ const getTenantBaseURL = () => {
 
     // Default or fallback
     return import.meta.env.VITE_API_BASE_URL + '/api/v1';
-};
+}
 
 const tenantApi = axios.create({
   baseURL: getTenantBaseURL(),
@@ -36,7 +35,16 @@ tenantApi.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthRequest = originalRequest.url.includes('/login') || originalRequest.url.includes('/refresh-token');
+
+    console.log('Tenant Interceptor 401 check:', {
+      url: originalRequest.url,
+      status: error.response?.status,
+      _retry: originalRequest._retry,
+      isAuthRequest: isAuthRequest
+    });
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
       try {
         const refreshRes = await tenantApi.post('/refresh-token');

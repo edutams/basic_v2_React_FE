@@ -44,7 +44,7 @@ const AgentFormFields = ({ formik }) => {
 
   return (
     <>
-      <Grid item size={{ xs: 12, md: 6, sm: 4 }}>
+      <Grid item size={{ xs: 12, md: 12, lg: 12 }}>
         <TextField
           key="organizationName"
           label="Organization Name"
@@ -58,21 +58,7 @@ const AgentFormFields = ({ formik }) => {
         />
       </Grid>
 
-      <Grid item size={{ xs: 12, md: 6, sm: 4 }}>
-        <TextField
-          key="organizationTitle"
-          label="Organization Title"
-          fullWidth
-          name="organizationTitle"
-          value={formik.values.organizationTitle}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.organizationTitle && Boolean(formik.errors.organizationTitle)}
-          helperText={formik.touched.organizationTitle && formik.errors.organizationTitle}
-        />
-      </Grid>
-
-      <Grid item size={{ xs: 12, md: 6, sm: 4 }}>
+      <Grid item size={{ xs: 12, md: 12, sm: 4 ,lg:12}}>
         <TextField
           key="agentDetails"
           label="Agent Name"

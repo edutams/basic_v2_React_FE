@@ -11,6 +11,7 @@ const defaultAuthState = {
 };
 
 export const TenantAuthProvider = ({ children }) => {
+  console.log('TenantAuthProvider rendering');
   const [user, setUser] = useState(defaultAuthState.user);
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
@@ -29,7 +30,8 @@ export const TenantAuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const res = await api.get('/get-user');
-        setUser(res.data?.data);
+        // The backend returns the user object directly
+        setUser(res.data);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('tenant_access_token');
@@ -94,6 +96,8 @@ export const TenantAuthProvider = ({ children }) => {
     logout,
     clearError,
   };
+
+  console.log('TenantAuthProvider contextValue:', contextValue);
 
   return <TenantAuthContext.Provider value={contextValue}>{children}</TenantAuthContext.Provider>;
 };

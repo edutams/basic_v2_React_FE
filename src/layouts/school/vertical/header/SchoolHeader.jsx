@@ -7,7 +7,7 @@ import { CustomizerContext } from 'src/context/CustomizerContext';
 import Search from '../../../full/vertical/header/Search';
 import Language from '../../../full/vertical/header/Language';
 import Notifications from '../../../full/vertical/header/Notification';
-import Profile from '../../../full/vertical/header/Profile';
+import Profile from './TenantProfile';
 
 const SchoolHeader = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));

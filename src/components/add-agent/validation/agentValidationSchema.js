@@ -6,11 +6,6 @@ export const agentValidationSchema = yup.object({
     .min(2, 'Organization name must be at least 2 characters')
     .max(100, 'Organization name must be less than 100 characters')
     .required('Organization name is required'),
-  organizationTitle: yup
-    .string()
-    .min(2, 'Organization title must be at least 2 characters')
-    .max(100, 'Organization title must be less than 100 characters')
-    .required('Organization title is required'),
   agentDetails: yup
     .string()
     .min(2, 'Agent name must be at least 2 characters')

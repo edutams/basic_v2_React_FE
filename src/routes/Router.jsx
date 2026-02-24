@@ -199,8 +199,11 @@ const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtop
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 
 const hostname = window.location.hostname;
-const parts = hostname.split('.');
-const isTenantSubdomain = parts.length > 2;
+const centralHost = import.meta.env.VITE_API_BASE_URL 
+  ? new URL(import.meta.env.VITE_API_BASE_URL).hostname 
+  : 'basic_v2.test';
+
+const isTenantSubdomain = hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
 
 const Router = isTenantSubdomain ? [
   {

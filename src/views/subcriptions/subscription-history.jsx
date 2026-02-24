@@ -18,6 +18,7 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -278,9 +279,25 @@ const SubscriptionHistory = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={9} align="center">
-                        <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
+                        {/* <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
                           No transactions found
-                        </Typography>
+                        </Typography> */}
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mb: 3,
+                            width: '100%',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            '& .MuiAlert-icon': {
+                              mr: 1.5,
+                            },
+                          }}
+                        >
+                          <Typography variant="body2" color="textSecondary">
+                            No records found
+                          </Typography>
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   )}

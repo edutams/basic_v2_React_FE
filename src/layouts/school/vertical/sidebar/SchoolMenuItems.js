@@ -6,6 +6,8 @@ import {
   IconUserCircle,
   IconBook,
   IconClipboardList,
+  IconAppWindow,
+  IconPoint,
 } from '@tabler/icons-react';
 
 const SchoolMenuItems = [
@@ -41,6 +43,27 @@ const SchoolMenuItems = [
         title: 'Scheme Of Work',
         icon: IconUsers,
         href: '/school-dashboard/scheme-of-work',
+      },
+    ],
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Subcriptions',
+    icon: IconAppWindow,
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Manage Subcription',
+        icon: IconPoint,
+        href: '/school-dashboard/manage-subcription',
+        // href: '/subcriptions/manage-subcription',
+      },
+      {
+        id: uniqueId(),
+        title: 'Subcription History',
+        icon: IconPoint,
+        href: '/school-dashboard/subscription-history',
       },
     ],
   },

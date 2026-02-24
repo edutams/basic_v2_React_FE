@@ -175,25 +175,25 @@ const Menuitems = [
     ],
   },
 
-  {
-    id: uniqueId(),
-    title: 'Subcriptions',
-    icon: IconAppWindow,
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Manage Subcription',
-        icon: IconPoint,
-        href: '/subcriptions/manage-subcription',
-      },
-      {
-        id: uniqueId(),
-        title: 'Subcription History',
-        icon: IconPoint,
-        href: '/subcriptions/subscription-history',
-      },
-    ],
-  },
+  // {
+  //   id: uniqueId(),
+  //   title: 'Subcriptions',
+  //   icon: IconAppWindow,
+  //   children: [
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Manage Subcription',
+  //       icon: IconPoint,
+  //       href: '/subcriptions/manage-subcription',
+  //     },
+  //     {
+  //       id: uniqueId(),
+  //       title: 'Subcription History',
+  //       icon: IconPoint,
+  //       href: '/subcriptions/subscription-history',
+  //     },
+  //   ],
+  // },
 
   /*
   {

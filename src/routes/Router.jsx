@@ -7,6 +7,10 @@ const SchoolDashboardMain = Loadable(
 );
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
+const Subcriptions = Loadable(lazy(() => import('../views/subcriptions/manage-subcription')));
+const SubscriptionHistory = Loadable(
+  lazy(() => import('../views/subcriptions/subscription-history')),
+);
 
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import DashboardsLayout from '../layouts/dashboard/DashboardsLayout';
@@ -21,7 +25,6 @@ const SchoolDashboard = Loadable(lazy(() => import('../views/dashboard/School'))
 const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
-
 const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')));
 
 /* ****Pages***** */
@@ -35,10 +38,6 @@ const ViewSchool = Loadable(lazy(() => import('../components/add-school/componen
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
-const Subcriptions = Loadable(lazy(() => import('../views/subcriptions/manage-subcription')));
-const SubscriptionHistory = Loadable(
-  lazy(() => import('../views/subcriptions/subscription-history')),
-);
 
 /* ****Apps***** */
 const Chats = Loadable(lazy(() => import('../views/apps/chat/Chat')));
@@ -230,9 +229,11 @@ const Router = isTenantSubdomain
               { path: '', element: <SchoolDashboardMain /> },
               { path: 'session-week-manager', element: <SessionWeekManager /> },
               { path: 'scheme-of-work', element: <SchemeOfWork /> },
+              { path: 'manage-subcription', element: <Subcriptions /> },
+              { path: 'subscription-history', element: <SubscriptionHistory /> },
             ],
           },
-          { path: '*', element: <Navigate to="/auth/404" /> },
+          // { path: '*', element: <Navigate to="/auth/404" /> },
         ],
       },
       {
@@ -269,8 +270,6 @@ const Router = isTenantSubdomain
           { path: '/package-manager', element: <PackageManager /> },
           { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
           { path: '/phet/stimulation-links', element: <StimulationLinks /> },
-          { path: '/subcriptions/manage-subcription', element: <Subcriptions /> },
-          { path: '/subcriptions/subscription-history', element: <SubscriptionHistory /> },
           { path: '/', element: <Navigate to="/agent/login" /> },
           // {
           //   path: '/',
@@ -298,20 +297,21 @@ const Router = isTenantSubdomain
               </ProtectedRoute>
             ),
           },
-          {
-            path: '/school-dashboard',
-            element: (
-              <ProtectedRoute>
-                <SchoolLayout />
-              </ProtectedRoute>
-            ),
-            children: [
-              { path: '', element: <SchoolDashboardMain /> },
-              { path: 'session-week-manager', element: <SessionWeekManager /> },
-              { path: 'scheme-of-work', element: <SchemeOfWork /> },
-              // { path: 'students', element: <SchoolStudents /> },
-            ],
-          },
+          // {
+          //   path: '/school-dashboard',
+          //   element: (
+          //     <ProtectedRoute>
+          //       <SchoolLayout />
+          //     </ProtectedRoute>
+          //   ),
+          //   children: [
+          //     { path: '', element: <SchoolDashboardMain /> },
+          //     { path: 'session-week-manager', element: <SessionWeekManager /> },
+          //     { path: 'scheme-of-work', element: <SchemeOfWork /> },
+          //     // { path: 'students', element: <SchoolStudents /> },
+          //   ],
+          // },
+
           { path: '/apps/chats', element: <Chats /> },
           { path: '/apps/notes', element: <Notes /> },
           { path: '/apps/calendar', element: <Calendar /> },

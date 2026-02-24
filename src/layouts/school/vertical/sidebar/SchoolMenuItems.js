@@ -64,6 +64,7 @@ const SchoolMenuItems = [
         title: 'Subcription History',
         icon: IconPoint,
         href: '/school-dashboard/subscription-history',
+        // href: '/subcriptions/manage-subcription',
       },
     ],
   },

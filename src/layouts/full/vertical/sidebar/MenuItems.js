@@ -153,23 +153,11 @@ const Menuitems = [
 
   {
     id: uniqueId(),
-    title: 'Subscriptions',
+    title: 'Tenant Subscriptions',
     icon: IconAppWindow,
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Manage Subscription',
-        icon: IconPoint,
-        href: '/subcriptions/manage-subcription',
-      },
-      {
-        id: uniqueId(),
-        title: 'Subscription History',
-        icon: IconPoint,
-        href: '/subcriptions/subscription-history',
-      },
-    ],
+    href: '/agent/subscriptions',
   },
+
 
   /*
   {

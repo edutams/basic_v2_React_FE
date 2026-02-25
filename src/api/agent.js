@@ -19,7 +19,15 @@ const agentApi = {
     const response = await api.get(`/agent/get_agent_details/${id}`);
     return response.data;
   },
-  // Add other methods as needed
+  impersonateAgent: async (id) => {
+    const response = await api.post(`/agent/impersonate/agent/${id}`);
+    return response.data;
+  },
+  impersonateTenant: async (id) => {
+    const response = await api.post(`/agent/impersonate/tenant/${id}`);
+    return response.data;
+  },
 };
+
 
 export default agentApi;

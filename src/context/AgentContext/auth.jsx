@@ -143,7 +143,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const impersonateAgent = async (id) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await api.post(`/agent/impersonate/agent/${id}`);
+      const { access_token, expires_in, user: apiUser, data: apiData } = res.data;
+      const userData = apiUser || apiData;
+
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('token_expires_in', expires_in.toString());
+      setUser(userData);
+      setIsAuthenticated(true);
+
+      return { success: true, user: userData };
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Impersonation failed';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearError = () => setError(null);
+
 
   // ---------------- Context value ----------------
   const contextValue = {
@@ -157,8 +181,10 @@ export const AuthProvider = ({ children }) => {
     updateAgentProfile,
     changePassword,
     refreshToken,
+    impersonateAgent,
     clearError,
   };
+
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

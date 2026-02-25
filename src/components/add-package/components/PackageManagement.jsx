@@ -26,6 +26,7 @@ const PackageManagement = ({
   const [packageActionType, setPackageActionType] = useState('create');
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [manageModulesOpen, setManageModulesOpen] = useState(false);
+  const [view, setView] = useState('list'); // 'list' or 'modules'
 
   const currentPackageModules = useMemo(() => {
     if (!currentPackage) return [];
@@ -61,7 +62,8 @@ const PackageManagement = ({
       // case 'viewModules':
       case 'manageModules':
         setCurrentPackage(package_);
-        setPackageModules(modules.filter(m => m.packageId === package_.id));
+        setPackageModules(package_.modules || []);
+        setView('modules');
         break;
 
       // case 'manageModules':
@@ -127,7 +129,7 @@ const PackageManagement = ({
       <Breadcrumb title="Packages" items={BCrumb} />
       
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 7 }}>
+        <Grid size={{ xs: 12, md: view === 'modules' ? 7 : 12 }}>
           <PackageTable
             packages={packages}
             onPackageAction={handlePackageAction}
@@ -135,15 +137,18 @@ const PackageManagement = ({
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 5 }}>
-          <ModuleManagement
-            packageModules={packageModules}
-            currentPackage={currentPackage}
-            onModuleUpdate={handleModuleUpdate}
-            onAttachModule={handleAttachModule}
-            isLoading={isLoading}
-          />
-        </Grid>
+        {view === 'modules' && (
+          <Grid size={{ xs: 12, md: 5 }}>
+            <ModuleManagement
+              packageModules={packageModules}
+              currentPackage={currentPackage}
+              onModuleUpdate={handleModuleUpdate}
+              onAttachModule={handleAttachModule}
+              isLoading={isLoading}
+              onBack={() => setView('list')}
+            />
+          </Grid>
+        )}
       </Grid>
 
       <PackageModal

@@ -15,13 +15,15 @@ import PropTypes from 'prop-types';
 
 const ModuleForm = ({ 
   initialValues = {
-    mod_name: '',
-    mod_description: '',
-    mod_status: 'active',
-    mod_links: {
+    module_name: '',
+    module_description: '',
+    module_status: 'active',
+    module_links: {
       link: '',
       permission: ''
-    }
+    },
+    is_sidebar: 'no',
+    module_order: 0
   },
   onSubmit,
   onCancel,
@@ -29,7 +31,16 @@ const ModuleForm = ({
   isLoading = false 
 }) => {
   const formik = useFormik({
-    initialValues,
+    initialValues: {
+      ...initialValues,
+      // Handle potential legacy field names
+      module_name: initialValues.module_name || initialValues.mod_name || '',
+      module_description: initialValues.module_description || initialValues.mod_description || '',
+      module_status: initialValues.module_status || initialValues.mod_status || 'active',
+      module_links: initialValues.module_links || initialValues.mod_links || { link: '', permission: '' },
+      is_sidebar: initialValues.is_sidebar || 'no',
+      module_order: initialValues.module_order || 0
+    },
     validationSchema: moduleValidationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {
@@ -43,44 +54,44 @@ const ModuleForm = ({
         <Grid size={{ xs: 12 }}>
           <TextField
             label="Module Name"
-            name="mod_name"
-            value={formik.values.mod_name}
+            name="module_name"
+            value={formik.values.module_name}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             variant="outlined"
-            error={formik.touched.mod_name && Boolean(formik.errors.mod_name)}
-            helperText={formik.touched.mod_name && formik.errors.mod_name}
+            error={formik.touched.module_name && Boolean(formik.errors.module_name)}
+            helperText={formik.touched.module_name && formik.errors.module_name}
           />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
           <TextField
             label="Module Description"
-            name="mod_description"
-            value={formik.values.mod_description}
+            name="module_description"
+            value={formik.values.module_description}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             multiline
             rows={1}
             variant="outlined"
-            error={formik.touched.mod_description && Boolean(formik.errors.mod_description)}
-            helperText={formik.touched.mod_description && formik.errors.mod_description}
+            error={formik.touched.module_description && Boolean(formik.errors.module_description)}
+            helperText={formik.touched.module_description && formik.errors.module_description}
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Module Link"
-            name="mod_links.link"
-            value={formik.values.mod_links?.link || ''}
+            name="module_links.link"
+            value={formik.values.module_links?.link || ''}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             variant="outlined"
-            error={formik.touched.mod_links?.link && Boolean(formik.errors.mod_links?.link)}
-            helperText={formik.touched.mod_links?.link && formik.errors.mod_links?.link}
+            error={formik.touched.module_links?.link && Boolean(formik.errors.module_links?.link)}
+            helperText={formik.touched.module_links?.link && formik.errors.module_links?.link}
             placeholder="/module-path"
           />
         </Grid>
@@ -88,29 +99,27 @@ const ModuleForm = ({
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Module Permission"
-            name="mod_links.permission"
-            value={formik.values.mod_links?.permission || ''}
+            name="module_links.permission"
+            value={formik.values.module_links?.permission || ''}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             variant="outlined"
-            error={formik.touched.mod_links?.permission && Boolean(formik.errors.mod_links?.permission)}
-            helperText={formik.touched.mod_links?.permission && formik.errors.mod_links?.permission}
+            error={formik.touched.module_links?.permission && Boolean(formik.errors.module_links?.permission)}
+            helperText={formik.touched.module_links?.permission && formik.errors.module_links?.permission}
             placeholder="module.view"
           />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
           <FormControl fullWidth variant="outlined">
-            {/* <InputLabel>Status</InputLabel> */}
             <Select
-              name="mod_status"
-              value={formik.values.mod_status}
+              name="module_status"
+              value={formik.values.module_status}
               onChange={formik.handleChange}
               displayEmpty
               onBlur={formik.handleBlur}
-              // label="Status"
-              error={formik.touched.mod_status && Boolean(formik.errors.mod_status)}
+              error={formik.touched.module_status && Boolean(formik.errors.module_status)}
             >
                <MenuItem value="">Select Status</MenuItem>
               <MenuItem value="active">Active</MenuItem>

@@ -96,6 +96,10 @@ const DUMMY_TRANSACTIONS = [
 ];
 
 const SubscriptionHistory = () => {
+  return <SubscriptionHistoryList />;
+};
+
+const SubscriptionHistoryList = () => {
   const [transactions, setTransactions] = useState(DUMMY_TRANSACTIONS);
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
@@ -144,175 +148,123 @@ const SubscriptionHistory = () => {
     handleMenuClose();
   };
 
-  const handleRevertPlan = (transaction) => {
-    // Handle revert plan action
-    console.log('Revert plan for:', transaction);
-    handleMenuClose();
-  };
-
-  const handleChangePlan = (transaction) => {
-    // Handle change plan action
-    console.log('Change plan for:', transaction);
-    handleMenuClose();
-  };
-
-  const handleViewInvoice = (transaction) => {
-    // Handle view invoice action
-    console.log('View invoice for:', transaction);
-    handleMenuClose();
-  };
-
-  const handleDeleteTransaction = (transaction) => {
-    // Handle delete transaction action
-    console.log('Delete transaction for:', transaction);
-    handleMenuClose();
-  };
-
   return (
-    <Box>
-      <Breadcrumb
-        title="Subscription History"
-        items={[
-          { title: 'Home', to: '/' },
-          { title: 'Subscriptions' },
-          { title: 'Subscription History' },
-        ]}
-      />
-      <ParentCard title="Subscription History">
-        <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              placeholder="Search by transaction ID or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ maxWidth: 400 }}
-            />
-          </Box>
+    <ParentCard title="Subscription History">
+      <Box sx={{ p: 0 }}>
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            placeholder="Search by transaction ID or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ maxWidth: 400 }}
+          />
+        </Box>
 
-          <Paper variant="outlined">
-            <TableContainer>
-              <Table sx={{ minWidth: 900 }}>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#f5f5f5' }}>
-                    <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>#</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Transaction Id</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '25%' }}>
-                      Payment Description
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Amount (₦)</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Gateway (₦)</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Amount Due (₦)</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '12%' }}>
-                      Transaction Date
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '8%' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '5%' }} align="center">
-                      Action
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredTransactions.length > 0 ? (
-                    filteredTransactions.map((transaction, index) => (
-                      <TableRow key={transaction.id} hover>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{transaction.transactionId}</TableCell>
-                        <TableCell>{transaction.paymentDescription}</TableCell>
-                        <TableCell>{transaction.amount}</TableCell>
-                        <TableCell>{transaction.gatewaycharges}</TableCell>
-                        <TableCell>{transaction.amountdue}</TableCell>
-                        <TableCell>{transaction.transactionDate}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={transaction.status.toUpperCase()}
-                            size="small"
-                            color={getStatusColor(transaction.status)}
-                            sx={{
-                              bgcolor:
-                                transaction.status === 'approved'
-                                  ? (theme) => theme.palette.success.light
-                                  : (theme) => theme.palette.warning.light,
-                              color:
-                                transaction.status === 'approved'
-                                  ? (theme) => theme.palette.success.main
-                                  : (theme) => theme.palette.warning.main,
-                              borderRadius: '8px',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton onClick={(e) => handleMenuOpen(e, transaction)}>
-                            <MoreVertIcon />
-                          </IconButton>
-                          <Menu
-                            anchorEl={anchorEl}
-                            open={Boolean(anchorEl) && selectedTransaction?.id === transaction.id}
-                            onClose={handleMenuClose}
-                          >
-                            {transaction.status === 'pending' ? (
-                              <>
-                                <MenuItem onClick={() => handleUpdateStatus(transaction)}>
-                                  Update Status
-                                </MenuItem>
-                              </>
-                            ) : (
-                              <>
-                                <MenuItem onClick={() => handleUpdateStatus(transaction)}>
-                                  Update Status
-                                </MenuItem>
-                                <MenuItem onClick={() => handlePrintReceipt(transaction)}>
-                                  Print Receipt
-                                </MenuItem>
-                              </>
-                            )}
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={9} align="center">
-                        {/* <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
-                          No transactions found
-                        </Typography> */}
-                        <Alert
-                          severity="info"
+        <Paper variant="outlined">
+          <TableContainer>
+            <Table sx={{ minWidth: 900 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                  <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Transaction Id</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '25%' }}>
+                    Payment Description
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Amount (₦)</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Gateway (₦)</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Amount Due (₦)</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '12%' }}>Transaction Date</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '8%' }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '5%' }} align="center">
+                    Action
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((transaction, index) => (
+                    <TableRow key={transaction.id} hover>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{transaction.transactionId}</TableCell>
+                      <TableCell>{transaction.paymentDescription}</TableCell>
+                      <TableCell>{transaction.amount}</TableCell>
+                      <TableCell>{transaction.gatewaycharges}</TableCell>
+                      <TableCell>{transaction.amountdue}</TableCell>
+                      <TableCell>{transaction.transactionDate}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={transaction.status.toUpperCase()}
+                          size="small"
+                          color={getStatusColor(transaction.status)}
                           sx={{
-                            mb: 3,
-                            width: '100%',
-                            justifyContent: 'center',
-                            textAlign: 'center',
-                            '& .MuiAlert-icon': {
-                              mr: 1.5,
-                            },
+                            bgcolor:
+                              transaction.status === 'approved'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.warning.light,
+                            color:
+                              transaction.status === 'approved'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.warning.main,
+                            borderRadius: '8px',
                           }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton onClick={(e) => handleMenuOpen(e, transaction)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl) && selectedTransaction?.id === transaction.id}
+                          onClose={handleMenuClose}
                         >
-                          <Typography variant="body2" color="textSecondary">
-                            No records found
-                          </Typography>
-                        </Alert>
+                          {transaction.status === 'pending' ? (
+                            <>
+                              <MenuItem onClick={() => handleUpdateStatus(transaction)}>
+                                Update Status
+                              </MenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <MenuItem onClick={() => handleUpdateStatus(transaction)}>
+                                Update Status
+                              </MenuItem>
+                              <MenuItem onClick={() => handlePrintReceipt(transaction)}>
+                                Print Receipt
+                              </MenuItem>
+                            </>
+                          )}
+                        </Menu>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Box>
-      </ParentCard>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} align="center">
+                      <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
+                        No transactions found
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      </Box>
       <ReceiptModal
         open={receiptModalOpen}
         onClose={() => setReceiptModalOpen(false)}
         transaction={selectedTransaction}
       />
-    </Box>
+    </ParentCard>
   );
 };
 

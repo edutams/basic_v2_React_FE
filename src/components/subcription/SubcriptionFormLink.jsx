@@ -10,9 +10,11 @@ import {
   FormControlLabel,
   Radio,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { stimulationLinkValidationSchema } from './validation/subcriptionValidationSchema';
+import tenantApi from 'src/api/tenant_api';
 
 const SubcriptionFormLink = ({
   initialValues = {},
@@ -31,6 +33,27 @@ const SubcriptionFormLink = ({
     ...initialValues,
   });
   const [errors, setErrors] = useState({});
+  const [options, setOptions] = useState({
+    sessions: [],
+    terms: [],
+    plans: [],
+  });
+  const [fetchingOptions, setFetchingOptions] = useState(true);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setFetchingOptions(true);
+        const res = await tenantApi.get('/get-form-options');
+        setOptions(res.data);
+      } catch (error) {
+        console.error('Error fetching options:', error);
+      } finally {
+        setFetchingOptions(false);
+      }
+    };
+    fetchOptions();
+  }, []);
 
   useEffect(() => {
     if (initialValues && Object.keys(initialValues).length > 0) {
@@ -47,7 +70,14 @@ const SubcriptionFormLink = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'studentpopulation') {
+      // Changing population resets any previously selected plan
+      setForm((prev) => ({ ...prev, studentpopulation: value, availableplan: '' }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
+
     setErrors((prev) => ({ ...prev, [name]: undefined }));
 
     // Reset term when switching to per session mode
@@ -56,11 +86,23 @@ const SubcriptionFormLink = ({
     }
   };
 
+  // Filter plans by the selected student population (matched against plan.data.students_limit)
+  const filteredPlans = form.studentpopulation
+    ? options.plans.filter((plan) => {
+        const data = plan?.plan?.data
+          ? (typeof plan.plan.data === 'string' ? JSON.parse(plan.plan.data) : plan.plan.data)
+          : {};
+        return data.students_limit === form.studentpopulation;
+      })
+    : [];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await stimulationLinkValidationSchema.validate(form, { abortEarly: false });
       setErrors({});
+      // Ensure we map student population correctly if needed, 
+      // but for now let's just send the form
       onSubmit(form);
     } catch (validationError) {
       if (validationError.inner) {
@@ -72,6 +114,14 @@ const SubcriptionFormLink = ({
       }
     }
   };
+
+  if (fetchingOptions) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -107,9 +157,11 @@ const SubcriptionFormLink = ({
         select
       >
         <MenuItem value="">Select Session</MenuItem>
-        <MenuItem value="2023/2024">2023/2024</MenuItem>
-        <MenuItem value="2024/2025">2024/2025</MenuItem>
-        <MenuItem value="2025/2026">2025/2026</MenuItem>
+        {options.sessions.map((session) => (
+          <MenuItem key={session.id} value={session.id.toString()}>
+            {session.sesname}
+          </MenuItem>
+        ))}
       </TextField>
 
       {form.subscriptionMode === 'perTerm' && (
@@ -125,9 +177,11 @@ const SubcriptionFormLink = ({
           select
         >
           <MenuItem value="">Select Term</MenuItem>
-          <MenuItem value="First Term">First Term</MenuItem>
-          <MenuItem value="Second Term">Second Term</MenuItem>
-          <MenuItem value="Third Term">Third Term</MenuItem>
+          {options.terms.map((term) => (
+            <MenuItem key={term.id} value={term.id.toString()}>
+              {term.term_name}
+            </MenuItem>
+          ))}
         </TextField>
       )}
 
@@ -145,7 +199,7 @@ const SubcriptionFormLink = ({
         <MenuItem value="">Select Student Population</MenuItem>
         <MenuItem value="1-50">1-50 Students</MenuItem>
         <MenuItem value="51-100">51-100 Students</MenuItem>
-        <MenuItem value="101-200">101-200 Students</MenuItem>
+        <MenuItem value="100-199">100-199 Students</MenuItem>
         <MenuItem value="200+">200 and above Students</MenuItem>
       </TextField>
 
@@ -157,13 +211,22 @@ const SubcriptionFormLink = ({
         onChange={handleChange}
         margin="normal"
         error={!!errors.availableplan}
-        helperText={errors.availableplan}
+        helperText={
+          !form.studentpopulation
+            ? 'Select a student population first to see matching plans'
+            : filteredPlans.length === 0
+            ? 'No plans available for the selected student population'
+            : errors.availableplan
+        }
         select
+        disabled={!form.studentpopulation || filteredPlans.length === 0}
       >
         <MenuItem value="">Select Plan</MenuItem>
-        <MenuItem value="OBASIC">OBASIC</MenuItem>
-        <MenuItem value="OBASIC+">OBASIC+</MenuItem>
-        <MenuItem value="OBASIC++">OBASIC++</MenuItem>
+        {filteredPlans.map((plan) => (
+          <MenuItem key={plan.id} value={plan.id.toString()}>
+            {plan.display_name} (₦{parseFloat(plan.price).toLocaleString()})
+          </MenuItem>
+        ))}
       </TextField>
 
       <TextField

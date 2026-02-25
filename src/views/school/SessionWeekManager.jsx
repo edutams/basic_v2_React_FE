@@ -24,7 +24,7 @@ import HolidayTab from 'src/components/school/components/HolidayTab';
 
 const BCrumb = [
   {
-    to: '/school-dashboard',
+    to: '/',
     title: 'School Dashboard',
   },
   {

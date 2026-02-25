@@ -6,7 +6,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
     name: '',
     description: '',
     price: '',
-    studentLimit: '',
+    student_limit: '',
     status: '',
   });
   const [errors, setErrors] = useState({});
@@ -19,18 +19,19 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
   ];
 
   const statusOptions = [
-    { value: 'Active', label: 'Active' },
-    { value: 'Inactive', label: 'Inactive' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
   ];
 
   useEffect(() => {
     if (actionType === 'update' && selectedPlan) {
+      const planData = selectedPlan.data ? JSON.parse(selectedPlan.data) : {};
       setFormData({
         id: selectedPlan.id,
         name: selectedPlan.name || '',
         description: selectedPlan.description || '',
         price: selectedPlan.price || '',
-        studentLimit: selectedPlan.studentLimit || '',
+        student_limit: planData.students_limit || selectedPlan.student_limit || '',
         status: selectedPlan.status || '',
       });
       setErrors({});
@@ -41,7 +42,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Plan name is required';
     if (!formData.price || formData.price <= 0) newErrors.price = 'Price must be a positive number';
-    if (!formData.studentLimit || formData.studentLimit === '') newErrors.studentLimit = 'Please select a student limit';
+    if (!formData.student_limit || formData.student_limit === '') newErrors.student_limit = 'Please select a student limit';
     if (!formData.status || formData.status === '') newErrors.status = 'Please select a status';
     return newErrors;
   };
@@ -63,7 +64,6 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
     onSubmit({
       ...formData,
       price: parseFloat(formData.price) || 0,
-      
     });
     
     if (actionType === 'create') {
@@ -71,7 +71,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
         name: '',
         description: '',
         price: '',
-        studentLimit: '',
+        student_limit: '',
         status: '',
       });
       setErrors({});
@@ -112,11 +112,11 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
         rows={3}
         fullWidth
       />
-      <FormControl fullWidth error={!!errors.studentLimit}>
+      <FormControl fullWidth error={!!errors.student_limit}>
         <InputLabel>Student Limit</InputLabel>
         <Select
-          name="studentLimit"
-          value={formData.studentLimit}
+          name="student_limit"
+          value={formData.student_limit}
           onChange={handleChange}
           required
         >
@@ -129,7 +129,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel }) => {
             </MenuItem>
           ))}
         </Select>
-        {errors.studentLimit && <FormHelperText>{errors.studentLimit}</FormHelperText>}
+        {errors.student_limit && <FormHelperText>{errors.student_limit}</FormHelperText>}
       </FormControl>
       <FormControl fullWidth error={!!errors.status}>
         <InputLabel>Status</InputLabel>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useContext } from 'react';
+import { AuthContext } from '../../context/AgentContext/auth';
 
 import {
   Grid,
@@ -66,6 +67,7 @@ const columnHelper = createColumnHelper();
 import locationApi from '../../api/location';
 
 const Agent = () => {
+  const { user, impersonateAgent } = useContext(AuthContext);
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
@@ -296,6 +298,19 @@ const Agent = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setAgentToDelete(null);
+  };
+
+  const handleImpersonate = async (agent) => {
+    try {
+      const result = await impersonateAgent(agent.s_n);
+      if (result.success) {
+        window.location.href = '/'; // Refresh to dashboard as the new agent
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      console.error("Impersonation failed", error);
+    }
   };
 
   const handleAgentUpdate = (updatedAgent) => {
@@ -579,10 +594,10 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
-                  handleChangeColorScheme(row.original);
+                  handleImpersonate(row.original);
                 }}
               >
-                Change Color Scheme
+                Login As
               </MenuItem>
               <MenuItem
                 onClick={() => {

@@ -31,7 +31,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
   const successMessage = location.state?.message;
   const notify = useNotification();
 
-  const from = location.state?.from?.pathname || '/school-dashboard';
+  const from = location.state?.from?.pathname || '/';
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

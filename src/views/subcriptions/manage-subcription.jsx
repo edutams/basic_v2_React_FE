@@ -112,9 +112,14 @@ const ManageSubscriptionList = () => {
     fetchSubscriptions();
   }, []);
 
-  const filteredRows = rows.filter((row) =>
-    row.sessionterm.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredRows = rows.filter((row) => {
+    const sessionTermStr = row.sessionterm 
+      ? row.sessionterm 
+      : `${row.sessions?.sesname || ''} ${row.terms?.term_name || ''}`;
+    
+    return sessionTermStr.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
 
   const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 

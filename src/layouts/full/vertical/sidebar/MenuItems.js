@@ -81,6 +81,13 @@ const Menuitems = [
     title: 'ACL Manager',
     icon: IconSettings,
     href: '/alc-manager',
+  }
+  ,
+  {
+    id: uniqueId(),
+    title: 'Calendar',
+    icon: IconCalendarTime,
+    href: '/calendar',
   },
   {
     id: uniqueId(),
@@ -106,37 +113,6 @@ const Menuitems = [
     icon: IconMap,
     href: '/my-plan',
   },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Calendar',
-  //   icon: IconAppWindow,
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Session',
-  //       icon: IconCalendarTime,
-  //       href: '/dashboards/session',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Term',
-  //       icon: IconTimeline,
-  //       href: '/dashboards/term',
-  //     },
-  //   ],
-  // },
-  //  {
-  //     id: uniqueId(),
-  //     title: 'Session',
-  //     icon: IconCalendarTime,
-  //     href: '/dashboards/session',
-  //   },
-  //   {
-  //     id: uniqueId(),
-  //     title: 'Term',
-  //     icon: IconTimeline,
-  //     href: '/dashboards/term',
-  //   },
   {
     id: uniqueId(),
     title: 'Gateway',
@@ -177,23 +153,11 @@ const Menuitems = [
 
   {
     id: uniqueId(),
-    title: 'Subscriptions',
+    title: 'Tenant Subscriptions',
     icon: IconAppWindow,
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Manage Subscription',
-        icon: IconPoint,
-        href: '/subcriptions/manage-subcription',
-      },
-      {
-        id: uniqueId(),
-        title: 'Subscription History',
-        icon: IconPoint,
-        href: '/subcriptions/subscription-history',
-      },
-    ],
+    href: '/agent/subscriptions',
   },
+
 
   /*
   {

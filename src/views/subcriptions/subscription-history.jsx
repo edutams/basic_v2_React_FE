@@ -18,6 +18,7 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -95,9 +96,7 @@ const DUMMY_TRANSACTIONS = [
 ];
 
 const SubscriptionHistory = () => {
-  return (
-    <SubscriptionHistoryList />
-  );
+  return <SubscriptionHistoryList />;
 };
 
 const SubscriptionHistoryList = () => {
@@ -181,9 +180,7 @@ const SubscriptionHistoryList = () => {
                   <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Amount (₦)</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Gateway (₦)</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>Amount Due (₦)</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', width: '12%' }}>
-                    Transaction Date
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: '12%' }}>Transaction Date</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: '8%' }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', width: '5%' }} align="center">
                     Action

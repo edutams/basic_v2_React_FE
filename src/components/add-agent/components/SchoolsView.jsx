@@ -15,8 +15,11 @@ import {
   Chip,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import agentApi from '../../../api/agent';
+import { AuthContext } from '../../../context/AgentContext/auth';
 
 const SchoolsView = ({ selectedAgent }) => {
+  const { user } = React.useContext(AuthContext);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSchool, setSelectedSchool] = useState(null);
 
@@ -56,6 +59,22 @@ const SchoolsView = ({ selectedAgent }) => {
 
   const manageSubscription = () => {
     console.log('Manage subscription:', selectedSchool);
+    handleActionClose();
+  };
+
+  const handleLoginAs = async () => {
+    if (!selectedSchool) return;
+    try {
+      const response = await agentApi.impersonateTenant(selectedSchool.id);
+      if (response.redirect_url) {
+        window.open(response.redirect_url, '_blank');
+      } else {
+        alert(response.error || "Failed to impersonate tenant");
+      }
+    } catch (error) {
+      console.error("Impersonation error:", error);
+      alert("An error occurred during impersonation");
+    }
     handleActionClose();
   };
 
@@ -163,6 +182,11 @@ const SchoolsView = ({ selectedAgent }) => {
         <MenuItem onClick={manageSubscription}>
           Manage Subcription
         </MenuItem>
+        {user?.access_level === 1 && (
+          <MenuItem onClick={handleLoginAs}>
+            Login As School
+          </MenuItem>
+        )}
       </Menu>
     </Box>
   );

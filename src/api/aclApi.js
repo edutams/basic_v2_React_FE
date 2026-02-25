@@ -72,7 +72,7 @@ const aclApi = {
     return response.data;
   },
 
-  // School ALC methods (using user table instead of agent table)
+  // School ALC methods (using tenant-based tables - school_acl_tables)
   getSchoolRoles: async (params) => {
     const response = await api.get('/acl/school/roles/get_paginated_roles', { params });
     return response.data;
@@ -115,16 +115,20 @@ const aclApi = {
     return response.data;
   },
 
-  assignSchoolUserRole: async (userId, roleIds) => {
-    const response = await api.post(`/acl/school/assignments/user/${userId}/assign`, {
+  assignSchoolUserRole: async (userId, roleIds, type = 'staff') => {
+    const response = await api.post('/acl/school/assignments/user/assign', {
+      user_id: userId,
       roles: roleIds,
+      type: type,
     });
     return response.data;
   },
 
-  unassignSchoolUserRole: async (userId, roleIds) => {
-    const response = await api.post(`/acl/school/assignments/user/${userId}/unassign`, {
+  unassignSchoolUserRole: async (userId, roleIds, type = 'staff') => {
+    const response = await api.post('/acl/school/assignments/user/unassign', {
+      user_id: userId,
       roles: roleIds,
+      type: type,
     });
     return response.data;
   },

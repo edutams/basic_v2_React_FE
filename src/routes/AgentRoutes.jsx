@@ -23,8 +23,10 @@ const CalendarManagement = Loadable(lazy(() => import('../views/calendar/Calenda
 const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
 const Mail = Loadable(lazy(() => import('../views/mail/Mail')));
 const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
+const AgentSubscriptionManagement = Loadable(lazy(() => import('../views/agent/subscriptions/AgentSubscriptionIndex')));
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
+
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 
 /* ****Apps***** */
@@ -180,7 +182,9 @@ const AgentRoutes = [
       { path: '/calendar', exact: true, element: <CalendarManagement /> },
       { path: '/chat', exact: true, element: <Chat /> },
       { path: '/mail', exact: true, element: <Mail /> },
+      { path: '/agent/subscriptions', exact: true, element: <AgentSubscriptionManagement /> },
       { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
+
       { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/modern', exact: true, element: <ModernDashboard /> },
       { path: '/edutier', element: <PackageManager /> },

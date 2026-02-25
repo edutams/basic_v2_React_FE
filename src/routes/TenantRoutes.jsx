@@ -13,6 +13,7 @@ const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWe
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
+const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 const AlcManager = Loadable(
   lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
@@ -40,9 +41,11 @@ const TenantRoutes = [
     element: <BlankLayout />,
     children: [
       { path: '/login', element: <TenantLogin /> },
+      { path: '/impersonate-login/:token', element: <ImpersonateLogin /> },
       { path: '/auth/404', element: <Error /> },
       { path: '*', element: <Navigate to="/login" /> },
     ],
+
   },
 ];
 

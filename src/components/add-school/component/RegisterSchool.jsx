@@ -10,6 +10,8 @@ import {
   FormHelperText,
   Grid,
   CircularProgress,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
@@ -191,6 +193,12 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
+      {loading && actionType !== 'update' && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <AlertTitle>Initialzation Processing</AlertTitle>
+          Please wait while the initialization setup is processing. This may take up to <strong>1 minute</strong>.
+        </Alert>
+      )}
       <Grid container spacing={2}>
         {/* Institution Details */}
         <Grid item size={{ xs: 12, md: 6, sm: 6 }}>

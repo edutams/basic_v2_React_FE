@@ -70,7 +70,14 @@ const SubcriptionFormLink = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'studentpopulation') {
+      // Changing population resets any previously selected plan
+      setForm((prev) => ({ ...prev, studentpopulation: value, availableplan: '' }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
+
     setErrors((prev) => ({ ...prev, [name]: undefined }));
 
     // Reset term when switching to per session mode
@@ -78,6 +85,16 @@ const SubcriptionFormLink = ({
       setForm((prev) => ({ ...prev, term: '' }));
     }
   };
+
+  // Filter plans by the selected student population (matched against plan.data.students_limit)
+  const filteredPlans = form.studentpopulation
+    ? options.plans.filter((plan) => {
+        const data = plan?.plan?.data
+          ? (typeof plan.plan.data === 'string' ? JSON.parse(plan.plan.data) : plan.plan.data)
+          : {};
+        return data.students_limit === form.studentpopulation;
+      })
+    : [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -182,7 +199,7 @@ const SubcriptionFormLink = ({
         <MenuItem value="">Select Student Population</MenuItem>
         <MenuItem value="1-50">1-50 Students</MenuItem>
         <MenuItem value="51-100">51-100 Students</MenuItem>
-        <MenuItem value="101-200">101-200 Students</MenuItem>
+        <MenuItem value="100-199">100-199 Students</MenuItem>
         <MenuItem value="200+">200 and above Students</MenuItem>
       </TextField>
 
@@ -194,11 +211,18 @@ const SubcriptionFormLink = ({
         onChange={handleChange}
         margin="normal"
         error={!!errors.availableplan}
-        helperText={errors.availableplan}
+        helperText={
+          !form.studentpopulation
+            ? 'Select a student population first to see matching plans'
+            : filteredPlans.length === 0
+            ? 'No plans available for the selected student population'
+            : errors.availableplan
+        }
         select
+        disabled={!form.studentpopulation || filteredPlans.length === 0}
       >
         <MenuItem value="">Select Plan</MenuItem>
-        {options.plans.map((plan) => (
+        {filteredPlans.map((plan) => (
           <MenuItem key={plan.id} value={plan.id.toString()}>
             {plan.display_name} (₦{parseFloat(plan.price).toLocaleString()})
           </MenuItem>

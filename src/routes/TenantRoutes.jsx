@@ -6,12 +6,17 @@ import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
 
-const SchoolDashboardMain = Loadable(lazy(() => import('../views/school-dashboard/SchoolDashboard')));
+const SchoolDashboardMain = Loadable(
+  lazy(() => import('../views/school-dashboard/SchoolDashboard')),
+);
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
+const AlcManager = Loadable(
+  lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
+);
 
 const TenantRoutes = [
   {
@@ -27,6 +32,7 @@ const TenantRoutes = [
       { path: '/scheme-of-work', element: <SchemeOfWork /> },
       { path: '/manage-subscription', element: <SubscriptionIndex /> },
       { path: '/subscription-history', element: <SubscriptionIndex /> },
+      { path: '/alc-manager', exact: true, element: <AlcManager /> },
     ],
   },
   {

@@ -145,6 +145,7 @@ const Agent = () => {
                      performance: 'School: ' + (agent.tenants_count || 0),
                      tenants_count: agent.tenants_count || 0,
                      sub_agents_count: agent.children_count || 0,
+                     access_level: agent.access_level,
                      headerColor: parsedColor?.headcolor,
                      sidebarColor: parsedColor?.sidecolor,
                      bodyColor: parsedColor?.bodycolor,
@@ -408,6 +409,30 @@ const Agent = () => {
             </Typography>
           </Stack>
         ),
+    }),
+    columnHelper.accessor('access_level', {
+      header: () => 'Access Level',
+      cell: (info) => {
+        const level = Number(info.getValue());
+        const colorMap = {
+          1: { color: '#2ca87f', bg: '#e6f4ee' },
+          2: { color: '#3949ab', bg: '#e8eaf6' },
+          3: { color: '#f57c00', bg: '#fff3e0' },
+        };
+        const config = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
+        return (
+          <Chip
+            size="small"
+            label={`Level ${level}`}
+            sx={{
+              bgcolor: config.bg,
+              color: config.color,
+              fontWeight: 600,
+              borderRadius: '8px',
+            }}
+          />
+        );
+      },
     }),
     columnHelper.accessor('subAgent', {
       header: () => 'Sub Agent',

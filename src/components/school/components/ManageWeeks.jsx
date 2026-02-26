@@ -13,7 +13,15 @@ import {
   Alert,
   Stack,
   CircularProgress,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
+import { Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import useNotification from '../../../hooks/useNotification';
 import tenantApi from '../../../api/tenant_api';
 
@@ -22,6 +30,7 @@ const ManageWeeks = ({ sessionTermId }) => {
   const [firstMonday, setFirstMonday] = useState('');
   const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, week: null });
 
   useEffect(() => {
     if (sessionTermId) {
@@ -58,6 +67,38 @@ const ManageWeeks = ({ sessionTermId }) => {
     } catch (error) {
       console.error('Error generating weeks:', error);
       notify.error('Failed to generate weeks', 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddWeek = async () => {
+    setLoading(true);
+    try {
+      const response = await tenantApi.post(`/session-mappings/${sessionTermId}/weeks/add`);
+      setWeeks(response.data);
+      notify.success('New week added successfully', 'Success');
+    } catch (error) {
+      console.error('Error adding week:', error);
+      notify.error('Failed to add week', 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteWeek = async () => {
+    const weekId = deleteDialog.week?.week_id;
+    if (!weekId) return;
+
+    setLoading(true);
+    setDeleteDialog({ open: false, week: null });
+    try {
+      const response = await tenantApi.delete(`/session-mappings/${sessionTermId}/weeks/${weekId}`);
+      setWeeks(response.data);
+      notify.success('Week deleted successfully', 'Success');
+    } catch (error) {
+      console.error('Error deleting week:', error);
+      notify.error('Failed to delete week', 'Error');
     } finally {
       setLoading(false);
     }
@@ -101,7 +142,7 @@ const ManageWeeks = ({ sessionTermId }) => {
     <Box>
       <Alert severity="info" sx={{ mb: 2 }} icon={false}>
         Set the first Monday of the term from the calendar, click generate weeks, then click "Save
-        All".
+        All". You can also add or delete individual weeks as needed.
       </Alert>
 
       <Stack direction="row" spacing={2} mb={3} alignItems="center">
@@ -121,6 +162,16 @@ const ManageWeeks = ({ sessionTermId }) => {
         >
           {loading ? <CircularProgress size={20} color="inherit" /> : 'Generate Weeks'}
         </Button>
+        <Button
+          variant="outlined"
+          color="success"
+          startIcon={<AddIcon />}
+          onClick={handleAddWeek}
+          size="small"
+          disabled={loading}
+        >
+          Add Week
+        </Button>
       </Stack>
 
       <Paper variant="outlined">
@@ -131,12 +182,13 @@ const ManageWeeks = ({ sessionTermId }) => {
                 <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Starts On</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Ends On</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', width: 60 }} align="center">Action</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading && weeks.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">
+                  <TableCell colSpan={4} align="center">
                     <CircularProgress size={24} sx={{ my: 2 }} />
                   </TableCell>
                 </TableRow>
@@ -164,6 +216,18 @@ const ManageWeeks = ({ sessionTermId }) => {
                         sx={{ minWidth: 150 }}
                       />
                     </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title={`Delete ${week.week_name}`}>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => setDeleteDialog({ open: true, week })}
+                          disabled={loading}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -177,8 +241,26 @@ const ManageWeeks = ({ sessionTermId }) => {
           </Button>
         </Box>
       </Paper>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, week: null })}>
+        <DialogTitle>Delete Week</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete <strong>{deleteDialog.week?.week_name}</strong>? This will remove
+            the week and its dates from this term.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog({ open: false, week: null })}>Cancel</Button>
+          <Button onClick={handleDeleteWeek} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
 
 export default ManageWeeks;
+

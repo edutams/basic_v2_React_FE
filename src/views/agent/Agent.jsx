@@ -695,10 +695,10 @@ const Agent = () => {
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
 
-      <Box mt={3} sx={{ mx: { xs: -2, sm: -3 }, px: { xs: 2, sm: 3 }, width: 'auto', maxWidth: 'none' }}>
+      <Box mt={3}>
         {/* Row 1: Stat Cards */}
-        <Grid container spacing={3} mb={3}>
-          <Grid item xs={12} md={4} lg={4}>
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total Agents"
               value="123"
@@ -709,7 +709,7 @@ const Agent = () => {
             />
           </Grid>
           
-          <Grid item xs={12} md={4} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Active School"
               value="123"
@@ -735,7 +735,7 @@ const Agent = () => {
             />
           </Grid>
           
-          <Grid item xs={12} md={4} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Revenue"
               value="#10, 000, 000"
@@ -749,7 +749,7 @@ const Agent = () => {
 
         {/* Row 2: Charts */}
         <Grid container spacing={3}>
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <ReusableBarChart
               title="Revenue Trend"
               series={revenueSeries}
@@ -762,7 +762,7 @@ const Agent = () => {
             />
           </Grid>
           
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <ReusablePieChart
               title="Plan Distribution"
               series={planSeries}

@@ -36,7 +36,7 @@ import SchoolAccessAnalysis from 'src/components/tenant-components/alc-manager/S
 
 import aclApi from 'src/api/aclApi';
 
-const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'ALC Manager' }];
+const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'ACL Manager' }];
 
 const SchoolAlcManager = () => {
   const notify = useNotification();
@@ -195,10 +195,10 @@ const SchoolAlcManager = () => {
 
   return (
     <PageContainer
-      title="School ALC Manager"
+      title="School Acl Manager"
       description="Access Control List Management for School"
     >
-      <Breadcrumb title="School ALC Manager" items={BCrumb} />
+      <Breadcrumb title="School ACL Manager" items={BCrumb} />
 
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>

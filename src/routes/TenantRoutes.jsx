@@ -19,6 +19,9 @@ const AlcManager = Loadable(
   lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
 );
 const ActivityLog = Loadable(lazy(() => import('../views/tenants-views/activity-log/ActivityLog')));
+const AccountSetting = Loadable(
+  lazy(() => import('../views/pages/account-setting/AccountSetting')),
+);
 
 const TenantRoutes = [
   {
@@ -36,6 +39,7 @@ const TenantRoutes = [
       { path: '/subscription-history', element: <SubscriptionIndex /> },
       { path: '/alc-manager', exact: true, element: <AlcManager /> },
       { path: '/activity-logs', exact: true, element: <ActivityLog /> },
+      { path: '/pages/account-settings', exact: true, element: <AccountSetting /> },
     ],
   },
   {

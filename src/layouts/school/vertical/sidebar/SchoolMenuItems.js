@@ -1,13 +1,14 @@
 import { uniqueId } from 'lodash';
 import {
   IconChartPie,
-  IconCalendarWeek,
   IconUsers,
   IconUserCircle,
   IconBook,
   IconClipboardList,
   IconAppWindow,
   IconPoint,
+  IconHistory,
+  IconTimeline,
 } from '@tabler/icons-react';
 
 const SchoolMenuItems = [
@@ -32,7 +33,6 @@ const SchoolMenuItems = [
     icon: IconUsers,
     href: '/alc-manager',
   },
-
   {
     id: uniqueId(),
     title: 'Setup',
@@ -40,8 +40,8 @@ const SchoolMenuItems = [
     children: [
       {
         id: uniqueId(),
-        title: 'School Calendar',
-        icon: IconUsers,
+        title: 'Session/Term Mapping',
+        icon: IconTimeline,
         href: '/session-week-manager',
       },
       {

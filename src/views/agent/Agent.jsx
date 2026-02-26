@@ -39,6 +39,16 @@ import agentApi from '../../api/agent';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import AddIcon from '@mui/icons-material/Add';
+import { 
+  IconUsers, 
+  IconSchool, 
+  IconCurrencyNaira, 
+} from '@tabler/icons-react';
+
+import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
+import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 
 import {
   flexRender,
@@ -68,6 +78,20 @@ import locationApi from '../../api/location';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
+
+  // Revenue Trend Mock Data
+  const revenueSeries = [
+    {
+      name: 'Revenue',
+      data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5],
+    },
+  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Plan Distribution Mock Data
+  const planSeries = [65, 52, 39];
+  const planLabels = ['Basic', 'Basic+', 'Basic++'];
+
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
@@ -119,6 +143,9 @@ const Agent = () => {
                      phoneNumber: agent.phone,
                      imgsrc: agent.image,
                      performance: 'School: ' + (agent.tenants_count || 0),
+                     tenants_count: agent.tenants_count || 0,
+                     sub_agents_count: agent.children_count || 0,
+                     access_level: agent.access_level,
                      headerColor: parsedColor?.headcolor,
                      sidebarColor: parsedColor?.sidecolor,
                      bodyColor: parsedColor?.bodycolor,
@@ -373,31 +400,77 @@ const Agent = () => {
             fullWidth
           />
         ) : (
-          <Stack direction="column" spacing={0.5} alignItems="flex-start">
-            <Typography color="textSecondary" variant="subtitle2">
-              {info.row.original.contactDetails}
+          <Stack direction="column" spacing={0} alignItems="flex-start">
+            <Typography variant="subtitle2" fontWeight="600">
+              {info.row.original.phoneNumber || '+23482103453956'}
             </Typography>
             <Typography color="textSecondary" variant="caption">
-              {info.row.original.phoneNumber}
+              {info.row.original.contactDetails}
             </Typography>
           </Stack>
         ),
     }),
+    columnHelper.accessor('access_level', {
+      header: () => 'Access Level',
+      cell: (info) => {
+        const level = Number(info.getValue());
+        const colorMap = {
+          1: { color: '#2ca87f', bg: '#e6f4ee' },
+          2: { color: '#3949ab', bg: '#e8eaf6' },
+          3: { color: '#f57c00', bg: '#fff3e0' },
+        };
+        const config = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
+        return (
+          <Chip
+            size="small"
+            label={`Level ${level}`}
+            sx={{
+              bgcolor: config.bg,
+              color: config.color,
+              fontWeight: 600,
+              borderRadius: '8px',
+            }}
+          />
+        );
+      },
+    }),
+    columnHelper.accessor('subAgent', {
+      header: () => 'Sub Agent',
+      cell: (info) => (
+        <Box
+          sx={{
+            bgcolor: '#e5e5f7',
+            color: '#333',
+            borderRadius: '4px',
+            width: 35,
+            height: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '700',
+            fontSize: '14px',
+          }}
+        >
+          {info.row.original.sub_agents_count ?? 0}
+        </Box>
+      ),
+    }),
     columnHelper.accessor('performance', {
       header: () => 'Performance',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Typography color="textSecondary" variant="h6" fontWeight="400">
-            {info.getValue()}
-          </Typography>
-        ),
+      cell: (info) => (
+        <Stack direction="row" spacing={0} sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+          <Box sx={{ bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="600" color="textSecondary">
+              School
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: '#b4ebc2', px: 1, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="700" color="#333">
+              {info.row.original.tenants_count ?? 0}
+            </Typography>
+          </Box>
+        </Stack>
+      ),
     }),
     // Gateway column removed
     columnHelper.accessor('colourScheme', {
@@ -645,25 +718,119 @@ const Agent = () => {
 
   return (
     <PageContainer title="Agent Page" description="This is the Agent page">
-      <Box sx={{ mt: 0 }}>
+      <Box sx={{ mt: 1 }}>
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
-      <Box sx={{ mt: 1 }}>
+
+      <Box mt={3}>
+        {/* Row 1: Stat Cards */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardStatCard
+              title="Total Agents"
+              value="123"
+              icon={IconUsers}
+              bgcolor="#E8F2F3"
+              color="#333"
+              iconBgColor="#2ca87f"
+            />
+          </Grid>
+          
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardStatCard
+              title="Active School"
+              value="123"
+              subtitle="Total School"
+              icon={IconSchool}
+              bgcolor="#C9EBD2"
+              color="#333"
+              iconBgColor="#2ca87f"
+              rightContent={
+                <Stack spacing={0.5}>
+                  {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
+                    <Stack key={idx} direction="row" justifyContent="space-between" spacing={2} sx={{ minWidth: 120 }}>
+                      <Typography variant="caption" color="textSecondary" fontWeight="600" sx={{ fontSize: '11px' }}>
+                        {label} -
+                      </Typography>
+                      <Typography variant="caption" color="error" fontWeight="700" sx={{ fontSize: '11px' }}>
+                        34
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              }
+            />
+          </Grid>
+          
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardStatCard
+              title="Revenue"
+              value="#10, 000, 000"
+              icon={IconCurrencyNaira}
+              bgcolor="#D2D2E8"
+              color="#333"
+              iconBgColor="#ffffff"
+            />
+          </Grid>
+        </Grid>
+
+        {/* Row 2: Charts */}
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <ReusableBarChart
+              title="Revenue Trend"
+              series={revenueSeries}
+              categories={months}
+              colors={['#3949ab']}
+              height={350}
+              yAxisPrefix="N"
+              yAxisFormatter={(val) => `${val.toFixed(1)}M`}
+              xAxisTitle="Month"
+            />
+          </Grid>
+          
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <ReusablePieChart
+              title="Plan Distribution"
+              series={planSeries}
+              labels={planLabels}
+              colors={['#3949ab', '#66bb6a', '#ffa726']}
+              height={320}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Box sx={{ mt: 3 }}>
         <ParentCard
           title={
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h5" fontWeight={200}>
-                My Agent List
-              </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: '#2ca87f',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                  }}
+                >
+                  <IconSchool size={16} />
+                </Box>
+                <Typography variant="h5">List of Agents</Typography>
+              </Stack>
               <Button
                 variant="contained"
-                color="primary"
-                startIcon={<HowToRegIcon />}
+                startIcon={<AddIcon />}
                 onClick={() => setIsRegisterModalOpen(true)}
+                sx={{ bgcolor: '#3949ab', '&:hover': { bgcolor: '#303f9f' } }}
               >
-                Register Agent
+                Add New Agent
               </Button>
-            </Box>
+            </Stack>
           }
         >
           <Grid container spacing={3} mb={3}>

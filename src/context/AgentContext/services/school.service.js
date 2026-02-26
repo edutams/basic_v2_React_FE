@@ -59,3 +59,79 @@ export const deleteSchool = async (id) => {
         throw error.response?.data || error;
     }
 };
+
+export const getSchoolCategories = async () => {
+    try {
+        const res = await api.get('/agent/get_school_categories');
+        return res.data?.data;
+    } catch (error) {
+        console.error('Error fetching school categories:', error);
+        throw error;
+    }
+};
+
+export const getSchoolDivisions = async () => {
+    try {
+        const res = await api.get('/agent/get_school_divisions');
+        return res.data?.data;
+    } catch (error) {
+        console.error('Error fetching school divisions:', error);
+        throw error;
+    }
+};
+
+// Category Management
+export const storeSchoolCategory = async (data) => {
+    try {
+        const res = await api.post('/agent/school_categories', data);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const updateSchoolCategory = async (id, data) => {
+    try {
+        const res = await api.put(`/agent/school_categories/${id}`, data);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const deleteSchoolCategory = async (id) => {
+    try {
+        const res = await api.delete(`/agent/school_categories/${id}`);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+// Division Management
+export const storeSchoolDivision = async (data) => {
+    try {
+        const res = await api.post('/agent/school_divisions', data);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const updateSchoolDivision = async (id, data) => {
+    try {
+        const res = await api.put(`/agent/school_divisions/${id}`, data);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const deleteSchoolDivision = async (id) => {
+    try {
+        const res = await api.delete(`/agent/school_divisions/${id}`);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};

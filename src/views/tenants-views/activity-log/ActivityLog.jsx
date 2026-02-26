@@ -12,6 +12,7 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TableFooter,
   Paper,
   Button,
   TextField,
@@ -226,8 +227,104 @@ const ActivityLog = () => {
     <PageContainer title="Activity Logs" description="View and manage activity logs">
       <Breadcrumb title="Activity Logs" bcRumb={BCrumb} />
 
-      {/* Statistics Cards */}
+      {/* Stats Cards */}
       {statistics && (
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            mb: 3,
+            flexWrap: 'wrap',
+            justifyContent: { xs: 'center', sm: 'flex-start' },
+          }}
+        >
+          <Box
+            sx={{
+              flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' },
+              minWidth: 0,
+              maxWidth: { xs: '100%', sm: '300px' },
+            }}
+          >
+            <Box
+              component="div"
+              sx={{
+                boxShadow: 2,
+                borderRadius: 1,
+                p: { xs: 1.5, sm: 2 },
+                bgcolor: '#fff',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                width: '100%',
+                height: { xs: 'auto', sm: 90 },
+              }}
+            >
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>
+                  Total
+                </Box>
+                <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>
+                  Activities
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  fontSize: { xs: 28, sm: 32 },
+                  fontWeight: 700,
+                  color: 'primary.main',
+                  ml: { xs: 1, sm: 2 },
+                }}
+              >
+                {statistics.total_activities || 0}
+              </Box>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' },
+              minWidth: 0,
+              maxWidth: { xs: '100%', sm: '300px' },
+            }}
+          >
+            <Box
+              component="div"
+              sx={{
+                boxShadow: 2,
+                borderRadius: 1,
+                p: { xs: 1.5, sm: 2 },
+                bgcolor: '#fff',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                width: '100%',
+                height: { xs: 'auto', sm: 90 },
+              }}
+            >
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>
+                  Activities
+                </Box>
+                <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>
+                  by Log Name
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  fontSize: { xs: 28, sm: 32 },
+                  fontWeight: 700,
+                  color: 'primary.main',
+                  ml: { xs: 1, sm: 2 },
+                }}
+              >
+                {0}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {/* Statistics Cards */}
+      {/* {statistics && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} md={3}>
             <Card>
@@ -260,208 +357,137 @@ const ActivityLog = () => {
             </Card>
           </Grid>
         </Grid>
-      )}
+      )} */}
 
-      {/* Filters */}
-      {/* <ParentCard title="Activity Logs" sx={{ mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Log Name</InputLabel>
-              <Select
-                value={filters.log_name}
-                label="Log Name"
-                onChange={(e) => handleFilterChange('log_name', e.target.value)}
-              >
-                <MenuItem value="">All</MenuItem>
-                {logNames.map((name) => (
-                  <MenuItem key={name} value={name}>
-                    {name || 'default'}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Description Search"
-              value={filters.description}
-              onChange={(e) => handleFilterChange('description', e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Date From"
-              type="date"
-              value={filters.date_from}
-              onChange={(e) => handleFilterChange('date_from', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth
-              size="small"
-              label="Date To"
-              type="date"
-              value={filters.date_to}
-              onChange={(e) => handleFilterChange('date_to', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="contained"
-                startIcon={<SearchIcon />}
-                onClick={handleSearch}
-                size="small"
-              >
-                Search
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={() => fetchActivities()}
-                size="small"
-              >
-                Refresh
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<FilterListIcon />}
-                onClick={handleClearFilters}
-                size="small"
-              >
-                Clear
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteSweepIcon />}
-                onClick={() => setPruneDialogOpen(true)}
-                size="small"
-              >
-                Prune
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
-      </ParentCard> */}
+      <ParentCard
+        title={
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Typography variant="h5">Activity Log</Typography>
+          </Box>
+        }
+      >
+        <Box sx={{ mb: 2 }}>
+          <TextField
+            placeholder="Search by description"
+            value={filters.description}
+            onChange={(e) => handleFilterChange('description', e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
 
-      {/* Activity Table */}
-      <ParentCard>
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Log Name</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Event</TableCell>
-                <TableCell>Causer</TableCell>
-                <TableCell>Subject</TableCell>
-                <TableCell>Created At</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
+        <Paper variant="outlined">
+          <TableContainer>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    <Typography>Loading...</Typography>
-                  </TableCell>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Log Name</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Event</TableCell>
+                  <TableCell>Causer</TableCell>
+                  <TableCell>Subject</TableCell>
+                  <TableCell>Time</TableCell>
+                  <TableCell align="center">Actions</TableCell>
                 </TableRow>
-              ) : activities.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} align="center">
-                    <Typography color="textSecondary">No activities found</Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                activities.map((activity) => (
-                  <TableRow key={activity.id} hover>
-                    <TableCell>{activity.id}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={activity.log_name || 'default'}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{activity.description}</TableCell>
-                    <TableCell>
-                      {activity.event && (
-                        <Chip
-                          label={activity.event}
-                          color={getEventColor(activity.event)}
-                          size="small"
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {activity.causer ? (
-                        <Box>
-                          <Typography variant="body2">
-                            {activity.causer.name || activity.causer_id}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {activity.causer.type}
-                          </Typography>
-                        </Box>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {activity.subject ? (
-                        <Box>
-                          <Typography variant="body2">{activity.subject.type}</Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {activity.subject_id}
-                          </Typography>
-                        </Box>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell>{formatDate(activity.created_at)}</TableCell>
-                    <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleViewActivity(activity)}
-                        title="View Details"
-                      >
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <Typography>Loading...</Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                ) : activities.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <Typography color="textSecondary">No activities found</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  activities.map((activity) => (
+                    <TableRow key={activity.id} hover>
+                      <TableCell>{activity.id}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={activity.log_name || 'default'}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>{activity.description}</TableCell>
+                      <TableCell>
+                        {activity.event && (
+                          <Chip
+                            label={activity.event}
+                            color={getEventColor(activity.event)}
+                            size="small"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {activity.causer ? (
+                          <Box>
+                            <Typography variant="body2">
+                              {activity.causer.name || activity.causer_id}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {activity.causer.type}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {activity.subject ? (
+                          <Box>
+                            <Typography variant="body2">{activity.subject.type}</Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {activity.subject_id}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(activity.created_at)}</TableCell>
+                      <TableCell align="center">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleViewActivity(activity)}
+                          title="View Details"
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
 
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 25, 50]}
-        />
+              {
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25, 50]}
+                      count={total}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={handleChangePage}
+                      onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                  </TableRow>
+                </TableFooter>
+              }
+            </Table>
+          </TableContainer>
+        </Paper>
       </ParentCard>
 
       {/* Activity Detail Dialog */}

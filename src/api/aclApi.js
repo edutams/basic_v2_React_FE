@@ -75,72 +75,71 @@ const aclApi = {
 
   // School ALC methods (using tenant-based tables - school_acl_tables)
   getSchoolRoles: async (params) => {
-    const response = await tenantApi.get('/acl/school/roles/get_paginated_roles', { params });
+    // console.log('Fetching school roles with params:', tenantApi.defaults.baseURL, params);
+    const response = await tenantApi.get('/censis/acl/roles/get_paginated_roles', { params });
     return response.data;
   },
 
   createSchoolRole: async (data) => {
-    const response = await tenantApi.post('/acl/school/roles', data);
+    const response = await tenantApi.post('/censis/acl/roles', data);
     return response.data;
   },
 
   updateSchoolRole: async (id, data) => {
-    const response = await tenantApi.put(`/acl/school/roles/${id}`, data);
+    const response = await tenantApi.put(`/censis/acl/roles/${id}`, data);
     return response.data;
   },
 
   getSchoolRolePermissions: async (roleId) => {
-    const response = await tenantApi.get(`/acl/school/roles/${roleId}/permissions`);
+    const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions`);
     return response.data;
   },
 
   attachSchoolRolePermissions: async (roleId, permissions) => {
-    const response = await tenantApi.post(`/acl/school/roles/${roleId}/permissions`, {
+    const response = await tenantApi.post(`/censis/acl/roles/${roleId}/permissions`, {
       permissions,
     });
     return response.data;
   },
 
   getSchoolAllPermissions: async () => {
-    const response = await tenantApi.get('/acl/school/roles/permissions/all');
+    const response = await tenantApi.get('/censis/acl/roles/permissions/all');
     return response.data;
   },
 
   getSchoolUsers: async () => {
-    const response = await tenantApi.get('/acl/school/assignments/users/list');
+    const response = await tenantApi.get('/censis/acl/assignments/users/list');
     return response.data;
   },
 
   getSchoolRolesList: async () => {
-    const response = await tenantApi.get('/acl/school/assignments/roles/list');
+    const response = await tenantApi.get('/censis/acl/assignments/roles/list');
     return response.data;
   },
 
-  assignSchoolUserRole: async (userId, roleIds, type = 'staff') => {
-    const response = await tenantApi.post('/acl/school/assignments/user/assign', {
+  assignSchoolUserRole: async (userId, roleIds) => {
+    const response = await tenantApi.post('/censis/acl/assignments/users/assign', {
       user_id: userId,
       roles: roleIds,
-      type: type,
     });
     return response.data;
   },
 
-  unassignSchoolUserRole: async (userId, roleIds, type = 'staff') => {
-    const response = await tenantApi.post('/acl/school/assignments/user/unassign', {
+  unassignSchoolUserRole: async (userId, roleIds) => {
+    const response = await tenantApi.post('/censis/acl/assignments/users/unassign', {
       user_id: userId,
       roles: roleIds,
-      type: type,
     });
     return response.data;
   },
 
   getSchoolRoleAnalytics: async (params) => {
-    const response = await tenantApi.get('/acl/school', { params });
+    const response = await tenantApi.get('/censis/acl', { params });
     return response.data;
   },
 
   getSchoolPermissionAnalytics: async (params) => {
-    const response = await tenantApi.get('/acl/school/permissions/analytics', { params });
+    const response = await tenantApi.get('/censis/acl/permissions/analytics', { params });
     return response.data;
   },
 };

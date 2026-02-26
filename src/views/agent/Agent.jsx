@@ -143,6 +143,8 @@ const Agent = () => {
                      phoneNumber: agent.phone,
                      imgsrc: agent.image,
                      performance: 'School: ' + (agent.tenants_count || 0),
+                     tenants_count: agent.tenants_count || 0,
+                     sub_agents_count: agent.children_count || 0,
                      headerColor: parsedColor?.headcolor,
                      sidebarColor: parsedColor?.sidecolor,
                      bodyColor: parsedColor?.bodycolor,
@@ -424,7 +426,7 @@ const Agent = () => {
             fontSize: '14px',
           }}
         >
-          {info.row.original.sub_agents_count || '2'}
+          {info.row.original.sub_agents_count ?? 0}
         </Box>
       ),
     }),
@@ -439,7 +441,7 @@ const Agent = () => {
           </Box>
           <Box sx={{ bgcolor: '#b4ebc2', px: 1, py: 0.5 }}>
             <Typography variant="caption" fontWeight="700" color="#333">
-              {info.row.original.tenants_count || '300'}
+              {info.row.original.tenants_count ?? 0}
             </Typography>
           </Box>
         </Stack>

@@ -63,6 +63,7 @@ import {
   IconMap,
   IconListCheck,
   IconCalendarTime,
+  IconHistory,
 } from '@tabler/icons-react';
 
 const Menuitems = [
@@ -94,6 +95,12 @@ const Menuitems = [
     title: 'Agent',
     icon: IconUserCircle,
     href: '/agent',
+  },
+  {
+    id: uniqueId(),
+    title: 'Activity Log',
+    icon: IconHistory,
+    href: '/activity-log',
   },
   {
     id: uniqueId(),

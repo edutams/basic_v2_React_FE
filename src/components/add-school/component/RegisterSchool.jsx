@@ -12,6 +12,7 @@ import {
   CircularProgress,
   Alert,
   AlertTitle,
+  Chip,
 } from '@mui/material';
 import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
@@ -20,12 +21,16 @@ import {
   updateSchool,
   getAllStates,
   getLgasByState,
+  getSchoolCategories,
+  getSchoolDivisions,
 } from '../../../context/AgentContext/services/school.service';
 import useNotification from '../../../hooks/useNotification';
 
 const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCancel }) => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [availableDivisions, setAvailableDivisions] = useState([]);
   const [loading, setLoading] = useState(false);
   const notify = useNotification();
 
@@ -39,6 +44,8 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     address: selectedSchool?.address || '',
     state_id: selectedSchool?.state_id || '',
     lga_id: selectedSchool?.lga_id || '',
+    school_categories: selectedSchool?.school_categories?.map(c => c.id) || [],
+    school_divisions: selectedSchool?.school_divisions?.map(d => d.id) || [],
     social_link: selectedSchool?.social_link || '',
     payModuleType: selectedSchool?.payModuleType || '',
     headcolor: selectedSchool?.color?.headcolor || 'bg-night-sky text-lighter',
@@ -59,6 +66,23 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
       }
     };
     fetchStates();
+  }, []);
+
+  // Fetch categories and divisions on mount
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const [cats, divs] = await Promise.all([
+          getSchoolCategories(),
+          getSchoolDivisions()
+        ]);
+        setCategories(cats || []);
+        setAvailableDivisions(divs || []);
+      } catch (err) {
+        notify.error('Failed to load school categorization metadata');
+      }
+    };
+    fetchMetadata();
   }, []);
 
   // Fetch LGAs when state changes
@@ -127,6 +151,12 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     if (!formData.payModuleType) {
       newErrors.payModuleType = 'Module type is required';
     }
+    if (formData.school_categories.length === 0) {
+       newErrors.school_categories = 'At least one school category is required';
+    }
+    if (formData.school_divisions.length === 0) {
+       newErrors.school_divisions = 'At least one school division is required';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -173,6 +203,8 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
         lga_id: '',
         social_link: '',
         payModuleType: '',
+        school_categories: [],
+        school_divisions: [],
         headcolor: 'bg-night-sky text-lighter',
         sidecolor: 'bg-dark text-lighter',
         bodycolor: 'null',
@@ -335,6 +367,61 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
               <MenuItem value="full">Full Pay</MenuItem>
             </Select>
             {errors.payModuleType && <FormHelperText>{errors.payModuleType}</FormHelperText>}
+          </FormControl>
+        </Grid>
+
+        {/* School Categorization */}
+        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.school_categories)}>
+            <InputLabel>School Categories</InputLabel>
+            <Select
+              name="school_categories"
+              multiple
+              value={formData.school_categories}
+              label="School Categories"
+              onChange={handleChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={categories.find(c => c.id === value)?.name} size="small" />
+                  ))}
+                </Box>
+              )}
+            >
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.school_categories && <FormHelperText>{errors.school_categories}</FormHelperText>}
+          </FormControl>
+        </Grid>
+
+        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.school_divisions)}>
+            <InputLabel>School Divisions</InputLabel>
+            <Select
+              name="school_divisions"
+              multiple
+              value={formData.school_divisions}
+              label="School Divisions"
+              onChange={handleChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={availableDivisions.find(d => d.id === value)?.name} size="small" />
+                  ))}
+                </Box>
+              )}
+            >
+              {availableDivisions.map((div) => (
+                <MenuItem key={div.id} value={div.id}>
+                  {div.name}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.school_divisions && <FormHelperText>{errors.school_divisions}</FormHelperText>}
           </FormControl>
         </Grid>
 

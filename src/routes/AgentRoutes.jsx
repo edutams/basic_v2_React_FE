@@ -24,6 +24,7 @@ const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
 const Mail = Loadable(lazy(() => import('../views/mail/Mail')));
 const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
 const AgentSubscriptionManagement = Loadable(lazy(() => import('../views/agent/subscriptions/AgentSubscriptionIndex')));
+const ActivityLog = Loadable(lazy(() => import('../views/activity-log/ActivityLog')));
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 
@@ -183,6 +184,7 @@ const AgentRoutes = [
       { path: '/chat', exact: true, element: <Chat /> },
       { path: '/mail', exact: true, element: <Mail /> },
       { path: '/agent/subscriptions', exact: true, element: <AgentSubscriptionManagement /> },
+      { path: '/activity-log', exact: true, element: <ActivityLog /> },
       { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
 
       { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },

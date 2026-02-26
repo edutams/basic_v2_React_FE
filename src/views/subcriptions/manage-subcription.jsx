@@ -201,8 +201,8 @@ const ManageSubscriptionList = () => {
         const payload = {
           agent_plan_id: data.availableplan,
           session_id: data.session,
-          term_id: data.term,
-          subscription_mode: data.subscriptionMode === 'perSession' ? 'online' : 'online', // adapt as needed
+          term_id: data.term || null,
+          subscription_mode: 'online', // adapt as needed
         };
         
         await tenantApi.post('/subscribe', payload);

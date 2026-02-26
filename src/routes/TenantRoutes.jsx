@@ -18,6 +18,7 @@ const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 const AlcManager = Loadable(
   lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
 );
+const ActivityLog = Loadable(lazy(() => import('../views/tenants-views/activity-log/ActivityLog')));
 
 const TenantRoutes = [
   {
@@ -34,6 +35,7 @@ const TenantRoutes = [
       { path: '/manage-subscription', element: <SubscriptionIndex /> },
       { path: '/subscription-history', element: <SubscriptionIndex /> },
       { path: '/alc-manager', exact: true, element: <AlcManager /> },
+      { path: '/activity-logs', exact: true, element: <ActivityLog /> },
     ],
   },
   {
@@ -45,7 +47,6 @@ const TenantRoutes = [
       { path: '/auth/404', element: <Error /> },
       { path: '*', element: <Navigate to="/login" /> },
     ],
-
   },
 ];
 

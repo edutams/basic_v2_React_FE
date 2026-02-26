@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -12,50 +12,55 @@ import {
   Button,
   Alert,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import useNotification from '../../../hooks/useNotification';
+import tenantApi from '../../../api/tenant_api';
 
-const ManageWeeks = () => {
+const ManageWeeks = ({ sessionTermId }) => {
   const notify = useNotification();
   const [firstMonday, setFirstMonday] = useState('');
-  const [weeks, setWeeks] = useState([
-    { week: 'Week 1', startsOn: '2025-02-24', endsOn: '2025-02-28' },
-    { week: 'Week 2', startsOn: '2025-03-03', endsOn: '2025-03-07' },
-    { week: 'Week 3', startsOn: '2025-03-10', endsOn: '2025-03-14' },
-    { week: 'Week 4', startsOn: '2025-03-17', endsOn: '2025-03-21' },
-    { week: 'Week 5', startsOn: '2025-03-24', endsOn: '2025-03-28' },
-    { week: 'Week 6', startsOn: '2025-03-31', endsOn: '2025-04-04' },
-    { week: 'Week 7', startsOn: '2025-04-07', endsOn: '2025-04-11' },
-    { week: 'Week 8', startsOn: '2025-04-14', endsOn: '2025-04-18' },
-    { week: 'Week 9', startsOn: '2025-04-21', endsOn: '2025-04-25' },
-    { week: 'Week 10', startsOn: '2025-04-28', endsOn: '2025-05-02' },
-    { week: 'Week 11', startsOn: '2025-05-05', endsOn: '2025-05-09' },
-  ]);
+  const [weeks, setWeeks] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleGenerateWeeks = () => {
+  useEffect(() => {
+    if (sessionTermId) {
+      fetchWeeks();
+    }
+  }, [sessionTermId]);
+
+  const fetchWeeks = async () => {
+    setLoading(true);
+    try {
+      const response = await tenantApi.get(`/session-mappings/${sessionTermId}/weeks`);
+      setWeeks(response.data);
+    } catch (error) {
+      console.error('Error fetching weeks:', error);
+      notify.error('Failed to fetch weeks', 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateWeeks = async () => {
     if (!firstMonday) {
       notify.warning('Please select the first Monday of the term', 'Warning');
       return;
     }
 
-    const startDate = new Date(firstMonday);
-    const generatedWeeks = [];
-
-    for (let i = 0; i < 11; i++) {
-      const weekStart = new Date(startDate);
-      weekStart.setDate(startDate.getDate() + i * 7);
-
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 4);
-
-      generatedWeeks.push({
-        week: `Week ${i + 1}`,
-        startsOn: weekStart.toISOString().split('T')[0],
-        endsOn: weekEnd.toISOString().split('T')[0],
+    setLoading(true);
+    try {
+      const response = await tenantApi.post(`/session-mappings/${sessionTermId}/weeks/auto-generate`, {
+        start_date: firstMonday,
       });
+      setWeeks(response.data);
+      notify.success('Weeks generated and saved successfully', 'Success');
+    } catch (error) {
+      console.error('Error generating weeks:', error);
+      notify.error('Failed to generate weeks', 'Error');
+    } finally {
+      setLoading(false);
     }
-
-    setWeeks(generatedWeeks);
   };
 
   const handleWeekChange = (index, field, value) => {
@@ -64,10 +69,33 @@ const ManageWeeks = () => {
     setWeeks(updatedWeeks);
   };
 
-  const handleSaveAll = () => {
-    // console.log('Saving all weeks:', weeks);
-    notify.success('Weeks saved successfully', 'Success');
+  const handleSaveAll = async () => {
+    setLoading(true);
+    try {
+      await tenantApi.post(`/session-mappings/${sessionTermId}/weeks`, {
+        weeks: weeks.map(w => ({
+          week_id: w.week_id,
+          start_date: w.start_date,
+          end_date: w.end_date
+        }))
+      });
+      notify.success('Weeks saved successfully', 'Success');
+      fetchWeeks();
+    } catch (error) {
+      console.error('Error saving weeks:', error);
+      notify.error('Failed to save weeks', 'Error');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!sessionTermId) {
+    return (
+      <Box p={3} textAlign="center">
+        <Alert severity="warning">Please select or activate a session-term mapping first.</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -81,10 +109,17 @@ const ManageWeeks = () => {
           type="date"
           value={firstMonday}
           onChange={(e) => setFirstMonday(e.target.value)}
+          size="small"
           sx={{ minWidth: 200 }}
         />
-        <Button variant="contained" color="primary" onClick={handleGenerateWeeks} size="small">
-          Generate Weeks
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleGenerateWeeks} 
+          size="small"
+          disabled={loading}
+        >
+          {loading ? <CircularProgress size={20} color="inherit" /> : 'Generate Weeks'}
         </Button>
       </Stack>
 
@@ -99,38 +134,46 @@ const ManageWeeks = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {weeks.map((week, index) => (
-                <TableRow key={index} hover>
-                  <TableCell>{week.week}</TableCell>
-                  <TableCell>
-                    <TextField
-                      type="date"
-                      value={week.startsOn}
-                      onChange={(e) => handleWeekChange(index, 'startsOn', e.target.value)}
-                      size="small"
-                      variant="outlined"
-                      sx={{ minWidth: 150 }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <TextField
-                      type="date"
-                      value={week.endsOn}
-                      onChange={(e) => handleWeekChange(index, 'endsOn', e.target.value)}
-                      size="small"
-                      variant="outlined"
-                      sx={{ minWidth: 150 }}
-                    />
+              {loading && weeks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center">
+                    <CircularProgress size={24} sx={{ my: 2 }} />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                weeks.map((week, index) => (
+                  <TableRow key={index} hover>
+                    <TableCell>{week.week_name}</TableCell>
+                    <TableCell>
+                      <TextField
+                        type="date"
+                        value={week.start_date || ''}
+                        onChange={(e) => handleWeekChange(index, 'start_date', e.target.value)}
+                        size="small"
+                        variant="outlined"
+                        sx={{ minWidth: 150 }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        type="date"
+                        value={week.end_date || ''}
+                        onChange={(e) => handleWeekChange(index, 'end_date', e.target.value)}
+                        size="small"
+                        variant="outlined"
+                        sx={{ minWidth: 150 }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </TableContainer>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-          <Button variant="contained" onClick={handleSaveAll}>
-            Save All
+          <Button variant="contained" onClick={handleSaveAll} disabled={loading || weeks.length === 0}>
+            {loading ? <CircularProgress size={20} color="inherit" /> : 'Save All'}
           </Button>
         </Box>
       </Paper>

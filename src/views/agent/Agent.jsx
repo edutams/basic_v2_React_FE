@@ -39,6 +39,15 @@ import agentApi from '../../api/agent';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import { 
+  IconUsers, 
+  IconSchool, 
+  IconCurrencyNaira, 
+} from '@tabler/icons-react';
+
+import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
+import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 
 import {
   flexRender,
@@ -68,6 +77,20 @@ import locationApi from '../../api/location';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
+
+  // Revenue Trend Mock Data
+  const revenueSeries = [
+    {
+      name: 'Revenue',
+      data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5],
+    },
+  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Plan Distribution Mock Data
+  const planSeries = [65, 52, 39];
+  const planLabels = ['Basic', 'Basic+', 'Basic++'];
+
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
@@ -373,31 +396,53 @@ const Agent = () => {
             fullWidth
           />
         ) : (
-          <Stack direction="column" spacing={0.5} alignItems="flex-start">
-            <Typography color="textSecondary" variant="subtitle2">
-              {info.row.original.contactDetails}
+          <Stack direction="column" spacing={0} alignItems="flex-start">
+            <Typography variant="subtitle2" fontWeight="600">
+              {info.row.original.phoneNumber || '+23482103453956'}
             </Typography>
             <Typography color="textSecondary" variant="caption">
-              {info.row.original.phoneNumber}
+              {info.row.original.contactDetails}
             </Typography>
           </Stack>
         ),
     }),
+    columnHelper.accessor('subAgent', {
+      header: () => 'Sub Agent',
+      cell: (info) => (
+        <Box
+          sx={{
+            bgcolor: '#ebf3f5',
+            color: '#333',
+            borderRadius: '4px',
+            width: 35,
+            height: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '700',
+            fontSize: '14px',
+          }}
+        >
+          {info.row.original.sub_agents_count || '2'}
+        </Box>
+      ),
+    }),
     columnHelper.accessor('performance', {
       header: () => 'Performance',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Typography color="textSecondary" variant="h6" fontWeight="400">
-            {info.getValue()}
-          </Typography>
-        ),
+      cell: (info) => (
+        <Stack direction="row" spacing={0} sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+          <Box sx={{ bgcolor: '#eee', px: 1, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="600" color="textSecondary">
+              School
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: '#2ca87f', px: 1, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="700" color="white">
+              {info.row.original.tenants_count || '300'}
+            </Typography>
+          </Box>
+        </Stack>
+      ),
     }),
     // Gateway column removed
     columnHelper.accessor('colourScheme', {
@@ -645,10 +690,73 @@ const Agent = () => {
 
   return (
     <PageContainer title="Agent Page" description="This is the Agent page">
-      <Box sx={{ mt: 0 }}>
+      <Box sx={{ mt: 1 }}>
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
-      <Box sx={{ mt: 1 }}>
+
+      <Box mt={3}>
+        <Grid container spacing={3}>
+          {/* Stat Cards */}
+          <Grid item xs={12} sm={6} lg={4}>
+            <DashboardStatCard
+              title="Total Agents"
+              value="123"
+              icon={IconUsers}
+              bgcolor="#ebf3f5"
+              color="#333"
+              iconBgColor="#2ca87f"
+            />
+          </Grid>
+          
+          <Grid item xs={12} sm={6} lg={4}>
+            <DashboardStatCard
+              title="Active School"
+              value="123"
+              subtitle="Total School"
+              icon={IconSchool}
+              bgcolor="#d1efdb"
+              color="#333"
+              iconBgColor="#2ca87f"
+            />
+          </Grid>
+          
+          <Grid item xs={12} sm={6} lg={4}>
+            <DashboardStatCard
+              title="Revenue"
+              value="#10, 000, 000"
+              icon={IconCurrencyNaira}
+              bgcolor="#d1d1e9"
+              color="#333"
+              iconBgColor="#5d87ff"
+            />
+          </Grid>
+
+          {/* Charts */}
+          <Grid item xs={12} lg={8}>
+            <ReusableBarChart
+              title="Revenue Trend"
+              subtitle="Analytics by Month"
+              series={revenueSeries}
+              categories={months}
+              colors={['#3949ab']}
+              height={350}
+            />
+          </Grid>
+          
+          <Grid item xs={12} lg={4}>
+            <ReusablePieChart
+              title="Plan Distribution"
+              subtitle="Subscription Breakdown"
+              series={planSeries}
+              labels={planLabels}
+              colors={['#3949ab', '#66bb6a', '#ffa726']}
+              height={350}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Box sx={{ mt: 3 }}>
         <ParentCard
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">

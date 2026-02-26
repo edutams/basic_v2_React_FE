@@ -39,6 +39,7 @@ import agentApi from '../../api/agent';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import AddIcon from '@mui/icons-material/Add';
 import { 
   IconUsers, 
   IconSchool, 
@@ -411,7 +412,7 @@ const Agent = () => {
       cell: (info) => (
         <Box
           sx={{
-            bgcolor: '#ebf3f5',
+            bgcolor: '#e5e5f7',
             color: '#333',
             borderRadius: '4px',
             width: 35,
@@ -431,13 +432,13 @@ const Agent = () => {
       header: () => 'Performance',
       cell: (info) => (
         <Stack direction="row" spacing={0} sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
-          <Box sx={{ bgcolor: '#eee', px: 1, py: 0.5 }}>
+          <Box sx={{ bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
             <Typography variant="caption" fontWeight="600" color="textSecondary">
               School
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: '#2ca87f', px: 1, py: 0.5 }}>
-            <Typography variant="caption" fontWeight="700" color="white">
+          <Box sx={{ bgcolor: '#b4ebc2', px: 1, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="700" color="#333">
               {info.row.original.tenants_count || '300'}
             </Typography>
           </Box>
@@ -694,63 +695,80 @@ const Agent = () => {
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
 
-      <Box mt={3}>
-        <Grid container spacing={3}>
-          {/* Stat Cards */}
-          <Grid item xs={12} sm={6} lg={4}>
+      <Box mt={3} sx={{ mx: { xs: -2, sm: -3 }, px: { xs: 2, sm: 3 }, width: 'auto', maxWidth: 'none' }}>
+        {/* Row 1: Stat Cards */}
+        <Grid container spacing={3} mb={3}>
+          <Grid item xs={12} md={4} lg={4}>
             <DashboardStatCard
               title="Total Agents"
               value="123"
               icon={IconUsers}
-              bgcolor="#ebf3f5"
+              bgcolor="#E8F2F3"
               color="#333"
               iconBgColor="#2ca87f"
             />
           </Grid>
           
-          <Grid item xs={12} sm={6} lg={4}>
+          <Grid item xs={12} md={4} lg={4}>
             <DashboardStatCard
               title="Active School"
               value="123"
               subtitle="Total School"
               icon={IconSchool}
-              bgcolor="#d1efdb"
+              bgcolor="#C9EBD2"
               color="#333"
               iconBgColor="#2ca87f"
+              rightContent={
+                <Stack spacing={0.5}>
+                  {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
+                    <Stack key={idx} direction="row" justifyContent="space-between" spacing={2} sx={{ minWidth: 120 }}>
+                      <Typography variant="caption" color="textSecondary" fontWeight="600" sx={{ fontSize: '11px' }}>
+                        {label} -
+                      </Typography>
+                      <Typography variant="caption" color="error" fontWeight="700" sx={{ fontSize: '11px' }}>
+                        34
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              }
             />
           </Grid>
           
-          <Grid item xs={12} sm={6} lg={4}>
+          <Grid item xs={12} md={4} lg={4}>
             <DashboardStatCard
               title="Revenue"
               value="#10, 000, 000"
               icon={IconCurrencyNaira}
-              bgcolor="#d1d1e9"
+              bgcolor="#D2D2E8"
               color="#333"
-              iconBgColor="#5d87ff"
+              iconBgColor="#ffffff"
             />
           </Grid>
+        </Grid>
 
-          {/* Charts */}
-          <Grid item xs={12} lg={8}>
+        {/* Row 2: Charts */}
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={8}>
             <ReusableBarChart
               title="Revenue Trend"
-              subtitle="Analytics by Month"
               series={revenueSeries}
               categories={months}
               colors={['#3949ab']}
               height={350}
+              yAxisPrefix="N"
+              yAxisFormatter={(val) => `${val.toFixed(1)}M`}
+              xAxisTitle="Month"
             />
           </Grid>
           
-          <Grid item xs={12} lg={4}>
+          <Grid item xs={12} md={4}>
             <ReusablePieChart
               title="Plan Distribution"
-              subtitle="Subscription Breakdown"
               series={planSeries}
               labels={planLabels}
               colors={['#3949ab', '#66bb6a', '#ffa726']}
-              height={350}
+              height={320}
             />
           </Grid>
         </Grid>
@@ -759,19 +777,33 @@ const Agent = () => {
       <Box sx={{ mt: 3 }}>
         <ParentCard
           title={
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h5" fontWeight={200}>
-                My Agent List
-              </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: '#2ca87f',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                  }}
+                >
+                  <IconSchool size={16} />
+                </Box>
+                <Typography variant="h5">List of Agents</Typography>
+              </Stack>
               <Button
                 variant="contained"
-                color="primary"
-                startIcon={<HowToRegIcon />}
+                startIcon={<AddIcon />}
                 onClick={() => setIsRegisterModalOpen(true)}
+                sx={{ bgcolor: '#3949ab', '&:hover': { bgcolor: '#303f9f' } }}
               >
-                Register Agent
+                Add New Agent
               </Button>
-            </Box>
+            </Stack>
           }
         >
           <Grid container spacing={3} mb={3}>

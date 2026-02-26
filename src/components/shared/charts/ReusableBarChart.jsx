@@ -5,7 +5,17 @@ import { Box, Typography } from '@mui/material';
 import DashboardCard from '../DashboardCard';
 import PropTypes from 'prop-types';
 
-const ReusableBarChart = ({ title, subtitle, series, categories, colors, height = 300 }) => {
+const ReusableBarChart = ({ 
+  title, 
+  subtitle, 
+  series, 
+  categories, 
+  colors, 
+  height = 300,
+  yAxisPrefix = '',
+  yAxisFormatter = (val) => val,
+  xAxisTitle = ''
+}) => {
   const theme = useTheme();
   
   const options = {
@@ -16,14 +26,16 @@ const ReusableBarChart = ({ title, subtitle, series, categories, colors, height 
       toolbar: {
         show: false,
       },
+      zoom: {
+        enabled: false
+      }
     },
     colors: colors || [theme.palette.primary.main, theme.palette.secondary.main],
     plotOptions: {
       bar: {
         borderRadius: 4,
         columnWidth: '45%',
-        distributed: true,
-        endingShape: 'rounded',
+        distributed: false, // Changed to false to avoid color per bar unless explicitly needed
       },
     },
     dataLabels: {
@@ -40,16 +52,29 @@ const ReusableBarChart = ({ title, subtitle, series, categories, colors, height 
           show: false,
         },
       },
+      yaxis: {
+        lines: {
+          show: true,
+        }
+      }
     },
     xaxis: {
       categories: categories || [],
       axisBorder: {
         show: false,
       },
+      title: {
+        text: xAxisTitle,
+        style: {
+          color: '#adb0bb',
+          fontWeight: 400
+        }
+      }
     },
     yaxis: {
       labels: {
         show: true,
+        formatter: (val) => `${yAxisPrefix}${yAxisFormatter(val)}`,
       },
     },
     tooltip: {
@@ -73,6 +98,9 @@ ReusableBarChart.propTypes = {
   categories: PropTypes.array.isRequired,
   colors: PropTypes.array,
   height: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  yAxisPrefix: PropTypes.string,
+  yAxisFormatter: PropTypes.func,
+  xAxisTitle: PropTypes.string,
 };
 
 export default ReusableBarChart;

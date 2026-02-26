@@ -44,21 +44,21 @@ const ReusablePieChart = ({ title, subtitle, series, labels, colors, height = 30
 
   return (
     <DashboardCard title={title} subtitle={subtitle}>
-      <Box mt={3}>
+      <Box mt={3} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Chart options={options} series={series} type="donut" height={height} width="100%" />
         
-        <Stack spacing={2} mt={4}>
+        <Stack direction="row" spacing={2} mt={4} justifyContent="center" flexWrap="wrap">
           {labels.map((label, index) => (
             <Stack key={label} direction="row" spacing={1} alignItems="center">
               <Box
                 sx={{
-                  width: 12,
-                  height: 12,
+                  width: 8,
+                  height: 8,
                   borderRadius: '50%',
                   bgcolor: options.colors[index] || '#ccc',
                 }}
               />
-              <Typography variant="subtitle2" color="textSecondary">
+              <Typography variant="caption" color="textSecondary" fontWeight="600">
                 {label} ({series[index]})
               </Typography>
             </Stack>

@@ -30,13 +30,14 @@ const SchoolPermissionBased = () => {
 
   useEffect(() => {
     fetchPermissions();
-  }, [page, nameFilter]);
+  }, [page, rowsPerPage, nameFilter]);
 
   const fetchPermissions = async () => {
     setLoading(true);
     try {
       const params = {
         page: page + 1,
+        per_page: rowsPerPage,
         search: nameFilter,
       };
       const res = await aclApi.getSchoolPermissionAnalytics(params);
@@ -44,7 +45,6 @@ const SchoolPermissionBased = () => {
       if (res?.data?.data) {
         setPermissions(res.data.data || []);
         setTotalRows(res.data.total || 0);
-        setRowsPerPage(res.data.per_page || 10);
       } else if (res?.current_page) {
         setPermissions(res.data || []);
         setTotalRows(res.total || 0);
@@ -162,11 +162,15 @@ const SchoolPermissionBased = () => {
               <TableFooter>
                 <TableRow>
                   <TablePagination
-                    rowsPerPageOptions={[10]}
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
                     count={totalRows}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
                     colSpan={5}
                   />
                 </TableRow>

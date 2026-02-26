@@ -282,7 +282,7 @@ const SchoolAlcManager = () => {
                 <TableFooter>
                   <TableRow>
                     <TablePagination
-                      rowsPerPageOptions={[5, 10, 25]}
+                      rowsPerPageOptions={[5, 10, 25, 50, 100]}
                       count={totalRoles}
                       rowsPerPage={rowsPerPage}
                       page={page}

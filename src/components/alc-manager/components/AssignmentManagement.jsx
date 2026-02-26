@@ -206,7 +206,7 @@ const AssignmentManagement = () => {
     <ParentCard
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5">Assign Roles/Permission to Users</Typography>
+          <Typography variant="h5">Assign Roles/Permission to Agents</Typography>
         </Box>
       }
     >

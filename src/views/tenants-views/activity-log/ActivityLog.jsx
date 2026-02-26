@@ -263,7 +263,7 @@ const ActivityLog = () => {
       )}
 
       {/* Filters */}
-      <ParentCard title="Activity Logs" sx={{ mb: 3 }}>
+      {/* <ParentCard title="Activity Logs" sx={{ mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={2}>
             <FormControl fullWidth size="small">
@@ -358,7 +358,7 @@ const ActivityLog = () => {
             </Stack>
           </Grid>
         </Grid>
-      </ParentCard>
+      </ParentCard> */}
 
       {/* Activity Table */}
       <ParentCard>

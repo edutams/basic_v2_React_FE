@@ -73,7 +73,13 @@ const aclApi = {
     return response.data;
   },
 
-  // School ALC methods (using tenant-based tables - school_acl_tables)
+
+  /*************************************************************************************************************************************************************
+    
+    School ALC methods (using tenant-based tables - school_acl_tables)
+    
+  **************************************************************************************************************************************************************/
+
   getSchoolRoles: async (params) => {
     // console.log('Fetching school roles with params:', tenantApi.defaults.baseURL, params);
     const response = await tenantApi.get('/censis/acl/roles/get_paginated_roles', { params });

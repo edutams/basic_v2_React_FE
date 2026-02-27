@@ -95,7 +95,7 @@ const ActivityLog = () => {
       <Breadcrumb title="Activity Log" items={BCrumb} />
 
       {/* Stats Cards */}
-      <Box
+      {/* <Box
         sx={{
           display: 'flex',
           gap: 2,
@@ -104,56 +104,57 @@ const ActivityLog = () => {
           justifyContent: { xs: 'center', sm: 'flex-start' },
         }}
       >
-        {/* {statsLoading ? (
-          <Typography>Loading statistics...</Typography>
-        ) : statistics ? ( */}
         <>
-          <Box
-            sx={{
-              flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 200px' },
-              minWidth: 0,
-              maxWidth: { xs: '100%', sm: '250px' },
-            }}
-          >
-            <BlankCard>
-              <CardContent>
-                <Typography variant="body2" color="textSecondary">
-                  Total Activities
-                </Typography>
-                <Typography variant="h3" fontWeight={600}>
-                  {0}
-                </Typography>
-              </CardContent>
-            </BlankCard>
-          </Box>
-          <Box
-            sx={{
-              flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' },
-              minWidth: 0,
-              maxWidth: { xs: '100%', sm: '350px' },
-            }}
-          >
-            <BlankCard>
-              <CardContent>
-                <Typography variant="body2" color="textSecondary" gutterBottom>
-                  Activities by Log Name
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {/* {statistics.by_log_name?.slice(0, 5).map((item, index) => (
-                    <Chip
-                      key={index}
-                      label={`${item.log_name || 'default'}: ${item.count}`}
-                      color="primary"
-                      variant="outlined"
-                      size="small"
-                    />
-                  ))} */}
-                </Box>
-              </CardContent>
-            </BlankCard>
-          </Box>
+          {
+            <Box
+              sx={{
+                flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 200px' },
+                minWidth: 0,
+                maxWidth: { xs: '100%', sm: '250px' },
+              }}
+            >
+              <BlankCard>
+                <CardContent>
+                  <Typography variant="body2" color="textSecondary">
+                    Total Activities
+                  </Typography>
+                  <Typography variant="h3" fontWeight={600}>
+                    {0}
+                  </Typography>
+                </CardContent>
+              </BlankCard>
+            </Box>
+          }
+          {
+            <Box
+              sx={{
+                flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' },
+                minWidth: 0,
+                maxWidth: { xs: '100%', sm: '350px' },
+              }}
+            >
+              <BlankCard>
+                <CardContent>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                    Activities by Log Name
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {statistics.by_log_name?.slice(0, 5).map((item, index) => (
+                      <Chip
+                        key={index}
+                        label={`${item.log_name || 'default'}: ${item.count}`}
+                        color="primary"
+                        variant="outlined"
+                        size="small"
+                      />
+                    ))}
+                  </Box>
+                </CardContent>
+              </BlankCard>
+            </Box>
+          }
         </>
-      </Box>
+      </Box> */}
 
       <BlankCard>
         <CardContent>
@@ -229,7 +230,7 @@ const ActivityLog = () => {
                 </Table>
               </TableContainer>
               <TablePagination
-                rowsPerPageOptions={[10, 20, 50]}
+                rowsPerPageOptions={[5, 10, 20, 50]}
                 component="div"
                 count={total}
                 rowsPerPage={rowsPerPage}

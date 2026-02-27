@@ -25,6 +25,7 @@ import {
   Alert,
   TextField,
   InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -59,6 +60,7 @@ const AlcManager = () => {
   const [roleType, setRoleType] = useState('');
   const [totalRoles, setTotalRoles] = useState(0);
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [newRoleForm, setNewRoleForm] = useState({
     roleName: '',
@@ -75,6 +77,7 @@ const AlcManager = () => {
 
   const fetchRoles = async () => {
     try {
+      setLoading(true);
       const res = await aclApi.getRoles({
         page: page + 1,
         per_page: rowsPerPage,
@@ -88,6 +91,8 @@ const AlcManager = () => {
     } catch (error) {
       setRows([]);
       notify.error('Failed to fetch roles');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,7 +179,7 @@ const AlcManager = () => {
 
       setNewRoleForm({
         roleName: '',
-        guardName: 'web',
+        // guardName: 'web',
         description: '',
       });
 
@@ -193,6 +198,13 @@ const AlcManager = () => {
 
     return rows.filter((row) => row?.name?.toLowerCase()?.includes(term));
   }, [rows, roleType]);
+
+  const resetFilters = () => {
+    setRoleType('');
+    setPage(0);
+  };
+
+  const hasFilters = roleType !== '';
 
   return (
     <PageContainer title="ACL Manager" description="Access Control List Management Dashboard">
@@ -221,11 +233,15 @@ const AlcManager = () => {
             </Box>
           }
         >
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-end' }}>
             <TextField
               placeholder="Search by role name"
               value={roleType}
-              onChange={(e) => setRoleType(e.target.value)}
+              onChange={(e) => {
+                setRoleType(e.target.value);
+                setPage(0);
+              }}
+              // sx={{ width: 400 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -234,6 +250,15 @@ const AlcManager = () => {
                 ),
               }}
             />
+            {hasFilters && (
+              <Button
+                variant="outlined"
+                onClick={resetFilters}
+                sx={{ height: 'fit-content', mb: 0.5 }}
+              >
+                Clear Filters
+              </Button>
+            )}
           </Box>
 
           <Paper variant="outlined">
@@ -250,42 +275,69 @@ const AlcManager = () => {
                 </TableHead>
 
                 <TableBody>
-                  {filteredRows.map((row, index) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{row.name}</TableCell>
-                      <TableCell>{row.guard_name}</TableCell>
-                      <TableCell>{row.description}</TableCell>
-
-                      <TableCell align="center">
-                        <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                          <MoreVertIcon />
-                        </IconButton>
-
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                          onClose={handleMenuClose}
-                        >
-                          <MenuItem onClick={() => handleAttachPermission(row)}>
-                            Attach Permission
-                          </MenuItem>
-
-                          <MenuItem onClick={() => handleViewPermission(row)}>
-                            View Permission
-                          </MenuItem>
-                        </Menu>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        <CircularProgress size={24} />
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : filteredRows.length > 0 ? (
+                    filteredRows.map((row, index) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>{row.name}</TableCell>
+                        <TableCell>{row.guard_name}</TableCell>
+                        <TableCell>{row.description}</TableCell>
+
+                        <TableCell align="center">
+                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                            <MoreVertIcon />
+                          </IconButton>
+
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleAttachPermission(row)}>
+                              Attach Permission
+                            </MenuItem>
+
+                            <MenuItem onClick={() => handleViewPermission(row)}>
+                              View Permission
+                            </MenuItem>
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mb: 3,
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            '& .MuiAlert-icon': {
+                              mr: 1.5,
+                            },
+                          }}
+                        >
+                          {hasFilters
+                            ? 'No roles match the current filters.'
+                            : 'No roles available. Create a new role to get started.'}
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
 
                 <TableFooter>
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      // count={rows.length}
-                      count={totalRoles}
+                      count={hasFilters ? filteredRows.length : totalRoles}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={(_, newPage) => setPage(newPage)}

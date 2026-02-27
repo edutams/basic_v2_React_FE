@@ -241,7 +241,7 @@ const AlcManager = () => {
                 setRoleType(e.target.value);
                 setPage(0);
               }}
-              sx={{ width: 400 }}
+              // sx={{ width: 400 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

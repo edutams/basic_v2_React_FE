@@ -213,13 +213,13 @@ const AssignmentManagement = () => {
       <Box sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
           <TextField
-            placeholder="Search by name..."
+            placeholder="Search by name"
             value={nameFilter}
             onChange={(e) => {
               setNameFilter(e.target.value);
               setPage(0);
             }}
-            sx={{ mb: 2, width: 400 }}
+            sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -364,7 +364,7 @@ const AssignmentManagement = () => {
       <ViewRoleModal
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
-        currentAgent={currentAgentForRole}
+        currentUser={currentAgentForRole}
       />
     </ParentCard>
   );

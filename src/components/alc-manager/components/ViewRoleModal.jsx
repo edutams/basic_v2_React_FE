@@ -35,7 +35,7 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body1" gutterBottom>
-          Current roles assigned to this user:
+          Current roles assigned to this agent:
         </Typography>
         <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {currentUser?.assignedRoles?.length > 0 ? (

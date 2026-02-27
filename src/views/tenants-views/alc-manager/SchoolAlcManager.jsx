@@ -207,11 +207,8 @@ const SchoolAlcManager = () => {
   const hasFilters = roleType !== '';
 
   return (
-    <PageContainer
-      title="School Acl Manager"
-      description="Access Control List Management for School"
-    >
-      <Breadcrumb title="School ACL Manager" items={BCrumb} />
+    <PageContainer title="Acl Manager" description="Access Control List Management for School">
+      <Breadcrumb title="ACL Manager" items={BCrumb} />
 
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>

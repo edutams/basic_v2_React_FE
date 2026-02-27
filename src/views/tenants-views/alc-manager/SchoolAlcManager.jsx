@@ -28,15 +28,15 @@ import {
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 import ParentCard from 'src/components/shared/ParentCard';
-import PermissionAttachmentModal from 'src/components/alc-manager/components/PermissionAttachmentModal';
-import ViewPermissionModal from 'src/components/alc-manager/components/ViewPermissionModal';
-import NewRoleModal from 'src/components/alc-manager/components/NewRoleModal';
+import PermissionAttachmentModal from 'src/components/tenant-components/alc-manager/SchoolPermissionAttachmentModal';
+import ViewPermissionModal from 'src/components/tenant-components/alc-manager/SchoolViewPermissionModal';
+import NewRoleModal from 'src/components/tenant-components/alc-manager/SchoolNewRoleModal';
 import SchoolAssignmentManagement from 'src/components/tenant-components/alc-manager/SchoolAssignmentManagement';
 import SchoolAccessAnalysis from 'src/components/tenant-components/alc-manager/SchoolAccessAnalysis';
 
 import aclApi from 'src/api/aclApi';
 
-const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'ALC Manager' }];
+const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'ACL Manager' }];
 
 const SchoolAlcManager = () => {
   const notify = useNotification();
@@ -195,10 +195,10 @@ const SchoolAlcManager = () => {
 
   return (
     <PageContainer
-      title="School ALC Manager"
+      title="School ACl Manager"
       description="Access Control List Management for School"
     >
-      <Breadcrumb title="School ALC Manager" items={BCrumb} />
+      <Breadcrumb title="School ACL Manager" items={BCrumb} />
 
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>

@@ -23,8 +23,8 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
-import RoleAttachmentModal from 'src/components/alc-manager/components/RoleAttachmentModal';
-import ViewRoleModal from 'src/components/alc-manager/components/ViewRoleModal';
+import RoleAttachmentModal from 'src/components/tenant-components/alc-manager/SchoolRoleAttachmentModal';
+import ViewRoleModal from 'src/components/tenant-components/alc-manager/SchoolViewRoleModal';
 import aclApi from 'src/api/aclApi';
 
 const SchoolAssignmentManagement = () => {

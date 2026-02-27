@@ -50,14 +50,14 @@ const aclApi = {
   },
 
   assignAgentRole: async (agentId, roleIds) => {
-    const response = await api.post(`/acl/assignments/agent/${agentId}/assign`, {
+    const response = await api.post(`/acl/assignments/agents/${agentId}/assign`, {
       roles: roleIds,
     });
     return response.data;
   },
 
   unassignAgentRole: async (agentId, roleIds) => {
-    const response = await api.post(`/acl/assignments/agent/${agentId}/unassign`, {
+    const response = await api.post(`/acl/assignments/agents/${agentId}/unassign`, {
       roles: roleIds,
     });
     return response.data;
@@ -72,7 +72,6 @@ const aclApi = {
     const response = await api.get('/acl/permissions/analytics', { params });
     return response.data;
   },
-
 
   /*************************************************************************************************************************************************************
     

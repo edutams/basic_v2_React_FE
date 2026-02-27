@@ -10,7 +10,7 @@ import {
   Chip,
 } from '@mui/material';
 
-const ViewRoleModal = ({ open, onClose, currentAgent }) => {
+const ViewRoleModal = ({ open, onClose, currentUser }) => {
   const getRoleColors = (roleName) => {
     const roleColorMap = {
       user: { bg: '#e8f5e9', color: '#2e7d32' },
@@ -30,16 +30,16 @@ const ViewRoleModal = ({ open, onClose, currentAgent }) => {
       <DialogTitle>
         Roles for{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-          "{currentAgent?.name}"
+          "{currentUser?.name}"
         </Box>{' '}
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body1" gutterBottom>
-          Current roles assigned to this agent:
+          Current roles assigned to this user:
         </Typography>
         <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {currentAgent?.assignedRoles?.length > 0 ? (
-            currentAgent.assignedRoles.map((role, index) => {
+          {currentUser?.assignedRoles?.length > 0 ? (
+            currentUser.assignedRoles.map((role, index) => {
               const roleName = typeof role === 'object' ? role.name : role;
               const colors = getRoleColors(roleName);
 
@@ -59,7 +59,7 @@ const ViewRoleModal = ({ open, onClose, currentAgent }) => {
             })
           ) : (
             <Typography variant="body2" color="textSecondary">
-              No roles assigned to this agent.
+              No roles assigned to this user.
             </Typography>
           )}
         </Box>

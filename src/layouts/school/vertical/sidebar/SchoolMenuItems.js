@@ -29,7 +29,7 @@ const SchoolMenuItems = [
 
   {
     id: uniqueId(),
-    title: 'ALC Manager',
+    title: 'ACL Manager',
     icon: IconUsers,
     href: '/alc-manager',
   },

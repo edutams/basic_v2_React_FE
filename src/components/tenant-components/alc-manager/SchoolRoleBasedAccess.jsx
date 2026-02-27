@@ -30,13 +30,14 @@ const SchoolRoleBasedAccess = () => {
 
   useEffect(() => {
     fetchRoles();
-  }, [page, nameFilter]);
+  }, [page, rowsPerPage, nameFilter]);
 
   const fetchRoles = async () => {
     setLoading(true);
     try {
       const params = {
         page: page + 1,
+        per_page: rowsPerPage,
         search: nameFilter,
       };
       const res = await aclApi.getSchoolRoleAnalytics(params);
@@ -44,7 +45,6 @@ const SchoolRoleBasedAccess = () => {
       if (res?.data) {
         setRoles(res.data.data || []);
         setTotalRows(res.data.total || 0);
-        setRowsPerPage(res.data.per_page || 10);
       }
     } catch (error) {
       console.error('Failed to fetch roles:', error);
@@ -157,11 +157,15 @@ const SchoolRoleBasedAccess = () => {
               <TableFooter>
                 <TableRow>
                   <TablePagination
-                    rowsPerPageOptions={[10]}
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
                     count={totalRows}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
                     colSpan={5}
                   />
                 </TableRow>

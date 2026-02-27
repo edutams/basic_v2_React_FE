@@ -38,7 +38,7 @@ import AccessAnalysis from 'src/components/alc-manager/components/AccessAnalysis
 
 import aclApi from 'src/api/aclApi';
 
-const BCrumb = [{ to: '/', title: 'Home' }, { title: 'ALC Manager' }];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'ACL Manager' }];
 
 const AlcManager = () => {
   const notify = useNotification();
@@ -195,8 +195,8 @@ const AlcManager = () => {
   }, [rows, roleType]);
 
   return (
-    <PageContainer title="ALC Manager" description="Access Control List Management Dashboard">
-      <Breadcrumb title="ALC Manager" items={BCrumb} />
+    <PageContainer title="ACL Manager" description="Access Control List Management Dashboard">
+      <Breadcrumb title="ACL Manager" items={BCrumb} />
 
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>

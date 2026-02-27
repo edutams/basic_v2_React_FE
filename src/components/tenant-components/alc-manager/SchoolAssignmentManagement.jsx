@@ -23,8 +23,8 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
-import RoleAttachmentModal from 'src/components/alc-manager/components/RoleAttachmentModal';
-import ViewRoleModal from 'src/components/alc-manager/components/ViewRoleModal';
+import RoleAttachmentModal from 'src/components/tenant-components/alc-manager/RoleAttachmentModal';
+import ViewRoleModal from 'src/components/tenant-components/alc-manager/ViewRoleModal';
 import aclApi from 'src/api/aclApi';
 
 const SchoolAssignmentManagement = () => {
@@ -308,7 +308,7 @@ const SchoolAssignmentManagement = () => {
               <TableFooter>
                 <TableRow>
                   <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
                     count={filteredUsers.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
@@ -329,13 +329,13 @@ const SchoolAssignmentManagement = () => {
       <RoleAttachmentModal
         open={roleAttachmentModalOpen}
         onClose={() => setRoleAttachmentModalOpen(false)}
-        currentAgent={currentUserForRole}
+        currentUser={currentUserForRole}
         onRoleSelection={handleRoleSelection}
       />
       <ViewRoleModal
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
-        currentAgent={currentUserForRole}
+        currentUser={currentUserForRole}
       />
     </ParentCard>
   );

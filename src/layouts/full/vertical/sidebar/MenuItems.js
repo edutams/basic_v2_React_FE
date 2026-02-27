@@ -63,6 +63,7 @@ import {
   IconMap,
   IconListCheck,
   IconCalendarTime,
+  IconHistory,
 } from '@tabler/icons-react';
 
 const Menuitems = [
@@ -78,82 +79,64 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'School',
-    icon: IconSchool,
-    href: '/dashboards/school',
+    title: 'ACL Manager',
+    icon: IconSettings,
+    href: '/alc-manager',
+  }
+  ,
+  {
+    id: uniqueId(),
+    title: 'Calendar',
+    icon: IconCalendarTime,
+    href: '/calendar',
   },
   {
     id: uniqueId(),
     title: 'Agent',
     icon: IconUserCircle,
-    href: '/dashboards/agent',
+    href: '/agent',
   },
   {
     id: uniqueId(),
-    title: 'Package Manager',
+    title: 'Activity Log',
+    icon: IconHistory,
+    href: '/activity-log',
+  },
+  {
+    id: uniqueId(),
+    title: 'School',
+    icon: IconSchool,
+    href: '/school',
+  },
+  {
+    id: uniqueId(),
+    title: 'EduTier',
     icon: IconListTree,
-    href: '/dashboards/package-manager',
+    href: '/edutier',
   },
   {
     id: uniqueId(),
     title: 'My Plan',
     icon: IconMap,
-    href: '/dashboards/my-plan',
+    href: '/my-plan',
   },
-  {
-    id: uniqueId(),
-    title: 'Calendar',
-    icon: IconCalendarTime,
-    href: '/dashboards/session',
-  },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Calendar',
-  //   icon: IconAppWindow,
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Session',
-  //       icon: IconCalendarTime,
-  //       href: '/dashboards/session',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Term',
-  //       icon: IconTimeline,
-  //       href: '/dashboards/term',
-  //     },
-  //   ],
-  // },
-  //  {
-  //     id: uniqueId(),
-  //     title: 'Session',
-  //     icon: IconCalendarTime,
-  //     href: '/dashboards/session',
-  //   },
-  //   {
-  //     id: uniqueId(),
-  //     title: 'Term',
-  //     icon: IconTimeline,
-  //     href: '/dashboards/term',
-  //   },
   {
     id: uniqueId(),
     title: 'Gateway',
     icon: IconWallet,
-    href: '/dashboards/gateway',
+    href: '/gateway',
   },
   {
     id: uniqueId(),
     title: 'Chat',
     icon: IconMessage2,
-    href: '/dashboards/chat',
+    href: '/chat',
   },
   {
     id: uniqueId(),
     title: 'Mail',
     icon: IconMail,
-    href: '/dashboards/mail',
+    href: '/mail',
   },
   {
     id: uniqueId(),
@@ -174,6 +157,14 @@ const Menuitems = [
       },
     ],
   },
+
+  {
+    id: uniqueId(),
+    title: 'Tenant Subscriptions',
+    icon: IconAppWindow,
+    href: '/agent/subscriptions',
+  },
+
 
   /*
   {
@@ -958,19 +949,19 @@ const Menuitems = [
   //   id: uniqueId(),
   //   title: 'Forgot Password',
   //   icon: IconRotate,
-  //   href: '/agent/forgot-password',
+  //   href: '/agent/forgot_password',
   //   children: [
   //     {
   //       id: uniqueId(),
   //       title: 'Side Forgot Password',
   //       icon: IconPoint,
-  //       href: '/agent/forgot-password',
+  //       href: '/agent/forgot_password',
   //     },
   //     {
   //       id: uniqueId(),
   //       title: 'Boxed Forgot Password',
   //       icon: IconPoint,
-  //       href: '/agent/forgot-password2',
+  //       href: '/agent/forgot_password2',
   //     },
   //   ],
   // },

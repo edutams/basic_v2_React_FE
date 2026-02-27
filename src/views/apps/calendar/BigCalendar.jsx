@@ -11,22 +11,22 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
+import { Calendar, dayjsLocalizer } from 'react-big-calendar';
+import dayjs from 'dayjs';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import Events from './EventData';
+import './Calendar.css';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import moment from 'moment';
-import Events from './EventData';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import dayjs from 'dayjs';
-import './Calendar.css';
-import PageContainer from 'src/components/container/PageContainer';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { IconCheck } from '@tabler/icons-react';
+import PageContainer from 'src/components/container/PageContainer';
 import BlankCard from 'src/components/shared/BlankCard';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 
-moment.locale('en-GB');
-const localizer = momentLocalizer(moment);
+const localizer = dayjsLocalizer(dayjs);
+
+
 
 
 const BCrumb = [

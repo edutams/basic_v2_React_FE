@@ -23,6 +23,7 @@ import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../shared/ParentCard';
 import ModuleModal from './ModuleModal';
@@ -36,6 +37,7 @@ const ModuleManagement = ({
   onModuleUpdate,
   onAttachModule = null,
   isLoading = false,
+  onBack = null,
 }) => {
   const [modSearch, setModSearch] = useState('');
   const [modulePage, setModulePage] = useState(0);
@@ -48,9 +50,14 @@ const ModuleManagement = ({
   const [moduleToDelete, setModuleToDelete] = useState(null);
   const notify = useNotification();
 
-  const filteredModules = packageModules.filter((mod) =>
-    mod.mod_name.toLowerCase().includes(modSearch.toLowerCase()),
-  );
+  const filteredModules = packageModules.filter((mod) => {
+    const name = mod.module_name || mod.mod_name || '';
+    const description = mod.module_description || mod.mod_description || '';
+    return (
+      name.toLowerCase().includes(modSearch.toLowerCase()) ||
+      description.toLowerCase().includes(modSearch.toLowerCase())
+    );
+  });
 
   const paginatedModules = filteredModules.slice(
     modulePage * moduleRowsPerPage,
@@ -67,25 +74,6 @@ const ModuleManagement = ({
     setSelectedModule(null);
   };
 
-  // const handleCreateModule = () => {
-  //   setModuleActionType('create');
-  //   setSelectedModule(null);
-  //   setModuleModalOpen(true);
-  // };
-
-  // const handleEditModule = (module) => {
-  //   setModuleActionType('update');
-  //   setSelectedModule(module);
-  //   setModuleModalOpen(true);
-  //   handleModuleMenuClose();
-  // };
-
-  // const handleDeleteModule = (module) => {
-  //   setModuleToDelete(module);
-  //   setDeleteDialogOpen(true);
-  //   handleModuleMenuClose();
-  // };
-
   const handleConfirmDelete = () => {
     if (moduleToDelete) {
       onModuleUpdate(moduleToDelete, 'delete');
@@ -96,7 +84,10 @@ const ModuleManagement = ({
   };
 
   const handleStatusChange = (module, status) => {
-    const updatedModule = { ...module, mod_status: status };
+    const updatedModule = { 
+      ...module, 
+      module_status: status 
+    };
     onModuleUpdate(updatedModule, 'update');
     notify.success(
       `Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`,
@@ -121,7 +112,7 @@ const ModuleManagement = ({
       return (
         <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
           <Typography variant="body2" color="textSecondary">
-            No modules found for this package. Click "Add New Module" to get started.
+            No modules found for this package. Click "Attach Module" to get started.
           </Typography>
         </Box>
       );
@@ -133,24 +124,26 @@ const ModuleManagement = ({
   return (
     <ParentCard
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          {/* <Typography variant="h5">
-            {packageModules.length > 0 && currentPackage
-              ? `Modules in '${currentPackage.pac_name}'`
-              : 'Modules'}
-          </Typography> */}
-          <Typography variant="h5">
-            {packageModules.length > 0 && currentPackage ? (
-              <>
-                Modules in{' '}
-                <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  {currentPackage.pac_name}
-                </Box>
-              </>
-            ) : (
-              'Modules'
+        <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
+          <Box display="flex" alignItems="center">
+            {onBack && (
+              <IconButton onClick={onBack} sx={{ mr: 2 }} color="primary">
+                <ArrowBackIcon />
+              </IconButton>
             )}
-          </Typography>
+            <Typography variant="h5">
+              {packageModules.length > 0 && currentPackage ? (
+                <>
+                  Modules in{' '}
+                  <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    {currentPackage.package_name || currentPackage.pac_name}
+                  </Box>
+                </>
+              ) : (
+                'Modules'
+              )}
+            </Typography>
+          </Box>
 
           {currentPackage && onAttachModule && (
             <Button
@@ -198,67 +191,58 @@ const ModuleManagement = ({
                     <TableCell sx={{ fontWeight: 'bold' }}>Module Name</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    {/* <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell> */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedModules.map((mod, index) => (
-                    <TableRow key={mod.id} hover>
-                      <TableCell>{modulePage * moduleRowsPerPage + index + 1}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="medium">
-                          {mod.mod_name}
-                        </Typography>
-                      </TableCell>
-                      <TableCell
-                        sx={{ whiteSpace: 'normal', wordBreak: 'break-word', maxWidth: 300 }}
-                      >
-                        <Typography variant="body2" color="textSecondary">
-                          {mod.mod_description}
-                        </Typography>
-                      </TableCell>
+                  {paginatedModules.map((mod, index) => {
+                    const name = mod.module_name || mod.mod_name;
+                    const description = mod.module_description || mod.mod_description;
+                    const status = mod.module_status || mod.mod_status || 'inactive';
 
-                      <TableCell>
-                        <Chip
-                          sx={{
-                            bgcolor:
-                              mod.mod_status === 'active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.error.light,
-                            color:
-                              mod.mod_status === 'active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.error.main,
-                            borderRadius: '8px',
-                          }}
-                          size="small"
-                          label={mod.mod_status.toUpperCase()}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        {/* <IconButton size="small" onClick={(e) => handleModuleMenuOpen(e, mod)}>
-                          <MoreVertIcon />
-                        </IconButton> */}
-                        <Menu
-                          anchorEl={moduleAnchorEl}
-                          open={Boolean(moduleAnchorEl) && selectedModule?.id === mod.id}
-                          onClose={handleModuleMenuClose}
+                    return (
+                      <TableRow key={mod.id || index} hover>
+                        <TableCell>{modulePage * moduleRowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="medium">
+                            {name}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          sx={{ whiteSpace: 'normal', wordBreak: 'break-word', maxWidth: 300 }}
                         >
-                          {/* <MenuItem onClick={() => handleEditModule(mod)}>
-                            Edit Module
-                          </MenuItem> */}
-                          {/* <MenuItem
-                            onClick={() => handleStatusChange(mod, mod.mod_status === 'active' ? 'inactive' : 'active')}
+                          <Typography variant="body2" color="textSecondary">
+                            {description}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Chip
+                            sx={{
+                              bgcolor:
+                                status === 'active'
+                                  ? (theme) => theme.palette.success.light
+                                  : (theme) => theme.palette.error.light,
+                              color:
+                                status === 'active'
+                                  ? (theme) => theme.palette.success.main
+                                  : (theme) => theme.palette.error.main,
+                              borderRadius: '8px',
+                            }}
+                            size="small"
+                            label={status.toUpperCase()}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Menu
+                            anchorEl={moduleAnchorEl}
+                            open={Boolean(moduleAnchorEl) && selectedModule?.id === mod.id}
+                            onClose={handleModuleMenuClose}
                           >
-                            {mod.mod_status === 'active' ? 'Deactivate Module' : 'Activate Module'}
-                          </MenuItem> */}
-                          {/* <MenuItem onClick={() => handleDeleteModule(mod)}>
-                            Delete Module
-                          </MenuItem> */}
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
@@ -296,7 +280,7 @@ const ModuleManagement = ({
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Module"
-        message={`Are you sure you want to delete "${moduleToDelete?.mod_name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${moduleToDelete?.module_name || moduleToDelete?.mod_name}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

@@ -34,7 +34,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   const successMessage = location.state?.message;
   const notify = useNotification();
 
-  const from = location.state?.from?.pathname || '/dashboards/analytical';
+  const from = location.state?.from?.pathname || '/';
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -174,7 +174,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             </FormGroup>
             <Typography
               component={Link}
-              to="/agent/forgot-password"
+              to="/agent/forgot_password"
               fontWeight="500"
               sx={{
                 textDecoration: 'none',

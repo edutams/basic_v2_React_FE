@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { useContext } from 'react';
+import { AuthContext } from '../../context/AgentContext/auth';
 
 import {
   Grid,
@@ -32,9 +34,21 @@ import AgentModal from '../../components/add-agent/components/AgentModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import EmptyTableState from '../../components/shared/EmptyTableState';
 import useTableEmptyState from '../../hooks/useTableEmptyState';
+import agentApi from '../../api/agent';
 
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import AddIcon from '@mui/icons-material/Add';
+import { 
+  IconUsers, 
+  IconSchool, 
+  IconCurrencyNaira, 
+} from '@tabler/icons-react';
+
+import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
+import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 
 import {
   flexRender,
@@ -60,19 +74,95 @@ const statusOptions = [
 
 const columnHelper = createColumnHelper();
 
+import locationApi from '../../api/location';
+
 const Agent = () => {
+  const { user, impersonateAgent } = useContext(AuthContext);
+
+  // Revenue Trend Mock Data
+  const revenueSeries = [
+    {
+      name: 'Revenue',
+      data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5],
+    },
+  ];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Plan Distribution Mock Data
+  const planSeries = [65, 52, 39];
+  const planLabels = ['Basic', 'Basic+', 'Basic++'];
+
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
   const [lga, setLga] = useState('');
-  const [referer, setReferer] = useState('');
+  const [status, setStatus] = useState('');
+  // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
+  
+  const [states, setStates] = useState([]);
+  const [lgas, setLgas] = useState([]);
+
+  const navigate = useNavigate();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [actionType, setActionType] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const params = {
+             state: state || undefined,
+             lga: lga || undefined,
+             status: status || undefined,
+             search: search || undefined,
+             access_level: agentLevel || undefined
+        };
+        const response = await agentApi.getAll(params);
+        if(response.success){
+             const mappedData = response.data.map((agent, index) => {
+                 let parsedColor = agent.color;
+                 if (typeof agent.color === 'string') {
+                     try {
+                         parsedColor = JSON.parse(agent.color);
+                     } catch (e) {
+                         console.error("Error parsing color JSON", e);
+                         parsedColor = {};
+                     }
+                 }
+
+                 return {
+                     s_n: agent.id,
+                     agentDetails: agent.name,
+                     organizationName: agent.org_name,
+                     organizationTitle: agent.org_title,
+                     contactDetails: agent.email,
+                     phoneNumber: agent.phone,
+                     imgsrc: agent.image,
+                     performance: 'School: ' + (agent.tenants_count || 0),
+                     tenants_count: agent.tenants_count || 0,
+                     sub_agents_count: agent.children_count || 0,
+                     access_level: agent.access_level,
+                     headerColor: parsedColor?.headcolor,
+                     sidebarColor: parsedColor?.sidecolor,
+                     bodyColor: parsedColor?.bodycolor,
+                     status: agent.status ? (agent.status.charAt(0).toUpperCase() + agent.status.slice(1)) : 'Inactive',
+                     lga: agent.lga_id,
+                     stateFilter: agent.state_lga?.state_id,
+                 };
+             });
+             setData(mappedData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch agents", error);
+      }
+    };
+    fetchData();
+  }, [refreshKey]);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
 
@@ -82,109 +172,61 @@ const Agent = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const applyFilters = () => {
-    console.log({ agentLevel, country, state, lga, referer, search });
-
+    setRefreshKey(prev => prev + 1);
     setHasFiltered(true);
   };
 
-  const stateLgaData = {
-    'Ogun State': [
-      'Abeokuta North',
-      'Abeokuta South',
-      'Ado-Odo/Ota',
-      'Ewekoro',
-      'Ifo',
-      'Ijebu East',
-      'Ijebu North',
-      'Ijebu North East',
-      'Ijebu Ode',
-      'Ikenne',
-      'Imeko Afon',
-      'Ipokia',
-      'Obafemi Owode',
-      'Odeda',
-      'Odogbolu',
-      'Ogun Waterside',
-      'Remo North',
-      'Sagamu',
-      'Yewa North',
-      'Yewa South',
-    ],
-    'Lagos State': [
-      'Agege',
-      'Ajeromi-Ifelodun',
-      'Alimosho',
-      'Amuwo-Odofin',
-      'Apapa',
-      'Badagry',
-      'Epe',
-      'Eti Osa',
-      'Ibeju-Lekki',
-      'Ifako-Ijaiye',
-      'Ikeja',
-      'Ikorodu',
-      'Kosofe',
-      'Lagos Island',
-      'Lagos Mainland',
-      'Mushin',
-      'Ojo',
-      'Oshodi-Isolo',
-      'Shomolu',
-      'Surulere',
-    ],
-  };
-
-  const availableLgas = useMemo(() => {
-    return state ? stateLgaData[state] || [] : [];
-  }, [state]);
-
+  // Fetch States on Mount
   useEffect(() => {
-    if (state && !availableLgas.includes(lga)) {
-      setLga('');
-    }
-  }, [state, availableLgas, lga]);
+    const fetchStates = async () => {
+      try {
+        const response = await locationApi.getStates();
+        setStates(response); 
+      } catch (error) {
+        console.error("Failed to fetch states", error);
+      }
+    };
+    fetchStates();
+  }, []);
+
+  // Fetch LGAs when State changes
+  useEffect(() => {
+    setLga('');
+    const fetchLgas = async () => {
+      if (state) {
+        try {
+            // Find state object to get ID if state is stored as name, or use state directly if ID
+            // The API likely returns objects with id and name. 
+            // The filters currently use state name (string). 
+            // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
+            // Based on previous code, state filter uses names. 
+            const selectedState = states.find(s => (s.stname || s.name) === state);
+            if(selectedState){
+                const response = await locationApi.getLgas(selectedState.id);
+                setLgas(response);
+            } else {
+                setLgas([]);
+            }
+        } catch (error) {
+            console.error("Failed to fetch LGAs", error);
+            setLgas([]);
+        }
+      } else {
+        setLgas([]);
+        setLga('');
+      }
+    };
+    fetchLgas();
+  }, [state, states]);
+
 
   const hasActiveFilters = useMemo(() => {
-    return agentLevel || country || state || lga || referer || search;
-  }, [agentLevel, country, state, lga, referer, search]);
+    return agentLevel || country || state || lga || search;
+  }, [agentLevel, country, state, lga, search]);
 
   const filteredData = useMemo(() => {
-    return data.filter((agent) => {
-      if (agentLevel && agent.level !== agentLevel) {
-        return false;
-      }
-
-      if (country && agent.country !== country) {
-        return false;
-      }
-
-      if (state && agent.stateFilter !== state) {
-        return false;
-      }
-
-      if (lga && agent.lga !== lga) {
-        return false;
-      }
-
-      if (referer && agent.referer !== referer) {
-        return false;
-      }
-
-      if (search) {
-        const searchLower = search.toLowerCase();
-        const matchesSearch =
-          agent.agentDetails?.toLowerCase().includes(searchLower) ||
-          agent.organizationName?.toLowerCase().includes(searchLower) ||
-          agent.contactDetails?.toLowerCase().includes(searchLower);
-
-        if (!matchesSearch) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [data, agentLevel, country, state, lga, referer, search]);
+    return data;
+  }, [data]);
 
   const emptyState = useTableEmptyState(filteredData, hasActiveFilters, !!search, search, {
     defaultMessage: 'No agents found',
@@ -285,6 +327,19 @@ const Agent = () => {
     setAgentToDelete(null);
   };
 
+  const handleImpersonate = async (agent) => {
+    try {
+      const result = await impersonateAgent(agent.s_n);
+      if (result.success) {
+        window.location.href = '/'; // Refresh to dashboard as the new agent
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      console.error("Impersonation failed", error);
+    }
+  };
+
   const handleAgentUpdate = (updatedAgent) => {
     setData((prevData) =>
       prevData.map((agent) => (agent.s_n === updatedAgent.s_n ? updatedAgent : agent)),
@@ -345,48 +400,79 @@ const Agent = () => {
             fullWidth
           />
         ) : (
-          <Stack direction="column" spacing={0.5} alignItems="flex-start">
-            <Typography color="textSecondary" variant="subtitle2">
-              {info.row.original.contactDetails}
+          <Stack direction="column" spacing={0} alignItems="flex-start">
+            <Typography variant="subtitle2" fontWeight="600">
+              {info.row.original.phoneNumber || '+23482103453956'}
             </Typography>
             <Typography color="textSecondary" variant="caption">
-              {info.row.original.phoneNumber}
+              {info.row.original.contactDetails}
             </Typography>
           </Stack>
         ),
     }),
+    columnHelper.accessor('access_level', {
+      header: () => 'Access Level',
+      cell: (info) => {
+        const level = Number(info.getValue());
+        const colorMap = {
+          1: { color: '#2ca87f', bg: '#e6f4ee' },
+          2: { color: '#3949ab', bg: '#e8eaf6' },
+          3: { color: '#f57c00', bg: '#fff3e0' },
+        };
+        const config = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
+        return (
+          <Chip
+            size="small"
+            label={`Level ${level}`}
+            sx={{
+              bgcolor: config.bg,
+              color: config.color,
+              fontWeight: 600,
+              borderRadius: '8px',
+            }}
+          />
+        );
+      },
+    }),
+    columnHelper.accessor('subAgent', {
+      header: () => 'Sub Agent',
+      cell: (info) => (
+        <Box
+          sx={{
+            bgcolor: '#e5e5f7',
+            color: '#333',
+            borderRadius: '4px',
+            width: 35,
+            height: 30,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: '700',
+            fontSize: '14px',
+          }}
+        >
+          {info.row.original.sub_agents_count ?? 0}
+        </Box>
+      ),
+    }),
     columnHelper.accessor('performance', {
       header: () => 'Performance',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Typography color="textSecondary" variant="h6" fontWeight="400">
-            {info.getValue()}
-          </Typography>
-        ),
+      cell: (info) => (
+        <Stack direction="row" spacing={0} sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+          <Box sx={{ bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="600" color="textSecondary">
+              School
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: '#b4ebc2', px: 1, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="700" color="#333">
+              {info.row.original.tenants_count ?? 0}
+            </Typography>
+          </Box>
+        </Stack>
+      ),
     }),
-    columnHelper.accessor('gateway', {
-      header: () => 'Gateway',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Typography color="textSecondary" variant="h6" fontWeight="400">
-            {info.getValue()}
-          </Typography>
-        ),
-    }),
+    // Gateway column removed
     columnHelper.accessor('colourScheme', {
       header: () => 'Colour Scheme',
       cell: (info) => {
@@ -525,6 +611,14 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
+                  navigate(`/dashboards/view-agent/${row.original.s_n}`);
+                }}
+              >
+                View Profile
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleClose();
                   handleUpdateAgent(row.original, 'update');
                 }}
               >
@@ -573,10 +667,10 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
-                  handleChangeColorScheme(row.original);
+                  handleImpersonate(row.original);
                 }}
               >
-                Change Color Scheme
+                Login As
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -624,29 +718,123 @@ const Agent = () => {
 
   return (
     <PageContainer title="Agent Page" description="This is the Agent page">
-      <Box sx={{ mt: 0 }}>
+      <Box sx={{ mt: 1 }}>
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
-      <Box sx={{ mt: 1 }}>
+
+      <Box mt={3}>
+        {/* Row 1: Stat Cards */}
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardStatCard
+              title="Total Agents"
+              value="123"
+              icon={IconUsers}
+              bgcolor="#E8F2F3"
+              color="#333"
+              iconBgColor="#2ca87f"
+            />
+          </Grid>
+          
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardStatCard
+              title="Active School"
+              value="123"
+              subtitle="Total School"
+              icon={IconSchool}
+              bgcolor="#C9EBD2"
+              color="#333"
+              iconBgColor="#2ca87f"
+              rightContent={
+                <Stack spacing={0.5}>
+                  {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
+                    <Stack key={idx} direction="row" justifyContent="space-between" spacing={2} sx={{ minWidth: 120 }}>
+                      <Typography variant="caption" color="textSecondary" fontWeight="600" sx={{ fontSize: '11px' }}>
+                        {label} -
+                      </Typography>
+                      <Typography variant="caption" color="error" fontWeight="700" sx={{ fontSize: '11px' }}>
+                        34
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+              }
+            />
+          </Grid>
+          
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardStatCard
+              title="Revenue"
+              value="#10, 000, 000"
+              icon={IconCurrencyNaira}
+              bgcolor="#D2D2E8"
+              color="#333"
+              iconBgColor="#ffffff"
+            />
+          </Grid>
+        </Grid>
+
+        {/* Row 2: Charts */}
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, lg: 8 }}>
+            <ReusableBarChart
+              title="Revenue Trend"
+              series={revenueSeries}
+              categories={months}
+              colors={['#3949ab']}
+              height={350}
+              yAxisPrefix="N"
+              yAxisFormatter={(val) => `${val.toFixed(1)}M`}
+              xAxisTitle="Month"
+            />
+          </Grid>
+          
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <ReusablePieChart
+              title="Plan Distribution"
+              series={planSeries}
+              labels={planLabels}
+              colors={['#3949ab', '#66bb6a', '#ffa726']}
+              height={320}
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      <Box sx={{ mt: 3 }}>
         <ParentCard
           title={
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h5" fontWeight={200}>
-                All Agent
-              </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    bgcolor: '#2ca87f',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                  }}
+                >
+                  <IconSchool size={16} />
+                </Box>
+                <Typography variant="h5">List of Agents</Typography>
+              </Stack>
               <Button
                 variant="contained"
-                color="primary"
-                startIcon={<HowToRegIcon />}
+                startIcon={<AddIcon />}
                 onClick={() => setIsRegisterModalOpen(true)}
+                sx={{ bgcolor: '#3949ab', '&:hover': { bgcolor: '#303f9f' } }}
               >
-                Register Agent
+                Add New Agent
               </Button>
-            </Box>
+            </Stack>
           }
         >
           <Grid container spacing={3} mb={3}>
-            {/* Basic Filters - Always Visible */}
+            {/* Basic Search - Always Visible */}
             <Grid size={{ xs: 12, md: 3, sm: 4 }}>
               <TextField
                 fullWidth
@@ -657,9 +845,24 @@ const Agent = () => {
               />
             </Grid>
 
+             {/* Filter Icon Toggle */}
+             {!showAdvancedFilters && (
+              <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                 <IconButton onClick={() => setShowAdvancedFilters(true)} color="primary">
+                    <FilterListIcon />
+                 </IconButton>
+              </Grid>
+            )}
+
+
             {/* Advanced Filters */}
-            {filterClicked && showAdvancedFilters && (
+            {showAdvancedFilters && (
               <>
+                 <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                 <IconButton onClick={() => setShowAdvancedFilters(false)} color="secondary">
+                    <FilterListIcon />
+                 </IconButton>
+              </Grid>
                 <Grid size={{ xs: 12, md: 3, sm: 3 }}>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel>Agent Level</InputLabel>
@@ -669,22 +872,25 @@ const Agent = () => {
                       onChange={(e) => setAgentLevel(e.target.value)}
                     >
                       <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="Level 1">Level 1</MenuItem>
-                      <MenuItem value="Level 2">Level 2</MenuItem>
-                      <MenuItem value="Level 3">Level 3</MenuItem>
+                      <MenuItem value="1">Level 1</MenuItem>
+                      <MenuItem value="2">Level 2</MenuItem>
+                      <MenuItem value="3">Level 3</MenuItem>
+                      <MenuItem value="4">Level 4</MenuItem>
+                      <MenuItem value="5">Level 5</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3, sm: 3 }}>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel>Country</InputLabel>
+                    <InputLabel>Status</InputLabel>
                     <Select
-                      value={country}
-                      label="Country"
-                      onChange={(e) => setCountry(e.target.value)}
+                      value={status}
+                      label="Status"
+                      onChange={(e) => setStatus(e.target.value)}
                     >
                       <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="optionA">Nigeria</MenuItem>
+                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="inactive">Inactive</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -693,8 +899,11 @@ const Agent = () => {
                     <InputLabel>State</InputLabel>
                     <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
                       <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="Ogun State">Ogun State</MenuItem>
-                      <MenuItem value="Lagos State">Lagos State</MenuItem>
+                      {states.map((s) => (
+                        <MenuItem key={s.id} value={s.stname || s.name}>
+                          {s.stname || s.name}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -708,49 +917,27 @@ const Agent = () => {
                       disabled={!state}
                     >
                       <MenuItem value="">-- Choose LGA --</MenuItem>
-                      {availableLgas.map((lgaOption) => (
-                        <MenuItem key={lgaOption} value={lgaOption}>
-                          {lgaOption}
+                      {lgas.map((l) => (
+                        <MenuItem key={l.id} value={l.lganame || l.name}>
+                          {l.lganame || l.name}
                         </MenuItem>
                       ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Referer</InputLabel>
-                    <Select
-                      value={referer}
-                      label="Referer"
-                      onChange={(e) => setReferer(e.target.value)}
-                    >
-                      <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="data1">Odeda</MenuItem>
-                      <MenuItem value="data2">Yewa</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
               </>
             )}
 
-            {filterClicked && !showAdvancedFilters && (
-              <Grid item xs={12} sm={6} md={3} sx={{ display: 'flex', alignItems: 'center' }}>
-                <Button variant="text" onClick={() => setShowAdvancedFilters(true)}>
-                  View All Filters
-                </Button>
-              </Grid>
-            )}
-
             <Grid>
               <Button
                 variant="contained"
                 onClick={() => {
-                  setFilterClicked(true);
+                  applyFilters();
                 }}
                 color="primary"
                 sx={{ justifyContent: 'center' }}
               >
-                Filter
+                Search
               </Button>
             </Grid>
 
@@ -779,7 +966,6 @@ const Agent = () => {
                     setCountry('');
                     setState('');
                     setLga('');
-                    setReferer('');
                     setSearch('');
                   }}
                   // sx={{ height: '48px' }}

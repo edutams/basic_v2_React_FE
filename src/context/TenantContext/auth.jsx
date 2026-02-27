@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
-import api from '../../api/auth';
+import api from '../../api/tenant_api';
 
-export const AuthContext = createContext(undefined);
+export const TenantAuthContext = createContext(undefined);
 
 const defaultAuthState = {
   user: null,
@@ -10,7 +10,8 @@ const defaultAuthState = {
   error: null,
 };
 
-export const AuthProvider = ({ children }) => {
+export const TenantAuthProvider = ({ children }) => {
+  console.log('TenantAuthProvider rendering');
   const [user, setUser] = useState(defaultAuthState.user);
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
@@ -18,7 +19,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const restoreUser = async () => {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('tenant_access_token');
 
       if (!token) {
         setIsLoading(false);
@@ -28,11 +29,12 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoading(true);
       try {
-        const res = await api.get('/agent/get-agent');
-        setUser(res.data?.data);
+        const res = await api.get('/get-user');
+        // The backend returns the user object directly
+        setUser(res.data);
         setIsAuthenticated(true);
       } catch (err) {
-        localStorage.removeItem('access_token');
+        localStorage.removeItem('tenant_access_token');
         setUser(null);
         setIsAuthenticated(false);
       } finally {
@@ -47,12 +49,11 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post('/agent/login', credentials);
+      const res = await api.post('/login', credentials);
 
-      const { access_token, expires_in, data: user } = res.data;
-
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('token_expires_in', expires_in.toString());
+      const { access_token, data: user } = res.data;
+      
+      localStorage.setItem('tenant_access_token', access_token);
       setUser(user);
       setIsAuthenticated(true);
 
@@ -66,29 +67,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (credentials) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await api.post('/agent/register', credentials);
-      setUser(credentials);
-      setIsAuthenticated(true);
-      return { success: true, user: credentials };
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Registration failed';
-      setError(msg);
-      return { success: false, error: msg };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const logout = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/agent/logout');
-      localStorage.removeItem('access_token');
+      await api.post('/logout');
+      localStorage.removeItem('tenant_access_token');
       setUser(null);
       setIsAuthenticated(false);
       return { success: true };
@@ -101,14 +85,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const clearError = () => setError(null);
+  
   const updateAgentProfile = async (data, isMultipart = false) => {
     setError(null);
     try {
-      const res = await api.post('/agent/update-agent-profile', data, {
+      const res = await api.put('/update-user', data, {
         headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
       });
-      setUser(res.data?.data);
-      return { success: true, user: res.data?.data };
+      const userData = res.data?.data || res.data;
+      setUser(userData);
+      return { success: true, user: userData };
     } catch (err) {
       const msg = err.response?.data?.error || 'Update failed';
       setError(msg);
@@ -119,7 +106,7 @@ export const AuthProvider = ({ children }) => {
   const changePassword = async (passwordData) => {
     setError(null);
     try {
-      await api.put('/agent/change-password', passwordData);
+      await api.put('/change-password', passwordData);
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.error || 'Password change failed';
@@ -128,17 +115,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const refreshToken = async () => {
-    try {
-      await api.post('/agent/refresh-token');
-    } catch (err) {
-      console.error('Token refresh failed', err);
-    }
-  };
-
-  const clearError = () => setError(null);
-
-  // ---------------- Context value ----------------
   const contextValue = {
     user,
     isAuthenticated,
@@ -146,12 +122,12 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     logout,
-    register,
     updateAgentProfile,
     changePassword,
-    refreshToken,
     clearError,
   };
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+  console.log('TenantAuthProvider contextValue:', contextValue);
+
+  return <TenantAuthContext.Provider value={contextValue}>{children}</TenantAuthContext.Provider>;
 };

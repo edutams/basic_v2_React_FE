@@ -34,7 +34,7 @@ import ParentCard from '../../components/shared/ParentCard';
 
 const BCrumb = [
   {
-    to: '/school-dashboard',
+    to: '/',
     title: 'School Dashboard',
   },
   { title: 'Scheme Of Work' },

@@ -7,6 +7,7 @@ import NavGroup from '../../../full/vertical/sidebar/NavGroup/NavGroup';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useAuth } from 'src/hooks/useAuth';
 import tenantApi from 'src/api/tenant_api';
+import { PermissionProvider, usePermissions } from '../../../../context/TenantContext/permissions';
 import {
   IconChartPie,
   IconUsers,
@@ -44,6 +45,7 @@ const SchoolSidebarItems = () => {
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
 
   const { user } = useAuth();
+  const { canAny } = usePermissions();
   const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
@@ -51,6 +53,7 @@ const SchoolSidebarItems = () => {
       try {
         const response = await tenantApi.get('/sidebar-modules');
         const modules = response.data;
+        console.log(modules, 'modules');
 
         const formattedMenu = modules.map(mod => ({
           id: mod.id,
@@ -87,8 +90,7 @@ const SchoolSidebarItems = () => {
         {menuItems.filter((item) => {
           if (!item.permission) return true;
           if (user?.is_super_admin) return true;
-          const userPermissions = user?.permissions || [];
-          return item.permission.some((p) => userPermissions.includes(p));
+          return canAny(item.permission);
         }).map((item) => {
           if (item.subheader) {
             return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;

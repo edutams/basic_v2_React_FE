@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
+import PermissionGate from '../components/auth/PermissionGate';
 
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
@@ -32,12 +33,41 @@ const TenantRoutes = [
       </TenantProtectedRoute>
     ),
     children: [
-      { path: '/', element: <SchoolDashboardMain /> },
-      { path: '/session-week-manager', element: <SessionWeekManager /> },
+      {
+        path: '/',
+        element: (
+          <PermissionGate permissions={['dashboard.view']}>
+            <SchoolDashboardMain />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/session-week-manager',
+        element: (
+          <PermissionGate permissions={['setup.academics.school']}>
+            <SessionWeekManager />
+          </PermissionGate>
+        ),
+      },
       { path: '/scheme-of-work', element: <SchemeOfWork /> },
-      { path: '/manage-subscription', element: <SubscriptionIndex /> },
+      {
+        path: '/manage-subscription',
+        element: (
+          <PermissionGate permissions={['manage.subscription']}>
+            <SubscriptionIndex />
+          </PermissionGate>
+        ),
+      },
       { path: '/subscription-history', element: <SubscriptionIndex /> },
-      { path: '/alc-manager', exact: true, element: <AlcManager /> },
+      {
+        path: '/alc-manager',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['api.v1.censis.acl.index']}>
+            <AlcManager />
+          </PermissionGate>
+        ),
+      },
       { path: '/activity-logs', exact: true, element: <ActivityLog /> },
       { path: '/pages/account-settings', exact: true, element: <AccountSetting /> },
     ],

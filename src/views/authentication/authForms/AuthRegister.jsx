@@ -56,7 +56,7 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
 
     if (result.success) {
       notify.success('Registration successful!', 'Welcome!');
-      navigate('/dashboards/analytical');
+      navigate('/');
     } else {
       setApiError(result.error || 'Registration failed');
       notify.error(result.error || 'Registration failed');

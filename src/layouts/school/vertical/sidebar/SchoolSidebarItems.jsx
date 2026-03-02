@@ -1,11 +1,37 @@
-import React, { useContext } from 'react';
-import SchoolMenuItems from './SchoolMenuItems';
+import React, { useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Box, List, useMediaQuery } from '@mui/material';
 import NavItem from '../../../full/vertical/sidebar/NavItem';
 import NavCollapse from '../../../full/vertical/sidebar/NavCollapse';
 import NavGroup from '../../../full/vertical/sidebar/NavGroup/NavGroup';
 import { CustomizerContext } from 'src/context/CustomizerContext';
+import { useAuth } from 'src/hooks/useAuth';
+import tenantApi from 'src/api/tenant_api';
+import {
+  IconChartPie,
+  IconUsers,
+  IconSettings,
+  IconTimeline,
+  IconAppWindow,
+  IconUserCircle,
+  IconBook,
+  IconClipboardList,
+  IconPoint,
+  IconCircle
+} from '@tabler/icons-react';
+
+const iconMapper = {
+  ChartPie: IconChartPie,
+  Users: IconUsers,
+  Settings: IconSettings,
+  Timeline: IconTimeline,
+  AppWindow: IconAppWindow,
+  UserCircle: IconUserCircle,
+  Book: IconBook,
+  ClipboardList: IconClipboardList,
+  Point: IconPoint,
+  Circle: IconCircle
+};
 
 const SchoolSidebarItems = () => {
   const { pathname } = useLocation();
@@ -17,10 +43,53 @@ const SchoolSidebarItems = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
 
+  const { user } = useAuth();
+  const [menuItems, setMenuItems] = useState([]);
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const response = await tenantApi.get('/sidebar-modules');
+        const modules = response.data;
+
+        const formattedMenu = modules.map(mod => ({
+          id: mod.id,
+          title: mod.module_name,
+          icon: iconMapper[mod.module_icon] || IconCircle,
+          href: mod.module_links?.link || '#',
+          permission: mod.module_links?.permission ? [mod.module_links.permission] : null,
+          children: mod.sub_modules?.length > 0 ? mod.sub_modules.map(sub => ({
+            id: sub.id,
+            title: sub.module_name,
+            icon: iconMapper[sub.module_icon] || IconPoint,
+            href: sub.module_links?.link || '#'
+          })) : null
+        }));
+
+        setMenuItems([
+          {
+            navlabel: true,
+            subheader: 'School Dashboard',
+          },
+          ...formattedMenu
+        ]);
+      } catch (error) {
+        console.error('Error fetching school sidebar modules:', error);
+      }
+    };
+
+    fetchModules();
+  }, []);
+
   return (
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav">
-        {SchoolMenuItems.map((item) => {
+        {menuItems.filter((item) => {
+          if (!item.permission) return true;
+          if (user?.is_super_admin) return true;
+          const userPermissions = user?.permissions || [];
+          return item.permission.some((p) => userPermissions.includes(p));
+        }).map((item) => {
           if (item.subheader) {
             return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;
           } else if (item.children) {

@@ -30,9 +30,9 @@ import {
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 import ParentCard from 'src/components/shared/ParentCard';
-import PermissionAttachmentModal from 'src/components/alc-manager/components/PermissionAttachmentModal';
-import ViewPermissionModal from 'src/components/alc-manager/components/ViewPermissionModal';
-import NewRoleModal from 'src/components/alc-manager/components/NewRoleModal';
+import PermissionAttachmentModal from 'src/components/tenant-components/alc-manager/SchoolPermissionAttachmentModal';
+import ViewPermissionModal from 'src/components/tenant-components/alc-manager/SchoolViewPermissionModal';
+import NewRoleModal from 'src/components/tenant-components/alc-manager/SchoolNewRoleModal';
 import SchoolAssignmentManagement from 'src/components/tenant-components/alc-manager/SchoolAssignmentManagement';
 import SchoolAccessAnalysis from 'src/components/tenant-components/alc-manager/SchoolAccessAnalysis';
 

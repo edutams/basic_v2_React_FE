@@ -20,6 +20,7 @@ const SchoolMenuItems = [
     title: 'Dashboard',
     icon: IconChartPie,
     href: '/',
+    permission: ['dashboard.view'],
   },
 
   {
@@ -32,6 +33,7 @@ const SchoolMenuItems = [
     title: 'ACL Manager',
     icon: IconUsers,
     href: '/alc-manager',
+    permission: ['api.v1.censis.acl.index'],
   },
   {
     id: uniqueId(),
@@ -58,6 +60,7 @@ const SchoolMenuItems = [
     title: 'Subscriptions',
     icon: IconAppWindow,
     href: '/manage-subscription',
+    permission: ['manage.subscription'],
   },
 
   {

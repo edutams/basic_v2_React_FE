@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../../api/tenant_api';
+import { PermissionProvider } from './permissions';
 
 export const TenantAuthContext = createContext(undefined);
 
@@ -8,14 +9,16 @@ const defaultAuthState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  permissions: [],
 };
 
 export const TenantAuthProvider = ({ children }) => {
-  console.log('TenantAuthProvider rendering');
+  // console.log('TenantAuthProvider rendering');
   const [user, setUser] = useState(defaultAuthState.user);
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
+  const [permissions, setPermissions] = useState(defaultAuthState.permissions);
 
   useEffect(() => {
     const restoreUser = async () => {
@@ -30,8 +33,11 @@ export const TenantAuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const res = await api.get('/get-user');
-        // The backend returns the user object directly
-        setUser(res.data);
+
+        const payload = res.data?.data;
+
+        setUser(payload.user);
+        setPermissions(payload.permissions);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('tenant_access_token');
@@ -52,7 +58,7 @@ export const TenantAuthProvider = ({ children }) => {
       const res = await api.post('/login', credentials);
 
       const { access_token, data: user } = res.data;
-      
+
       localStorage.setItem('tenant_access_token', access_token);
       setUser(user);
       setIsAuthenticated(true);
@@ -86,7 +92,7 @@ export const TenantAuthProvider = ({ children }) => {
   };
 
   const clearError = () => setError(null);
-  
+
   const updateAgentProfile = async (data, isMultipart = false) => {
     setError(null);
     try {
@@ -125,9 +131,14 @@ export const TenantAuthProvider = ({ children }) => {
     updateAgentProfile,
     changePassword,
     clearError,
+    permissions,
   };
 
-  console.log('TenantAuthProvider contextValue:', contextValue);
+  // console.log('TenantAuthProvider contextValue:', contextValue);
 
-  return <TenantAuthContext.Provider value={contextValue}>{children}</TenantAuthContext.Provider>;
+  return (
+    <TenantAuthContext.Provider value={contextValue}>
+      <PermissionProvider permissions={permissions || []}>{children}</PermissionProvider>
+    </TenantAuthContext.Provider>
+  );
 };

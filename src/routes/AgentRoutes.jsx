@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import PermissionGate from '../components/auth/PermissionGate';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -173,23 +174,113 @@ const AgentRoutes = [
       </ProtectedRoute>
     ),
     children: [
-      { path: '/', element: <Navigate to="/analytical" /> },
-      { path: '/analytical', exact: true, element: <AnalyticalDashboard /> },
-      { path: '/alc-manager', exact: true, element: <AlcManager /> },
-      { path: '/agent', exact: true, element: <Agent /> },
-      { path: '/school', exact: true, element: <SchoolDashboard /> },
+      { path: '/', element: <Navigate to="/" /> },
+      {
+        path: '/',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.dashboard']}>
+            <AnalyticalDashboard />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/dashboards/school',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.dashboard']}>
+            <SchoolDashboard />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/alc-manager',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.acl.index']}>
+            <AlcManager />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/agent',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.acl.user.manage.role']}>
+            <Agent />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/agent/view/:id',
+        element: (
+          <PermissionGate permissions={['censis.acl.user.manage.role']}>
+            <ViewAgent />
+          </PermissionGate>
+        ),
+      },
       { path: '/gateway', exact: true, element: <Gateway /> },
       { path: '/my-plan', exact: true, element: <MyPlan /> },
-      { path: '/calendar', exact: true, element: <CalendarManagement /> },
+      {
+        path: '/calendar',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.calendar.view']}>
+            <CalendarManagement />
+          </PermissionGate>
+        ),
+      },
       { path: '/chat', exact: true, element: <Chat /> },
       { path: '/mail', exact: true, element: <Mail /> },
-      { path: '/agent/subscriptions', exact: true, element: <AgentSubscriptionManagement /> },
-      { path: '/activity-log', exact: true, element: <ActivityLog /> },
+      {
+        path: '/school',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.tenant.view']}>
+            <SchoolDashboard />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/view-school/:id',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.tenant.view']}>
+            <ViewSchool />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/agent/subscriptions',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.subscription.view']}>
+            <AgentSubscriptionManagement />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/activity-log',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.activity_log.view']}>
+            <ActivityLog />
+          </PermissionGate>
+        ),
+      },
       { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
 
       { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/modern', exact: true, element: <ModernDashboard /> },
-      { path: '/edutier', element: <PackageManager /> },
+      {
+        path: '/edutier',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.edutier.manage']}>
+            <PackageManager />
+          </PermissionGate>
+        ),
+      },
       { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
       { path: '/phet/stimulation-links', element: <StimulationLinks /> },
       { path: '/', element: <Navigate to="/agent/login" /> },

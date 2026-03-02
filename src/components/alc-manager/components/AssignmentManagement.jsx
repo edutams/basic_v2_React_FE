@@ -26,8 +26,10 @@ import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 import aclApi from 'src/api/aclApi';
+import { useNotification } from 'src/hooks/useNotification';
 
 const AssignmentManagement = () => {
+  const notify = useNotification();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -134,6 +136,20 @@ const AssignmentManagement = () => {
     console.log('Agent ID being sent:', currentAgentForRole.id);
     console.log('Role IDs being attached:', roleIds);
 
+    // Determine if we're adding or removing roles
+    const currentRoleIds = currentAgentForRole.assignedRoles?.map((r) => r.id) || [];
+    const addedRoles = roleIds.filter((id) => !currentRoleIds.includes(id));
+    const removedRoles = currentRoleIds.filter((id) => !roleIds.includes(id));
+
+    let actionType = '';
+    if (addedRoles.length > 0 && removedRoles.length > 0) {
+      actionType = 'updated';
+    } else if (removedRoles.length > 0) {
+      actionType = 'removed';
+    } else {
+      actionType = 'added';
+    }
+
     try {
       const assignRes = await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
       // console.log('Role assignment response:', assignRes);
@@ -163,9 +179,23 @@ const AssignmentManagement = () => {
         setCurrentAgentForRole(updatedCurrentAgent);
       }
 
+      // Show appropriate success message
+      if (actionType === 'added') {
+        notify.success('Role(s) attached successfully!');
+      } else if (actionType === 'removed') {
+        notify.success('Role(s) removed successfully!');
+      } else {
+        notify.success('Roles updated successfully!');
+      }
       setRoleAttachmentModalOpen(false);
     } catch (err) {
       console.error('Failed to assign roles:', err);
+      // Show appropriate error message
+      if (actionType === 'removed') {
+        notify.error(err?.response?.data?.message || 'Failed to remove role(s)');
+      } else {
+        notify.error(err?.response?.data?.message || 'Failed to attach role(s)');
+      }
     }
   };
 
@@ -213,13 +243,13 @@ const AssignmentManagement = () => {
       <Box sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
           <TextField
-            placeholder="Search by name..."
+            placeholder="Search by name"
             value={nameFilter}
             onChange={(e) => {
               setNameFilter(e.target.value);
               setPage(0);
             }}
-            sx={{ mb: 2, width: 400 }}
+            sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -364,7 +394,7 @@ const AssignmentManagement = () => {
       <ViewRoleModal
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
-        currentAgent={currentAgentForRole}
+        currentUser={currentAgentForRole}
       />
     </ParentCard>
   );

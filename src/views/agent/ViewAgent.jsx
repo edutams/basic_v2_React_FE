@@ -23,7 +23,10 @@ import {
   TextField
 } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { IconUser, IconGridDots, IconSchool, IconSettings, IconUsers } from '@tabler/icons-react';
+import { IconUser, IconGridDots, IconSchool, IconSettings, IconUsers, IconLock } from '@tabler/icons-react';
+import { useAuth } from '../../hooks/useAuth';
+import eduTierApi from '../../api/eduTierApi';
+import { Checkbox, FormControlLabel, FormGroup, Alert, CircularProgress } from '@mui/material';
 
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -71,9 +74,36 @@ const ViewAgent = () => {
     const [loading, setLoading] = useState(true);
     const [value, setValue] = React.useState('1');
 
+    const { user } = useAuth();
+    const isLevel1 = user?.access_level == 1;
+
+    const [allModules, setAllModules] = useState([]);
+    const [assignedModules, setAssignedModules] = useState([]);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState(null);
+
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
+
+    const fetchModulesData = async () => {
+        try {
+            const [modulesRes, assignedRes] = await Promise.all([
+                eduTierApi.getModules(),
+                eduTierApi.getAgentModules(id)
+            ]);
+            setAllModules(modulesRes);
+            setAssignedModules(assignedRes || []);
+        } catch (error) {
+            console.error("Failed to fetch modules", error);
+        }
+    };
+
+    useEffect(() => {
+        if (value === '5') {
+            fetchModulesData();
+        }
+    }, [value, id]);
 
     useEffect(() => {
         const fetchAgent = async () => {
@@ -207,6 +237,9 @@ const ViewAgent = () => {
                     <Tab icon={<IconUsers size="20" />} label="Team (Descendants)" value="2" iconPosition="start" />
                     <Tab icon={<IconSchool size="20" />} label="Schools (Tenants)" value="3" iconPosition="start" />
                     <Tab icon={<IconSettings size="20" />} label="Settings & Profile" value="4" iconPosition="start" />
+                    {isLevel1 && (
+                        <Tab icon={<IconLock size="20" />} label="Module Assignments" value="5" iconPosition="start" />
+                    )}
                 </TabList>
             </Box>
             
@@ -342,6 +375,78 @@ const ViewAgent = () => {
                  </Grid>
             </TabPanel>
 
+            {/* Module Assignments Tab */}
+            {isLevel1 && (
+                <TabPanel value="5" sx={{ p: 0, pt: 3 }}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h5" mb={1} fontWeight={600}>Module Access Control</Typography>
+                            <Typography variant="body2" color="textSecondary" mb={3}>
+                                Manually assign or revoke module access for this agent. These are "Direct Assignments" that override plan restrictions.
+                            </Typography>
+
+                            {message && (
+                                <Alert severity={message.type} sx={{ mb: 3 }} onClose={() => setMessage(null)}>
+                                    {message.text}
+                                </Alert>
+                            )}
+
+                            <FormGroup>
+                                <Grid container spacing={2}>
+                                    {allModules.map((module) => (
+                                        <Grid item xs={12} sm={6} md={4} key={module.id}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={assignedModules.includes(module.id)}
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                            setAssignedModules(prev => 
+                                                                checked 
+                                                                    ? [...prev, module.id] 
+                                                                    : prev.filter(id => id !== module.id)
+                                                            );
+                                                        }}
+                                                    />
+                                                }
+                                                label={
+                                                    <Box>
+                                                        <Typography variant="subtitle1" fontWeight={600}>{module.module_name}</Typography>
+                                                        <Typography variant="caption" color="textSecondary">{module.module_links?.link}</Typography>
+                                                    </Box>
+                                                }
+                                            />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </FormGroup>
+
+                            <Box mt={4} display="flex" justifyContent="flex-end">
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="large"
+                                    onClick={async () => {
+                                        setSaving(true);
+                                        try {
+                                            await eduTierApi.saveAgentModules(id, assignedModules);
+                                            setMessage({ type: 'success', text: 'Modules assigned successfully!' });
+                                        } catch (error) {
+                                            setMessage({ type: 'error', text: 'Failed to save assignments.' });
+                                        } finally {
+                                            setSaving(false);
+                                        }
+                                    }}
+                                    disabled={saving}
+                                    startIcon={saving ? <CircularProgress size={20} color="inherit" /> : null}
+                                >
+                                    {saving ? 'Saving...' : 'Save Assignments'}
+                                </Button>
+                            </Box>
+                        </CardContent>
+                    </Card>
+                </TabPanel>
+            )}
         </TabContext>
       </Box>
     </PageContainer>

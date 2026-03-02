@@ -37,7 +37,7 @@ export const TenantAuthProvider = ({ children }) => {
         const payload = res.data?.data;
 
         setUser(payload.user);
-        setPermissions(payload.permissions);
+        setPermissions(payload.permissions || []);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('tenant_access_token');
@@ -57,10 +57,11 @@ export const TenantAuthProvider = ({ children }) => {
     try {
       const res = await api.post('/login', credentials);
 
-      const { access_token, data: user } = res.data;
+      const { access_token, data: userData } = res.data;
 
       localStorage.setItem('tenant_access_token', access_token);
-      setUser(user);
+      setUser(userData);
+      setPermissions(userData.permissions || []);
       setIsAuthenticated(true);
 
       return { success: true, user };

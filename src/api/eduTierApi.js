@@ -70,6 +70,17 @@ const eduTierApi = {
     });
     return response.data;
   },
+  getAgentModules: async (agentId) => {
+    const response = await api.get(`/agent/edu-tier/get-agent-modules/${agentId}`);
+    return response.data;
+  },
+  saveAgentModules: async (agentId, moduleIds) => {
+    const response = await api.post('/agent/edu-tier/save-agent-modules', {
+      agent_id: agentId,
+      module_ids: moduleIds,
+    });
+    return response.data;
+  },
 };
 
 export default eduTierApi;

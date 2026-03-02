@@ -41,11 +41,15 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
 
   const filteredModules = useMemo(() => {
     return modules.filter((module) => {
-      const matchesSearch =
-        module.mod_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        module.mod_description.toLowerCase().includes(searchTerm.toLowerCase());
+      const name = module.module_name || module.mod_name || '';
+      const description = module.module_description || module.mod_description || '';
+      const status = module.module_status || module.mod_status || '';
 
-      const matchesStatus = statusFilter === 'all' || module.mod_status === statusFilter;
+      const matchesSearch =
+        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        description.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = statusFilter === 'all' || status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -167,43 +171,43 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
                   </TableRow>
                 ) : paginatedModules.length > 0 ? (
                   paginatedModules.map((module, index) => (
-                    <TableRow hover>
+                    <TableRow hover key={module.id || index}>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight="medium">
-                          {module.mod_name}
+                          {module.module_name || module.mod_name}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" color="textSecondary">
-                          {module.mod_description}
+                          {module.module_description || module.mod_description}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontFamily="monospace">
-                          {module.mod_links?.link}
+                          {module.module_links?.link || module.mod_links?.link}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontFamily="monospace">
-                          {module.mod_links?.permission}
+                          {module.module_links?.permission || module.mod_links?.permission}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
                           sx={{
                             bgcolor:
-                              module.mod_status === 'active'
+                              (module.module_status || module.mod_status) === 'active'
                                 ? (theme) => theme.palette.success.light
                                 : (theme) => theme.palette.error.light,
                             color:
-                              module.mod_status === 'active'
+                              (module.module_status || module.mod_status) === 'active'
                                 ? (theme) => theme.palette.success.main
                                 : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                           }}
                           size="small"
-                          label={module.mod_status.toUpperCase()}
+                          label={(module.module_status || module.mod_status || 'INACTIVE').toUpperCase()}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -221,12 +225,12 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
                           <MenuItem
                             onClick={() =>
                               handleAction(
-                                module.mod_status === 'active' ? 'deactivate' : 'activate',
+                                (module.module_status || module.mod_status) === 'active' ? 'deactivate' : 'activate',
                                 module,
                               )
                             }
                           >
-                            {module.mod_status === 'active'
+                            {(module.module_status || module.mod_status) === 'active'
                               ? 'Deactivate Module'
                               : 'Activate Module'}
                           </MenuItem>

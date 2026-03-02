@@ -22,7 +22,7 @@ const BCrumb = [
     title: 'Home',
   },
   {
-    title: 'Modules',
+    title: 'EduTier',
   },
 ];
 
@@ -49,7 +49,7 @@ function a11yProps(index) {
   };
 }
 
-const PackageManager = () => {
+const EduTier = () => {
   const [value, setValue] = React.useState(0);
 
   const handleChange = (event, newValue) => {
@@ -57,9 +57,9 @@ const PackageManager = () => {
   };
 
   return (
-    <PageContainer title="Package Manager" description="this is Package Manager page">
+    <PageContainer title="EduTier" description="this is EduTier page">
       {/* breadcrumb */}
-      <Breadcrumb title="Package Settings" items={BCrumb} />
+      <Breadcrumb title="EduTier Settings" items={BCrumb} />
       {/* end breadcrumb */}
 
       <Grid container spacing={3}>
@@ -113,4 +113,4 @@ const PackageManager = () => {
   );
 };
 
-export default PackageManager;
+export default EduTier;

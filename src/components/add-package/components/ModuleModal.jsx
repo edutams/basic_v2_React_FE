@@ -41,7 +41,6 @@ const ModuleModal = ({
   const handleSubmit = (values) => {
     if (actionType === 'create') {
       const newModule = {
-        id: Date.now(),
         ...values,
         packageId: currentPackage?.id,
       };
@@ -59,13 +58,15 @@ const ModuleModal = ({
   const handleStatusChange = (status) => {
     const updatedModule = {
       ...selectedModule,
-      mod_status: status,
+      module_status: status,
     };
     onModuleUpdate(updatedModule, 'update');
     onClose();
   };
 
   const renderContent = () => {
+    const moduleName = selectedModule?.module_name || selectedModule?.mod_name || '';
+
     switch (actionType) {
       case 'create':
         return (
@@ -95,7 +96,7 @@ const ModuleModal = ({
               Activate Module
             </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              Are you sure you want to activate "{selectedModule?.mod_name}"?
+              Are you sure you want to activate "{moduleName}"?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button variant="outlined" onClick={onClose}>
@@ -120,7 +121,7 @@ const ModuleModal = ({
               Deactivate Module
             </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              Are you sure you want to deactivate "{selectedModule?.mod_name}"?
+              Are you sure you want to deactivate "{moduleName}"?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button variant="outlined" onClick={onClose}>

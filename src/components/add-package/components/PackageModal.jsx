@@ -43,7 +43,6 @@ const PackageModal = ({
   const handleSubmit = (values) => {
     if (actionType === 'create') {
       const newPackage = {
-        id: Date.now(),
         ...values,
       };
       onPackageUpdate(newPackage, 'create');
@@ -60,7 +59,7 @@ const PackageModal = ({
   const handleStatusChange = (status) => {
     const updatedPackage = {
       ...selectedPackage,
-      pac_status: status,
+      package_status: status,
     };
     onPackageUpdate(updatedPackage, 'update');
     onClose();
@@ -103,7 +102,7 @@ const PackageModal = ({
             handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')
           }
           title={actionType === 'activate' ? 'Activate Package' : 'Deactivate Package'}
-          message={`Are you sure you want to ${actionType} "${selectedPackage?.pac_name}"?`}
+          message={`Are you sure you want to ${actionType} "${selectedPackage?.package_name || selectedPackage?.pac_name}"?`}
           confirmText={actionType === 'activate' ? 'Activate' : 'Deactivate'}
           cancelText="Cancel"
           severity={actionType === 'activate' ? 'theme.palette.primary.main' : 'error'}

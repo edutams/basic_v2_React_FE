@@ -71,7 +71,11 @@ const ManageModulesModal = ({
   const handleSelectAllCategory = (category, checked) => {
     const updatedAssignments = { ...moduleAssignments };
     allModules
-      .filter((module) => getCategoryName(module) === category && module.mod_status === 'active')
+      .filter((module) => {
+        const cat = getCategoryName(module);
+        const status = module.module_status || module.mod_status || '';
+        return cat === category && status === 'active';
+      })
       .forEach((module) => {
         updatedAssignments[module.id] = checked;
       });
@@ -88,7 +92,6 @@ const ManageModulesModal = ({
     const assignedModules = allModules.filter((module) => moduleAssignments[module.id]);
     const unassignedModules = allModules.filter((module) => !moduleAssignments[module.id]);
     onModuleAssignment(currentPackage, assignedModules, unassignedModules);
-    // notify.success('Module assignments updated successfully', 'Success');
     setConfirmDialogOpen(false);
     onClose();
   };
@@ -100,7 +103,10 @@ const ManageModulesModal = ({
   const groupedModules = useMemo(() => {
     const groups = {};
     allModules
-      .filter((module) => module.mod_name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter((module) => {
+        const name = module.module_name || module.mod_name || '';
+        return name.toLowerCase().includes(searchQuery.toLowerCase());
+      })
       .forEach((module) => {
         const category = getCategoryName(module);
         if (!groups[category]) {
@@ -115,7 +121,7 @@ const ManageModulesModal = ({
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={`Manage ${currentPackage?.pac_name || 'Package'} Modules`}
+      title={`Manage ${(currentPackage?.package_name || currentPackage?.pac_name) || 'Package'} Modules`}
       size="large"
       disableEnforceFocus
       disableAutoFocus
@@ -171,124 +177,42 @@ const ManageModulesModal = ({
             </Typography>
           </Box>
         ) : (
-          // <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: '50vh' }}>
-          //   <Table stickyHeader aria-label="Module assignment table">
-          //     <TableHead>
-          //       <TableRow>
-          //         <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
-          //         <TableCell sx={{ fontWeight: 'bold' }}>Module Name</TableCell>
-          //         <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-          //         <TableCell sx={{ fontWeight: 'bold' }}></TableCell>
-          //         <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-          //           Assign
-          //         </TableCell>
-          //       </TableRow>
-          //     </TableHead>
-          //     <TableBody>
-          //       {Object.entries(groupedModules).map(([category, modules], catIndex) => (
-          //         <React.Fragment key={category}>
-          //           <TableRow>
-          //             <TableCell colSpan={5} sx={{ bgcolor: 'grey.200', fontWeight: 'bold' }}>
-          //               <Box
-          //                 sx={{
-          //                   display: 'flex',
-          //                   alignItems: 'center',
-          //                   justifyContent: 'space-between',
-          //                 }}
-          //               >
-          //                 <Typography variant="subtitle1">{category}</Typography>
-          //                 <Checkbox
-          //                   checked={modules
-          //                     .filter((m) => m.mod_status === 'active')
-          //                     .every((m) => moduleAssignments[m.id])}
-          //                   indeterminate={
-          //                     modules.some((m) => moduleAssignments[m.id]) &&
-          //                     !modules
-          //                       .filter((m) => m.mod_status === 'active')
-          //                       .every((m) => moduleAssignments[m.id])
-          //                   }
-          //                   onChange={(e) => handleSelectAllCategory(category, e.target.checked)}
-          //                   aria-label={`Select all modules in ${category}`}
-          //                 />
-          //               </Box>
-          //             </TableCell>
-          //           </TableRow>
-          //           {modules.map((module, index) => (
-          //             <TableRow
-          //               key={module.id}
-          //               sx={{ '&:hover': { bgcolor: 'grey.100' } }}
-          //               role="checkbox"
-          //               aria-checked={moduleAssignments[module.id] || false}
-          //             >
-          //               <TableCell>
-          //                 {catIndex + 1}.{index + 1}
-          //               </TableCell>
-          //               <TableCell>
-          //                 <Typography variant="body2" fontWeight="medium">
-          //                   {module.mod_name}
-          //                 </Typography>
-          //               </TableCell>
-          //               <TableCell>
-          //                 <Typography variant="body2" color="textSecondary">
-          //                   {module.mod_description || 'No description available'}
-          //                 </Typography>
-          //               </TableCell>
-          //               <TableCell>
-          //                 {/* <Typography
-          //                   variant="body2"
-          //                   color={module.mod_status === 'active' ? 'success.main' : 'error.main'}
-          //                   fontWeight="medium"
-          //                 >
-          //                   {module.mod_status.toUpperCase()}
-          //                 </Typography> */}
-          //               </TableCell>
-          //               <TableCell align="center">
-          //                 <Checkbox
-          //                   checked={moduleAssignments[module.id] || false}
-          //                   onChange={(e) => handleToggleModule(module.id, e.target.checked)}
-          //                   disabled={module.mod_status === 'inactive'}
-          //                   color="primary"
-          //                   inputProps={{ 'aria-label': `Assign ${module.mod_name} to package` }}
-          //                 />
-          //               </TableCell>
-          //             </TableRow>
-          //           ))}
-          //         </React.Fragment>
-          //       ))}
-          //     </TableBody>
-          //   </Table>
-          // </TableContainer>
-
           <Box
             sx={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 2,
               p: 2,
-              // backgroundColor: '#f9f9f9',
               backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f9f9f9'),
               borderRadius: 2,
             }}
           >
             {allModules
-              .filter((module) => module.mod_name.toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((module) => (
-                <FormControlLabel
-                  key={module.id}
-                  control={
-                    <Checkbox
-                      checked={moduleAssignments[module.id] || false}
-                      onChange={(e) => handleToggleModule(module.id, e.target.checked)}
-                      disabled={module.mod_status === 'inactive'}
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" noWrap sx={{ fontSize: '0.8rem' }}>
-                      {module.mod_name}
-                    </Typography>
-                  }
-                />
-              ))}
+              .filter((module) => {
+                const name = module.module_name || module.mod_name || '';
+                return name.toLowerCase().includes(searchQuery.toLowerCase());
+              })
+              .map((module) => {
+                const name = module.module_name || module.mod_name;
+                const status = module.module_status || module.mod_status || '';
+                return (
+                  <FormControlLabel
+                    key={module.id}
+                    control={
+                      <Checkbox
+                        checked={moduleAssignments[module.id] || false}
+                        onChange={(e) => handleToggleModule(module.id, e.target.checked)}
+                        disabled={status === 'inactive'}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" noWrap sx={{ fontSize: '0.8rem' }}>
+                        {name}
+                      </Typography>
+                    }
+                  />
+                );
+              })}
           </Box>
         )}
 
@@ -326,14 +250,15 @@ ManageModulesModal.propTypes = {
   allModules: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      mod_name: PropTypes.string.isRequired,
+      module_name: PropTypes.string,
+      mod_name: PropTypes.string,
+      module_description: PropTypes.string,
       mod_description: PropTypes.string,
-      mod_status: PropTypes.string.isRequired,
+      module_status: PropTypes.string,
+      mod_status: PropTypes.string,
       packageId: PropTypes.number,
-      mod_links: PropTypes.shape({
-        link: PropTypes.string,
-        permission: PropTypes.string,
-      }),
+      module_links: PropTypes.object,
+      mod_links: PropTypes.object,
     }),
   ),
   packageModules: PropTypes.arrayOf(

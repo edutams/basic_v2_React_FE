@@ -86,6 +86,34 @@ export const TenantAuthProvider = ({ children }) => {
   };
 
   const clearError = () => setError(null);
+  
+  const updateAgentProfile = async (data, isMultipart = false) => {
+    setError(null);
+    try {
+      const res = await api.put('/update-user', data, {
+        headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
+      });
+      const userData = res.data?.data || res.data;
+      setUser(userData);
+      return { success: true, user: userData };
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Update failed';
+      setError(msg);
+      return { success: false, error: msg };
+    }
+  };
+
+  const changePassword = async (passwordData) => {
+    setError(null);
+    try {
+      await api.put('/change-password', passwordData);
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Password change failed';
+      setError(msg);
+      return { success: false, error: msg };
+    }
+  };
 
   const contextValue = {
     user,
@@ -94,6 +122,8 @@ export const TenantAuthProvider = ({ children }) => {
     error,
     login,
     logout,
+    updateAgentProfile,
+    changePassword,
     clearError,
   };
 

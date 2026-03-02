@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -10,31 +10,38 @@ import {
   TextField,
   Button,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
+import { useTenantAuth } from 'src/hooks/useTenantAuth';
+import useNotification from 'src/hooks/useNotification';
+import tenantApi from 'src/api/tenant_api';
 import ManageSessions from 'src/components/school/components/ManageSessions';
 import ManageWeeks from 'src/components/school/components/ManageWeeks';
 import HolidayModal from 'src/components/school/components/HolidayModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
-import AddSessionModal from 'src/components/school/components/AddSessionModal';
 import SetSessionTermModal from 'src/components/school/components/SetSessionTermModal';
 import HolidayTab from 'src/components/school/components/HolidayTab';
 
 const BCrumb = [
   {
-    to: '/school-dashboard',
+    to: '/',
     title: 'School Dashboard',
   },
   {
-    title: 'School Calendar',
+    title: 'Session/Term Mapping',
   },
 ];
 
 const SessionWeekManager = () => {
+  const { user } = useTenantAuth();
+  const isTenant = !!user;
+  const notify = useNotification();
+
   const [mainTab, setMainTab] = useState(0);
-  const [sessionTab, setSessionTab] = useState(0);
+  const [sessionTab, setSessionTab] = useState(isTenant ? 1 : 0);
   const [openModal, setOpenModal] = useState(false);
   const [modalActionType, setModalActionType] = useState('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -43,6 +50,25 @@ const SessionWeekManager = () => {
   const [sessionsData, setSessionsData] = useState(null);
   const [addSessionModalOpen, setAddSessionModalOpen] = useState(false);
   const [setSessionTermModalOpen, setSetSessionTermModalOpen] = useState(false);
+  const [mappings, setMappings] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isTenant) {
+      const fetchMappings = async () => {
+        setLoading(true);
+        try {
+          const response = await tenantApi.get('/session-mappings');
+          setMappings(response.data);
+        } catch (error) {
+          console.error('Error fetching mappings:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchMappings();
+    }
+  }, [isTenant]);
 
   const handleSessionAction = (action, session) => {
     setSelectedSession(session);
@@ -50,24 +76,28 @@ const SessionWeekManager = () => {
     setConfirmDialogOpen(true);
   };
 
-  const handleConfirmStatusChange = () => {
+  const handleConfirmStatusChange = async () => {
     if (selectedSession && confirmAction) {
-      const newStatus = confirmAction === 'activate' ? 'ACTIVE' : 'INACTIVE';
-
-      // Update the session status
-      const updatedSession = {
-        ...selectedSession,
-        status: newStatus,
-      };
-
-      console.log(`${confirmAction} session:`, updatedSession);
-
-      // Trigger refresh to update the data
-      setSessionsData(updatedSession);
-
-      setConfirmDialogOpen(false);
-      setConfirmAction('');
-      setSelectedSession(null);
+      try {
+        if (confirmAction === 'activate') {
+          await tenantApi.post(`/session-mappings/${selectedSession.id}/activate`);
+          notify.success('Session mapping activated successfully', 'Success');
+        } else if (confirmAction === 'deactivate') {
+          await tenantApi.post(`/session-mappings/${selectedSession.id}/deactivate`);
+          notify.success('Session mapping deactivated successfully', 'Success');
+        } else {
+          // Handle other actions (delete, etc.)
+          console.log(`Action ${confirmAction} on session ${selectedSession.id}`);
+        }
+        handleRefresh();
+      } catch (error) {
+        console.error(`Error performing ${confirmAction} on session:`, error);
+        notify.error(`Failed to ${confirmAction} session mapping`, 'Error');
+      } finally {
+        setConfirmDialogOpen(false);
+        setConfirmAction('');
+        setSelectedSession(null);
+      }
     }
   };
 
@@ -89,6 +119,20 @@ const SessionWeekManager = () => {
 
   const handleRefresh = () => {
     console.log('Refreshing data...');
+    if (isTenant) {
+      const fetchMappings = async () => {
+        setLoading(true);
+        try {
+          const response = await tenantApi.get('/session-mappings');
+          setMappings(response.data);
+        } catch (error) {
+          console.error('Error fetching mappings:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchMappings();
+    }
   };
 
   const handleMainTabChange = (event, newValue) => {
@@ -128,67 +172,47 @@ const SessionWeekManager = () => {
   };
 
   return (
-    <PageContainer title="School Calendar" description="Manage academic sessions and weeks">
-      <Breadcrumb title="School Calendar" items={BCrumb} />
+    <PageContainer title="Session/Term Mapping" description="Manage academic sessions and weeks">
+      <Breadcrumb title="Session/Term Mapping" items={BCrumb} />
 
       <Card variant="outlined">
         <CardContent>
           {/* Main Tabs */}
-          <Tabs value={mainTab} onChange={handleMainTabChange} sx={{ mb: 3 }}>
-            <Tab label="Session/Weeks Manager" />
-            <Tab label="Set Holiday" />
-          </Tabs>
+            <Tabs
+              value={mainTab}
+              onChange={handleMainTabChange}
+              sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
+            >
+              <Tab label="Session/Term Mapping" />
+              <Tab label="Week Manager" />
+              <Tab label="Set Holiday" />
+            </Tabs>
 
           {mainTab === 0 && (
-            <Grid container spacing={3}>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography variant="h5" fontWeight={600}>
-                        Manage Sessions
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        onClick={handleAddSessionClick}
-                      >
-                        {sessionTab === 0 ? 'Add Session' : 'Set Session/Term'}
-                      </Button>
-                    </Box>
-
-                    <Tabs value={sessionTab} onChange={handleSessionTabChange} sx={{ mb: 2 }}>
-                      <Tab label="All Sessions" />
-                      <Tab label="Session/Term" />
-                    </Tabs>
-
-                    <ManageSessions
-                      activeTab={sessionTab}
-                      onSessionAction={handleSessionAction}
-                      updatedSession={sessionsData}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography variant="h5" fontWeight={600}>
-                        Manage Weeks
-                      </Typography>
-                    </Box>
-
-                    <ManageWeeks />
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+            <Box>
+              {loading ? (
+                <Box display="flex" justifyContent="center" py={5}>
+                  <CircularProgress size={32} />
+                </Box>
+              ) : (
+                <ManageSessions
+                  activeTab={1} // Force Session/Term tab for tenants
+                  onSessionAction={handleSessionAction}
+                  updatedSession={sessionsData}
+                  data={mappings}
+                  isReadOnly={false} // Allow actions for tenants now
+                />
+              )}
+            </Box>
           )}
 
-          {mainTab === 1 && <HolidayTab handleRefresh={handleRefresh} />}
+          {mainTab === 1 && (
+            <Box>
+              <ManageWeeks sessionTermId={mappings.find(m => m.status?.toUpperCase() === 'ACTIVE')?.id} />
+            </Box>
+          )}
+
+          {mainTab === 2 && <HolidayTab handleRefresh={handleRefresh} />}
         </CardContent>
       </Card>
 
@@ -203,11 +227,6 @@ const SessionWeekManager = () => {
         confirmText={confirmAction === 'activate' ? 'Activate' : 'Deactivate'}
         cancelText="Cancel"
         severity={confirmAction === 'activate' ? 'primary' : 'error'}
-      />
-      <AddSessionModal
-        open={addSessionModalOpen}
-        onClose={handleCloseAddSessionModal}
-        onSubmit={handleAddSessionSubmit}
       />
       <SetSessionTermModal
         open={setSessionTermModalOpen}

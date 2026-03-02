@@ -1,21 +1,21 @@
 import * as yup from 'yup';
 
 export const moduleValidationSchema = yup.object({
-  mod_name: yup
+  module_name: yup
     .string()
     .min(3, 'Module name must be at least 3 characters')
     .max(50, 'Module name must be less than 50 characters')
     .required('Module name is required'),
-  mod_description: yup
+  module_description: yup
     .string()
     .min(10, 'Module description must be at least 10 characters')
     .max(500, 'Module description must be less than 500 characters')
     .required('Module description is required'),
-  mod_status: yup
+  module_status: yup
     .string()
     .oneOf(['active', 'inactive'], 'Status must be either active or inactive')
     .required('Status is required'),
-  mod_links: yup.object({
+  module_links: yup.object({
     link: yup
       .string()
       .matches(/^\/[a-zA-Z0-9\-_\/]*$/, 'Link must start with / and contain only valid characters')

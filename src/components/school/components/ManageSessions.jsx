@@ -18,11 +18,11 @@ import {
 
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 
-const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
+const ManageSessions = ({ activeTab, onSessionAction, updatedSession, data, isReadOnly }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const [sessions, setSessions] = useState([
     { id: 1, name: '2020/2021', status: 'INACTIVE' },
@@ -67,7 +67,7 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
     }
   }, [updatedSession]);
 
-  const currentData = activeTab === 0 ? sessions : sessionTerms;
+  const currentData = data || (activeTab === 0 ? sessions : sessionTerms);
   const paginatedData = currentData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleMenuClick = (event, session) => {
@@ -106,9 +106,16 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>
-                  {activeTab === 0 ? 'Session Name' : 'Session/Term'}
-                </TableCell>
+                {data ? (
+                  <>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Session</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Term</TableCell>
+                  </>
+                ) : (
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    {activeTab === 0 ? 'Session Name' : 'Session/Term'}
+                  </TableCell>
+                )}
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                   Actions
@@ -120,18 +127,25 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
                 paginatedData.map((item, index) => (
                   <TableRow key={item.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{activeTab === 0 ? item.name : item.sessionTerm}</TableCell>
+                    {data ? (
+                      <>
+                        <TableCell>{item.session?.sesname || 'N/A'}</TableCell>
+                        <TableCell>{item.term?.term_name || 'N/A'}</TableCell>
+                      </>
+                    ) : (
+                      <TableCell>{activeTab === 0 ? item.name : item.sessionTerm}</TableCell>
+                    )}
                     <TableCell>
                       <Chip
-                        label={String(item.status || 'UNKNOWN')}
+                        label={String(item.status || 'UNKNOWN').toUpperCase()}
                         // color={item.status === 'ACTIVE' ? 'success' : 'default'}
                         sx={{
                           color:
-                            item.status === 'ACTIVE'
+                            item.status?.toUpperCase() === 'ACTIVE'
                               ? (theme) => theme.palette.success.main
                               : (theme) => theme.palette.error.main,
                           bgcolor:
-                            item.status === 'ACTIVE'
+                            item.status?.toUpperCase() === 'ACTIVE'
                               ? (theme) => theme.palette.success.light
                               : (theme) => theme.palette.error.light,
                           borderRadius: '8px',
@@ -174,13 +188,28 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession }) => {
         <MenuItem
           onClick={() =>
             handleAction(
-              selectedSession?.status === 'ACTIVE' ? 'deactivate' : 'activate',
+              selectedSession?.status?.toString().toUpperCase() === 'ACTIVE'
+                ? 'deactivate'
+                : 'activate',
               selectedSession,
             )
           }
         >
-          {selectedSession?.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+          {selectedSession?.status?.toString().toUpperCase() === 'ACTIVE'
+            ? 'Deactivate'
+            : 'Activate'}
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            alert('Manage Curriculum functionality coming soon');
+          }}
+        >
+          Manage Curriculum
+        </MenuItem>
+        {!isReadOnly && (
+          <MenuItem onClick={() => handleAction('delete', selectedSession)}>Delete</MenuItem>
+        )}
       </Menu>
     </Box>
   );

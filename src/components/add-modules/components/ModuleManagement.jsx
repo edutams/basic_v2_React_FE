@@ -99,7 +99,7 @@ const ModuleManagement = ({
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Module"
-        message={`Are you sure you want to delete "${moduleToDelete?.mod_name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${moduleToDelete?.module_name || moduleToDelete?.mod_name}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

@@ -63,6 +63,7 @@ import {
   IconMap,
   IconListCheck,
   IconCalendarTime,
+  IconHistory,
 } from '@tabler/icons-react';
 
 const Menuitems = [
@@ -81,6 +82,13 @@ const Menuitems = [
     title: 'ACL Manager',
     icon: IconSettings,
     href: '/alc-manager',
+  }
+  ,
+  {
+    id: uniqueId(),
+    title: 'Calendar',
+    icon: IconCalendarTime,
+    href: '/calendar',
   },
   {
     id: uniqueId(),
@@ -90,15 +98,21 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
+    title: 'Activity Log',
+    icon: IconHistory,
+    href: '/activity-log',
+  },
+  {
+    id: uniqueId(),
     title: 'School',
     icon: IconSchool,
     href: '/school',
   },
   {
     id: uniqueId(),
-    title: 'Package Manager',
+    title: 'EduTier',
     icon: IconListTree,
-    href: '/package-manager',
+    href: '/edutier',
   },
   {
     id: uniqueId(),
@@ -106,37 +120,6 @@ const Menuitems = [
     icon: IconMap,
     href: '/my-plan',
   },
-  // {
-  //   id: uniqueId(),
-  //   title: 'Calendar',
-  //   icon: IconAppWindow,
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Session',
-  //       icon: IconCalendarTime,
-  //       href: '/dashboards/session',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Term',
-  //       icon: IconTimeline,
-  //       href: '/dashboards/term',
-  //     },
-  //   ],
-  // },
-  //  {
-  //     id: uniqueId(),
-  //     title: 'Session',
-  //     icon: IconCalendarTime,
-  //     href: '/dashboards/session',
-  //   },
-  //   {
-  //     id: uniqueId(),
-  //     title: 'Term',
-  //     icon: IconTimeline,
-  //     href: '/dashboards/term',
-  //   },
   {
     id: uniqueId(),
     title: 'Gateway',
@@ -175,25 +158,13 @@ const Menuitems = [
     ],
   },
 
-  // {
-  //   id: uniqueId(),
-  //   title: 'Subcriptions',
-  //   icon: IconAppWindow,
-  //   children: [
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Manage Subcription',
-  //       icon: IconPoint,
-  //       href: '/subcriptions/manage-subcription',
-  //     },
-  //     {
-  //       id: uniqueId(),
-  //       title: 'Subcription History',
-  //       icon: IconPoint,
-  //       href: '/subcriptions/subscription-history',
-  //     },
-  //   ],
-  // },
+  {
+    id: uniqueId(),
+    title: 'Tenant Subscriptions',
+    icon: IconAppWindow,
+    href: '/agent/subscriptions',
+  },
+
 
   /*
   {

@@ -27,8 +27,10 @@ import {
   Alert,
   Chip,
   CircularProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
-import { IconSchool, IconUserPlus, IconCheck, IconX } from '@tabler/icons-react';
+import { IconSchool, IconUserPlus, IconCheck, IconX, IconSettings } from '@tabler/icons-react';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -43,6 +45,7 @@ import ChangeAgent from '../../components/add-school/component/ChangeAgent';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import BlankCard from '../../components/shared/BlankCard';
 import ChangeColorScheme from '../../components/add-school/component/ChangeColorScheme';
+import SchoolCategorizationManager from './SchoolCategorizationManager';
 import { Link } from 'react-router';
 import {
   getSchools,
@@ -96,6 +99,12 @@ const SchoolDashboard = () => {
 
   const [filterClicked, setFilterClicked] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
   const fetchSchools = async () => {
     setLoading(true);
@@ -253,101 +262,112 @@ const SchoolDashboard = () => {
         ))}
       </Box>
 
-      <BlankCard>
-        <Box sx={{ p: 3 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h5">All Schools</Typography>
-            <Button variant="contained" color="primary" onClick={handleOpen} startIcon={<IconUserPlus size={18} />}>
-              Register New School
-            </Button>
-          </Stack>
+      <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={activeTab} onChange={handleTabChange} aria-label="school dashboard tabs">
+          <Tab icon={<IconSchool size={20} />} iconPosition="start" label="Schools List" />
+          <Tab icon={<IconSettings size={20} />} iconPosition="start" label="School Configuration" />
+        </Tabs>
+      </Box>
 
-          <Grid container spacing={2} mb={3} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField fullWidth label="Search School Name" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Button variant="contained" fullWidth onClick={fetchSchools} disabled={loading}>
-                {loading ? <CircularProgress size={24} /> : 'Refresh'}
+      {activeTab === 0 && (
+        <BlankCard>
+          <Box sx={{ p: 3 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+              <Typography variant="h5">All Schools</Typography>
+              <Button variant="contained" color="primary" onClick={handleOpen} startIcon={<IconUserPlus size={18} />}>
+                Register New School
               </Button>
-            </Grid>
-          </Grid>
+            </Stack>
 
-          <TableContainer component={Paper} elevation={0} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>School Name</TableCell>
-                  <TableCell>Url</TableCell>
-                  <TableCell>Date Created</TableCell>
-                  <TableCell>Colors</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedSchools.length > 0 ? (
-                  paginatedSchools.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight={600}>{row.institutionName}</Typography>
-                      </TableCell>
-                      <TableCell>{row.schoolUrl || '-'}</TableCell>
-                      <TableCell>{dayjs(row.date).format('DD MMM YYYY')}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', width: 40, height: 20, borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                          <Box sx={{ flex: 1, bgcolor: row.headerColor || '#eee' }} />
-                          <Box sx={{ flex: 1, bgcolor: row.sidebarColor || '#ddd' }} />
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={row.status} 
-                          size="small"
-                          color={row.status === 'Active' ? 'success' : 'default'}
-                          variant="light"
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton onClick={(e) => handleActionClick(e, row.id)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={actionAnchorEl}
-                          open={Boolean(actionAnchorEl) && activeRow === row.id}
-                          onClose={handleActionClose}
-                        >
-                          <MenuItem onClick={() => { setEditSchoolData(row.raw); setOpenEditModal(true); handleActionClose(); }}>Edit Details</MenuItem>
-                          <MenuItem onClick={() => { setSchoolToDeactivate(row); setOpenDeactivateDialog(true); handleActionClose(); }}>Deactivate</MenuItem>
-                          <MenuItem onClick={() => { setSchoolToDelete(row); setOpenDeleteDialog(true); handleActionClose(); }} sx={{ color: 'error.main' }}>Delete</MenuItem>
-                        </Menu>
+            <Grid container spacing={2} mb={3} alignItems="center">
+              <Grid item xs={12} md={4}>
+                <TextField fullWidth label="Search School Name" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <Button variant="contained" fullWidth onClick={fetchSchools} disabled={loading}>
+                  {loading ? <CircularProgress size={24} /> : 'Refresh'}
+                </Button>
+              </Grid>
+            </Grid>
+
+            <TableContainer component={Paper} elevation={0} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>School Name</TableCell>
+                    <TableCell>Url</TableCell>
+                    <TableCell>Date Created</TableCell>
+                    <TableCell>Colors</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedSchools.length > 0 ? (
+                    paginatedSchools.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>
+                          <Typography variant="subtitle2" fontWeight={600}>{row.institutionName}</Typography>
+                        </TableCell>
+                        <TableCell>{row.schoolUrl || '-'}</TableCell>
+                        <TableCell>{dayjs(row.date).format('DD MMM YYYY')}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', width: 40, height: 20, borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                            <Box sx={{ flex: 1, bgcolor: row.headerColor || '#eee' }} />
+                            <Box sx={{ flex: 1, bgcolor: row.sidebarColor || '#ddd' }} />
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={row.status} 
+                            size="small"
+                            color={row.status === 'Active' ? 'success' : 'default'}
+                            variant="light"
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={(e) => handleActionClick(e, row.id)}>
+                            <MoreVertIcon />
+                          </IconButton>
+                          <Menu
+                            anchorEl={actionAnchorEl}
+                            open={Boolean(actionAnchorEl) && activeRow === row.id}
+                            onClose={handleActionClose}
+                          >
+                            <MenuItem onClick={() => { setEditSchoolData(row.raw); setOpenEditModal(true); handleActionClose(); }}>Edit Details</MenuItem>
+                            <MenuItem onClick={() => { setSchoolToDeactivate(row); setOpenDeactivateDialog(true); handleActionClose(); }}>Deactivate</MenuItem>
+                            <MenuItem onClick={() => { setSchoolToDelete(row); setOpenDeleteDialog(true); handleActionClose(); }} sx={{ color: 'error.main' }}>Delete</MenuItem>
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                        <Typography variant="body1" color="textSecondary">No schools found.</Typography>
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
+                  )}
+                </TableBody>
+                <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                      <Typography variant="body1" color="textSecondary">No schools found.</Typography>
-                    </TableCell>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25]}
+                      count={filteredSchools.length}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={handleChangePage}
+                      onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
                   </TableRow>
-                )}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredSchools.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                  />
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </TableContainer>
-        </Box>
-      </BlankCard>
+                </TableFooter>
+              </Table>
+            </TableContainer>
+          </Box>
+        </BlankCard>
+      )}
+
+      {activeTab === 1 && <SchoolCategorizationManager />}
 
       {/* Modals & Dialogs */}
       <ReusableModal open={openRegisterModal || openEditModal} onClose={handleClose} title={openEditModal ? 'Edit School' : 'Register School'} size="large">

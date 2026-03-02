@@ -23,10 +23,12 @@ import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'; // for 
 
 const PackageForm = ({
   initialValues = {
-    pac_name: '',
-    pac_description: '',
-    pac_status: 'active',
-    pac_icon: 'fas fa-box',
+    package_name: '',
+    package_description: '',
+    package_status: 'active',
+    package_icon: 'fas fa-box',
+    package_code: '',
+    package_order: 0
   },
   onSubmit,
   onCancel,
@@ -34,7 +36,16 @@ const PackageForm = ({
   isLoading = false,
 }) => {
   const formik = useFormik({
-    initialValues,
+    initialValues: {
+      ...initialValues,
+      // Handle potential legacy field names
+      package_name: initialValues.package_name || initialValues.pac_name || '',
+      package_description: initialValues.package_description || initialValues.pac_description || '',
+      package_status: initialValues.package_status || initialValues.pac_status || 'active',
+      package_icon: initialValues.package_icon || initialValues.pac_icon || 'fas fa-box',
+      package_code: initialValues.package_code || initialValues.pac_code || '',
+      package_order: initialValues.package_order || 0
+    },
     validationSchema: packageValidationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {
@@ -48,30 +59,30 @@ const PackageForm = ({
         <Grid size={{ xs: 12 }}>
           <TextField
             label="Package Name"
-            name="pac_name"
-            value={formik.values.pac_name}
+            name="package_name"
+            value={formik.values.package_name}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             variant="outlined"
-            error={formik.touched.pac_name && Boolean(formik.errors.pac_name)}
-            helperText={formik.touched.pac_name && formik.errors.pac_name}
+            error={formik.touched.package_name && Boolean(formik.errors.package_name)}
+            helperText={formik.touched.package_name && formik.errors.package_name}
           />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
           <TextField
             label="Package Description"
-            name="pac_description"
-            value={formik.values.pac_description}
+            name="package_description"
+            value={formik.values.package_description}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             multiline
             rows={4}
             variant="outlined"
-            error={formik.touched.pac_description && Boolean(formik.errors.pac_description)}
-            helperText={formik.touched.pac_description && formik.errors.pac_description}
+            error={formik.touched.package_description && Boolean(formik.errors.package_description)}
+            helperText={formik.touched.package_description && formik.errors.package_description}
           />
         </Grid>
 
@@ -79,12 +90,12 @@ const PackageForm = ({
           <FormControl fullWidth variant="outlined">
             <InputLabel>Status</InputLabel>
             <Select
-              name="pac_status"
-              value={formik.values.pac_status}
+              name="package_status"
+              value={formik.values.package_status}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Status"
-              error={formik.touched.pac_status && Boolean(formik.errors.pac_status)}
+              error={formik.touched.package_status && Boolean(formik.errors.package_status)}
             >
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
@@ -93,47 +104,65 @@ const PackageForm = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            label="Package Code"
+            name="package_code"
+            value={formik.values.package_code}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            fullWidth
+            variant="outlined"
+            error={formik.touched.package_code && Boolean(formik.errors.package_code)}
+            helperText={formik.touched.package_code && formik.errors.package_code}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <TextField
+            label="Package Order"
+            name="package_order"
+            type="number"
+            value={formik.values.package_order}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            fullWidth
+            variant="outlined"
+            error={formik.touched.package_order && Boolean(formik.errors.package_order)}
+            helperText={formik.touched.package_order && formik.errors.package_order}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth variant="outlined">
             <InputLabel>Icon</InputLabel>
             <Select
-              name="pac_icon"
-              value={formik.values.pac_icon}
+              name="package_icon"
+              value={formik.values.package_icon}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Icon"
-              error={formik.touched.pac_icon && Boolean(formik.errors.pac_icon)}
+              error={formik.touched.package_icon && Boolean(formik.errors.package_icon)}
             >
-              {/* <MenuItem value="fas fa-box">📦 Box</MenuItem>
-              <MenuItem value="fas fa-rocket">🚀 Rocket</MenuItem>
-              <MenuItem value="fas fa-building">🏢 Building</MenuItem>
-              <MenuItem value="fas fa-star">⭐ Star</MenuItem>
-              <MenuItem value="fas fa-crown">👑 Crown</MenuItem> */}
-
               <MenuItem value="school">
                 <SchoolOutlinedIcon sx={{ mr: 1 }} />
                 School
               </MenuItem>
-
               <MenuItem value="agent">
                 <SupervisorAccountOutlinedIcon sx={{ mr: 1 }} />
                 Agent
               </MenuItem>
-
               <MenuItem value="module">
                 <ExtensionOutlinedIcon sx={{ mr: 1 }} />
                 Module
               </MenuItem>
-
               <MenuItem value="package">
                 <Inventory2OutlinedIcon sx={{ mr: 1 }} />
                 Package
               </MenuItem>
-
               <MenuItem value="term">
                 <CalendarTodayOutlinedIcon sx={{ mr: 1 }} />
                 Term
               </MenuItem>
-
               <MenuItem value="session">
                 <ScheduleOutlinedIcon sx={{ mr: 1 }} />
                 Session

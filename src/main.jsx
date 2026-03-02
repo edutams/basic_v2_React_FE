@@ -17,22 +17,37 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 //   });
 // }
 
-// deferRender().then(() => {
+const hostname = window.location.hostname;
+const centralHost = import.meta.env.VITE_API_BASE_URL
+  ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
+  : 'basic_v2.test';
+
+const isTenantSubdomain =
+  hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
+
+const RootApp = () => {
+  const content = (
+    <CustomizerContextProvider>
+      <SnackbarProvider>
+        <Suspense fallback={<Spinner />}>
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
+        </Suspense>
+      </SnackbarProvider>
+    </CustomizerContextProvider>
+  );
+
+  if (isTenantSubdomain) {
+    return <TenantAuthProvider>{content}</TenantAuthProvider>;
+  }
+
+  return <AuthProvider>{content}</AuthProvider>;
+};
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <AuthProvider>
-      <TenantAuthProvider>
-        <CustomizerContextProvider>
-        <SnackbarProvider>
-          <Suspense fallback={<Spinner />}>
-            <ErrorBoundary>
-              <App />
-            </ErrorBoundary>
-          </Suspense>
-        </SnackbarProvider>
-      </CustomizerContextProvider>
-    </TenantAuthProvider>
-  </AuthProvider>
-</LocalizationProvider>,
+    <RootApp />
+  </LocalizationProvider>,
 );
-// });
+

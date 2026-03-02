@@ -34,11 +34,15 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
 
-  const filteredPackages = packages.filter(
-    (pkg) =>
-      pkg.pac_name.toLowerCase().includes(pacSearch.toLowerCase()) ||
-      pkg.pac_description.toLowerCase().includes(pacSearch.toLowerCase()),
-  );
+  const filteredPackages = packages.filter((pkg) => {
+    const name = pkg.package_name || pkg.pac_name || '';
+    const description = pkg.package_description || pkg.pac_description || '';
+
+    return (
+      name.toLowerCase().includes(pacSearch.toLowerCase()) ||
+      description.toLowerCase().includes(pacSearch.toLowerCase())
+    );
+  });
 
   const paginatedPackages = filteredPackages.slice(
     page * rowsPerPage,
@@ -117,39 +121,39 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
                   </TableRow>
                 ) : paginatedPackages.length > 0 ? (
                   paginatedPackages.map((pkg, index) => (
-                    <TableRow key={pkg.id} hover>
+                    <TableRow key={pkg.id || index} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <i
-                            className={pkg.pac_icon}
+                            className={pkg.package_icon || pkg.pac_icon}
                             style={{ fontSize: '18px', marginRight: '8px' }}
                           />
                           <Typography variant="body2" fontWeight="medium">
-                            {pkg.pac_name}
+                            {pkg.package_name || pkg.pac_name}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" color="textSecondary">
-                          {pkg.pac_description}
+                          {pkg.package_description || pkg.pac_description}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
                           sx={{
                             bgcolor:
-                              pkg.pac_status === 'active'
+                              (pkg.package_status || pkg.pac_status) === 'active'
                                 ? (theme) => theme.palette.success.light
                                 : (theme) => theme.palette.error.light,
                             color:
-                              pkg.pac_status === 'active'
+                              (pkg.package_status || pkg.pac_status) === 'active'
                                 ? (theme) => theme.palette.success.main
                                 : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                           }}
                           size="small"
-                          label={pkg.pac_status.toUpperCase()}
+                          label={(pkg.package_status || pkg.pac_status || 'INACTIVE').toUpperCase()}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -173,12 +177,12 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
                           <MenuItem
                             onClick={() =>
                               handleAction(
-                                pkg.pac_status === 'active' ? 'deactivate' : 'activate',
+                                (pkg.package_status || pkg.pac_status) === 'active' ? 'deactivate' : 'activate',
                                 pkg,
                               )
                             }
                           >
-                            {pkg.pac_status === 'active'
+                            {(pkg.package_status || pkg.pac_status) === 'active'
                               ? 'Deactivate Package'
                               : 'Activate Package'}
                           </MenuItem>

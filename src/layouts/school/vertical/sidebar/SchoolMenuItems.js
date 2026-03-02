@@ -1,13 +1,14 @@
 import { uniqueId } from 'lodash';
 import {
   IconChartPie,
-  IconCalendarWeek,
   IconUsers,
   IconUserCircle,
   IconBook,
   IconClipboardList,
   IconAppWindow,
   IconPoint,
+  IconHistory,
+  IconTimeline,
 } from '@tabler/icons-react';
 
 const SchoolMenuItems = [
@@ -16,10 +17,9 @@ const SchoolMenuItems = [
     subheader: 'School Dashboard',
   },
   {
-    id: uniqueId(),
     title: 'Dashboard',
     icon: IconChartPie,
-    href: '/school-dashboard',
+    href: '/',
   },
 
   {
@@ -29,63 +29,54 @@ const SchoolMenuItems = [
 
   {
     id: uniqueId(),
+    title: 'ACL Manager',
+    icon: IconUsers,
+    href: '/alc-manager',
+  },
+  {
+    id: uniqueId(),
     title: 'Setup',
     icon: IconUsers,
     children: [
       {
         id: uniqueId(),
-        title: 'School Calendar',
-        icon: IconUsers,
-        href: '/school-dashboard/session-week-manager',
+        title: 'Session/Term Mapping',
+        icon: IconTimeline,
+        href: '/session-week-manager',
       },
       {
         id: uniqueId(),
         title: 'Scheme Of Work',
         icon: IconUsers,
-        href: '/school-dashboard/scheme-of-work',
+        href: '/scheme-of-work',
       },
     ],
   },
 
   {
     id: uniqueId(),
-    title: 'Subcriptions',
+    title: 'Subscriptions',
     icon: IconAppWindow,
-    children: [
-      {
-        id: uniqueId(),
-        title: 'Manage Subcription',
-        icon: IconPoint,
-        href: '/school-dashboard/manage-subcription',
-        // href: '/subcriptions/manage-subcription',
-      },
-      {
-        id: uniqueId(),
-        title: 'Subcription History',
-        icon: IconPoint,
-        href: '/school-dashboard/subscription-history',
-        // href: '/subcriptions/manage-subcription',
-      },
-    ],
+    href: '/manage-subscription',
   },
 
   {
     id: uniqueId(),
     title: 'Admission',
     icon: IconUserCircle,
-    href: '/school-dashboard/teachers',
+    href: '/teachers',
   },
   {
     id: uniqueId(),
     title: 'Digital Class',
     icon: IconBook,
-    href: '/school-dashboard/classes',
+    href: '/classes',
   },
   {
     id: uniqueId(),
     title: 'Forum',
     icon: IconClipboardList,
-    href: '/school-dashboard/subjects',
+    href: '/subjects',
   },
 ];
 

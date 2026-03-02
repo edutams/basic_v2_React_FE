@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../../api/auth';
+import { PermissionProvider } from './permissions';
 
 export const AuthContext = createContext(undefined);
 
@@ -8,6 +9,7 @@ const defaultAuthState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  permissions: [],
 };
 
 export const AuthProvider = ({ children }) => {
@@ -15,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
+  const [permissions, setPermissions] = useState(defaultAuthState.permissions);
 
   useEffect(() => {
     const restoreUser = async () => {
@@ -28,13 +31,13 @@ export const AuthProvider = ({ children }) => {
 
       setIsLoading(true);
       try {
-        // const res = await api.get('/agent/get-agent');
-        // setUser(res.data?.data);
         const res = await api.get('/agent/get_agent');
-        const userData = res.data?.user || res.data?.data;
-        console.log('restoreUser user data:', userData);
-        setUser(userData);
-        setIsAuthenticated(!!userData);
+
+        const payload = res.data?.data;
+
+        setUser(payload.user);
+        setPermissions(payload.permissions);
+        setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('access_token');
         setUser(null);
@@ -168,7 +171,6 @@ export const AuthProvider = ({ children }) => {
 
   const clearError = () => setError(null);
 
-
   // ---------------- Context value ----------------
   const contextValue = {
     user,
@@ -183,8 +185,12 @@ export const AuthProvider = ({ children }) => {
     refreshToken,
     impersonateAgent,
     clearError,
+    permissions,
   };
 
-
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={contextValue}>
+      <PermissionProvider permissions={permissions || []}>{children}</PermissionProvider>
+    </AuthContext.Provider>
+  );
 };

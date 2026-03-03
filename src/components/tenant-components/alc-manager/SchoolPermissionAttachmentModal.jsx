@@ -18,47 +18,32 @@ import {
 import { Search as SearchIcon } from '@mui/icons-material';
 import aclApi from 'src/api/aclApi';
 
-const PermissionAttachmentModal = ({
+const SchoolPermissionAttachmentModal = ({
   open,
   onClose,
   selectedRow,
-  selectedPermissions: propSelectedPermissions = [],
+  availablePermissions,
+  selectedPermissions = [],
   permissionSearch,
   onPermissionSearchChange,
+  onPermissionChange,
   onSave,
 }) => {
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState([]);
-  const [selectedPermissions, setSelectedPermissions] = useState([]);
-  const [permissionSearchLocal, setPermissionSearchLocal] = useState('');
 
-  // Fetch all permissions when modal opens
   useEffect(() => {
-    if (open) {
+    if (open && availablePermissions.length === 0) {
       fetchPermissions();
+    } else if (availablePermissions.length > 0) {
+      setPermissions(availablePermissions);
     }
-  }, [open]);
-
-  // Sync selectedPermissions when prop changes (these are the permissions already attached to the role)
-  useEffect(() => {
-    if (propSelectedPermissions && propSelectedPermissions.length > 0) {
-      setSelectedPermissions(propSelectedPermissions);
-    } else {
-      setSelectedPermissions([]);
-    }
-  }, [propSelectedPermissions]);
-
-  // Sync permissionSearch when prop changes
-  useEffect(() => {
-    if (permissionSearch !== undefined) {
-      setPermissionSearchLocal(permissionSearch);
-    }
-  }, [permissionSearch]);
+  }, [open, availablePermissions]);
 
   const fetchPermissions = async () => {
     setLoading(true);
     try {
-      const res = await aclApi.getAllPermissions();
+      const res = await aclApi.getSchoolAllPermissions();
       setPermissions(res?.data || []);
     } catch (err) {
       console.error('Failed to fetch permissions:', err);
@@ -68,49 +53,27 @@ const PermissionAttachmentModal = ({
   };
 
   const handleToggle = (permission) => {
-    setSelectedPermissions((prev) => {
-      const exists = prev.some(
-        (p) => String(p.id) === String(permission.id) || p.name === permission.name,
-      );
-      return exists
-        ? prev.filter((p) => String(p.id) !== String(permission.id) && p.name !== permission.name)
-        : [...prev, permission];
-    });
+    if (onPermissionChange) {
+      onPermissionChange(permission);
+    }
   };
 
   const isSelected = (permission) => {
-    return selectedPermissions.some(
-      (p) => String(p.id) === String(permission.id) || p.name === permission.name,
-    );
+    return selectedPermissions.some((p) => p.id === permission.id || p.name === permission.name);
   };
 
-  const filteredPermissions = permissions.filter((permission) =>
-    permission?.name?.toLowerCase()?.includes(permissionSearchLocal?.toLowerCase() || ''),
+  const filteredPermissions = permissions.filter((perm) =>
+    perm.name?.toLowerCase().includes(permissionSearch?.toLowerCase() || ''),
   );
-
-  const handleSave = () => {
-    if (onSave) {
-      onSave(selectedPermissions);
-    }
-  };
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setPermissionSearchLocal(value);
-    if (onPermissionSearchChange) {
-      onPermissionSearchChange(value);
-    }
-  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        Attach Permissions to{' '}
+        Attach Permissions to Role{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
           "{selectedRow?.name}"
         </Box>
       </DialogTitle>
-
       <DialogContent dividers>
         <Typography variant="body1" gutterBottom>
           Select permissions to attach to this role:
@@ -122,9 +85,9 @@ const PermissionAttachmentModal = ({
           type="text"
           fullWidth
           variant="outlined"
-          value={permissionSearchLocal}
-          onChange={handleSearchChange}
           sx={{ mb: 2 }}
+          value={permissionSearch}
+          onChange={(e) => onPermissionSearchChange && onPermissionSearchChange(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -174,10 +137,9 @@ const PermissionAttachmentModal = ({
           </Box>
         )}
       </DialogContent>
-
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
+        <Button variant="contained" color="primary" onClick={onSave}>
           Save Permissions
         </Button>
       </DialogActions>
@@ -185,4 +147,4 @@ const PermissionAttachmentModal = ({
   );
 };
 
-export default PermissionAttachmentModal;
+export default SchoolPermissionAttachmentModal;

@@ -130,11 +130,12 @@ const AlcManager = () => {
     });
   };
 
-  const handleSavePermissions = async () => {
+  const handleSavePermissions = async (permissions) => {
     try {
+      const permissionsToSave = permissions || selectedPermissions;
       await aclApi.attachPermissions(
         selectedRow.id,
-        selectedPermissions.map((p) => p.name),
+        permissionsToSave.map((p) => p.name),
       );
 
       notify.success('Permissions updated successfully!');
@@ -358,12 +359,9 @@ const AlcManager = () => {
         open={permissionModalOpen}
         onClose={() => setPermissionModalOpen(false)}
         selectedRow={selectedRow}
-        availablePermissions={allPermissions}
-        // availablePermissions={selectedRow?.permissions || []}
         selectedPermissions={selectedPermissions || []}
         permissionSearch={permissionSearch}
         onPermissionSearchChange={setPermissionSearch}
-        onPermissionChange={handlePermissionChange}
         onSave={handleSavePermissions}
       />
 

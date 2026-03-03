@@ -371,7 +371,7 @@ const SchoolDashboard = () => {
 
       {/* Modals & Dialogs */}
       <ReusableModal open={openRegisterModal || openEditModal} onClose={handleClose} title={openEditModal ? 'Edit School' : 'Register School'} size="large">
-        <RegisterSchoolForm actionType={openEditModal ? 'update' : 'create'} selectedAgent={editSchoolData} onSubmit={handleRefresh} onCancel={handleClose} />
+        <RegisterSchoolForm actionType={openEditModal ? 'update' : 'create'} selectedSchool={editSchoolData} onSubmit={handleRefresh} onCancel={handleClose} />
       </ReusableModal>
 
       <ConfirmationDialog 

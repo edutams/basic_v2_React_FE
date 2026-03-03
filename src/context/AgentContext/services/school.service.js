@@ -43,7 +43,7 @@ export const getSchools = async () => {
 export const updateSchool = async (id, schoolData) => {
     try {
         const res = await api.put(`/agent/update-tenant/${id}`, schoolData);
-        return res.data?.data;
+        return res.data;
     } catch (error) {
         console.error('Error updating school:', error);
         throw error.response?.data || error;

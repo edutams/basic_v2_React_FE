@@ -105,6 +105,26 @@ const SchoolAssignmentManagement = () => {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
+      subject_teacher: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.secondary.main,
+      },
+      student: {
+        backgroundColor: (theme) => theme.palette.purple.A50,
+        color: (theme) => theme.palette.purple.A100,
+      },
+      bursar: {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.dark,
+      },
+      lesson_note_admin: {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.dark,
+      },
+      prospective: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.primary.dark,
+      },
     };
 
     return (

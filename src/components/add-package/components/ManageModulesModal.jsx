@@ -121,7 +121,15 @@ const ManageModulesModal = ({
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={`Manage ${(currentPackage?.package_name || currentPackage?.pac_name) || 'Package'} Modules`}
+      title={
+        <>
+          Manage{' '}
+          <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            {currentPackage?.package_name || currentPackage?.pac_name || 'Package'}
+          </Box>{' '}
+          Modules
+        </>
+      }
       size="large"
       disableEnforceFocus
       disableAutoFocus

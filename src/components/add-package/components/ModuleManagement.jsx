@@ -84,9 +84,9 @@ const ModuleManagement = ({
   };
 
   const handleStatusChange = (module, status) => {
-    const updatedModule = { 
-      ...module, 
-      module_status: status 
+    const updatedModule = {
+      ...module,
+      module_status: status,
     };
     onModuleUpdate(updatedModule, 'update');
     notify.success(
@@ -126,15 +126,15 @@ const ModuleManagement = ({
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
           <Box display="flex" alignItems="center">
-            {onBack && (
+            {/* {onBack && (
               <IconButton onClick={onBack} sx={{ mr: 2 }} color="primary">
                 <ArrowBackIcon />
               </IconButton>
-            )}
+            )} */}
             <Typography variant="h5">
               {packageModules.length > 0 && currentPackage ? (
                 <>
-                  Modules in{' '}
+                  List of Modules in{' '}
                   <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
                     {currentPackage.package_name || currentPackage.pac_name}
                   </Box>
@@ -152,7 +152,7 @@ const ModuleManagement = ({
               onClick={onAttachModule}
               sx={{ ml: 2 }}
             >
-              Attach Module
+              Manage Module
             </Button>
           )}
         </Box>
@@ -185,6 +185,7 @@ const ModuleManagement = ({
           <Paper variant="outlined">
             <TableContainer>
               <Table sx={{ whiteSpace: 'nowrap' }}>
+                {/* <Table> */}
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
@@ -237,8 +238,7 @@ const ModuleManagement = ({
                             anchorEl={moduleAnchorEl}
                             open={Boolean(moduleAnchorEl) && selectedModule?.id === mod.id}
                             onClose={handleModuleMenuClose}
-                          >
-                          </Menu>
+                          ></Menu>
                         </TableCell>
                       </TableRow>
                     );
@@ -280,7 +280,9 @@ const ModuleManagement = ({
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Module"
-        message={`Are you sure you want to delete "${moduleToDelete?.module_name || moduleToDelete?.mod_name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${
+          moduleToDelete?.module_name || moduleToDelete?.mod_name
+        }"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

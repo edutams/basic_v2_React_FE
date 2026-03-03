@@ -61,6 +61,7 @@ const PackageManagement = ({
         setCurrentPackage(package_);
         setPackageModules(package_.modules || []);
         setView('modules');
+        // setManageModulesOpen(true);
         break;
 
       // case 'manageModules':

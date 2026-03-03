@@ -51,15 +51,22 @@ const ManageModulesModal = ({
   const [searchQuery, setSearchQuery] = useState('');
   const notify = useNotification();
 
+  // Filter modules by current package only
+  const packageModulesOnly = useMemo(() => {
+    if (!currentPackage) return [];
+    return allModules.filter((m) => m.packageId === currentPackage.id);
+  }, [allModules, currentPackage]);
+
   useEffect(() => {
     if (open && currentPackage) {
       const assignments = {};
-      allModules.forEach((module) => {
-        assignments[module.id] = packageModules.some((pm) => pm.id === module.id);
+      // Only initialize modules that belong to this package
+      packageModulesOnly.forEach((module) => {
+        assignments[module.id] = true; // All modules in package are checked
       });
       setModuleAssignments(assignments);
     }
-  }, [open, currentPackage, allModules, packageModules]);
+  }, [open, currentPackage, packageModulesOnly]);
 
   const handleToggleModule = (moduleId, checked) => {
     setModuleAssignments((prev) => ({
@@ -70,7 +77,7 @@ const ManageModulesModal = ({
 
   const handleSelectAllCategory = (category, checked) => {
     const updatedAssignments = { ...moduleAssignments };
-    allModules
+    packageModulesOnly
       .filter((module) => {
         const cat = getCategoryName(module);
         const status = module.module_status || module.mod_status || '';
@@ -89,8 +96,11 @@ const ManageModulesModal = ({
   };
 
   const handleConfirmSave = () => {
-    const assignedModules = allModules.filter((module) => moduleAssignments[module.id]);
-    const unassignedModules = allModules.filter((module) => !moduleAssignments[module.id]);
+    // Get only modules that belong to this package and are checked
+    const assignedModules = packageModulesOnly.filter((module) => moduleAssignments[module.id]);
+    // Get modules that belong to this package but are unchecked
+    const unassignedModules = packageModulesOnly.filter((module) => !moduleAssignments[module.id]);
+
     onModuleAssignment(currentPackage, assignedModules, unassignedModules);
     setConfirmDialogOpen(false);
     onClose();
@@ -102,7 +112,7 @@ const ManageModulesModal = ({
 
   const groupedModules = useMemo(() => {
     const groups = {};
-    allModules
+    packageModulesOnly
       .filter((module) => {
         const name = module.module_name || module.mod_name || '';
         return name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -115,7 +125,7 @@ const ManageModulesModal = ({
         groups[category].push(module);
       });
     return groups;
-  }, [allModules, searchQuery]);
+  }, [packageModulesOnly, searchQuery]);
 
   return (
     <ReusableModal
@@ -123,8 +133,9 @@ const ManageModulesModal = ({
       onClose={onClose}
       title={
         <>
-          Manage{' '}
+          Manage
           <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            {' '}
             {currentPackage?.package_name || currentPackage?.pac_name || 'Package'}
           </Box>{' '}
           Modules
@@ -150,7 +161,7 @@ const ManageModulesModal = ({
           <InfoOutlinedIcon color="info" />
           <Typography variant="body2" color="textSecondary">
             Select modules to assign to this package. Currently {getAssignedCount} of{' '}
-            {allModules.length} modules are assigned.
+            {packageModulesOnly.length} modules are assigned.
           </Typography>
         </Box>
 
@@ -195,7 +206,7 @@ const ManageModulesModal = ({
               borderRadius: 2,
             }}
           >
-            {allModules
+            {packageModulesOnly
               .filter((module) => {
                 const name = module.module_name || module.mod_name || '';
                 return name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -231,7 +242,7 @@ const ManageModulesModal = ({
           <Button
             variant="contained"
             onClick={handleSaveClick}
-            disabled={isLoading || getAssignedCount === packageModules.length}
+            disabled={isLoading || getAssignedCount === packageModulesOnly.length}
           >
             {isLoading ? 'Saving...' : 'Save Changes'}
           </Button>

@@ -152,7 +152,7 @@ const ModuleManagement = ({
               onClick={onAttachModule}
               sx={{ ml: 2 }}
             >
-              Manage Module
+              Attach Module
             </Button>
           )}
         </Box>

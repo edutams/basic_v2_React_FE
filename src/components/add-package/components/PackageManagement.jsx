@@ -158,8 +158,6 @@ const PackageManagement = ({
         open={manageModulesOpen}
         onClose={() => setManageModulesOpen(false)}
         currentPackage={currentPackage}
-        allModules={modules}
-        packageModules={currentPackageModules}
         onModuleAssignment={handleModuleAssignment}
         isLoading={isLoading}
       />

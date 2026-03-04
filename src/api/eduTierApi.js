@@ -42,6 +42,10 @@ const eduTierApi = {
     const response = await api.get('/agent/edu-tier/modules');
     return response.data;
   },
+  getPackageModules: async (packageId) => {
+    const response = await api.get(`/agent/edu-tier/packages/${packageId}/modules`);
+    return response.data;
+  },
   saveModule: async (data) => {
     if (data.id) {
       const response = await api.put(`/agent/edu-tier/modules/${data.id}`, data);

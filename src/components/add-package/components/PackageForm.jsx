@@ -27,7 +27,7 @@ const PackageForm = ({
     package_description: '',
     package_status: 'active',
     package_icon: 'fas fa-box',
-    package_code: '',
+    // package_code: '',
     package_order: 0,
   },
   onSubmit,

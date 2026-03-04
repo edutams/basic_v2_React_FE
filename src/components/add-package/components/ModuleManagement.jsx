@@ -23,10 +23,10 @@ import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Block as BlockIcon,
-  CheckCircle as CheckCircleIcon,
+  // Edit as EditIcon,
+  // Delete as DeleteIcon,
+  // Block as BlockIcon,
+  // CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../shared/ParentCard';
 import ModuleModal from './ModuleModal';
@@ -259,7 +259,7 @@ const ModuleManagement = ({
                             onClose={handleModuleMenuClose}
                           >
                             <MenuItem onClick={() => handleEditModule(mod)}>
-                              <EditIcon sx={{ mr: 1, fontSize: 18 }} />
+                              {/* <EditIcon sx={{ mr: 1, fontSize: 18 }} /> */}
                               Edit Module
                             </MenuItem>
                             <MenuItem
@@ -270,21 +270,18 @@ const ModuleManagement = ({
                             >
                               {status === 'active' ? (
                                 <>
-                                  <BlockIcon sx={{ mr: 1, fontSize: 18 }} />
+                                  {/* <BlockIcon sx={{ mr: 1, fontSize: 18 }} /> */}
                                   Deactivate
                                 </>
                               ) : (
-                                <>
-                                  <CheckCircleIcon sx={{ mr: 1, fontSize: 18 }} />
-                                  Activate
-                                </>
+                                <>Activate</>
                               )}
                             </MenuItem>
                             <MenuItem
                               onClick={() => handleDeleteModule(mod)}
                               sx={{ color: 'error.main' }}
                             >
-                              <DeleteIcon sx={{ mr: 1, fontSize: 18 }} />
+                              {/* <DeleteIcon sx={{ mr: 1, fontSize: 18 }} /> */}
                               Delete
                             </MenuItem>
                           </Menu>

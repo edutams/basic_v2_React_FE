@@ -103,7 +103,7 @@ const ModuleManagement = ({
       ...module,
       module_status: status,
     };
-    onModuleUpdate(updatedModule, 'update');
+    onModuleUpdate(updatedModule, 'status_change');
     notify.success(
       `Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`,
       'Success',

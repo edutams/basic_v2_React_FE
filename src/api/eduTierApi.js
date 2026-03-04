@@ -85,6 +85,13 @@ const eduTierApi = {
     });
     return response.data;
   },
+  deactivateModuleForTenants: async (moduleId, status) => {
+    const response = await api.post('/agent/edu-tier/deactivate-module-tenants', {
+      module_id: moduleId,
+      status: status,
+    });
+    return response.data;
+  },
 };
 
 export default eduTierApi;

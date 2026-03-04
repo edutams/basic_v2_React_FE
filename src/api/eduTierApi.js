@@ -42,6 +42,10 @@ const eduTierApi = {
     const response = await api.get('/agent/edu-tier/modules');
     return response.data;
   },
+  getPackageModules: async (packageId) => {
+    const response = await api.get(`/agent/edu-tier/packages/${packageId}/modules`);
+    return response.data;
+  },
   saveModule: async (data) => {
     if (data.id) {
       const response = await api.put(`/agent/edu-tier/modules/${data.id}`, data);
@@ -78,6 +82,13 @@ const eduTierApi = {
     const response = await api.post('/agent/edu-tier/save-agent-modules', {
       agent_id: agentId,
       module_ids: moduleIds,
+    });
+    return response.data;
+  },
+  deactivateModuleForTenants: async (moduleId, status) => {
+    const response = await api.post('/agent/edu-tier/deactivate-module-tenants', {
+      module_id: moduleId,
+      status: status,
     });
     return response.data;
   },

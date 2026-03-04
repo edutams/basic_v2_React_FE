@@ -22,9 +22,11 @@ const PermissionAttachmentModal = ({
   open,
   onClose,
   selectedRow,
+  availablePermissions = [],
   selectedPermissions: propSelectedPermissions = [],
   permissionSearch,
   onPermissionSearchChange,
+  onPermissionChange,
   onSave,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -32,12 +34,22 @@ const PermissionAttachmentModal = ({
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [permissionSearchLocal, setPermissionSearchLocal] = useState('');
 
-  // Fetch all permissions when modal opens
+  // Use availablePermissions from props if provided, otherwise use fetched permissions
+  const displayPermissions = availablePermissions.length > 0 ? availablePermissions : permissions;
+
+  // Set loading to false when availablePermissions is provided
   useEffect(() => {
-    if (open) {
+    if (availablePermissions.length > 0) {
+      setLoading(false);
+    }
+  }, [availablePermissions]);
+
+  // Fetch all permissions when modal opens (only if availablePermissions is not provided)
+  useEffect(() => {
+    if (open && availablePermissions.length === 0) {
       fetchPermissions();
     }
-  }, [open]);
+  }, [open, availablePermissions]);
 
   // Sync selectedPermissions when prop changes (these are the permissions already attached to the role)
   useEffect(() => {
@@ -68,6 +80,11 @@ const PermissionAttachmentModal = ({
   };
 
   const handleToggle = (permission) => {
+    // Call onPermissionChange if provided (for parent component to handle state)
+    if (onPermissionChange) {
+      onPermissionChange(permission);
+    }
+    // Also update local state for display
     setSelectedPermissions((prev) => {
       const exists = prev.some(
         (p) => String(p.id) === String(permission.id) || p.name === permission.name,
@@ -84,7 +101,7 @@ const PermissionAttachmentModal = ({
     );
   };
 
-  const filteredPermissions = permissions.filter((permission) =>
+  const filteredPermissions = displayPermissions.filter((permission) =>
     permission?.name?.toLowerCase()?.includes(permissionSearchLocal?.toLowerCase() || ''),
   );
 

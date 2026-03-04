@@ -1,16 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
-  Grid,
   FormControlLabel,
   Typography,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Paper,
   Checkbox,
   Button,
   CircularProgress,
@@ -19,9 +11,8 @@ import {
 } from '@mui/material';
 import ReusableModal from '../../shared/ReusableModal';
 import ConfirmationDialog from '../../shared/ConfirmationDialog';
-
+import eduTierApi from 'src/api/eduTierApi';
 import PropTypes from 'prop-types';
-import { useNotification } from '../../../hooks/useNotification';
 import SearchIcon from '@mui/icons-material/Search';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
@@ -41,25 +32,55 @@ const ManageModulesModal = ({
   open,
   onClose,
   currentPackage,
-  allModules = [],
-  packageModules = [],
   onModuleAssignment,
-  isLoading = false,
+  isLoading: propLoading = false,
   error = null,
 }) => {
+  const [allModules, setAllModules] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [moduleAssignments, setModuleAssignments] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
-  const notify = useNotification();
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
 
+  // Fetch modules for the specific package when modal opens or when package changes
   useEffect(() => {
-    if (open && currentPackage) {
+    if (open && currentPackage?.id) {
+      setAllModules([]); // Clear previous modules
+      fetchPackageModules(currentPackage.id);
+    } else if (!open) {
+      setAllModules([]); // Clear when closed
+      setModuleAssignments({});
+    }
+  }, [open, currentPackage?.id]);
+
+  const fetchPackageModules = async (packageId) => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const res = await eduTierApi.getPackageModules(packageId);
+      setAllModules(res?.data || res || []);
+    } catch (err) {
+      console.error('Failed to fetch package modules:', err);
+      setFetchError('Failed to load modules');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Since API returns only modules for the package, use allModules directly
+  const packageModulesOnly = allModules;
+
+  // Initialize selections when modal opens
+  useEffect(() => {
+    if (open && currentPackage && packageModulesOnly.length > 0) {
       const assignments = {};
-      allModules.forEach((module) => {
-        assignments[module.id] = packageModules.some((pm) => pm.id === module.id);
+      packageModulesOnly.forEach((module) => {
+        assignments[module.id] = true;
       });
       setModuleAssignments(assignments);
     }
-  }, [open, currentPackage, allModules, packageModules]);
+  }, [open, currentPackage, packageModulesOnly]);
 
   const handleToggleModule = (moduleId, checked) => {
     setModuleAssignments((prev) => ({
@@ -68,30 +89,16 @@ const ManageModulesModal = ({
     }));
   };
 
-  const handleSelectAllCategory = (category, checked) => {
-    const updatedAssignments = { ...moduleAssignments };
-    allModules
-      .filter((module) => {
-        const cat = getCategoryName(module);
-        const status = module.module_status || module.mod_status || '';
-        return cat === category && status === 'active';
-      })
-      .forEach((module) => {
-        updatedAssignments[module.id] = checked;
-      });
-    setModuleAssignments(updatedAssignments);
-  };
-
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-
   const handleSaveClick = () => {
     setConfirmDialogOpen(true);
   };
 
   const handleConfirmSave = () => {
-    const assignedModules = allModules.filter((module) => moduleAssignments[module.id]);
-    const unassignedModules = allModules.filter((module) => !moduleAssignments[module.id]);
+    const assignedModules = packageModulesOnly.filter((module) => moduleAssignments[module.id]);
+    const unassignedModules = packageModulesOnly.filter((module) => !moduleAssignments[module.id]);
+
     onModuleAssignment(currentPackage, assignedModules, unassignedModules);
+
     setConfirmDialogOpen(false);
     onClose();
   };
@@ -100,34 +107,34 @@ const ManageModulesModal = ({
     return Object.values(moduleAssignments).filter(Boolean).length;
   }, [moduleAssignments]);
 
-  const groupedModules = useMemo(() => {
-    const groups = {};
-    allModules
-      .filter((module) => {
-        const name = module.module_name || module.mod_name || '';
-        return name.toLowerCase().includes(searchQuery.toLowerCase());
-      })
-      .forEach((module) => {
-        const category = getCategoryName(module);
-        if (!groups[category]) {
-          groups[category] = [];
-        }
-        groups[category].push(module);
-      });
-    return groups;
-  }, [allModules, searchQuery]);
+  const filteredModules = useMemo(() => {
+    return packageModulesOnly.filter((module) => {
+      const name = (module.module_name || module.mod_name || '').toLowerCase();
+      return name.includes(searchQuery.toLowerCase());
+    });
+  }, [packageModulesOnly, searchQuery]);
+
+  const isLoading = loading || propLoading;
 
   return (
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={`Manage ${(currentPackage?.package_name || currentPackage?.pac_name) || 'Package'} Modules`}
+      title={
+        <>
+          Manage{' '}
+          <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+            {currentPackage?.package_name || currentPackage?.pac_name || 'Package'}
+          </Box>{' '}
+          modules
+        </>
+      }
       size="large"
       disableEnforceFocus
       disableAutoFocus
       aria-labelledby="manage-modules-modal"
     >
-      <Box sx={{ p: 3, maxHeight: '80vh', overflowY: 'auto' }}>
+      <Box sx={{ maxHeight: '80vh', overflowY: 'auto' }}>
         <Box
           sx={{
             mb: 3,
@@ -142,7 +149,7 @@ const ManageModulesModal = ({
           <InfoOutlinedIcon color="info" />
           <Typography variant="body2" color="textSecondary">
             Select modules to assign to this package. Currently {getAssignedCount} of{' '}
-            {allModules.length} modules are assigned.
+            {packageModulesOnly.length} modules are assigned.
           </Typography>
         </Box>
 
@@ -156,13 +163,12 @@ const ManageModulesModal = ({
             InputProps={{
               startAdornment: <SearchIcon color="action" />,
             }}
-            aria-label="Search modules"
           />
         </Box>
 
-        {error && (
+        {(error || fetchError) && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+            {error || fetchError}
           </Alert>
         )}
 
@@ -170,7 +176,7 @@ const ManageModulesModal = ({
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
-        ) : Object.keys(groupedModules).length === 0 ? (
+        ) : filteredModules.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant="body1" color="textSecondary">
               {searchQuery ? 'No modules match your search.' : 'No modules available to assign.'}
@@ -187,32 +193,28 @@ const ManageModulesModal = ({
               borderRadius: 2,
             }}
           >
-            {allModules
-              .filter((module) => {
-                const name = module.module_name || module.mod_name || '';
-                return name.toLowerCase().includes(searchQuery.toLowerCase());
-              })
-              .map((module) => {
-                const name = module.module_name || module.mod_name;
-                const status = module.module_status || module.mod_status || '';
-                return (
-                  <FormControlLabel
-                    key={module.id}
-                    control={
-                      <Checkbox
-                        checked={moduleAssignments[module.id] || false}
-                        onChange={(e) => handleToggleModule(module.id, e.target.checked)}
-                        disabled={status === 'inactive'}
-                      />
-                    }
-                    label={
-                      <Typography variant="body2" noWrap sx={{ fontSize: '0.8rem' }}>
-                        {name}
-                      </Typography>
-                    }
-                  />
-                );
-              })}
+            {filteredModules.map((module) => {
+              const name = module.module_name || module.mod_name;
+              const status = module.module_status || module.mod_status || '';
+
+              return (
+                <FormControlLabel
+                  key={module.id}
+                  control={
+                    <Checkbox
+                      checked={moduleAssignments[module.id] || false}
+                      onChange={(e) => handleToggleModule(module.id, e.target.checked)}
+                      disabled={status === 'inactive'}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" noWrap sx={{ fontSize: '0.8rem' }}>
+                      {name}
+                    </Typography>
+                  }
+                />
+              );
+            })}
           </Box>
         )}
 
@@ -223,7 +225,7 @@ const ManageModulesModal = ({
           <Button
             variant="contained"
             onClick={handleSaveClick}
-            disabled={isLoading || getAssignedCount === packageModules.length}
+            disabled={isLoading || getAssignedCount === packageModulesOnly.length}
           >
             {isLoading ? 'Saving...' : 'Save Changes'}
           </Button>
@@ -247,25 +249,6 @@ ManageModulesModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   currentPackage: PropTypes.object,
-  allModules: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      module_name: PropTypes.string,
-      mod_name: PropTypes.string,
-      module_description: PropTypes.string,
-      mod_description: PropTypes.string,
-      module_status: PropTypes.string,
-      mod_status: PropTypes.string,
-      packageId: PropTypes.number,
-      module_links: PropTypes.object,
-      mod_links: PropTypes.object,
-    }),
-  ),
-  packageModules: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    }),
-  ),
   onModuleAssignment: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   error: PropTypes.string,

@@ -359,9 +359,11 @@ const AlcManager = () => {
         open={permissionModalOpen}
         onClose={() => setPermissionModalOpen(false)}
         selectedRow={selectedRow}
+        availablePermissions={allPermissions}
         selectedPermissions={selectedPermissions || []}
         permissionSearch={permissionSearch}
         onPermissionSearchChange={setPermissionSearch}
+        onPermissionChange={handlePermissionChange}
         onSave={handleSavePermissions}
       />
 

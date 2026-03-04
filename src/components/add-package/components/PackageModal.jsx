@@ -6,16 +6,15 @@ import PropTypes from 'prop-types';
 
 import ConfirmationDialog from '../../shared/ConfirmationDialog';
 
-
 const getModalConfig = (actionType) => {
   const configs = {
     create: {
       title: 'Create Package',
-      size: 'medium',
+      size: 'small',
     },
     update: {
       title: 'Update Package',
-      size: 'medium',
+      size: 'small',
     },
     activate: {
       title: 'Activate Package',
@@ -36,7 +35,7 @@ const PackageModal = ({
   actionType,
   selectedPackage,
   onPackageUpdate,
-  isLoading = false
+  isLoading = false,
 }) => {
   const modalConfig = getModalConfig(actionType);
 
@@ -98,11 +97,11 @@ const PackageModal = ({
         <ConfirmationDialog
           open={open}
           onClose={onClose}
-          onConfirm={() =>
-            handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')
-          }
+          onConfirm={() => handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')}
           title={actionType === 'activate' ? 'Activate Package' : 'Deactivate Package'}
-          message={`Are you sure you want to ${actionType} "${selectedPackage?.package_name || selectedPackage?.pac_name}"?`}
+          message={`Are you sure you want to ${actionType} "${
+            selectedPackage?.package_name || selectedPackage?.pac_name
+          }"?`}
           confirmText={actionType === 'activate' ? 'Activate' : 'Deactivate'}
           cancelText="Cancel"
           severity={actionType === 'activate' ? 'theme.palette.primary.main' : 'error'}
@@ -117,11 +116,10 @@ const PackageModal = ({
           disableAutoFocus
         >
           {renderContent()}
-        </ReusableModal> 
+        </ReusableModal>
       )}
     </>
   );
-}; 
-  
+};
 
 export default PackageModal;

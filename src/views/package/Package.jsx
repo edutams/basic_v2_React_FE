@@ -34,7 +34,10 @@ const Package = () => {
     try {
       if (operation === 'create' || operation === 'update') {
         await eduTierApi.savePackage(packageData);
-        notify.success(`Package ${operation === 'create' ? 'created' : 'updated'} successfully`, 'Success');
+        notify.success(
+          `Package ${operation === 'create' ? 'created' : 'updated'} successfully`,
+          'Success',
+        );
       } else if (operation === 'delete') {
         await eduTierApi.deletePackage(packageData.id);
         notify.success('Package deleted successfully', 'Success');
@@ -52,10 +55,22 @@ const Package = () => {
     try {
       if (operation === 'create' || operation === 'update') {
         await eduTierApi.saveModule(moduleData);
-        notify.success(`Module ${operation === 'create' ? 'created' : 'updated'} successfully`, 'Success');
+        notify.success(
+          `Module ${operation === 'create' ? 'created' : 'updated'} successfully`,
+          'Success',
+        );
       } else if (operation === 'delete') {
         await eduTierApi.deleteModule(moduleData.id);
         notify.success('Module deleted successfully', 'Success');
+      } else if (operation === 'status_change') {
+        // Only update the module status for tenants under this agent
+        // Do NOT update the agent-level module
+        const status = moduleData.module_status;
+        await eduTierApi.deactivateModuleForTenants(moduleData.id, status);
+        notify.success(
+          `Module ${status === 'active' ? 'activated' : 'deactivated'} for all tenants`,
+          'Success',
+        );
       }
       fetchData();
     } catch (error) {

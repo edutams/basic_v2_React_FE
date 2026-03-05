@@ -62,6 +62,8 @@ import {
   deleteSchool,
 } from '../../context/AgentContext/services/school.service';
 
+import agentApi from '../../api/agent';
+
 import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
@@ -230,6 +232,33 @@ const SchoolDashboard = () => {
       setSnackbarSeverity('error');
     }
     setSnackbarOpen(true);
+  };
+
+  const handleLoginAsAdmin = async (school) => {
+    try {
+      const response = await agentApi.impersonateTenant(school.id);
+      if (response.status === 'success') {
+        // Open the redirect URL in a new tab
+        if (response.redirect_url) {
+          window.open(response.redirect_url, '_blank');
+        } else if (response.access_token) {
+          // Fallback if no redirect_url
+          localStorage.setItem('impersonation_token', response.access_token);
+          localStorage.setItem('impersonated_tenant_id', school.id);
+          window.open(`https://${school.schoolUrl}/dashboard`, '_blank');
+        }
+      } else {
+        setSnackbarMessage(response.error || 'Failed to login as admin');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    } catch (err) {
+      console.error('Failed to login as admin', err);
+      setSnackbarMessage(err.response?.data?.error || 'Failed to login as admin');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+    handleActionClose();
   };
 
   const filteredSchools = schoolList.filter((school) => {
@@ -517,13 +546,16 @@ const SchoolDashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              color: '#5C5C5C',
+              bgcolor: '#F8F8F8',
+              borderRadius: '8px 8px 0 0',
             }}
           >
             <Typography
+              variant="h5"
               sx={{
-                fontSize: 15,
                 fontWeight: 'bold',
-                color: '#5C5C5C',
+                color: '#5E5E5E',
               }}
             >
               Login Activities
@@ -533,7 +565,6 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                // borderRadius: 2,
                 background: '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
@@ -549,10 +580,10 @@ const SchoolDashboard = () => {
           {/* Body */}
           <Box sx={{ px: 2, py: 3 }}>
             {[
-              { label: 'Teacher:', value: 12 },
-              { label: 'SPA', value: 45 },
-              { label: 'Student', value: 23 },
-              { label: 'Parent', value: 12 },
+              { label: 'Teacher:', value: 0 },
+              { label: 'SPA', value: 0 },
+              { label: 'Student', value: 0 },
+              { label: 'Parent', value: 0 },
             ].map((item, index) => (
               <Box
                 key={index}
@@ -773,9 +804,7 @@ const SchoolDashboard = () => {
                           >
                             <MenuItem
                               onClick={() => {
-                                setEditSchoolData(row.raw);
-                                setOpenEditModal(true);
-                                handleActionClose();
+                                handleLoginAsAdmin(row);
                               }}
                             >
                               Login As Admin

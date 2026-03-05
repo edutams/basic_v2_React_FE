@@ -141,6 +141,8 @@ const SchoolDashboard = () => {
           gateway: t.tenant_gateway?.name || 'Default',
           date: t.created_at,
           socialLink: t.social_link,
+          contactEmail: t.contact_email || t.email || '',
+          contactPhone: t.contact_phone || t.phone || '',
           headerColor: colors.headcolor,
           sidebarColor: colors.sidecolor,
           bodyColor: colors.bodycolor,
@@ -279,26 +281,26 @@ const SchoolDashboard = () => {
         {/* TOTAL SCHOOL */}
         <Paper
           sx={{
-            p: 4,
+            px: 3,
+            py: 2,
             borderRadius: 2,
             background: '#FFFFFF',
           }}
         >
           {/* Header */}
           <Box
-            mb={2}
+            mb={3}
             sx={{
-              // p: 2,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
-            <Typography variant="h5" color="text.primary">
+            <Typography variant="h5" color="text.secondary">
               Onboarding
             </Typography>
           </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <IconSchool size={50} color="#1DA1F2" />
 
             <Box textAlign="right">
@@ -319,7 +321,6 @@ const SchoolDashboard = () => {
             </Box>
           </Box>
 
-          {/* Active */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
             <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
               Active School
@@ -338,7 +339,6 @@ const SchoolDashboard = () => {
             />
           </Box>
 
-          {/* Inactive */}
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography sx={{ color: '#B02D2D', fontSize: 15, fontWeight: 'bold' }}>
               Inactive School
@@ -360,14 +360,15 @@ const SchoolDashboard = () => {
 
         <Paper
           sx={{
-            p: 3,
+            px: 3,
+            py: 2,
             borderRadius: 2,
             background: '#FFFFFF',
           }}
         >
           {/* Header */}
           <Box
-            mb={2}
+            mb={3}
             sx={{
               // p: 2,
               display: 'flex',
@@ -383,7 +384,6 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                // borderRadius: 2,
                 background: '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
@@ -393,7 +393,7 @@ const SchoolDashboard = () => {
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
           </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <IconSchool size={50} color="#1DA1F2" />
 
             <Box textAlign="right">
@@ -450,13 +450,15 @@ const SchoolDashboard = () => {
         </Paper>
         <Paper
           sx={{
-            p: 3,
+            px: 3,
+            py: 2,
             borderRadius: 2,
             background: '#FFFFFF',
           }}
         >
           {/* Header */}
           <Box
+            mb={2}
             sx={{
               // p: 2,
               display: 'flex',
@@ -472,7 +474,6 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                // borderRadius: 2,
                 background: '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
@@ -486,14 +487,13 @@ const SchoolDashboard = () => {
           <Box>
             <Box
               sx={{
-                height: 140,
+                height: 160,
                 display: 'flex',
-                justifyContent: 'center',
                 alignItems: 'center',
                 overflow: 'hidden',
               }}
             >
-              {/* <ReusablePieChart series={planSeries} labels={planLabels} width={120} height={120} />s */}
+              <ReusablePieChart series={planSeries} labels={planLabels} height={150} hideCard />
             </Box>
           </Box>
         </Paper>
@@ -599,7 +599,7 @@ const SchoolDashboard = () => {
                 onClick={handleOpen}
                 startIcon={<IconUserPlus size={18} />}
               >
-                Register New School
+                Add New School
               </Button>
             </Stack>
 
@@ -625,8 +625,10 @@ const SchoolDashboard = () => {
                   <TableRow>
                     <TableCell>School Name</TableCell>
                     <TableCell>Url</TableCell>
-                    <TableCell>Date Created</TableCell>
-                    <TableCell>Colors</TableCell>
+                    <TableCell>Contact Details</TableCell>
+                    <TableCell>Agent In Charge</TableCell>
+                    <TableCell>Plan (Population)</TableCell>
+                    <TableCell>Color Scheme</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="right">Action</TableCell>
                   </TableRow>
@@ -641,7 +643,34 @@ const SchoolDashboard = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>{row.schoolUrl || '-'}</TableCell>
-                        <TableCell>{dayjs(row.date).format('DD MMM YYYY')}</TableCell>
+                        <TableCell>
+                          {row.contactEmail || row.contactPhone ? (
+                            <>
+                              {row.contactEmail && (
+                                <Typography variant="body2">{row.contactEmail}</Typography>
+                              )}
+                              {row.contactPhone && (
+                                <Typography variant="caption" display="block" color="textSecondary">
+                                  {row.contactPhone}
+                                </Typography>
+                              )}
+                            </>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+                        <TableCell>{row.agent || '-'}</TableCell>
+                        <TableCell>
+                          {row.schoolCategories?.length > 0 ? (
+                            <Stack direction="row" spacing={0.5}>
+                              {row.schoolCategories.map((cat, idx) => (
+                                <Chip key={idx} label={cat} size="small" variant="outlined" />
+                              ))}
+                            </Stack>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Box
                             sx={{
@@ -665,6 +694,7 @@ const SchoolDashboard = () => {
                             variant="light"
                           />
                         </TableCell>
+
                         <TableCell align="right">
                           <IconButton onClick={(e) => handleActionClick(e, row.id)}>
                             <MoreVertIcon />
@@ -681,7 +711,16 @@ const SchoolDashboard = () => {
                                 handleActionClose();
                               }}
                             >
-                              Edit Details
+                              Login As Admin
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setEditSchoolData(row.raw);
+                                setOpenEditModal(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Edit School
                             </MenuItem>
                             <MenuItem
                               onClick={() => {
@@ -708,7 +747,7 @@ const SchoolDashboard = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                      <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
                         <Typography variant="body1" color="textSecondary">
                           No schools found.
                         </Typography>

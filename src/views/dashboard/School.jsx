@@ -138,16 +138,20 @@ const SchoolDashboard = () => {
           institutionName: t.tenant_name,
           schoolUrl: t.domains?.[0]?.domain || '',
           agent: t.agent?.name || 'My Agency',
+          agentEmail: t.agent?.email || '',
+          agentImage: t.agent?.image || '',
+          schoolImage: t.image || t.logo || '',
           gateway: t.tenant_gateway?.name || 'Default',
           date: t.created_at,
           socialLink: t.social_link,
-          contactEmail: t.contact_email || t.email || '',
-          contactPhone: t.contact_phone || t.phone || '',
+          contactEmail: t.admin_email || '',
+          contactPhone: t.admin_phone || t.phone || '',
           headerColor: colors.headcolor,
           sidebarColor: colors.sidecolor,
           bodyColor: colors.bodycolor,
           status: t.status === 'active' ? 'Active' : 'Inactive',
           schoolCategories: eduTiers,
+
           raw: t, // Keep raw data for editing
         };
       });
@@ -624,7 +628,7 @@ const SchoolDashboard = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>School Name</TableCell>
-                    <TableCell>Url</TableCell>
+                    {/* <TableCell>Url</TableCell> */}
                     <TableCell>Contact Details</TableCell>
                     <TableCell>Agent In Charge</TableCell>
                     <TableCell>Plan (Population)</TableCell>
@@ -638,11 +642,27 @@ const SchoolDashboard = () => {
                     paginatedSchools.map((row) => (
                       <TableRow key={row.id}>
                         <TableCell>
-                          <Typography variant="subtitle2" fontWeight={600}>
+                          {/* <Typography variant="subtitle2" fontWeight={600}>
                             {row.institutionName}
-                          </Typography>
+                          </Typography> */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <img
+                              src={row.schoolImage || '/src/assets/images/users/default_avatar.png'}
+                              alt={row.institutionName}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                              }}
+                            />
+
+                            <Box>
+                              <Typography variant="subtitle2">{row.institutionName}</Typography>
+                            </Box>
+                          </Box>
                         </TableCell>
-                        <TableCell>{row.schoolUrl || '-'}</TableCell>
+                        {/* <TableCell>{row.schoolUrl || '-'}</TableCell> */}
                         <TableCell>
                           {row.contactEmail || row.contactPhone ? (
                             <>
@@ -659,7 +679,29 @@ const SchoolDashboard = () => {
                             '-'
                           )}
                         </TableCell>
-                        <TableCell>{row.agent || '-'}</TableCell>
+
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <img
+                              src={row.agentImage || '/src/assets/images/users/default_avatar.png'}
+                              alt={row.agent}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                              }}
+                            />
+
+                            <Box>
+                              <Typography variant="subtitle2">{row.agent || '-'}</Typography>
+                              <Typography variant="caption" color="textSecondary">
+                                {row.agentEmail}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
                         <TableCell>
                           {row.schoolCategories?.length > 0 ? (
                             <Stack direction="row" spacing={0.5}>
@@ -672,26 +714,51 @@ const SchoolDashboard = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              width: 40,
-                              height: 20,
-                              borderRadius: '4px',
-                              overflow: 'hidden',
-                              border: '1px solid #ddd',
-                            }}
-                          >
-                            <Box sx={{ flex: 1, bgcolor: row.headerColor || '#eee' }} />
-                            <Box sx={{ flex: 1, bgcolor: row.sidebarColor || '#ddd' }} />
-                          </Box>
+                          <Stack direction="column" spacing={0.5}>
+                            {row.headerColor && (
+                              <Typography variant="caption" color="textSecondary">
+                                Header: {row.headerColor}
+                              </Typography>
+                            )}
+                            {row.sidebarColor && (
+                              <Typography variant="caption" color="textSecondary">
+                                Sidebar: {row.sidebarColor}
+                              </Typography>
+                            )}
+                            {row.bodyColor && (
+                              <Typography variant="caption" color="textSecondary">
+                                Body: {row.bodyColor}
+                              </Typography>
+                            )}
+                            {!row.headerColor && !row.sidebarColor && !row.bodyColor && (
+                              <Typography variant="caption" color="textSecondary">
+                                -
+                              </Typography>
+                            )}
+                          </Stack>
                         </TableCell>
                         <TableCell>
-                          <Chip
+                          {/* <Chip
                             label={row.status}
                             size="small"
                             color={row.status === 'Active' ? 'success' : 'default'}
                             variant="light"
+                          /> */}
+                          <Chip
+                            label={row.status}
+                            size="small"
+                            sx={{
+                              bgcolor:
+                                row.status === 'Active'
+                                  ? (theme) => theme.palette.success.light
+                                  : (theme) => theme.palette.error.light,
+                              color:
+                                row.status === 'Active'
+                                  ? (theme) => theme.palette.success.main
+                                  : (theme) => theme.palette.error.main,
+                              borderRadius: '8px',
+                              fontWeight: 600,
+                            }}
                           />
                         </TableCell>
 

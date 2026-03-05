@@ -135,6 +135,9 @@ const SchoolDashboard = () => {
         // Extract education tiers from schoolCategories
         const eduTiers = t.schoolCategories?.map((cat) => cat.name) || [];
 
+        // Extract school divisions (Primary, Junior, Senior)
+        const schoolDivisions = t.school_divisions?.map((div) => div.name) || [];
+
         return {
           id: t.id,
           institutionName: t.tenant_name,
@@ -153,6 +156,7 @@ const SchoolDashboard = () => {
           bodyColor: colors.bodycolor,
           status: t.status === 'active' ? 'Active' : 'Inactive',
           schoolCategories: eduTiers,
+          schoolDivisions: schoolDivisions,
 
           raw: t, // Keep raw data for editing
         };
@@ -283,9 +287,9 @@ const SchoolDashboard = () => {
     active: schoolList.filter((s) => s.status === 'Active').length,
     inactive: schoolList.filter((s) => s.status === 'Inactive').length,
     subAgents: 0, // Placeholder - would need separate API
-    primary: schoolList.filter((s) => s.schoolCategories?.includes('Primary')).length,
-    junior: schoolList.filter((s) => s.schoolCategories?.includes('Junior')).length,
-    senior: schoolList.filter((s) => s.schoolCategories?.includes('Senior')).length,
+    primary: schoolList.filter((s) => s.schoolDivisions?.includes('Primary')).length,
+    junior: schoolList.filter((s) => s.schoolDivisions?.includes('Junior')).length,
+    senior: schoolList.filter((s) => s.schoolDivisions?.includes('Senior')).length,
   };
 
   const planSeries = [50, 15, 35];
@@ -452,7 +456,7 @@ const SchoolDashboard = () => {
             </Typography>
 
             <Chip
-              label={schoolSummary.active}
+              label={schoolSummary.primary}
               size="small"
               sx={{
                 background: '#52932E',
@@ -469,7 +473,7 @@ const SchoolDashboard = () => {
             </Typography>
 
             <Chip
-              label={schoolSummary.inactive}
+              label={schoolSummary.senior}
               size="small"
               sx={{
                 background: '#52932E',
@@ -658,6 +662,7 @@ const SchoolDashboard = () => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>S/N</TableCell>
                     <TableCell>School Name</TableCell>
                     {/* <TableCell>Url</TableCell> */}
                     <TableCell>Contact Details</TableCell>
@@ -670,8 +675,9 @@ const SchoolDashboard = () => {
                 </TableHead>
                 <TableBody>
                   {paginatedSchools.length > 0 ? (
-                    paginatedSchools.map((row) => (
+                    paginatedSchools.map((row, index) => (
                       <TableRow key={row.id}>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>
                           {/* <Typography variant="subtitle2" fontWeight={600}>
                             {row.institutionName}

@@ -526,7 +526,7 @@ const SchoolDashboard = () => {
                 overflow: 'hidden',
               }}
             >
-              <ReusablePieChart series={planSeries} labels={planLabels} height={150} hideCard />
+              <ReusablePieChart series={planSeries} labels={planLabels} height={180} hideCard />
             </Box>
           </Box>
         </Paper>

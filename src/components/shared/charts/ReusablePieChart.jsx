@@ -34,7 +34,7 @@ const ReusablePieChart = ({
     plotOptions: {
       pie: {
         donut: {
-          size: '60%',
+          size: '70%',
           // background: 'transparent',
         },
       },
@@ -42,11 +42,14 @@ const ReusablePieChart = ({
     dataLabels: {
       enabled: true,
       formatter: function (val) {
-        return val.toFixed(1) + '%';
+        return val.toFixed(0) + '%';
       },
       style: {
-        fontSize: '12px',
+        fontSize: '10px',
         fontWeight: '600',
+      },
+      dropShadow: {
+        enabled: false,
       },
     },
     stroke: {

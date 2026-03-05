@@ -611,7 +611,7 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
-                  navigate(`/dashboards/view-agent/${row.original.s_n}`);
+                  navigate(`/agent/view/${row.original.s_n}`);
                 }}
               >
                 View Profile
@@ -996,7 +996,7 @@ const Agent = () => {
               <TableBody>
                 {!emptyState.isEmpty ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} hover>
+                    <TableRow key={row.id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: '#F8FAFC' } }}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}

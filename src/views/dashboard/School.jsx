@@ -29,8 +29,17 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  Divider,
 } from '@mui/material';
-import { IconSchool, IconUserPlus, IconCheck, IconX, IconSettings } from '@tabler/icons-react';
+import {
+  IconSchool,
+  IconUserPlus,
+  IconCheck,
+  IconX,
+  IconSettings,
+  IconUsers,
+  IconChartBar,
+} from '@tabler/icons-react';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -53,6 +62,10 @@ import {
   deleteSchool,
 } from '../../context/AgentContext/services/school.service';
 
+import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
+import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
+
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
 const SchoolDashboard = () => {
@@ -65,7 +78,7 @@ const SchoolDashboard = () => {
   const [nameValue, setNameValue] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editSchoolData, setEditSchoolData] = useState(null);
@@ -74,32 +87,30 @@ const SchoolDashboard = () => {
   const [openGatewayModal, setOpenGatewayModal] = useState(false);
   const [openAgentModal, setOpenAgentModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('');
-  const [agentList] = useState([
-    { label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' },
-  ]);
-  
+  const [agentList] = useState([{ label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' }]);
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
   const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
-  
+
   const [openClear2FAConfirm, setOpenClear2FAConfirm] = useState(false);
   const [selectedSchoolFor2FA, setSelectedSchoolFor2FA] = useState(null);
   const [openFixImageConfirm, setOpenFixImageConfirm] = useState(false);
-  
+
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
-  
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  
+
   const [openColorSchemeModal, setOpenColorSchemeModal] = useState(false);
   const [selectedSchoolForColor, setSelectedSchoolForColor] = useState(null);
 
   const [filterClicked, setFilterClicked] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
@@ -114,10 +125,13 @@ const SchoolDashboard = () => {
       const mappedData = data.map((t) => {
         let colors = {};
         try {
-          colors = typeof t.color === 'string' ? JSON.parse(t.color) : (t.color || {});
+          colors = typeof t.color === 'string' ? JSON.parse(t.color) : t.color || {};
         } catch (e) {
           console.error('Error parsing color for tenant', t.id);
         }
+
+        // Extract education tiers from schoolCategories
+        const eduTiers = t.schoolCategories?.map((cat) => cat.name) || [];
 
         return {
           id: t.id,
@@ -131,6 +145,7 @@ const SchoolDashboard = () => {
           sidebarColor: colors.sidecolor,
           bodyColor: colors.bodycolor,
           status: t.status === 'active' ? 'Active' : 'Inactive',
+          schoolCategories: eduTiers,
           raw: t, // Keep raw data for editing
         };
       });
@@ -230,42 +245,346 @@ const SchoolDashboard = () => {
 
   const schoolSummary = {
     total: schoolList.length,
-    myRegistered: schoolList.length,
     active: schoolList.filter((s) => s.status === 'Active').length,
     inactive: schoolList.filter((s) => s.status === 'Inactive').length,
+    subAgents: 0, // Placeholder - would need separate API
+    primary: schoolList.filter((s) => s.schoolCategories?.includes('Primary')).length,
+    junior: schoolList.filter((s) => s.schoolCategories?.includes('Junior')).length,
+    senior: schoolList.filter((s) => s.schoolCategories?.includes('Senior')).length,
   };
+
+  const planSeries = [50, 15, 35];
+
+  const planLabels = ['Basic', 'Basic +', 'Basic ++'];
+
+  const planData = [
+    { name: 'Basic', value: 50, color: '#5A6ACF' },
+    { name: 'Basic +', value: 15, color: '#F06292' },
+    { name: 'Basic ++', value: 35, color: '#9C27B0' },
+  ];
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
-      
+
       {/* Summary Stats */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
-        {[
-          { label: 'Total', value: schoolSummary.total, bg: 'primary', icon: <IconSchool width={22} color="#fff" /> },
-          { label: 'My Registered', value: schoolSummary.myRegistered, bg: 'secondary', icon: <IconUserPlus width={22} color="#fff" /> },
-          { label: 'Active', value: schoolSummary.active, bg: 'success', icon: <IconCheck width={22} color="#fff" /> },
-          { label: 'Inactive', value: schoolSummary.inactive, bg: 'warning', icon: <IconX width={22} color="#fff" /> },
-        ].map((item, index) => (
-          <Paper key={index} elevation={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderRadius: 2, minHeight: 120 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box width={38} height={38} bgcolor={`${item.bg}.main`} display="flex" alignItems="center" justifyContent="center" borderRadius={1}>
-                {item.icon}
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{item.label}</Typography>
-                <Typography variant="body2" color="text.secondary">Schools</Typography>
-              </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {/* TOTAL SCHOOL */}
+        <Paper
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            background: '#FFFFFF',
+          }}
+        >
+          {/* Header */}
+          <Box
+            mb={2}
+            sx={{
+              // p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.primary">
+              Onboarding
+            </Typography>
+          </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <IconSchool size={50} color="#1DA1F2" />
+
+            <Box textAlign="right">
+              <Typography
+                sx={{
+                  fontSize: 40,
+                  fontWeight: 'bold',
+                  color: '#1E3A5F',
+                  lineHeight: 1,
+                }}
+              >
+                {schoolSummary.total}
+              </Typography>
+
+              <Typography variant="h5" color="text.primary">
+                Total School
+              </Typography>
             </Box>
-            <Typography variant="h2" sx={{ fontWeight: 'bold', fontSize: '36px', color: '#28a745' }}>{item.value}</Typography>
-          </Paper>
-        ))}
+          </Box>
+
+          {/* Active */}
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+              Active School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.active}
+              size="small"
+              sx={{
+                background: '#BEEAA6',
+                color: '#0D47A1',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+
+          {/* Inactive */}
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography sx={{ color: '#B02D2D', fontSize: 15, fontWeight: 'bold' }}>
+              Inactive School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.inactive}
+              size="small"
+              sx={{
+                background: '#F96459',
+                color: '#fff',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+        </Paper>
+
+        <Paper
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            background: '#FFFFFF',
+          }}
+        >
+          {/* Header */}
+          <Box
+            mb={2}
+            sx={{
+              // p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.secondary">
+              Subscriptions
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                // borderRadius: 2,
+                background: '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <IconSchool size={50} color="#1DA1F2" />
+
+            <Box textAlign="right">
+              <Typography
+                sx={{
+                  fontSize: 40,
+                  fontWeight: 'bold',
+                  color: '#1E3A5F',
+                  lineHeight: 1,
+                }}
+              >
+                {schoolSummary.total}
+              </Typography>
+              <Typography variant="h5" color="text.primary">
+                Total School
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+              Primary School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.active}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+              Senior School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.inactive}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+        </Paper>
+        <Paper
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            background: '#FFFFFF',
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              // p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.primary">
+              Plan Distribution
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                // borderRadius: 2,
+                background: '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box>
+            <Box
+              sx={{
+                height: 140,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              {/* <ReusablePieChart series={planSeries} labels={planLabels} width={120} height={120} />s */}
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* SUB AGENTS */}
+        <Paper
+          sx={{
+            borderRadius: 2,
+            overflow: 'hidden',
+            background: '#FFFFFF',
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 15,
+                fontWeight: 'bold',
+                color: '#5C5C5C',
+              }}
+            >
+              Login Activities
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                // borderRadius: 2,
+                background: '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Body */}
+          <Box sx={{ px: 2, py: 3 }}>
+            {[
+              { label: 'Teacher:', value: 12 },
+              { label: 'SPA', value: 45 },
+              { label: 'Student', value: 23 },
+              { label: 'Parent', value: 12 },
+            ].map((item, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h5" color="text.primary">
+                  {item.label}
+                </Typography>
+
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: '#E10600',
+                  }}
+                >
+                  {item.value}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
       </Box>
 
       <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={handleTabChange} aria-label="school dashboard tabs">
           <Tab icon={<IconSchool size={20} />} iconPosition="start" label="Schools List" />
-          <Tab icon={<IconSettings size={20} />} iconPosition="start" label="School Configuration" />
+          <Tab
+            icon={<IconSettings size={20} />}
+            iconPosition="start"
+            label="School Configuration"
+          />
         </Tabs>
       </Box>
 
@@ -274,14 +593,24 @@ const SchoolDashboard = () => {
           <Box sx={{ p: 3 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
               <Typography variant="h5">All Schools</Typography>
-              <Button variant="contained" color="primary" onClick={handleOpen} startIcon={<IconUserPlus size={18} />}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleOpen}
+                startIcon={<IconUserPlus size={18} />}
+              >
                 Register New School
               </Button>
             </Stack>
 
             <Grid container spacing={2} mb={3} alignItems="center">
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Search School Name" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
+                <TextField
+                  fullWidth
+                  label="Search School Name"
+                  value={nameValue}
+                  onChange={(e) => setNameValue(e.target.value)}
+                />
               </Grid>
               <Grid item xs={12} md={2}>
                 <Button variant="contained" fullWidth onClick={fetchSchools} disabled={loading}>
@@ -307,19 +636,30 @@ const SchoolDashboard = () => {
                     paginatedSchools.map((row) => (
                       <TableRow key={row.id}>
                         <TableCell>
-                          <Typography variant="subtitle2" fontWeight={600}>{row.institutionName}</Typography>
+                          <Typography variant="subtitle2" fontWeight={600}>
+                            {row.institutionName}
+                          </Typography>
                         </TableCell>
                         <TableCell>{row.schoolUrl || '-'}</TableCell>
                         <TableCell>{dayjs(row.date).format('DD MMM YYYY')}</TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', width: 40, height: 20, borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              width: 40,
+                              height: 20,
+                              borderRadius: '4px',
+                              overflow: 'hidden',
+                              border: '1px solid #ddd',
+                            }}
+                          >
                             <Box sx={{ flex: 1, bgcolor: row.headerColor || '#eee' }} />
                             <Box sx={{ flex: 1, bgcolor: row.sidebarColor || '#ddd' }} />
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Chip 
-                            label={row.status} 
+                          <Chip
+                            label={row.status}
                             size="small"
                             color={row.status === 'Active' ? 'success' : 'default'}
                             variant="light"
@@ -334,9 +674,34 @@ const SchoolDashboard = () => {
                             open={Boolean(actionAnchorEl) && activeRow === row.id}
                             onClose={handleActionClose}
                           >
-                            <MenuItem onClick={() => { setEditSchoolData(row.raw); setOpenEditModal(true); handleActionClose(); }}>Edit Details</MenuItem>
-                            <MenuItem onClick={() => { setSchoolToDeactivate(row); setOpenDeactivateDialog(true); handleActionClose(); }}>Deactivate</MenuItem>
-                            <MenuItem onClick={() => { setSchoolToDelete(row); setOpenDeleteDialog(true); handleActionClose(); }} sx={{ color: 'error.main' }}>Delete</MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setEditSchoolData(row.raw);
+                                setOpenEditModal(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Edit Details
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setSchoolToDeactivate(row);
+                                setOpenDeactivateDialog(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Deactivate
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setSchoolToDelete(row);
+                                setOpenDeleteDialog(true);
+                                handleActionClose();
+                              }}
+                              sx={{ color: 'error.main' }}
+                            >
+                              Delete
+                            </MenuItem>
                           </Menu>
                         </TableCell>
                       </TableRow>
@@ -344,7 +709,9 @@ const SchoolDashboard = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                        <Typography variant="body1" color="textSecondary">No schools found.</Typography>
+                        <Typography variant="body1" color="textSecondary">
+                          No schools found.
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -370,32 +737,53 @@ const SchoolDashboard = () => {
       {activeTab === 1 && <SchoolCategorizationManager />}
 
       {/* Modals & Dialogs */}
-      <ReusableModal open={openRegisterModal || openEditModal} onClose={handleClose} title={openEditModal ? 'Edit School' : 'Register School'} size="large">
-        <RegisterSchoolForm actionType={openEditModal ? 'update' : 'create'} selectedSchool={editSchoolData} onSubmit={handleRefresh} onCancel={handleClose} />
+      <ReusableModal
+        open={openRegisterModal || openEditModal}
+        onClose={handleClose}
+        title={openEditModal ? 'Edit School' : 'Register School'}
+        size="large"
+      >
+        <RegisterSchoolForm
+          actionType={openEditModal ? 'update' : 'create'}
+          selectedSchool={editSchoolData}
+          onSubmit={handleRefresh}
+          onCancel={handleClose}
+        />
       </ReusableModal>
 
-      <ConfirmationDialog 
-        open={openDeleteDialog} 
-        onClose={() => setOpenDeleteDialog(false)} 
-        onConfirm={() => handleDeleteSchool(schoolToDelete)} 
-        title="Delete School" 
+      <ConfirmationDialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        onConfirm={() => handleDeleteSchool(schoolToDelete)}
+        title="Delete School"
         message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
         confirmText="Delete"
         severity="error"
       />
 
-      <ConfirmationDialog 
-        open={openDeactivateDialog} 
-        onClose={() => setOpenDeactivateDialog(false)} 
-        onConfirm={() => handleDeactivateSchool(schoolToDeactivate)} 
-        title="Deactivate School" 
+      <ConfirmationDialog
+        open={openDeactivateDialog}
+        onClose={() => setOpenDeactivateDialog(false)}
+        onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
+        title="Deactivate School"
         message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
         confirmText="Deactivate"
         severity="warning"
       />
 
-      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>{snackbarMessage}</Alert>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
     </LocalizationProvider>
   );

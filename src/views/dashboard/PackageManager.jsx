@@ -100,9 +100,9 @@ const EduTier = () => {
             background: '#FFFFFF',
           }}
         >
-          {/* <Typography variant="h5" color="text.secondary">
+          <Typography variant="h5" color="text.secondary">
             Payment
-          </Typography> */}
+          </Typography>
           <Box
             mb={3}
             sx={{

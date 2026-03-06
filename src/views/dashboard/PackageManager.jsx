@@ -10,11 +10,12 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 
 // components
-import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons';
+import { IconArticle, IconBell, IconLock, IconUserCircle, IconChecklist } from '@tabler/icons';
 import BlankCard from '../../components/shared/BlankCard';
 import ModulesTab from '../modules/Modules';
 import PackageTab from '../package/Package';
 import PlanTab from '../plan/Plan';
+import MyPlanTab from '../my-plan/MyPlan';
 
 const BCrumb = [
   {
@@ -57,9 +58,9 @@ const EduTier = () => {
   };
 
   return (
-    <PageContainer title="EduTier" description="this is EduTier page">
+    <PageContainer title="Subscription" description="this is Subscription page">
       {/* breadcrumb */}
-      <Breadcrumb title="EduTier Settings" items={BCrumb} />
+      <Breadcrumb title="Manage Subscription" items={BCrumb} />
       {/* end breadcrumb */}
 
       <Grid container spacing={3}>
@@ -92,6 +93,12 @@ const EduTier = () => {
                   label="Plan"
                   {...a11yProps(2)}
                 />
+                <Tab
+                  iconPosition="start"
+                  icon={<IconChecklist size="22" />}
+                  label="My Plan"
+                  {...a11yProps(3)}
+                />
               </Tabs>
             </Box>
             <Divider />
@@ -104,6 +111,9 @@ const EduTier = () => {
               </TabPanel>
               <TabPanel value={value} index={2}>
                 <PlanTab />
+              </TabPanel>
+              <TabPanel value={value} index={3}>
+                <MyPlanTab />
               </TabPanel>
             </CardContent>
           </BlankCard>

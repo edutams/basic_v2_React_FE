@@ -284,7 +284,7 @@ const SchoolDashboard = () => {
     total: schoolList.length,
     active: schoolList.filter((s) => s.status === 'Active').length,
     inactive: schoolList.filter((s) => s.status === 'Inactive').length,
-    subAgents: 0, // Placeholder - would need separate API
+    subAgents: 0,
     primary: schoolList.filter((s) => s.schoolDivisions?.includes('Primary')).length,
     junior: schoolList.filter((s) => s.schoolDivisions?.includes('Junior')).length,
     senior: schoolList.filter((s) => s.schoolDivisions?.includes('Senior')).length,

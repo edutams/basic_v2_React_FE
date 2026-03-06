@@ -23,6 +23,7 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -295,39 +296,39 @@ const Plan = () => {
             <Table aria-label="plan table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>
+                  <TableCell sx={{ width: '5%' }}>
                     <Typography variant="h6">S/N</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '10%' }}>
                     <Typography variant="h6">Name</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '40%' }}>
                     <Typography variant="h6">Description</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '15%' }}>
                     <Typography variant="h6">Price (₦)</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '15%' }}>
                     <Typography variant="h6">Student Limit</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '10%' }}>
                     <Typography variant="h6">Status</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '5%' }}>
                     <Typography variant="h6">Action</Typography>
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedPlans.length > 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
+                      <CircularProgress size={40} />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedPlans.length > 0 ? (
                   paginatedPlans.map((plan, index) => (
-                    <TableRow
-                      key={plan.id}
-                      sx={{
-                        '&:hover': { bgcolor: 'grey.50' },
-                        '&:last-child td, &:last-child th': { border: 0 },
-                      }}
-                    >
+                    <TableRow key={plan.id} hover>
                       <TableCell>
                         <Typography variant="subtitle2">
                           {page * rowsPerPage + index + 1}
@@ -364,7 +365,7 @@ const Plan = () => {
                               whiteSpace: 'pre-line',
                               overflow: 'hidden',
                               display: '-webkit-box',
-                              WebkitLineClamp: 3,
+                              WebkitLineClamp: 5,
                               WebkitBoxOrient: 'vertical',
                               textOverflow: 'ellipsis',
                               cursor: 'pointer',

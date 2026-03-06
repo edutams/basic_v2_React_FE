@@ -18,6 +18,7 @@ import {
   MenuItem,
   Chip,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -115,8 +116,8 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <Typography>Loading...</Typography>
+                    <TableCell colSpan={5} sx={{ textAlign: 'center', py: 10 }}>
+                      <CircularProgress size={40} />
                     </TableCell>
                   </TableRow>
                 ) : paginatedPackages.length > 0 ? (
@@ -177,7 +178,9 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
                           <MenuItem
                             onClick={() =>
                               handleAction(
-                                (pkg.package_status || pkg.pac_status) === 'active' ? 'deactivate' : 'activate',
+                                (pkg.package_status || pkg.pac_status) === 'active'
+                                  ? 'deactivate'
+                                  : 'activate',
                                 pkg,
                               )
                             }

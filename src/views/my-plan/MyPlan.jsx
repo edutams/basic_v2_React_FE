@@ -63,7 +63,19 @@ const MyPlan = () => {
     try {
       setLoading(true);
       const res = await api.get('/agent/edu-tier/my-plans');
-      setPlans(res.data);
+
+      // If no plans exist, automatically sync from system plans
+      if (res.data.length === 0) {
+        try {
+          const syncRes = await api.post('/agent/edu-tier/my-plans/sync');
+          setPlans(syncRes.data.data);
+        } catch (syncError) {
+          // If sync fails, just show empty table
+          setPlans([]);
+        }
+      } else {
+        setPlans(res.data);
+      }
     } catch (error) {
       console.error('Error fetching plans:', error);
       setSnackbarMessage('Failed to fetch plans');
@@ -110,19 +122,15 @@ const MyPlan = () => {
       try {
         const newStatus = planToDeactivate.status === 'active' ? 'inactive' : 'active';
         await api.patch(`/agent/edu-tier/my-plans/${planToDeactivate.id}/status`, {
-          status: newStatus
+          status: newStatus,
         });
-        
+
         setPlans((prev) =>
-          prev.map((p) =>
-            p.id === planToDeactivate.id
-              ? { ...p, status: newStatus }
-              : p
-          )
+          prev.map((p) => (p.id === planToDeactivate.id ? { ...p, status: newStatus } : p)),
         );
         setOpenDeactivateDialog(false);
         setSnackbarMessage(
-          `Plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`
+          `Plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
         );
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
@@ -149,7 +157,7 @@ const MyPlan = () => {
   const handleEditPlan = (plan) => {
     handleActionClose();
     setEditPlan(plan);
-    setEditName(plan.name);
+    setEditName(plan.display_name || plan.name);
     setEditPrice(plan.price);
     setOpenEditModal(true);
   };
@@ -160,12 +168,8 @@ const MyPlan = () => {
         display_name: editName,
         price: parseFloat(editPrice),
       });
-      
-      setPlans((prev) =>
-        prev.map((p) =>
-          p.id === editPlan.id ? res.data : p
-        )
-      );
+
+      setPlans((prev) => prev.map((p) => (p.id === editPlan.id ? res.data : p)));
       setOpenEditModal(false);
       setSnackbarMessage('Plan updated successfully');
       setSnackbarSeverity('success');
@@ -196,16 +200,16 @@ const MyPlan = () => {
                     <Typography variant="h6">Name</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="h6">Description</Typography>
+                    <Typography variant="h6">Student Limit</Typography>
                   </TableCell>
+                  {/* <TableCell>
+                    <Typography variant="h6">Description</Typography>
+                  </TableCell> */}
                   <TableCell>
                     <Typography variant="h6">Base Price (₦)</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="h6">Price (₦)</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Student Limit</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="h6">Status</Typography>
@@ -226,13 +230,7 @@ const MyPlan = () => {
                   paginatedPlans.map((plan, index) => {
                     const planData = plan.plan?.data ? JSON.parse(plan.plan.data) : {};
                     return (
-                      <TableRow
-                        key={plan.id}
-                        sx={{
-                          '&:hover': { bgcolor: 'grey.50' },
-                          '&:last-child td, &:last-child th': { border: 0 },
-                        }}
-                      >
+                      <TableRow key={plan.id} hover>
                         <TableCell>
                           <Typography variant="subtitle2">
                             {page * rowsPerPage + index + 1}
@@ -244,10 +242,15 @@ const MyPlan = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2">{plan.plan?.description}</Typography>
+                          <Typography variant="h6">{planData.students_limit || 'N/A'}</Typography>
                         </TableCell>
+                        {/* <TableCell>
+                          <Typography variant="body2">{plan.plan?.description}</Typography>
+                        </TableCell> */}
                         <TableCell>
-                          <Typography variant="h6">₦{parseFloat(plan.plan?.price || 0).toFixed(2)}</Typography>
+                          <Typography variant="h6">
+                            ₦{parseFloat(plan.plan?.price || 0).toFixed(2)}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="h6">
@@ -255,23 +258,24 @@ const MyPlan = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="h6">{planData.students_limit || 'N/A'}</Typography>
-                        </TableCell>
-                        <TableCell>
                           <Chip
                             sx={{
                               bgcolor:
                                 plan.status === 'active'
                                   ? (theme) => theme.palette.success.light
-                                  : (theme) => theme.palette.primary.light,
+                                  : (theme) => theme.palette.error.light,
                               color:
                                 plan.status === 'active'
                                   ? (theme) => theme.palette.success.main
-                                  : (theme) => theme.palette.primary.main,
+                                  : (theme) => theme.palette.error.main,
                               borderRadius: '8px',
                             }}
                             size="small"
-                            label={plan.status ? plan.status.charAt(0).toUpperCase() + plan.status.slice(1) : 'Unknown'}
+                            label={
+                              plan.status
+                                ? plan.status.charAt(0).toUpperCase() + plan.status.slice(1)
+                                : 'Unknown'
+                            }
                           />
                         </TableCell>
                         <TableCell>
@@ -285,8 +289,12 @@ const MyPlan = () => {
                             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                             transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                           >
-                            <MenuItem onClick={() => handleViewPlan(plan)}>View Plan Details</MenuItem>
-                            <MenuItem onClick={() => handleEditPlan(plan)}>Edit Plan Details</MenuItem>
+                            <MenuItem onClick={() => handleViewPlan(plan)}>
+                              View Plan Details
+                            </MenuItem>
+                            <MenuItem onClick={() => handleEditPlan(plan)}>
+                              Edit Plan Details
+                            </MenuItem>
                             <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
                               {plan.status === 'active' ? 'Deactivate' : 'Activate'}
                             </MenuItem>
@@ -337,7 +345,10 @@ const MyPlan = () => {
 
         <ReusableModal
           open={openViewModal}
-          onClose={() => { handleViewClose(); setShowModules(false); }}
+          onClose={() => {
+            handleViewClose();
+            setShowModules(false);
+          }}
           title="View Details"
           size="medium"
           showDivider={true}
@@ -360,7 +371,10 @@ const MyPlan = () => {
                 }}
               >
                 <Typography variant="body1" sx={{ fontSize: 16 }}>
-                  {selectedPlan?.plan?.data ? JSON.parse(selectedPlan.plan.data).students_limit : 'N/A'} Students
+                  {selectedPlan?.plan?.data
+                    ? JSON.parse(selectedPlan.plan.data).students_limit
+                    : 'N/A'}{' '}
+                  Students
                 </Typography>
               </Box>
             </Box>
@@ -379,7 +393,8 @@ const MyPlan = () => {
               }}
             >
               <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
-                {selectedPlan?.display_name?.toUpperCase()} (₦{parseFloat(selectedPlan?.price || 0).toLocaleString()})
+                {selectedPlan?.display_name?.toUpperCase()} (₦
+                {parseFloat(selectedPlan?.price || 0).toLocaleString()})
               </Typography>
               <Button
                 variant="text"
@@ -395,9 +410,16 @@ const MyPlan = () => {
                     Modules
                   </Typography>
                   {selectedPlan?.plan?.modules?.map((module) => (
-                    <Box key={module.id} sx={{ mb: 1, p: 1, border: '1px solid #eee', borderRadius: 1 }}>
-                      <Typography variant="body1" fontWeight={600}>{module.module_name}</Typography>
-                      <Typography variant="body2" color="text.secondary">{module.module_description}</Typography>
+                    <Box
+                      key={module.id}
+                      sx={{ mb: 1, p: 1, border: '1px solid #eee', borderRadius: 1 }}
+                    >
+                      <Typography variant="body1" fontWeight={600}>
+                        {module.module_name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {module.module_description}
+                      </Typography>
                     </Box>
                   ))}
                   {(!selectedPlan?.plan?.modules || selectedPlan.plan.modules.length === 0) && (
@@ -452,14 +474,14 @@ const MyPlan = () => {
           open={openDeactivateDialog}
           onClose={() => setOpenDeactivateDialog(false)}
           onConfirm={handleDeactivatePlan}
-          title={planToDeactivate?.status === 'Active' ? 'Deactivate Plan' : 'Activate Plan'}
+          title={planToDeactivate?.status === 'active' ? 'Deactivate Plan' : 'Activate Plan'}
           message={`Are you sure you want to ${
-            planToDeactivate?.status === 'Active' ? 'deactivate' : 'activate'
-          } ${planToDeactivate?.name}?`}
-          confirmText={planToDeactivate?.status === 'Active' ? 'Deactivate' : 'Activate'}
+            planToDeactivate?.status === 'active' ? 'deactivate' : 'activate'
+          } ${planToDeactivate?.display_name || planToDeactivate?.name}?`}
+          confirmText={planToDeactivate?.status === 'active' ? 'Deactivate' : 'Activate'}
           cancelText="Cancel"
-          confirmColor={planToDeactivate?.status === 'Active' ? 'error' : 'success'}
-          severity={planToDeactivate?.status === 'Active' ? 'error' : 'success'}
+          confirmColor={planToDeactivate?.status === 'active' ? 'error' : 'success'}
+          severity={planToDeactivate?.status === 'active' ? 'error' : 'success'}
         />
 
         <Snackbar

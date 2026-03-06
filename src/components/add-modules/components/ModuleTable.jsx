@@ -21,6 +21,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -42,7 +43,6 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
   const [isLoading, setIsLoading] = useState(false);
   const [moduleList, setModuleList] = useState(modules);
 
-  // Fetch modules from tenant API using axios
   const fetchModules = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -234,8 +234,8 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <Typography>Loading...</Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
+                      <CircularProgress size={40} />
                     </TableCell>
                   </TableRow>
                 ) : paginatedModules.length > 0 ? (
@@ -318,7 +318,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
                       <Typography variant="body1" color="textSecondary">
                         {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
                       </Typography>

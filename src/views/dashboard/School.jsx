@@ -158,7 +158,7 @@ const SchoolDashboard = () => {
           schoolCategories: eduTiers,
           schoolDivisions: schoolDivisions,
 
-          raw: t, // Keep raw data for editing
+          raw: t,
         };
       });
       setSchoolList(mappedData);
@@ -242,11 +242,9 @@ const SchoolDashboard = () => {
     try {
       const response = await agentApi.impersonateTenant(school.id);
       if (response.status === 'success') {
-        // Open the redirect URL in a new tab
         if (response.redirect_url) {
           window.open(response.redirect_url, '_blank');
         } else if (response.access_token) {
-          // Fallback if no redirect_url
           localStorage.setItem('impersonation_token', response.access_token);
           localStorage.setItem('impersonated_tenant_id', school.id);
           window.open(`https://${school.schoolUrl}/dashboard`, '_blank');
@@ -286,27 +284,27 @@ const SchoolDashboard = () => {
     total: schoolList.length,
     active: schoolList.filter((s) => s.status === 'Active').length,
     inactive: schoolList.filter((s) => s.status === 'Inactive').length,
-    subAgents: 0, // Placeholder - would need separate API
+    subAgents: 0,
     primary: schoolList.filter((s) => s.schoolDivisions?.includes('Primary')).length,
     junior: schoolList.filter((s) => s.schoolDivisions?.includes('Junior')).length,
     senior: schoolList.filter((s) => s.schoolDivisions?.includes('Senior')).length,
   };
 
-  const planSeries = [50, 15, 35];
+  const planSeries = [40, 15, 35, 10];
 
-  const planLabels = ['Basic', 'Basic +', 'Basic ++'];
+  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
 
   const planData = [
-    { name: 'Basic', value: 50, color: '#5A6ACF' },
-    { name: 'Basic +', value: 15, color: '#F06292' },
-    { name: 'Basic ++', value: 35, color: '#9C27B0' },
+    { name: 'Freemium', value: 40, color: '#7987FF' },
+    { name: 'Basic', value: 15, color: '#FFA5CB' },
+    { name: 'Basic +', value: 35, color: '#EC468C' },
+    { name: 'Basic ++', value: 10, color: '#8B48E3' },
   ];
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
 
-      {/* Summary Stats */}
       <Box
         sx={{
           display: 'grid',
@@ -524,7 +522,7 @@ const SchoolDashboard = () => {
           <Box>
             <Box
               sx={{
-                height: 160,
+                height: 170,
                 display: 'flex',
                 alignItems: 'center',
                 overflow: 'hidden',

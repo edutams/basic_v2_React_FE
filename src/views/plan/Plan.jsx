@@ -22,6 +22,8 @@ import {
   FormControlLabel,
   useMediaQuery,
   useTheme,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -199,6 +201,33 @@ const Plan = () => {
   const theme = useTheme();
   const isMobileOrTablet = useMediaQuery(theme.breakpoints.down('md'));
 
+  const renderDescriptionList = (description) => {
+    const lines = description.split('\n').filter((line) => line.trim() !== '');
+
+    const header = lines[0];
+    const features = lines.slice(1);
+
+    return (
+      <div
+        style={{
+          maxHeight: 250,
+          overflowY: 'auto',
+          paddingRight: 6,
+        }}
+      >
+        <Typography sx={{ fontWeight: 600, mb: 1 }}>{header}</Typography>
+
+        <ul style={{ margin: 0, paddingLeft: '18px' }}>
+          {features.map((line, index) => (
+            <li key={index} style={{ marginBottom: '6px', lineHeight: 1.4 }}>
+              {line.trim()}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <PageContainer title="Plans" description="This is the Plans page">
       <Breadcrumb title="Plans" items={BCrumb} />
@@ -267,39 +296,39 @@ const Plan = () => {
             <Table aria-label="plan table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>
+                  <TableCell sx={{ width: '5%' }}>
                     <Typography variant="h6">S/N</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '10%' }}>
                     <Typography variant="h6">Name</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '40%' }}>
                     <Typography variant="h6">Description</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '15%' }}>
                     <Typography variant="h6">Price (₦)</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '15%' }}>
                     <Typography variant="h6">Student Limit</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '10%' }}>
                     <Typography variant="h6">Status</Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ width: '5%' }}>
                     <Typography variant="h6">Action</Typography>
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedPlans.length > 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
+                      <CircularProgress size={40} />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedPlans.length > 0 ? (
                   paginatedPlans.map((plan, index) => (
-                    <TableRow
-                      key={plan.id}
-                      sx={{
-                        '&:hover': { bgcolor: 'grey.50' },
-                        '&:last-child td, &:last-child th': { border: 0 },
-                      }}
-                    >
+                    <TableRow key={plan.id} hover>
                       <TableCell>
                         <Typography variant="subtitle2">
                           {page * rowsPerPage + index + 1}
@@ -311,10 +340,45 @@ const Plan = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">{plan.description}</Typography>
+                        <Tooltip
+                          title={renderDescriptionList(plan.description)}
+                          arrow
+                          slotProps={{
+                            tooltip: {
+                              sx: {
+                                maxWidth: 500,
+                                fontSize: '14px',
+                                padding: '12px',
+                                whiteSpace: 'normal',
+                                backgroundColor: '#F8FAFC',
+                                color: '#1F2937',
+                                borderRadius: '8px',
+                                lineHeight: 1.6,
+                                boxShadow: '0px 4px 20px rgba(0,0,0,0.08)',
+                              },
+                            },
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              whiteSpace: 'pre-line',
+                              overflow: 'hidden',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 5,
+                              WebkitBoxOrient: 'vertical',
+                              textOverflow: 'ellipsis',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {plan.description}
+                          </Typography>
+                        </Tooltip>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="h6">₦{parseFloat(plan.price).toLocaleString()}</Typography>
+                        <Typography variant="h6">
+                          ₦{parseFloat(plan.price).toLocaleString()}
+                        </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="h6">
@@ -327,11 +391,11 @@ const Plan = () => {
                             bgcolor:
                               plan.status === 'active'
                                 ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.primary.light,
+                                : (theme) => theme.palette.error.light,
                             color:
                               plan.status === 'active'
                                 ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.primary.main,
+                                : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                           }}
                           size="small"
@@ -465,7 +529,7 @@ const Plan = () => {
           <Box sx={{ mt: 4 }}>
             <ManageModule
               selectedPlan={selectedPlan}
-              currentPermissions={selectedPlan?.modules?.map(m => m.id) || []}
+              currentPermissions={selectedPlan?.modules?.map((m) => m.id) || []}
               modules={modules}
               packages={packages}
               onSave={handleSavePackageFeatures}

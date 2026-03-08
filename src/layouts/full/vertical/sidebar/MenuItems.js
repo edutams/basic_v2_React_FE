@@ -122,12 +122,6 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'My Plan',
-    icon: IconMap,
-    href: '/my-plan',
-  },
-  {
-    id: uniqueId(),
     title: 'Gateway',
     icon: IconWallet,
     href: '/gateway',
@@ -171,7 +165,6 @@ const Menuitems = [
     href: '/agent/subscriptions',
     permission: ['censis.subscription.view'],
   },
-
 
   /*
   {

@@ -19,7 +19,6 @@ const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
 const ViewAgent = Loadable(lazy(() => import('../views/agent/ViewAgent')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
-const MyPlan = Loadable(lazy(() => import('../views/my-plan/MyPlan')));
 const CalendarManagement = Loadable(lazy(() => import('../views/calendar/CalendarManagement')));
 const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
 const Mail = Loadable(lazy(() => import('../views/mail/Mail')));
@@ -220,7 +219,6 @@ const AgentRoutes = [
         ),
       },
       { path: '/gateway', exact: true, element: <Gateway /> },
-      { path: '/my-plan', exact: true, element: <MyPlan /> },
       {
         path: '/calendar',
         exact: true,

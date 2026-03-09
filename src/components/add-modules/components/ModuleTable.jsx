@@ -22,6 +22,7 @@ import {
   InputLabel,
   Select,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -318,10 +319,22 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
-                      <Typography variant="body1" color="textSecondary">
-                        {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
-                      </Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        <Typography variant="body1" color="textSecondary">
+                          {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
+                        </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}

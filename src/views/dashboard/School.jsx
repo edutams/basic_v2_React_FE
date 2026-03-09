@@ -292,11 +292,13 @@ const SchoolDashboard = () => {
   const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
 
   const planData = [
-    { name: 'Freemium', value: 40, color: '#7987FF' },
-    { name: 'Basic', value: 15, color: '#FFA5CB' },
-    { name: 'Basic +', value: 35, color: '#EC468C' },
+    { name: 'Freemium', value: 40, color: '#EC468C' },
+    { name: 'Basic', value: 15, color: '#7987FF' },
+    { name: 'Basic +', value: 35, color: '#FFA5CB' },
     { name: 'Basic ++', value: 10, color: '#8B48E3' },
   ];
+
+  const planColors = planData.map((p) => p.color);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -525,7 +527,13 @@ const SchoolDashboard = () => {
                 overflow: 'hidden',
               }}
             >
-              <ReusablePieChart series={planSeries} labels={planLabels} height={180} hideCard />
+              <ReusablePieChart
+                series={planSeries}
+                colors={planColors}
+                labels={planLabels}
+                height={180}
+                hideCard
+              />
             </Box>
           </Box>
         </Paper>

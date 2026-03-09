@@ -65,7 +65,7 @@ const MyPlan = () => {
       const res = await api.get('/agent/edu-tier/my-plans');
 
       // If no plans exist, automatically sync from system plans
-      if (res.data.length === 0) {
+      if (res.data.data?.length === 0) {
         try {
           const syncRes = await api.post('/agent/edu-tier/my-plans/sync');
           setPlans(syncRes.data.data);

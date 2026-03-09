@@ -67,6 +67,8 @@ import agentApi from '../../api/agent';
 import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
+import PlanDistributionModal from '../agent/components/PlanDistributionModal';
+import LoggedInUsersModal from '../agent/components/LoggedInUsersModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
@@ -109,6 +111,9 @@ const SchoolDashboard = () => {
 
   const [openColorSchemeModal, setOpenColorSchemeModal] = useState(false);
   const [selectedSchoolForColor, setSelectedSchoolForColor] = useState(null);
+
+  const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
+  const [openLoggedInUsersModal, setOpenLoggedInUsersModal] = useState(false);
 
   const [filterClicked, setFilterClicked] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -447,6 +452,7 @@ const SchoolDashboard = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
               }}
             >
               <IconChartBar size={22} color="#FFFFFF" />
@@ -537,7 +543,9 @@ const SchoolDashboard = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
               }}
+              onClick={() => setOpenPlanDistributionModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -601,7 +609,9 @@ const SchoolDashboard = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
               }}
+              onClick={() => setOpenLoggedInUsersModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -979,6 +989,15 @@ const SchoolDashboard = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      <PlanDistributionModal
+        open={openPlanDistributionModal}
+        onClose={() => setOpenPlanDistributionModal(false)}
+      />
+      <LoggedInUsersModal
+        open={openLoggedInUsersModal}
+        onClose={() => setOpenLoggedInUsersModal(false)}
+      />
     </LocalizationProvider>
   );
 };

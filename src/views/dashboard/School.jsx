@@ -123,7 +123,6 @@ const SchoolDashboard = () => {
     setLoading(true);
     try {
       const data = await getSchools();
-      s;
       const mappedData = data.map((t) => {
         let colors = {};
         try {

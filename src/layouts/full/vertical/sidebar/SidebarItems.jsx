@@ -97,6 +97,9 @@ const SidebarItems = () => {
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav">
         {menuItems.filter((item) => {
+          if (user?.access_level > 1 && (item.title === 'Agent' || item.href === '/agent')) {
+            return false;
+          }
           if (!item.permission) return true;
           if (user?.is_super_admin) return true;
           const userPermissions = user?.permissions || [];

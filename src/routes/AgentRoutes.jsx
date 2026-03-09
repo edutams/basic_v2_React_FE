@@ -206,16 +206,16 @@ const AgentRoutes = [
         exact: true,
         element: (
           <PermissionGate permissions={['censis.acl.user.manage.role']}>
-            <Agent />
+            {useAuth().user?.access_level === 1 ? <Agent /> : <Navigate to="/" />}
           </PermissionGate>
         ),
       },
       {
         path: '/agent/view/:id',
         element: (
-          <PermissionGate permissions={['censis.acl.user.manage.role']}>
+          <ProtectedRoute>
             <ViewAgent />
-          </PermissionGate>
+          </ProtectedRoute>
         ),
       },
       { path: '/gateway', exact: true, element: <Gateway /> },

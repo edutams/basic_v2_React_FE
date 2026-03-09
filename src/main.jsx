@@ -50,4 +50,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <RootApp />
   </LocalizationProvider>,
 );
-

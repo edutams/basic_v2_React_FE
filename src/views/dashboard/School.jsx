@@ -241,14 +241,11 @@ const SchoolDashboard = () => {
   const handleLoginAsAdmin = async (school) => {
     try {
       const response = await agentApi.impersonateTenant(school.id);
-      if (response.status === 'success') {
-        if (response.redirect_url) {
-          window.open(response.redirect_url, '_blank');
-        } else if (response.access_token) {
-          localStorage.setItem('impersonation_token', response.access_token);
-          localStorage.setItem('impersonated_tenant_id', school.id);
-          window.open(`https://${school.schoolUrl}/dashboard`, '_blank');
-        }
+      // response IS already the data (agentApi returns response.data)
+      console.log('impersonate response:', response);
+
+      if (response.status === 'success' && response.redirect_url) {
+        window.open(response.redirect_url, '_blank');
       } else {
         setSnackbarMessage(response.error || 'Failed to login as admin');
         setSnackbarSeverity('error');

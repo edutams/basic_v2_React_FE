@@ -1,20 +1,19 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { useEffect } from 'react';
+import { useParams } from 'react-router';
+import { CircularProgress, Box, Typography } from '@mui/material';
 
 const ImpersonateLogin = () => {
-  const { token } = useParams();
-  const navigate = useNavigate();
+  const params = useParams();
+  const token = params.token;
 
   useEffect(() => {
     if (token) {
       localStorage.setItem('tenant_access_token', token);
-      // Redirect to dashboard
       window.location.href = '/';
     } else {
-      navigate('/login');
+      window.location.href = '/login';
     }
-  }, [token, navigate]);
+  }, [token]);
 
   return (
     <Box
@@ -26,7 +25,7 @@ const ImpersonateLogin = () => {
     >
       <CircularProgress size={60} thickness={4} />
       <Typography variant="h6" sx={{ mt: 2 }}>
-        Authenticating Impersonation session...
+        Authenticating...
       </Typography>
     </Box>
   );

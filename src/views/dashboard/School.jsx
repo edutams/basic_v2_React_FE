@@ -354,9 +354,9 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            {/* <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
               Active School
-            </Typography>
+            </Typography> */}
 
             <Chip
               label={schoolSummary.active}

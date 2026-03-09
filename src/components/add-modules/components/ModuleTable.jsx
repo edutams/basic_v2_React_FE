@@ -254,12 +254,22 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontFamily="monospace">
-                          {module.module_links?.link || module.mod_links?.link}
+                          {/* {module.module_links?.link || module.mod_links?.link} */}
+                          {module.module_links
+                            ? JSON.parse(module.module_links).link
+                            : module.mod_links
+                            ? JSON.parse(module.mod_links).link
+                            : ''}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontFamily="monospace">
-                          {module.module_links?.permission || module.mod_links?.permission}
+                          {/* {module.module_links?.permission || module.mod_links?.permission} */}
+                          {module.module_links
+                            ? JSON.parse(module.module_links).permission
+                            : module.mod_links
+                            ? JSON.parse(module.mod_links).permission
+                            : ''}
                         </Typography>
                       </TableCell>
                       <TableCell>

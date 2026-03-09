@@ -480,8 +480,8 @@ const MyPlan = () => {
           } ${planToDeactivate?.display_name || planToDeactivate?.name}?`}
           confirmText={planToDeactivate?.status === 'active' ? 'Deactivate' : 'Activate'}
           cancelText="Cancel"
-          confirmColor={planToDeactivate?.status === 'active' ? 'error' : 'success'}
-          severity={planToDeactivate?.status === 'active' ? 'error' : 'success'}
+          confirmColor={planToDeactivate?.status === 'active' ? 'error' : 'primary'}
+          severity={planToDeactivate?.status === 'active' ? 'error' : 'primary'}
         />
 
         <Snackbar

@@ -6,18 +6,11 @@ const ImpersonateLogin = () => {
   const params = useParams();
   const token = params.token;
 
-  console.log('=== ImpersonateLogin ===');
-  console.log('params:', params);
-  console.log('token:', token);
-
   useEffect(() => {
-    console.log('useEffect token:', token);
     if (token) {
       localStorage.setItem('tenant_access_token', token);
-      console.log('saved, redirecting to /');
       window.location.href = '/';
     } else {
-      console.log('no token, redirecting to /login');
       window.location.href = '/login';
     }
   }, [token]);

@@ -22,6 +22,7 @@ import {
   InputLabel,
   Select,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -254,22 +255,12 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontFamily="monospace">
-                          {/* {module.module_links?.link || module.mod_links?.link} */}
-                          {module.module_links
-                            ? JSON.parse(module.module_links).link
-                            : module.mod_links
-                            ? JSON.parse(module.mod_links).link
-                            : ''}
+                          {module.module_links?.link || module.mod_links?.link}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontFamily="monospace">
-                          {/* {module.module_links?.permission || module.mod_links?.permission} */}
-                          {module.module_links
-                            ? JSON.parse(module.module_links).permission
-                            : module.mod_links
-                            ? JSON.parse(module.mod_links).permission
-                            : ''}
+                          {module.module_links?.permission || module.mod_links?.permission}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -328,10 +319,22 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
-                      <Typography variant="body1" color="textSecondary">
-                        {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
-                      </Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        <Typography variant="body1" color="textSecondary">
+                          {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
+                        </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}

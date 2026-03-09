@@ -1,32 +1,28 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
   IconButton,
   Typography,
   Box,
   Grid,
   Stack,
-  FormControl,
   Select,
   MenuItem,
-  Button,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TextField,
   Menu,
-  Card,Divider
+  Card,
+  Divider
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import StandardModal from 'src/components/shared/StandardModal';
+import PrimaryButton from 'src/components/shared/PrimaryButton';
 
 const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -46,19 +42,16 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
     { label: 'Parent', count: 20 },
   ];
 
-  const data = [
-    { id: 1, school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL', url: 'https://fsps.sef.edutams.net', number: 30 },
-    { id: 2, school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL', url: 'https://gmsps.sef.edutams.net', number: 10 },
-    { id: 3, school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL', url: 'https://iksps.sef.edutams.net', number: 39 },
-  ];
-
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: '4px' } }}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'flex-end', p: 1, bgcolor: '#f4f6f8' }}>
-        <IconButton onClick={onClose} sx={{ color: 'red' }}><CloseIcon fontSize="large" /></IconButton>
-      </DialogTitle>
-      
-      <DialogContent sx={{ p: 4, bgcolor: '#f4f6f8' }}>
+    <StandardModal 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="lg" 
+      padding={4}
+      headerBg="#f4f6f8"
+      sx={{ bgcolor: '#f4f6f8' }}
+      dividers={false}
+    >
         {/* Top Stat Cards */}
         <Grid container spacing={2} mb={3}>
           {stats.map((stat, idx) => (
@@ -92,13 +85,12 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               </Box>
               <Typography variant="subtitle1" fontWeight="600" color="#4a5568">Logged In Users This Week</Typography>
             </Stack>
-            <Button 
-              variant="contained" 
+            <PrimaryButton 
               startIcon={<GetAppIcon />} 
-              sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, textTransform: 'none', fontWeight: 600, px: 2 }}
+              sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' } }}
             >
               Export to Excel
-            </Button>
+            </PrimaryButton>
           </Box>
 
           {/* Filter Bar */}
@@ -149,7 +141,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               />
             </Box>
 
-            <Button variant="contained" sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, textTransform: 'none', height: '35px', px: 4, fontWeight: 700, ml: 'auto' }}>Filter</Button>
+            <PrimaryButton sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, ml: 'auto' }}>Filter</PrimaryButton>
           </Box>
 
           <TableContainer component={Box} sx={{ bgcolor: 'white' }}>
@@ -201,9 +193,9 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
         <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
           <MenuItem onClick={() => { handleCloseMenu(); onViewUserList(); }}>View Users List</MenuItem>
         </Menu>
-      </DialogContent>
-    </Dialog>
+    </StandardModal>
   );
 };
 
 export default LoggedInUsersModal;
+

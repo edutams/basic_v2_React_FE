@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Box, Tab, Stack, Grid } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
+import { useParams } from 'react-router';
+import { useAuth } from '../../hooks/useAuth';
 
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -16,24 +18,29 @@ import SchoolsTab from './components/SchoolsTab';
 
 // Mock Data
 import { mockAgentData } from './mockData';
-
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { to: '/agent', title: 'Agent' },
-  { title: 'View Profile' },
-];
-
 const ViewAgent = () => {
+    const { user: currentUser } = useAuth();
+    const { id } = useParams();
     const [value, setValue] = React.useState('1');
+    const isOwnProfile = currentUser && currentUser.id == id;
+
+    const BCrumb = [
+        { to: '/', title: 'Home' },
+        ...(isOwnProfile && currentUser.access_level > 1 ? [] : [{ to: '/agent', title: 'Agent' }]),
+        { title: isOwnProfile && currentUser.access_level > 1 ? 'Dashboard' : 'View Profile' },
+    ];
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
     return (
-        <PageContainer title="View Agent Profile" description="Detailed agent profile view">
+        <PageContainer 
+            title={isOwnProfile && currentUser.access_level > 1 ? "Agent Dashboard" : "View Agent Profile"} 
+            description="Detailed agent profile view"
+        >
             <Box sx={{ bgcolor: '#F1F5F9', minHeight: '100vh', p: { xs: 1, md: 2 } }}>
-                <Breadcrumb title="View Profile" items={BCrumb} />
+                <Breadcrumb title={isOwnProfile && currentUser.access_level > 1 ? "Dashboard" : "View Profile"} items={BCrumb} />
                 
                 <Box mt={3}>
                     <Grid container spacing={3} alignItems="stretch">

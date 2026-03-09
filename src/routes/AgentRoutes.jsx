@@ -3,6 +3,7 @@ import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
+import { useAuth } from '../hooks/useAuth';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -25,6 +26,7 @@ const Mail = Loadable(lazy(() => import('../views/mail/Mail')));
 const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
 const AgentSubscriptionManagement = Loadable(lazy(() => import('../views/agent/subscriptions/AgentSubscriptionIndex')));
 const ActivityLog = Loadable(lazy(() => import('../views/activity-log/ActivityLog')));
+const CommissionManagement = Loadable(lazy(() => import('../views/commission/CommissionManagement')));
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 
@@ -164,6 +166,14 @@ const SimpletreeFocus = Loadable(lazy(() => import('../views/mui-trees/simpletre
 const SimpletreeItems = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-items/page')));
 const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')));
 
+const AgentRouteWrapper = () => {
+  const { user } = useAuth();
+  if (user && user.access_level > 1) {
+    return <Navigate to={`/agent/view/${user.id}`} replace />;
+  }
+  return <Agent />;
+};
+
 const AgentRoutes = [
   {
     path: '/',
@@ -206,7 +216,7 @@ const AgentRoutes = [
         exact: true,
         element: (
           <PermissionGate permissions={['censis.acl.user.manage.role']}>
-            <Agent />
+            <AgentRouteWrapper />
           </PermissionGate>
         ),
       },
@@ -263,6 +273,15 @@ const AgentRoutes = [
         element: (
           <PermissionGate permissions={['censis.activity_log.view']}>
             <ActivityLog />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/agent/commissions',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.acl.user.manage.role']}>
+            <CommissionManagement />
           </PermissionGate>
         ),
       },

@@ -10,6 +10,7 @@ import { useAuth } from 'src/hooks/useAuth';
 import api from 'src/api/auth';
 import {
   IconChartPie,
+  IconCurrencyDollar,
   IconSettings,
   IconCalendarTime,
   IconUserCircle,
@@ -25,11 +26,16 @@ import {
   IconCircle,
   IconShieldLock,
   IconCalendarClock,
-  IconArchive
+  IconArchive,
+  IconLayoutDashboard,
+  IconUsers
 } from '@tabler/icons-react';
+import { useParams } from 'react-router';
+
 
 const iconMapper = {
   ChartPie: IconChartPie,
+  CurrencyDollar: IconCurrencyDollar,
   ShieldX: IconShieldLock,
   CalendarClock: IconCalendarClock,
   UserCircle: IconUserCircle,
@@ -97,9 +103,18 @@ const SidebarItems = () => {
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav">
         {menuItems.filter((item) => {
-          if (!item.permission) return true;
+          if (!item.permission) {
+            // Special check for Agent page visibility
+            if (item.href === '/agent' && user?.access_level > 1) {
+              return false;
+            }
+            return true;
+          }
           if (user?.is_super_admin) return true;
           const userPermissions = user?.permissions || [];
+          if (item.href === '/agent' && user?.access_level > 1) {
+            return false;
+          }
           return item.permission.some((p) => userPermissions.includes(p));
         }).map((item) => {
           if (item.subheader) {

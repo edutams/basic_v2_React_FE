@@ -68,13 +68,12 @@ const MyPlan = () => {
       if (res.data.data?.length === 0) {
         try {
           const syncRes = await api.post('/agent/edu-tier/my-plans/sync');
-          setPlans(syncRes.data.data);
+          setPlans(syncRes.data.data || []);
         } catch (syncError) {
-          // If sync fails, just show empty table
           setPlans([]);
         }
       } else {
-        setPlans(res.data);
+        setPlans(res.data.data || []);
       }
     } catch (error) {
       console.error('Error fetching plans:', error);

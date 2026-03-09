@@ -26,6 +26,20 @@ const AccountSetting = Loadable(
 
 const TenantRoutes = [
   {
+    path: '/login',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <TenantLogin /> }],
+  },
+  {
+    path: '/impersonate-login/:token',
+    element: <ImpersonateLogin />,
+  },
+  {
+    path: '/auth/404',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <Error /> }],
+  },
+  {
     path: '/',
     element: (
       <TenantProtectedRoute>
@@ -34,7 +48,7 @@ const TenantRoutes = [
     ),
     children: [
       {
-        path: '/',
+        index: true,
         element: (
           <PermissionGate permissions={['dashboard.view']}>
             <SchoolDashboardMain />
@@ -42,46 +56,36 @@ const TenantRoutes = [
         ),
       },
       {
-        path: '/session-week-manager',
+        path: 'session-week-manager',
         element: (
           <PermissionGate permissions={['setup.academics.school']}>
             <SessionWeekManager />
           </PermissionGate>
         ),
       },
-      { path: '/scheme-of-work', element: <SchemeOfWork /> },
+      { path: 'scheme-of-work', element: <SchemeOfWork /> },
       {
-        path: '/manage-subscription',
+        path: 'manage-subscription',
         element: (
           <PermissionGate permissions={['manage.subscription']}>
             <SubscriptionIndex />
           </PermissionGate>
         ),
       },
-      { path: '/subscription-history', element: <SubscriptionIndex /> },
+      { path: 'subscription-history', element: <SubscriptionIndex /> },
       {
-        path: '/alc-manager',
-        exact: true,
+        path: 'alc-manager',
         element: (
           <PermissionGate permissions={['api.v1.censis.acl.index']}>
             <AlcManager />
           </PermissionGate>
         ),
       },
-      { path: '/activity-logs', exact: true, element: <ActivityLog /> },
-      { path: '/pages/account-settings', exact: true, element: <AccountSetting /> },
+      { path: 'activity-logs', element: <ActivityLog /> },
+      { path: 'pages/account-settings', element: <AccountSetting /> },
     ],
   },
-  {
-    path: '/',
-    element: <BlankLayout />,
-    children: [
-      { path: '/login', element: <TenantLogin /> },
-      { path: '/impersonate-login/:token', element: <ImpersonateLogin /> },
-      { path: '/auth/404', element: <Error /> },
-      { path: '*', element: <Navigate to="/login" /> },
-    ],
-  },
+  { path: '*', element: <Navigate to="/login" replace /> }, // ← Catch-all at top level
 ];
 
 export default TenantRoutes;

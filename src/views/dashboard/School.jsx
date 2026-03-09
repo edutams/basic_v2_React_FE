@@ -123,20 +123,44 @@ const SchoolDashboard = () => {
     setLoading(true);
     try {
       const data = await getSchools();
-      // Map backend data to frontend field names
+      s;
       const mappedData = data.map((t) => {
         let colors = {};
         try {
-          colors = typeof t.color === 'string' ? JSON.parse(t.color) : t.color || {};
+          if (t.color && typeof t.color === 'string') {
+            const parsed = JSON.parse(t.color);
+            if (parsed.headcolor && parsed.headcolor !== 'default') {
+              colors = parsed;
+            }
+          }
+
+          if (t.headcolor && t.headcolor !== 'default') {
+            colors.headcolor = t.headcolor;
+          }
+          if (t.sidecolor && t.sidecolor !== 'default') {
+            colors.sidecolor = t.sidecolor;
+          }
+          if (t.bodycolor && t.bodycolor !== 'default') {
+            colors.bodycolor = t.bodycolor;
+          }
         } catch (e) {
-          console.error('Error parsing color for tenant', t.id);
+          console.error('Error parsing color for tenant', t.id, e);
         }
 
-        // Extract education tiers from schoolCategories
         const eduTiers = t.schoolCategories?.map((cat) => cat.name) || [];
+        const flatEduTiers = t.school_categories?.map((cat) => cat.name) || [];
+        const allEduTiers = eduTiers.length > 0 ? eduTiers : flatEduTiers;
 
-        // Extract school divisions (Primary, Junior, Senior)
         const schoolDivisions = t.school_divisions?.map((div) => div.name) || [];
+
+        let planSubstitute = t.payModuleType || null;
+        let populationSubstitute = null;
+        if (t.modular) {
+          try {
+            const modularArr = typeof t.modular === 'string' ? JSON.parse(t.modular) : t.modular;
+            populationSubstitute = modularArr.length;
+          } catch (e) {}
+        }
 
         return {
           id: t.id,
@@ -155,8 +179,10 @@ const SchoolDashboard = () => {
           sidebarColor: colors.sidecolor,
           bodyColor: colors.bodycolor,
           status: t.status === 'active' ? 'Active' : 'Inactive',
-          schoolCategories: eduTiers,
+          schoolCategories: allEduTiers,
           schoolDivisions: schoolDivisions,
+          plan: planSubstitute,
+          population: populationSubstitute,
 
           raw: t,
         };
@@ -356,9 +382,9 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            {/* <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
               Active School
-            </Typography> */}
+            </Typography>
 
             <Chip
               label={schoolSummary.active}
@@ -682,9 +708,6 @@ const SchoolDashboard = () => {
                       <TableRow key={row.id}>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>
-                          {/* <Typography variant="subtitle2" fontWeight={600}>
-                            {row.institutionName}
-                          </Typography> */}
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <img
                               src={row.schoolImage || '/src/assets/images/users/default_avatar.png'}
@@ -743,47 +766,75 @@ const SchoolDashboard = () => {
                         </TableCell>
 
                         <TableCell>
-                          {row.schoolCategories?.length > 0 ? (
-                            <Stack direction="row" spacing={0.5}>
-                              {row.schoolCategories.map((cat, idx) => (
-                                <Chip key={idx} label={cat} size="small" variant="outlined" />
-                              ))}
+                          {row.plan || row.population ? (
+                            <Stack direction="column" spacing={0.5}>
+                              {row.plan && (
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="600"
+                                  sx={{ textTransform: 'capitalize' }}
+                                >
+                                  {row.plan}
+                                </Typography>
+                              )}
+                              {row.population !== null && row.population !== undefined && (
+                                <Typography variant="caption" color="textSecondary">
+                                  Modules: {row.population}
+                                </Typography>
+                              )}
                             </Stack>
                           ) : (
-                            '-'
+                            <Typography variant="caption" color="textSecondary">
+                              -
+                            </Typography>
                           )}
                         </TableCell>
                         <TableCell>
-                          <Stack direction="column" spacing={0.5}>
-                            {row.headerColor && (
-                              <Typography variant="caption" color="textSecondary">
-                                Header: {row.headerColor}
-                              </Typography>
-                            )}
-                            {row.sidebarColor && (
-                              <Typography variant="caption" color="textSecondary">
-                                Sidebar: {row.sidebarColor}
-                              </Typography>
-                            )}
-                            {row.bodyColor && (
-                              <Typography variant="caption" color="textSecondary">
-                                Body: {row.bodyColor}
-                              </Typography>
-                            )}
-                            {!row.headerColor && !row.sidebarColor && !row.bodyColor && (
-                              <Typography variant="caption" color="textSecondary">
-                                -
-                              </Typography>
-                            )}
-                          </Stack>
+                          {row.headerColor || row.sidebarColor || row.bodyColor ? (
+                            <Box
+                              sx={{
+                                display: 'inline-block',
+                                width: 40,
+                                height: 30,
+                                borderRadius: '5px',
+                                overflow: 'hidden',
+                              }}
+                              title={`Header: ${row.headerColor} | Sidebar: ${row.sidebarColor} | Body: ${row.bodyColor}`}
+                            >
+                              <Box
+                                sx={{
+                                  width: '100%',
+                                  height: '30%',
+                                  backgroundColor: row.headerColor,
+                                  borderRadius: 0,
+                                }}
+                              />
+                              <Box sx={{ display: 'flex', height: '70%' }}>
+                                <Box
+                                  sx={{
+                                    width: '50%',
+                                    height: '100%',
+                                    backgroundColor: row.sidebarColor,
+                                    borderRadius: 0,
+                                  }}
+                                />
+                                <Box
+                                  sx={{
+                                    width: '50%',
+                                    height: '100%',
+                                    backgroundColor: row.bodyColor,
+                                    borderRadius: 0,
+                                  }}
+                                />
+                              </Box>
+                            </Box>
+                          ) : (
+                            <Typography variant="caption" color="textSecondary">
+                              -
+                            </Typography>
+                          )}
                         </TableCell>
                         <TableCell>
-                          {/* <Chip
-                            label={row.status}
-                            size="small"
-                            color={row.status === 'Active' ? 'success' : 'default'}
-                            variant="light"
-                          /> */}
                           <Chip
                             label={row.status}
                             size="small"

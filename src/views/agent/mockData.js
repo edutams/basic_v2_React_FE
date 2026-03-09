@@ -11,7 +11,9 @@ export const mockAgentData = {
         totalTransaction: '70,234.00',
         transactionCount: '1,3443',
         totalSchool: 70,
-        totalSubAgents: 36
+        totalSubAgents: 36,
+        commission: '100,000,000,000',
+        volume: '110,344,300,000'
     },
     revenueData: [
         { month: 'Jan', revenue: 600000 },

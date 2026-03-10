@@ -67,8 +67,8 @@ import agentApi from '../../api/agent';
 // import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 // import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
-import PlanDistributionModal from '../agent/components/PlanDistributionModal';
-import LoggedInUsersModal from '../agent/components/LoggedInUsersModal';
+import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
+import LoginActivities from '../dashboard/components/LoginActivities';
 import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
@@ -1024,7 +1024,7 @@ const SchoolDashboard = () => {
         open={openPlanDistributionModal}
         onClose={() => setOpenPlanDistributionModal(false)}
       />
-      <LoggedInUsersModal
+      <LoginActivities
         open={openLoggedInUsersModal}
         onClose={() => setOpenLoggedInUsersModal(false)}
       />

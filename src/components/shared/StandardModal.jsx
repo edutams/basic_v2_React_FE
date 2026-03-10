@@ -54,7 +54,7 @@ const StandardModal = ({
           <Stack direction="row" alignItems="center" spacing={1.5}>
             {Icon && <Icon size={24} color="#4A5568" />}
             {title && (
-              <Typography variant="h6" sx={{ fontSize: 20, fontWeight: 700, color: '#1A202C' }}>
+              <Typography variant="h6" sx={{ fontSize: 18, fontWeight: 700, color: '#1A202C' }}>
                 {title}
               </Typography>
             )}

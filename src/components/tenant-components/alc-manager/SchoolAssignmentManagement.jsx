@@ -23,11 +23,13 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
-import RoleAttachmentModal from 'src/components/alc-manager/components/RoleAttachmentModal';
-import ViewRoleModal from 'src/components/alc-manager/components/ViewRoleModal';
+import RoleAttachmentModal from 'src/components/tenant-components/alc-manager/RoleAttachmentModal';
+import ViewRoleModal from 'src/components/tenant-components/alc-manager/ViewRoleModal';
 import aclApi from 'src/api/aclApi';
+import { useNotification } from 'src/hooks/useNotification';
 
 const SchoolAssignmentManagement = () => {
+  const notify = useNotification();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -103,6 +105,26 @@ const SchoolAssignmentManagement = () => {
         backgroundColor: (theme) => theme.palette.primary.light,
         color: (theme) => theme.palette.primary.main,
       },
+      subject_teacher: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.secondary.main,
+      },
+      student: {
+        backgroundColor: (theme) => theme.palette.purple.A50,
+        color: (theme) => theme.palette.purple.A100,
+      },
+      bursar: {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.dark,
+      },
+      lesson_note_admin: {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.dark,
+      },
+      prospective: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.primary.dark,
+      },
     };
 
     return (
@@ -115,6 +137,20 @@ const SchoolAssignmentManagement = () => {
 
   const handleRoleSelection = async (roleIds) => {
     if (!currentUserForRole) return;
+
+    // Determine if we're adding or removing roles
+    const currentRoleIds = currentUserForRole.assignedRoles?.map((r) => r.id) || [];
+    const addedRoles = roleIds.filter((id) => !currentRoleIds.includes(id));
+    const removedRoles = currentRoleIds.filter((id) => !roleIds.includes(id));
+
+    let actionType = '';
+    if (addedRoles.length > 0 && removedRoles.length > 0) {
+      actionType = 'updated';
+    } else if (removedRoles.length > 0) {
+      actionType = 'removed';
+    } else {
+      actionType = 'added';
+    }
 
     try {
       await aclApi.assignSchoolUserRole(currentUserForRole.id, roleIds);
@@ -139,9 +175,23 @@ const SchoolAssignmentManagement = () => {
         setCurrentUserForRole(updatedCurrentUser);
       }
 
+      // Show appropriate success message
+      if (actionType === 'added') {
+        notify.success('Role(s) attached successfully!');
+      } else if (actionType === 'removed') {
+        notify.success('Role(s) removed successfully!');
+      } else {
+        notify.success('Roles updated successfully!');
+      }
       setRoleAttachmentModalOpen(false);
     } catch (err) {
       console.error('Failed to assign roles:', err);
+      // Show appropriate error message
+      if (actionType === 'removed') {
+        notify.error(err?.response?.data?.message || 'Failed to remove role(s)');
+      } else {
+        notify.error(err?.response?.data?.message || 'Failed to attach role(s)');
+      }
     }
   };
 
@@ -184,13 +234,13 @@ const SchoolAssignmentManagement = () => {
       <Box sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
           <TextField
-            placeholder="Search by name..."
+            placeholder="Search by name"
             value={nameFilter}
             onChange={(e) => {
               setNameFilter(e.target.value);
               setPage(0);
             }}
-            sx={{ mb: 2, width: 400 }}
+            sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -308,7 +358,7 @@ const SchoolAssignmentManagement = () => {
               <TableFooter>
                 <TableRow>
                   <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
+                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
                     count={filteredUsers.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
@@ -329,13 +379,13 @@ const SchoolAssignmentManagement = () => {
       <RoleAttachmentModal
         open={roleAttachmentModalOpen}
         onClose={() => setRoleAttachmentModalOpen(false)}
-        currentAgent={currentUserForRole}
+        currentUser={currentUserForRole}
         onRoleSelection={handleRoleSelection}
       />
       <ViewRoleModal
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
-        currentAgent={currentUserForRole}
+        currentUser={currentUserForRole}
       />
     </ParentCard>
   );

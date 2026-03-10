@@ -23,7 +23,10 @@ import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
-  ArrowBack as ArrowBackIcon,
+  // Edit as EditIcon,
+  // Delete as DeleteIcon,
+  // Block as BlockIcon,
+  // CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../shared/ParentCard';
 import ModuleModal from './ModuleModal';
@@ -65,6 +68,7 @@ const ModuleManagement = ({
   );
 
   const handleModuleMenuOpen = (event, mod) => {
+    event.stopPropagation();
     setModuleAnchorEl(event.currentTarget);
     setSelectedModule(mod);
   };
@@ -72,6 +76,17 @@ const ModuleManagement = ({
   const handleModuleMenuClose = () => {
     setModuleAnchorEl(null);
     setSelectedModule(null);
+  };
+
+  const handleEditModule = (mod) => {
+    setModuleActionType('update');
+    setSelectedModule(mod);
+    setModuleModalOpen(true);
+  };
+
+  const handleDeleteModule = (mod) => {
+    setModuleToDelete(mod);
+    setDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = () => {
@@ -84,11 +99,11 @@ const ModuleManagement = ({
   };
 
   const handleStatusChange = (module, status) => {
-    const updatedModule = { 
-      ...module, 
-      module_status: status 
+    const updatedModule = {
+      ...module,
+      module_status: status,
     };
-    onModuleUpdate(updatedModule, 'update');
+    onModuleUpdate(updatedModule, 'status_change');
     notify.success(
       `Module ${status === 'active' ? 'activated' : 'deactivated'} successfully`,
       'Success',
@@ -126,15 +141,15 @@ const ModuleManagement = ({
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
           <Box display="flex" alignItems="center">
-            {onBack && (
+            {/* {onBack && (
               <IconButton onClick={onBack} sx={{ mr: 2 }} color="primary">
                 <ArrowBackIcon />
               </IconButton>
-            )}
+            )} */}
             <Typography variant="h5">
               {packageModules.length > 0 && currentPackage ? (
                 <>
-                  Modules in{' '}
+                  List of Modules in{' '}
                   <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
                     {currentPackage.package_name || currentPackage.pac_name}
                   </Box>
@@ -185,12 +200,14 @@ const ModuleManagement = ({
           <Paper variant="outlined">
             <TableContainer>
               <Table sx={{ whiteSpace: 'nowrap' }}>
+                {/* <Table> */}
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Module Name</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -233,11 +250,40 @@ const ModuleManagement = ({
                           />
                         </TableCell>
                         <TableCell align="center">
+                          <IconButton onClick={(e) => handleModuleMenuOpen(e, mod)}>
+                            <MoreVertIcon />
+                          </IconButton>
                           <Menu
                             anchorEl={moduleAnchorEl}
                             open={Boolean(moduleAnchorEl) && selectedModule?.id === mod.id}
                             onClose={handleModuleMenuClose}
                           >
+                            <MenuItem onClick={() => handleEditModule(mod)}>
+                              {/* <EditIcon sx={{ mr: 1, fontSize: 18 }} /> */}
+                              Edit Module
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                const newStatus = status === 'active' ? 'inactive' : 'active';
+                                handleStatusChange(mod, newStatus);
+                              }}
+                            >
+                              {status === 'active' ? (
+                                <>
+                                  {/* <BlockIcon sx={{ mr: 1, fontSize: 18 }} /> */}
+                                  Deactivate
+                                </>
+                              ) : (
+                                <>Activate</>
+                              )}
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => handleDeleteModule(mod)}
+                              sx={{ color: 'error.main' }}
+                            >
+                              {/* <DeleteIcon sx={{ mr: 1, fontSize: 18 }} /> */}
+                              Delete
+                            </MenuItem>
                           </Menu>
                         </TableCell>
                       </TableRow>
@@ -280,7 +326,9 @@ const ModuleManagement = ({
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Module"
-        message={`Are you sure you want to delete "${moduleToDelete?.module_name || moduleToDelete?.mod_name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${
+          moduleToDelete?.module_name || moduleToDelete?.mod_name
+        }"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

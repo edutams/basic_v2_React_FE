@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,24 +11,113 @@ import {
   InputAdornment,
   Checkbox,
   ListItemText,
-  List,
   ListItem,
   ListItemButton,
+  CircularProgress,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
+import aclApi from 'src/api/aclApi';
 
 const PermissionAttachmentModal = ({
   open,
   onClose,
   selectedRow,
-  availablePermissions,
-  selectedPermissions,
+  availablePermissions = [],
+  selectedPermissions: propSelectedPermissions = [],
   permissionSearch,
   onPermissionSearchChange,
   onPermissionChange,
   onSave,
 }) => {
-  const safeAvailablePermissions = availablePermissions || [];
+  const [loading, setLoading] = useState(false);
+  const [permissions, setPermissions] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [permissionSearchLocal, setPermissionSearchLocal] = useState('');
+
+  // Use availablePermissions from props if provided, otherwise use fetched permissions
+  const displayPermissions = availablePermissions.length > 0 ? availablePermissions : permissions;
+
+  // Set loading to false when availablePermissions is provided
+  useEffect(() => {
+    if (availablePermissions.length > 0) {
+      setLoading(false);
+    }
+  }, [availablePermissions]);
+
+  // Fetch all permissions when modal opens (only if availablePermissions is not provided)
+  useEffect(() => {
+    if (open && availablePermissions.length === 0) {
+      fetchPermissions();
+    }
+  }, [open, availablePermissions]);
+
+  // Sync selectedPermissions when prop changes (these are the permissions already attached to the role)
+  useEffect(() => {
+    if (propSelectedPermissions && propSelectedPermissions.length > 0) {
+      setSelectedPermissions(propSelectedPermissions);
+    } else {
+      setSelectedPermissions([]);
+    }
+  }, [propSelectedPermissions]);
+
+  // Sync permissionSearch when prop changes
+  useEffect(() => {
+    if (permissionSearch !== undefined) {
+      setPermissionSearchLocal(permissionSearch);
+    }
+  }, [permissionSearch]);
+
+  const fetchPermissions = async () => {
+    setLoading(true);
+    try {
+      const res = await aclApi.getAllPermissions();
+      setPermissions(res?.data || []);
+    } catch (err) {
+      console.error('Failed to fetch permissions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggle = (permission) => {
+    // Call onPermissionChange if provided (for parent component to handle state)
+    if (onPermissionChange) {
+      onPermissionChange(permission);
+    }
+    // Also update local state for display
+    setSelectedPermissions((prev) => {
+      const exists = prev.some(
+        (p) => String(p.id) === String(permission.id) || p.name === permission.name,
+      );
+      return exists
+        ? prev.filter((p) => String(p.id) !== String(permission.id) && p.name !== permission.name)
+        : [...prev, permission];
+    });
+  };
+
+  const isSelected = (permission) => {
+    return selectedPermissions.some(
+      (p) => String(p.id) === String(permission.id) || p.name === permission.name,
+    );
+  };
+
+  const filteredPermissions = displayPermissions.filter((permission) =>
+    permission?.name?.toLowerCase()?.includes(permissionSearchLocal?.toLowerCase() || ''),
+  );
+
+  const handleSave = () => {
+    if (onSave) {
+      onSave(selectedPermissions);
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setPermissionSearchLocal(value);
+    if (onPermissionSearchChange) {
+      onPermissionSearchChange(value);
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -50,8 +139,8 @@ const PermissionAttachmentModal = ({
           type="text"
           fullWidth
           variant="outlined"
-          value={permissionSearch}
-          onChange={(e) => onPermissionSearchChange(e.target.value)}
+          value={permissionSearchLocal}
+          onChange={handleSearchChange}
           sx={{ mb: 2 }}
           InputProps={{
             startAdornment: (
@@ -62,30 +151,28 @@ const PermissionAttachmentModal = ({
           }}
         />
 
-        <Typography variant="caption" color="textSecondary" sx={{ mb: 2 }}>
-          Selected: {selectedPermissions.length} of{' '}
-          {
-            safeAvailablePermissions.filter((permission) =>
-              permission?.name?.toLowerCase()?.includes(permissionSearch.toLowerCase()),
-            ).length
-          }{' '}
-          permissions
+        <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
+          Current permissions: {selectedPermissions.length} permissions assigned
         </Typography>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-          {safeAvailablePermissions
-            .filter((permission) =>
-              permission?.name?.toLowerCase()?.includes(permissionSearch.toLowerCase()),
-            )
-
-            .map((permission) => (
-              <ListItem
-                key={permission.id}
-                disablePadding
-                sx={{ padding: '4px 8px', display: 'flex', alignItems: 'center' }}
-              >
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 1,
+              maxHeight: 400,
+              overflow: 'auto',
+            }}
+          >
+            {filteredPermissions.map((permission) => (
+              <ListItem key={permission.id} disablePadding sx={{ padding: '4px 8px' }}>
                 <ListItemButton
-                  onClick={() => onPermissionChange(permission)}
+                  onClick={() => handleToggle(permission)}
                   sx={{
                     padding: '4px 8px',
                     display: 'flex',
@@ -93,13 +180,7 @@ const PermissionAttachmentModal = ({
                     width: '100%',
                   }}
                 >
-                  <Checkbox
-                    size="small"
-                    // checked={selectedPermissions.includes(permission)}
-                    checked={selectedPermissions.some((p) => p.id === permission.id)}
-                    onChange={() => onPermissionChange(permission)}
-                    sx={{ marginRight: 1 }}
-                  />
+                  <Checkbox size="small" checked={isSelected(permission)} sx={{ marginRight: 1 }} />
                   <ListItemText
                     primary={permission.name}
                     primaryTypographyProps={{ variant: 'body2' }}
@@ -107,13 +188,14 @@ const PermissionAttachmentModal = ({
                 </ListItemButton>
               </ListItem>
             ))}
-        </Box>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onSave} variant="contained" color="primary">
-          Attach Permissions
+        <Button onClick={handleSave} variant="contained" color="primary">
+          Save Permissions
         </Button>
       </DialogActions>
     </Dialog>

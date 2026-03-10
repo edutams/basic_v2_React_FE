@@ -26,6 +26,7 @@ import {
   IconButton,
   Button,
   Badge,
+  Card
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -44,9 +45,19 @@ import {
   IconUsers, 
   IconSchool, 
   IconCurrencyNaira, 
+  IconChartBar
 } from '@tabler/icons-react';
 
 import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+import AgentSubAgentsCard from './components/AgentSubAgentsCard';
+import AgentRevenueCard from './components/AgentRevenueCard';
+import AgentSchoolCard from './components/AgentSchoolCard';
+import LoginActivitiesCard from './components/LoginActivitiesCard';
+import PlanDistributionModal from './components/PlanDistributionModal';
+import LoggedInUsersModal from './components/LoggedInUsersModal';
+import ViewUsersListModal from './components/ViewUsersListModal';
+import TotalSchoolModal from './components/TotalSchoolModal';
+import TotalTransactionModal from './components/TotalTransactionModal';
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 
@@ -97,6 +108,21 @@ const Agent = () => {
   const [state, setState] = useState('');
   const [lga, setLga] = useState('');
   const [status, setStatus] = useState('');
+
+  // Modal States
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
+  const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
+  const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+
+  const loginActivities = [
+    { label: 'Teacher', value: 12 },
+    { label: 'SPA', value: 45 },
+    { label: 'Student', value: 23 },
+    { label: 'Parent', value: 12 },
+  ];
   // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
   
@@ -611,10 +637,10 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
-                  navigate(`/dashboards/view-agent/${row.original.s_n}`);
+                  navigate(`/agent/view/${row.original.s_n}`);
                 }}
               >
-                View Profile
+                View Agent Profile
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -646,7 +672,7 @@ const Agent = () => {
                   handleSetCommission(row.original);
                 }}
               >
-                Set Commission
+                Update Commission
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -662,7 +688,7 @@ const Agent = () => {
                   handleManageGateway(row.original);
                 }}
               >
-                Manage Gateway
+                Manage Payment Gateway
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -670,8 +696,7 @@ const Agent = () => {
                   handleImpersonate(row.original);
                 }}
               >
-                Login As
-              </MenuItem>
+Change Agent Color Scheme              </MenuItem>
               <MenuItem
                 onClick={() => {
                   handleClose();
@@ -726,25 +751,13 @@ const Agent = () => {
         {/* Row 1: Stat Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Total Agents"
+            <AgentSchoolCard
+              title="Total School"
               value="123"
-              icon={IconUsers}
-              bgcolor="#E8F2F3"
-              color="#333"
-              iconBgColor="#2ca87f"
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Active School"
-              value="123"
-              subtitle="Total School"
               icon={IconSchool}
               bgcolor="#C9EBD2"
-              color="#333"
               iconBgColor="#2ca87f"
+              onClick={() => setIsSchoolModalOpen(true)}
               rightContent={
                 <Stack spacing={0.5}>
                   {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
@@ -761,44 +774,115 @@ const Agent = () => {
               }
             />
           </Grid>
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <AgentSubAgentsCard
+              title="Total Sub Agents"
+              value="36"
+              icon={IconUsers}
+              bgcolor="#E8F2F3"
+              iconBgColor="#2ca87f"
+            />
+          </Grid>
           
           <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Revenue"
-              value="#10, 000, 000"
+            <AgentRevenueCard
+              title="Total Transaction Value"
+              value="70,234.00"
               icon={IconCurrencyNaira}
-              bgcolor="#D2D2E8"
-              color="#333"
-              iconBgColor="#ffffff"
+              commission="100,000,000,000"
+              volume="110,344,300,000"
+              onClick={() => setIsTransactionModalOpen(true)}
             />
           </Grid>
         </Grid>
 
-        {/* Row 2: Charts */}
+        {/* Row 2: Charts and Login Activities */}
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <ReusableBarChart
-              title="Revenue Trend"
-              series={revenueSeries}
-              categories={months}
-              colors={['#3949ab']}
-              height={350}
-              yAxisPrefix="N"
-              yAxisFormatter={(val) => `${val.toFixed(1)}M`}
-              xAxisTitle="Month"
-            />
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <Card sx={{ p: 0, height: '100%', borderRadius: '12px', boxShadow: 'none', border: '1px solid rgba(0,0,0,0.05)' }}>
+               <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="h5" fontWeight="600" sx={{ color: '#4a3aff' }}>Transaction</Typography>
+                  <Stack direction="row" spacing={1}>
+                     <Select size="small" value="Year" sx={{ minWidth: 100, height: '35px' }}>
+                        <MenuItem value="Year">Year</MenuItem>
+                     </Select>
+                     <Select size="small" value="Bank" sx={{ minWidth: 100, height: '35px' }}>
+                        <MenuItem value="Bank">Bank</MenuItem>
+                     </Select>
+                  </Stack>
+               </Box>
+               <Box sx={{ p: 2 }}>
+                <ReusableBarChart
+                  series={revenueSeries}
+                  categories={months}
+                  colors={['#3949ab']}
+                  height={300}
+                  yAxisPrefix="N"
+                  yAxisFormatter={(val) => `${val.toFixed(1)}M`}
+                  xAxisTitle="Month"
+                />
+               </Box>
+            </Card>
           </Grid>
           
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <ReusablePieChart
-              title="Plan Distribution"
-              series={planSeries}
-              labels={planLabels}
-              colors={['#3949ab', '#66bb6a', '#ffa726']}
-              height={320}
+          <Grid size={{ xs: 12, lg: 3 }}>
+            <LoginActivitiesCard 
+              title="Login Activities" 
+              activities={loginActivities}
+              onIconClick={() => setIsLoggedInUsersModalOpen(true)}
             />
           </Grid>
+
+          <Grid size={{ xs: 12, lg: 3 }}>
+             <Card sx={{ p: '24px !important', height: '100%', borderRadius: '12px', boxShadow: 'none', border: '1px solid rgba(0,0,0,0.05)', position: 'relative' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Typography variant="subtitle2" fontWeight="600" sx={{ color: '#64748B' }}>
+                    Plan Distribution
+                  </Typography>
+                  <Box 
+                    onClick={() => setIsPlanModalOpen(true)}
+                    sx={{ 
+                      bgcolor: '#454545', 
+                      p: 0.5, 
+                      borderRadius: '4px', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: '#333' }
+                    }}
+                  >
+                    <IconChartBar size={20} color="white" />
+                  </Box>
+                </Box>
+                <ReusablePieChart
+                  series={planSeries}
+                  labels={planLabels}
+                  colors={['#ff4081', '#2196f3', '#ff80ab', '#b39ddb']}
+                  height={200}
+                />
+             </Card>
+          </Grid>
         </Grid>
+
+        {/* Modals */}
+        <PlanDistributionModal 
+          open={isPlanModalOpen} 
+          onClose={() => setIsPlanModalOpen(false)} 
+        />
+        <LoggedInUsersModal 
+          open={isLoggedInUsersModalOpen} 
+          onClose={() => setIsLoggedInUsersModalOpen(false)}
+          onViewUserList={() => {
+            setIsLoggedInUsersModalOpen(false);
+            setIsViewUsersListModalOpen(true);
+          }}
+        />
+        <ViewUsersListModal 
+          open={isViewUsersListModalOpen} 
+          onClose={() => setIsViewUsersListModalOpen(false)}
+          schoolName={selectedSchoolForUsers}
+        />
       </Box>
 
       <Box sx={{ mt: 3 }}>
@@ -996,7 +1080,7 @@ const Agent = () => {
               <TableBody>
                 {!emptyState.isEmpty ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} hover>
+                    <TableRow key={row.id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: '#F8FAFC' } }}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1039,6 +1123,27 @@ const Agent = () => {
           confirmText="Yes, Delete"
           cancelText="Cancel"
           severity="error"
+        />
+        <TotalSchoolModal 
+          open={isSchoolModalOpen} 
+          onClose={() => setIsSchoolModalOpen(false)} 
+        />
+        <TotalTransactionModal 
+          open={isTransactionModalOpen} 
+          onClose={() => setIsTransactionModalOpen(false)} 
+        />
+        <LoggedInUsersModal 
+          open={isLoggedInUsersModalOpen} 
+          onClose={() => setIsLoggedInUsersModalOpen(false)}
+          onViewUserList={() => setIsViewUsersListModalOpen(true)}
+        />
+        <ViewUsersListModal 
+          open={isViewUsersListModalOpen} 
+          onClose={() => setIsViewUsersListModalOpen(false)} 
+        />
+        <PlanDistributionModal 
+          open={isPlanModalOpen} 
+          onClose={() => setIsPlanModalOpen(false)} 
         />
       </Box>
     </PageContainer>

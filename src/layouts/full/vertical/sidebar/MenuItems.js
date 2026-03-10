@@ -75,50 +75,50 @@ const Menuitems = [
     id: uniqueId(),
     title: 'Analytical',
     icon: IconChartPie,
-    href: '/dashboards/analytical',
+    href: '/analytical',
+    permission: ['censis.dashboard'],
   },
   {
     id: uniqueId(),
     title: 'ACL Manager',
     icon: IconSettings,
     href: '/alc-manager',
-  }
-  ,
+    permission: ['censis.acl.index'],
+  },
   {
     id: uniqueId(),
     title: 'Calendar',
     icon: IconCalendarTime,
     href: '/calendar',
+    permission: ['censis.calendar.view'],
   },
   {
     id: uniqueId(),
     title: 'Agent',
     icon: IconUserCircle,
     href: '/agent',
+    permission: ['censis.acl.user.manage.role'],
   },
   {
     id: uniqueId(),
     title: 'Activity Log',
     icon: IconHistory,
     href: '/activity-log',
+    permission: ['censis.activity_log.view'],
   },
   {
     id: uniqueId(),
     title: 'School',
     icon: IconSchool,
     href: '/school',
+    permission: ['censis.tenant.view'],
   },
   {
     id: uniqueId(),
     title: 'EduTier',
     icon: IconListTree,
     href: '/edutier',
-  },
-  {
-    id: uniqueId(),
-    title: 'My Plan',
-    icon: IconMap,
-    href: '/my-plan',
+    permission: ['censis.edutier.manage'],
   },
   {
     id: uniqueId(),
@@ -163,8 +163,8 @@ const Menuitems = [
     title: 'Tenant Subscriptions',
     icon: IconAppWindow,
     href: '/agent/subscriptions',
+    permission: ['censis.subscription.view'],
   },
-
 
   /*
   {

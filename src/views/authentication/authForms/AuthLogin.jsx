@@ -85,7 +85,16 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      navigate(from, { replace: true });
+      const user = result.user;
+      if (user) {
+        if (user.access_level === 1) {
+          navigate('/agent', { replace: true });
+        } else if (user.access_level > 1) {
+          navigate(`/agent/view/${user.id}`, { replace: true });
+        } else {
+          navigate(from, { replace: true });
+        }
+      }
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }

@@ -230,7 +230,7 @@ const Plan = () => {
 
   return (
     <PageContainer title="Plans" description="This is the Plans page">
-      <Breadcrumb title="Plans" items={BCrumb} />
+      {/* <Breadcrumb title="Plans" items={BCrumb} /> */}
       <ParentCard
         title={
           <Box sx={{ width: '100%' }}>

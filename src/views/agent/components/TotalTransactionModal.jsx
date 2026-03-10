@@ -13,6 +13,7 @@ import {
 import StandardModal from 'src/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
+import { color } from 'framer-motion';
 
 const TotalTransactionModal = ({ open, onClose }) => {
     const [year, setYear] = React.useState('2026');
@@ -75,6 +76,12 @@ const TotalTransactionModal = ({ open, onClose }) => {
             maxWidth="lg"
             padding={3}
             dividers={false}
+            actions={
+                <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+                    <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+                    <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
+                </Stack>
+            }
         >
             {/* Top Cards Section */}
             <Grid container spacing={2} mb={4}>
@@ -137,7 +144,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
                         <MenuItem value="All">Transaction option</MenuItem>
                     </Select>
                 </Box>
-                <PrimaryButton sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#27A844' }, height: 'fit-content' }}>Filter</PrimaryButton>
+                <PrimaryButton sx={{ color:"#ffffff",bgcolor: '#27A844', '&:hover': { bgcolor: '#27A844',color:"#ffffff" }, height: 'fit-content' }}>Filter</PrimaryButton>
 
                 <Box sx={{ ml: { sm: 'auto' }, display: 'flex', alignItems: 'center', width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'center', sm: 'flex-end' } }}>
                     <Typography variant="h6" fontWeight="700" color="textSecondary">Total Transaction Value</Typography>

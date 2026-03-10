@@ -1,28 +1,16 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
   Typography,
   Box,
   Stack,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  
- Card,Divider
+  IconButton,
+  Card,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import GetAppIcon from '@mui/icons-material/GetApp';
-import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StandardDataTable from 'src/components/shared/StandardDataTable';
+import StandardModal from 'src/components/shared/StandardModal';
+import PrimaryButton from 'src/components/shared/PrimaryButton';
 
 const ViewUsersListModal = ({ open, onClose, schoolName }) => {
   const data = [
@@ -33,32 +21,29 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
   ];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '8px' } }}>
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column-reverse', sm: 'row' },
-        justifyContent: 'space-between', 
-        alignItems: { xs: 'flex-start', sm: 'center' }, 
-        p: 2.5, 
-        borderBottom: '1px solid #e2e8f0', 
-        bgcolor: 'white',
-        gap: 1
-      }}>
-        <Typography variant="subtitle1" fontWeight="700" color="#4a5568">
-          Logged in users today for {schoolName || 'FESTIVAL SPECIAL PRIAMRY SCHOOL'}
-        </Typography>
-        <IconButton onClick={onClose} sx={{ color: '#4a5568', ml: { xs: 'auto', sm: 0 }, mt: { xs: -1, sm: 0 } }}><CloseIcon /></IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ p: 4, bgcolor: '#f4f6f8' }}>
-        <Card sx={{ p: 0, borderRadius: '4px', boxShadow: 'none', border: '1px solid #e2e8f0', bgcolor: 'white', overflow: 'hidden' }}>
+    <StandardModal
+      open={open}
+      onClose={onClose}
+      title={`Logged in users today for ${schoolName || 'FESTIVAL SPECIAL PRIAMRY SCHOOL'}`}
+      maxWidth="md"
+      padding={4}
+      headerBg="white"
+      actions={
+        <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+          <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+          <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
+        </Stack>
+      }
+    >
+      <Card sx={{ p: 0, borderRadius: '4px', boxShadow: 'none', border: '1px solid #e2e8f0', bgcolor: 'white', overflow: 'hidden' }}>
            <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-              <Button 
-                variant="contained" 
+              <PrimaryButton 
+                variant="primary"
                 startIcon={<GetAppIcon />} 
-                sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, textTransform: 'none', fontWeight: 600, width: { xs: '100%', sm: 'auto' } }}
+                sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, width: { xs: '100%', sm: 'auto' } }}
               >
                 Export to Excel
-              </Button>
+              </PrimaryButton>
            </Box>
            <Box sx={{ p: 2 }}>
             <StandardDataTable 
@@ -80,9 +65,8 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
               pageSize={10}
             />
            </Box>
-        </Card>
-      </DialogContent>
-    </Dialog>
+      </Card>
+    </StandardModal>
   );
 };
 

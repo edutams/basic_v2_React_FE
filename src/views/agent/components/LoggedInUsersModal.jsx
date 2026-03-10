@@ -46,6 +46,12 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
       headerBg="#f4f6f8"
       sx={{ bgcolor: '#f4f6f8' }}
       dividers={false}
+      actions={
+        <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+          <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+          <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
+        </Stack>
+      }
     >
         {/* Top Stat Cards */}
         <Grid container spacing={1.5} mb={3}>

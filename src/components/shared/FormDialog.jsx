@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, Box } from '@mui/material';
-import ReusableDialog from './ReusableDialog';
+import { Box } from '@mui/material';
 import PropTypes from 'prop-types';
+import ReusableDialog from './ReusableDialog';
+import PrimaryButton from './PrimaryButton';
 
 const FormDialog = ({
   open,
@@ -11,10 +12,6 @@ const FormDialog = ({
   children,
   submitText = 'Submit',
   cancelText = 'Cancel',
-  submitColor = 'primary',
-  submitVariant = 'contained',
-  cancelColor = 'inherit',
-  cancelVariant = 'outlined',
   submitDisabled = false,
   maxWidth = 'sm',
   dividers = true,
@@ -26,23 +23,21 @@ const FormDialog = ({
   };
 
   const actions = (
-    <Box sx={{ display: 'flex', gap: 1 }}>
-      <Button
+    <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
+      <PrimaryButton
         onClick={onClose}
-        color={cancelColor}
-        variant={cancelVariant}
+        variant="secondary"
       >
         {cancelText}
-      </Button>
-      <Button
+      </PrimaryButton>
+      <PrimaryButton
         type="submit"
         form="form-dialog-form"
-        color={submitColor}
-        variant={submitVariant}
+        variant="primary"
         disabled={submitDisabled}
       >
         {submitText}
-      </Button>
+      </PrimaryButton>
     </Box>
   );
 

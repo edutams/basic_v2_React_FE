@@ -640,7 +640,7 @@ const Agent = () => {
                   navigate(`/agent/view/${row.original.s_n}`);
                 }}
               >
-                View Profile
+                View Agent Profile
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -672,7 +672,7 @@ const Agent = () => {
                   handleSetCommission(row.original);
                 }}
               >
-                Set Commission
+                Update Commission
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -688,7 +688,7 @@ const Agent = () => {
                   handleManageGateway(row.original);
                 }}
               >
-                Manage Gateway
+                Manage Payment Gateway
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -696,8 +696,7 @@ const Agent = () => {
                   handleImpersonate(row.original);
                 }}
               >
-                Login As
-              </MenuItem>
+Change Agent Color Scheme              </MenuItem>
               <MenuItem
                 onClick={() => {
                   handleClose();

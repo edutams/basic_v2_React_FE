@@ -69,6 +69,7 @@ import agentApi from '../../api/agent';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../agent/components/PlanDistributionModal';
 import LoggedInUsersModal from '../agent/components/LoggedInUsersModal';
+import TotalSchoolModal from '../agent/components/TotalSchoolModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
@@ -114,6 +115,7 @@ const SchoolDashboard = () => {
 
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openLoggedInUsersModal, setOpenLoggedInUsersModal] = useState(false);
+  const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
 
   const [filterClicked, setFilterClicked] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -380,7 +382,7 @@ const SchoolDashboard = () => {
               </Typography>
 
               <Typography variant="h5" color="text.primary">
-                Total School
+                Total Schools
               </Typography>
             </Box>
           </Box>
@@ -454,6 +456,7 @@ const SchoolDashboard = () => {
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
+              onClick={() => setOpenTotalSchoolModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -473,7 +476,7 @@ const SchoolDashboard = () => {
                 {schoolSummary.total}
               </Typography>
               <Typography variant="h5" color="text.primary">
-                Total School
+                Total Schools
               </Typography>
             </Box>
           </Box>
@@ -888,6 +891,15 @@ const SchoolDashboard = () => {
                               Edit School
                             </MenuItem>
                             <MenuItem
+                            // onClick={() => {
+                            //   setEditSchoolData(row.raw);
+                            //   setOpenEditModal(true);
+                            //   handleActionClose();
+                            // }}
+                            >
+                              Details
+                            </MenuItem>
+                            <MenuItem
                               onClick={() => {
                                 setSchoolToDeactivate(row);
                                 setOpenDeactivateDialog(true);
@@ -897,6 +909,24 @@ const SchoolDashboard = () => {
                               Deactivate
                             </MenuItem>
                             <MenuItem
+                            // onClick={() => {
+                            //   setSchoolToDeactivate(row);
+                            //   setOpenDeactivateDialog(true);
+                            //   handleActionClose();
+                            // }}
+                            >
+                              School
+                            </MenuItem>
+                            <MenuItem
+                            // onClick={() => {
+                            //   setSchoolToDeactivate(row);
+                            //   setOpenDeactivateDialog(true);
+                            //   handleActionClose();
+                            // }}
+                            >
+                              Change
+                            </MenuItem>
+                            {/* <MenuItem
                               onClick={() => {
                                 setSchoolToDelete(row);
                                 setOpenDeleteDialog(true);
@@ -905,7 +935,7 @@ const SchoolDashboard = () => {
                               sx={{ color: 'error.main' }}
                             >
                               Delete
-                            </MenuItem>
+                            </MenuItem> */}
                           </Menu>
                         </TableCell>
                       </TableRow>
@@ -997,6 +1027,10 @@ const SchoolDashboard = () => {
       <LoggedInUsersModal
         open={openLoggedInUsersModal}
         onClose={() => setOpenLoggedInUsersModal(false)}
+      />
+      <TotalSchoolModal
+        open={openTotalSchoolModal}
+        onClose={() => setOpenTotalSchoolModal(false)}
       />
     </LocalizationProvider>
   );

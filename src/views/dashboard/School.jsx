@@ -350,7 +350,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -367,14 +368,14 @@ const SchoolDashboard = () => {
             </Typography>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -429,7 +430,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -450,7 +452,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -462,14 +464,14 @@ const SchoolDashboard = () => {
             </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -521,7 +523,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -542,7 +545,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -579,7 +582,8 @@ const SchoolDashboard = () => {
           sx={{
             borderRadius: 2,
             overflow: 'hidden',
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -589,8 +593,8 @@ const SchoolDashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              color: '#5C5C5C',
-              bgcolor: '#F8F8F8',
+              color: theme.palette.mode === 'dark' ? '#fff' : '#5C5C5C',
+              bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F8F8F8',
               borderRadius: '8px 8px 0 0',
             }}
           >
@@ -598,7 +602,7 @@ const SchoolDashboard = () => {
               variant="h5"
               sx={{
                 fontWeight: 'bold',
-                color: '#5E5E5E',
+                color: theme.palette.mode === 'dark' ? '#fff' : '#5E5E5E',
               }}
             >
               Login Activities
@@ -608,7 +612,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

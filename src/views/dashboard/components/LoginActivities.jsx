@@ -18,11 +18,12 @@ import {
   TableRow,
   TablePagination,
   TableFooter,
+  useTheme,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IconUsers } from '@tabler/icons-react';
-import StandardModal from 'src/components/shared/StandardModal';
+import ReusableModal from 'src/components/shared/ReusableModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 
 const loginActivitiesData = [
@@ -44,45 +45,10 @@ const loginActivitiesData = [
     url: 'https://iksps.sef.edutams.net',
     number: 39,
   },
-  {
-    id: 4,
-    school: 'KABIRU KIRU MODEL PRIMARY SCHOOL',
-    url: 'https://kkmps.sef.edutams.net',
-    number: 13,
-  },
-  {
-    id: 5,
-    school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL',
-    url: 'https://kksps.sef.edutams.net',
-    number: 33,
-  },
-  {
-    id: 6,
-    school: 'KWALLI SPECIAL PRIMARY SCHOOL',
-    url: 'https://ksps.sef.edutams.net',
-    number: 32,
-  },
-  {
-    id: 7,
-    school: 'Lgea Agabija',
-    url: 'https://las.sef.edutams.net',
-    number: 18,
-  },
-  {
-    id: 8,
-    school: 'Lgea Early Child, Mairafi.',
-    url: 'https://lecm.sef.edutams.net',
-    number: 10,
-  },
-  {
-    id: 9,
-    school: 'Lgea Agudu',
-    url: 'https://lgag.sef.edutams.net',
-    number: 8,
-  },
 ];
 
 const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openMenu = Boolean(anchorEl);
   const [page, setPage] = useState(0);
@@ -106,10 +72,10 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
   };
 
   return (
-    <StandardModal
+    <ReusableModal
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      size="extraLarge"
       padding={4}
       headerBg="#f4f6f8"
       dividers={false}
@@ -136,7 +102,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                 borderRadius: '6px',
                 boxShadow: 'none',
                 border: '1px solid #E5E7EB',
-                bgcolor: '#FFFFFF',
+                bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 height: '95px',
@@ -149,7 +115,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                   sx={{
                     fontSize: '18px',
                     fontWeight: 300,
-                    color: '#240606',
+                    color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
                   }}
                 >
                   {stat.label}
@@ -190,6 +156,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           boxShadow: 'none',
           overflow: 'hidden',
           border: '1px solid #e2e8f0',
+          background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
         }}
       >
         {/* Header */}
@@ -199,13 +166,17 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            bgcolor: 'white',
+            bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : 'white',
             flexWrap: 'wrap',
             gap: 2,
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Typography variant="subtitle1" fontWeight="600" color="#4a5568">
+            <Typography
+              variant="subtitle1"
+              fontWeight="600"
+              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#4a5568' }}
+            >
               Logged In Users This Week
             </Typography>
           </Stack>
@@ -228,7 +199,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             flexWrap: 'wrap',
             gap: 2,
             p: 2,
-            bgcolor: '#f2fdf5',
+            bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f2fdf5',
             borderTop: '1px solid #e2e8f0',
           }}
         >
@@ -238,14 +209,30 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               display: 'flex',
               border: '1px solid #ddd',
               borderRadius: '4px',
-              bgcolor: 'white',
+              bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
             }}
           >
-            <Box sx={{ px: 2, py: 0.8, bgcolor: '#e0f7fa', borderRight: '1px solid #ddd' }}>
-              <Typography variant="body2">Agent</Typography>
+            <Box
+              sx={{
+                px: 2,
+                py: 0.8,
+                bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
+                borderRight: '1px solid #ddd',
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+              >
+                Agent
+              </Typography>
             </Box>
 
-            <Select size="small" defaultValue="Agent 2" sx={{ minWidth: 120 }}>
+            <Select
+              size="small"
+              defaultValue="Agent 2"
+              sx={{ minWidth: 120, color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+            >
               <MenuItem value="Agent 2">Agent 2</MenuItem>
             </Select>
           </Box>
@@ -256,11 +243,23 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               display: 'flex',
               border: '1px solid #ddd',
               borderRadius: '4px',
-              bgcolor: 'white',
+              bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
             }}
           >
-            <Box sx={{ px: 2, py: 0.8, bgcolor: '#e0f7fa', borderRight: '1px solid #ddd' }}>
-              <Typography variant="body2">User Type</Typography>
+            <Box
+              sx={{
+                px: 2,
+                py: 0.8,
+                bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
+                borderRight: '1px solid #ddd',
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+              >
+                User Type
+              </Typography>
             </Box>
 
             <Select size="small" defaultValue="Teacher" sx={{ minWidth: 120 }}>
@@ -281,13 +280,48 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
         <Box sx={{ p: 2 }}>
           <TableContainer>
             <Table sx={{ whiteSpace: 'nowrap' }}>
-              <TableHead sx={{ bgcolor: '#F9FAFB' }}>
+              <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F9FAFB' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>School</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>URL</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Number</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Action</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#374151',
+                    }}
+                  >
+                    #
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#374151',
+                    }}
+                  >
+                    School
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#374151',
+                    }}
+                  >
+                    URL
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#374151',
+                    }}
+                  >
+                    Number
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#374151',
+                    }}
+                  >
+                    Action
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -295,11 +329,23 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                   ? loginActivitiesData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   : loginActivitiesData
                 ).map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{row.school}</TableCell>
-                    <TableCell>{row.url}</TableCell>
-                    <TableCell>{row.number}</TableCell>
+                  <TableRow
+                    key={row.id}
+                    hover
+                    sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                  >
+                    <TableCell sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}>
+                      {row.id}
+                    </TableCell>
+                    <TableCell sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}>
+                      {row.school}
+                    </TableCell>
+                    <TableCell sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}>
+                      {row.url}
+                    </TableCell>
+                    <TableCell sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}>
+                      {row.number}
+                    </TableCell>
                     <TableCell>
                       <IconButton onClick={handleClickMenu}>
                         <MoreVertIcon fontSize="small" />
@@ -336,7 +382,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           View Users List
         </MenuItem>
       </Menu>
-    </StandardModal>
+    </ReusableModal>
   );
 };
 

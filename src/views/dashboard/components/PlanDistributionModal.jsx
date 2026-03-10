@@ -1,9 +1,21 @@
 import React from 'react';
-import { Typography, Box, Grid, Stack, Select, MenuItem, Button, Card } from '@mui/material';
+import {
+  Typography,
+  Box,
+  Grid,
+  Stack,
+  Select,
+  MenuItem,
+  Button,
+  Card,
+  useTheme,
+} from '@mui/material';
 import Chart from 'react-apexcharts';
-import StandardModal from 'src/components/shared/StandardModal';
+// import StandardModal from 'src/components/shared/StandardModal';
+import ReusableModal from 'src/components/shared/ReusableModal';
 
 const PlanDistributionModal = ({ open, onClose }) => {
+  const theme = useTheme();
   const plans = [
     { label: 'Freemium', value: '7,000,234.00', color: '#263393', bg: 'white', border: '#263393' },
     { label: 'Basic', value: '7,000,234.00', color: '#7987FF', bg: 'white', border: '#7987FF' },
@@ -87,10 +99,10 @@ const PlanDistributionModal = ({ open, onClose }) => {
   ];
 
   return (
-    <StandardModal
+    <ReusableModal
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      size="extraLarge"
       padding={0}
       title={
         <Typography fontSize={24} fontWeight={700}>
@@ -98,7 +110,13 @@ const PlanDistributionModal = ({ open, onClose }) => {
         </Typography>
       }
     >
-      <Box sx={{ p: 4, bgcolor: '#f8fafc', position: 'relative' }}>
+      <Box
+        sx={{
+          p: 4,
+          bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f8fafc',
+          position: 'relative',
+        }}
+      >
         <Grid container spacing={2} mb={4} mt={2}>
           {plans.map((plan, index) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
@@ -114,6 +132,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                   justifyContent: 'center',
                   alignItems: 'center',
                   textAlign: 'center',
+                  background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
                 }}
               >
                 <Typography
@@ -126,7 +145,11 @@ const PlanDistributionModal = ({ open, onClose }) => {
 
                 <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }} />
-                  <Typography variant="caption" fontWeight="700" sx={{ color: '#444' }}>
+                  <Typography
+                    variant="caption"
+                    fontWeight="700"
+                    sx={{ color: theme.palette.mode === 'dark' ? '#aaa' : '#444' }}
+                  >
                     {plan.label}
                   </Typography>
                 </Stack>
@@ -139,70 +162,81 @@ const PlanDistributionModal = ({ open, onClose }) => {
           sx={{
             borderRadius: '8px',
             overflow: 'hidden',
-            bgcolor: 'white',
+            bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : 'white',
             p: 0,
             border: '1px solid #e2e8f0',
           }}
         >
-          <Box sx={{ bgcolor: '#f2fdf5', px: 3, py: 1 }}>
+          <Box
+            sx={{ bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f2fdf5', px: 3, py: 1 }}
+          >
             <Grid container alignItems="center">
               <Grid item xs={12} md={9}>
-                <Grid item xs={12} md={3}>
-                  <Stack direction="row" spacing={2} alignItems="center" justifyContent="flex-end">
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="flex-start"
+                  sx={{ pl: 1 }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
+                      overflow: 'hidden',
+                    }}
+                  >
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        bgcolor: 'white',
-                        overflow: 'hidden',
+                        px: 2,
+                        py: 0.5,
+                        bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
+                        borderRight: '1px solid #ddd',
                       }}
                     >
-                      <Box
-                        sx={{
-                          px: 2,
-                          py: 0.5,
-                          bgcolor: '#e0f7fa',
-                          borderRight: '1px solid #ddd',
-                        }}
+                      <Typography
+                        variant="body2"
+                        fontWeight="500"
+                        sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
                       >
-                        <Typography variant="body2" fontWeight="500">
-                          Year
-                        </Typography>
-                      </Box>
-
-                      <Select
-                        size="small"
-                        value="2026"
-                        sx={{
-                          '& fieldset': { border: 'none' },
-                          '.MuiSelect-select': {
-                            py: 0.5,
-                            fontWeight: 600,
-                            minWidth: '70px',
-                          },
-                        }}
-                      >
-                        <MenuItem value="2026">2026</MenuItem>
-                      </Select>
+                        Year
+                      </Typography>
                     </Box>
 
-                    <Button
-                      variant="contained"
+                    <Select
+                      size="small"
+                      value="2026"
                       sx={{
-                        bgcolor: '#2ca87f',
-                        '&:hover': { bgcolor: '#238a68' },
-                        textTransform: 'none',
-                        px: 3,
-                        fontWeight: 600,
-                        height: '32px',
+                        '& fieldset': { border: 'none' },
+                        '.MuiSelect-select': {
+                          py: 0.5,
+                          fontWeight: 600,
+                          minWidth: '70px',
+                          color: theme.palette.mode === 'dark' ? '#fff' : '#333',
+                        },
                       }}
                     >
-                      Filter
-                    </Button>
-                  </Stack>
-                </Grid>
+                      <MenuItem value="2026">2026</MenuItem>
+                    </Select>
+                  </Box>
+
+                  <Button
+                    variant="contained"
+                    sx={{
+                      bgcolor: '#2ca87f',
+                      '&:hover': { bgcolor: '#238a68' },
+                      textTransform: 'none',
+                      px: 3,
+                      fontWeight: 600,
+                      height: '32px',
+                    }}
+                  >
+                    Filter
+                  </Button>
+                </Stack>
               </Grid>
 
               <Grid item xs={12} md={3}>
@@ -210,7 +244,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                   fontWeight="700"
                   sx={{
                     fontSize: '16px',
-                    color: '#555',
+                    color: theme.palette.mode === 'dark' ? '#fff' : '#555',
                   }}
                 >
                   Plan per School
@@ -237,7 +271,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                       key={index}
                       sx={{
                         p: 2,
-                        border: `1.5px solid #FA7CEB`,
+                        border: `1.5px solid ${plan.border}`,
                         boxShadow: 'none',
                         borderRadius: '4px',
                         flex: 1,
@@ -246,13 +280,18 @@ const PlanDistributionModal = ({ open, onClose }) => {
                         justifyContent: 'center',
                         alignItems: 'center',
                         textAlign: 'center',
+                        background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
                       }}
                     >
                       <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
                         <Box
                           sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }}
                         />
-                        <Typography variant="subtitle2" fontWeight="700" sx={{ color: '#1a3353' }}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="700"
+                          sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1a3353' }}
+                        >
                           {plan.label}
                         </Typography>
                       </Stack>
@@ -276,7 +315,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
           </Box>
         </Box>
       </Box>
-    </StandardModal>
+    </ReusableModal>
   );
 };
 

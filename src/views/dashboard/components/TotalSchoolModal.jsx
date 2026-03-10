@@ -9,12 +9,14 @@ import {
   Select,
   MenuItem,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import { IconSchool, IconUsers, IconLayoutDashboard, IconX } from '@tabler/icons-react';
-import StandardModal from 'src/components/shared/StandardModal';
+import ReusableModal from 'src/components/shared/ReusableModal';
 import Chart from 'react-apexcharts';
 
 const SchoolsOverviewModal = ({ open, onClose }) => {
+  const theme = useTheme();
   const [tab, setTab] = useState(0);
   const [year, setYear] = useState(2026);
 
@@ -77,10 +79,10 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
   ];
 
   return (
-    <StandardModal
+    <ReusableModal
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      size="extraLarge"
       padding={0}
       title={
         <Typography fontSize={24} fontWeight={700}>
@@ -102,11 +104,16 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
             }}
           >
             <IconSchool size={32} color="#1DA1F2" />
             <Box textAlign="right">
-              <Typography fontSize={28} fontWeight={700}>
+              <Typography
+                fontSize={28}
+                fontWeight={700}
+                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}
+              >
                 700
               </Typography>
               <Typography color="text.secondary" fontSize={14}>
@@ -125,16 +132,37 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
               height: 95,
               display: 'flex',
               alignItems: 'center',
+              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
             }}
           >
             <Stack spacing={1} width="100%">
               <Stack direction="row" justifyContent="space-between">
-                <Typography fontSize={15}>Primary Sch -</Typography>
-                <Typography fontWeight={600}>34</Typography>
+                <Typography
+                  fontSize={15}
+                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                >
+                  Primary Sch -
+                </Typography>
+                <Typography
+                  fontWeight={600}
+                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                >
+                  34
+                </Typography>
               </Stack>
               <Stack direction="row" justifyContent="space-between">
-                <Typography fontSize={15}>Senior Sec</Typography>
-                <Typography fontWeight={600}>34</Typography>
+                <Typography
+                  fontSize={15}
+                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                >
+                  Senior Sec -
+                </Typography>
+                <Typography
+                  fontWeight={600}
+                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                >
+                  34
+                </Typography>
               </Stack>
             </Stack>
           </Paper>
@@ -164,11 +192,18 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
 
         {/* TAB CONTENT */}
         {tab === 0 && (
-          <Paper sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid #eee' }}>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              overflow: 'hidden',
+              border: '1px solid #eee',
+              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+            }}
+          >
             {/* Header with Year Selector */}
             <Box
               sx={{
-                background: '#F2FFFA',
+                background: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F2FFFA',
                 px: 3,
                 py: 2,
                 display: 'flex',
@@ -183,13 +218,13 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                     display: 'inline-flex',
                     alignItems: 'center',
                     border: '1px solid #dcdcdc',
-                    borderRadius: 1,
+                    borderRadius: '0 !important',
                     overflow: 'hidden',
                   }}
                 >
                   <Box
                     sx={{
-                      background: '#E7FAFF',
+                      background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#E7FAFF',
                       px: 2,
                       py: 0.6,
                       display: 'flex',
@@ -197,7 +232,12 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                       borderRight: '1px solid #dcdcdc',
                     }}
                   >
-                    <Typography fontSize={14}>Year</Typography>
+                    <Typography
+                      fontSize={14}
+                      sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                    >
+                      Year
+                    </Typography>
                   </Box>
 
                   <Select
@@ -207,12 +247,18 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                     variant="standard"
                     disableUnderline
                     sx={{
-                      background: '#F5F5F5',
-                      px: 1.5,
-                      py: 0.5,
-                      fontSize: 14,
+                      background: theme.palette.mode === 'dark' ? '#333' : '#F5F5F5',
+                      px: 1.2,
                       minWidth: 70,
-                      '& .MuiSelect-select': { paddingRight: '20px !important' },
+                      height: 32,
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#333',
+                      '& .MuiSelect-select': {
+                        padding: '6px 20px 6px 6px !important',
+                        display: 'flex',
+                        alignItems: 'center',
+                      },
                     }}
                   >
                     <MenuItem value={2024}>2024</MenuItem>
@@ -223,18 +269,31 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
               </Stack>
             </Box>
 
-            <Box sx={{ p: 3, background: '#fff', height: 350 }}>
+            <Box
+              sx={{
+                p: 3,
+                background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+                height: 350,
+              }}
+            >
               <Chart options={chartOptions} series={chartSeries} type="bar" height={300} />
             </Box>
           </Paper>
         )}
 
         {tab === 1 && (
-          <Paper sx={{ borderRadius: 2, overflow: 'hidden', border: '1px solid #eee' }}>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              overflow: 'hidden',
+              border: '1px solid #eee',
+              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+            }}
+          >
             {/* Header with Year Selector */}
             <Box
               sx={{
-                background: '#F2FFFA',
+                background: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F2FFFA',
                 px: 3,
                 py: 2,
                 display: 'flex',
@@ -253,13 +312,13 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                     display: 'inline-flex',
                     alignItems: 'center',
                     border: '1px solid #dcdcdc',
-                    borderRadius: 1,
+                    borderRadius: 0,
                     overflow: 'hidden',
                   }}
                 >
                   <Box
                     sx={{
-                      background: '#E7FAFF',
+                      background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#E7FAFF',
                       px: 2,
                       py: 0.6,
                       display: 'flex',
@@ -267,21 +326,27 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                       borderRight: '1px solid #dcdcdc',
                     }}
                   >
-                    <Typography fontSize={14}>Agent</Typography>
+                    <Typography
+                      fontSize={14}
+                      sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                    >
+                      Agent
+                    </Typography>
                   </Box>
 
                   <Select
-                    value={'agent1'} // example value
+                    value={'agent1'}
                     onChange={(e) => console.log('Selected agent:', e.target.value)}
                     size="small"
                     variant="standard"
                     disableUnderline
                     sx={{
-                      background: '#F5F5F5',
+                      background: theme.palette.mode === 'dark' ? '#333' : '#F5F5F5',
                       px: 1.5,
                       py: 0.5,
                       fontSize: 14,
                       minWidth: 120,
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#333',
                       '& .MuiSelect-select': { paddingRight: '20px !important' },
                     }}
                   >
@@ -297,13 +362,13 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                     display: 'inline-flex',
                     alignItems: 'center',
                     border: '1px solid #dcdcdc',
-                    borderRadius: 1,
+                    borderRadius: 0,
                     overflow: 'hidden',
                   }}
                 >
                   <Box
                     sx={{
-                      background: '#E7FAFF',
+                      background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#E7FAFF',
                       px: 2,
                       py: 0.6,
                       display: 'flex',
@@ -311,7 +376,12 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                       borderRight: '1px solid #dcdcdc',
                     }}
                   >
-                    <Typography fontSize={14}>Year</Typography>
+                    <Typography
+                      fontSize={14}
+                      sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                    >
+                      Year
+                    </Typography>
                   </Box>
 
                   <Select
@@ -321,11 +391,12 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                     variant="standard"
                     disableUnderline
                     sx={{
-                      background: '#F5F5F5',
+                      background: theme.palette.mode === 'dark' ? '#333' : '#F5F5F5',
                       px: 1.5,
                       py: 0.5,
                       fontSize: 14,
                       minWidth: 70,
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#333',
                       '& .MuiSelect-select': { paddingRight: '20px !important' },
                     }}
                   >
@@ -355,7 +426,13 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
               </Stack>
             </Box>
 
-            <Box sx={{ p: 3, background: '#fff', height: 350 }}>
+            <Box
+              sx={{
+                p: 3,
+                background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+                height: 350,
+              }}
+            >
               <Chart
                 options={{
                   chart: {
@@ -406,7 +483,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
           </Paper>
         )}
       </Box>
-    </StandardModal>
+    </ReusableModal>
   );
 };
 

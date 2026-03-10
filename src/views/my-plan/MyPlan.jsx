@@ -31,6 +31,8 @@ import ReusableModal from '../../components/shared/ReusableModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import FormDialog from '../../components/shared/FormDialog';
 
+import PlanDistributionModal from '../agent/components/PlanDistributionModal';
+
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'My Plans' }];
 
 const MyPlan = () => {
@@ -49,6 +51,7 @@ const MyPlan = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [openEditModal, setOpenEditModal] = useState(false);
+
   const [editPlan, setEditPlan] = useState(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
@@ -64,19 +67,25 @@ const MyPlan = () => {
       setLoading(true);
       const res = await api.get('/agent/edu-tier/my-plans');
 
+      // Ensure res.data is an array, otherwise default to empty array
+      const plansData = Array.isArray(res.data) ? res.data : [];
+
       // If no plans exist, automatically sync from system plans
-      if (res.data.data?.length === 0) {
+      if (plansData.length === 0) {
         try {
           const syncRes = await api.post('/agent/edu-tier/my-plans/sync');
-          setPlans(syncRes.data.data || []);
+          // Ensure sync response data is an array
+          setPlans(Array.isArray(syncRes.data.data) ? syncRes.data.data : []);
         } catch (syncError) {
+          // If sync fails, just show empty table
           setPlans([]);
         }
       } else {
-        setPlans(res.data.data || []);
+        setPlans(plansData);
       }
     } catch (error) {
       console.error('Error fetching plans:', error);
+      setPlans([]);
       setSnackbarMessage('Failed to fetch plans');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -181,7 +190,9 @@ const MyPlan = () => {
     }
   };
 
-  const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedPlans = Array.isArray(plans)
+    ? plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    : [];
 
   return (
     <PageContainer title="My Plans" description="This is the My Plans page">

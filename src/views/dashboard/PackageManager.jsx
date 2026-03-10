@@ -1,4 +1,5 @@
-import * as React from 'react';
+import React, { useState } from 'react';
+// import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 
@@ -28,6 +29,7 @@ import PlanTab from '../plan/Plan';
 import MyPlanTab from '../my-plan/MyPlan';
 
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
+import PlanDistributionModal from '../agent/components/PlanDistributionModal';
 
 const planSeries = [40, 15, 35, 10];
 
@@ -77,6 +79,7 @@ function a11yProps(index) {
 
 const EduTier = () => {
   const [value, setValue] = React.useState(0);
+  const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -84,7 +87,7 @@ const EduTier = () => {
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
-      <Breadcrumb title="Manage Subscription" items={BCrumb} />
+      <Breadcrumb title="Managex Subscription" items={BCrumb} />
 
       <Box
         sx={{
@@ -254,7 +257,9 @@ const EduTier = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
               }}
+              onClick={() => setOpenPlanDistributionModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -415,6 +420,11 @@ const EduTier = () => {
           </BlankCard>
         </Grid>
       </Grid>
+
+      <PlanDistributionModal
+        open={openPlanDistributionModal}
+        onClose={() => setOpenPlanDistributionModal(false)}
+      />
     </PageContainer>
   );
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   IconButton,
   Typography,
@@ -10,18 +10,83 @@ import {
   TextField,
   Menu,
   Card,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  TableFooter,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
-import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IconUsers } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
-import StandardDataTable from 'src/components/shared/StandardDataTable';
+
+const loginActivitiesData = [
+  {
+    id: 1,
+    school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL',
+    url: 'https://fsps.sef.edutams.net',
+    number: 30,
+  },
+  {
+    id: 2,
+    school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL',
+    url: 'https://gmsps.sef.edutams.net',
+    number: 10,
+  },
+  {
+    id: 3,
+    school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL',
+    url: 'https://iksps.sef.edutams.net',
+    number: 39,
+  },
+  {
+    id: 4,
+    school: 'KABIRU KIRU MODEL PRIMARY SCHOOL',
+    url: 'https://kkmps.sef.edutams.net',
+    number: 13,
+  },
+  {
+    id: 5,
+    school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL',
+    url: 'https://kksps.sef.edutams.net',
+    number: 33,
+  },
+  {
+    id: 6,
+    school: 'KWALLI SPECIAL PRIMARY SCHOOL',
+    url: 'https://ksps.sef.edutams.net',
+    number: 32,
+  },
+  {
+    id: 7,
+    school: 'Lgea Agabija',
+    url: 'https://las.sef.edutams.net',
+    number: 18,
+  },
+  {
+    id: 8,
+    school: 'Lgea Early Child, Mairafi.',
+    url: 'https://lecm.sef.edutams.net',
+    number: 10,
+  },
+  {
+    id: 9,
+    school: 'Lgea Agudu',
+    url: 'https://lgag.sef.edutams.net',
+    number: 8,
+  },
+];
 
 const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openMenu = Boolean(anchorEl);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const handleClickMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -29,6 +94,15 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
 
   const handleCloseMenu = () => {
     setAnchorEl(null);
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   return (
@@ -131,10 +205,6 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box sx={{ border: '1px solid #cbd5e0', borderRadius: '4px', p: 0.5 }}>
-              <GridViewIcon sx={{ color: '#cbd5e0', fontSize: '24px' }} />
-            </Box>
-
             <Typography variant="subtitle1" fontWeight="600" color="#4a5568">
               Logged In Users This Week
             </Typography>
@@ -209,80 +279,49 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
 
         {/* DataTable */}
         <Box sx={{ p: 2 }}>
-          <StandardDataTable
-            columns={[
-              { header: '#', accessorKey: 'id' },
-              { header: 'School', accessorKey: 'school' },
-              { header: 'URL', accessorKey: 'url' },
-              { header: 'Number', accessorKey: 'number' },
-              {
-                header: 'Action',
-                accessorKey: 'action',
-                cell: () => (
-                  <IconButton onClick={handleClickMenu}>
-                    <MoreVertIcon fontSize="small" />
-                  </IconButton>
-                ),
-              },
-            ]}
-            pageSize={5}
-            data={[
-              {
-                id: 1,
-                school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL',
-                url: 'https://fsps.sef.edutams.net',
-                number: 30,
-              },
-              {
-                id: 2,
-                school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL',
-                url: 'https://gmsps.sef.edutams.net',
-                number: 10,
-              },
-              {
-                id: 3,
-                school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL',
-                url: 'https://iksps.sef.edutams.net',
-                number: 39,
-              },
-              {
-                id: 4,
-                school: 'KABIRU KIRU MODEL PRIMARY SCHOOL',
-                url: 'https://kkmps.sef.edutams.net',
-                number: 13,
-              },
-              {
-                id: 5,
-                school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL',
-                url: 'https://kksps.sef.edutams.net',
-                number: 33,
-              },
-              {
-                id: 6,
-                school: 'KWALLI SPECIAL PRIMARY SCHOOL',
-                url: 'https://ksps.sef.edutams.net',
-                number: 32,
-              },
-              {
-                id: 7,
-                school: 'Lgea Agabija',
-                url: 'https://las.sef.edutams.net',
-                number: 18,
-              },
-              {
-                id: 8,
-                school: 'Lgea Early Child, Mairafi.',
-                url: 'https://lecm.sef.edutams.net',
-                number: 10,
-              },
-              {
-                id: 9,
-                school: 'Lgea Agudu',
-                url: 'https://lgag.sef.edutams.net',
-                number: 8,
-              },
-            ]}
-          />
+          <TableContainer>
+            <Table sx={{ whiteSpace: 'nowrap' }}>
+              <TableHead sx={{ bgcolor: '#F9FAFB' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>School</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>URL</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Number</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#374151' }}>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(rowsPerPage > 0
+                  ? loginActivitiesData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  : loginActivitiesData
+                ).map((row) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell>{row.id}</TableCell>
+                    <TableCell>{row.school}</TableCell>
+                    <TableCell>{row.url}</TableCell>
+                    <TableCell>{row.number}</TableCell>
+                    <TableCell>
+                      <IconButton onClick={handleClickMenu}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    count={loginActivitiesData.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                  />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </TableContainer>
         </Box>
       </Card>
 

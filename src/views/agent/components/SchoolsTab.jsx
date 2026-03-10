@@ -7,7 +7,7 @@ import { IconGridDots, IconPlus, IconDotsVertical, IconEye, IconEdit, IconTrash 
 
 import { useNavigate } from 'react-router';
 
-const SchoolsTab = ({ schools }) => {
+const SchoolsTab = ({ schools, onAddSchool }) => {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedRow, setSelectedRow] = useState(null);
@@ -34,7 +34,7 @@ const SchoolsTab = ({ schools }) => {
                     <Box display="flex" gap={2}>
                         <Button 
                             variant="contained" 
-                            onClick={() => navigate('/school')}
+                            onClick={onAddSchool}
                             startIcon={<IconPlus size={18} />} 
                             sx={{ bgcolor: '#3B82F6', textTransform: 'none', borderRadius: '8px' }}
                         >

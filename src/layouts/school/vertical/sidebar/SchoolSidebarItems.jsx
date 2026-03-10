@@ -52,7 +52,7 @@ const SchoolSidebarItems = () => {
     const fetchModules = async () => {
       try {
         const response = await tenantApi.get('/sidebar-modules');
-        const modules = response.data;
+        const modules = response.data.data;
         console.log(modules, 'modules');
 
         const formattedMenu = modules.map(mod => ({

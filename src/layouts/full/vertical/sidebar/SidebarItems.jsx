@@ -10,6 +10,7 @@ import { useAuth } from 'src/hooks/useAuth';
 import api from 'src/api/auth';
 import {
   IconChartPie,
+  IconCurrencyDollar,
   IconSettings,
   IconCalendarTime,
   IconUserCircle,
@@ -27,9 +28,12 @@ import {
   IconCalendarClock,
   IconArchive,
 } from '@tabler/icons-react';
+import { useParams } from 'react-router';
+
 
 const iconMapper = {
   ChartPie: IconChartPie,
+  CurrencyDollar: IconCurrencyDollar,
   ShieldX: IconShieldLock,
   CalendarClock: IconCalendarClock,
   UserCircle: IconUserCircle,

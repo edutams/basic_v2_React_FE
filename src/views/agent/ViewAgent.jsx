@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
-import { Box, Tab, Stack, Grid } from '@mui/material';
+import { Box, Tab, Stack, Grid ,Divider} from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconUsers, IconSchool, } from '@tabler/icons-react';
+import { useParams } from 'react-router';
+import { useAuth } from '../../hooks/useAuth';
 
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -13,38 +15,91 @@ import StatCards from './components/StatCards';
 import OverviewTab from './components/OverviewTab';
 import TeamTab from './components/TeamTab';
 import SchoolsTab from './components/SchoolsTab';
+import TotalSchoolModal from './components/TotalSchoolModal';
+import TotalTransactionModal from './components/TotalTransactionModal';
+import AgentModal from '../../components/add-agent/components/AgentModal';
+import ReusableModal from '../../components/shared/ReusableModal';
+import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 
 // Mock Data
 import { mockAgentData } from './mockData';
 
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { to: '/agent', title: 'Agent' },
-  { title: 'View Profile' },
-];
-
 const ViewAgent = () => {
+    const { user: currentUser } = useAuth();
+    const { id } = useParams();
     const [value, setValue] = React.useState('1');
+    const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+    const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+    const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
+    const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
+
+    const isOwnProfile = currentUser && currentUser.id == id;
+
+    const BCrumb = [
+        { to: '/', title: 'Home' },
+        ...(isOwnProfile && currentUser.access_level > 1 ? [] : [{ to: '/agent', title: 'Agent' }]),
+        { title: isOwnProfile && currentUser.access_level > 1 ? 'Dashboard' : 'View Profile' },
+    ];
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
     return (
-        <PageContainer title="View Agent Profile" description="Detailed agent profile view">
+        <PageContainer 
+            title={isOwnProfile && currentUser.access_level > 1 ? "Agent Dashboard" : "View Agent Profile"} 
+            description="Detailed agent profile view"
+        >
             <Box sx={{ bgcolor: '#F1F5F9', minHeight: '100vh', p: { xs: 1, md: 2 } }}>
-                <Breadcrumb title="View Profile" items={BCrumb} />
+                <Breadcrumb title={isOwnProfile && currentUser.access_level > 1 ? "Dashboard" : "View Profile"} items={BCrumb} />
                 
                 <Box mt={3}>
                     <Grid container spacing={3} alignItems="stretch">
                         <Grid size={{xs: 12, md: 5, lg: 5}}>
-                            <ProfileHeader profile={mockAgentData.profile} />
+                            <ProfileHeader 
+                                profile={mockAgentData.profile} 
+                                onAddAgent={() => setValue('2')}
+                                onAddSchool={() => setValue('3')}
+                            />
                         </Grid>
                         <Grid size={{xs: 12, md: 7, lg: 7}}>
-                            <StatCards stats={mockAgentData.stats} />
+                            <StatCards 
+                                stats={mockAgentData.stats} 
+                                onTransactionClick={() => setIsTransactionModalOpen(true)}
+                                onSchoolClick={() => setIsSchoolModalOpen(true)}
+                            />
                         </Grid>
                     </Grid>
                 </Box>
+
+                {/* Modals */}
+                <TotalSchoolModal 
+                    open={isSchoolModalOpen} 
+                    onClose={() => setIsSchoolModalOpen(false)} 
+                />
+                <TotalTransactionModal 
+                    open={isTransactionModalOpen} 
+                    onClose={() => setIsTransactionModalOpen(false)} 
+                />
+
+                <AgentModal 
+                    open={isAddAgentModalOpen} 
+                    onClose={() => setIsAddAgentModalOpen(false)} 
+                    handleRefresh={() => {}} 
+                />
+                
+                <ReusableModal
+                    open={isAddSchoolModalOpen}
+                    onClose={() => setIsAddSchoolModalOpen(false)}
+                    title="Register School"
+                    size="large"
+                >
+                    <RegisterSchoolForm
+                        actionType="create"
+                        onSubmit={() => setIsAddSchoolModalOpen(false)}
+                        onCancel={() => setIsAddSchoolModalOpen(false)}
+                    />
+                </ReusableModal>
                     
                 <Box mt={4}>
                     <Box sx={{ bgcolor: 'white', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
@@ -98,10 +153,16 @@ const ViewAgent = () => {
                                     <OverviewTab data={mockAgentData} />
                                 </TabPanel>
                                 <TabPanel value="2" sx={{ p: 3 }}>
-                                    <TeamTab team={mockAgentData.team} />
+                                    <TeamTab 
+                                        team={mockAgentData.team} 
+                                        onAddAgent={() => setIsAddAgentModalOpen(true)}
+                                    />
                                 </TabPanel>
                                 <TabPanel value="3" sx={{ p: 3 }}>
-                                    <SchoolsTab schools={mockAgentData.schools} />
+                                    <SchoolsTab 
+                                        schools={mockAgentData.schools} 
+                                        onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                                    />
                                 </TabPanel>
                             </Box>
                         </TabContext>

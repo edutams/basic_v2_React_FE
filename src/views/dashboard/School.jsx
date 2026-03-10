@@ -69,7 +69,7 @@ import agentApi from '../../api/agent';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../agent/components/PlanDistributionModal';
 import LoggedInUsersModal from '../agent/components/LoggedInUsersModal';
-import TotalSchoolModal from '../agent/components/TotalSchoolModal';
+import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 

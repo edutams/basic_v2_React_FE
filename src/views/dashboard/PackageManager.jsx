@@ -1,4 +1,5 @@
-import * as React from 'react';
+import React, { useState } from 'react';
+// import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 
@@ -28,17 +29,20 @@ import PlanTab from '../plan/Plan';
 import MyPlanTab from '../my-plan/MyPlan';
 
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
+import PlanDistributionModal from '../agent/components/PlanDistributionModal';
 
 const planSeries = [40, 15, 35, 10];
 
 const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
 
 const planData = [
-  { name: 'Freemium', value: 40, color: '#7987FF' },
-  { name: 'Basic', value: 15, color: '#FFA5CB' },
-  { name: 'Basic +', value: 35, color: '#EC468C' },
+  { name: 'Freemium', value: 40, color: '#EC468C' },
+  { name: 'Basic', value: 15, color: '#7987FF' },
+  { name: 'Basic +', value: 35, color: '#FFA5CB' },
   { name: 'Basic ++', value: 10, color: '#8B48E3' },
 ];
+
+const planColors = planData.map((p) => p.color);
 
 const BCrumb = [
   {
@@ -75,6 +79,7 @@ function a11yProps(index) {
 
 const EduTier = () => {
   const [value, setValue] = React.useState(0);
+  const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -82,7 +87,7 @@ const EduTier = () => {
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
-      <Breadcrumb title="Manage Subscription" items={BCrumb} />
+      <Breadcrumb title="Managex Subscription" items={BCrumb} />
 
       <Box
         sx={{
@@ -252,7 +257,9 @@ const EduTier = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
               }}
+              onClick={() => setOpenPlanDistributionModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -267,7 +274,13 @@ const EduTier = () => {
                 overflow: 'hidden',
               }}
             >
-              <ReusablePieChart series={planSeries} labels={planLabels} height={180} hideCard />
+              <ReusablePieChart
+                series={planSeries}
+                colors={planColors}
+                labels={planLabels}
+                height={180}
+                hideCard
+              />
             </Box>
           </Box>
         </Paper>
@@ -407,6 +420,11 @@ const EduTier = () => {
           </BlankCard>
         </Grid>
       </Grid>
+
+      <PlanDistributionModal
+        open={openPlanDistributionModal}
+        onClose={() => setOpenPlanDistributionModal(false)}
+      />
     </PageContainer>
   );
 };

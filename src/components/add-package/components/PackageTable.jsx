@@ -19,6 +19,7 @@ import {
   Chip,
   Button,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -196,9 +197,19 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      <Typography variant="body1" color="textSecondary">
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
                         No packages found
-                      </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}

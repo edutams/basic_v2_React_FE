@@ -3,16 +3,19 @@ import { Card, CardContent, Typography, Box, Stack, Divider } from '@mui/materia
 import PropTypes from 'prop-types';
 import { IconChartBar,IconWallet } from '@tabler/icons-react';
 
-const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume }) => {
+const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume, onClick }) => {
   return (
     <Card
+      onClick={onClick}
       sx={{
         backgroundColor: 'white',
         height: '100%',
         borderRadius: '12px',
         boxShadow: 'none',
-        // border: '1.5px solid #00ACFF',
-        position: 'relative'
+        border: '1px solid rgba(0,0,0,0.05)',
+        position: 'relative',
+        cursor: onClick ? 'pointer' : 'default',
+        '&:hover': onClick ? { transform: 'scale(1.01)', transition: '0.2s' } : {}
       }}
     >
       <CardContent sx={{ p: '24px !important' }}>

@@ -7,7 +7,7 @@ const moduleApi = {
    */
   getModules: async (params) => {
     const response = await api.get('/agent/edu-tier/modules', { params });
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -16,7 +16,7 @@ const moduleApi = {
    */
   getModule: async (id) => {
     const response = await api.get(`/agent/edu-tier/modules/${id}`);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -25,7 +25,7 @@ const moduleApi = {
    */
   createModule: async (data) => {
     const response = await api.post('/agent/edu-tier/modules', data);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -35,7 +35,7 @@ const moduleApi = {
    */
   updateModule: async (id, data) => {
     const response = await api.put(`/agent/edu-tier/modules/${id}`, data);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -44,7 +44,7 @@ const moduleApi = {
    */
   deleteModule: async (id) => {
     const response = await api.delete(`/agent/edu-tier/modules/${id}`);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -53,7 +53,7 @@ const moduleApi = {
    */
   activateModule: async (id) => {
     const response = await api.put(`/agent/edu-tier/modules/${id}`, { module_status: 'active' });
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -62,7 +62,7 @@ const moduleApi = {
    */
   deactivateModule: async (id) => {
     const response = await api.put(`/agent/edu-tier/modules/${id}`, { module_status: 'inactive' });
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -70,7 +70,7 @@ const moduleApi = {
    */
   getAllModules: async () => {
     const response = await api.get('/agent/edu-tier/modules/all');
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -79,7 +79,7 @@ const moduleApi = {
    */
   getPackageModules: async (packageId) => {
     const response = await api.get(`/agent/edu-tier/packages/${packageId}/modules`);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -92,7 +92,7 @@ const moduleApi = {
       plan_id: planId,
       module_ids: moduleIds,
     });
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -105,7 +105,7 @@ const moduleApi = {
       package_id: packageId,
       module_ids: moduleIds,
     });
-    return response.data;
+    return response.data.data;
   },
 
   /*********************************************************************************************
@@ -122,7 +122,7 @@ const moduleApi = {
    */
   getTenantModules: async (params) => {
     const response = await api.get('/agent/edu-tier/modules', { params });
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -131,7 +131,7 @@ const moduleApi = {
    */
   getTenantModule: async (id) => {
     const response = await api.get(`/agent/edu-tier/modules/${id}`);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -140,7 +140,7 @@ const moduleApi = {
    */
   createTenantModule: async (data) => {
     const response = await api.post('/agent/edu-tier/modules', data);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -150,7 +150,7 @@ const moduleApi = {
    */
   updateTenantModule: async (id, data) => {
     const response = await api.put(`/agent/edu-tier/modules/${id}`, data);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -159,7 +159,7 @@ const moduleApi = {
    */
   deleteTenantModule: async (id) => {
     const response = await api.delete(`/agent/edu-tier/modules/${id}`);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -168,7 +168,7 @@ const moduleApi = {
    */
   activateTenantModule: async (id) => {
     const response = await api.put(`/agent/edu-tier/modules/${id}`, { module_status: 'active' });
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -177,7 +177,7 @@ const moduleApi = {
    */
   deactivateTenantModule: async (id) => {
     const response = await api.put(`/agent/edu-tier/modules/${id}`, { module_status: 'inactive' });
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -185,7 +185,7 @@ const moduleApi = {
    */
   getAllTenantModules: async () => {
     const response = await api.get('/agent/edu-tier/modules/all');
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -193,7 +193,7 @@ const moduleApi = {
    */
   getTenantSidebarModules: async () => {
     const response = await api.get('/agent/edu-tier/sidebar-modules');
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -201,7 +201,7 @@ const moduleApi = {
    */
   getTenantPackages: async () => {
     const response = await api.get('/agent/edu-tier/packages');
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -210,7 +210,7 @@ const moduleApi = {
    */
   getTenantPackageModules: async (packageId) => {
     const response = await api.get(`/agent/edu-tier/packages/${packageId}/modules`);
-    return response.data;
+    return response.data.data;
   },
 
   /**
@@ -223,7 +223,7 @@ const moduleApi = {
       package_id: packageId,
       module_ids: moduleIds,
     });
-    return response.data;
+    return response.data.data;
   },
 };
 

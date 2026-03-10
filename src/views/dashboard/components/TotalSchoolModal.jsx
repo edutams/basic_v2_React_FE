@@ -180,7 +180,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
         <Tabs
           value={tab}
           onChange={handleTabChange}
-          sx={{ borderBottom: '1px solid #e0e0e0', mb: 2, minHeight: 42 }}
+          sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, minHeight: 42 }}
         >
           <Tab
             value={0}
@@ -204,7 +204,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
             sx={{
               borderRadius: 2,
               overflow: 'hidden',
-              border: '1px solid #eee',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #eee',
               background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
             }}
           >
@@ -225,7 +225,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    border: '1px solid #dcdcdc',
+                    border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #dcdcdc',
                     borderRadius: '0 !important',
                     overflow: 'hidden',
                   }}
@@ -237,7 +237,8 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                       py: 0.6,
                       display: 'flex',
                       alignItems: 'center',
-                      borderRight: '1px solid #dcdcdc',
+                      borderRight:
+                        theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #dcdcdc',
                     }}
                   >
                     <Typography
@@ -294,7 +295,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
             sx={{
               borderRadius: 2,
               overflow: 'hidden',
-              border: '1px solid #eee',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #eee',
               background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
             }}
           >
@@ -319,7 +320,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    border: '1px solid #dcdcdc',
+                    border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #dcdcdc',
                     borderRadius: 0,
                     overflow: 'hidden',
                   }}
@@ -331,7 +332,8 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                       py: 0.6,
                       display: 'flex',
                       alignItems: 'center',
-                      borderRight: '1px solid #dcdcdc',
+                      borderRight:
+                        theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #dcdcdc',
                     }}
                   >
                     <Typography
@@ -369,7 +371,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    border: '1px solid #dcdcdc',
+                    border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #dcdcdc',
                     borderRadius: 0,
                     overflow: 'hidden',
                   }}
@@ -381,7 +383,8 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                       py: 0.6,
                       display: 'flex',
                       alignItems: 'center',
-                      borderRight: '1px solid #dcdcdc',
+                      borderRight:
+                        theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #dcdcdc',
                     }}
                   >
                     <Typography

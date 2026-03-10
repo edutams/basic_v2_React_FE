@@ -180,7 +180,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
             overflow: 'hidden',
             bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : 'white',
             p: 0,
-            border: '1px solid #e2e8f0',
+            border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #e2e8f0',
           }}
         >
           <Box
@@ -199,7 +199,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      border: '1px solid #ddd',
+                      border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
                       borderRadius: '4px',
                       bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
                       overflow: 'hidden',
@@ -210,7 +210,8 @@ const PlanDistributionModal = ({ open, onClose }) => {
                         px: 2,
                         py: 0.5,
                         bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
-                        borderRight: '1px solid #ddd',
+                        borderRight:
+                          theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
                       }}
                     >
                       <Typography
@@ -269,7 +270,12 @@ const PlanDistributionModal = ({ open, onClose }) => {
             </Grid>
           </Box>
 
-          <Box sx={{ p: 4 }}>
+          <Box
+            sx={{
+              p: 4,
+              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+            }}
+          >
             <Grid container spacing={4} sx={{ display: 'flex' }}>
               <Grid size={{ xs: 12, md: 9 }}>
                 <Box sx={{ p: 1, position: 'relative' }}>

@@ -101,7 +101,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                 py: 3,
                 borderRadius: '6px',
                 boxShadow: 'none',
-                border: '1px solid #E5E7EB',
+                border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
                 bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
@@ -155,7 +155,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           borderRadius: '4px',
           boxShadow: 'none',
           overflow: 'hidden',
-          border: '1px solid #e2e8f0',
+          border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #e2e8f0',
           background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
         }}
       >
@@ -200,14 +200,14 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             gap: 2,
             p: 2,
             bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f2fdf5',
-            borderTop: '1px solid #e2e8f0',
+            borderTop: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #e2e8f0',
           }}
         >
           {/* Agent */}
           <Box
             sx={{
               display: 'flex',
-              border: '1px solid #ddd',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
               borderRadius: '4px',
               bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
             }}
@@ -217,7 +217,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                 px: 2,
                 py: 0.8,
                 bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
-                borderRight: '1px solid #ddd',
+                borderRight: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
               }}
             >
               <Typography
@@ -241,7 +241,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           <Box
             sx={{
               display: 'flex',
-              border: '1px solid #ddd',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
               borderRadius: '4px',
               bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
             }}
@@ -251,7 +251,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                 px: 2,
                 py: 0.8,
                 bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
-                borderRight: '1px solid #ddd',
+                borderRight: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
               }}
             >
               <Typography
@@ -277,8 +277,17 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
         </Box>
 
         {/* DataTable */}
-        <Box sx={{ p: 2 }}>
-          <TableContainer>
+        <Box
+          sx={{
+            p: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+          }}
+        >
+          <TableContainer
+            sx={{
+              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+            }}
+          >
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F9FAFB' }}>
                 <TableRow>

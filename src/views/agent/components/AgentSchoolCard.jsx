@@ -2,15 +2,18 @@ import React from 'react';
 import { Card, CardContent, Typography, Box, Stack, Divider } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const AgentSchoolCard = ({ title, value, icon: Icon, bgcolor, iconBgColor, rightContent }) => {
+const AgentSchoolCard = ({ title, value, icon: Icon, bgcolor, iconBgColor, rightContent, onClick }) => {
   return (
     <Card
+      onClick={onClick}
       sx={{
         backgroundColor: bgcolor || '#C9EBD2',
         height: '100%',
         borderRadius: '12px',
         boxShadow: 'none',
         border: '1px solid rgba(0,0,0,0.05)',
+        cursor: onClick ? 'pointer' : 'default',
+        '&:hover': onClick ? { transform: 'scale(1.01)', transition: '0.2s' } : {}
       }}
     >
       <CardContent sx={{ p: '24px !important', height: '100%', display: 'flex', alignItems: 'center' }}>

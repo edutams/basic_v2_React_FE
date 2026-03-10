@@ -108,7 +108,9 @@ const PlanDistributionModal = ({ open, onClose }) => {
                 height: '80px',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                alignItems: 'center',
+                textAlign: 'center'
               }}>
                 <Typography variant="h5" fontWeight="700" sx={{ color: plan.color, fontSize: '22px' }}>
                   # {plan.value}
@@ -135,8 +137,13 @@ const PlanDistributionModal = ({ open, onClose }) => {
   {/* Spacer */}
   <Box />
 
-  {/* Filters */}
-  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+  <Box sx={{ 
+    display: "flex", 
+    flexDirection: { xs: "column", sm: "row" },
+    alignItems: "center", 
+    gap: 2,
+    width: { xs: "100%", sm: "auto" }
+  }}>
     <Box
       sx={{
         display: "flex",
@@ -145,6 +152,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
         borderRadius: "4px",
         bgcolor: "white",
         overflow: "hidden",
+        width: { xs: "100%", sm: "auto" }
       }}
     >
       <Box
@@ -159,7 +167,6 @@ const PlanDistributionModal = ({ open, onClose }) => {
           Year
         </Typography>
       </Box>
-
       <Select
         size="small"
         value="2026"
@@ -170,13 +177,13 @@ const PlanDistributionModal = ({ open, onClose }) => {
             py: 0.5,
             fontWeight: 600,
             minWidth: "60px"
-          }
+          },
+          flexGrow: { xs: 1, sm: 0 }
         }}
       >
         <MenuItem value="2026">2026</MenuItem>
       </Select>
     </Box>
-
     <Button
       variant="contained"
       sx={{
@@ -185,7 +192,8 @@ const PlanDistributionModal = ({ open, onClose }) => {
         textTransform: "none",
         px: 3,
         fontWeight: 600,
-        height: "32px"
+        height: "32px",
+        width: { xs: "100%", sm: "auto" }
       }}
     >
       Filter
@@ -220,7 +228,9 @@ const PlanDistributionModal = ({ open, onClose }) => {
                       flex: 1,
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      textAlign: 'center'
                     }}>
                        <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
                           <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }} />

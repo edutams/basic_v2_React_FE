@@ -7,7 +7,7 @@ import { IconGridDots, IconUserPlus, IconDotsVertical, IconEye, IconEdit, IconTr
 
 import { useNavigate } from 'react-router';
 
-const TeamTab = ({ team }) => {
+const TeamTab = ({ team, onAddAgent }) => {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedRow, setSelectedRow] = useState(null);
@@ -37,7 +37,7 @@ const TeamTab = ({ team }) => {
                         </Select>
                         <Button 
                             variant="contained" 
-                            onClick={() => navigate('/agent')}
+                            onClick={onAddAgent}
                             startIcon={<IconUserPlus size={18} />} 
                             sx={{ bgcolor: '#3B82F6', textTransform: 'none', borderRadius: '8px' }}
                         >

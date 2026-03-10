@@ -22,6 +22,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import StandardDataTable from 'src/components/shared/StandardDataTable';
 
 const ViewUsersListModal = ({ open, onClose, schoolName }) => {
   const data = [
@@ -33,11 +34,20 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '8px' } }}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2.5, borderBottom: '1px solid #e2e8f0', bgcolor: 'white' }}>
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column-reverse', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'flex-start', sm: 'center' }, 
+        p: 2.5, 
+        borderBottom: '1px solid #e2e8f0', 
+        bgcolor: 'white',
+        gap: 1
+      }}>
         <Typography variant="subtitle1" fontWeight="700" color="#4a5568">
           Logged in users today for {schoolName || 'FESTIVAL SPECIAL PRIAMRY SCHOOL'}
         </Typography>
-        <IconButton onClick={onClose} sx={{ color: '#4a5568' }}><CloseIcon /></IconButton>
+        <IconButton onClick={onClose} sx={{ color: '#4a5568', ml: { xs: 'auto', sm: 0 }, mt: { xs: -1, sm: 0 } }}><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent sx={{ p: 4, bgcolor: '#f4f6f8' }}>
         <Card sx={{ p: 0, borderRadius: '4px', boxShadow: 'none', border: '1px solid #e2e8f0', bgcolor: 'white', overflow: 'hidden' }}>
@@ -45,37 +55,31 @@ const ViewUsersListModal = ({ open, onClose, schoolName }) => {
               <Button 
                 variant="contained" 
                 startIcon={<GetAppIcon />} 
-                sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, textTransform: 'none', fontWeight: 600 }}
+                sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, textTransform: 'none', fontWeight: 600, width: { xs: '100%', sm: 'auto' } }}
               >
                 Export to Excel
               </Button>
            </Box>
-           <TableContainer>
-            <Table>
-               <TableHead>
-                  <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                    <TableCell><Typography fontWeight="700" color="#4a5568">#</Typography></TableCell>
-                    <TableCell><Typography fontWeight="700" color="#4a5568">User Details</Typography></TableCell>
-                    <TableCell><Typography fontWeight="700" color="#4a5568">Date/Time Logged In</Typography></TableCell>
-                    <TableCell align="center"><Typography fontWeight="700" color="#4a5568">Action</Typography></TableCell>
-                  </TableRow>
-               </TableHead>
-               <TableBody>
-                  {data.map((row) => (
-                    <TableRow key={row.id} sx={{ bgcolor: row.id === 4 ? '#f0fff4' : 'inherit', '&:hover': { bgcolor: '#f8fafc' } }}>
-                       <TableCell sx={{ color: '#4a5568', fontWeight: 500 }}>{row.id}</TableCell>
-                       <TableCell sx={{ color: '#4a5568', fontWeight: 600 }}>{row.name}</TableCell>
-                       <TableCell sx={{ color: '#718096', fontWeight: 500 }}>{row.time}</TableCell>
-                       <TableCell align="center">
-                          <IconButton size="small" sx={{ bgcolor: row.id === 4 ? 'white' : 'transparent', color: '#444', borderRadius: '4px', border: row.id === 4 ? '1px solid #2ca87f' : 'none' }}>
-                            <MoreVertIcon fontSize="small" />
-                          </IconButton>
-                       </TableCell>
-                    </TableRow>
-                  ))}
-               </TableBody>
-            </Table>
-           </TableContainer>
+           <Box sx={{ p: 2 }}>
+            <StandardDataTable 
+              columns={[
+                { header: '#', accessorKey: 'id' },
+                { header: 'User Details', accessorKey: 'name', cell: (info) => (
+                  <Typography variant="body2" fontWeight="600" color="#4a5568">{info.getValue()}</Typography>
+                )},
+                { header: 'Date/Time Logged In', accessorKey: 'time', cell: (info) => (
+                  <Typography sx={{ color: '#718096', fontWeight: 500, fontSize: '13px' }}>{info.getValue()}</Typography>
+                )},
+                { header: 'Action', accessorKey: 'action', cell: () => (
+                  <IconButton size="small" >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+                ), align: 'center' }
+              ]}
+              data={data}
+              pageSize={10}
+            />
+           </Box>
         </Card>
       </DialogContent>
     </Dialog>

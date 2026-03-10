@@ -68,7 +68,7 @@ const SidebarItems = () => {
     const fetchModules = async () => {
       try {
         const response = await api.get('/agent/sidebar-modules');
-        const modules = response.data;
+        const modules = response.data.data;
         
         const formattedMenu = modules.map(mod => ({
           id: mod.id,

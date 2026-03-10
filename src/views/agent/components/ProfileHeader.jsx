@@ -2,7 +2,7 @@ import { Grid, Card, Box, Typography, Avatar, Button, Stack, Chip } from '@mui/m
 import { IconAdjustmentsHorizontal, IconCash } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 
-const ProfileHeader = ({ profile }) => {
+const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
     const navigate = useNavigate();
 
     return (
@@ -69,7 +69,7 @@ const ProfileHeader = ({ profile }) => {
                 <Button 
                     variant="outlined" 
                     fullWidth
-                    onClick={() => navigate('/school')}
+                    onClick={onAddSchool}
                     startIcon={<IconAdjustmentsHorizontal size={24} />} 
                     sx={{ 
                         color: 'white', 
@@ -92,7 +92,7 @@ const ProfileHeader = ({ profile }) => {
                 <Button 
                     variant="contained" 
                     fullWidth
-                    onClick={() => navigate('/agent')}
+                    onClick={onAddAgent}
                     startIcon={<IconCash size={24} />} 
                     sx={{ 
                         bgcolor: 'white', 

@@ -56,6 +56,8 @@ import LoginActivitiesCard from './components/LoginActivitiesCard';
 import PlanDistributionModal from './components/PlanDistributionModal';
 import LoggedInUsersModal from './components/LoggedInUsersModal';
 import ViewUsersListModal from './components/ViewUsersListModal';
+import TotalSchoolModal from './components/TotalSchoolModal';
+import TotalTransactionModal from './components/TotalTransactionModal';
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 
@@ -112,6 +114,8 @@ const Agent = () => {
   const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
   const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
 
   const loginActivities = [
     { label: 'Teacher', value: 12 },
@@ -754,6 +758,7 @@ const Agent = () => {
               icon={IconSchool}
               bgcolor="#C9EBD2"
               iconBgColor="#2ca87f"
+              onClick={() => setIsSchoolModalOpen(true)}
               rightContent={
                 <Stack spacing={0.5}>
                   {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
@@ -787,6 +792,7 @@ const Agent = () => {
               icon={IconCurrencyNaira}
               commission="100,000,000,000"
               volume="110,344,300,000"
+              onClick={() => setIsTransactionModalOpen(true)}
             />
           </Grid>
         </Grid>
@@ -1118,6 +1124,27 @@ const Agent = () => {
           confirmText="Yes, Delete"
           cancelText="Cancel"
           severity="error"
+        />
+        <TotalSchoolModal 
+          open={isSchoolModalOpen} 
+          onClose={() => setIsSchoolModalOpen(false)} 
+        />
+        <TotalTransactionModal 
+          open={isTransactionModalOpen} 
+          onClose={() => setIsTransactionModalOpen(false)} 
+        />
+        <LoggedInUsersModal 
+          open={isLoggedInUsersModalOpen} 
+          onClose={() => setIsLoggedInUsersModalOpen(false)}
+          onViewUserList={() => setIsViewUsersListModalOpen(true)}
+        />
+        <ViewUsersListModal 
+          open={isViewUsersListModalOpen} 
+          onClose={() => setIsViewUsersListModalOpen(false)} 
+        />
+        <PlanDistributionModal 
+          open={isPlanModalOpen} 
+          onClose={() => setIsPlanModalOpen(false)} 
         />
       </Box>
     </PageContainer>

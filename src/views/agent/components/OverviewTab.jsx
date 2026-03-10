@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { 
     Grid, Card, Box, Typography, Stack, MenuItem, Select, FormControl, 
     Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Avatar, Chip, IconButton, Button,
-    Menu, ListItemIcon, ListItemText
+    Menu, ListItemIcon, ListItemText,
+    Divider
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import { IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
@@ -77,21 +78,25 @@ const OverviewTab = ({ data }) => {
     return (
         <Box sx={{ p: { xs: 1, md: 2 }, bgcolor: '#F8FAFC' }}>
             {/* Year Filter */}
-            <Box sx={{ bgcolor: 'white', p: 1.5, borderRadius: '8px', border: '1px solid #E2E8F0', mb: 3, display: 'inline-block' }}>
-                <Stack direction="row" spacing={0} alignItems="center">
-                    <Box sx={{ bgcolor: '#F1F5F9', px: 2, py: 0.8, borderRadius: '4px 0 0 4px', borderRight: '1px solid #E2E8F0' }}>
-                        <Typography variant="caption" fontWeight={700} color="#64748B">year</Typography>
-                    </Box>
-                    <Select 
-                        value="2026" 
-                        size="small" 
-                        variant="standard"
-                        disableUnderline
-                        sx={{ px: 2, py: 0.8, bgcolor: 'white', borderRadius: '0 4px 4px 0', minWidth: 100, fontSize: '14px', fontWeight: 700 }}
-                    >
-                        <MenuItem value="2026">2026</MenuItem>
-                    </Select>
-                </Stack>
+            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', maxWidth: { xs: '100%', sm: 200 }, border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden', bgcolor: 'white' }}>
+                <Box sx={{ bgcolor: '#EEF2FF', px: 2, py: 1, borderRight: '1px solid #E2E8F0' }}>
+                    <Typography variant="caption" fontWeight="800" color="#4F46E5" sx={{ textTransform: 'uppercase', fontSize: '10px' }}>
+                        Year
+                    </Typography>
+                </Box>
+                <Select 
+                    fullWidth
+                    value="2026" 
+                    size="small" 
+                    sx={{ 
+                        '& fieldset': { border: 'none' },
+                        fontSize: '14px', 
+                        fontWeight: 700,
+                        '& .MuiSelect-select': { py: 0.5, pl: 1.5 }
+                    }}
+                >
+                    <MenuItem value="2026">2026</MenuItem>
+                </Select>
             </Box>
 
             <Grid container spacing={3}>
@@ -111,6 +116,8 @@ const OverviewTab = ({ data }) => {
                 {/* Column 2: Login Activities & Plan Distribution */}
                 <Grid size={{ xs: 12, md: 3 }}>
                     <Stack spacing={3} sx={{ height: '100%' }}>
+                        {/* Login Activities (Commented Out per request) */}
+                        {/* 
                         <Card sx={{ p: 3, borderRadius: '12px', flex: 1, border: '1px solid #E2E8F0', boxShadow: 'none' }}>
                             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
                                 <Typography variant="subtitle2" fontWeight={800} color="#1E293B">Login Activities</Typography>
@@ -124,6 +131,43 @@ const OverviewTab = ({ data }) => {
                                     </Box>
                                 ))}
                             </Stack>
+                        </Card> 
+                        */}
+
+                        {/* Credit Facilities Card - Refined */}
+                        <Card sx={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: 'none', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', bgcolor: 'white' }}>
+                            {/* Header Section */}
+                            <Box sx={{ px: 2, pt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                        <Typography sx={{ fontWeight: 700, color: '#545454', fontSize: '14px', letterSpacing: '0.2px' }}>Credit Facilities</Typography>
+                                </Box>
+                                <Box sx={{ p: 0.6, bgcolor: '#545454', borderRadius: '4px', display: 'flex', color: 'white' }}>
+                                    <IconChartBar size={18} strokeWidth={2.5} />
+                                </Box>
+                            </Box>
+                            <Divider sx={{ borderColor: '#E2E8F0', opacity: 0.6 }} />
+                            
+                            {/* Content Section */}
+                            <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', flexGrow: 1, gap: 1.5 }}>
+                                <Box sx={{ 
+                                    flex: 1.8, 
+                                    bgcolor: '#DEE5F6', 
+                                    borderRadius: '4px', 
+                                    p: 2, 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    justifyContent: 'center',
+                                    height: '100px',
+                                    minWidth: 0
+                                }}>
+                                    <Typography variant="subtitle2" fontWeight={800} sx={{ color: '#1A3353', mb: 1, fontSize: '12px', letterSpacing: '0.1px' }}>Total Credit</Typography>
+                                    <Typography fontWeight={800} sx={{ color: 'black', fontSize: '18px', lineHeight: 1 }}># 100,000,000,000</Typography>
+                                </Box>
+                                <Box sx={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Typography fontWeight={800} sx={{ color: 'black', fontSize: '28px', lineHeight: 1 }}>1,000</Typography>
+                                    <Typography sx={{ fontWeight: 700, color: '#828282', fontSize: '14px', mt: 0.5 }}>Schools</Typography>
+                                </Box>
+                            </Box>
                         </Card>
                         <Card sx={{ p: 3, borderRadius: '12px', flex: 1.5, border: '1px solid #E2E8F0', boxShadow: 'none' }}>
                             <Typography variant="subtitle2" fontWeight={800} color="#1E293B" mb={2}>Plan Distribution</Typography>

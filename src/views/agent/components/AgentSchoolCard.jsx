@@ -1,22 +1,27 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Stack, Divider } from '@mui/material';
+import { Card, CardContent, Typography, Box, Stack, Divider, useTheme } from '@mui/material';
 import PropTypes from 'prop-types';
 import { IconChartBar } from '@tabler/icons-react';
 
 const AgentSchoolCard = ({ title, value, icon: Icon, bgcolor, iconBgColor, rightContent, onClick }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   return (
     <Card
       onClick={onClick}
       sx={{
-        backgroundColor: bgcolor || '#C9EBD2',
+        backgroundColor: bgcolor || (isDarkMode ? theme.palette.background.paper : '#C9EBD2'),
         height: '100%',
         borderRadius: '16px',
         boxShadow: 'none',
-        border: 'none',
+        border: isDarkMode ? `1px solid ${theme.palette.divider}` : 'none',
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
         overflow: 'visible',
-        '&:hover': onClick ? { transform: 'scale(1.01)', transition: '0.2s' } : {}
+        transition: 'all 0.2s ease-in-out',
+        backgroundImage: isDarkMode ? 'none' : 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+        '&:hover': onClick ? { transform: 'translateY(-4px)', boxShadow: theme.shadows[4] } : {}
       }}
     >
       <CardContent sx={{ p: '24px !important', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -37,7 +42,15 @@ const AgentSchoolCard = ({ title, value, icon: Icon, bgcolor, iconBgColor, right
               <Icon width="24" height="24" color="white" />
             </Box>
           )}
-          <Typography variant="h6" fontWeight="600" sx={{ color: '#1a3353', fontSize: '15px', mt: 1 }}>
+          <Typography 
+            variant="h6" 
+            fontWeight="600" 
+            sx={{ 
+              color: isDarkMode ? theme.palette.text.primary : '#1a3353', 
+              fontSize: '15px', 
+              mt: 1 
+            }}
+          >
             Active School
           </Typography>
         </Box>
@@ -46,27 +59,51 @@ const AgentSchoolCard = ({ title, value, icon: Icon, bgcolor, iconBgColor, right
         <Stack direction="row" spacing={3} alignItems="center" justifyContent="space-between" sx={{ position: 'relative' }}>
           {/* Left: Value & Title */}
           <Box sx={{ flex: 1.2 }}>
-            <Typography variant="h1" fontWeight="800" sx={{ color: '#1a3353', fontSize: '48px', lineHeight: 1, mb: 1 }}>
+            <Typography 
+              variant="h1" 
+              fontWeight="800" 
+              sx={{ 
+                color: isDarkMode ? theme.palette.text.primary : '#1a3353', 
+                fontSize: '48px', 
+                lineHeight: 1, 
+                mb: 1 
+              }}
+            >
               {value}
             </Typography>
-            <Typography variant="subtitle1" fontWeight="700" sx={{ color: '#1a3353', fontSize: '16px' }}>
+            <Typography 
+              variant="subtitle1" 
+              fontWeight="700" 
+              sx={{ 
+                color: isDarkMode ? theme.palette.text.secondary : '#1a3353', 
+                fontSize: '16px' 
+              }}
+            >
               {title}
             </Typography>
           </Box>
 
           {/* Divider & Bottom Icon */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', height: '80px' }}>
-             <Divider orientation="vertical" flexItem sx={{ borderRightWidth: 3, borderColor: '#111', height: '100%' }} />
+             <Divider 
+               orientation="vertical" 
+               flexItem 
+               sx={{ 
+                 borderRightWidth: 3, 
+                 borderColor: isDarkMode ? theme.palette.divider : '#111', 
+                 height: '100%' 
+               }} 
+             />
              <Box sx={{ 
                 position: 'absolute', 
                 bottom: -15, 
                 left: -40, 
-                bgcolor: '#454545', 
+                bgcolor: isDarkMode ? theme.palette.background.default : '#454545', 
                 borderRadius: '6px', 
                 p: 0.8, 
                 display: 'flex', 
                 color: 'white',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                boxShadow: theme.shadows[2]
              }}>
                 <IconChartBar size={20} strokeWidth={2.5} />
              </Box>

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { 
-    Table, TableBody, TableCell, TableHead, TableRow, Avatar, Chip, Typography, Box, Paper, TableContainer, Select, MenuItem, Button,
-    IconButton, Menu, ListItemIcon, ListItemText
+    Table, TableBody, TableCell, TableHead, TableRow, Avatar, Chip, Typography, Box, TableContainer, Select, MenuItem, Button,
+    IconButton, Menu, ListItemIcon, ListItemText, useTheme
 } from '@mui/material';
 import { IconGridDots, IconUserPlus, IconDotsVertical, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
-
 import { useNavigate } from 'react-router';
 
 const TeamTab = ({ team, onAddAgent }) => {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedRow, setSelectedRow] = useState(null);
     const open = Boolean(anchorEl);
@@ -25,11 +27,11 @@ const TeamTab = ({ team, onAddAgent }) => {
 
     return (
         <Box mt={3}>
-            <Box sx={{ border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
-                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'white' }}>
+            <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '8px', overflow: 'hidden' }}>
+                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: theme.palette.background.paper }}>
                     <Box display="flex" alignItems="center" gap={1}>
-                         <IconGridDots size={20} color="#00ACFF" />
-                         <Typography variant="h6" fontWeight={700}>List of Agents</Typography>
+                         <IconGridDots size={20} color={theme.palette.primary.main} />
+                         <Typography variant="h6" fontWeight={700} sx={{ color: theme.palette.text.primary }}>List of Agents</Typography>
                     </Box>
                     <Box display="flex" gap={2}>
                         <Select value="Level" size="small" sx={{ borderRadius: '8px', minWidth: 150 }}>
@@ -48,41 +50,41 @@ const TeamTab = ({ team, onAddAgent }) => {
 
                 <TableContainer>
                     <Table>
-                        <TableHead sx={{ bgcolor: '#EAFDF6' }}>
+                        <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.1)' : '#EAFDF6' }}>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>S/N</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>Agent Details</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>Transaction</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>Performance</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>Level</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>Descendent</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>Status</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: '#1E293B' }}>Action</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>S/N</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Agent Details</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Transaction</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Performance</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Level</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Descendent</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {team.map((row, idx) => (
-                                <TableRow key={idx} sx={{ '&:nth-of-type(odd)': { bgcolor: '#F8FAFC' } }}>
-                                    <TableCell>{idx + 1}</TableCell>
+                                <TableRow key={idx} sx={{ '&:nth-of-type(odd)': { bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' } }}>
+                                    <TableCell sx={{ color: theme.palette.text.primary }}>{idx + 1}</TableCell>
                                     <TableCell>
                                         <Box display="flex" alignItems="center" gap={1.5}>
                                             <Avatar sx={{ width: 40, height: 40 }} />
                                             <Box>
-                                                <Typography variant="subtitle2" fontWeight={700}>{row.name}</Typography>
+                                                <Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.text.primary }}>{row.name}</Typography>
                                                 <Typography variant="caption" color="textSecondary" display="block">{row.handle}</Typography>
                                                 <Typography variant="caption" color="textSecondary">{row.phone}</Typography>
                                             </Box>
                                         </Box>
                                     </TableCell>
-                                    <TableCell><Typography variant="subtitle2" fontWeight={700}># {row.transaction}</Typography></TableCell>
+                                    <TableCell><Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.text.primary }}># {row.transaction}</Typography></TableCell>
                                     <TableCell>
                                         <Box display="flex" alignItems="center" gap={1}>
                                             <Typography variant="caption" color="textSecondary">School</Typography>
-                                            <Chip label={row.performance} size="small" sx={{ bgcolor: '#EAFDF6', color: '#10B981', fontWeight: 700, borderRadius: '4px' }} />
+                                            <Chip label={row.performance} size="small" sx={{ bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.1)' : '#EAFDF6', color: isDarkMode ? '#4ade80' : '#10B981', fontWeight: 700, borderRadius: '4px' }} />
                                         </Box>
                                     </TableCell>
                                     <TableCell>
-                                        <Box sx={{ bgcolor: '#FEF9C3', color: '#854D0E', borderRadius: '4px', textAlign: 'center', width: 40, py: 0.5, fontSize: '12px' }}>
+                                        <Box sx={{ bgcolor: isDarkMode ? 'rgba(250, 204, 21, 0.2)' : '#FEF9C3', color: isDarkMode ? '#fde047' : '#854D0E', borderRadius: '4px', textAlign: 'center', width: 40, py: 0.5, fontSize: '12px' }}>
                                             {row.level}
                                         </Box>
                                     </TableCell>
@@ -94,8 +96,8 @@ const TeamTab = ({ team, onAddAgent }) => {
                                             label={row.status} 
                                             size="small" 
                                             sx={{ 
-                                                bgcolor: row.status === 'Active' ? '#DCFCE7' : '#FEE2E2', 
-                                                color: row.status === 'Active' ? '#166534' : '#991B1B',
+                                                bgcolor: row.status === 'Active' ? (isDarkMode ? 'rgba(34, 197, 94, 0.2)' : '#DCFCE7') : (isDarkMode ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2'), 
+                                                color: row.status === 'Active' ? (isDarkMode ? '#4ade80' : '#166534') : (isDarkMode ? '#ef4444' : '#991B1B'),
                                                 fontWeight: 700,
                                                 borderRadius: '4px',
                                                 minWidth: 70
@@ -104,7 +106,7 @@ const TeamTab = ({ team, onAddAgent }) => {
                                     </TableCell>
                                     <TableCell>
                                         <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                                            <IconDotsVertical size={18} color="#64748B" />
+                                            <IconDotsVertical size={18} color={theme.palette.text.secondary} />
                                         </IconButton>
                                     </TableCell>
                                 </TableRow>
@@ -123,16 +125,17 @@ const TeamTab = ({ team, onAddAgent }) => {
                     elevation: 0,
                     sx: {
                         borderRadius: '8px',
-                        border: '1px solid #E2E8F0',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        border: `1px solid ${theme.palette.divider}`,
+                        bgcolor: theme.palette.background.paper,
+                        boxShadow: theme.shadows[3],
                         minWidth: 150,
                         '& .MuiMenuItem-root': {
                             fontSize: '14px',
                             fontWeight: 600,
-                            color: '#475569',
+                            color: theme.palette.text.secondary,
                             py: 1,
                             px: 2,
-                            '&:hover': { bgcolor: '#F8FAFC', color: '#00B4FF' }
+                            '&:hover': { bgcolor: isDarkMode ? theme.palette.action.hover : '#F8FAFC', color: theme.palette.primary.main }
                         }
                     },
                 }}
@@ -147,8 +150,8 @@ const TeamTab = ({ team, onAddAgent }) => {
                     <ListItemIcon><IconEdit size={18} /></ListItemIcon>
                     <ListItemText primary="Edit Record" />
                 </MenuItem>
-                <MenuItem onClick={handleMenuClose} sx={{ color: '#EF4444 !important' }}>
-                    <ListItemIcon sx={{ color: '#EF4444' }}><IconTrash size={18} /></ListItemIcon>
+                <MenuItem onClick={handleMenuClose} sx={{ color: `${theme.palette.error.main} !important` }}>
+                    <ListItemIcon sx={{ color: theme.palette.error.main }}><IconTrash size={18} /></ListItemIcon>
                     <ListItemText primary="Delete" />
                 </MenuItem>
             </Menu>

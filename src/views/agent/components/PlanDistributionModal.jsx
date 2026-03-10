@@ -1,249 +1,153 @@
 import React from 'react';
 import {
-  Typography,
-  Box,
-  Grid,
-  Stack,
-  Select,
-  MenuItem,
-  Card,
+    Grid,
+    Box,
+    Typography,
+    Stack,
+    Card,
+    useTheme
 } from '@mui/material';
-import Chart from 'react-apexcharts';
 import StandardModal from 'src/components/shared/StandardModal';
+import Chart from 'react-apexcharts';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 
 const PlanDistributionModal = ({ open, onClose }) => {
-  const plans = [
-    { label: 'Freemium', value: '7,000,234.00', color: '#1a3353', bg: 'white', border: '#1a3353' },
-    { label: 'Basic', value: '7,000,234.00', color: '#4a3aff', bg: 'white', border: '#4a3aff' },
-    { label: 'Basic +', value: '7,000,234.00', color: '#ff4081', bg: 'white', border: '#fcc5d8' },
-    { label: 'Basic ++', value: '7,000,234.00', color: '#9c27b0', bg: 'white', border: '#e1bee7' },
-  ];
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
 
-  const chartOptions = {
-    chart: {
-      type: 'bar',
-      toolbar: { show: true },
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: '70%',
-        borderRadius: 0
-      },
-    },
-    dataLabels: { enabled: false },
-    stroke: {
-      show: true,
-      width: 1,
-      colors: ['#fff']
-    },
-    xaxis: {
-      categories: ['Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo', 'Olasegun Obasanjo'],
-      labels: {
-        rotate: -45,
-        style: { fontSize: '10px', fontWeight: 600 }
-      },
-      title: { 
-        text: 'Agent',
-        style: { fontWeight: 700, fontSize: '12px' },
-        offsetY: 85
-      },
-      axisBorder: { show: true, color: '#e0e0e0' },
-      axisTicks: { show: false }
-    },
-    yaxis: {
-      title: { 
-        text: 'NO of Schools',
-        style: { fontWeight: 700, fontSize: '12px' }
-      },
-      min: 0,
-      max: 100,
-      tickAmount: 10,
-    },
-    fill: { opacity: 1 },
-    colors: ['#3949ab', '#2196f3', '#ff4081', '#9c27b0'],
-    legend: { 
-      position: 'top',
-      horizontalAlign: 'center',
-      fontSize: '14px',
-      fontWeight: 700,
-      markers: { radius: 12 },
-      itemMargin: { horizontal: 15, vertical: 10 }
-    },
-    grid: {
-      borderColor: '#f1f1f1',
-      strokeDashArray: 0,
-    }
-  };
+    const chartOptions = {
+        chart: {
+            toolbar: { show: false },
+            fontFamily: 'inherit',
+            background: 'transparent'
+        },
+        theme: {
+            mode: isDarkMode ? 'dark' : 'light'
+        },
+        labels: ['Basic Plan', 'Standard Plan', 'Premium Plan'],
+        colors: ['#00ACFF', '#22C55E', '#FACC15'],
+        legend: {
+            position: 'bottom',
+            fontFamily: 'inherit',
+            labels: { colors: theme.palette.text.secondary },
+            markers: { radius: 12 }
+        },
+        dataLabels: {
+            enabled: true,
+            formatter: (val) => `${val.toFixed(1)}%`,
+            style: {
+                fontSize: '14px',
+                fontWeight: '700',
+                colors: ['#fff']
+            },
+            dropShadow: { enabled: false }
+        },
+        stroke: { show: false },
+        tooltip: { theme: isDarkMode ? 'dark' : 'light' },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '65%',
+                    labels: {
+                        show: true,
+                        name: { show: true, fontSize: '14px', fontWeight: 600, color: theme.palette.text.secondary },
+                        value: { show: true, fontSize: '20px', fontWeight: 700, color: theme.palette.text.primary },
+                        total: { show: true, label: 'Total', fontSize: '14px', fontWeight: 600, color: theme.palette.text.secondary }
+                    }
+                }
+            }
+        }
+    };
 
-  const chartSeries = [
-    { name: 'Freemium', data: [55, 10, 8, 12, 25, 10, 10, 45, 12, 12] },
-    { name: 'Basic', data: [38, 40, 15, 40, 30, 15, 12, 32, 32, 32] },
-    { name: 'Basic +', data: [30, 82, 32, 35, 28, 28, 5, 32, 32, 72] },
-    { name: 'Basic ++', data: [48, 15, 12, 18, 50, 32, 8, 32, 55, 52] },
-  ];
+    const chartSeries = [120, 310, 270]; // Example counts for percentages
 
-  return (
-    <StandardModal
-      open={open}
-      onClose={onClose}
-      title="Plan Distribution"
-      maxWidth="lg"
-      padding={0}
-      actions={
-        <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-          <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
-          <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
-        </Stack>
-      }
-    >
-      <Box sx={{ p: 4, bgcolor: '#f8fafc' }}>
-        <Grid container spacing={2} mb={4}>
-          {plans.map((plan, index) => (
-            <Grid container  size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-              <Card sx={{ 
-                p: 2, 
-                border: `1.5px solid ${plan.border}`, 
-                boxShadow: 'none', 
-                borderRadius: '4px',
-                height: '80px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                textAlign: 'center',
-                width: '100%'
-              }}>
-                <Typography variant="h5" fontWeight="700" sx={{ color: plan.color, fontSize: '22px' }}>
-                  # {plan.value}
-                </Typography>
-                <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }} />
-                  <Typography variant="caption" fontWeight="700" sx={{ color: '#444' }}>{plan.label}</Typography>
-                </Stack>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        <Box sx={{ borderRadius: '8px', overflow: 'hidden', bgcolor: 'white', p: 0, border: '1px solid #e2e8f0' }}>
-            <Box
-                sx={{
-                    display: "flex",
-                    flexDirection: { xs: 'column', md: 'row' },
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    p: 2,
-                    bgcolor: "#f2fdf5",
-                    gap: 2
-                }}
-            >
-                <Typography variant="subtitle1" fontWeight="700" color="#134E48" sx={{ fontSize: { xs: '14px', sm: '16px' } }}>
-                    Plan per School
-                </Typography>
-
-                <Box sx={{ 
-                    display: "flex", 
-                    flexDirection: { xs: "column", sm: "row" },
-                    alignItems: "center", 
-                    gap: 2,
-                    width: { xs: "100%", sm: "auto" }
-                }}>
-                    <Box
-                        sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            border: "1px solid #ddd",
-                            borderRadius: "4px",
-                            bgcolor: "white",
-                            overflow: "hidden",
-                            width: { xs: "100%", sm: "auto" }
-                        }}
-                    >
-                        <Box
-                            sx={{
-                                px: 2,
-                                py: 0.5,
-                                bgcolor: "#e0f7fa",
-                                borderRight: "1px solid #ddd"
-                            }}
-                        >
-                            <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: '#0369A1' }}>
-                                Year
-                            </Typography>
-                        </Box>
-                        <Select
-                            size="small"
-                            value="2026"
-                            sx={{
-                                border: "none",
-                                "& fieldset": { border: "none" },
-                                ".MuiSelect-select": {
-                                    py: 0.5,
-                                    fontWeight: 700,
-                                    minWidth: "80px",
-                                    fontSize: '13px'
-                                },
-                                flexGrow: { xs: 1, sm: 0 }
-                            }}
-                        >
-                            <MenuItem value="2026">2026</MenuItem>
-                        </Select>
-                    </Box>
-                    <PrimaryButton
-                        variant="primary"
-                        sx={{
-                            height: "36px",
-                            px: 4,
-                            width: { xs: "100%", sm: "auto" },
-                        }}
-                    >
-                        Filter
-                    </PrimaryButton>
-                </Box>
+    const PlanCard = ({ title, count, color, percentage }) => (
+        <Card sx={{ 
+            p: 2.5, 
+            bgcolor: theme.palette.background.paper, 
+            border: `1px solid ${theme.palette.divider}`,
+            boxShadow: theme.shadows[1],
+            borderRadius: '12px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1
+        }}>
+            <Typography variant="body2" fontWeight="700" color="textSecondary" sx={{ textTransform: 'uppercase' }}>{title}</Typography>
+            <Typography variant="h4" fontWeight="800" sx={{ color: color }}>{count}</Typography>
+            <Box sx={{ 
+                px: 1.5, 
+                py: 0.5, 
+                bgcolor: `${color}15`, 
+                color: color, 
+                borderRadius: '20px', 
+                fontSize: '12px', 
+                fontWeight: 700, 
+                width: 'fit-content', 
+                mx: 'auto' 
+            }}>
+                {percentage}% of Users
             </Box>
+        </Card>
+    );
 
-          <Box sx={{ p: 4 }}>
-            <Grid container spacing={4} sx={{ display: 'flex' }}>
-              <Grid size={{ xs: 12, md: 9 }}>
-                <Box sx={{ p: 1, position: 'relative' }}>
-                  <Chart options={chartOptions} series={chartSeries} type="bar" height={450} />
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex' }}>
-                <Stack spacing={2} sx={{ width: '100%', height: '450px', justifyContent: 'space-between' }}>
-                  {plans.map((plan, index) => (
-                    <Card key={index} sx={{ 
-                      p: 2, 
-                      border: `1.5px solid ${plan.border}`, 
-                      boxShadow: 'none',
-                      borderRadius: '4px',
-                      flex: 1,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      textAlign: 'center'
-                    }}>
-                       <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }} />
-                          <Typography variant="subtitle2" fontWeight="700" sx={{ color: '#1a3353' }}>{plan.label}</Typography>
-                       </Stack>
-                       <Typography variant="h3" fontWeight="800" sx={{ color: plan.color, mb: 0.5, fontSize: '28px' }}>
-                          {index === 1 ? '400' : index === 2 ? '30' : index === 3 ? '800' : '300'}
-                       </Typography>
-                       <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>School</Typography>
-                    </Card>
-                  ))}
+    return (
+        <StandardModal
+            open={open}
+            onClose={onClose}
+            title="Plan Distribution"
+            maxWidth="md"
+            padding={3}
+            dividers={false}
+            headerBg={isDarkMode ? theme.palette.background.paper : '#F8FAFC'}
+            sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}
+            actions={
+                <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+                    <PrimaryButton variant="secondary" onClick={onClose}>Close</PrimaryButton>
+                    <PrimaryButton variant="primary" onClick={onClose}>Download Report</PrimaryButton>
                 </Stack>
-              </Grid>
+            }
+        >
+            <Grid container spacing={4} alignItems="center">
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Box sx={{ 
+                        p: 2, 
+                        border: `1px solid ${theme.palette.divider}`, 
+                        borderRadius: '16px', 
+                        bgcolor: theme.palette.background.paper,
+                        display: 'flex',
+                        justifyContent: 'center'
+                    }}>
+                        <Chart options={chartOptions} series={chartSeries} type="donut" height={350} width="100%" />
+                    </Box>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                    <Stack spacing={2}>
+                        <PlanCard title="Basic Plan" count="120" color="#00ACFF" percentage="17.1" />
+                        <PlanCard title="Standard Plan" count="310" color="#22C55E" percentage="44.3" />
+                        <PlanCard title="Premium Plan" count="270" color="#FACC15" percentage="38.6" />
+                    </Stack>
+                </Grid>
             </Grid>
-          </Box>
-        </Box>
-      </Box>
-    </StandardModal>
-  );
+
+            {/* Summary Box */}
+            <Box sx={{ 
+                mt: 4, 
+                p: 3, 
+                bgcolor: isDarkMode ? 'rgba(0, 172, 255, 0.05)' : '#E0F2FE', 
+                borderRadius: '12px',
+                border: `1px solid ${isDarkMode ? 'rgba(0, 172, 255, 0.2)' : '#BAE6FD'}`
+            }}>
+                <Typography variant="subtitle1" fontWeight="800" color={isDarkMode ? theme.palette.info.light : '#0369A1'} mb={1} sx={{ textTransform: 'uppercase' }}>
+                    Distribution Insights
+                </Typography>
+                <Typography variant="body2" color="textSecondary" lineHeight={1.6}>
+                    The **Standard Plan** is currently the most popular among your schools, accounting for over 44% of total subscriptions. 
+                    Consider offering incentives for users to upgrade to the **Premium Plan** to increase your commission earnings.
+                </Typography>
+            </Box>
+        </StandardModal>
+    );
 };
 
 export default PlanDistributionModal;

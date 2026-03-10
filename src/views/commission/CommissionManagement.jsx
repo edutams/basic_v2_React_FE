@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Box, Typography, Tabs, Tab, Select, MenuItem } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Select, MenuItem, useTheme } from '@mui/material';
 import { IconLayoutDashboard, IconChartBar, IconSchool } from '@tabler/icons-react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -21,6 +20,9 @@ const CommissionManagement = () => {
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [typeModalOpen, setTypeModalOpen] = useState(false);
     const [selectedAgent, setSelectedAgent] = useState(null);
+
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
 
     const handleTabChange = (event, newValue) => {
         setValue(newValue);
@@ -55,14 +57,14 @@ const CommissionManagement = () => {
 
     return (
         <PageContainer title="Manage Commission" description="Commission management dashboard">
-            <Box sx={{ p: { xs: 1, md: 3 }, bgcolor: '#F8FAFC', minHeight: '100vh' }}>
+            <Box sx={{ p: { xs: 1, md: 3 }, bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC', minHeight: '100vh' }}>
                 <Breadcrumb title="Manage Commission" items={BCrumb} />
 
                 <Box mt={3}>
                     <CommissionSummaryCards />
                 </Box>
 
-                <Box mt={4} sx={{ bgcolor: 'white', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+                <Box mt={4} sx={{ bgcolor: theme.palette.background.paper, borderRadius: '16px', border: `1px solid ${theme.palette.divider}`, overflow: 'hidden' }}>
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pt: 2, pb: 0 }}>
                         <Tabs 
                             value={value} 
@@ -82,7 +84,7 @@ const CommissionManagement = () => {
 
                     <Box sx={{ p: 4 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h5" fontWeight={700}>{getTitle()}</Typography>
+                            <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>{getTitle()}</Typography>
                             {value === '1' && (
                                 <Select
                                     value="2026"

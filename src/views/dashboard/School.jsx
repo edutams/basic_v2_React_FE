@@ -74,6 +74,7 @@ const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
 const SchoolDashboard = () => {
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [schoolList, setSchoolList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -348,7 +349,7 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            bgcolor: theme.palette.background.paper,
           }}
         >
           {/* Header */}
@@ -365,14 +366,14 @@ const SchoolDashboard = () => {
             </Typography>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconSchool size={50} color={theme.palette.primary.main} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.text.primary,
                   lineHeight: 1,
                 }}
               >
@@ -386,7 +387,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
               Active School
             </Typography>
 
@@ -404,7 +405,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#B02D2D', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.error.main, fontSize: 15, fontWeight: 'bold' }}>
               Inactive School
             </Typography>
 
@@ -427,7 +428,7 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            bgcolor: theme.palette.background.paper,
           }}
         >
           {/* Header */}
@@ -448,7 +449,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                bgcolor: isDarkMode ? theme.palette.grey[800] : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -459,14 +460,14 @@ const SchoolDashboard = () => {
             </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconSchool size={50} color={theme.palette.primary.main} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.text.primary,
                   lineHeight: 1,
                 }}
               >
@@ -479,7 +480,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
               Primary School
             </Typography>
 
@@ -496,7 +497,7 @@ const SchoolDashboard = () => {
             />
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
               Senior School
             </Typography>
 
@@ -518,7 +519,7 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            bgcolor: theme.palette.background.paper,
           }}
         >
           {/* Header */}
@@ -539,7 +540,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                bgcolor: isDarkMode ? theme.palette.grey[800] : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -576,7 +577,7 @@ const SchoolDashboard = () => {
           sx={{
             borderRadius: 2,
             overflow: 'hidden',
-            background: '#FFFFFF',
+            bgcolor: theme.palette.background.paper,
           }}
         >
           {/* Header */}
@@ -586,8 +587,8 @@ const SchoolDashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              color: '#5C5C5C',
-              bgcolor: '#F8F8F8',
+              color: theme.palette.text.secondary,
+              bgcolor: isDarkMode ? theme.palette.action.hover : '#F8F8F8',
               borderRadius: '8px 8px 0 0',
             }}
           >
@@ -595,7 +596,7 @@ const SchoolDashboard = () => {
               variant="h5"
               sx={{
                 fontWeight: 'bold',
-                color: '#5E5E5E',
+                color: theme.palette.text.primary,
               }}
             >
               Login Activities
@@ -605,7 +606,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                bgcolor: isDarkMode ? theme.palette.grey[800] : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -643,7 +644,7 @@ const SchoolDashboard = () => {
                 <Typography
                   variant="h5"
                   sx={{
-                    color: '#E10600',
+                    color: theme.palette.error.main,
                   }}
                 >
                   {item.value}

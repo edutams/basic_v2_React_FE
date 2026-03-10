@@ -87,7 +87,7 @@ const EduTier = () => {
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
-      <Breadcrumb title="Managex Subscription" items={BCrumb} />
+      <Breadcrumb title="Manage Subscription" items={BCrumb} />
 
       <Box
         sx={{

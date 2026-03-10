@@ -53,7 +53,19 @@ const OverviewTab = ({ data }) => {
         labels: data.planDistribution.map(d => d.label),
         colors: ['#A855F7', '#EC4899', '#3B82F6'], // Matching mockup colors
         legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '12px', fontWeight: 600, labels: { colors: '#64748B' } },
-        dataLabels: { enabled: false },
+        dataLabels: { 
+            enabled: true,
+            formatter: function (val) {
+                return val.toFixed(0) + "%"
+            },
+            style: {
+                fontSize: '12px',
+                fontFamily: "'DM Sans', sans-serif",
+                fontWeight: 700,
+                colors: ['#fff']
+            },
+            dropShadow: { enabled: false }
+        },
         plotOptions: { 
             pie: { 
                 donut: { 

@@ -75,10 +75,16 @@ const TotalSchoolModal = ({ open, onClose }) => {
             padding={3}
             dividers={false}
             headerBg="#F8FAFC"
+            actions={
+                <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+                    <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+                    <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
+                </Stack>
+            }
         >
             {/* Top Cards Section */}
             <Grid container spacing={3} mb={4}>
-                <Grid item xs={12} sm={5} md={4.5}>
+                <Grid size={{ xs: 12, sm: 12, md: 3 }}>
                     <Card sx={{ 
                         p: 2.5, 
                         display: 'flex', 
@@ -88,7 +94,8 @@ const TotalSchoolModal = ({ open, onClose }) => {
                         boxShadow: 'none',
                         height: '100%',
                         bgcolor: 'white',
-                        borderRadius: '4px'
+                        borderRadius: '4px',
+                        width: '100%'
                     }}>
                         <Box sx={{ color: '#00ACFF', display: 'flex' }}>
                             <IconSchool size={40} />
@@ -99,7 +106,7 @@ const TotalSchoolModal = ({ open, onClose }) => {
                         </Box>
                     </Card>
                 </Grid>
-                <Grid item xs={12} sm={7} md={5.5}>
+                <Grid size={{ xs: 12, sm: 12, md: 3 }}>
                     <Card sx={{ 
                         p: 2.5, 
                         border: '1px solid #FF00FF', 
@@ -109,7 +116,8 @@ const TotalSchoolModal = ({ open, onClose }) => {
                         flexDirection: 'column',
                         justifyContent: 'center',
                         bgcolor: 'white',
-                        borderRadius: '4px'
+                        borderRadius: '4px',
+                        width: '100%'
                     }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
                             <Typography variant="body1" fontWeight="600" color="#1E293B">Primary Sch -</Typography>
@@ -149,48 +157,61 @@ const TotalSchoolModal = ({ open, onClose }) => {
             {/* Filters Section */}
             <Box sx={{ 
                 display: 'flex', 
-                flexDirection: { xs: 'column', sm: 'row' },
-                justifyContent: 'flex-end', 
+                flexDirection: { xs: 'column', md: 'row' },
+                justifyContent: 'space-between', 
                 gap: 2, 
                 mb: 4, 
-                p: 2, 
+                p: { xs: 2, sm: 3 }, 
                 bgcolor: '#F0FDFA', 
                 borderRadius: '8px',
-                alignItems: { xs: 'stretch', sm: 'center' }
+                alignItems: { xs: 'stretch', md: 'center' }
             }}>
-                {tabValue === '2' && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden', flexShrink: 0 }}>
+                <Typography variant="subtitle1" fontWeight="700" color="#134E48" sx={{ fontSize: { xs: '14px', sm: '16px' } }}>
+                    Filter Data
+                </Typography>
+                
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' }, 
+                    gap: 2,
+                    flexGrow: 1,
+                    justifyContent: 'flex-end',
+                    alignItems: { xs: 'stretch', sm: 'center' }
+                }}>
+                    {tabValue === '2' && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden' }}>
+                            <Box sx={{ px: 2, py: 1, bgcolor: '#E0F2FE', borderRight: '1px solid #E2E8F0' }}>
+                                <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: '#0369A1' }}>Agent</Typography>
+                            </Box>
+                            <Select 
+                                size="small" 
+                                value={agent} 
+                                onChange={(e) => setAgent(e.target.value)}
+                                sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 150 }, flexGrow: 1, fontSize: '13px', fontWeight: 600 }}
+                            >
+                                <MenuItem value="All">All Agents</MenuItem>
+                                <MenuItem value="1">Agent 1</MenuItem>
+                            </Select>
+                        </Box>
+                    )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden' }}>
                         <Box sx={{ px: 2, py: 1, bgcolor: '#E0F2FE', borderRight: '1px solid #E2E8F0' }}>
-                            <Typography variant="body2" fontWeight="600">Select Agent</Typography>
+                            <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: '#0369A1' }}>Year</Typography>
                         </Box>
                         <Select 
                             size="small" 
-                            value={agent} 
-                            onChange={(e) => setAgent(e.target.value)}
-                            sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 150 }, flexGrow: 1 }}
+                            value={year} 
+                            onChange={(e) => setYear(e.target.value)}
+                            sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 100 }, flexGrow: 1, fontSize: '13px', fontWeight: 600 }}
                         >
-                            <MenuItem value="All">All Agents</MenuItem>
-                            <MenuItem value="1">Agent 1</MenuItem>
+                            <MenuItem value="2026">2026</MenuItem>
+                            <MenuItem value="2025">2025</MenuItem>
                         </Select>
                     </Box>
-                )}
-                <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden', flexShrink: 0 }}>
-                    <Box sx={{ px: 2, py: 1, bgcolor: '#E0F2FE', borderRight: '1px solid #E2E8F0' }}>
-                        <Typography variant="body2" fontWeight="600">Year</Typography>
-                    </Box>
-                    <Select 
-                        size="small" 
-                        value={year} 
-                        onChange={(e) => setYear(e.target.value)}
-                        sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 120 }, flexGrow: 1 }}
-                    >
-                        <MenuItem value="2026">2026</MenuItem>
-                        <MenuItem value="2025">2025</MenuItem>
-                    </Select>
+                    {tabValue === '2' && (
+                        <PrimaryButton sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, height: '36px', px: 4, borderRadius: '4px' }}>Filter</PrimaryButton>
+                    )}
                 </Box>
-                {tabValue === '2' && (
-                    <PrimaryButton sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, height: '40px', px: 3 }}>Filter</PrimaryButton>
-                )}
             </Box>
 
             {/* Chart Area */}

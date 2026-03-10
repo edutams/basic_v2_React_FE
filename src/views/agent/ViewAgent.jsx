@@ -58,8 +58,8 @@ const ViewAgent = () => {
                         <Grid size={{xs: 12, md: 5, lg: 5}}>
                             <ProfileHeader 
                                 profile={mockAgentData.profile} 
-                                onAddAgent={() => setValue('2')}
-                                onAddSchool={() => setValue('3')}
+                                onAddAgent={() => setIsAddAgentModalOpen(true)}
+                                onAddSchool={() => setIsAddSchoolModalOpen(true)}
                             />
                         </Grid>
                         <Grid size={{xs: 12, md: 7, lg: 7}}>
@@ -108,6 +108,9 @@ const ViewAgent = () => {
                                 <TabList 
                                     onChange={handleChange} 
                                     aria-label="agent tabs"
+                                    variant="scrollable"
+                                    scrollButtons="auto"
+                                    allowScrollButtonsMobile
                                     sx={{
                                         '& .MuiTabs-indicator': {
                                             height: 4,

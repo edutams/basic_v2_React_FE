@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Box, Typography, Tabs, Tab, Select, MenuItem } from '@mui/material';
+import { IconLayoutDashboard, IconChartBar, IconSchool } from '@tabler/icons-react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import CommissionSummaryCards from './components/CommissionSummaryCards';
@@ -63,11 +64,19 @@ const CommissionManagement = () => {
 
                 <Box mt={4} sx={{ bgcolor: 'white', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden' }}>
                     <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pt: 2, pb: 0 }}>
-                        <Tabs value={value} onChange={handleTabChange} textColor="inherit" indicatorColor="primary">
-                            <Tab label="Overview" value="1" sx={{ textTransform: 'none', fontWeight: 600 }} />
-                            <Tab label="Manage" value="2" sx={{ textTransform: 'none', fontWeight: 600 }} />
-                            <Tab label="Commission by Subscription" value="3" sx={{ textTransform: 'none', fontWeight: 600 }} />
-                            <Tab label="Commission by Transaction" value="4" sx={{ textTransform: 'none', fontWeight: 600 }} />
+                        <Tabs 
+                            value={value} 
+                            onChange={handleTabChange} 
+                            textColor="inherit" 
+                            indicatorColor="primary"
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            allowScrollButtonsMobile
+                        >
+                            <Tab label="Overview" value="1" icon={<IconLayoutDashboard size={18} />} iconPosition="start" sx={{ textTransform: 'none', fontWeight: 600 }} />
+                            <Tab label="Manage" value="2" icon={<IconChartBar size={18} />} iconPosition="start" sx={{ textTransform: 'none', fontWeight: 600 }} />
+                            <Tab label="Commission by Subscription" value="3" icon={<IconSchool size={18} />} iconPosition="start" sx={{ textTransform: 'none', fontWeight: 600 }} />
+                            <Tab label="Commission by Transaction" value="4" icon={<IconChartBar size={18} />} iconPosition="start" sx={{ textTransform: 'none', fontWeight: 600 }} />
                         </Tabs>
                     </Box>
 

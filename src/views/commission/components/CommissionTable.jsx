@@ -55,23 +55,28 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType }) =>
                     </Box>
                 )
             }),
-            columnHelper.accessor('commissionType', {
-                header: 'Commission Type',
-                cell: (info) => (
-                    <Chip 
-                        label={info.getValue()} 
-                        size="small"
-                        sx={{ 
-                            bgcolor: getCommissionTypeColor(info.getValue()),
-                            color: getCommissionTypeTextColor(info.getValue()),
-                            fontWeight: 600,
-                            borderRadius: '8px',
-                            fontSize: '0.75rem'
-                        }} 
-                    />
-                )
-            }),
         ];
+
+        if (activeTab !== '3' && activeTab !== '4') {
+            baseColumns.push(
+                columnHelper.accessor('commissionType', {
+                    header: 'Commission Type',
+                    cell: (info) => (
+                        <Chip 
+                            label={info.getValue()} 
+                            size="small"
+                            sx={{ 
+                                bgcolor: getCommissionTypeColor(info.getValue()),
+                                color: getCommissionTypeTextColor(info.getValue()),
+                                fontWeight: 600,
+                                borderRadius: '8px',
+                                fontSize: '0.75rem'
+                            }} 
+                        />
+                    )
+                })
+            );
+        }
 
         if (activeTab === '1') {
             baseColumns.push(

@@ -41,6 +41,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
         },
       },
       zoom: { enabled: false },
+      background: 'transparent',
     },
     xaxis: {
       categories: [
@@ -60,15 +61,22 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
         style: {
           fontSize: '12px',
           fontWeight: 500,
+          colors: theme.palette.mode === 'dark' ? '#fff' : '#333',
         },
       },
+      axisBorder: { show: true, color: theme.palette.mode === 'dark' ? '#444' : '#eee' },
+      axisTicks: { show: false },
     },
     yaxis: {
-      title: { text: 'Number of Schools' },
+      title: {
+        text: 'Number of Schools',
+        style: { colors: theme.palette.mode === 'dark' ? '#fff' : '#333' },
+      },
     },
     dataLabels: { enabled: false },
     colors: ['#1DA1F2'],
-    grid: { borderColor: '#eee' },
+    grid: { borderColor: theme.palette.mode === 'dark' ? '#444' : '#eee' },
+    theme: { mode: theme.palette.mode },
   };
 
   const chartSeries = [
@@ -466,11 +474,31 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                       'Nov',
                       'Dec',
                     ],
+                    labels: {
+                      style: {
+                        colors: theme.palette.mode === 'dark' ? '#fff' : '#333',
+                      },
+                    },
+                    axisBorder: {
+                      show: true,
+                      color: theme.palette.mode === 'dark' ? '#444' : '#eee',
+                    },
                   },
-                  yaxis: { title: { text: 'Number of Schools' } },
+                  yaxis: {
+                    title: {
+                      text: 'Number of Schools',
+                      style: { colors: theme.palette.mode === 'dark' ? '#fff' : '#333' },
+                    },
+                    labels: {
+                      style: {
+                        colors: theme.palette.mode === 'dark' ? '#fff' : '#333',
+                      },
+                    },
+                  },
                   dataLabels: { enabled: false },
                   colors: ['#1DA1F2'],
-                  grid: { borderColor: '#eee' },
+                  grid: { borderColor: theme.palette.mode === 'dark' ? '#444' : '#eee' },
+                  theme: { mode: theme.palette.mode },
                 }}
                 series={[
                   { name: 'Agent 1', data: [12, 19, 23, 30, 15, 28, 20, 25, 32, 18, 22, 27] },

@@ -39,7 +39,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
     stroke: {
       show: true,
       width: 1,
-      colors: ['#fff'],
+      colors: theme.palette.mode === 'dark' ? ['#333'] : ['#fff'],
     },
     xaxis: {
       categories: [
@@ -56,20 +56,35 @@ const PlanDistributionModal = ({ open, onClose }) => {
       ],
       labels: {
         rotate: -45,
-        style: { fontSize: '10px', fontWeight: 600 },
+        style: {
+          fontSize: '10px',
+          fontWeight: 600,
+          colors: theme.palette.mode === 'dark' ? '#fff' : '#333',
+        },
       },
       title: {
         text: 'Agent',
-        style: { fontWeight: 700, fontSize: '12px' },
+        style: {
+          fontWeight: 700,
+          fontSize: '12px',
+          color: theme.palette.mode === 'dark' ? '#fff' : '#333',
+        },
         offsetY: 85,
       },
-      axisBorder: { show: true, color: '#e0e0e0' },
+      axisBorder: { show: true, color: theme.palette.mode === 'dark' ? '#444' : '#e0e0e0' },
       axisTicks: { show: false },
     },
     yaxis: {
       title: {
         text: 'NO of Schools',
-        style: { fontWeight: 700, fontSize: '12px' },
+        style: {
+          fontWeight: 700,
+          fontSize: '12px',
+          color: theme.palette.mode === 'dark' ? '#fff' : '#333',
+        },
+      },
+      labels: {
+        style: { colors: theme.palette.mode === 'dark' ? '#fff' : '#333' },
       },
       min: 0,
       max: 100,
@@ -86,9 +101,10 @@ const PlanDistributionModal = ({ open, onClose }) => {
       itemMargin: { horizontal: 15, vertical: 10 },
     },
     grid: {
-      borderColor: '#f1f1f1',
+      borderColor: theme.palette.mode === 'dark' ? '#444' : '#f1f1f1',
       strokeDashArray: 0,
     },
+    theme: { mode: theme.palette.mode },
   };
 
   const chartSeries = [

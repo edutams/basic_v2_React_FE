@@ -25,8 +25,8 @@ export const SetCommissionModal = ({ open, onClose, agent }) => {
             maxWidth="sm"
             actions={
                 <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-                    <PrimaryButton variant="text" color="inherit" onClick={onClose} sx={{ color: 'text.secondary' }}>Cancel</PrimaryButton>
-                    <PrimaryButton onClick={onClose}>Update</PrimaryButton>
+                    <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+                    <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
                 </Stack>
             }
         >
@@ -75,8 +75,8 @@ export const ChangeCommissionTypeModal = ({ open, onClose, agent }) => {
             maxWidth="xs"
             actions={
                 <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-                    <PrimaryButton variant="text" color="inherit" onClick={onClose} sx={{ color: 'text.secondary' }}>Cancel</PrimaryButton>
-                    <PrimaryButton onClick={onClose}>Save</PrimaryButton>
+                    <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+                    <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
                 </Stack>
             }
         >

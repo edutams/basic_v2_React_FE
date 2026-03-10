@@ -16,7 +16,7 @@ const CommissionSummaryCards = () => {
                             height: '100%'
                         }}
                     >
-                        <CardContent sx={{ p: '24px !important' }}>
+                        <CardContent sx={{ p: '24px !important', textAlign: 'center' }}>
                             <Typography variant="h3" sx={{ fontWeight: 700, color: stat.color, mb: 1 }}>
                                 {stat.value}
                             </Typography>

@@ -1,32 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
   FormControl,
   OutlinedInput,
   InputAdornment,
-  Button,
-  TextField,
-  Grid,
-  Paper,
+  Stack,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
+import PropTypes from 'prop-types';
+import PrimaryButton from '../../shared/PrimaryButton';
+import { IconArrowUp } from '@tabler/icons-react';
 
-
-const infoBoxStyle = {
-  bgcolor: '#e6f4ff',
-  color: '#333',
-  borderRadius: 1,
-  p: 2,
-  mb: 3,
-  fontSize: '0.875rem',
-};
-
-const SetCommissionModal = ({ open, onClose, selectedAgent, onSave }) => {
-  const [maxCommission, setMaxCommission] = useState(100);
-  const [remainingCommission, setRemainingCommission] = useState(100);
-
+const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
   const validationSchema = yup.object({
     commissionPercentage: yup
       .number()
@@ -42,92 +29,89 @@ const SetCommissionModal = ({ open, onClose, selectedAgent, onSave }) => {
     validationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {
-      const updatedAgent = {
+      const updatedValues = {
         ...selectedAgent,
         commissionPercentage: values.commissionPercentage,
-        lastCommissionUpdate: new Date().toISOString(),
+        // Since handleUpdate in AgentModal expects certain fields, 
+        // we should ensure we're passing what it needs or update the logic there.
+        // For now, let's keep it consistent with how it was used.
       };
-      onSave(updatedAgent);
+      
+      // The handleUpdate expects the formik values structure if called from onSubmit
+      // but here SetCommission calls onSave(handleUpdate) with values.
+      // Let's refine this to match the backend expectation or the handleUpdate logic.
+      onSave({
+        ...selectedAgent,
+        commission_percentage: values.commissionPercentage
+      });
       onClose();
     },
   });
 
-  useEffect(() => {
-    const refCommission = selectedAgent?.referrerCommission || 100;
-    setMaxCommission(refCommission);
-    const current = formik.values.commissionPercentage || 0;
-    setRemainingCommission(refCommission - current);
-  }, [formik.values.commissionPercentage, selectedAgent]);
-
   const handleInputChange = (e) => {
-    const val = Math.max(0, Math.min(maxCommission, Number(e.target.value)));
-    formik.setFieldValue('commissionPercentage', val);
-    setRemainingCommission(maxCommission - val);
+    const val = e.target.value;
+    if (val === '' || (Number(val) >= 0 && Number(val) <= 100)) {
+      formik.setFieldValue('commissionPercentage', val);
+    }
   };
 
   return (
-    <Box>
-      <Box sx={infoBoxStyle}>
-          For every school you or agent(s) under you register, you are allotted 100% as commission.
-          Whatever percentage you set as commission for the agent(s) under you, will be deducted
-          from the total percentage allotted to you.
-        </Box>
+    <Box sx={{ p: 1 }}>
+      <Typography variant="body1" sx={{ color: '#64748B', mb: 3 }}>
+        Editing commission for <Box component="span" sx={{ fontWeight: 800, color: '#1E293B' }}>{selectedAgent?.agentDetails || 'Adebayo Ogunlesi'}</Box>
+      </Typography>
 
-        <Grid container spacing={2}>
-          <Grid item size={{ xs: 12, sm: 12 }}>
-            <TextField
-              label="Referrer Name"
-              value={selectedAgent?.referrerName || 'Crownbirth Limited'}
-              fullWidth
-              InputProps={{ readOnly: true }}
-              variant="outlined"
-            />
-          </Grid>
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1E293B', mb: 1 }}>
+        Commission Percentage
+      </Typography>
 
-          <Grid item size={{ xs: 12, sm: 12 }}>
-            <TextField
-              label="Referrer Commission %"
-              value={selectedAgent?.referrerCommission || 100}
-              fullWidth
-              InputProps={{ readOnly: true, endAdornment: <InputAdornment position="end">%</InputAdornment> }}
-              variant="outlined"
-            />
-          </Grid>
+      <FormControl fullWidth sx={{ position: 'relative', mb: 4 }}>
+        <OutlinedInput
+          placeholder="60"
+          value={formik.values.commissionPercentage}
+          onChange={handleInputChange}
+          onBlur={formik.handleBlur}
+          type="number"
+          sx={{
+            borderRadius: '12px',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderWidth: '2px',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            },
+            height: '56px',
+            fontSize: '18px',
+            fontWeight: 700,
+          }}
+       
+        />
+       
+      </FormControl>
 
-          <Grid item size={{ xs: 12, sm: 12 }}>
-            <FormControl fullWidth>
-              <OutlinedInput
-                placeholder="Set Commission %"
-                value={formik.values.commissionPercentage}
-                onChange={handleInputChange}
-                onBlur={formik.handleBlur}
-                endAdornment={<InputAdornment position="end">of 100%</InputAdornment>}
-                error={formik.touched.commissionPercentage && Boolean(formik.errors.commissionPercentage)}
-                type="number"
-              />
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
-          <Button onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={formik.handleSubmit}
-            variant="contained"
-            sx={{
-              bgcolor: '#f9a825',
-              color: '#fff',
-              '&:hover': { bgcolor: '#f57f17' },
-            }}
-            disabled={!formik.isValid}
-          >
-            Update
-          </Button>
-        </Box>
+      <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+        <PrimaryButton variant="secondary" onClick={onClose} sx={{ minWidth: '100px' }}>
+          Cancel
+        </PrimaryButton>
+        <PrimaryButton 
+          variant="primary" 
+          onClick={formik.handleSubmit} 
+          disabled={!formik.isValid || loading}
+          sx={{ minWidth: '100px' }}
+        >
+          Save
+        </PrimaryButton>
       </Box>
+    </Box>
   );
+};
+
+SetCommissionModal.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  selectedAgent: PropTypes.object,
+  onSave: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
 };
 
 export default SetCommissionModal;

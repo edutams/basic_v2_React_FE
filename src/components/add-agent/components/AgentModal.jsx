@@ -32,7 +32,7 @@ const getModalConfig = (actionType) => {
       size: 'large',
     },
     setCommission: {
-      title: 'Set Commission',
+      title: 'Edit Commission Percentage',
       size: 'small',
     },
     manageReferral: {
@@ -223,6 +223,7 @@ const AgentModal = ({
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onClose={handleClose}
+            loading={loading}
           />
         );
       

@@ -1,22 +1,16 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
   Typography,
   Box,
   Grid,
   Stack,
-  FormControl,
   Select,
   MenuItem,
-  Button,
   Card,
-  Divider
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import Chart from 'react-apexcharts';
+import StandardModal from 'src/components/shared/StandardModal';
+import PrimaryButton from 'src/components/shared/PrimaryButton';
 
 const PlanDistributionModal = ({ open, onClose }) => {
   const plans = [
@@ -91,15 +85,23 @@ const PlanDistributionModal = ({ open, onClose }) => {
   ];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 0 } }}>
-      <DialogContent sx={{ p: 4, bgcolor: '#f8fafc', position: 'relative' }}>
-        <IconButton onClick={onClose} sx={{ position: 'absolute', right: 16, top: 16, color: 'red' }}>
-          <CloseIcon fontSize="large" />
-        </IconButton>
-
-        <Grid container spacing={2} mb={4} mt={2}>
+    <StandardModal
+      open={open}
+      onClose={onClose}
+      title="Plan Distribution"
+      maxWidth="lg"
+      padding={0}
+      actions={
+        <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+          <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+          <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
+        </Stack>
+      }
+    >
+      <Box sx={{ p: 4, bgcolor: '#f8fafc' }}>
+        <Grid container spacing={2} mb={4}>
           {plans.map((plan, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+            <Grid container  size={{ xs: 12, sm: 6, md: 3 }} key={index}>
               <Card sx={{ 
                 p: 2, 
                 border: `1.5px solid ${plan.border}`, 
@@ -110,7 +112,8 @@ const PlanDistributionModal = ({ open, onClose }) => {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                textAlign: 'center'
+                textAlign: 'center',
+                width: '100%'
               }}>
                 <Typography variant="h5" fontWeight="700" sx={{ color: plan.color, fontSize: '22px' }}>
                   # {plan.value}
@@ -125,90 +128,81 @@ const PlanDistributionModal = ({ open, onClose }) => {
         </Grid>
 
         <Box sx={{ borderRadius: '8px', overflow: 'hidden', bgcolor: 'white', p: 0, border: '1px solid #e2e8f0' }}>
-         <Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    p: 1,
-    bgcolor: "#f2fdf5"
-  }}
->
-  {/* Spacer */}
-  <Box />
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: { xs: 'column', md: 'row' },
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 2,
+                    bgcolor: "#f2fdf5",
+                    gap: 2
+                }}
+            >
+                <Typography variant="subtitle1" fontWeight="700" color="#134E48" sx={{ fontSize: { xs: '14px', sm: '16px' } }}>
+                    Plan per School
+                </Typography>
 
-  <Box sx={{ 
-    display: "flex", 
-    flexDirection: { xs: "column", sm: "row" },
-    alignItems: "center", 
-    gap: 2,
-    width: { xs: "100%", sm: "auto" }
-  }}>
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        border: "1px solid #ddd",
-        borderRadius: "4px",
-        bgcolor: "white",
-        overflow: "hidden",
-        width: { xs: "100%", sm: "auto" }
-      }}
-    >
-      <Box
-        sx={{
-          px: 2,
-          py: 0.5,
-          bgcolor: "#e0f7fa",
-          borderRight: "1px solid #ddd"
-        }}
-      >
-        <Typography variant="body2" fontWeight="500">
-          Year
-        </Typography>
-      </Box>
-      <Select
-        size="small"
-        value="2026"
-        sx={{
-          border: "none",
-          "& fieldset": { border: "none" },
-          ".MuiSelect-select": {
-            py: 0.5,
-            fontWeight: 600,
-            minWidth: "60px"
-          },
-          flexGrow: { xs: 1, sm: 0 }
-        }}
-      >
-        <MenuItem value="2026">2026</MenuItem>
-      </Select>
-    </Box>
-    <Button
-      variant="contained"
-      sx={{
-        bgcolor: "#2ca87f",
-        "&:hover": { bgcolor: "#238a68" },
-        textTransform: "none",
-        px: 3,
-        fontWeight: 600,
-        height: "32px",
-        width: { xs: "100%", sm: "auto" }
-      }}
-    >
-      Filter
-    </Button>
-  </Box>
-
-  {/* Right Title */}
-  {/* <Typography
-    variant="h6"
-    fontWeight="700"
-    sx={{ color: "#444", fontSize: "16px" }}
-  >
-    Plan per School
-  </Typography> */}
-</Box>
+                <Box sx={{ 
+                    display: "flex", 
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: "center", 
+                    gap: 2,
+                    width: { xs: "100%", sm: "auto" }
+                }}>
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            border: "1px solid #ddd",
+                            borderRadius: "4px",
+                            bgcolor: "white",
+                            overflow: "hidden",
+                            width: { xs: "100%", sm: "auto" }
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                px: 2,
+                                py: 0.5,
+                                bgcolor: "#e0f7fa",
+                                borderRight: "1px solid #ddd"
+                            }}
+                        >
+                            <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: '#0369A1' }}>
+                                Year
+                            </Typography>
+                        </Box>
+                        <Select
+                            size="small"
+                            value="2026"
+                            sx={{
+                                border: "none",
+                                "& fieldset": { border: "none" },
+                                ".MuiSelect-select": {
+                                    py: 0.5,
+                                    fontWeight: 700,
+                                    minWidth: "80px",
+                                    fontSize: '13px'
+                                },
+                                flexGrow: { xs: 1, sm: 0 }
+                            }}
+                        >
+                            <MenuItem value="2026">2026</MenuItem>
+                        </Select>
+                    </Box>
+                    <PrimaryButton
+                        variant="primary"
+                        sx={{
+                            height: "36px",
+                            px: 4,
+                            width: { xs: "100%", sm: "auto" },
+                        }}
+                    >
+                        Filter
+                    </PrimaryButton>
+                </Box>
+            </Box>
 
           <Box sx={{ p: 4 }}>
             <Grid container spacing={4} sx={{ display: 'flex' }}>
@@ -247,8 +241,8 @@ const PlanDistributionModal = ({ open, onClose }) => {
             </Grid>
           </Box>
         </Box>
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </StandardModal>
   );
 };
 

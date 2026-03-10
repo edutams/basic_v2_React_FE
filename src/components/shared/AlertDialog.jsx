@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, Box, Alert, AlertTitle } from '@mui/material';
-import ReusableDialog from './ReusableDialog';
+import { Box, Alert, AlertTitle } from '@mui/material';
 import PropTypes from 'prop-types';
+import ReusableDialog from './ReusableDialog';
+import PrimaryButton from './PrimaryButton';
 
 const AlertDialog = ({
   open,
@@ -12,7 +13,6 @@ const AlertDialog = ({
   showIcon = true,
   variant = 'standard', 
   buttonText = 'OK',
-  buttonColor = 'primary',
   maxWidth = 'sm',
   ...dialogProps
 }) => {
@@ -29,14 +29,16 @@ const AlertDialog = ({
   );
 
   const actions = (
-    <Button
-      onClick={onClose}
-      color={buttonColor}
-      variant="contained"
-      autoFocus
-    >
-      {buttonText}
-    </Button>
+    <Box sx={{ p: 1 }}>
+      <PrimaryButton
+        onClick={onClose}
+        variant="primary"
+        autoFocus
+        fullWidth
+      >
+        {buttonText}
+      </PrimaryButton>
+    </Box>
   );
 
   return (

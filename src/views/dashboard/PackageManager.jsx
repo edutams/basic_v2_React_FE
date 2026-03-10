@@ -12,7 +12,7 @@ import Divider from '@mui/material/Divider';
 
 import {
   IconSchool,
-  IconUserPlus,
+  IconCash,
   IconCheck,
   IconX,
   IconSettings,
@@ -30,6 +30,7 @@ import MyPlanTab from '../my-plan/MyPlan';
 
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../agent/components/PlanDistributionModal';
+import TotalSchoolModal from '../agent/components/TotalSchoolModal';
 
 const planSeries = [40, 15, 35, 10];
 
@@ -80,6 +81,7 @@ function a11yProps(index) {
 const EduTier = () => {
   const [value, setValue] = React.useState(0);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
+  const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -87,7 +89,7 @@ const EduTier = () => {
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
-      <Breadcrumb title="Managex Subscription" items={BCrumb} />
+      <Breadcrumb title="Manage Subscription" items={BCrumb} />
 
       <Box
         sx={{
@@ -118,7 +120,7 @@ const EduTier = () => {
             }}
           ></Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconCash size={50} color="#1DA1F2" />
 
             <Box textAlign="right">
               <Typography
@@ -168,6 +170,7 @@ const EduTier = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
+              onClick={() => setOpenTotalSchoolModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -424,6 +427,11 @@ const EduTier = () => {
       <PlanDistributionModal
         open={openPlanDistributionModal}
         onClose={() => setOpenPlanDistributionModal(false)}
+      />
+
+      <TotalSchoolModal
+        open={openTotalSchoolModal}
+        onClose={() => setOpenTotalSchoolModal(false)}
       />
     </PageContainer>
   );

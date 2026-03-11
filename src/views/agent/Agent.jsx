@@ -26,7 +26,7 @@ import {
   IconButton,
   Button,
   Badge,
-  Card
+  Card,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -41,12 +41,7 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
-import { 
-  IconUsers, 
-  IconSchool, 
-  IconCurrencyNaira, 
-  IconChartBar
-} from '@tabler/icons-react';
+import { IconUsers, IconSchool, IconCurrencyNaira, IconChartBar } from '@tabler/icons-react';
 
 import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 import AgentSubAgentsCard from './components/AgentSubAgentsCard';
@@ -97,7 +92,20 @@ const Agent = () => {
       data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5],
     },
   ];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 
   // Plan Distribution Mock Data
   const planSeries = [65, 52, 39];
@@ -125,7 +133,7 @@ const Agent = () => {
   ];
   // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
-  
+
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
 
@@ -141,49 +149,51 @@ const Agent = () => {
     const fetchData = async () => {
       try {
         const params = {
-             state: state || undefined,
-             lga: lga || undefined,
-             status: status || undefined,
-             search: search || undefined,
-             access_level: agentLevel || undefined
+          state: state || undefined,
+          lga: lga || undefined,
+          status: status || undefined,
+          search: search || undefined,
+          access_level: agentLevel || undefined,
         };
         const response = await agentApi.getAll(params);
-        if(response.success){
-             const mappedData = response.data.map((agent, index) => {
-                 let parsedColor = agent.color;
-                 if (typeof agent.color === 'string') {
-                     try {
-                         parsedColor = JSON.parse(agent.color);
-                     } catch (e) {
-                         console.error("Error parsing color JSON", e);
-                         parsedColor = {};
-                     }
-                 }
+        if (response.success) {
+          const mappedData = response.data.map((agent, index) => {
+            let parsedColor = agent.color;
+            if (typeof agent.color === 'string') {
+              try {
+                parsedColor = JSON.parse(agent.color);
+              } catch (e) {
+                console.error('Error parsing color JSON', e);
+                parsedColor = {};
+              }
+            }
 
-                 return {
-                     s_n: agent.id,
-                     agentDetails: agent.name,
-                     organizationName: agent.org_name,
-                     organizationTitle: agent.org_title,
-                     contactDetails: agent.email,
-                     phoneNumber: agent.phone,
-                     imgsrc: agent.image,
-                     performance: 'School: ' + (agent.tenants_count || 0),
-                     tenants_count: agent.tenants_count || 0,
-                     sub_agents_count: agent.children_count || 0,
-                     access_level: agent.access_level,
-                     headerColor: parsedColor?.headcolor,
-                     sidebarColor: parsedColor?.sidecolor,
-                     bodyColor: parsedColor?.bodycolor,
-                     status: agent.status ? (agent.status.charAt(0).toUpperCase() + agent.status.slice(1)) : 'Inactive',
-                     lga: agent.lga_id,
-                     stateFilter: agent.state_lga?.state_id,
-                 };
-             });
-             setData(mappedData);
+            return {
+              s_n: agent.id,
+              agentDetails: agent.name,
+              organizationName: agent.org_name,
+              organizationTitle: agent.org_title,
+              contactDetails: agent.email,
+              phoneNumber: agent.phone,
+              imgsrc: agent.image,
+              performance: 'School: ' + (agent.tenants_count || 0),
+              tenants_count: agent.tenants_count || 0,
+              sub_agents_count: agent.children_count || 0,
+              access_level: agent.access_level,
+              headerColor: parsedColor?.headcolor,
+              sidebarColor: parsedColor?.sidecolor,
+              bodyColor: parsedColor?.bodycolor,
+              status: agent.status
+                ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
+                : 'Inactive',
+              lga: agent.lga_id,
+              stateFilter: agent.state_lga?.state_id,
+            };
+          });
+          setData(mappedData);
         }
       } catch (error) {
-        console.error("Failed to fetch agents", error);
+        console.error('Failed to fetch agents', error);
       }
     };
     fetchData();
@@ -198,7 +208,7 @@ const Agent = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const applyFilters = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
     setHasFiltered(true);
   };
 
@@ -207,9 +217,9 @@ const Agent = () => {
     const fetchStates = async () => {
       try {
         const response = await locationApi.getStates();
-        setStates(response); 
+        setStates(response);
       } catch (error) {
-        console.error("Failed to fetch states", error);
+        console.error('Failed to fetch states', error);
       }
     };
     fetchStates();
@@ -221,21 +231,21 @@ const Agent = () => {
     const fetchLgas = async () => {
       if (state) {
         try {
-            // Find state object to get ID if state is stored as name, or use state directly if ID
-            // The API likely returns objects with id and name. 
-            // The filters currently use state name (string). 
-            // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
-            // Based on previous code, state filter uses names. 
-            const selectedState = states.find(s => (s.stname || s.name) === state);
-            if(selectedState){
-                const response = await locationApi.getLgas(selectedState.id);
-                setLgas(response);
-            } else {
-                setLgas([]);
-            }
-        } catch (error) {
-            console.error("Failed to fetch LGAs", error);
+          // Find state object to get ID if state is stored as name, or use state directly if ID
+          // The API likely returns objects with id and name.
+          // The filters currently use state name (string).
+          // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
+          // Based on previous code, state filter uses names.
+          const selectedState = states.find((s) => (s.stname || s.name) === state);
+          if (selectedState) {
+            const response = await locationApi.getLgas(selectedState.id);
+            setLgas(response);
+          } else {
             setLgas([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch LGAs', error);
+          setLgas([]);
         }
       } else {
         setLgas([]);
@@ -244,7 +254,6 @@ const Agent = () => {
     };
     fetchLgas();
   }, [state, states]);
-
 
   const hasActiveFilters = useMemo(() => {
     return agentLevel || country || state || lga || search;
@@ -362,7 +371,7 @@ const Agent = () => {
         alert(result.error);
       }
     } catch (error) {
-      console.error("Impersonation failed", error);
+      console.error('Impersonation failed', error);
     }
   };
 
@@ -484,7 +493,11 @@ const Agent = () => {
     columnHelper.accessor('performance', {
       header: () => 'Performance',
       cell: (info) => (
-        <Stack direction="row" spacing={0} sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+        <Stack
+          direction="row"
+          spacing={0}
+          sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}
+        >
           <Box sx={{ bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
             <Typography variant="caption" fontWeight="600" color="textSecondary">
               School
@@ -696,7 +709,8 @@ const Agent = () => {
                   handleImpersonate(row.original);
                 }}
               >
-Change Agent Color Scheme              </MenuItem>
+                Change Agent Color Scheme{' '}
+              </MenuItem>
               <MenuItem
                 onClick={() => {
                   handleClose();
@@ -761,11 +775,27 @@ Change Agent Color Scheme              </MenuItem>
               rightContent={
                 <Stack spacing={0.5}>
                   {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
-                    <Stack key={idx} direction="row" justifyContent="space-between" spacing={2} sx={{ minWidth: 120 }}>
-                      <Typography variant="caption" color="textSecondary" fontWeight="600" sx={{ fontSize: '11px' }}>
+                    <Stack
+                      key={idx}
+                      direction="row"
+                      justifyContent="space-between"
+                      spacing={2}
+                      sx={{ minWidth: 120 }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="textSecondary"
+                        fontWeight="600"
+                        sx={{ fontSize: '11px' }}
+                      >
                         {label} -
                       </Typography>
-                      <Typography variant="caption" color="error" fontWeight="700" sx={{ fontSize: '11px' }}>
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        fontWeight="700"
+                        sx={{ fontSize: '11px' }}
+                      >
                         34
                       </Typography>
                     </Stack>
@@ -783,7 +813,7 @@ Change Agent Color Scheme              </MenuItem>
               iconBgColor="#2ca87f"
             />
           </Grid>
-          
+
           <Grid size={{ xs: 12, lg: 4 }}>
             <AgentRevenueCard
               title="Total Transaction Value"
@@ -799,19 +829,36 @@ Change Agent Color Scheme              </MenuItem>
         {/* Row 2: Charts and Login Activities */}
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, lg: 6 }}>
-            <Card sx={{ p: 0, height: '100%', borderRadius: '12px', boxShadow: 'none', border: '1px solid rgba(0,0,0,0.05)' }}>
-               <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="h5" fontWeight="600" sx={{ color: '#4a3aff' }}>Transaction</Typography>
-                  <Stack direction="row" spacing={1}>
-                     <Select size="small" value="Year" sx={{ minWidth: 100, height: '35px' }}>
-                        <MenuItem value="Year">Year</MenuItem>
-                     </Select>
-                     <Select size="small" value="Bank" sx={{ minWidth: 100, height: '35px' }}>
-                        <MenuItem value="Bank">Bank</MenuItem>
-                     </Select>
-                  </Stack>
-               </Box>
-               <Box sx={{ p: 2 }}>
+            <Card
+              sx={{
+                p: 0,
+                height: '100%',
+                borderRadius: '12px',
+                boxShadow: 'none',
+                border: '1px solid rgba(0,0,0,0.05)',
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="h5" fontWeight="600" sx={{ color: '#4a3aff' }}>
+                  Transaction
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  <Select size="small" value="Year" sx={{ minWidth: 100, height: '35px' }}>
+                    <MenuItem value="Year">Year</MenuItem>
+                  </Select>
+                  <Select size="small" value="Bank" sx={{ minWidth: 100, height: '35px' }}>
+                    <MenuItem value="Bank">Bank</MenuItem>
+                  </Select>
+                </Stack>
+              </Box>
+              <Box sx={{ p: 2 }}>
                 <ReusableBarChart
                   series={revenueSeries}
                   categories={months}
@@ -821,65 +868,78 @@ Change Agent Color Scheme              </MenuItem>
                   yAxisFormatter={(val) => `${val.toFixed(1)}M`}
                   xAxisTitle="Month"
                 />
-               </Box>
+              </Box>
             </Card>
           </Grid>
-          
+
           <Grid size={{ xs: 12, lg: 3 }}>
-            <LoginActivitiesCard 
-              title="Login Activities" 
+            <LoginActivitiesCard
+              title="Login Activities"
               activities={loginActivities}
               onIconClick={() => setIsLoggedInUsersModalOpen(true)}
             />
           </Grid>
 
           <Grid size={{ xs: 12, lg: 3 }}>
-             <Card sx={{ p: '24px !important', height: '100%', borderRadius: '12px', boxShadow: 'none', border: '1px solid rgba(0,0,0,0.05)', position: 'relative' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="subtitle2" fontWeight="600" sx={{ color: '#64748B' }}>
-                    Plan Distribution
-                  </Typography>
-                  <Box 
-                    onClick={() => setIsPlanModalOpen(true)}
-                    sx={{ 
-                      bgcolor: '#454545', 
-                      p: 0.5, 
-                      borderRadius: '4px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      '&:hover': { bgcolor: '#333' }
-                    }}
-                  >
-                    <IconChartBar size={20} color="white" />
-                  </Box>
+            <Card
+              sx={{
+                p: '24px !important',
+                height: '100%',
+                borderRadius: '12px',
+                boxShadow: 'none',
+                border: '1px solid rgba(0,0,0,0.05)',
+                position: 'relative',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  mb: 2,
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight="600" sx={{ color: '#64748B' }}>
+                  Plan Distribution
+                </Typography>
+                <Box
+                  onClick={() => setIsPlanModalOpen(true)}
+                  sx={{
+                    bgcolor: '#454545',
+                    p: 0.5,
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: '#333' },
+                  }}
+                >
+                  <IconChartBar size={20} color="white" />
                 </Box>
-                <ReusablePieChart
-                  series={planSeries}
-                  labels={planLabels}
-                  colors={['#ff4081', '#2196f3', '#ff80ab', '#b39ddb']}
-                  height={200}
-                />
-             </Card>
+              </Box>
+              <ReusablePieChart
+                series={planSeries}
+                labels={planLabels}
+                colors={['#ff4081', '#2196f3', '#ff80ab', '#b39ddb']}
+                height={200}
+              />
+            </Card>
           </Grid>
         </Grid>
 
         {/* Modals */}
-        <PlanDistributionModal 
-          open={isPlanModalOpen} 
-          onClose={() => setIsPlanModalOpen(false)} 
-        />
-        <LoggedInUsersModal 
-          open={isLoggedInUsersModalOpen} 
+        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+        <LoggedInUsersModal
+          open={isLoggedInUsersModalOpen}
           onClose={() => setIsLoggedInUsersModalOpen(false)}
           onViewUserList={() => {
             setIsLoggedInUsersModalOpen(false);
             setIsViewUsersListModalOpen(true);
           }}
         />
-        <ViewUsersListModal 
-          open={isViewUsersListModalOpen} 
+        <ViewUsersListModal
+          open={isViewUsersListModalOpen}
           onClose={() => setIsViewUsersListModalOpen(false)}
           schoolName={selectedSchoolForUsers}
         />
@@ -888,7 +948,13 @@ Change Agent Color Scheme              </MenuItem>
       <Box sx={{ mt: 3 }}>
         <ParentCard
           title={
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ width: '100%' }}
+            >
               <Stack direction="row" spacing={1} alignItems="center">
                 <Box
                   sx={{
@@ -929,24 +995,23 @@ Change Agent Color Scheme              </MenuItem>
               />
             </Grid>
 
-             {/* Filter Icon Toggle */}
-             {!showAdvancedFilters && (
+            {/* Filter Icon Toggle */}
+            {!showAdvancedFilters && (
               <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                 <IconButton onClick={() => setShowAdvancedFilters(true)} color="primary">
-                    <FilterListIcon />
-                 </IconButton>
+                <IconButton onClick={() => setShowAdvancedFilters(true)} color="primary">
+                  <FilterListIcon />
+                </IconButton>
               </Grid>
             )}
-
 
             {/* Advanced Filters */}
             {showAdvancedFilters && (
               <>
-                 <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                 <IconButton onClick={() => setShowAdvancedFilters(false)} color="secondary">
+                <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                  <IconButton onClick={() => setShowAdvancedFilters(false)} color="secondary">
                     <FilterListIcon />
-                 </IconButton>
-              </Grid>
+                  </IconButton>
+                </Grid>
                 <Grid size={{ xs: 12, md: 3, sm: 3 }}>
                   <FormControl fullWidth variant="outlined">
                     <InputLabel>Agent Level</InputLabel>
@@ -1080,7 +1145,7 @@ Change Agent Color Scheme              </MenuItem>
               <TableBody>
                 {!emptyState.isEmpty ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: '#F8FAFC' } }}>
+                    <TableRow key={row.id} hover>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1124,27 +1189,21 @@ Change Agent Color Scheme              </MenuItem>
           cancelText="Cancel"
           severity="error"
         />
-        <TotalSchoolModal 
-          open={isSchoolModalOpen} 
-          onClose={() => setIsSchoolModalOpen(false)} 
+        <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+        <TotalTransactionModal
+          open={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
         />
-        <TotalTransactionModal 
-          open={isTransactionModalOpen} 
-          onClose={() => setIsTransactionModalOpen(false)} 
-        />
-        <LoggedInUsersModal 
-          open={isLoggedInUsersModalOpen} 
+        <LoggedInUsersModal
+          open={isLoggedInUsersModalOpen}
           onClose={() => setIsLoggedInUsersModalOpen(false)}
           onViewUserList={() => setIsViewUsersListModalOpen(true)}
         />
-        <ViewUsersListModal 
-          open={isViewUsersListModalOpen} 
-          onClose={() => setIsViewUsersListModalOpen(false)} 
+        <ViewUsersListModal
+          open={isViewUsersListModalOpen}
+          onClose={() => setIsViewUsersListModalOpen(false)}
         />
-        <PlanDistributionModal 
-          open={isPlanModalOpen} 
-          onClose={() => setIsPlanModalOpen(false)} 
-        />
+        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
       </Box>
     </PageContainer>
   );

@@ -75,6 +75,7 @@ const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
 const SchoolDashboard = () => {
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [schoolList, setSchoolList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -389,7 +390,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
               Active School
             </Typography>
 
@@ -407,7 +408,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#B02D2D', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.error.main, fontSize: 15, fontWeight: 'bold' }}>
               Inactive School
             </Typography>
 
@@ -484,7 +485,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
               Primary School
             </Typography>
 
@@ -501,7 +502,7 @@ const SchoolDashboard = () => {
             />
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
               Senior School
             </Typography>
 
@@ -650,7 +651,7 @@ const SchoolDashboard = () => {
                 <Typography
                   variant="h5"
                   sx={{
-                    color: '#E10600',
+                    color: theme.palette.error.main,
                   }}
                 >
                   {item.value}

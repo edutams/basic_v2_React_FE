@@ -4,16 +4,17 @@ import {
   Typography,
   FormControl,
   OutlinedInput,
-  InputAdornment,
-  Stack,
+  useTheme,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import PropTypes from 'prop-types';
 import PrimaryButton from '../../shared/PrimaryButton';
-import { IconArrowUp } from '@tabler/icons-react';
 
 const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   const validationSchema = yup.object({
     commissionPercentage: yup
       .number()
@@ -29,17 +30,6 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
     validationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {
-      const updatedValues = {
-        ...selectedAgent,
-        commissionPercentage: values.commissionPercentage,
-        // Since handleUpdate in AgentModal expects certain fields, 
-        // we should ensure we're passing what it needs or update the logic there.
-        // For now, let's keep it consistent with how it was used.
-      };
-      
-      // The handleUpdate expects the formik values structure if called from onSubmit
-      // but here SetCommission calls onSave(handleUpdate) with values.
-      // Let's refine this to match the backend expectation or the handleUpdate logic.
       onSave({
         ...selectedAgent,
         commission_percentage: values.commissionPercentage
@@ -57,11 +47,11 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
 
   return (
     <Box sx={{ p: 1 }}>
-      <Typography variant="body1" sx={{ color: '#64748B', mb: 3 }}>
-        Editing commission for <Box component="span" sx={{ fontWeight: 800, color: '#1E293B' }}>{selectedAgent?.agentDetails || 'Adebayo Ogunlesi'}</Box>
+      <Typography variant="body1" sx={{ color: theme.palette.text.secondary, mb: 3 }}>
+        Editing commission for <Box component="span" sx={{ fontWeight: 800, color: theme.palette.text.primary }}>{selectedAgent?.agentDetails || 'Adebayo Ogunlesi'}</Box>
       </Typography>
 
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1E293B', mb: 1 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: theme.palette.text.primary, mb: 1 }}>
         Commission Percentage
       </Typography>
 
@@ -74,20 +64,23 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
           type="number"
           sx={{
             borderRadius: '12px',
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'white',
             '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : '#E2E8F0',
               borderWidth: '2px',
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.3)' : '#CBD5E1',
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#FEC120',
             },
             height: '56px',
             fontSize: '18px',
             fontWeight: 700,
+            color: theme.palette.text.primary,
           }}
-       
         />
-       
       </FormControl>
 
       <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
@@ -100,7 +93,7 @@ const SetCommissionModal = ({ onClose, selectedAgent, onSave, loading }) => {
           disabled={!formik.isValid || loading}
           sx={{ minWidth: '100px' }}
         >
-          Save
+          {loading ? 'Saving...' : 'Save'}
         </PrimaryButton>
       </Box>
     </Box>

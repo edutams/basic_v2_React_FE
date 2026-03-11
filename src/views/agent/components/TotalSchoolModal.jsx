@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
     Grid,
@@ -9,7 +10,7 @@ import {
     Select,
     MenuItem,
     Card,
-    useTheme
+    Divider
 } from '@mui/material';
 import StandardModal from 'src/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
@@ -17,8 +18,6 @@ import PrimaryButton from 'src/components/shared/PrimaryButton';
 import { IconSchool, IconChartBar } from '@tabler/icons-react';
 
 const TotalSchoolModal = ({ open, onClose }) => {
-    const theme = useTheme();
-    const isDarkMode = theme.palette.mode === 'dark';
     const [tabValue, setTabValue] = React.useState('1');
     const [year, setYear] = React.useState('2026');
     const [agent, setAgent] = React.useState('All');
@@ -31,11 +30,7 @@ const TotalSchoolModal = ({ open, onClose }) => {
         chart: {
             toolbar: { show: true, tools: { download: true, selection: false, zoom: false, zoomin: false, zoomout: false, pan: false, reset: false } },
             fontFamily: 'inherit',
-            foreColor: theme.palette.text.secondary,
-            background: 'transparent'
-        },
-        theme: {
-            mode: isDarkMode ? 'dark' : 'light'
+            foreColor: '#64748B',
         },
         plotOptions: {
             bar: {
@@ -52,19 +47,16 @@ const TotalSchoolModal = ({ open, onClose }) => {
                 : ['Olusegun Obasanjo', 'Micheal Olusegun', 'Micheal Olusegun', 'Micheal Olusegun', 'Micheal Olusegun', 'Micheal Olusegun', 'Micheal Olusegun', 'Micheal Olusegun'],
             labels: {
                 rotate: tabValue === '1' ? 0 : -45,
-                style: { fontSize: '12px', colors: theme.palette.text.secondary }
-            },
-            axisBorder: { color: theme.palette.divider },
-            axisTicks: { color: theme.palette.divider }
+                style: { fontSize: '12px' }
+            }
         },
         yaxis: {
-            title: { text: 'Number of School', style: { color: theme.palette.text.secondary, fontWeight: 600 } },
-            labels: { style: { colors: theme.palette.text.secondary } }
+            title: { text: 'Number of School', style: { color: '#64748B', fontWeight: 500 } }
         },
         grid: {
-            borderColor: theme.palette.divider,
+            borderColor: '#f1f1f1',
         },
-        tooltip: { theme: isDarkMode ? 'dark' : 'light' }
+        tooltip: { theme: 'light' }
     };
 
     const chartSeries = [{
@@ -82,8 +74,7 @@ const TotalSchoolModal = ({ open, onClose }) => {
             maxWidth="lg"
             padding={3}
             dividers={false}
-            headerBg={isDarkMode ? theme.palette.background.paper : '#F8FAFC'}
-            sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}
+            headerBg="#F8FAFC"
             actions={
                 <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
                     <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
@@ -99,61 +90,61 @@ const TotalSchoolModal = ({ open, onClose }) => {
                         display: 'flex', 
                         alignItems: 'center', 
                         gap: 2.5, 
-                        border: `1px solid ${theme.palette.divider}`, 
-                        boxShadow: theme.shadows[1],
+                        border: '1px solid #FF00FF', 
+                        boxShadow: 'none',
                         height: '100%',
-                        bgcolor: theme.palette.background.paper,
-                        borderRadius: '12px',
+                        bgcolor: 'white',
+                        borderRadius: '4px',
                         width: '100%'
                     }}>
                         <Box sx={{ color: '#00ACFF', display: 'flex' }}>
                             <IconSchool size={40} />
                         </Box>
                         <Box sx={{ textAlign: 'center', flexGrow: 1 }}>
-                            <Typography variant="h3" fontWeight="800" color="textPrimary" sx={{ lineHeight: 1 }}>700</Typography>
-                            <Typography variant="caption" color="textSecondary" fontWeight="700" sx={{ mt: 0.5, display: 'block', textTransform: 'uppercase' }}>Total School</Typography>
+                            <Typography variant="h3" fontWeight="800" color="#1E293B" sx={{ lineHeight: 1 }}>700</Typography>
+                            <Typography variant="caption" color="textSecondary" fontWeight="600" sx={{ mt: 0.5, display: 'block' }}>Total School</Typography>
                         </Box>
                     </Card>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 12, md: 3 }}>
                     <Card sx={{ 
                         p: 2.5, 
-                        border: `1px solid ${theme.palette.divider}`, 
-                        boxShadow: theme.shadows[1],
+                        border: '1px solid #FF00FF', 
+                        boxShadow: 'none',
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'center',
-                        bgcolor: theme.palette.background.paper,
-                        borderRadius: '12px',
+                        bgcolor: 'white',
+                        borderRadius: '4px',
                         width: '100%'
                     }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="body1" fontWeight="700" color="textPrimary">Primary Sch -</Typography>
-                            <Typography variant="h5" fontWeight="800" color="textPrimary">34</Typography>
+                            <Typography variant="body1" fontWeight="600" color="#1E293B">Primary Sch -</Typography>
+                            <Typography variant="h5" fontWeight="700" color="#1E293B">34</Typography>
                         </Stack>
                         <Stack direction="row" justifyContent="space-between" alignItems="center" mt={0.5}>
-                            <Typography variant="body1" fontWeight="700" color="textPrimary">Senior Sec -</Typography>
-                            <Typography variant="h5" fontWeight="800" color="textPrimary">34</Typography>
+                            <Typography variant="body1" fontWeight="600" color="#1E293B">Senior Sec -</Typography>
+                            <Typography variant="h5" fontWeight="700" color="#1E293B">34</Typography>
                         </Stack>
                     </Card>
                 </Grid>
             </Grid>
 
             {/* Navigation Tabs */}
-            <Box sx={{ borderBottom: 1, borderColor: theme.palette.divider, mb: 3 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
                 <Tabs value={tabValue} onChange={handleTabChange} sx={{
                     '& .MuiTab-root': {
                         textTransform: 'none',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         minHeight: 48,
-                        color: theme.palette.text.secondary,
-                        bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#F1F5F9',
-                        borderRadius: '8px 8px 0 0',
+                        color: '#64748B',
+                        bgcolor: '#F1F5F9',
+                        borderRadius: '4px 4px 0 0',
                         mr: 0.5,
                         '&.Mui-selected': {
-                            color: theme.palette.text.primary,
-                            bgcolor: theme.palette.background.paper,
+                            color: '#1E293B',
+                            bgcolor: '#fff',
                         }
                     },
                     '& .MuiTabs-indicator': { display: 'none' }
@@ -170,13 +161,12 @@ const TotalSchoolModal = ({ open, onClose }) => {
                 justifyContent: 'space-between', 
                 gap: 2, 
                 mb: 4, 
-                p: { xs: 2.5, sm: 3 }, 
-                bgcolor: isDarkMode ? 'rgba(0, 150, 136, 0.05)' : '#F0FDFA', 
-                borderRadius: '12px',
-                border: `1px solid ${theme.palette.divider}`,
+                p: { xs: 2, sm: 3 }, 
+                bgcolor: '#F0FDFA', 
+                borderRadius: '8px',
                 alignItems: { xs: 'stretch', md: 'center' }
             }}>
-                <Typography variant="subtitle1" fontWeight="800" color={isDarkMode ? theme.palette.primary.main : '#134E48'} sx={{ fontSize: { xs: '14px', sm: '16px' }, textTransform: 'uppercase' }}>
+                <Typography variant="subtitle1" fontWeight="700" color="#134E48" sx={{ fontSize: { xs: '14px', sm: '16px' } }}>
                     Filter Data
                 </Typography>
                 
@@ -189,62 +179,43 @@ const TotalSchoolModal = ({ open, onClose }) => {
                     alignItems: { xs: 'stretch', sm: 'center' }
                 }}>
                     {tabValue === '2' && (
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          border: `1px solid ${theme.palette.divider}`, 
-                          borderRadius: '6px', 
-                          bgcolor: theme.palette.background.paper, 
-                          overflow: 'hidden' 
-                        }}>
-                            <Box sx={{ px: 2, py: 1, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#E0F2FE', borderRight: `1px solid ${theme.palette.divider}` }}>
-                                <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: isDarkMode ? theme.palette.info.light : '#0369A1' }}>Agent</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden' }}>
+                            <Box sx={{ px: 2, py: 1, bgcolor: '#E0F2FE', borderRight: '1px solid #E2E8F0' }}>
+                                <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: '#0369A1' }}>Agent</Typography>
                             </Box>
                             <Select 
                                 size="small" 
                                 value={agent} 
                                 onChange={(e) => setAgent(e.target.value)}
-                                sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 150 }, flexGrow: 1, fontSize: '13px', fontWeight: 700 }}
+                                sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 150 }, flexGrow: 1, fontSize: '13px', fontWeight: 600 }}
                             >
                                 <MenuItem value="All">All Agents</MenuItem>
                                 <MenuItem value="1">Agent 1</MenuItem>
                             </Select>
                         </Box>
                     )}
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      border: `1px solid ${theme.palette.divider}`, 
-                      borderRadius: '6px', 
-                      bgcolor: theme.palette.background.paper, 
-                      overflow: 'hidden' 
-                    }}>
-                        <Box sx={{ px: 2, py: 1, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#E0F2FE', borderRight: `1px solid ${theme.palette.divider}` }}>
-                            <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: isDarkMode ? theme.palette.info.light : '#0369A1' }}>Year</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #E2E8F0', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden' }}>
+                        <Box sx={{ px: 2, py: 1, bgcolor: '#E0F2FE', borderRight: '1px solid #E2E8F0' }}>
+                            <Typography variant="caption" fontWeight="800" sx={{ textTransform: 'uppercase', color: '#0369A1' }}>Year</Typography>
                         </Box>
                         <Select 
                             size="small" 
                             value={year} 
                             onChange={(e) => setYear(e.target.value)}
-                            sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 100 }, flexGrow: 1, fontSize: '13px', fontWeight: 700 }}
+                            sx={{ '& fieldset': { border: 'none' }, minWidth: { xs: '100%', sm: 100 }, flexGrow: 1, fontSize: '13px', fontWeight: 600 }}
                         >
                             <MenuItem value="2026">2026</MenuItem>
                             <MenuItem value="2025">2025</MenuItem>
                         </Select>
                     </Box>
                     {tabValue === '2' && (
-                        <PrimaryButton sx={{ height: '36px', px: 4 }}>Filter</PrimaryButton>
+                        <PrimaryButton sx={{ bgcolor: '#22C55E', '&:hover': { bgcolor: '#16A34A' }, height: '36px', px: 4, borderRadius: '4px' }}>Filter</PrimaryButton>
                     )}
                 </Box>
             </Box>
 
             {/* Chart Area */}
-            <Box sx={{ 
-              p: 2, 
-              border: `1px solid ${theme.palette.divider}`, 
-              borderRadius: '12px',
-              bgcolor: theme.palette.background.paper
-            }}>
+            <Box sx={{ p: 2, border: '1px solid #E2E8F0', borderRadius: '8px' }}>
                 <Chart options={chartOptions} series={chartSeries} type="bar" height={350} />
             </Box>
         </StandardModal>

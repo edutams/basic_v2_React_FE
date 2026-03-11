@@ -67,9 +67,9 @@ import agentApi from '../../api/agent';
 // import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 // import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
-import PlanDistributionModal from '../agent/components/PlanDistributionModal';
-import LoggedInUsersModal from '../agent/components/LoggedInUsersModal';
-import TotalSchoolModal from '../agent/components/TotalSchoolModal';
+import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
+import LoginActivities from '../dashboard/components/LoginActivities';
+import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
@@ -351,7 +351,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            bgcolor: theme.palette.background.paper,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -368,14 +369,14 @@ const SchoolDashboard = () => {
             </Typography>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color={theme.palette.primary.main} />
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: theme.palette.text.primary,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -430,7 +431,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            bgcolor: theme.palette.background.paper,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -451,7 +453,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                bgcolor: isDarkMode ? theme.palette.grey[800] : '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -463,14 +465,14 @@ const SchoolDashboard = () => {
             </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color={theme.palette.primary.main} />
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: theme.palette.text.primary,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -522,7 +524,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            bgcolor: theme.palette.background.paper,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -543,7 +546,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                bgcolor: isDarkMode ? theme.palette.grey[800] : '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -580,7 +583,8 @@ const SchoolDashboard = () => {
           sx={{
             borderRadius: 2,
             overflow: 'hidden',
-            bgcolor: theme.palette.background.paper,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -590,8 +594,8 @@ const SchoolDashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              color: theme.palette.text.secondary,
-              bgcolor: isDarkMode ? theme.palette.action.hover : '#F8F8F8',
+              color: theme.palette.mode === 'dark' ? '#fff' : '#5C5C5C',
+              bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F8F8F8',
               borderRadius: '8px 8px 0 0',
             }}
           >
@@ -599,7 +603,7 @@ const SchoolDashboard = () => {
               variant="h5"
               sx={{
                 fontWeight: 'bold',
-                color: theme.palette.text.primary,
+                color: theme.palette.mode === 'dark' ? '#fff' : '#5E5E5E',
               }}
             >
               Login Activities
@@ -609,7 +613,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                bgcolor: isDarkMode ? theme.palette.grey[800] : '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1025,7 +1029,7 @@ const SchoolDashboard = () => {
         open={openPlanDistributionModal}
         onClose={() => setOpenPlanDistributionModal(false)}
       />
-      <LoggedInUsersModal
+      <LoginActivities
         open={openLoggedInUsersModal}
         onClose={() => setOpenLoggedInUsersModal(false)}
       />

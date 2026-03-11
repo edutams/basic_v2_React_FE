@@ -15,20 +15,20 @@ import { IconX } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 
 const StandardModal = ({
-    open,
-    onClose,
-    title,
-    children,
-    actions,
-    maxWidth = 'sm',
-    fullWidth = true,
-    showCloseButton = true,
-    icon: Icon,
-    dividers = true,
-    padding = 3,
-    sx = {},
-    headerBg = 'transparent',
-    ...dialogProps
+  open,
+  onClose,
+  title,
+  children,
+  actions,
+  maxWidth = 'sm',
+  fullWidth = true,
+  showCloseButton = true,
+  icon: Icon,
+  dividers = true,
+  padding = 3,
+  sx = {},
+  headerBg = 'transparent',
+  ...dialogProps
 }) => {
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
@@ -104,19 +104,19 @@ const StandardModal = ({
 };
 
 StandardModal.propTypes = {
-    open: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    title: PropTypes.string,
-    children: PropTypes.node.isRequired,
-    actions: PropTypes.node,
-    maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', false]),
-    fullWidth: PropTypes.bool,
-    showCloseButton: PropTypes.bool,
-    icon: PropTypes.elementType,
-    dividers: PropTypes.bool,
-    padding: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    sx: PropTypes.object,
-    headerBg: PropTypes.string,
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string,
+  children: PropTypes.node.isRequired,
+  actions: PropTypes.node,
+  maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', false]),
+  fullWidth: PropTypes.bool,
+  showCloseButton: PropTypes.bool,
+  icon: PropTypes.elementType,
+  dividers: PropTypes.bool,
+  padding: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  sx: PropTypes.object,
+  headerBg: PropTypes.string,
 };
 
 export default StandardModal;

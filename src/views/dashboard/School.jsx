@@ -713,7 +713,7 @@ const SchoolDashboard = () => {
             <TableContainer component={Paper} elevation={0} variant="outlined">
               <Table>
                 <TableHead>
-                  <TableRow hover>
+                  <TableRow>
                     <TableCell>S/N</TableCell>
                     <TableCell>School Name</TableCell>
                     {/* <TableCell>Url</TableCell> */}

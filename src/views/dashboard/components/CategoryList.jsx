@@ -129,14 +129,26 @@ const CategoryList = () => {
 
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        mb={2}
+        spacing={2}
+      >
         <TextField
           size="small"
           placeholder="Search categories..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          fullWidth
         />
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenModal()}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => handleOpenModal()}
+          sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
+        >
           Add Category
         </Button>
       </Stack>

@@ -7,16 +7,10 @@ import {
   Stack,
   Select,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Menu,
   Card,
-  Divider
+  useTheme
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
@@ -27,6 +21,8 @@ import PrimaryButton from 'src/components/shared/PrimaryButton';
 import StandardDataTable from 'src/components/shared/StandardDataTable';
 
 const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openMenu = Boolean(anchorEl);
 
@@ -43,8 +39,8 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
       onClose={onClose} 
       maxWidth="lg" 
       padding={4}
-      headerBg="#f4f6f8"
-      sx={{ bgcolor: '#f4f6f8' }}
+      headerBg={isDarkMode ? theme.palette.background.paper : '#f4f6f8'}
+      sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#f4f6f8' }}
       dividers={false}
       actions={
         <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
@@ -61,20 +57,20 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             { label: 'SPA', count: 20, icon: <IconUsers size={24} />, color: '#F59E0B' },
             { label: 'Parent', count: 20, icon: <IconUsers size={24} />, color: '#EF4444' },
           ].map((stat, idx) => (
-            <Grid item xs={6} sm={6} lg={3} key={idx}>
+            <Grid size={{ xs: 6, sm: 6, lg: 3 }} key={idx}>
               <Card sx={{ 
                 p: { xs: 1.5, sm: 2 }, 
                 borderRadius: '12px', 
-                boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', 
-                border: '1px solid #E2E8F0', 
-                bgcolor: 'white',
+                boxShadow: theme.shadows[1], 
+                border: `1px solid ${theme.palette.divider}`, 
+                bgcolor: theme.palette.background.paper,
                 height: '100%',
                 display: 'flex',
                 alignItems: 'center',
                 transition: 'all 0.2s ease-in-out',
                 '&:hover': {
                   transform: 'translateY(-2px)',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                  boxShadow: theme.shadows[3],
                   borderColor: stat.color
                 }
               }}>
@@ -86,16 +82,26 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                     width: { xs: 32, sm: 40 }, 
                     height: { xs: 32, sm: 40 }, 
                     borderRadius: '8px', 
-                    bgcolor: `${stat.color}15`, 
+                    bgcolor: isDarkMode ? `${stat.color}20` : `${stat.color}15`, 
                     color: stat.color 
                   }}>
                     {stat.icon}
                   </Box>
                   <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                    <Typography variant="caption" fontWeight="700" color="#64748B" sx={{ display: 'block', fontSize: { xs: '10px', sm: '12px' }, textTransform: 'uppercase' }}>
+                    <Typography 
+                      variant="caption" 
+                      fontWeight="700" 
+                      color="textSecondary" 
+                      sx={{ display: 'block', fontSize: { xs: '10px', sm: '12px' }, textTransform: 'uppercase' }}
+                    >
                       {stat.label}
                     </Typography>
-                    <Typography variant="h5" fontWeight="800" color="#1E293B" sx={{ fontSize: { xs: '16px', sm: '20px' } }}>
+                    <Typography 
+                      variant="h5" 
+                      fontWeight="800" 
+                      color="textPrimary" 
+                      sx={{ fontSize: { xs: '16px', sm: '20px' } }}
+                    >
                       {stat.count}
                     </Typography>
                   </Box>
@@ -105,7 +111,14 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           ))}
         </Grid>
 
-        <Card sx={{ p: 0, borderRadius: '4px', boxShadow: 'none', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+        <Card sx={{ 
+          p: 0, 
+          borderRadius: '4px', 
+          boxShadow: 'none', 
+          overflow: 'hidden', 
+          border: `1px solid ${theme.palette.divider}`,
+          bgcolor: theme.palette.background.paper
+        }}>
           {/* Header */}
           <Box sx={{ 
             p: 2, 
@@ -113,14 +126,14 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between', 
             alignItems: { xs: 'flex-start', sm: 'center' }, 
-            bgcolor: 'white',
+            bgcolor: 'transparent',
             gap: 2
           }}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box sx={{ border: '1px solid #cbd5e0', borderRadius: '4px', p: 0.5, display: 'flex' }}>
-                <GridViewIcon sx={{ color: '#cbd5e0', fontSize: '24px' }} />
+              <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '4px', p: 0.5, display: 'flex' }}>
+                <GridViewIcon sx={{ color: theme.palette.text.disabled, fontSize: '24px' }} />
               </Box>
-              <Typography variant="subtitle1" fontWeight="600" color="#4a5568">Logged In Users This Week</Typography>
+              <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
             </Stack>
             <PrimaryButton 
               startIcon={<GetAppIcon />} 
@@ -138,13 +151,21 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             p: 2, 
             alignItems: { xs: 'stretch', sm: 'center' }, 
             flexWrap: 'wrap', 
-            bgcolor: '#f2fdf5', 
-            borderTop: '1px solid #e2e8f0' 
+            bgcolor: isDarkMode ? 'rgba(44, 168, 127, 0.05)' : '#f2fdf5', 
+            borderTop: `1px solid ${theme.palette.divider}` 
           }}>
             {/* Agent Filter */}
-            <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden', flex: { xs: '1 1 auto', sm: '0 0 auto' } }}>
-              <Box sx={{ px: 2, py: 0.8, bgcolor: '#e0f7fa', borderRight: '1px solid #ddd' }}>
-                 <Typography variant="body2" fontWeight="500">Agent</Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              border: `1px solid ${theme.palette.divider}`, 
+              borderRadius: '6px', 
+              bgcolor: theme.palette.background.paper, 
+              overflow: 'hidden', 
+              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            }}>
+              <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
+                 <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
               </Box>
               <Select size="small" defaultValue="Agent 2" sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}>
                 <MenuItem value="Agent 2">Agent 2</MenuItem>
@@ -152,9 +173,17 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             </Box>
 
             {/* User Type Filter */}
-            <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden', flex: { xs: '1 1 auto', sm: '0 0 auto' } }}>
-              <Box sx={{ px: 2, py: 0.8, bgcolor: '#e0f7fa', borderRight: '1px solid #ddd' }}>
-                 <Typography variant="body2" fontWeight="500">User Type</Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              border: `1px solid ${theme.palette.divider}`, 
+              borderRadius: '6px', 
+              bgcolor: theme.palette.background.paper, 
+              overflow: 'hidden', 
+              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            }}>
+              <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
+                 <Typography variant="body2" fontWeight="600" color="textPrimary">User Type</Typography>
               </Box>
               <Select size="small" defaultValue="Teacher" sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}>
                 <MenuItem value="Teacher">Teacher</MenuItem>
@@ -162,32 +191,58 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             </Box>
 
             {/* From Filter */}
-            <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden', flex: { xs: '1 1 auto', sm: '0 0 auto' } }}>
-              <Box sx={{ px: 1, py: 0.8, bgcolor: '#f4f6f8', borderRight: '1px solid #ddd' }}>
-                 <Typography variant="caption" sx={{ fontSize: '10px' }}>From</Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              border: `1px solid ${theme.palette.divider}`, 
+              borderRadius: '6px', 
+              bgcolor: theme.palette.background.paper, 
+              overflow: 'hidden', 
+              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            }}>
+              <Box sx={{ px: 1, py: 0.8, bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f4f6f8', borderRight: `1px solid ${theme.palette.divider}` }}>
+                 <Typography variant="caption" sx={{ fontSize: '10px', color: 'textSecondary' }}>From</Typography>
               </Box>
               <TextField 
                 size="small" 
                 type="date" 
-                defaultValue="yyyy-mm-dd"
-                sx={{ '& fieldset': { border: 'none' }, '& input': { py: 0.8, fontSize: '13px' }, flexGrow: 1 }} 
+                sx={{ 
+                  '& fieldset': { border: 'none' }, 
+                  '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary }, 
+                  flexGrow: 1 
+                }} 
               />
             </Box>
 
             {/* To Filter */}
-            <Box sx={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '4px', bgcolor: 'white', overflow: 'hidden', flex: { xs: '1 1 auto', sm: '0 0 auto' } }}>
-              <Box sx={{ px: 1, py: 0.8, bgcolor: '#f4f6f8', borderRight: '1px solid #ddd' }}>
-                 <Typography variant="caption" sx={{ fontSize: '10px' }}>To</Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              border: `1px solid ${theme.palette.divider}`, 
+              borderRadius: '6px', 
+              bgcolor: theme.palette.background.paper, 
+              overflow: 'hidden', 
+              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            }}>
+              <Box sx={{ px: 1, py: 0.8, bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f4f6f8', borderRight: `1px solid ${theme.palette.divider}` }}>
+                 <Typography variant="caption" sx={{ fontSize: '10px', color: 'textSecondary' }}>To</Typography>
               </Box>
               <TextField 
                 size="small" 
                 type="date" 
-                defaultValue="yyyy-mm-dd"
-                sx={{ '& fieldset': { border: 'none' }, '& input': { py: 0.8, fontSize: '13px' }, flexGrow: 1 }} 
+                sx={{ 
+                  '& fieldset': { border: 'none' }, 
+                  '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary }, 
+                  flexGrow: 1 
+                }} 
               />
             </Box>
 
-            <PrimaryButton sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, ml: { sm: 'auto' } }}>Filter</PrimaryButton>
+            <PrimaryButton 
+              sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, ml: { sm: 'auto' } }}
+            >
+              Filter
+            </PrimaryButton>
           </Box>
 
           <Box sx={{ p: 2 }}>
@@ -195,19 +250,19 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               columns={[
                 { header: '#', accessorKey: 'id' },
                 { header: 'School', accessorKey: 'school', cell: (info) => (
-                  <Typography variant="body2" fontWeight="600" color="#1e293b">{info.getValue()}</Typography>
+                  <Typography variant="body2" fontWeight="600" color="textPrimary">{info.getValue()}</Typography>
                 )},
                 { header: 'URL', accessorKey: 'url', cell: (info) => (
-                  <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 500 }}>{info.getValue()}</Typography>
+                  <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{info.getValue()}</Typography>
                 )},
                 { header: 'Number', accessorKey: 'number', cell: (info) => (
-                  <Typography variant="body2" color="#475569" fontWeight="500">{info.getValue()}</Typography>
+                  <Typography variant="body2" color="textSecondary" fontWeight="600">{info.getValue()}</Typography>
                 )},
                 { header: 'Action', accessorKey: 'action', cell: () => (
                   <IconButton 
                     onClick={handleClickMenu} 
                     size="small"
-                    sx={{ color: '#64748b', '&:hover': { color: '#1e293b', bgcolor: '#e2e8f0' } }}
+                    sx={{ color: theme.palette.text.secondary, '&:hover': { color: theme.palette.text.primary, bgcolor: theme.palette.action.hover } }}
                   >
                      <MoreVertIcon fontSize="small" />
                   </IconButton>

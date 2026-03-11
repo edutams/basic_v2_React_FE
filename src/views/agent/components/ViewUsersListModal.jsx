@@ -1,73 +1,82 @@
 import React from 'react';
 import {
-  Typography,
-  Box,
-  Stack,
-  IconButton,
-  Card,
+    Box,
+    Typography,
+    Stack,
+    Card,
+    useTheme
 } from '@mui/material';
-import GetAppIcon from '@mui/icons-material/GetApp';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import StandardDataTable from 'src/components/shared/StandardDataTable';
 import StandardModal from 'src/components/shared/StandardModal';
+import StandardDataTable from 'src/components/shared/StandardDataTable';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
+import { IconDownload } from '@tabler/icons-react';
 
-const ViewUsersListModal = ({ open, onClose, schoolName }) => {
-  const data = [
-    { id: 1, name: 'ABBA Hadiza Mohd', time: 'Tuesday, February 3rd 2026, 12:43:47 pm' },
-    { id: 2, name: 'BALA Rabiu R', time: 'Monday, February 2nd 2026, 7:53:18 am' },
-    { id: 3, name: 'ABBA Hadiza Mohd', time: 'Tuesday, February 3rd 2026, 12:43:47 pm' },
-    { id: 4, name: 'BALA Rabiu R', time: 'Monday, February 2nd 2026, 7:53:18 am' },
-  ];
+const ViewUsersListModal = ({ open, onClose }) => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
 
-  return (
-    <StandardModal
-      open={open}
-      onClose={onClose}
-      title={`Logged in users today for ${schoolName || 'FESTIVAL SPECIAL PRIAMRY SCHOOL'}`}
-      maxWidth="md"
-      padding={4}
-      headerBg="white"
-      actions={
-        <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-          <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
-          <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
-        </Stack>
-      }
-    >
-      <Card sx={{ p: 0, borderRadius: '4px', boxShadow: 'none', border: '1px solid #e2e8f0', bgcolor: 'white', overflow: 'hidden' }}>
-           <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-              <PrimaryButton 
-                variant="primary"
-                startIcon={<GetAppIcon />} 
-                sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, width: { xs: '100%', sm: 'auto' } }}
-              >
-                Export to Excel
-              </PrimaryButton>
-           </Box>
-           <Box sx={{ p: 2 }}>
-            <StandardDataTable 
-              columns={[
-                { header: '#', accessorKey: 'id' },
-                { header: 'User Details', accessorKey: 'name', cell: (info) => (
-                  <Typography variant="body2" fontWeight="600" color="#4a5568">{info.getValue()}</Typography>
-                )},
-                { header: 'Date/Time Logged In', accessorKey: 'time', cell: (info) => (
-                  <Typography sx={{ color: '#718096', fontWeight: 500, fontSize: '13px' }}>{info.getValue()}</Typography>
-                )},
-                { header: 'Action', accessorKey: 'action', cell: () => (
-                  <IconButton size="small" >
-                    <MoreVertIcon fontSize="small" />
-                  </IconButton>
-                ), align: 'center' }
-              ]}
-              data={data}
-              pageSize={10}
-            />
-           </Box>
-      </Card>
-    </StandardModal>
-  );
+    const columns = [
+        { id: 'name', label: 'Name', minWidth: 170 },
+        { id: 'email', label: 'Email Address', minWidth: 170 },
+        { id: 'role', label: 'Role', minWidth: 100 },
+        { id: 'lastLogin', label: 'Last Login', minWidth: 170 },
+    ];
+
+    const rows = [
+        { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', lastLogin: '2024-03-20 10:30 AM' },
+        { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Teacher', lastLogin: '2024-03-20 09:15 AM' },
+    ];
+
+    return (
+        <StandardModal
+            open={open}
+            onClose={onClose}
+            title="User List"
+            maxWidth="md"
+            padding={0}
+            headerBg={isDarkMode ? theme.palette.background.paper : '#fff'}
+            sx={{ bgcolor: isDarkMode ? theme.palette.background.default : 'transparent' }}
+            actions={
+                <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+                    <PrimaryButton variant="secondary" onClick={onClose}>Close</PrimaryButton>
+                    <PrimaryButton startIcon={<IconDownload size={18} />}>Export List</PrimaryButton>
+                </Stack>
+            }
+        >
+            <Box sx={{ p: 3 }}>
+                <Card sx={{ 
+                    mb: 3, 
+                    p: 2.5, 
+                    border: `1px solid ${theme.palette.divider}`, 
+                    boxShadow: theme.shadows[1],
+                    bgcolor: theme.palette.background.paper,
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <Box>
+                        <Typography variant="h5" fontWeight="800" color="textPrimary">Total Users</Typography>
+                        <Typography variant="body2" color="textSecondary" fontWeight="600">Overview of all registered users in the system</Typography>
+                    </Box>
+                    <Typography variant="h3" fontWeight="900" color="primary">452</Typography>
+                </Card>
+
+                <Box sx={{ 
+                    border: `1px solid ${theme.palette.divider}`, 
+                    borderRadius: '12px', 
+                    overflow: 'hidden',
+                    bgcolor: theme.palette.background.paper
+                }}>
+                    <StandardDataTable 
+                        columns={columns} 
+                        rows={rows} 
+                        showSelection={false}
+                    />
+                </Box>
+            </Box>
+        </StandardModal>
+    );
 };
 
 export default ViewUsersListModal;

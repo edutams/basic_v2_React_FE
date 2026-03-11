@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
     Table,
@@ -7,14 +6,9 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Paper,
     Typography,
     Box,
-    Divider,
-    IconButton,
-    Stack,
-    MenuItem,
-    Button
+    useTheme
 } from '@mui/material';
 import {
     flexRender,
@@ -23,13 +17,6 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import {
-    IconChevronLeft,
-    IconChevronRight,
-    IconChevronsLeft,
-    IconChevronsRight,
-} from '@tabler/icons-react';
-import CustomSelect from 'src/components/forms/theme-elements/CustomSelect';
 import StandardPagination from './StandardPagination';
 import PropTypes from 'prop-types';
 
@@ -40,6 +27,9 @@ const StandardDataTable = ({
     pageSize = 10,
     title = ""
 }) => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+
     const table = useReactTable({
         data,
         columns,
@@ -54,14 +44,27 @@ const StandardDataTable = ({
     });
 
     return (
-        <Box sx={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
+        <Box sx={{ 
+            border: `1px solid ${theme.palette.divider}`, 
+            borderRadius: '12px', 
+            overflow: 'hidden',
+            bgcolor: theme.palette.background.paper
+        }}>
             <TableContainer>
                 <Table sx={{ whiteSpace: 'nowrap' }}>
-                    <TableHead sx={{ bgcolor: '#F9FAFB' }}>
+                    <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
-                                    <TableCell key={header.id} sx={{ fontWeight: 600, color: '#374151', py: 2 }}>
+                                    <TableCell 
+                                        key={header.id} 
+                                        sx={{ 
+                                            fontWeight: 600, 
+                                            color: theme.palette.text.primary, 
+                                            py: 2,
+                                            borderBottom: `1px solid ${theme.palette.divider}`
+                                        }}
+                                    >
                                         {header.isPlaceholder
                                             ? null
                                             : flexRender(header.column.columnDef.header, header.getContext())}
@@ -73,9 +76,25 @@ const StandardDataTable = ({
                     <TableBody>
                         {table.getRowModel().rows.length > 0 ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow key={row.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                <TableRow 
+                                    key={row.id} 
+                                    hover 
+                                    sx={{ 
+                                        '&:last-child td, &:last-child th': { border: 0 },
+                                        '&:hover': {
+                                            bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.03) !important' : 'rgba(0,0,0,0.02) !important'
+                                        }
+                                    }}
+                                >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} sx={{ py: 2 }}>
+                                        <TableCell 
+                                            key={cell.id} 
+                                            sx={{ 
+                                                py: 2,
+                                                color: theme.palette.text.secondary,
+                                                borderColor: theme.palette.divider
+                                            }}
+                                        >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}

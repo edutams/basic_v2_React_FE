@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableDialog from './ReusableDialog';
 import PrimaryButton from './PrimaryButton';
@@ -16,6 +16,7 @@ const ConfirmationDialog = ({
   maxWidth = 'xs',
   ...dialogProps
 }) => {
+  const theme = useTheme();
   const handleConfirm = () => {
     onConfirm();
     onClose();
@@ -34,9 +35,9 @@ const ConfirmationDialog = ({
         variant="primary"
         autoFocus
         sx={{ 
-          bgcolor: severity === 'error' ? '#EF4444' : '#FEC120',
+          bgcolor: severity === 'error' ? theme.palette.error.main : theme.palette.warning.main,
           '&:hover': {
-            bgcolor: severity === 'error' ? '#DC2626' : '#EAB308',
+            bgcolor: severity === 'error' ? theme.palette.error.dark : theme.palette.warning.dark,
           }
         }}
       >

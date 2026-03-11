@@ -1,14 +1,15 @@
 import React from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Typography,
-  Box,
-  Stack,
-  Divider,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    IconButton,
+    Typography,
+    Box,
+    Stack,
+    Divider,
+    useTheme
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
@@ -29,57 +30,77 @@ const StandardModal = ({
   headerBg = 'transparent',
   ...dialogProps
 }) => {
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth={maxWidth}
-      fullWidth={fullWidth}
-      PaperProps={{
-        sx: { borderRadius: '12px', ...sx },
-      }}
-      {...dialogProps}
-    >
-      {(title || showCloseButton) && (
-        <DialogTitle
-          sx={{
-            m: 0,
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            bgcolor: headerBg,
-          }}
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+
+    return (
+        <Dialog
+            open={open}
+            onClose={onClose}
+            maxWidth={maxWidth}
+            fullWidth={fullWidth}
+            PaperProps={{
+              sx: { 
+                borderRadius: '12px', 
+                bgcolor: theme.palette.background.paper,
+                backgroundImage: 'none', // Remove MUI default overlay in dark mode
+                ...sx 
+              }
+            }}
+            {...dialogProps}
         >
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            {Icon && <Icon size={24} color="#4A5568" />}
-            {title && (
-              <Typography variant="h6" sx={{ fontSize: 18, fontWeight: 700, color: '#1A202C' }}>
-                {title}
-              </Typography>
+            {(title || showCloseButton) && (
+                <DialogTitle sx={{ 
+                    m: 0, 
+                    p: 2, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    bgcolor: headerBg === 'transparent' ? 'transparent' : (isDarkMode ? theme.palette.background.default : headerBg),
+                    borderBottom: dividers && !title ? `1px solid ${theme.palette.divider}` : 'none'
+                }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                        {Icon && <Icon size={24} color={theme.palette.text.secondary} />}
+                        {title && (
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
+                                {title}
+                            </Typography>
+                        )}
+                    </Stack>
+                    {showCloseButton && (
+                        <IconButton
+                            aria-label="close"
+                            onClick={onClose}
+                            sx={{
+                                color: theme.palette.text.secondary,
+                                '&:hover': {
+                                    bgcolor: theme.palette.action.hover
+                                }
+                            }}
+                        >
+                            <IconX size={20} />
+                        </IconButton>
+                    )}
+                </DialogTitle>
             )}
-          </Stack>
-          {showCloseButton && (
-            <IconButton
-              aria-label="close"
-              onClick={onClose}
-              sx={{
-                color: (theme) => theme.palette.grey[500],
-              }}
+            
+            <DialogContent 
+                dividers={dividers} 
+                sx={{ 
+                    p: padding,
+                    color: theme.palette.text.primary
+                }}
             >
-              <IconX size={20} />
-            </IconButton>
-          )}
-        </DialogTitle>
-      )}
+                {children}
+            </DialogContent>
 
-      <DialogContent dividers={dividers} sx={{ p: padding }}>
-        {children}
-      </DialogContent>
-
-      {actions && <DialogActions sx={{ p: 2, px: 3 }}>{actions}</DialogActions>}
-    </Dialog>
-  );
+            {actions && (
+                <DialogActions sx={{ p: 2, px: 3, borderTop: dividers ? `1px solid ${theme.palette.divider}` : 'none' }}>
+                    {actions}
+                </DialogActions>
+            )}
+        </Dialog>
+    );
 };
 
 StandardModal.propTypes = {

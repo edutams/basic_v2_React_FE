@@ -141,7 +141,7 @@ const CategoryList = () => {
           placeholder="Search categories..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          fullWidth
+          sx={{ maxWidth: { xs: '100%', sm: 300 } }}
         />
         <Button
           variant="contained"

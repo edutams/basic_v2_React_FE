@@ -141,7 +141,7 @@ const DivisionList = () => {
           placeholder="Search divisions..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          fullWidth
+          sx={{ maxWidth: { xs: '100%', sm: 300 } }}
         />
         <Button
           variant="contained"

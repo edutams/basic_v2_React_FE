@@ -48,13 +48,13 @@ const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume, onClic
           <Typography
             variant="h2"
             fontWeight="700"
-            sx={{ color: isDark ? '#fff' : '#1a3353', fontSize: '32px', mb: 0.5 }}
+            sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontSize: '32px', mb: 0.5 }}
           >
             # {value}
           </Typography>
           <Typography
             variant="subtitle2"
-            sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500, fontSize: '14px' }}
+            sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontWeight: 500, fontSize: '14px' }}
           >
             {title}
           </Typography>
@@ -65,7 +65,7 @@ const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume, onClic
             <Typography
               variant="caption"
               sx={{
-                color: isDark ? '#fff' : '#1a3353',
+                color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                 fontWeight: 700,
                 display: 'block',
                 mb: 0.5,
@@ -105,7 +105,7 @@ const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume, onClic
             <Typography
               variant="caption"
               sx={{
-                color: isDark ? '#aaa' : '#64748B',
+                color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                 fontWeight: 600,
                 display: 'block',
                 mb: 0.5,
@@ -122,6 +122,7 @@ const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume, onClic
                 py: 1,
                 borderRadius: '50px',
                 textAlign: 'center',
+                
               }}
             >
               <Typography variant="body2" sx={{ fontWeight: 600 }}>

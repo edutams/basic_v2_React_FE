@@ -46,14 +46,14 @@ const AgentSubAgentsCard = ({ title, value, icon: Icon, bgcolor, iconBgColor }) 
             <Typography
               variant="h1"
               fontWeight="700"
-              sx={{ color: isDark ? '#fff' : '#1a3353', fontSize: '48px', lineHeight: 1 }}
+              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontSize: '48px', lineHeight: 1 }}
             >
               {value}
             </Typography>
             <Typography
               variant="h6"
               fontWeight="600"
-              sx={{ color: isDark ? '#aaa' : '#1a3353', mt: 0.5, opacity: 0.9 }}
+              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', mt: 0.5, opacity: 0.9 }}
             >
               {title}
             </Typography>

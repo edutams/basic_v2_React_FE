@@ -165,8 +165,8 @@ const OverviewTab = ({ data }) => {
                                 </Box>
                             </Box>
                         </Card>
-                        <Card sx={{ p: 3, borderRadius: '12px', flex: 1.5, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none' }}>
-                            <Typography variant="subtitle2" fontWeight={800} color="textPrimary" mb={2}>Plan Distribution</Typography>
+                        <Card sx={{ p: 3, borderRadius: '12px', flex: 1.5, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none', color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>
+                            <Typography variant="subtitle2" fontWeight={800} color="textPrimary" mb={2} sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>Plan Distribution</Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                 <Chart options={planOptions} series={planSeries} type="donut" height={240} />
                             </Box>

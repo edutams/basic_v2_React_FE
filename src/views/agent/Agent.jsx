@@ -27,6 +27,8 @@ import {
   Button,
   Badge,
   Card,
+  useTheme,
+
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -84,6 +86,8 @@ import locationApi from '../../api/location';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
+    const theme = useTheme();
+  
 
   // Revenue Trend Mock Data
   const revenueSeries = [
@@ -786,7 +790,8 @@ const Agent = () => {
                         variant="caption"
                         color="textSecondary"
                         fontWeight="600"
-                        sx={{ fontSize: '11px' }}
+                        sx={{ fontSize: '11px',color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', }}
+                        
                       >
                         {label} -
                       </Typography>
@@ -846,7 +851,7 @@ const Agent = () => {
                   alignItems: 'center',
                 }}
               >
-                <Typography variant="h5" fontWeight="600" sx={{ color: '#4a3aff' }}>
+                <Typography variant="h5" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#4a3aff'}}>
                   Transaction
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -899,7 +904,7 @@ const Agent = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant="subtitle2" fontWeight="600" sx={{ color: '#64748B' }}>
+                <Typography variant="subtitle2" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>
                   Plan Distribution
                 </Typography>
                 <Box

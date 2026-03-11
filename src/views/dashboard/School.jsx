@@ -390,7 +390,9 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
+            <Typography
+              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
+            >
               Active School
             </Typography>
 
@@ -485,7 +487,9 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
+            <Typography
+              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
+            >
               Primary School
             </Typography>
 
@@ -502,7 +506,9 @@ const SchoolDashboard = () => {
             />
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}>
+            <Typography
+              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
+            >
               Senior School
             </Typography>
 
@@ -707,7 +713,7 @@ const SchoolDashboard = () => {
             <TableContainer component={Paper} elevation={0} variant="outlined">
               <Table>
                 <TableHead>
-                  <TableRow>
+                  <TableRow hover>
                     <TableCell>S/N</TableCell>
                     <TableCell>School Name</TableCell>
                     {/* <TableCell>Url</TableCell> */}

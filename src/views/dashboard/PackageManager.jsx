@@ -90,7 +90,7 @@ const EduTier = () => {
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
-      <Breadcrumb title="Manage Subscription" items={BCrumb} />
+      <Breadcrumb title="Manage Subscrription" items={BCrumb} />
 
       <Box
         sx={{
@@ -374,13 +374,13 @@ const EduTier = () => {
       <Grid container spacing={3}>
         <Grid size={12}>
           <BlankCard>
-            <Box sx={{ maxWidth: { xs: 320, sm: 480 } }}>
+            <Box sx={{ width: '100%', overflowX: 'auto' }}>
               <Tabs
                 value={value}
                 onChange={handleChange}
-                // scrollButtons="auto"
+                scrollButtons="auto"
+                variant="scrollable"
                 aria-label="basic tabs example"
-                // variant="scrollable"
               >
                 <Tab
                   iconPosition="start"

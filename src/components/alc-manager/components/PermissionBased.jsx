@@ -176,16 +176,16 @@ const AssignmentManagement = () => {
         </Box>
 
         <Paper variant="outlined">
-          <TableContainer>
-            <Table sx={{ tableLayout: 'fixed' }}>
+          <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '10%' }}>S/N</TableCell>
-                  <TableCell sx={{ width: '35%' }}>Permissions</TableCell>
-                  <TableCell sx={{ width: '35%' }} align="center">
+                  <TableCell sx={{ width: { xs: '40%', md: '35%' } }}>Permissions</TableCell>
+                  <TableCell sx={{ width: { xs: '25%', md: '35%' } }} align="center">
                     Total Role
                   </TableCell>
-                  <TableCell sx={{ width: '15%' }} align="center">
+                  <TableCell sx={{ width: { xs: '25%', md: '15%' } }} align="center">
                     Total Agents
                   </TableCell>
                 </TableRow>

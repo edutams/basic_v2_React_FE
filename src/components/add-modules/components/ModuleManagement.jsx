@@ -7,16 +7,9 @@ import ModuleModal from './ModuleModal';
 import ConfirmationDialog from '../../shared/ConfirmationDialog';
 import PropTypes from 'prop-types';
 import { useNotification } from '../../../hooks/useNotification';
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { title: 'Modules' },
-];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Modules' }];
 
-const ModuleManagement = ({
-  modules = [],
-  onModuleUpdate,
-  isLoading = false
-}) => {
+const ModuleManagement = ({ modules = [], onModuleUpdate, isLoading = false }) => {
   const [moduleModalOpen, setModuleModalOpen] = useState(false);
   const [moduleActionType, setModuleActionType] = useState('create');
   const [selectedModule, setSelectedModule] = useState(null);
@@ -75,14 +68,10 @@ const ModuleManagement = ({
 
   return (
     <PageContainer title="Modules" description="Manage system modules and their configurations">
-      <Breadcrumb title="Modules" items={BCrumb} />
-      
+      {/* <Breadcrumb title="Modules" items={BCrumb} /> */}
+
       <Box sx={{ mt: 2 }}>
-        <ModuleTable
-          modules={modules}
-          onModuleAction={handleModuleAction}
-          isLoading={isLoading}
-        />
+        <ModuleTable modules={modules} onModuleAction={handleModuleAction} isLoading={isLoading} />
       </Box>
 
       <ModuleModal
@@ -99,7 +88,9 @@ const ModuleManagement = ({
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Module"
-        message={`Are you sure you want to delete "${moduleToDelete?.module_name || moduleToDelete?.mod_name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${
+          moduleToDelete?.module_name || moduleToDelete?.mod_name
+        }"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

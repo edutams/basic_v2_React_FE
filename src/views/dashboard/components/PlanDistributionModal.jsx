@@ -186,86 +186,81 @@ const PlanDistributionModal = ({ open, onClose }) => {
           <Box
             sx={{ bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f2fdf5', px: 3, py: 1 }}
           >
-            <Grid container alignItems="center">
-              <Grid item xs={12} md={9}>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  alignItems="center"
-                  justifyContent="flex-start"
-                  sx={{ pl: 1 }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
-                      borderRadius: '4px',
-                      bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
-                      overflow: 'hidden',
-                    }}
-                  >
+            <Grid container alignItems="center" justifyContent="flex-end">
+              <Grid item xs={12}>
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mr: 2 }}>
                     <Box
                       sx={{
-                        px: 2,
-                        py: 0.5,
-                        bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
-                        borderRight:
-                          theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
+                        display: 'flex',
+                        alignItems: 'center',
+                        border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
+                        borderRadius: '4px',
+                        bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
+                        overflow: 'hidden',
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        fontWeight="500"
-                        sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                      <Box
+                        sx={{
+                          px: 2,
+                          py: 0.5,
+                          bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
+                          borderRight:
+                            theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
+                        }}
                       >
-                        Year
-                      </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight="500"
+                          sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
+                        >
+                          Year
+                        </Typography>
+                      </Box>
+
+                      <Select
+                        size="small"
+                        value="2026"
+                        sx={{
+                          '& fieldset': { border: 'none' },
+                          '.MuiSelect-select': {
+                            py: 0.5,
+                            fontWeight: 600,
+                            minWidth: '70px',
+                            color: theme.palette.mode === 'dark' ? '#fff' : '#333',
+                          },
+                        }}
+                      >
+                        <MenuItem value="2026">2026</MenuItem>
+                      </Select>
                     </Box>
 
-                    <Select
-                      size="small"
-                      value="2026"
+                    <Button
+                      variant="contained"
                       sx={{
-                        '& fieldset': { border: 'none' },
-                        '.MuiSelect-select': {
-                          py: 0.5,
-                          fontWeight: 600,
-                          minWidth: '70px',
-                          color: theme.palette.mode === 'dark' ? '#fff' : '#333',
-                        },
+                        bgcolor: '#2ca87f',
+                        '&:hover': { bgcolor: '#238a68' },
+                        textTransform: 'none',
+                        px: 3,
+                        fontWeight: 600,
+                        height: '32px',
                       }}
                     >
-                      <MenuItem value="2026">2026</MenuItem>
-                    </Select>
-                  </Box>
+                      Filter
+                    </Button>
+                  </Stack>
 
-                  <Button
-                    variant="contained"
+                  {/* Right Side Title */}
+                  <Typography
+                    fontWeight="700"
                     sx={{
-                      bgcolor: '#2ca87f',
-                      '&:hover': { bgcolor: '#238a68' },
-                      textTransform: 'none',
-                      px: 3,
-                      fontWeight: 600,
-                      height: '32px',
+                      fontSize: '16px',
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#555',
                     }}
                   >
-                    Filter
-                  </Button>
+                    Plan per School
+                  </Typography>
                 </Stack>
-              </Grid>
-
-              <Grid item xs={12} md={3}>
-                <Typography
-                  fontWeight="700"
-                  sx={{
-                    fontSize: '16px',
-                    color: theme.palette.mode === 'dark' ? '#fff' : '#555',
-                  }}
-                >
-                  Plan per School
-                </Typography>
               </Grid>
             </Grid>
           </Box>

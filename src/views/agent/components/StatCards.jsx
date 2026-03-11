@@ -21,11 +21,9 @@ const StatCards = ({ stats, onTransactionClick, onSchoolClick }) => {
                         flexDirection: 'column', 
                         justifyContent: 'space-between', 
                         position: 'relative',
-                        bgcolor: isDarkMode ? 'rgba(0, 172, 255, 0.05)' : '#f5fdf9', 
+                        bgcolor: theme.palette.background.paper,
                         border: `1px solid ${isDarkMode ? theme.palette.divider : 'rgba(0,0,0,0.05)'}`,
                         boxShadow: 'none',
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: isDarkMode ? 'rgba(0, 172, 255, 0.1)' : '#f0fdf4' }
                     }}
                 >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
@@ -116,8 +114,6 @@ const StatCards = ({ stats, onTransactionClick, onSchoolClick }) => {
                         bgcolor: theme.palette.background.paper,
                         border: `1px solid ${isDarkMode ? theme.palette.divider : 'rgba(0,0,0,0.05)'}`,
                         boxShadow: 'none',
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: isDarkMode ? 'rgba(255,255,255,0.02)' : '#f8fafc' }
                     }}
                 >
                     <Stack direction="row" spacing={3} alignItems="center" justifyContent="center">

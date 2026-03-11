@@ -20,7 +20,7 @@ const ReusablePieChart = ({
     chart: {
       type: 'donut',
       fontFamily: "'Plus Jakarta Sans', sans-serif;",
-      foreColor: '#adb0bb',
+      foreColor: theme.palette.text.secondary,
       toolbar: {
         show: false,
       },
@@ -35,7 +35,7 @@ const ReusablePieChart = ({
       pie: {
         donut: {
           size: '70%',
-          // background: 'transparent',
+          background: 'transparent',
         },
       },
     },
@@ -47,6 +47,7 @@ const ReusablePieChart = ({
       style: {
         fontSize: '10px',
         fontWeight: '600',
+        colors: [theme.palette.text.primary],
       },
       dropShadow: {
         enabled: false,
@@ -62,19 +63,16 @@ const ReusablePieChart = ({
       floating: false,
       fontSize: '12px',
       fontWeight: '600',
-      color: theme.palette.mode === 'dark' ? 'dark' : 'light',
-      style: {
-        color: theme.palette.mode === 'dark' ? 'dark' : 'light',
-      },
       labels: {
-        colors: theme.palette.mode === 'dark' ? '#fff' : '#333',
+        colors: theme.palette.text.secondary,
       },
+      itemMargin: {
+        horizontal: 5,
+        vertical: 5
+      }
     },
     tooltip: {
-      theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
-      style: {
-        color: theme.palette.mode === 'dark' ? 'dark' : 'light',
-      },
+      theme: theme.palette.mode,
       fillSeriesColor: false,
     },
   };

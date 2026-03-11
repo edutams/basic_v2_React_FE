@@ -266,13 +266,13 @@ const AssignmentManagement = () => {
         </Box>
 
         <Paper variant="outlined">
-          <TableContainer>
-            <Table sx={{ tableLayout: 'fixed' }}>
+          <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '10%' }}>#</TableCell>
-                  <TableCell sx={{ width: '35%' }}>Agent Details</TableCell>
-                  <TableCell sx={{ width: '35%' }}>Assigned Role</TableCell>
+                  <TableCell sx={{ width: { xs: '40%', md: '35%' } }}>Agent Details</TableCell>
+                  <TableCell sx={{ width: { xs: '35%', md: '35%' } }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Action
                   </TableCell>
@@ -290,7 +290,14 @@ const AssignmentManagement = () => {
                     <TableRow key={user.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            flexWrap: { xs: 'wrap', md: 'nowrap' },
+                          }}
+                        >
                           <img
                             src={user.image || '/src/assets/images/users/default_avatar.png'}
                             alt={user.name}

@@ -66,6 +66,9 @@ const ReusablePieChart = ({
       style: {
         color: theme.palette.mode === 'dark' ? 'dark' : 'light',
       },
+      labels: {
+        colors: theme.palette.mode === 'dark' ? '#fff' : '#333',
+      },
     },
     tooltip: {
       theme: theme.palette.mode === 'dark' ? 'dark' : 'light',

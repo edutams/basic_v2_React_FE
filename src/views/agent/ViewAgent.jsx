@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Box, Tab, Stack, Grid ,Divider} from '@mui/material';
+import { Box, Tab, Stack, Grid ,Divider,useTheme} from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool, } from '@tabler/icons-react';
 import { useParams } from 'react-router';
@@ -32,6 +32,8 @@ const ViewAgent = () => {
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
     const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
     const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
+      const theme = useTheme();
+      const isDark = theme.palette.mode === 'dark';
 
     const isOwnProfile = currentUser && currentUser.id == id;
 
@@ -50,7 +52,7 @@ const ViewAgent = () => {
             title={isOwnProfile && currentUser.access_level > 1 ? "Agent Dashboard" : "View Agent Profile"} 
             description="Detailed agent profile view"
         >
-            <Box sx={{ bgcolor: '#F1F5F9', minHeight: '100vh', p: { xs: 1, md: 2 } }}>
+            <Box sx={{ bgcolor:theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF' , minHeight: '100vh', p: { xs: 1, md: 2 } }}>
                 <Breadcrumb title={isOwnProfile && currentUser.access_level > 1 ? "Dashboard" : "View Profile"} items={BCrumb} />
                 
                 <Box mt={3}>
@@ -102,9 +104,9 @@ const ViewAgent = () => {
                 </ReusableModal>
                     
                 <Box mt={4}>
-                    <Box sx={{ bgcolor: 'white', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <Box sx={{ bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF', borderRadius: '12px', overflow: 'hidden', border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                         <TabContext value={value}>
-                            <Box sx={{ borderBottom: 1, borderColor: '#E2E8F0', bgcolor: '#F8FAFC', px: 2 }}>
+                            <Box sx={{ borderBottom: 1, borderColor: theme.palette.mode === 'dark' ? '#333' : '#E2E8F0', bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF', px: 2 }}>
                                 <TabList 
                                     onChange={handleChange} 
                                     aria-label="agent tabs"
@@ -121,9 +123,9 @@ const ViewAgent = () => {
                                             minHeight: 64,
                                             fontSize: '14px',
                                             fontWeight: 700,
-                                            color: '#64748B',
+                                            color: theme.palette.mode === 'dark' ? '#fff' : '#64748B',
                                             '&.Mui-selected': {
-                                                color: '#1E293B'
+                                                color: theme.palette.mode === 'dark' ? '#fff' : '#1E293B'
                                             }
                                         }
                                     }}

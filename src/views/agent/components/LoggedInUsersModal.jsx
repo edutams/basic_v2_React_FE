@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+
 import {
   IconButton,
   Typography,
@@ -10,30 +11,37 @@ import {
   TextField,
   Menu,
   Card,
-  useTheme
+  useTheme,
+   ListItemIcon, ListItemText,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers } from '@tabler/icons-react';
+import { IconUsers,IconEye, IconEdit, IconTrash ,IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload} from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 import StandardDataTable from 'src/components/shared/StandardDataTable';
 
-const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
+const LoggedInUsersModal = ({  onClose,open }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const openMenu = Boolean(anchorEl);
+    const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const isMenuOpen = Boolean(anchorEl);
 
-  const handleClickMenu = (event) => {
+  const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
+    setSelectedRow(row);
   };
-  const handleCloseMenu = () => {
+
+  const handleMenuClose = () => {
     setAnchorEl(null);
+    setSelectedRow(null);
   };
+
 
   return (
+    <>
     <StandardModal 
       open={open} 
       onClose={onClose} 
@@ -258,9 +266,9 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
                 { header: 'Number', accessorKey: 'number', cell: (info) => (
                   <Typography variant="body2" color="textSecondary" fontWeight="600">{info.getValue()}</Typography>
                 )},
-                { header: 'Action', accessorKey: 'action', cell: () => (
+                { header: 'Action', accessorKey: 'action', cell: (info) => (
                   <IconButton 
-                    onClick={handleClickMenu} 
+                    onClick={(e) => handleMenuClick(e, info.row.original)} 
                     size="small"
                     sx={{ color: theme.palette.text.secondary, '&:hover': { color: theme.palette.text.primary, bgcolor: theme.palette.action.hover } }}
                   >
@@ -284,10 +292,46 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           </Box>
         </Card>
 
-        <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
-          <MenuItem onClick={() => { handleCloseMenu(); onViewUserList(); }}>View Users List</MenuItem>
-        </Menu>
     </StandardModal>
+    <Menu
+      anchorEl={anchorEl}
+      open={isMenuOpen}
+      onClose={handleMenuClose}
+      PaperProps={{
+        elevation: 0,
+        sx: {
+          borderRadius: '8px',
+          border: `1px solid ${theme.palette.divider}`,
+          bgcolor: theme.palette.background.paper,
+          boxShadow: theme.shadows[3],
+          minWidth: 150,
+          '& .MuiMenuItem-root': {
+            fontSize: '14px',
+            fontWeight: 600,
+            color: theme.palette.text.secondary,
+            py: 1,
+            px: 2,
+            '&:hover': { bgcolor: isDarkMode ? theme.palette.action.hover : '#F8FAFC', color: theme.palette.primary.main }
+          }
+        },
+      }}
+      transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+      anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+    >
+      <MenuItem onClick={handleMenuClose}>
+        <ListItemIcon><IconEye size={18} /></ListItemIcon>
+        <ListItemText primary="View Detail" />
+      </MenuItem>
+      <MenuItem onClick={handleMenuClose}>
+        <ListItemIcon><IconEdit size={18} /></ListItemIcon>
+        <ListItemText primary="Edit Record" />
+      </MenuItem>
+      <MenuItem onClick={handleMenuClose} sx={{ color: `${theme.palette.error.main} !important` }}>
+        <ListItemIcon sx={{ color: theme.palette.error.main }}><IconTrash size={18} /></ListItemIcon>
+        <ListItemText primary="Delete" />
+      </MenuItem>
+    </Menu>
+    </>
   );
 };
 

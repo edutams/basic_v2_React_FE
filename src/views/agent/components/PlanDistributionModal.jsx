@@ -31,7 +31,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
     stroke: {
       show: true,
       width: 1,
-      colors: isDark ? ['#333'] : ['#fff'],
+      colors: theme.palette.mode === 'dark' ? ['#1E3A5F'] : ['#fff'],
     },
     xaxis: {
       categories: [
@@ -101,7 +101,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
       maxWidth="lg"
       padding={0}
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
-      sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
+      sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff',color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}
       actions={
         <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
           <PrimaryButton variant="secondary" onClick={onClose}>

@@ -22,7 +22,7 @@ const LoginActivitiesCard = ({ title, activities, onIconClick }) => {
     >
       <CardContent sx={{ p: '24px !important', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
-          <Typography variant="subtitle2" fontWeight="600" sx={{ color: theme.palette.text.secondary }}>
+          <Typography variant="subtitle2" fontWeight="600" sx={{ color: isDarkMode ? '#fff' : '#1E3A5F' }}>
             {title}
           </Typography>
           <Box 

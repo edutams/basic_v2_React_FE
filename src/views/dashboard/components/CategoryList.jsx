@@ -21,6 +21,7 @@ import {
   TablePagination,
   Stack,
   Menu,
+  useTheme,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -38,6 +39,7 @@ import useNotification from '../../../hooks/useNotification';
 import ConfirmationDialog from '../../../components/shared/ConfirmationDialog';
 
 const CategoryList = () => {
+  const theme = useTheme();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
@@ -174,7 +176,18 @@ const CategoryList = () => {
                     <Chip
                       label={cat.status}
                       size="small"
-                      color={cat.status === 'active' ? 'success' : 'default'}
+                      sx={{
+                        bgcolor:
+                          cat.status === 'active'
+                            ? (theme) => theme.palette.success.light
+                            : (theme) => theme.palette.error.light,
+                        color:
+                          cat.status === 'active'
+                            ? (theme) => theme.palette.success.main
+                            : (theme) => theme.palette.error.main,
+                        borderRadius: '8px',
+                        fontWeight: 600,
+                      }}
                     />
                   </TableCell>
                   <TableCell align="right">

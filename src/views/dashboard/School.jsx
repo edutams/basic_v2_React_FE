@@ -67,14 +67,15 @@ import agentApi from '../../api/agent';
 // import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 // import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
-import PlanDistributionModal from '../agent/components/PlanDistributionModal';
-import LoggedInUsersModal from '../agent/components/LoggedInUsersModal';
-import TotalSchoolModal from '../agent/components/TotalSchoolModal';
+import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
+import LoginActivities from '../dashboard/components/LoginActivities';
+import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
 const SchoolDashboard = () => {
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [schoolList, setSchoolList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -350,7 +351,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -367,14 +369,14 @@ const SchoolDashboard = () => {
             </Typography>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -388,7 +390,9 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography
+              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
+            >
               Active School
             </Typography>
 
@@ -406,7 +410,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#B02D2D', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.error.main, fontSize: 15, fontWeight: 'bold' }}>
               Inactive School
             </Typography>
 
@@ -429,7 +433,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -450,7 +455,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -462,14 +467,14 @@ const SchoolDashboard = () => {
             </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -482,7 +487,9 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography
+              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
+            >
               Primary School
             </Typography>
 
@@ -499,7 +506,9 @@ const SchoolDashboard = () => {
             />
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#52932E', fontSize: 15, fontWeight: 'bold' }}>
+            <Typography
+              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
+            >
               Senior School
             </Typography>
 
@@ -521,7 +530,8 @@ const SchoolDashboard = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -542,7 +552,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -579,7 +589,8 @@ const SchoolDashboard = () => {
           sx={{
             borderRadius: 2,
             overflow: 'hidden',
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           {/* Header */}
@@ -589,8 +600,8 @@ const SchoolDashboard = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              color: '#5C5C5C',
-              bgcolor: '#F8F8F8',
+              color: theme.palette.mode === 'dark' ? '#fff' : '#5C5C5C',
+              bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F8F8F8',
               borderRadius: '8px 8px 0 0',
             }}
           >
@@ -598,7 +609,7 @@ const SchoolDashboard = () => {
               variant="h5"
               sx={{
                 fontWeight: 'bold',
-                color: '#5E5E5E',
+                color: theme.palette.mode === 'dark' ? '#fff' : '#5E5E5E',
               }}
             >
               Login Activities
@@ -608,7 +619,7 @@ const SchoolDashboard = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -646,7 +657,7 @@ const SchoolDashboard = () => {
                 <Typography
                   variant="h5"
                   sx={{
-                    color: '#E10600',
+                    color: theme.palette.error.main,
                   }}
                 >
                   {item.value}
@@ -1024,7 +1035,7 @@ const SchoolDashboard = () => {
         open={openPlanDistributionModal}
         onClose={() => setOpenPlanDistributionModal(false)}
       />
-      <LoggedInUsersModal
+      <LoginActivities
         open={openLoggedInUsersModal}
         onClose={() => setOpenLoggedInUsersModal(false)}
       />

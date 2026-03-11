@@ -79,6 +79,8 @@ const AgentModal = ({
     headerColor: shouldPrefillForm ? (selectedAgent?.headerColor || '') : '',
     sidebarColor: shouldPrefillForm ? (selectedAgent?.sidebarColor || '') : '',
     bodyColor: shouldPrefillForm ? (selectedAgent?.bodyColor || '') : '',
+    country: shouldPrefillForm ? (selectedAgent?.country || 'Nigeria') : 'Nigeria',
+    organizationTitle: shouldPrefillForm ? (selectedAgent?.organizationTitle || '') : '',
     accessLevel: shouldPrefillForm ? (selectedAgent?.accessLevel || '') : '',
     permissions: shouldPrefillForm ? (selectedAgent?.permissions || []) : [],
   };
@@ -114,6 +116,9 @@ const AgentModal = ({
             phone: values.agentPhone,
             address: values.contactAddress,
             lga_id: values.lga,
+            country: values.country,
+            org_title: values.organizationTitle,
+            access_level: values.accessLevel,
             headcolor: values.headerColor || 'default',
             sidecolor: values.sidebarColor || 'default',
             bodycolor: values.bodyColor || 'default',
@@ -161,6 +166,9 @@ const AgentModal = ({
             phone: values.agentPhone,
             address: values.contactAddress,
             lga_id: values.lga,
+            country: values.country,
+            org_title: values.organizationTitle,
+            access_level: values.accessLevel,
             color: {
                 headcolor: values.headerColor || 'default',
                 sidecolor: values.sidebarColor || 'default',

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
     Dialog,
@@ -9,27 +8,31 @@ import {
     Typography,
     Box,
     Stack,
-    Divider
+    Divider,
+    useTheme
 } from '@mui/material';
 import { IconX } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 
 const StandardModal = ({
-    open,
-    onClose,
-    title,
-    children,
-    actions,
-    maxWidth = 'sm',
-    fullWidth = true,
-    showCloseButton = true,
-    icon: Icon,
-    dividers = true,
-    padding = 3,
-    sx = {},
-    headerBg = 'transparent',
-    ...dialogProps
+  open,
+  onClose,
+  title,
+  children,
+  actions,
+  maxWidth = 'sm',
+  fullWidth = true,
+  showCloseButton = true,
+  icon: Icon,
+  dividers = true,
+  padding = 3,
+  sx = {},
+  headerBg = 'transparent',
+  ...dialogProps
 }) => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+
     return (
         <Dialog
             open={open}
@@ -37,7 +40,12 @@ const StandardModal = ({
             maxWidth={maxWidth}
             fullWidth={fullWidth}
             PaperProps={{
-              sx: { borderRadius: '12px', ...sx }
+              sx: { 
+                borderRadius: '12px', 
+                bgcolor: theme.palette.background.paper,
+                backgroundImage: 'none', // Remove MUI default overlay in dark mode
+                ...sx 
+              }
             }}
             {...dialogProps}
         >
@@ -48,12 +56,13 @@ const StandardModal = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'space-between',
-                    bgcolor: headerBg
+                    bgcolor: headerBg === 'transparent' ? 'transparent' : (isDarkMode ? theme.palette.background.default : headerBg),
+                    borderBottom: dividers && !title ? `1px solid ${theme.palette.divider}` : 'none'
                 }}>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
-                        {Icon && <Icon size={24} color="#4A5568" />}
+                        {Icon && <Icon size={24} color={theme.palette.text.secondary} />}
                         {title && (
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1A202C' }}>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
                                 {title}
                             </Typography>
                         )}
@@ -63,7 +72,10 @@ const StandardModal = ({
                             aria-label="close"
                             onClick={onClose}
                             sx={{
-                                color: (theme) => theme.palette.grey[500],
+                                color: theme.palette.text.secondary,
+                                '&:hover': {
+                                    bgcolor: theme.palette.action.hover
+                                }
                             }}
                         >
                             <IconX size={20} />
@@ -72,12 +84,18 @@ const StandardModal = ({
                 </DialogTitle>
             )}
             
-            <DialogContent dividers={dividers} sx={{ p: padding }}>
+            <DialogContent 
+                dividers={dividers} 
+                sx={{ 
+                    p: padding,
+                    color: theme.palette.text.primary
+                }}
+            >
                 {children}
             </DialogContent>
 
             {actions && (
-                <DialogActions sx={{ p: 2, px: 3 }}>
+                <DialogActions sx={{ p: 2, px: 3, borderTop: dividers ? `1px solid ${theme.palette.divider}` : 'none' }}>
                     {actions}
                 </DialogActions>
             )}
@@ -86,19 +104,19 @@ const StandardModal = ({
 };
 
 StandardModal.propTypes = {
-    open: PropTypes.bool.isRequired,
-    onClose: PropTypes.func.isRequired,
-    title: PropTypes.string,
-    children: PropTypes.node.isRequired,
-    actions: PropTypes.node,
-    maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', false]),
-    fullWidth: PropTypes.bool,
-    showCloseButton: PropTypes.bool,
-    icon: PropTypes.elementType,
-    dividers: PropTypes.bool,
-    padding: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    sx: PropTypes.object,
-    headerBg: PropTypes.string,
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string,
+  children: PropTypes.node.isRequired,
+  actions: PropTypes.node,
+  maxWidth: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl', false]),
+  fullWidth: PropTypes.bool,
+  showCloseButton: PropTypes.bool,
+  icon: PropTypes.elementType,
+  dividers: PropTypes.bool,
+  padding: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  sx: PropTypes.object,
+  headerBg: PropTypes.string,
 };
 
 export default StandardModal;

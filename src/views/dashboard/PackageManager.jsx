@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 
-import { Grid, Paper, Typography, Chip } from '@mui/material';
+import { Grid, Paper, Typography, Chip, useTheme } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -29,8 +29,8 @@ import PlanTab from '../plan/Plan';
 import MyPlanTab from '../my-plan/MyPlan';
 
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
-import PlanDistributionModal from '../agent/components/PlanDistributionModal';
-import TotalSchoolModal from '../agent/components/TotalSchoolModal';
+import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
+import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 
 const planSeries = [40, 15, 35, 10];
 
@@ -79,6 +79,7 @@ function a11yProps(index) {
 }
 
 const EduTier = () => {
+  const theme = useTheme();
   const [value, setValue] = React.useState(0);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
@@ -89,7 +90,7 @@ const EduTier = () => {
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
-      <Breadcrumb title="Manage Subscription" items={BCrumb} />
+      <Breadcrumb title="Manage Subscrription" items={BCrumb} />
 
       <Box
         sx={{
@@ -104,7 +105,8 @@ const EduTier = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           <Typography variant="h5" color="text.secondary">
@@ -120,14 +122,14 @@ const EduTier = () => {
             }}
           ></Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconCash size={50} color="#1DA1F2" />
+            <IconCash size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -146,7 +148,8 @@ const EduTier = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           <Box
@@ -165,7 +168,7 @@ const EduTier = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -176,14 +179,14 @@ const EduTier = () => {
             </Box>
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color="#1DA1F2" />
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
             <Box textAlign="right">
               <Typography
                 sx={{
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: '#1E3A5F',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                   lineHeight: 1,
                 }}
               >
@@ -237,7 +240,8 @@ const EduTier = () => {
             px: 3,
             py: 2,
             borderRadius: 2,
-            background: '#FFFFFF',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           <Box
@@ -256,7 +260,7 @@ const EduTier = () => {
               sx={{
                 width: 30,
                 height: 30,
-                background: '#5C5C5C',
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -370,13 +374,13 @@ const EduTier = () => {
       <Grid container spacing={3}>
         <Grid size={12}>
           <BlankCard>
-            <Box sx={{ maxWidth: { xs: 320, sm: 480 } }}>
+            <Box sx={{ width: '100%', overflowX: 'auto' }}>
               <Tabs
                 value={value}
                 onChange={handleChange}
-                // scrollButtons="auto"
+                scrollButtons="auto"
+                variant="scrollable"
                 aria-label="basic tabs example"
-                // variant="scrollable"
               >
                 <Tab
                   iconPosition="start"

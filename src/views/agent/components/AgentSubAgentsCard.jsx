@@ -1,20 +1,31 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Stack } from '@mui/material';
+import { Card, CardContent, Typography, Box, Stack, useTheme } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const AgentSubAgentsCard = ({ title, value, icon: Icon, bgcolor, iconBgColor }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   return (
     <Card
       sx={{
-        backgroundColor: bgcolor || '#E8F2F3',
+        backgroundColor: isDark ? '#1e1e1e' : bgcolor || '#E8F2F3',
         height: '100%',
         borderRadius: '12px',
         boxShadow: 'none',
-        border: '1px solid rgba(0,0,0,0.05)',
+        border: isDark ? '1px solid #333' : '1px solid rgba(0,0,0,0.05)',
       }}
     >
-      <CardContent sx={{ p: '24px !important', height: '100%', display: 'flex', alignItems: 'center' }}>
-        <Stack direction="row" spacing={4} alignItems="center" justifyContent="center" sx={{ width: '100%' }}>
+      <CardContent
+        sx={{ p: '24px !important', height: '100%', display: 'flex', alignItems: 'center' }}
+      >
+        <Stack
+          direction="row"
+          spacing={4}
+          alignItems="center"
+          justifyContent="center"
+          sx={{ width: '100%' }}
+        >
           {Icon && (
             <Box
               sx={{
@@ -32,10 +43,18 @@ const AgentSubAgentsCard = ({ title, value, icon: Icon, bgcolor, iconBgColor }) 
             </Box>
           )}
           <Box>
-            <Typography variant="h1" fontWeight="700" sx={{ color: '#1a3353', fontSize: '48px', lineHeight: 1 }}>
+            <Typography
+              variant="h1"
+              fontWeight="700"
+              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontSize: '48px', lineHeight: 1 }}
+            >
               {value}
             </Typography>
-            <Typography variant="h6" fontWeight="600" sx={{ color: '#1a3353', mt: 0.5, opacity: 0.9 }}>
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', mt: 0.5, opacity: 0.9 }}
+            >
               {title}
             </Typography>
           </Box>

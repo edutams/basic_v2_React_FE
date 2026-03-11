@@ -1,9 +1,11 @@
-import { Grid, Card, Box, Typography, Avatar, Button, Stack, Chip } from '@mui/material';
+import { Grid, Card, Box, Typography, Avatar, Button, Stack, Chip, useTheme } from '@mui/material';
 import { IconAdjustmentsHorizontal, IconCash } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 
 const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
 
     return (
         <Card sx={{ 
@@ -11,7 +13,7 @@ const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
             height: '100%', 
             borderRadius: '16px', 
             overflow: 'hidden', 
-            bgcolor: '#03A9F4',
+            bgcolor: isDarkMode ? theme.palette.primary.dark : '#03A9F4',
             color: 'white',
             display: 'flex',
             flexDirection: 'column',
@@ -37,10 +39,10 @@ const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
                     }} 
                 />
                 <Box>
-                    <Typography variant="h3" fontWeight={700} sx={{ mb: 0.5, fontSize: { xs: '28px', sm: '35px' }, letterSpacing: '-0.02em' }}>
+                    <Typography variant="h3" fontWeight={700} sx={{ mb: 0.5, fontSize: { xs: '28px', sm: '35px' }, letterSpacing: '-0.02em', color: 'white' }}>
                         Hi, {profile.name}!
                     </Typography>
-                    <Typography variant="body1" sx={{ opacity: 1, mb: 2, fontSize: { xs: '16px', sm: '18px' }, fontWeight: 400 }}>
+                    <Typography variant="body1" sx={{ opacity: 1, mb: 2, fontSize: { xs: '16px', sm: '18px' }, fontWeight: 400, color: 'white' }}>
                         {profile.handle}
                     </Typography>
                     
@@ -49,8 +51,8 @@ const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
                             label="Active" 
                             size="small" 
                             sx={{ 
-                                bgcolor: '#E8F5E9', 
-                                color: '#4CAF50', 
+                                bgcolor: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : '#E8F5E9', 
+                                color: isDarkMode ? '#81C784' : '#4CAF50', 
                                 fontWeight: 600, 
                                 fontSize: '12px', 
                                 height: 28,
@@ -58,7 +60,7 @@ const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
                                 px: 1
                             }} 
                         />
-                        <Typography variant="h4" fontWeight={600} sx={{ fontSize: '15px' }}>
+                        <Typography variant="h4" fontWeight={600} sx={{ fontSize: '15px', color: 'white' }}>
                             {profile.level}
                         </Typography>
                     </Stack>
@@ -96,15 +98,15 @@ const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
                     startIcon={<IconCash size={24} />} 
                     sx={{ 
                         bgcolor: 'white', 
-                        color: '#03A9F4', 
+                        color: isDarkMode ? theme.palette.primary.dark : '#03A9F4', 
                         textTransform: 'none', 
                         borderRadius: '12px', 
-                        fontWeight: 300,
+                        fontWeight: 600,
                         fontSize: '18px',
                         flex: 1,
                         boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                         '&:hover': {
-                            bgcolor: '#F5F5F5',
+                            bgcolor: isDarkMode ? '#e0e0e0' : '#F5F5F5',
                             boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
                         }
                     }}

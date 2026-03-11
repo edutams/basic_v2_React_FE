@@ -211,8 +211,23 @@ const AlcManager = () => {
     <PageContainer title="ACL Manager" description="Access Control List Management Dashboard">
       <Breadcrumb title="ACL Manager" items={BCrumb} />
 
-      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+      <Box
+        sx={{
+          mb: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+          overflowX: 'auto',
+          '& .MuiTabs-root': {
+            minWidth: '300px',
+          },
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
           <Tab label="Role Management" value="Role Management" />
           <Tab label="Permission Assignment" value="Assignment Management" />
           <Tab label="Access Analysis" value="Analysis Report" />

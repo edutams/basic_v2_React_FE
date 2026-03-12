@@ -195,27 +195,7 @@ const AgentFormFields = ({ formik }) => {
         </FormControl>
       </Grid>
 
-      {/* Row 5: Agent Level & Contact Address */}
-      <Grid item size={{ xs: 12, md: 6 }}>
-        <FormControl fullWidth error={formik.touched.accessLevel && Boolean(formik.errors.accessLevel)}>
-          <InputLabel>Agent Level</InputLabel>
-          <Select
-            name="accessLevel"
-            value={formik.values.accessLevel}
-            label="Agent Level"
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-          >
-            <MenuItem value="1">Level 1</MenuItem>
-            <MenuItem value="2">Level 2</MenuItem>
-            <MenuItem value="3">Level 3</MenuItem>
-          </Select>
-          {formik.touched.accessLevel && formik.errors.accessLevel && (
-            <FormHelperText>{formik.errors.accessLevel}</FormHelperText>
-          )}
-        </FormControl>
-      </Grid>
-      <Grid item size={{ xs: 12, md: 6 }}>
+      <Grid item size={{ xs: 12, md: 12 }}>
         <TextField
           key="contactAddress"
           label="Contact Address"

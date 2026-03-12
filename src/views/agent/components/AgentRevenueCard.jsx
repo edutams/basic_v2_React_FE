@@ -11,7 +11,7 @@ const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume, onClic
     <Card
       onClick={onClick}
       sx={{
-        backgroundColor: isDark ? '#1e1e1e' : 'white',
+        backgroundColor: isDark ? 'hsl(142, 100%, 98%)' : 'hsl(142, 100%, 98%)',
         height: '100%',
         borderRadius: '12px',
         boxShadow: 'none',
@@ -48,13 +48,13 @@ const AgentRevenueCard = ({ title, value, icon: Icon, commission, volume, onClic
           <Typography
             variant="h2"
             fontWeight="700"
-            sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontSize: '32px', mb: 0.5 }}
+            sx={{ color: theme.palette.mode === 'dark' ? '#1E3A5F' : '#1E3A5F', fontSize: '32px', mb: 0.5 }}
           >
             # {value}
           </Typography>
           <Typography
             variant="subtitle2"
-            sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontWeight: 500, fontSize: '14px' }}
+            sx={{ color: theme.palette.mode === 'dark' ? '#1E3A5F' : '#1E3A5F', fontWeight: 500, fontSize: '15px' }}
           >
             {title}
           </Typography>

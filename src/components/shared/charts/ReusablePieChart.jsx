@@ -89,7 +89,10 @@ const ReusablePieChart = ({
 
   return (
     <DashboardCard title={title} subtitle={subtitle}>
-      <Box>{chartContent}</Box>
+      <Box>
+        {chartContent}
+
+      </Box>
     </DashboardCard>
   );
 };

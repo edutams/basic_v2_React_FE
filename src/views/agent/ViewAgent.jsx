@@ -26,7 +26,8 @@ import { mockAgentData } from './mockData';
 
 const ViewAgent = () => {
     const { user: currentUser } = useAuth();
-    const { id } = useParams();
+    const { id: paramId } = useParams();
+    const id = paramId || currentUser?.id;
     const [value, setValue] = React.useState('1');
     const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -36,11 +37,12 @@ const ViewAgent = () => {
       const isDark = theme.palette.mode === 'dark';
 
     const isOwnProfile = currentUser && currentUser.id == id;
+    const isDashboard = !paramId;
 
     const BCrumb = [
         { to: '/', title: 'Home' },
-        ...(isOwnProfile && currentUser.access_level > 1 ? [] : [{ to: '/agent', title: 'Agent' }]),
-        { title: isOwnProfile && currentUser.access_level > 1 ? 'Dashboard' : 'View Profile' },
+        ...(isDashboard || (isOwnProfile && currentUser.access_level > 1) ? [] : [{ to: '/agent', title: 'Agent' }]),
+        { title: isDashboard || (isOwnProfile && currentUser.access_level > 1) ? 'Dashboard' : 'View Profile' },
     ];
 
     const handleChange = (event, newValue) => {

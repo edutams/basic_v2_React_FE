@@ -14,16 +14,12 @@ const getTenantBaseURL = () => {
     hostname !== "localhost" &&
     hostname !== "127.0.0.1";
 
-  if (isTenantSubdomain) {
-    return `${window.location.protocol}//${hostname}/api/v1`;
+  if (!isTenantSubdomain) {
+    throw new Error(
+      "tenantApi should NOT be used on central/agent domain"
+    );
   }
-
-  // fallback, if not tenant
-  return (
-    (window.location.hostname === "localhost"
-      ? import.meta.env.VITE_API_BASE_URL_LOCAL
-      : import.meta.env.VITE_API_BASE_URL_PROD) + "/api/v1"
-  );
+  return `${window.location.protocol}//${hostname}/api/v1`;
 }
 
 const tenantApi = axios.create({

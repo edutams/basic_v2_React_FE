@@ -22,11 +22,11 @@ const getTenantBaseURL = () => {
   return `${window.location.protocol}//${hostname}/api/v1`;
 }
 
-const tenantApi = axios.create({
-  baseURL: getTenantBaseURL(),
-});
+const tenantApi = axios.create({ baseURL: '/' });
 
 tenantApi.interceptors.request.use((config) => {
+  // ✅ only runs when a request is actually made
+  config.baseURL = getTenantBaseURL();
   const token = localStorage.getItem('tenant_access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

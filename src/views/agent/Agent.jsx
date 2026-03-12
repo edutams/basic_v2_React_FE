@@ -148,6 +148,11 @@ const Agent = () => {
   const [actionType, setActionType] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
+  const [analytics, setAnalytics] = useState({
+    totalAgents: 0,
+    totalSubAgents: 0,
+    totalSchools: 0,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,6 +200,12 @@ const Agent = () => {
             };
           });
           setData(mappedData);
+
+          // Calculate Analytics
+          const totalAgents = response.data.length;
+          const totalSubAgents = response.data.reduce((acc, curr) => acc + (curr.children_count || 0), 0);
+          const totalSchools = response.data.reduce((acc, curr) => acc + (curr.tenants_count || 0), 0);
+          setAnalytics({ totalAgents, totalSubAgents, totalSchools });
         }
       } catch (error) {
         console.error('Failed to fetch agents', error);
@@ -207,9 +218,6 @@ const Agent = () => {
   const [agentToDelete, setAgentToDelete] = useState(null);
 
   const [hasFiltered, setHasFiltered] = useState(false);
-  const [showAllFilters, setShowAllFilters] = useState(false);
-  const [filterClicked, setFilterClicked] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const applyFilters = () => {
     setRefreshKey((prev) => prev + 1);
@@ -765,190 +773,154 @@ const Agent = () => {
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
 
-      <Box mt={3}>
-        {/* Row 1: Stat Cards */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <AgentSchoolCard
-              title="Total School"
-              value="123"
-              icon={IconSchool}
-              bgcolor="#C9EBD2"
-              iconBgColor="#2ca87f"
-              onClick={() => setIsSchoolModalOpen(true)}
-              rightContent={
-                <Stack spacing={0.5}>
-                  {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
-                    <Stack
-                      key={idx}
-                      direction="row"
-                      justifyContent="space-between"
-                      spacing={2}
-                      sx={{ minWidth: 120 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="textSecondary"
-                        fontWeight="600"
-                        sx={{ fontSize: '11px',color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', }}
-                        
-                      >
-                        {label} -
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        fontWeight="700"
-                        sx={{ fontSize: '11px' }}
-                      >
-                        34
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <AgentSubAgentsCard
-              title="Total Sub Agents"
-              value="36"
-              icon={IconUsers}
-              bgcolor="#E8F2F3"
-              iconBgColor="#2ca87f"
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <AgentRevenueCard
-              title="Total Transaction Value"
-              value="70,234.00"
-              icon={IconCurrencyNaira}
-              commission="100,000,000,000"
-              volume="110,344,300,000"
-              onClick={() => setIsTransactionModalOpen(true)}
-            />
-          </Grid>
-        </Grid>
-
-        {/* Row 2: Charts and Login Activities */}
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Card
-              sx={{
-                p: 0,
-                height: '100%',
-                borderRadius: '12px',
-                boxShadow: 'none',
-                border: '1px solid rgba(0,0,0,0.05)',
-              }}
-            >
-              <Box
+      {/* Analytics Section */}
+      <Grid container spacing={2} mb={3} mt={2}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: '6px',
+              boxShadow: 'none',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
+              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              height: '95px',
+              width: '100%',
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography
                 sx={{
-                  p: 2,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  fontSize: '18px',
+                  fontWeight: 300,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
                 }}
               >
-                <Typography variant="h5" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#4a3aff'}}>
-                  Transaction
-                </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Select size="small" value="Year" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="Year">Year</MenuItem>
-                  </Select>
-                  <Select size="small" value="Bank" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="Bank">Bank</MenuItem>
-                  </Select>
-                </Stack>
-              </Box>
-              <Box sx={{ p: 2 }}>
-                <ReusableBarChart
-                  series={revenueSeries}
-                  categories={months}
-                  colors={['#3949ab']}
-                  height={300}
-                  yAxisPrefix="N"
-                  yAxisFormatter={(val) => `${val.toFixed(1)}M`}
-                  xAxisTitle="Month"
-                />
-              </Box>
-            </Card>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 3 }}>
-            <LoginActivitiesCard
-              title="Login Activities"
-              activities={loginActivities}
-              onIconClick={() => setIsLoggedInUsersModalOpen(true)}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 3 }}>
-            <Card
+                Total agent
+              </Typography>
+            </Box>
+            <Box
               sx={{
-                p: '24px !important',
-                height: '100%',
-                borderRadius: '12px',
-                boxShadow: 'none',
-                border: '1px solid rgba(0,0,0,0.05)',
-                position: 'relative',
+                height: '40px',
+                width: '1px',
+                bgcolor: '#D1D5DB',
+                mx: 2,
               }}
-            >
-              <Box
+            />
+            <Box sx={{ width: 60, textAlign: 'right' }}>
+              <Typography
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  mb: 2,
+                  fontSize: '25px',
+                  fontWeight: 700,
+                  color: '#2F8F46',
                 }}
               >
-                <Typography variant="subtitle2" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>
-                  Plan Distribution
-                </Typography>
-                <Box
-                  onClick={() => setIsPlanModalOpen(true)}
-                  sx={{
-                    bgcolor: '#454545',
-                    p: 0.5,
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: '#333' },
-                  }}
-                >
-                  <IconChartBar size={20} color="white" />
-                </Box>
-              </Box>
-              <ReusablePieChart
-                series={planSeries}
-                labels={planLabels}
-                colors={['#ff4081', '#2196f3', '#ff80ab', '#b39ddb']}
-                height={200}
-              />
-            </Card>
-          </Grid>
+                {analytics.totalAgents}
+              </Typography>
+            </Box>
+          </Card>
         </Grid>
 
-        {/* Modals */}
-        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
-        <LoggedInUsersModal
-          open={isLoggedInUsersModalOpen}
-          onClose={() => setIsLoggedInUsersModalOpen(false)}
-          onViewUserList={() => {
-            setIsLoggedInUsersModalOpen(false);
-            setIsViewUsersListModalOpen(true);
-          }}
-        />
-        <ViewUsersListModal
-          open={isViewUsersListModalOpen}
-          onClose={() => setIsViewUsersListModalOpen(false)}
-          schoolName={selectedSchoolForUsers}
-        />
-      </Box>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: '6px',
+              boxShadow: 'none',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
+              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              height: '95px',
+              width: '100%',
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 300,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
+                }}
+              >
+                Total Sub Agent
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                height: '40px',
+                width: '1px',
+                bgcolor: '#D1D5DB',
+                mx: 2,
+              }}
+            />
+            <Box sx={{ width: 60, textAlign: 'right' }}>
+              <Typography
+                sx={{
+                  fontSize: '25px',
+                  fontWeight: 700,
+                  color: '#2F8F46',
+                }}
+              >
+                {analytics.totalSubAgents}
+              </Typography>
+            </Box>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: '6px',
+              boxShadow: 'none',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
+              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              height: '95px',
+              width: '100%',
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 300,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
+                }}
+              >
+                Total School
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                height: '40px',
+                width: '1px',
+                bgcolor: '#D1D5DB',
+                mx: 2,
+              }}
+            />
+            <Box sx={{ width: 60, textAlign: 'right' }}>
+              <Typography
+                sx={{
+                  fontSize: '25px',
+                  fontWeight: 700,
+                  color: '#2F8F46',
+                }}
+              >
+                {analytics.totalSchools}
+              </Typography>
+            </Box>
+          </Card>
+        </Grid>
+      </Grid>
+
+
 
       <Box sx={{ mt: 3 }}>
         <ParentCard
@@ -988,8 +960,7 @@ const Agent = () => {
             </Stack>
           }
         >
-          <Grid container spacing={3} mb={3}>
-            {/* Basic Search - Always Visible */}
+          <Grid container spacing={3} mb={3} alignItems="center">
             <Grid size={{ xs: 12, md: 3, sm: 4 }}>
               <TextField
                 fullWidth
@@ -1000,121 +971,88 @@ const Agent = () => {
               />
             </Grid>
 
-            {/* Filter Icon Toggle */}
-            {!showAdvancedFilters && (
-              <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                <IconButton onClick={() => setShowAdvancedFilters(true)} color="primary">
-                  <FilterListIcon />
-                </IconButton>
-              </Grid>
-            )}
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Agent Level</InputLabel>
+                <Select
+                  value={agentLevel}
+                  label="Agent Level"
+                  onChange={(e) => setAgentLevel(e.target.value)}
+                >
+                  <MenuItem value="">-- Select --</MenuItem>
+                  <MenuItem value="1">Level 1</MenuItem>
+                  <MenuItem value="2">Level 2</MenuItem>
+                  <MenuItem value="3">Level 3</MenuItem>
+                  <MenuItem value="4">Level 4</MenuItem>
+                  <MenuItem value="5">Level 5</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-            {/* Advanced Filters */}
-            {showAdvancedFilters && (
-              <>
-                <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                  <IconButton onClick={() => setShowAdvancedFilters(false)} color="secondary">
-                    <FilterListIcon />
-                  </IconButton>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Agent Level</InputLabel>
-                    <Select
-                      value={agentLevel}
-                      label="Agent Level"
-                      onChange={(e) => setAgentLevel(e.target.value)}
-                    >
-                      <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="1">Level 1</MenuItem>
-                      <MenuItem value="2">Level 2</MenuItem>
-                      <MenuItem value="3">Level 3</MenuItem>
-                      <MenuItem value="4">Level 4</MenuItem>
-                      <MenuItem value="5">Level 5</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={status}
-                      label="Status"
-                      onChange={(e) => setStatus(e.target.value)}
-                    >
-                      <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="active">Active</MenuItem>
-                      <MenuItem value="inactive">Inactive</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>State</InputLabel>
-                    <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
-                      <MenuItem value="">-- Select --</MenuItem>
-                      {states.map((s) => (
-                        <MenuItem key={s.id} value={s.stname || s.name}>
-                          {s.stname || s.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>LGA</InputLabel>
-                    <Select
-                      value={lga}
-                      label="LGA"
-                      onChange={(e) => setLga(e.target.value)}
-                      disabled={!state}
-                    >
-                      <MenuItem value="">-- Choose LGA --</MenuItem>
-                      {lgas.map((l) => (
-                        <MenuItem key={l.id} value={l.lganame || l.name}>
-                          {l.lganame || l.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </>
-            )}
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={status}
+                  label="Status"
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <MenuItem value="">-- Select --</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-            <Grid>
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>State</InputLabel>
+                <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
+                  <MenuItem value="">-- Select --</MenuItem>
+                  {states.map((s) => (
+                    <MenuItem key={s.id} value={s.stname || s.name}>
+                      {s.stname || s.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>LGA</InputLabel>
+                <Select
+                  value={lga}
+                  label="LGA"
+                  onChange={(e) => setLga(e.target.value)}
+                  disabled={!state}
+                >
+                  <MenuItem value="">-- Choose LGA --</MenuItem>
+                  {lgas.map((l) => (
+                    <MenuItem key={l.id} value={l.lganame || l.name}>
+                      {l.lganame || l.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 1, sm: 4 }}>
               <Button
+                fullWidth
                 variant="contained"
-                onClick={() => {
-                  applyFilters();
-                }}
+                onClick={() => applyFilters()}
                 color="primary"
-                sx={{ justifyContent: 'center' }}
               >
                 Search
               </Button>
             </Grid>
-
-            {showAdvancedFilters && (
-              <Grid
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  // textDecoration: 'underline',
-                }}
-              >
-                <Button variant="text" onClick={() => setShowAdvancedFilters(false)}>
-                  Show Less Filters
-                </Button>
-              </Grid>
-            )}
-
             {hasActiveFilters && (
-              <Grid>
+              <Grid size={{ xs: 12, md: 2, sm: 4 }}>
                 <Button
                   variant="outlined"
                   color="secondary"
-                  // fullWidth
+                  fullWidth
                   onClick={() => {
                     setAgentLevel('');
                     setCountry('');
@@ -1122,7 +1060,7 @@ const Agent = () => {
                     setLga('');
                     setSearch('');
                   }}
-                  // sx={{ height: '48px' }}
+                  sx={{ height: '56px' }}
                 >
                   Clear Filters
                 </Button>

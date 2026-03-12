@@ -167,11 +167,15 @@ const SimpletreeItems = Loadable(lazy(() => import('../views/mui-trees/simpletre
 const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')));
 
 const AgentRouteWrapper = () => {
+  return <Agent />;
+};
+
+const DashboardRouteWrapper = () => {
   const { user } = useAuth();
   if (user && user.access_level > 1) {
-    return <Navigate to={`/agent/view/${user.id}`} replace />;
+    return <ViewAgent />;
   }
-  return <Agent />;
+  return <AnalyticalDashboard />;
 };
 
 const AgentRoutes = [
@@ -183,16 +187,7 @@ const AgentRoutes = [
       </ProtectedRoute>
     ),
     children: [
-      { path: '/', element: <Navigate to="/" /> },
-      {
-        path: '/',
-        exact: true,
-        element: (
-          <PermissionGate permissions={['censis.dashboard']}>
-            <AnalyticalDashboard />
-          </PermissionGate>
-        ),
-      },
+      { path: '/', element: <DashboardRouteWrapper /> },
       {
         path: '/dashboards/school',
         exact: true,

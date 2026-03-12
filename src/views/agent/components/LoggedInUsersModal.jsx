@@ -12,21 +12,30 @@ import {
   Menu,
   Card,
   useTheme,
-   ListItemIcon, ListItemText,
+  ListItemIcon, ListItemText,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableFooter,
+  TablePagination,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers,IconEye, IconEdit, IconTrash ,IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload} from '@tabler/icons-react';
+import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
-import StandardDataTable from 'src/components/shared/StandardDataTable';
 
-const LoggedInUsersModal = ({  onClose,open }) => {
+const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-    const [anchorEl, setAnchorEl] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const isMenuOpen = Boolean(anchorEl);
 
   const handleMenuClick = (event, row) => {
@@ -39,24 +48,45 @@ const LoggedInUsersModal = ({  onClose,open }) => {
     setSelectedRow(null);
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const loggedInUsersData = [
+    { id: 1, school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL', url: 'https://fsps.sef.edutams.net', number: 30 },
+    { id: 2, school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL', url: 'https://gmsps.sef.edutams.net', number: 10 },
+    { id: 3, school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL', url: 'https://iksps.sef.edutams.net', number: 39 },
+    { id: 4, school: 'KABIRU KIRU MODEL PRIMARY SCHOOL', url: 'https://kkmps.sef.edutams.net', number: 13 },
+    { id: 5, school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL', url: 'https://kksps.sef.edutams.net', number: 33 },
+    { id: 6, school: 'KWALLI SPECIAL PRIMARY SCHOOL', url: 'https://ksps.sef.edutams.net', number: 32 },
+    { id: 7, school: 'Lgea Agabija', url: 'https://las.sef.edutams.net', number: 18 },
+    { id: 8, school: 'Lgea Early Child, Mairafi.', url: 'https://lecm.sef.edutams.net', number: 10 },
+    { id: 9, school: 'Lgea Agudu', url: 'https://lgag.sef.edutams.net', number: 8 },
+  ];
+
 
   return (
     <>
-    <StandardModal 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="lg" 
-      padding={4}
-      headerBg={isDarkMode ? theme.palette.background.paper : '#f4f6f8'}
-      sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#f4f6f8' }}
-      dividers={false}
-      actions={
-        <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
-          <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
-          <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
-        </Stack>
-      }
-    >
+      <StandardModal
+        open={open}
+        onClose={onClose}
+        maxWidth="lg"
+        padding={4}
+        headerBg={isDarkMode ? theme.palette.background.paper : '#f4f6f8'}
+        sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#f4f6f8' }}
+        dividers={false}
+        actions={
+          <Stack direction="row" spacing={2} justifyContent="flex-end" width="100%">
+            <PrimaryButton variant="secondary" onClick={onClose}>Cancel</PrimaryButton>
+            <PrimaryButton variant="primary" onClick={onClose}>Save</PrimaryButton>
+          </Stack>
+        }
+      >
         {/* Top Stat Cards */}
         <Grid container spacing={1.5} mb={3}>
           {[
@@ -66,11 +96,11 @@ const LoggedInUsersModal = ({  onClose,open }) => {
             { label: 'Parent', count: 20, icon: <IconUsers size={24} />, color: '#EF4444' },
           ].map((stat, idx) => (
             <Grid size={{ xs: 6, sm: 6, lg: 3 }} key={idx}>
-              <Card sx={{ 
-                p: { xs: 1.5, sm: 2 }, 
-                borderRadius: '12px', 
-                boxShadow: theme.shadows[1], 
-                border: `1px solid ${theme.palette.divider}`, 
+              <Card sx={{
+                p: { xs: 1.5, sm: 2 },
+                borderRadius: '12px',
+                boxShadow: theme.shadows[1],
+                border: `1px solid ${theme.palette.divider}`,
                 bgcolor: theme.palette.background.paper,
                 height: '100%',
                 display: 'flex',
@@ -83,31 +113,31 @@ const LoggedInUsersModal = ({  onClose,open }) => {
                 }
               }}>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    width: { xs: 32, sm: 40 }, 
-                    height: { xs: 32, sm: 40 }, 
-                    borderRadius: '8px', 
-                    bgcolor: isDarkMode ? `${stat.color}20` : `${stat.color}15`, 
-                    color: stat.color 
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: { xs: 32, sm: 40 },
+                    height: { xs: 32, sm: 40 },
+                    borderRadius: '8px',
+                    bgcolor: isDarkMode ? `${stat.color}20` : `${stat.color}15`,
+                    color: stat.color
                   }}>
                     {stat.icon}
                   </Box>
                   <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                    <Typography 
-                      variant="caption" 
-                      fontWeight="700" 
-                      color="textSecondary" 
+                    <Typography
+                      variant="caption"
+                      fontWeight="700"
+                      color="textSecondary"
                       sx={{ display: 'block', fontSize: { xs: '10px', sm: '12px' }, textTransform: 'uppercase' }}
                     >
                       {stat.label}
                     </Typography>
-                    <Typography 
-                      variant="h5" 
-                      fontWeight="800" 
-                      color="textPrimary" 
+                    <Typography
+                      variant="h5"
+                      fontWeight="800"
+                      color="textPrimary"
                       sx={{ fontSize: { xs: '16px', sm: '20px' } }}
                     >
                       {stat.count}
@@ -119,21 +149,21 @@ const LoggedInUsersModal = ({  onClose,open }) => {
           ))}
         </Grid>
 
-        <Card sx={{ 
-          p: 0, 
-          borderRadius: '4px', 
-          boxShadow: 'none', 
-          overflow: 'hidden', 
+        <Card sx={{
+          p: 0,
+          borderRadius: '4px',
+          boxShadow: 'none',
+          overflow: 'hidden',
           border: `1px solid ${theme.palette.divider}`,
           bgcolor: theme.palette.background.paper
         }}>
           {/* Header */}
-          <Box sx={{ 
-            p: 2, 
-            display: 'flex', 
+          <Box sx={{
+            p: 2,
+            display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between', 
-            alignItems: { xs: 'flex-start', sm: 'center' }, 
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
             bgcolor: 'transparent',
             gap: 2
           }}>
@@ -143,37 +173,42 @@ const LoggedInUsersModal = ({  onClose,open }) => {
               </Box>
               <Typography variant="subtitle1" fontWeight="600" color="textPrimary">Logged In Users This Week</Typography>
             </Stack>
-            <PrimaryButton 
-              startIcon={<GetAppIcon />} 
-              sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, width: { xs: '100%', sm: 'auto' } }}
+            <PrimaryButton
+              startIcon={<GetAppIcon />}
+              sx={{
+                color: '#ffffff !important',
+                bgcolor: '#2ca87f !important',
+                '&:hover': { bgcolor: '#238a68 !important' },
+                width: { xs: '100%', sm: 'auto' }
+              }}
             >
               Export to Excel
             </PrimaryButton>
           </Box>
 
           {/* Filter Bar */}
-          <Box sx={{ 
-            display: 'flex', 
+          <Box sx={{
+            display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2, 
-            p: 2, 
-            alignItems: { xs: 'stretch', sm: 'center' }, 
-            flexWrap: 'wrap', 
-            bgcolor: isDarkMode ? 'rgba(44, 168, 127, 0.05)' : '#f2fdf5', 
-            borderTop: `1px solid ${theme.palette.divider}` 
+            gap: 2,
+            p: 2,
+            alignItems: { xs: 'stretch', sm: 'center' },
+            flexWrap: 'wrap',
+            bgcolor: isDarkMode ? 'rgba(44, 168, 127, 0.05)' : '#f2fdf5',
+            borderTop: `1px solid ${theme.palette.divider}`
           }}>
             {/* Agent Filter */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              border: `1px solid ${theme.palette.divider}`, 
-              borderRadius: '6px', 
-              bgcolor: theme.palette.background.paper, 
-              overflow: 'hidden', 
-              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '6px',
+              bgcolor: theme.palette.background.paper,
+              overflow: 'hidden',
+              flex: { xs: '1 1 auto', sm: '0 0 auto' }
             }}>
               <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
-                 <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
+                <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
               </Box>
               <Select size="small" defaultValue="Agent 2" sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}>
                 <MenuItem value="Agent 2">Agent 2</MenuItem>
@@ -181,17 +216,17 @@ const LoggedInUsersModal = ({  onClose,open }) => {
             </Box>
 
             {/* User Type Filter */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              border: `1px solid ${theme.palette.divider}`, 
-              borderRadius: '6px', 
-              bgcolor: theme.palette.background.paper, 
-              overflow: 'hidden', 
-              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '6px',
+              bgcolor: theme.palette.background.paper,
+              overflow: 'hidden',
+              flex: { xs: '1 1 auto', sm: '0 0 auto' }
             }}>
               <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
-                 <Typography variant="body2" fontWeight="600" color="textPrimary">User Type</Typography>
+                <Typography variant="body2" fontWeight="600" color="textPrimary">User Type</Typography>
               </Box>
               <Select size="small" defaultValue="Teacher" sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}>
                 <MenuItem value="Teacher">Teacher</MenuItem>
@@ -199,138 +234,164 @@ const LoggedInUsersModal = ({  onClose,open }) => {
             </Box>
 
             {/* From Filter */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              border: `1px solid ${theme.palette.divider}`, 
-              borderRadius: '6px', 
-              bgcolor: theme.palette.background.paper, 
-              overflow: 'hidden', 
-              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '6px',
+              bgcolor: theme.palette.background.paper,
+              overflow: 'hidden',
+              flex: { xs: '1 1 auto', sm: '0 0 auto' }
             }}>
               <Box sx={{ px: 1, py: 0.8, bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f4f6f8', borderRight: `1px solid ${theme.palette.divider}` }}>
-                 <Typography variant="caption" sx={{ fontSize: '10px', color: 'textSecondary' }}>From</Typography>
+                <Typography variant="caption" sx={{ fontSize: '10px', color: 'textSecondary' }}>From</Typography>
               </Box>
-              <TextField 
-                size="small" 
-                type="date" 
-                sx={{ 
-                  '& fieldset': { border: 'none' }, 
-                  '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary }, 
-                  flexGrow: 1 
-                }} 
+              <TextField
+                size="small"
+                type="date"
+                sx={{
+                  '& fieldset': { border: 'none' },
+                  '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary },
+                  flexGrow: 1
+                }}
               />
             </Box>
 
             {/* To Filter */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              border: `1px solid ${theme.palette.divider}`, 
-              borderRadius: '6px', 
-              bgcolor: theme.palette.background.paper, 
-              overflow: 'hidden', 
-              flex: { xs: '1 1 auto', sm: '0 0 auto' } 
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '6px',
+              bgcolor: theme.palette.background.paper,
+              overflow: 'hidden',
+              flex: { xs: '1 1 auto', sm: '0 0 auto' }
             }}>
               <Box sx={{ px: 1, py: 0.8, bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : '#f4f6f8', borderRight: `1px solid ${theme.palette.divider}` }}>
-                 <Typography variant="caption" sx={{ fontSize: '10px', color: 'textSecondary' }}>To</Typography>
+                <Typography variant="caption" sx={{ fontSize: '10px', color: 'textSecondary' }}>To</Typography>
               </Box>
-              <TextField 
-                size="small" 
-                type="date" 
-                sx={{ 
-                  '& fieldset': { border: 'none' }, 
-                  '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary }, 
-                  flexGrow: 1 
-                }} 
+              <TextField
+                size="small"
+                type="date"
+                sx={{
+                  '& fieldset': { border: 'none' },
+                  '& input': { py: 0.8, fontSize: '13px', color: theme.palette.text.primary },
+                  flexGrow: 1
+                }}
               />
             </Box>
 
-            <PrimaryButton 
-              sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' }, ml: { sm: 'auto' } }}
+            <PrimaryButton
+              sx={{
+                color: '#ffffff !important',
+                bgcolor: '#2ca87f !important',
+                '&:hover': { bgcolor: '#238a68 !important' },
+                ml: { sm: 'auto' }
+              }}
             >
               Filter
             </PrimaryButton>
           </Box>
 
-          <Box sx={{ p: 2 }}>
-            <StandardDataTable 
-              columns={[
-                { header: '#', accessorKey: 'id' },
-                { header: 'School', accessorKey: 'school', cell: (info) => (
-                  <Typography variant="body2" fontWeight="600" color="textPrimary">{info.getValue()}</Typography>
-                )},
-                { header: 'URL', accessorKey: 'url', cell: (info) => (
-                  <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{info.getValue()}</Typography>
-                )},
-                { header: 'Number', accessorKey: 'number', cell: (info) => (
-                  <Typography variant="body2" color="textSecondary" fontWeight="600">{info.getValue()}</Typography>
-                )},
-                { header: 'Action', accessorKey: 'action', cell: (info) => (
-                  <IconButton 
-                    onClick={(e) => handleMenuClick(e, info.row.original)} 
-                    size="small"
-                    sx={{ color: theme.palette.text.secondary, '&:hover': { color: theme.palette.text.primary, bgcolor: theme.palette.action.hover } }}
-                  >
-                     <MoreVertIcon fontSize="small" />
-                  </IconButton>
-                ), align: 'right' }
-              ]}
-              data={[
-                { id: 1, school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL', url: 'https://fsps.sef.edutams.net', number: 30 },
-                { id: 2, school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL', url: 'https://gmsps.sef.edutams.net', number: 10 },
-                { id: 3, school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL', url: 'https://iksps.sef.edutams.net', number: 39 },
-                { id: 4, school: 'KABIRU KIRU MODEL PRIMARY SCHOOL', url: 'https://kkmps.sef.edutams.net', number: 13 },
-                { id: 5, school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL', url: 'https://kksps.sef.edutams.net', number: 33 },
-                { id: 6, school: 'KWALLI SPECIAL PRIMARY SCHOOL', url: 'https://ksps.sef.edutams.net', number: 32 },
-                { id: 7, school: 'Lgea Agabija', url: 'https://las.sef.edutams.net', number: 18 },
-                { id: 8, school: 'Lgea Early Child, Mairafi.', url: 'https://lecm.sef.edutams.net', number: 10 },
-                { id: 9, school: 'Lgea Agudu', url: 'https://lgag.sef.edutams.net', number: 8 },
-              ]}
-              pageSize={5}
-            />
+          <Box sx={{ p: 0 }}>
+            <TableContainer>
+              <Table sx={{ whiteSpace: 'nowrap' }}>
+                <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>#</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>School</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>URL</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Number</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(rowsPerPage > 0
+                    ? loggedInUsersData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    : loggedInUsersData
+                  ).map((row) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell sx={{ color: theme.palette.text.secondary }}>{row.id}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{row.url}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="textSecondary" fontWeight="600">{row.number}</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
+                          <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25]}
+                      count={loggedInUsersData.length}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={handleChangePage}
+                      onRowsPerPageChange={handleChangeRowsPerPage}
+                      sx={{ borderBottom: 'none' }}
+                    />
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </TableContainer>
           </Box>
         </Card>
+      </StandardModal>
 
-    </StandardModal>
-    <Menu
-      anchorEl={anchorEl}
-      open={isMenuOpen}
-      onClose={handleMenuClose}
-      PaperProps={{
-        elevation: 0,
-        sx: {
-          borderRadius: '8px',
-          border: `1px solid ${theme.palette.divider}`,
-          bgcolor: theme.palette.background.paper,
-          boxShadow: theme.shadows[3],
-          minWidth: 150,
-          '& .MuiMenuItem-root': {
-            fontSize: '14px',
-            fontWeight: 600,
-            color: theme.palette.text.secondary,
-            py: 1,
-            px: 2,
-            '&:hover': { bgcolor: isDarkMode ? theme.palette.action.hover : '#F8FAFC', color: theme.palette.primary.main }
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{
+          sx: {
+            width: 180,
+            bgcolor: theme.palette.background.paper,
+            boxShadow: theme.shadows[3],
+            borderRadius: '12px',
+            border: `1px solid ${theme.palette.divider}`,
+            '& .MuiMenuItem-root': {
+              fontSize: '14px',
+              fontWeight: 600,
+              color: theme.palette.text.secondary,
+              py: 1,
+              px: 2,
+              '&:hover': {
+                bgcolor: isDarkMode ? theme.palette.action.hover : '#F8FAFC',
+                color: theme.palette.primary.main
+              }
+            }
           }
-        },
-      }}
-      transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-      anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-    >
-      <MenuItem onClick={handleMenuClose}>
-        <ListItemIcon><IconEye size={18} /></ListItemIcon>
-        <ListItemText primary="View Detail" />
-      </MenuItem>
-      <MenuItem onClick={handleMenuClose}>
-        <ListItemIcon><IconEdit size={18} /></ListItemIcon>
-        <ListItemText primary="Edit Record" />
-      </MenuItem>
-      <MenuItem onClick={handleMenuClose} sx={{ color: `${theme.palette.error.main} !important` }}>
-        <ListItemIcon sx={{ color: theme.palette.error.main }}><IconTrash size={18} /></ListItemIcon>
-        <ListItemText primary="Delete" />
-      </MenuItem>
-    </Menu>
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            if (onViewUserList) onViewUserList();
+          }}
+        >
+          View Users List
+        </MenuItem>
+      </Menu>
+
+
     </>
   );
 };

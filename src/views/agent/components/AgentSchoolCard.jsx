@@ -80,14 +80,14 @@ const AgentSchoolCard = ({
             <Typography
               variant="h1"
               fontWeight="800"
-              sx={{ color: isDark ? '#fff' : '#1a3353', fontSize: '48px', lineHeight: 1, mb: 1 }}
+              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontSize: '48px', lineHeight: 1, mb: 1 }}
             >
               {value}
             </Typography>
             <Typography
               variant="subtitle1"
               fontWeight="700"
-              sx={{ color: isDark ? '#aaa' : '#1a3353', fontSize: '16px' }}
+              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontSize: '16px' }}
             >
               {title}
             </Typography>

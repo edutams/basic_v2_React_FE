@@ -84,7 +84,7 @@ const CommissionManagement = () => {
 
                     <Box sx={{ p: 4 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>{getTitle()}</Typography>
+                            <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}></Typography>
                             {value === '1' && (
                                 <Select
                                     value="2026"

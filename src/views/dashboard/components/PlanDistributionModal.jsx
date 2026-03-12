@@ -16,6 +16,7 @@ import ReusableModal from 'src/components/shared/ReusableModal';
 
 const PlanDistributionModal = ({ open, onClose }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const plans = [
     { label: 'Freemium', value: '7,000,234.00', color: '#263393', bg: 'white', border: '#263393' },
     { label: 'Basic', value: '7,000,234.00', color: '#7987FF', bg: 'white', border: '#7987FF' },
@@ -121,7 +122,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
       size="extraLarge"
       padding={0}
       title={
-        <Typography fontSize={24} fontWeight={700}>
+        <Typography fontSize={24} fontWeight={700} sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>
           Plan Distribution
         </Typography>
       }

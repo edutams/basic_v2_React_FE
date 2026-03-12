@@ -71,7 +71,7 @@ const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
                 <Button 
                     variant="outlined" 
                     fullWidth
-                    onClick={onAddSchool}
+                    onClick={() => navigate('/school')}
                     startIcon={<IconAdjustmentsHorizontal size={24} />} 
                     sx={{ 
                         color: 'white', 
@@ -94,7 +94,7 @@ const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
                 <Button 
                     variant="contained" 
                     fullWidth
-                    onClick={onAddAgent}
+                    onClick={() => navigate('/agent')}
                     startIcon={<IconCash size={24} />} 
                     sx={{ 
                         bgcolor: 'white', 

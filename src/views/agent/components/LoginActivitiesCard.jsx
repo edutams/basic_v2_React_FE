@@ -43,7 +43,7 @@ const LoginActivitiesCard = ({ title, activities, onIconClick }) => {
         </Box>
 
         <Stack spacing={2.5} sx={{ px: 2 }}>
-          {activities.map((activity, index) => (
+          {activities?.map((activity, index) => (
             <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="h5" fontWeight="500" sx={{ color: theme.palette.text.primary, fontSize: '20px' }}>
                 {activity.label}:

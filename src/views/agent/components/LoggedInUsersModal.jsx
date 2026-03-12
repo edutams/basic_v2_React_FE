@@ -13,6 +13,14 @@ import {
   Card,
   useTheme,
   ListItemIcon, ListItemText,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableFooter,
+  TablePagination,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import GridViewIcon from '@mui/icons-material/GridView';
@@ -20,15 +28,15 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
-import StandardDataTable from 'src/components/shared/StandardDataTable';
 
 const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const isMenuOpen = Boolean(anchorEl);
-  const openMenu = Boolean(anchorEl);
 
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -39,6 +47,27 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
     setAnchorEl(null);
     setSelectedRow(null);
   };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const loggedInUsersData = [
+    { id: 1, school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL', url: 'https://fsps.sef.edutams.net', number: 30 },
+    { id: 2, school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL', url: 'https://gmsps.sef.edutams.net', number: 10 },
+    { id: 3, school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL', url: 'https://iksps.sef.edutams.net', number: 39 },
+    { id: 4, school: 'KABIRU KIRU MODEL PRIMARY SCHOOL', url: 'https://kkmps.sef.edutams.net', number: 13 },
+    { id: 5, school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL', url: 'https://kksps.sef.edutams.net', number: 33 },
+    { id: 6, school: 'KWALLI SPECIAL PRIMARY SCHOOL', url: 'https://ksps.sef.edutams.net', number: 32 },
+    { id: 7, school: 'Lgea Agabija', url: 'https://las.sef.edutams.net', number: 18 },
+    { id: 8, school: 'Lgea Early Child, Mairafi.', url: 'https://lecm.sef.edutams.net', number: 10 },
+    { id: 9, school: 'Lgea Agudu', url: 'https://lgag.sef.edutams.net', number: 8 },
+  ];
 
 
   return (
@@ -264,68 +293,103 @@ const LoggedInUsersModal = ({ onClose, open, onViewUserList }) => {
             </PrimaryButton>
           </Box>
 
-          <Box sx={{ p: 2 }}>
-            <StandardDataTable
-              columns={[
-                { header: '#', accessorKey: 'id' },
-                {
-                  header: 'School', accessorKey: 'school', cell: (info) => (
-                    <Typography variant="body2" fontWeight="600" color="textPrimary">{info.getValue()}</Typography>
-                  )
-                },
-                {
-                  header: 'URL', accessorKey: 'url', cell: (info) => (
-                    <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{info.getValue()}</Typography>
-                  )
-                },
-                {
-                  header: 'Number', accessorKey: 'number', cell: (info) => (
-                    <Typography variant="body2" color="textSecondary" fontWeight="600">{info.getValue()}</Typography>
-                  )
-                },
-                {
-                  header: 'Action', accessorKey: 'action', cell: (info) => (
-                    <IconButton size="small" onClick={(e) => handleMenuClick(e, info.row.original)}>
-                      <IconDotsVertical size={18} color={theme.palette.text.secondary} />
-                    </IconButton>
-                  ),
-
-                }
-              ]}
-              data={[
-                { id: 1, school: 'FESTIVAL SPECIAL PRIAMRY SCHOOL', url: 'https://fsps.sef.edutams.net', number: 30 },
-                { id: 2, school: 'GIDAN MAKAMA SPECIAL PRIMARY SCHOOL', url: 'https://gmsps.sef.edutams.net', number: 10 },
-                { id: 3, school: 'LAURE IBRAHIM KOKI SPECIAL PRIMARY SCHOOL', url: 'https://iksps.sef.edutams.net', number: 39 },
-                { id: 4, school: 'KABIRU KIRU MODEL PRIMARY SCHOOL', url: 'https://kkmps.sef.edutams.net', number: 13 },
-                { id: 5, school: 'KOFAR KUDU SPECIAL PRIMARY SCHOOL', url: 'https://kksps.sef.edutams.net', number: 33 },
-                { id: 6, school: 'KWALLI SPECIAL PRIMARY SCHOOL', url: 'https://ksps.sef.edutams.net', number: 32 },
-                { id: 7, school: 'Lgea Agabija', url: 'https://las.sef.edutams.net', number: 18 },
-                { id: 8, school: 'Lgea Early Child, Mairafi.', url: 'https://lecm.sef.edutams.net', number: 10 },
-                { id: 9, school: 'Lgea Agudu', url: 'https://lgag.sef.edutams.net', number: 8 },
-              ]}
-              pageSize={5}
-            />
-
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-
-            >
-              <MenuItem
-                onClick={() => {
-                  handleMenuClose();
-                  if (onViewUserList) onViewUserList();
-                }}
-              >
-                View Users Listsdeee
-              </MenuItem>
-            </Menu>
+          <Box sx={{ p: 0 }}>
+            <TableContainer>
+              <Table sx={{ whiteSpace: 'nowrap' }}>
+                <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>#</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>School</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>URL</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>Number</TableCell>
+                    <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary, textAlign: 'right' }}>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(rowsPerPage > 0
+                    ? loggedInUsersData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    : loggedInUsersData
+                  ).map((row) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell sx={{ color: theme.palette.text.secondary }}>{row.id}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight="600" color="textPrimary">{row.school}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ color: '#2ca87f', fontSize: '13px', fontWeight: 600 }}>{row.url}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="textSecondary" fontWeight="600">{row.number}</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
+                          <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination
+                      rowsPerPageOptions={[5, 10, 25]}
+                      count={loggedInUsersData.length}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={handleChangePage}
+                      onRowsPerPageChange={handleChangeRowsPerPage}
+                      sx={{ borderBottom: 'none' }}
+                    />
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </TableContainer>
           </Box>
         </Card>
-
-
       </StandardModal>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{
+          sx: {
+            width: 180,
+            bgcolor: theme.palette.background.paper,
+            boxShadow: theme.shadows[3],
+            borderRadius: '12px',
+            border: `1px solid ${theme.palette.divider}`,
+            '& .MuiMenuItem-root': {
+              fontSize: '14px',
+              fontWeight: 600,
+              color: theme.palette.text.secondary,
+              py: 1,
+              px: 2,
+              '&:hover': {
+                bgcolor: isDarkMode ? theme.palette.action.hover : '#F8FAFC',
+                color: theme.palette.primary.main
+              }
+            }
+          }
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleMenuClose();
+            if (onViewUserList) onViewUserList();
+          }}
+        >
+          View Users List
+        </MenuItem>
+      </Menu>
 
 
     </>

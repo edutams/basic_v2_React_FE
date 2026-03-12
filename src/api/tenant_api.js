@@ -1,22 +1,29 @@
 import axios from 'axios';
 
 const getTenantBaseURL = () => {
-    const hostname = window.location.hostname;
-    const centralHost = import.meta.env.VITE_API_BASE_URL 
-        ? new URL(import.meta.env.VITE_API_BASE_URL).hostname 
-        : 'basic_v2.test';
-    
-    const isTenantSubdomain = hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
-    
-    // Check if we are on a subdomain
-    if (isTenantSubdomain) {
-        // Use the protocol from the current page
-        const protocol = window.location.protocol;
-        return `${protocol}//${hostname}/api/v1`;
-    }
+  const hostname = window.location.hostname;
 
-    // Default or fallback
-    return import.meta.env.VITE_API_BASE_URL + '/api/v1';
+  const centralDomain =
+    hostname === "localhost"
+      ? import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL
+      : import.meta.env.VITE_CENTRAL_DOMAIN_PROD;
+
+
+  const isTenantSubdomain =
+    hostname !== centralDomain &&
+    hostname !== "localhost" &&
+    hostname !== "127.0.0.1";
+
+  if (isTenantSubdomain) {
+    return `${window.location.protocol}//${hostname}/api/v1`;
+  }
+
+  // fallback, if not tenant
+  return (
+    (window.location.hostname === "localhost"
+      ? import.meta.env.VITE_API_BASE_URL_LOCAL
+      : import.meta.env.VITE_API_BASE_URL_PROD) + "/api/v1"
+  );
 }
 
 const tenantApi = axios.create({

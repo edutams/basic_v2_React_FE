@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+const CENTRAL_API_BASE_URL =
+  window.location.hostname === "localhost"
+    ? import.meta.env.VITE_API_BASE_URL_LOCAL
+    : import.meta.env.VITE_API_BASE_URL_PROD;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL + '/api/v1',
+  baseURL: CENTRAL_API_BASE_URL + '/api/v1',
 });
 
 api.interceptors.request.use((config) => {

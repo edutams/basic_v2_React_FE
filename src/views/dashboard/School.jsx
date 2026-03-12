@@ -390,9 +390,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography
-              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
-            >
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
               Active School
             </Typography>
 
@@ -410,7 +408,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: theme.palette.error.main, fontSize: 15, fontWeight: 'bold' }}>
+            <Typography sx={{ color: theme.palette.error.main, fontSize: 13, fontWeight: 'bold' }}>
               Inactive School
             </Typography>
 
@@ -487,9 +485,7 @@ const SchoolDashboard = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography
-              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
-            >
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
               Primary School
             </Typography>
 
@@ -506,9 +502,7 @@ const SchoolDashboard = () => {
             />
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography
-              sx={{ color: theme.palette.success.main, fontSize: 15, fontWeight: 'bold' }}
-            >
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
               Senior School
             </Typography>
 

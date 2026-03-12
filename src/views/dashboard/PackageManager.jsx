@@ -199,7 +199,7 @@ const EduTier = () => {
           </Box>
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 12, fontWeight: 'bold' }}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
               Primary School
             </Typography>
 
@@ -217,7 +217,7 @@ const EduTier = () => {
             />
           </Box>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#52932E', fontSize: 12, fontWeight: 'bold' }}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
               Senior School
             </Typography>
 

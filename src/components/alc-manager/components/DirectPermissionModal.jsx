@@ -45,12 +45,12 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
     if (!currentAgent?.id) return;
 
     try {
-      // Get direct permissions
+      // Get direct permissions only
       const directRes = await aclApi.getAgentDirectPermissions(currentAgent.id);
       const directPerms = directRes?.data || [];
       setDirectPermissions(directPerms);
 
-      // Get permissions from roles
+      // Also get role permissions for display purposes
       const rolesRes = await aclApi.getAgents();
       let agentData = null;
 
@@ -75,10 +75,11 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
         }
       }
 
-      // Combine direct permissions and role permissions
+      // Set all permissions (for display), but only pre-select direct permissions
       const allPermissions = [...new Set([...directPerms, ...rolePermissions])];
       setCurrentPermissions(allPermissions);
-      setSelectedPermissions(allPermissions);
+      // Only pre-select DIRECT permissions, not role permissions
+      setSelectedPermissions(directPerms);
     } catch (err) {
       console.error('Failed to fetch current permissions:', err);
     }
@@ -138,8 +139,8 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
         />
 
         <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
-          Current permissions: {currentPermissions.length} permissions | Direct:{' '}
-          {directPermissions.length} permissions
+          Current permissions: {currentPermissions.length} (Direct: {directPermissions.length}) -
+          Checked permissions will be saved as direct
         </Typography>
 
         {loading ? (

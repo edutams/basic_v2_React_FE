@@ -28,7 +28,6 @@ import {
   Badge,
   Card,
   useTheme,
-
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -86,8 +85,7 @@ import locationApi from '../../api/location';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
-    const theme = useTheme();
-  
+  const theme = useTheme();
 
   // Revenue Trend Mock Data
   const revenueSeries = [
@@ -203,8 +201,14 @@ const Agent = () => {
 
           // Calculate Analytics
           const totalAgents = response.data.length;
-          const totalSubAgents = response.data.reduce((acc, curr) => acc + (curr.children_count || 0), 0);
-          const totalSchools = response.data.reduce((acc, curr) => acc + (curr.tenants_count || 0), 0);
+          const totalSubAgents = response.data.reduce(
+            (acc, curr) => acc + (curr.children_count || 0),
+            0,
+          );
+          const totalSchools = response.data.reduce(
+            (acc, curr) => acc + (curr.tenants_count || 0),
+            0,
+          );
           setAnalytics({ totalAgents, totalSubAgents, totalSchools });
         }
       } catch (error) {
@@ -288,7 +292,7 @@ const Agent = () => {
 
   const handleAddAgent = (newAgent) => {
     setData((prevData) => [...prevData, newAgent]);
-    console.log('New Agent Added:', newAgent);
+    // console.log('New Agent Added:', newAgent);
 
     setHeaderColor(newAgent.headerColor);
     setSidebarColor(newAgent.sidebarColor);
@@ -311,14 +315,14 @@ const Agent = () => {
   };
 
   const handleUpdateAgent = (agentData, actionType) => {
-    console.log('Selected Agent Data:', agentData);
+    // console.log('Selected Agent Data:', agentData);
     setSelectedAgent(agentData);
     setActionType(actionType);
     setIsModalOpen(true);
   };
 
   const handleViewSchools = (agentData) => {
-    console.log('Selected Agent Data:', agentData);
+    // console.log('Selected Agent Data:', agentData);
     setSelectedAgent(agentData);
     setActionType('viewSchools');
     setIsModalOpen(true);
@@ -603,14 +607,14 @@ const Agent = () => {
                 info.getValue() === 'Active'
                   ? (theme) => theme.palette.success.light
                   : info.getValue() === 'Inactive'
-                  ? (theme) => theme.palette.error.light
-                  : (theme) => theme.palette.secondary.light,
+                    ? (theme) => theme.palette.error.light
+                    : (theme) => theme.palette.secondary.light,
               color:
                 info.getValue() === 'Active'
                   ? (theme) => theme.palette.success.main
                   : info.getValue() === 'Inactive'
-                  ? (theme) => theme.palette.error.main
-                  : (theme) => theme.palette.secondary.main,
+                    ? (theme) => theme.palette.error.main
+                    : (theme) => theme.palette.secondary.main,
               borderRadius: '8px',
             }}
             size="small"
@@ -670,6 +674,14 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
+                  handleImpersonate(row.original);
+                }}
+              >
+                Login As Agent
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  handleClose();
                   handleUpdateAgent(row.original, 'update');
                 }}
               >
@@ -715,14 +727,7 @@ const Agent = () => {
               >
                 Manage Payment Gateway
               </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleImpersonate(row.original);
-                }}
-              >
-                Change Agent Color Scheme{' '}
-              </MenuItem>
+
               <MenuItem
                 onClick={() => {
                   handleClose();
@@ -920,8 +925,6 @@ const Agent = () => {
         </Grid>
       </Grid>
 
-
-
       <Box sx={{ mt: 3 }}>
         <ParentCard
           title={
@@ -992,11 +995,7 @@ const Agent = () => {
             <Grid size={{ xs: 12, md: 2, sm: 4 }}>
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Status</InputLabel>
-                <Select
-                  value={status}
-                  label="Status"
-                  onChange={(e) => setStatus(e.target.value)}
-                >
+                <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
                   <MenuItem value="">-- Select --</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
                   <MenuItem value="inactive">Inactive</MenuItem>
@@ -1038,12 +1037,7 @@ const Agent = () => {
             </Grid>
 
             <Grid size={{ xs: 12, md: 1, sm: 4 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => applyFilters()}
-                color="primary"
-              >
+              <Button fullWidth variant="contained" onClick={() => applyFilters()} color="primary">
                 Search
               </Button>
             </Grid>

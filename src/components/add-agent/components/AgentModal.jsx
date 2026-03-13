@@ -11,7 +11,7 @@ import ChangeColorScheme from './ChangeColorScheme';
 import { agentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 import agentApi from '../../../api/agent';
-import { AuthContext } from "../../../context/AgentContext/auth";
+import { AuthContext } from '../../../context/AgentContext/auth';
 
 const getModalConfig = (actionType) => {
   const configs = {
@@ -52,13 +52,7 @@ const getModalConfig = (actionType) => {
   return configs[actionType] || configs.create;
 };
 
-const AgentModal = ({ 
-  open, 
-  onClose, 
-  handleRefresh, 
-  selectedAgent, 
-  actionType = 'create' 
-}) => {
+const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 'create' }) => {
   console.log('selectedAgent:', selectedAgent);
   console.log('actionType:', actionType);
 
@@ -69,19 +63,19 @@ const AgentModal = ({
   const modalConfig = getModalConfig(actionType);
 
   const initialValues = {
-    organizationName: shouldPrefillForm ? (selectedAgent?.organizationName || '') : '',
-    agentDetails: shouldPrefillForm ? (selectedAgent?.agentDetails || '') : '',
-    contactDetails: shouldPrefillForm ? (selectedAgent?.contactDetails || '') : '',
-    agentPhone: shouldPrefillForm ? (selectedAgent?.phoneNumber || '') : '',
-    contactAddress: shouldPrefillForm ? (selectedAgent?.contactAddress || '') : '',
-    stateFilter: shouldPrefillForm ? (selectedAgent?.stateFilter || '') : '',
-    lga: shouldPrefillForm ? (selectedAgent?.lga || '') : '',
-    headerColor: shouldPrefillForm ? (selectedAgent?.headerColor || '') : '',
-    sidebarColor: shouldPrefillForm ? (selectedAgent?.sidebarColor || '') : '',
-    bodyColor: shouldPrefillForm ? (selectedAgent?.bodyColor || '') : '',
-    country: shouldPrefillForm ? (selectedAgent?.country || 'Nigeria') : 'Nigeria',
-    organizationTitle: shouldPrefillForm ? (selectedAgent?.organizationTitle || '') : '',
-    permissions: shouldPrefillForm ? (selectedAgent?.permissions || []) : [],
+    organizationName: shouldPrefillForm ? selectedAgent?.organizationName || '' : '',
+    agentDetails: shouldPrefillForm ? selectedAgent?.agentDetails || '' : '',
+    contactDetails: shouldPrefillForm ? selectedAgent?.contactDetails || '' : '',
+    agentPhone: shouldPrefillForm ? selectedAgent?.phoneNumber || '' : '',
+    contactAddress: shouldPrefillForm ? selectedAgent?.contactAddress || '' : '',
+    stateFilter: shouldPrefillForm ? selectedAgent?.stateFilter || '' : '',
+    lga: shouldPrefillForm ? selectedAgent?.lga || '' : '',
+    headerColor: shouldPrefillForm ? selectedAgent?.headerColor || '' : '',
+    sidebarColor: shouldPrefillForm ? selectedAgent?.sidebarColor || '' : '',
+    bodyColor: shouldPrefillForm ? selectedAgent?.bodyColor || '' : '',
+    country: shouldPrefillForm ? selectedAgent?.country || 'Nigeria' : 'Nigeria',
+    organizationTitle: shouldPrefillForm ? selectedAgent?.organizationTitle || '' : '',
+    permissions: shouldPrefillForm ? selectedAgent?.permissions || [] : [],
   };
 
   const formik = useFormik({
@@ -108,100 +102,101 @@ const AgentModal = ({
   const handleSaveClick = async (values) => {
     setLoading(true);
     try {
-        const payload = {
-            org_name: values.organizationName,
-            name: values.agentDetails,
-            email: values.contactDetails,
-            phone: values.agentPhone,
-            address: values.contactAddress,
-            lga_id: values.lga,
-            country: values.country,
-            org_title: values.organizationTitle,
-            access_level: '2',
-            headcolor: values.headerColor || 'default',
-            sidecolor: values.sidebarColor || 'default',
-            bodycolor: values.bodyColor || 'default',
-        };
+      const payload = {
+        org_name: values.organizationName,
+        name: values.agentDetails,
+        email: values.contactDetails,
+        phone: values.agentPhone,
+        address: values.contactAddress,
+        lga_id: values.lga,
+        country: values.country,
+        org_title: values.organizationTitle,
+        access_level: '2',
+        headcolor: values.headerColor || 'default',
+        sidecolor: values.sidebarColor || 'default',
+        bodycolor: values.bodyColor || 'default',
+      };
 
-        const response = await agentApi.create(payload);
+      const response = await agentApi.createAgent(payload);
 
-        if(response.success){
-            const newAgent = response.data;
-            handleRefresh(newAgent); 
-            resetForm();
-            onClose();
-        } else {
-            console.error("Failed to create agent:", response.message);
-            // Handle specific logic errors if any
-        }
+      if (response.success) {
+        const newAgent = response.data;
+        handleRefresh(newAgent);
+        resetForm();
+        onClose();
+      } else {
+        console.error('Failed to create agent:', response.message);
+        // Handle specific logic errors if any
+      }
     } catch (error) {
-        console.error("Error creating agent:", error);
-        if (error.response && error.response.status === 422) {
-            const backendErrors = error.response.data.errors;
-            const mappedErrors = {};
-            
-            // Map backend fields to formik fields
-            if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
-            if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
-            if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
-            if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
-            if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
-            if (backendErrors.lga_id) mappedErrors.lga = backendErrors.lga_id[0];
+      console.error('Error creating agent:', error);
+      if (error.response && error.response.status === 422) {
+        const backendErrors = error.response.data.errors;
+        const mappedErrors = {};
 
-            formik.setErrors(mappedErrors);
-        }
+        // Map backend fields to formik fields
+        if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
+        if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
+        if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
+        if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
+        if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
+        if (backendErrors.lga_id) mappedErrors.lga = backendErrors.lga_id[0];
+
+        formik.setErrors(mappedErrors);
+      }
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   const handleUpdate = async (values) => {
     setLoading(true);
     try {
-        const payload = {
-            org_name: values.organizationName,
-            name: values.agentDetails,
-            email: values.contactDetails,
-            phone: values.agentPhone,
-            address: values.contactAddress,
-            lga_id: values.lga,
-            country: values.country,
-            org_title: values.organizationTitle,
-            access_level: selectedAgent?.access_level || '2',
-            color: {
-                headcolor: values.headerColor || 'default',
-                sidecolor: values.sidebarColor || 'default',
-                bodycolor: values.bodyColor || 'default',
-            },
-            status: selectedAgent.status === 'Active' ? 'active' : 'inactive', // or handle status update logic separately
-        };
+      const payload = {
+        org_name: values.organizationName,
+        name: values.agentDetails,
+        email: values.contactDetails,
+        phone: values.agentPhone,
+        address: values.contactAddress,
+        lga_id: values.lga,
+        country: values.country,
+        org_title: values.organizationTitle,
+        access_level: selectedAgent?.access_level || '2',
+        color: {
+          headcolor: values.headerColor || 'default',
+          sidecolor: values.sidebarColor || 'default',
+          bodycolor: values.bodyColor || 'default',
+        },
+        status: selectedAgent.status === 'Active' ? 'active' : 'inactive', // or handle status update logic separately
+      };
 
-        const response = await agentApi.update(selectedAgent.s_n, payload);
+      const response = await agentApi.update(selectedAgent.s_n, payload);
 
-        if(response.data){ // Check if data exists or success flag
-             handleRefresh(response.data);
-             resetForm();
-             onClose();
-        } else {
-             console.error("Update returned invalid response", response);
-        }
+      if (response.data) {
+        // Check if data exists or success flag
+        handleRefresh(response.data);
+        resetForm();
+        onClose();
+      } else {
+        console.error('Update returned invalid response', response);
+      }
     } catch (error) {
-        console.error("Agent update failed:", error);
-         if (error.response && error.response.status === 422) {
-            const backendErrors = error.response.data.errors;
-            const mappedErrors = {};
-            
-            if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
-            if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
-            if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
-            if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
-            if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
-            if (backendErrors.lga_id) mappedErrors.lga = backendErrors.lga_id[0];
+      console.error('Agent update failed:', error);
+      if (error.response && error.response.status === 422) {
+        const backendErrors = error.response.data.errors;
+        const mappedErrors = {};
 
-            formik.setErrors(mappedErrors);
-        }
+        if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
+        if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
+        if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
+        if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
+        if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
+        if (backendErrors.lga_id) mappedErrors.lga = backendErrors.lga_id[0];
+
+        formik.setErrors(mappedErrors);
+      }
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -214,7 +209,7 @@ const AgentModal = ({
     switch (actionType) {
       case 'viewSchools':
         return <SchoolsView selectedAgent={selectedAgent} />;
-      
+
       case 'managePermissions':
         return (
           <PermissionManager
@@ -223,7 +218,7 @@ const AgentModal = ({
             onCancel={handleClose}
           />
         );
-      
+
       case 'setCommission':
         return (
           <SetCommissionModal
@@ -233,7 +228,7 @@ const AgentModal = ({
             loading={loading}
           />
         );
-      
+
       case 'manageReferral':
         return (
           <ManageReferralModal
@@ -242,7 +237,7 @@ const AgentModal = ({
             onClose={handleClose}
           />
         );
-      
+
       case 'manageGateway':
         return (
           <ManageGateway
@@ -251,7 +246,7 @@ const AgentModal = ({
             onClose={handleClose}
           />
         );
-      
+
       case 'changeColorScheme':
         return (
           <ChangeColorScheme
@@ -260,7 +255,7 @@ const AgentModal = ({
             onClose={handleClose}
           />
         );
-      
+
       case 'create':
       default:
         return (

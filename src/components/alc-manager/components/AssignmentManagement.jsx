@@ -25,6 +25,7 @@ import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-mater
 import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
+import DirectPermissionModal from './DirectPermissionModal';
 import aclApi from 'src/api/aclApi';
 import { useNotification } from 'src/hooks/useNotification';
 
@@ -42,6 +43,7 @@ const AssignmentManagement = () => {
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [currentAgentForRole, setCurrentAgentForRole] = useState(null);
+  const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -129,6 +131,40 @@ const AssignmentManagement = () => {
     );
   };
 
+  const getLevelChipSx = (level) => {
+    const levelNum = parseInt(level, 10);
+
+    const levelStyles = {
+      1: {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.main,
+      },
+      2: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.secondary.main,
+      },
+      3: {
+        backgroundColor: (theme) => theme.palette.success.light,
+        color: (theme) => theme.palette.success.main,
+      },
+      4: {
+        backgroundColor: (theme) => theme.palette.warning.light,
+        color: (theme) => theme.palette.warning.main,
+      },
+      5: {
+        backgroundColor: (theme) => theme.palette.error.light,
+        color: (theme) => theme.palette.error.main,
+      },
+    };
+
+    return (
+      levelStyles[levelNum] || {
+        backgroundColor: (theme) => theme.palette.grey[300],
+        color: (theme) => theme.palette.grey[700],
+      }
+    );
+  };
+
   const handleRoleSelection = async (roleIds) => {
     if (!currentAgentForRole) return;
 
@@ -199,6 +235,19 @@ const AssignmentManagement = () => {
     }
   };
 
+  const handleDirectPermissionSave = async (permissions) => {
+    if (!currentAgentForRole) return;
+
+    try {
+      await aclApi.assignAgentDirectPermissions(currentAgentForRole.id, permissions);
+      notify.success('Direct permissions assigned successfully!');
+      setDirectPermissionModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to assign direct permissions');
+    }
+  };
+
   const handleAction = (action, row) => {
     if (action === 'edit') {
       setCurrentAgentForRole(row);
@@ -206,6 +255,9 @@ const AssignmentManagement = () => {
     } else if (action === 'view') {
       setCurrentAgentForRole(row);
       setViewRoleModalOpen(true);
+    } else if (action === 'directPermission') {
+      setCurrentAgentForRole(row);
+      setDirectPermissionModalOpen(true);
     }
     handleMenuClose();
   };
@@ -309,11 +361,29 @@ const AssignmentManagement = () => {
                             }}
                           />
 
-                          <Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                            }}
+                          >
                             <Typography variant="subtitle2">{user.name}</Typography>
                             <Typography variant="caption" color="textSecondary">
                               {user.email}
                             </Typography>
+                            {user.level !== undefined && user.level !== null && (
+                              <Chip
+                                label={`Level: ${user.level}`}
+                                size="small"
+                                sx={{
+                                  mt: 0.5,
+                                  height: 20,
+                                  fontSize: '0.7rem',
+                                  ...getLevelChipSx(user.level),
+                                }}
+                              />
+                            )}
                           </Box>
                         </Box>
                       </TableCell>
@@ -345,6 +415,9 @@ const AssignmentManagement = () => {
                             Attach Role
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('view', user)}>View Role</MenuItem>
+                          <MenuItem onClick={() => handleAction('directPermission', user)}>
+                            Assign Direct Permission
+                          </MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
@@ -402,6 +475,12 @@ const AssignmentManagement = () => {
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
         currentUser={currentAgentForRole}
+      />
+      <DirectPermissionModal
+        open={directPermissionModalOpen}
+        onClose={() => setDirectPermissionModalOpen(false)}
+        currentAgent={currentAgentForRole}
+        onPermissionSave={handleDirectPermissionSave}
       />
     </ParentCard>
   );

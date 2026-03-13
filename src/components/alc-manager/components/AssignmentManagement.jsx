@@ -25,6 +25,7 @@ import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-mater
 import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
+import DirectPermissionModal from './DirectPermissionModal';
 import aclApi from 'src/api/aclApi';
 import { useNotification } from 'src/hooks/useNotification';
 
@@ -42,6 +43,7 @@ const AssignmentManagement = () => {
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [currentAgentForRole, setCurrentAgentForRole] = useState(null);
+  const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -233,6 +235,19 @@ const AssignmentManagement = () => {
     }
   };
 
+  const handleDirectPermissionSave = async (permissions) => {
+    if (!currentAgentForRole) return;
+
+    try {
+      await aclApi.assignAgentDirectPermissions(currentAgentForRole.id, permissions);
+      notify.success('Direct permissions assigned successfully!');
+      setDirectPermissionModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to assign direct permissions');
+    }
+  };
+
   const handleAction = (action, row) => {
     if (action === 'edit') {
       setCurrentAgentForRole(row);
@@ -240,6 +255,9 @@ const AssignmentManagement = () => {
     } else if (action === 'view') {
       setCurrentAgentForRole(row);
       setViewRoleModalOpen(true);
+    } else if (action === 'directPermission') {
+      setCurrentAgentForRole(row);
+      setDirectPermissionModalOpen(true);
     }
     handleMenuClose();
   };
@@ -397,6 +415,9 @@ const AssignmentManagement = () => {
                             Attach Role
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('view', user)}>View Role</MenuItem>
+                          <MenuItem onClick={() => handleAction('directPermission', user)}>
+                            Assign Direct Permission
+                          </MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
@@ -454,6 +475,12 @@ const AssignmentManagement = () => {
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
         currentUser={currentAgentForRole}
+      />
+      <DirectPermissionModal
+        open={directPermissionModalOpen}
+        onClose={() => setDirectPermissionModalOpen(false)}
+        currentAgent={currentAgentForRole}
+        onPermissionSave={handleDirectPermissionSave}
       />
     </ParentCard>
   );

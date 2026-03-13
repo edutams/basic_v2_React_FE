@@ -12,6 +12,7 @@ import { agentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 import agentApi from '../../../api/agent';
 import { AuthContext } from '../../../context/AgentContext/auth';
+import { useNotification } from '../../../hooks/useNotification';
 
 const getModalConfig = (actionType) => {
   const configs = {
@@ -53,8 +54,7 @@ const getModalConfig = (actionType) => {
 };
 
 const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 'create' }) => {
-  console.log('selectedAgent:', selectedAgent);
-  console.log('actionType:', actionType);
+  const notify = useNotification();
 
   const { user } = React.useContext(AuthContext);
   const canSelectColor = user?.access_level < 2;
@@ -125,8 +125,8 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
         resetForm();
         onClose();
       } else {
-        console.error('Failed to create agent:', response.message);
-        // Handle specific logic errors if any
+        console.error('Failed to create agent:', response.data?.message);
+        notify.error(response?.data?.message || 'Failed to create agent');
       }
     } catch (error) {
       console.error('Error creating agent:', error);

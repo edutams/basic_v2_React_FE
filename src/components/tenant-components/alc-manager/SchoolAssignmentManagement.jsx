@@ -26,7 +26,7 @@ import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from 'src/components/tenant-components/alc-manager/RoleAttachmentModal';
 import ViewRoleModal from 'src/components/tenant-components/alc-manager/ViewRoleModal';
 import aclApi from 'src/api/aclApi';
-import { useNotification } from 'src/hooks/useNotification';
+import { useNotification } from '../../../hooks/useNotification';
 
 const SchoolAssignmentManagement = () => {
   const notify = useNotification();

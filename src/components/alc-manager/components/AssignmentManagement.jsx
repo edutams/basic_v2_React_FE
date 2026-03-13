@@ -26,6 +26,7 @@ import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 import DirectPermissionModal from './DirectPermissionModal';
+import ViewDirectPermissionModal from './ViewDirectPermissionModal';
 import aclApi from 'src/api/aclApi';
 import { useNotification } from '../../../hooks/useNotification';
 
@@ -44,6 +45,7 @@ const AssignmentManagement = () => {
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [currentAgentForRole, setCurrentAgentForRole] = useState(null);
   const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
+  const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -258,6 +260,9 @@ const AssignmentManagement = () => {
     } else if (action === 'directPermission') {
       setCurrentAgentForRole(row);
       setDirectPermissionModalOpen(true);
+    } else if (action === 'viewDirectPermission') {
+      setCurrentAgentForRole(row);
+      setViewDirectPermissionModalOpen(true);
     }
     handleMenuClose();
   };
@@ -418,6 +423,9 @@ const AssignmentManagement = () => {
                           <MenuItem onClick={() => handleAction('directPermission', user)}>
                             Assign Direct Permission
                           </MenuItem>
+                          <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                            View Direct Permission
+                          </MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
@@ -481,6 +489,11 @@ const AssignmentManagement = () => {
         onClose={() => setDirectPermissionModalOpen(false)}
         currentAgent={currentAgentForRole}
         onPermissionSave={handleDirectPermissionSave}
+      />
+      <ViewDirectPermissionModal
+        open={viewDirectPermissionModalOpen}
+        onClose={() => setViewDirectPermissionModalOpen(false)}
+        currentUser={currentAgentForRole}
       />
     </ParentCard>
   );

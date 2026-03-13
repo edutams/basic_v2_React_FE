@@ -20,6 +20,7 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [permissionSearch, setPermissionSearch] = useState('');
   const [currentPermissions, setCurrentPermissions] = useState([]);
+  const [directPermissions, setDirectPermissions] = useState([]);
 
   useEffect(() => {
     if (open) {
@@ -44,9 +45,40 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
     if (!currentAgent?.id) return;
 
     try {
-      const res = await aclApi.getAgentDirectPermissions(currentAgent.id);
-      setCurrentPermissions(res?.data || []);
-      setSelectedPermissions(res?.data || []);
+      // Get direct permissions
+      const directRes = await aclApi.getAgentDirectPermissions(currentAgent.id);
+      const directPerms = directRes?.data || [];
+      setDirectPermissions(directPerms);
+
+      // Get permissions from roles
+      const rolesRes = await aclApi.getAgents();
+      let agentData = null;
+
+      if (Array.isArray(rolesRes.data)) {
+        agentData = rolesRes.data.find((a) => a.id === currentAgent.id);
+      } else if (rolesRes.data?.data) {
+        agentData = rolesRes.data.data.find((a) => a.id === currentAgent.id);
+      }
+
+      // Get permissions from all assigned roles
+      let rolePermissions = [];
+      if (agentData?.roles) {
+        for (const role of agentData.roles) {
+          try {
+            const rolePermsRes = await aclApi.getRolePermissions(role.id);
+            if (rolePermsRes?.data) {
+              rolePermissions = [...rolePermissions, ...rolePermsRes.data.map((p) => p.name)];
+            }
+          } catch (err) {
+            console.error('Failed to fetch role permissions:', err);
+          }
+        }
+      }
+
+      // Combine direct permissions and role permissions
+      const allPermissions = [...new Set([...directPerms, ...rolePermissions])];
+      setCurrentPermissions(allPermissions);
+      setSelectedPermissions(allPermissions);
     } catch (err) {
       console.error('Failed to fetch current permissions:', err);
     }
@@ -106,7 +138,8 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
         />
 
         <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
-          Current direct permissions: {selectedPermissions.length} permissions assigned
+          Current permissions: {currentPermissions.length} permissions | Direct:{' '}
+          {directPermissions.length} permissions
         </Typography>
 
         {loading ? (

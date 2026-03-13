@@ -129,6 +129,40 @@ const AssignmentManagement = () => {
     );
   };
 
+  const getLevelChipSx = (level) => {
+    const levelNum = parseInt(level, 10);
+
+    const levelStyles = {
+      1: {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.main,
+      },
+      2: {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.secondary.main,
+      },
+      3: {
+        backgroundColor: (theme) => theme.palette.success.light,
+        color: (theme) => theme.palette.success.main,
+      },
+      4: {
+        backgroundColor: (theme) => theme.palette.warning.light,
+        color: (theme) => theme.palette.warning.main,
+      },
+      5: {
+        backgroundColor: (theme) => theme.palette.error.light,
+        color: (theme) => theme.palette.error.main,
+      },
+    };
+
+    return (
+      levelStyles[levelNum] || {
+        backgroundColor: (theme) => theme.palette.grey[300],
+        color: (theme) => theme.palette.grey[700],
+      }
+    );
+  };
+
   const handleRoleSelection = async (roleIds) => {
     if (!currentAgentForRole) return;
 
@@ -309,11 +343,29 @@ const AssignmentManagement = () => {
                             }}
                           />
 
-                          <Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                            }}
+                          >
                             <Typography variant="subtitle2">{user.name}</Typography>
                             <Typography variant="caption" color="textSecondary">
                               {user.email}
                             </Typography>
+                            {user.level !== undefined && user.level !== null && (
+                              <Chip
+                                label={`Level: ${user.level}`}
+                                size="small"
+                                sx={{
+                                  mt: 0.5,
+                                  height: 20,
+                                  fontSize: '0.7rem',
+                                  ...getLevelChipSx(user.level),
+                                }}
+                              />
+                            )}
                           </Box>
                         </Box>
                       </TableCell>

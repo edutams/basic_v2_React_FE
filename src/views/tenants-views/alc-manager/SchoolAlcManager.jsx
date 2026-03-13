@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import { useNotification } from 'src/hooks/useNotification';
+import { useNotification } from '../../../hooks/useNotification';
 
 import {
   Box,

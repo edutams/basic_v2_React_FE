@@ -27,7 +27,7 @@ import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 import DirectPermissionModal from './DirectPermissionModal';
 import aclApi from 'src/api/aclApi';
-import { useNotification } from 'src/hooks/useNotification';
+import { useNotification } from '../../../hooks/useNotification';
 
 const AssignmentManagement = () => {
   const notify = useNotification();

@@ -13,7 +13,7 @@ import {
   Alert,
   AlertTitle,
   Chip,
-  Typography
+  Typography,
 } from '@mui/material';
 import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
@@ -51,8 +51,12 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     address: selectedSchool?.address || '',
     state_id: selectedSchool?.state_lga?.state_id || '',
     lga_id: selectedSchool?.lga_id || '',
-    school_categories: selectedSchool?.school_categories?.map(c => c.id) || selectedSchool?.school_categories || [],
-    school_divisions: selectedSchool?.school_divisions?.map(d => d.id) || selectedSchool?.school_divisions || [],
+    school_categories:
+      selectedSchool?.school_categories?.map((c) => c.id) ||
+      selectedSchool?.school_categories ||
+      [],
+    school_divisions:
+      selectedSchool?.school_divisions?.map((d) => d.id) || selectedSchool?.school_divisions || [],
     headcolor: selectedSchool?.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: selectedSchool?.color?.sidecolor || 'bg-dark text-lighter',
     bodycolor: selectedSchool?.color?.bodycolor || 'null',
@@ -77,10 +81,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const [cats, divs] = await Promise.all([
-          getSchoolCategories(),
-          getSchoolDivisions()
-        ]);
+        const [cats, divs] = await Promise.all([getSchoolCategories(), getSchoolDivisions()]);
         setCategories(cats || []);
         setAvailableDivisions(divs || []);
       } catch (err) {
@@ -127,59 +128,78 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     if (!formData.tenant_name.trim()) {
       newErrors.tenant_name = 'Institution name is required';
     }
+
     if (!formData.tenant_short_name.trim()) {
       newErrors.tenant_short_name = 'Institution short name is required';
     }
+
     if (!formData.admin_fname.trim()) {
       newErrors.admin_fname = 'Administrator first name is required';
     }
+
     if (!formData.admin_lname.trim()) {
       newErrors.admin_lname = 'Administrator last name is required';
     }
+
     if (!formData.admin_email.trim()) {
       newErrors.admin_email = 'Administrator email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.admin_email)) {
       newErrors.admin_email = 'Invalid email format';
     }
+
     if (!formData.admin_phone.trim()) {
       newErrors.admin_phone = 'Administrator phone is required';
     }
+
     if (!formData.tenant_email.trim()) {
       newErrors.tenant_email = 'Institution email is required';
     }
+
     if (!formData.owner_fname.trim()) {
       newErrors.owner_fname = 'Owner first name is required';
     }
+
     if (!formData.owner_lname.trim()) {
       newErrors.owner_lname = 'Owner last name is required';
     }
+
     if (!formData.owner_email.trim()) {
       newErrors.owner_email = 'Owner email is required';
     }
+
     if (!formData.owner_phone.trim()) {
       newErrors.owner_phone = 'Owner phone is required';
     }
+
     if (!formData.session_term) {
       newErrors.session_term = 'Session term is required';
     }
+
     if (!formData.address.trim()) {
       newErrors.address = 'Institution address is required';
     }
+
     if (!formData.state_id) {
       newErrors.state_id = 'State is required';
     }
+
     if (!formData.lga_id) {
       newErrors.lga_id = 'LGA is required';
     }
-    if (!formData.payModuleType) {
-      newErrors.payModuleType = 'Module type is required';
+
+    // Not currently in the form
+    // if (!formData.payModuleType) {
+    //   newErrors.payModuleType = 'Module type is required';
+    // }
+
+    if (!formData.school_categories || formData.school_categories.length === 0) {
+      newErrors.school_categories = 'At least one school category is required';
     }
-    if (formData.school_categories.length === 0) {
-       newErrors.school_categories = 'At least one school category is required';
-    }
-    if (formData.school_divisions.length === 0) {
-       newErrors.school_divisions = 'At least one school division is required';
-    }
+
+    // Field is commented out in UI
+    // if (formData.school_divisions.length === 0) {
+    //   newErrors.school_divisions = 'At least one school division is required';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -256,7 +276,8 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
       {loading && actionType !== 'update' && (
         <Alert severity="info" sx={{ mb: 3 }}>
           <AlertTitle>Initialzation Processing</AlertTitle>
-          Please wait while the initialization setup is processing. This may take up to <strong>1 minute</strong>.
+          Please wait while the initialization setup is processing. This may take up to{' '}
+          <strong>1 minute</strong>.
         </Alert>
       )}
       <Grid container spacing={2}>
@@ -314,7 +335,11 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => (
-                    <Chip key={value} label={categories.find(c => c.id === value)?.name} size="small" />
+                    <Chip
+                      key={value}
+                      label={categories.find((c) => c.id === value)?.name}
+                      size="small"
+                    />
                   ))}
                 </Box>
               )}
@@ -325,7 +350,9 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
                 </MenuItem>
               ))}
             </Select>
-            {errors.school_categories && <FormHelperText>{errors.school_categories}</FormHelperText>}
+            {errors.school_categories && (
+              <FormHelperText>{errors.school_categories}</FormHelperText>
+            )}
           </FormControl>
         </Grid>
 
@@ -412,12 +439,13 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             {errors.school_divisions && <FormHelperText>{errors.school_divisions}</FormHelperText>}
           </FormControl>
         </Grid> */}
-      
 
         {/* School Owner Details Section */}
         <Grid item xs={12}>
           <Box sx={{ p: 2, bgcolor: '#F1F8E9', borderRadius: '4px', border: '1px solid #DCEDC8' }}>
-            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2, color: '#33691E' }}>School Owner Details</Typography>
+            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2, color: '#33691E' }}>
+              School Owner Details
+            </Typography>
             <Grid container spacing={2}>
               <Grid item size={{ xs: 12, md: 6 }}>
                 <TextField
@@ -474,7 +502,9 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
         {/* School Admin Owner Details Section */}
         <Grid item xs={12}>
           <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: '4px', border: '1px solid #E0E0E0' }}>
-            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2 }}>School Admin Owner Details</Typography>
+            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2 }}>
+              School Admin Owner Details
+            </Typography>
             <Grid container spacing={2}>
               <Grid item size={{ xs: 12, md: 6 }}>
                 <TextField
@@ -534,7 +564,6 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             <ColorSchemeSelector formData={formData} onColorChange={handleColorChange} />
           </Grid>
         )}
-
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

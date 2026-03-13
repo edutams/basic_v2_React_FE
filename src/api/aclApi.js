@@ -63,6 +63,18 @@ const aclApi = {
     return response.data;
   },
 
+  getAgentDirectPermissions: async (agentId) => {
+    const response = await api.get(`/acl/assignments/agents/${agentId}/permissions`);
+    return response.data;
+  },
+
+  assignAgentDirectPermissions: async (agentId, permissions) => {
+    const response = await api.post(`/acl/assignments/agents/${agentId}/permissions`, {
+      permissions,
+    });
+    return response.data;
+  },
+
   getRoleAnalytics: async (params) => {
     const response = await api.get('/acl', { params });
     return response.data;

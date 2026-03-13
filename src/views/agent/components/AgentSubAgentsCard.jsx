@@ -9,7 +9,7 @@ const AgentSubAgentsCard = ({ title, value, icon: Icon, bgcolor, iconBgColor }) 
   return (
     <Card
       sx={{
-        backgroundColor: isDark ? '#1e1e1e' : bgcolor || '#E8F2F3',
+        backgroundColor: isDark ? '#D9E6EB' : bgcolor || '#D9E6EB',
         height: '100%',
         borderRadius: '12px',
         boxShadow: 'none',
@@ -45,15 +45,15 @@ const AgentSubAgentsCard = ({ title, value, icon: Icon, bgcolor, iconBgColor }) 
           <Box>
             <Typography
               variant="h1"
-              fontWeight="700"
-              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', fontSize: '48px', lineHeight: 1 }}
+              fontWeight="800"
+              sx={{ color: theme.palette.mode === 'dark' ? '#1E3A5F' : '#1E3A5F', fontSize: '50px', lineHeight: 1 }}
             >
               {value}
             </Typography>
             <Typography
               variant="h6"
               fontWeight="600"
-              sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F', mt: 0.5, opacity: 0.9 }}
+              sx={{ color: theme.palette.mode === 'dark' ? '#1E3A5F' : '#1E3A5F', mt: 0.5, opacity: 0.9 }}
             >
               {title}
             </Typography>

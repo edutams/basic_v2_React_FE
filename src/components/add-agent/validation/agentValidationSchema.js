@@ -31,7 +31,6 @@ export const agentValidationSchema = yup.object({
   lga: yup.string().required('LGA is required'),
   country: yup.string().required('Country is required'),
   organizationTitle: yup.string().required('Organization title is required'),
-  accessLevel: yup.string().required('Agent level is required'),
 });
 
 export default agentValidationSchema;

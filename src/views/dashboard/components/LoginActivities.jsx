@@ -186,6 +186,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             sx={{
               bgcolor: '#2ca87f',
               '&:hover': { bgcolor: '#238a68' },
+              color: '#ffffff !important',
             }}
           >
             Export to Excel
@@ -271,7 +272,13 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           <TextField size="small" type="date" />
           <TextField size="small" type="date" />
 
-          <PrimaryButton sx={{ bgcolor: '#2ca87f', '&:hover': { bgcolor: '#238a68' } }}>
+          <PrimaryButton
+            sx={{
+              bgcolor: '#2ca87f',
+              '&:hover': { bgcolor: '#238a68' },
+              color: '#ffffff !important',
+            }}
+          >
             Filter
           </PrimaryButton>
         </Box>
@@ -381,7 +388,19 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
       </Card>
 
       {/* Menu */}
-      <Menu anchorEl={anchorEl} open={openMenu} onClose={handleCloseMenu}>
+      <Menu
+        anchorEl={anchorEl}
+        open={openMenu}
+        onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
         <MenuItem
           onClick={() => {
             handleCloseMenu();

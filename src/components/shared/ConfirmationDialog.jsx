@@ -1,7 +1,8 @@
 import React from 'react';
-import { Button, Box } from '@mui/material';
-import ReusableDialog from './ReusableDialog'; // Adjust path
+import { Box, useTheme } from '@mui/material';
 import PropTypes from 'prop-types';
+import ReusableDialog from './ReusableDialog';
+import PrimaryButton from './PrimaryButton';
 
 const ConfirmationDialog = ({
   open,
@@ -11,50 +12,37 @@ const ConfirmationDialog = ({
   message = 'Are you sure you want to proceed?',
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  confirmColor = 'primary',
-  confirmVariant = 'contained',
-  cancelColor = 'inherit',
-  cancelVariant = 'outlined',
   severity = 'info',
   maxWidth = 'xs',
   ...dialogProps
 }) => {
-  console.log('ConfirmationDialog rendered, open:', open); // Debugging
+  const theme = useTheme();
   const handleConfirm = () => {
     onConfirm();
     onClose();
   };
 
-  const getSeverityColor = () => {
-    switch (severity) {
-      case 'error':
-        return 'error';
-      case 'warning':
-        return 'warning';
-      case 'success':
-        return 'success';
-      default:
-        return confirmColor;
-    }
-  };
-
   const actions = (
-    <Box sx={{ display: 'flex', gap: 1 }}>
-      <Button
+    <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
+      <PrimaryButton
         onClick={onClose}
-        color={cancelColor}
-        variant={cancelVariant}
+        variant="secondary"
       >
         {cancelText}
-      </Button>
-      <Button
+      </PrimaryButton>
+      <PrimaryButton
         onClick={handleConfirm}
-        color={getSeverityColor()}
-        variant={confirmVariant}
+        variant="primary"
         autoFocus
+        sx={{ 
+          bgcolor: severity === 'error' ? theme.palette.error.main : theme.palette.warning.main,
+          '&:hover': {
+            bgcolor: severity === 'error' ? theme.palette.error.dark : theme.palette.warning.dark,
+          }
+        }}
       >
         {confirmText}
-      </Button>
+      </PrimaryButton>
     </Box>
   );
 

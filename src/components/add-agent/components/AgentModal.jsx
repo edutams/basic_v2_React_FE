@@ -32,7 +32,7 @@ const getModalConfig = (actionType) => {
       size: 'large',
     },
     setCommission: {
-      title: 'Set Commission',
+      title: 'Edit Commission Percentage',
       size: 'small',
     },
     manageReferral: {
@@ -79,7 +79,8 @@ const AgentModal = ({
     headerColor: shouldPrefillForm ? (selectedAgent?.headerColor || '') : '',
     sidebarColor: shouldPrefillForm ? (selectedAgent?.sidebarColor || '') : '',
     bodyColor: shouldPrefillForm ? (selectedAgent?.bodyColor || '') : '',
-    accessLevel: shouldPrefillForm ? (selectedAgent?.accessLevel || '') : '',
+    country: shouldPrefillForm ? (selectedAgent?.country || 'Nigeria') : 'Nigeria',
+    organizationTitle: shouldPrefillForm ? (selectedAgent?.organizationTitle || '') : '',
     permissions: shouldPrefillForm ? (selectedAgent?.permissions || []) : [],
   };
 
@@ -114,6 +115,9 @@ const AgentModal = ({
             phone: values.agentPhone,
             address: values.contactAddress,
             lga_id: values.lga,
+            country: values.country,
+            org_title: values.organizationTitle,
+            access_level: '2',
             headcolor: values.headerColor || 'default',
             sidecolor: values.sidebarColor || 'default',
             bodycolor: values.bodyColor || 'default',
@@ -161,6 +165,9 @@ const AgentModal = ({
             phone: values.agentPhone,
             address: values.contactAddress,
             lga_id: values.lga,
+            country: values.country,
+            org_title: values.organizationTitle,
+            access_level: selectedAgent?.access_level || '2',
             color: {
                 headcolor: values.headerColor || 'default',
                 sidecolor: values.sidebarColor || 'default',
@@ -223,6 +230,7 @@ const AgentModal = ({
             selectedAgent={selectedAgent}
             onSave={handleUpdate}
             onClose={handleClose}
+            loading={loading}
           />
         );
       

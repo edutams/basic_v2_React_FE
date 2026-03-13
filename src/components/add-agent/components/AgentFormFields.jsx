@@ -44,24 +44,11 @@ const AgentFormFields = ({ formik }) => {
 
   return (
     <>
-      <Grid item size={{ xs: 12, md: 12, lg: 12 }}>
-        <TextField
-          key="organizationName"
-          label="Organization Name"
-          fullWidth
-          name="organizationName"
-          value={formik.values.organizationName}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          error={formik.touched.organizationName && Boolean(formik.errors.organizationName)}
-          helperText={formik.touched.organizationName && formik.errors.organizationName}
-        />
-      </Grid>
-
-      <Grid item size={{ xs: 12, md: 12, sm: 4 ,lg:12}}>
+      {/* Row 1: Name & Mail */}
+      <Grid item size={{ xs: 12, md: 6 }}>
         <TextField
           key="agentDetails"
-          label="Agent Name"
+          label="Name"
           fullWidth
           name="agentDetails"
           value={formik.values.agentDetails}
@@ -71,11 +58,10 @@ const AgentFormFields = ({ formik }) => {
           helperText={formik.touched.agentDetails && formik.errors.agentDetails}
         />
       </Grid>
-
-      <Grid item size={{ xs: 12, md: 6, sm: 4 }}>
+      <Grid item size={{ xs: 12, md: 6 }}>
         <TextField
           key="contactDetails"
-          label="Agent Email"
+          label="Mail"
           fullWidth
           name="contactDetails"
           type="email"
@@ -87,10 +73,11 @@ const AgentFormFields = ({ formik }) => {
         />
       </Grid>
 
-      <Grid item size={{ xs: 12, md: 5, sm: 4 }}>
+      {/* Row 2: Phone No & Country */}
+      <Grid item size={{ xs: 12, md: 6 }}>
         <TextField
           key="agentPhone"
-          label="Agent Phone"
+          label="Phone No:"
           placeholder="+234-801-234-5678"
           fullWidth
           name="agentPhone"
@@ -101,8 +88,28 @@ const AgentFormFields = ({ formik }) => {
           helperText={formik.touched.agentPhone && formik.errors.agentPhone}
         />
       </Grid>
+      <Grid item size={{ xs: 12, md: 6 }}>
+        <FormControl fullWidth error={formik.touched.country && Boolean(formik.errors.country)}>
+          <InputLabel>Country</InputLabel>
+          <Select
+            name="country"
+            value={formik.values.country}
+            label="Country"
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          >
+            <MenuItem value="Nigeria">Nigeria</MenuItem>
+            <MenuItem value="Ghana">Ghana</MenuItem>
+            <MenuItem value="Kenya">Kenya</MenuItem>
+          </Select>
+          {formik.touched.country && formik.errors.country && (
+            <FormHelperText>{formik.errors.country}</FormHelperText>
+          )}
+        </FormControl>
+      </Grid>
 
-      <Grid item size={{ xs: 12, md: 4, sm: 4 }}>
+      {/* Row 3: State & LGA */}
+      <Grid item size={{ xs: 12, md: 6 }}>
         <FormControl
           fullWidth
           error={formik.touched.stateFilter && Boolean(formik.errors.stateFilter)}
@@ -127,8 +134,7 @@ const AgentFormFields = ({ formik }) => {
           )}
         </FormControl>
       </Grid>
-
-      <Grid item size={{ xs: 12, md: 3, sm: 4 }}>
+      <Grid item size={{ xs: 12, md: 6 }}>
         <FormControl
           fullWidth
           error={formik.touched.lga && Boolean(formik.errors.lga)}
@@ -152,22 +158,51 @@ const AgentFormFields = ({ formik }) => {
           {formik.touched.lga && formik.errors.lga && (
             <FormHelperText>{formik.errors.lga}</FormHelperText>
           )}
-          {!formik.values.stateFilter && (
-            <FormHelperText>Please select a state first</FormHelperText>
+        </FormControl>
+      </Grid>
+
+      {/* Row 4: Organization Name & Organization Title */}
+      <Grid item size={{ xs: 12, md: 6 }}>
+        <TextField
+          key="organizationName"
+          label="Organization Name"
+          fullWidth
+          name="organizationName"
+          value={formik.values.organizationName}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          error={formik.touched.organizationName && Boolean(formik.errors.organizationName)}
+          helperText={formik.touched.organizationName && formik.errors.organizationName}
+        />
+      </Grid>
+      <Grid item size={{ xs: 12, md: 6 }}>
+        <FormControl fullWidth error={formik.touched.organizationTitle && Boolean(formik.errors.organizationTitle)}>
+          <InputLabel>Organization Title</InputLabel>
+          <Select
+            name="organizationTitle"
+            value={formik.values.organizationTitle}
+            label="Organization Title"
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          >
+            <MenuItem value="CEO">CEO</MenuItem>
+            <MenuItem value="Manager">Manager</MenuItem>
+            <MenuItem value="Agent">Agent</MenuItem>
+          </Select>
+          {formik.touched.organizationTitle && formik.errors.organizationTitle && (
+            <FormHelperText>{formik.errors.organizationTitle}</FormHelperText>
           )}
         </FormControl>
       </Grid>
 
-
-
-      <Grid item size={{ xs: 12, md: 12, sm: 4 }}>
+      <Grid item size={{ xs: 12, md: 12 }}>
         <TextField
           key="contactAddress"
           label="Contact Address"
           fullWidth
           name="contactAddress"
           multiline
-          rows={2}
+          rows={3}
           value={formik.values.contactAddress}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}

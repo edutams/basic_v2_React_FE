@@ -8,17 +8,14 @@ import PackageModal from './PackageModal';
 import ManageModulesModal from './ManageModulesModal';
 import PropTypes from 'prop-types';
 
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { title: 'Packages' },
-];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Packages' }];
 
-const PackageManagement = ({ 
-  packages = [], 
+const PackageManagement = ({
+  packages = [],
   modules = [],
   onPackageUpdate,
   onModuleUpdate,
-  isLoading = false 
+  isLoading = false,
 }) => {
   const [currentPackage, setCurrentPackage] = useState(null);
   const [packageModules, setPackageModules] = useState([]);
@@ -30,7 +27,7 @@ const PackageManagement = ({
 
   const currentPackageModules = useMemo(() => {
     if (!currentPackage) return [];
-    return modules.filter(module => module.packageId === currentPackage.id);
+    return modules.filter((module) => module.packageId === currentPackage.id);
   }, [modules, currentPackage]);
 
   const handlePackageAction = (action, package_ = null) => {
@@ -64,6 +61,7 @@ const PackageManagement = ({
         setCurrentPackage(package_);
         setPackageModules(package_.modules || []);
         setView('modules');
+        // setManageModulesOpen(true);
         break;
 
       // case 'manageModules':
@@ -78,7 +76,7 @@ const PackageManagement = ({
 
   const handlePackageUpdate = (packageData, operation) => {
     onPackageUpdate(packageData, operation);
-    
+
     if (currentPackage && packageData.id === currentPackage.id) {
       setCurrentPackage(packageData);
     }
@@ -92,29 +90,27 @@ const PackageManagement = ({
 
   const handleModuleUpdate = (moduleData, operation) => {
     onModuleUpdate(moduleData, operation);
-    
+
     if (currentPackage) {
       if (operation === 'create') {
-        setPackageModules(prev => [...prev, moduleData]);
+        setPackageModules((prev) => [...prev, moduleData]);
       } else if (operation === 'update') {
-        setPackageModules(prev => 
-          prev.map(mod => mod.id === moduleData.id ? moduleData : mod)
+        setPackageModules((prev) =>
+          prev.map((mod) => (mod.id === moduleData.id ? moduleData : mod)),
         );
       } else if (operation === 'delete') {
-        setPackageModules(prev => 
-          prev.filter(mod => mod.id !== moduleData.id)
-        );
+        setPackageModules((prev) => prev.filter((mod) => mod.id !== moduleData.id));
       }
     }
   };
 
   const handleModuleAssignment = (package_, assignedModules, unassignedModules) => {
-    assignedModules.forEach(module => {
+    assignedModules.forEach((module) => {
       const updatedModule = { ...module, packageId: package_.id };
       onModuleUpdate(updatedModule, 'update');
     });
 
-    unassignedModules.forEach(module => {
+    unassignedModules.forEach((module) => {
       const updatedModule = { ...module, packageId: null };
       onModuleUpdate(updatedModule, 'update');
     });
@@ -126,10 +122,10 @@ const PackageManagement = ({
 
   return (
     <PageContainer title="Packages" description="Manage packages and their modules">
-      <Breadcrumb title="Packages" items={BCrumb} />
-      
+      {/* <Breadcrumb title="Packages" items={BCrumb} /> */}
+
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: view === 'modules' ? 7 : 12 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <PackageTable
             packages={packages}
             onPackageAction={handlePackageAction}
@@ -137,18 +133,16 @@ const PackageManagement = ({
           />
         </Grid>
 
-        {view === 'modules' && (
-          <Grid size={{ xs: 12, md: 5 }}>
-            <ModuleManagement
-              packageModules={packageModules}
-              currentPackage={currentPackage}
-              onModuleUpdate={handleModuleUpdate}
-              onAttachModule={handleAttachModule}
-              isLoading={isLoading}
-              onBack={() => setView('list')}
-            />
-          </Grid>
-        )}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <ModuleManagement
+            packageModules={packageModules}
+            currentPackage={currentPackage}
+            onModuleUpdate={handleModuleUpdate}
+            onAttachModule={handleAttachModule}
+            isLoading={isLoading}
+            onBack={() => setView('list')}
+          />
+        </Grid>
       </Grid>
 
       <PackageModal
@@ -164,8 +158,6 @@ const PackageManagement = ({
         open={manageModulesOpen}
         onClose={() => setManageModulesOpen(false)}
         currentPackage={currentPackage}
-        allModules={modules}
-        packageModules={currentPackageModules}
         onModuleAssignment={handleModuleAssignment}
         isLoading={isLoading}
       />

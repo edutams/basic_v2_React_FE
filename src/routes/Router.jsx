@@ -3,12 +3,14 @@ import TenantRoutes from './TenantRoutes';
 import AgentRoutes from './AgentRoutes';
 
 const hostname = window.location.hostname;
-const centralHost = import.meta.env.VITE_API_BASE_URL
-  ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
-  : 'basic_v2.test';
+
+const centralDomain =
+  hostname === 'localhost' || hostname === '127.0.0.1'
+    ? import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL
+    : import.meta.env.VITE_CENTRAL_DOMAIN_PROD;
 
 const isTenantSubdomain =
-  hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
+  hostname !== centralDomain && hostname !== 'localhost' && hostname !== '127.0.0.1';
 
 const Router = isTenantSubdomain ? TenantRoutes : AgentRoutes;
 

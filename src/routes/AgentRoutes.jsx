@@ -3,6 +3,7 @@ import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
+import { useAuth } from '../hooks/useAuth';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -19,13 +20,13 @@ const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
 const ViewAgent = Loadable(lazy(() => import('../views/agent/ViewAgent')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
-const MyPlan = Loadable(lazy(() => import('../views/my-plan/MyPlan')));
 const CalendarManagement = Loadable(lazy(() => import('../views/calendar/CalendarManagement')));
 const Chat = Loadable(lazy(() => import('../views/chat/Chat')));
 const Mail = Loadable(lazy(() => import('../views/mail/Mail')));
 const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
 const AgentSubscriptionManagement = Loadable(lazy(() => import('../views/agent/subscriptions/AgentSubscriptionIndex')));
 const ActivityLog = Loadable(lazy(() => import('../views/activity-log/ActivityLog')));
+const CommissionManagement = Loadable(lazy(() => import('../views/commission/CommissionManagement')));
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 
@@ -165,6 +166,18 @@ const SimpletreeFocus = Loadable(lazy(() => import('../views/mui-trees/simpletre
 const SimpletreeItems = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-items/page')));
 const SimpletreeSelection = Loadable(lazy(() => import('../views/mui-trees/simpletree/simpletree-selection/page')));
 
+const AgentRouteWrapper = () => {
+  return <Agent />;
+};
+
+const DashboardRouteWrapper = () => {
+  const { user } = useAuth();
+  if (user && user.access_level > 1) {
+    return <ViewAgent />;
+  }
+  return <AnalyticalDashboard />;
+};
+
 const AgentRoutes = [
   {
     path: '/',
@@ -174,16 +187,7 @@ const AgentRoutes = [
       </ProtectedRoute>
     ),
     children: [
-      { path: '/', element: <Navigate to="/" /> },
-      {
-        path: '/',
-        exact: true,
-        element: (
-          <PermissionGate permissions={['censis.dashboard']}>
-            <AnalyticalDashboard />
-          </PermissionGate>
-        ),
-      },
+      { path: '/', element: <DashboardRouteWrapper /> },
       {
         path: '/dashboards/school',
         exact: true,
@@ -207,7 +211,7 @@ const AgentRoutes = [
         exact: true,
         element: (
           <PermissionGate permissions={['censis.acl.user.manage.role']}>
-            <Agent />
+            <AgentRouteWrapper />
           </PermissionGate>
         ),
       },
@@ -220,7 +224,6 @@ const AgentRoutes = [
         ),
       },
       { path: '/gateway', exact: true, element: <Gateway /> },
-      { path: '/my-plan', exact: true, element: <MyPlan /> },
       {
         path: '/calendar',
         exact: true,
@@ -265,6 +268,15 @@ const AgentRoutes = [
         element: (
           <PermissionGate permissions={['censis.activity_log.view']}>
             <ActivityLog />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: '/agent/commissions',
+        exact: true,
+        element: (
+          <PermissionGate permissions={['censis.acl.user.manage.role']}>
+            <CommissionManagement />
           </PermissionGate>
         ),
       },

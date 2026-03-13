@@ -37,21 +37,7 @@ import {
 import axios from 'src/api/auth';
 import useNotification from 'src/hooks/useNotification';
 
-// ─── Confirmation Dialog ───────────────────────────────────────────────────
-function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
-  return (
-    <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        <Typography sx={{ pt: 1 }}>{message}</Typography>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" color="primary" onClick={onConfirm}>Yes, Proceed</Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
+import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 
 const AgentSubscriptionList = ({ status }) => {
   const [rows, setRows] = useState([]);
@@ -289,9 +275,9 @@ const AgentSubscriptionList = ({ status }) => {
           </TableContainer>
         </Paper>
       )}
-      <ConfirmDialog 
+      <ConfirmationDialog 
         {...confirm} 
-        onCancel={() => setConfirm((prev) => ({ ...prev, open: false }))} 
+        onClose={() => setConfirm((prev) => ({ ...prev, open: false }))} 
       />
     </Box>
   );

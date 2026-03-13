@@ -26,6 +26,9 @@ import {
   IconButton,
   Button,
   Badge,
+  Card,
+  useTheme,
+
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -40,13 +43,18 @@ import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
-import { 
-  IconUsers, 
-  IconSchool, 
-  IconCurrencyNaira, 
-} from '@tabler/icons-react';
+import { IconUsers, IconSchool, IconCurrencyNaira, IconChartBar } from '@tabler/icons-react';
 
 import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+import AgentSubAgentsCard from './components/AgentSubAgentsCard';
+import AgentRevenueCard from './components/AgentRevenueCard';
+import AgentSchoolCard from './components/AgentSchoolCard';
+import LoginActivitiesCard from './components/LoginActivitiesCard';
+import PlanDistributionModal from './components/PlanDistributionModal';
+import LoggedInUsersModal from './components/LoggedInUsersModal';
+import ViewUsersListModal from './components/ViewUsersListModal';
+import TotalSchoolModal from './components/TotalSchoolModal';
+import TotalTransactionModal from './components/TotalTransactionModal';
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 
@@ -78,6 +86,8 @@ import locationApi from '../../api/location';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
+    const theme = useTheme();
+  
 
   // Revenue Trend Mock Data
   const revenueSeries = [
@@ -86,7 +96,20 @@ const Agent = () => {
       data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5],
     },
   ];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 
   // Plan Distribution Mock Data
   const planSeries = [65, 52, 39];
@@ -97,9 +120,24 @@ const Agent = () => {
   const [state, setState] = useState('');
   const [lga, setLga] = useState('');
   const [status, setStatus] = useState('');
+
+  // Modal States
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
+  const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
+  const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+
+  const loginActivities = [
+    { label: 'Teacher', value: 12 },
+    { label: 'SPA', value: 45 },
+    { label: 'Student', value: 23 },
+    { label: 'Parent', value: 12 },
+  ];
   // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
-  
+
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
 
@@ -110,54 +148,67 @@ const Agent = () => {
   const [actionType, setActionType] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
+  const [analytics, setAnalytics] = useState({
+    totalAgents: 0,
+    totalSubAgents: 0,
+    totalSchools: 0,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const params = {
-             state: state || undefined,
-             lga: lga || undefined,
-             status: status || undefined,
-             search: search || undefined,
-             access_level: agentLevel || undefined
+          state: state || undefined,
+          lga: lga || undefined,
+          status: status || undefined,
+          search: search || undefined,
+          access_level: agentLevel || undefined,
         };
         const response = await agentApi.getAll(params);
-        if(response.success){
-             const mappedData = response.data.map((agent, index) => {
-                 let parsedColor = agent.color;
-                 if (typeof agent.color === 'string') {
-                     try {
-                         parsedColor = JSON.parse(agent.color);
-                     } catch (e) {
-                         console.error("Error parsing color JSON", e);
-                         parsedColor = {};
-                     }
-                 }
+        if (response.success) {
+          const mappedData = response.data.map((agent, index) => {
+            let parsedColor = agent.color;
+            if (typeof agent.color === 'string') {
+              try {
+                parsedColor = JSON.parse(agent.color);
+              } catch (e) {
+                console.error('Error parsing color JSON', e);
+                parsedColor = {};
+              }
+            }
 
-                 return {
-                     s_n: agent.id,
-                     agentDetails: agent.name,
-                     organizationName: agent.org_name,
-                     organizationTitle: agent.org_title,
-                     contactDetails: agent.email,
-                     phoneNumber: agent.phone,
-                     imgsrc: agent.image,
-                     performance: 'School: ' + (agent.tenants_count || 0),
-                     tenants_count: agent.tenants_count || 0,
-                     sub_agents_count: agent.children_count || 0,
-                     access_level: agent.access_level,
-                     headerColor: parsedColor?.headcolor,
-                     sidebarColor: parsedColor?.sidecolor,
-                     bodyColor: parsedColor?.bodycolor,
-                     status: agent.status ? (agent.status.charAt(0).toUpperCase() + agent.status.slice(1)) : 'Inactive',
-                     lga: agent.lga_id,
-                     stateFilter: agent.state_lga?.state_id,
-                 };
-             });
-             setData(mappedData);
+            return {
+              s_n: agent.id,
+              agentDetails: agent.name,
+              organizationName: agent.org_name,
+              organizationTitle: agent.org_title,
+              contactDetails: agent.email,
+              phoneNumber: agent.phone,
+              imgsrc: agent.image,
+              performance: 'School: ' + (agent.tenants_count || 0),
+              tenants_count: agent.tenants_count || 0,
+              sub_agents_count: agent.children_count || 0,
+              access_level: agent.access_level,
+              headerColor: parsedColor?.headcolor,
+              sidebarColor: parsedColor?.sidecolor,
+              bodyColor: parsedColor?.bodycolor,
+              status: agent.status
+                ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
+                : 'Inactive',
+              lga: agent.lga_id,
+              stateFilter: agent.state_lga?.state_id,
+            };
+          });
+          setData(mappedData);
+
+          // Calculate Analytics
+          const totalAgents = response.data.length;
+          const totalSubAgents = response.data.reduce((acc, curr) => acc + (curr.children_count || 0), 0);
+          const totalSchools = response.data.reduce((acc, curr) => acc + (curr.tenants_count || 0), 0);
+          setAnalytics({ totalAgents, totalSubAgents, totalSchools });
         }
       } catch (error) {
-        console.error("Failed to fetch agents", error);
+        console.error('Failed to fetch agents', error);
       }
     };
     fetchData();
@@ -167,12 +218,9 @@ const Agent = () => {
   const [agentToDelete, setAgentToDelete] = useState(null);
 
   const [hasFiltered, setHasFiltered] = useState(false);
-  const [showAllFilters, setShowAllFilters] = useState(false);
-  const [filterClicked, setFilterClicked] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const applyFilters = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
     setHasFiltered(true);
   };
 
@@ -181,9 +229,9 @@ const Agent = () => {
     const fetchStates = async () => {
       try {
         const response = await locationApi.getStates();
-        setStates(response); 
+        setStates(response);
       } catch (error) {
-        console.error("Failed to fetch states", error);
+        console.error('Failed to fetch states', error);
       }
     };
     fetchStates();
@@ -195,21 +243,21 @@ const Agent = () => {
     const fetchLgas = async () => {
       if (state) {
         try {
-            // Find state object to get ID if state is stored as name, or use state directly if ID
-            // The API likely returns objects with id and name. 
-            // The filters currently use state name (string). 
-            // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
-            // Based on previous code, state filter uses names. 
-            const selectedState = states.find(s => (s.stname || s.name) === state);
-            if(selectedState){
-                const response = await locationApi.getLgas(selectedState.id);
-                setLgas(response);
-            } else {
-                setLgas([]);
-            }
-        } catch (error) {
-            console.error("Failed to fetch LGAs", error);
+          // Find state object to get ID if state is stored as name, or use state directly if ID
+          // The API likely returns objects with id and name.
+          // The filters currently use state name (string).
+          // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
+          // Based on previous code, state filter uses names.
+          const selectedState = states.find((s) => (s.stname || s.name) === state);
+          if (selectedState) {
+            const response = await locationApi.getLgas(selectedState.id);
+            setLgas(response);
+          } else {
             setLgas([]);
+          }
+        } catch (error) {
+          console.error('Failed to fetch LGAs', error);
+          setLgas([]);
         }
       } else {
         setLgas([]);
@@ -218,7 +266,6 @@ const Agent = () => {
     };
     fetchLgas();
   }, [state, states]);
-
 
   const hasActiveFilters = useMemo(() => {
     return agentLevel || country || state || lga || search;
@@ -336,7 +383,7 @@ const Agent = () => {
         alert(result.error);
       }
     } catch (error) {
-      console.error("Impersonation failed", error);
+      console.error('Impersonation failed', error);
     }
   };
 
@@ -458,7 +505,11 @@ const Agent = () => {
     columnHelper.accessor('performance', {
       header: () => 'Performance',
       cell: (info) => (
-        <Stack direction="row" spacing={0} sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
+        <Stack
+          direction="row"
+          spacing={0}
+          sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}
+        >
           <Box sx={{ bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
             <Typography variant="caption" fontWeight="600" color="textSecondary">
               School
@@ -611,10 +662,10 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
-                  navigate(`/dashboards/view-agent/${row.original.s_n}`);
+                  navigate(`/agent/view/${row.original.s_n}`);
                 }}
               >
-                View Profile
+                View Agent Profile
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -646,7 +697,7 @@ const Agent = () => {
                   handleSetCommission(row.original);
                 }}
               >
-                Set Commission
+                Update Commission
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -662,7 +713,7 @@ const Agent = () => {
                   handleManageGateway(row.original);
                 }}
               >
-                Manage Gateway
+                Manage Payment Gateway
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -670,7 +721,7 @@ const Agent = () => {
                   handleImpersonate(row.original);
                 }}
               >
-                Login As
+                Change Agent Color Scheme{' '}
               </MenuItem>
               <MenuItem
                 onClick={() => {
@@ -722,89 +773,165 @@ const Agent = () => {
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
 
-      <Box mt={3}>
-        {/* Row 1: Stat Cards */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Total Agents"
-              value="123"
-              icon={IconUsers}
-              bgcolor="#E8F2F3"
-              color="#333"
-              iconBgColor="#2ca87f"
+      {/* Analytics Section */}
+      <Grid container spacing={2} mb={3} mt={2}>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: '6px',
+              boxShadow: 'none',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
+              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              height: '95px',
+              width: '100%',
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 300,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
+                }}
+              >
+                Total agent
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                height: '40px',
+                width: '1px',
+                bgcolor: '#D1D5DB',
+                mx: 2,
+              }}
             />
-          </Grid>
-          
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Active School"
-              value="123"
-              subtitle="Total School"
-              icon={IconSchool}
-              bgcolor="#C9EBD2"
-              color="#333"
-              iconBgColor="#2ca87f"
-              rightContent={
-                <Stack spacing={0.5}>
-                  {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
-                    <Stack key={idx} direction="row" justifyContent="space-between" spacing={2} sx={{ minWidth: 120 }}>
-                      <Typography variant="caption" color="textSecondary" fontWeight="600" sx={{ fontSize: '11px' }}>
-                        {label} -
-                      </Typography>
-                      <Typography variant="caption" color="error" fontWeight="700" sx={{ fontSize: '11px' }}>
-                        34
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              }
-            />
-          </Grid>
-          
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Revenue"
-              value="#10, 000, 000"
-              icon={IconCurrencyNaira}
-              bgcolor="#D2D2E8"
-              color="#333"
-              iconBgColor="#ffffff"
-            />
-          </Grid>
+            <Box sx={{ width: 60, textAlign: 'right' }}>
+              <Typography
+                sx={{
+                  fontSize: '25px',
+                  fontWeight: 700,
+                  color: '#2F8F46',
+                }}
+              >
+                {analytics.totalAgents}
+              </Typography>
+            </Box>
+          </Card>
         </Grid>
 
-        {/* Row 2: Charts */}
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <ReusableBarChart
-              title="Revenue Trend"
-              series={revenueSeries}
-              categories={months}
-              colors={['#3949ab']}
-              height={350}
-              yAxisPrefix="N"
-              yAxisFormatter={(val) => `${val.toFixed(1)}M`}
-              xAxisTitle="Month"
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: '6px',
+              boxShadow: 'none',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
+              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              height: '95px',
+              width: '100%',
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 300,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
+                }}
+              >
+                Total Sub Agent
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                height: '40px',
+                width: '1px',
+                bgcolor: '#D1D5DB',
+                mx: 2,
+              }}
             />
-          </Grid>
-          
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <ReusablePieChart
-              title="Plan Distribution"
-              series={planSeries}
-              labels={planLabels}
-              colors={['#3949ab', '#66bb6a', '#ffa726']}
-              height={320}
-            />
-          </Grid>
+            <Box sx={{ width: 60, textAlign: 'right' }}>
+              <Typography
+                sx={{
+                  fontSize: '25px',
+                  fontWeight: 700,
+                  color: '#2F8F46',
+                }}
+              >
+                {analytics.totalSubAgents}
+              </Typography>
+            </Box>
+          </Card>
         </Grid>
-      </Box>
+
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              px: 4,
+              py: 3,
+              borderRadius: '6px',
+              boxShadow: 'none',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
+              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              height: '95px',
+              width: '100%',
+            }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                sx={{
+                  fontSize: '18px',
+                  fontWeight: 300,
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
+                }}
+              >
+                Total School
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                height: '40px',
+                width: '1px',
+                bgcolor: '#D1D5DB',
+                mx: 2,
+              }}
+            />
+            <Box sx={{ width: 60, textAlign: 'right' }}>
+              <Typography
+                sx={{
+                  fontSize: '25px',
+                  fontWeight: 700,
+                  color: '#2F8F46',
+                }}
+              >
+                {analytics.totalSchools}
+              </Typography>
+            </Box>
+          </Card>
+        </Grid>
+      </Grid>
+
+
 
       <Box sx={{ mt: 3 }}>
         <ParentCard
           title={
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ width: '100%' }}
+            >
               <Stack direction="row" spacing={1} alignItems="center">
                 <Box
                   sx={{
@@ -833,8 +960,7 @@ const Agent = () => {
             </Stack>
           }
         >
-          <Grid container spacing={3} mb={3}>
-            {/* Basic Search - Always Visible */}
+          <Grid container spacing={3} mb={3} alignItems="center">
             <Grid size={{ xs: 12, md: 3, sm: 4 }}>
               <TextField
                 fullWidth
@@ -845,122 +971,88 @@ const Agent = () => {
               />
             </Grid>
 
-             {/* Filter Icon Toggle */}
-             {!showAdvancedFilters && (
-              <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                 <IconButton onClick={() => setShowAdvancedFilters(true)} color="primary">
-                    <FilterListIcon />
-                 </IconButton>
-              </Grid>
-            )}
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Agent Level</InputLabel>
+                <Select
+                  value={agentLevel}
+                  label="Agent Level"
+                  onChange={(e) => setAgentLevel(e.target.value)}
+                >
+                  <MenuItem value="">-- Select --</MenuItem>
+                  <MenuItem value="1">Level 1</MenuItem>
+                  <MenuItem value="2">Level 2</MenuItem>
+                  <MenuItem value="3">Level 3</MenuItem>
+                  <MenuItem value="4">Level 4</MenuItem>
+                  <MenuItem value="5">Level 5</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={status}
+                  label="Status"
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <MenuItem value="">-- Select --</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-            {/* Advanced Filters */}
-            {showAdvancedFilters && (
-              <>
-                 <Grid item xs={12} sm={6} md={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                 <IconButton onClick={() => setShowAdvancedFilters(false)} color="secondary">
-                    <FilterListIcon />
-                 </IconButton>
-              </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Agent Level</InputLabel>
-                    <Select
-                      value={agentLevel}
-                      label="Agent Level"
-                      onChange={(e) => setAgentLevel(e.target.value)}
-                    >
-                      <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="1">Level 1</MenuItem>
-                      <MenuItem value="2">Level 2</MenuItem>
-                      <MenuItem value="3">Level 3</MenuItem>
-                      <MenuItem value="4">Level 4</MenuItem>
-                      <MenuItem value="5">Level 5</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={status}
-                      label="Status"
-                      onChange={(e) => setStatus(e.target.value)}
-                    >
-                      <MenuItem value="">-- Select --</MenuItem>
-                      <MenuItem value="active">Active</MenuItem>
-                      <MenuItem value="inactive">Inactive</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>State</InputLabel>
-                    <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
-                      <MenuItem value="">-- Select --</MenuItem>
-                      {states.map((s) => (
-                        <MenuItem key={s.id} value={s.stname || s.name}>
-                          {s.stname || s.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3, sm: 3 }}>
-                  <FormControl fullWidth variant="outlined">
-                    <InputLabel>LGA</InputLabel>
-                    <Select
-                      value={lga}
-                      label="LGA"
-                      onChange={(e) => setLga(e.target.value)}
-                      disabled={!state}
-                    >
-                      <MenuItem value="">-- Choose LGA --</MenuItem>
-                      {lgas.map((l) => (
-                        <MenuItem key={l.id} value={l.lganame || l.name}>
-                          {l.lganame || l.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </>
-            )}
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>State</InputLabel>
+                <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
+                  <MenuItem value="">-- Select --</MenuItem>
+                  {states.map((s) => (
+                    <MenuItem key={s.id} value={s.stname || s.name}>
+                      {s.stname || s.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
-            <Grid>
+            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel>LGA</InputLabel>
+                <Select
+                  value={lga}
+                  label="LGA"
+                  onChange={(e) => setLga(e.target.value)}
+                  disabled={!state}
+                >
+                  <MenuItem value="">-- Choose LGA --</MenuItem>
+                  {lgas.map((l) => (
+                    <MenuItem key={l.id} value={l.lganame || l.name}>
+                      {l.lganame || l.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 1, sm: 4 }}>
               <Button
+                fullWidth
                 variant="contained"
-                onClick={() => {
-                  applyFilters();
-                }}
+                onClick={() => applyFilters()}
                 color="primary"
-                sx={{ justifyContent: 'center' }}
               >
                 Search
               </Button>
             </Grid>
-
-            {showAdvancedFilters && (
-              <Grid
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  // textDecoration: 'underline',
-                }}
-              >
-                <Button variant="text" onClick={() => setShowAdvancedFilters(false)}>
-                  Show Less Filters
-                </Button>
-              </Grid>
-            )}
-
             {hasActiveFilters && (
-              <Grid>
+              <Grid size={{ xs: 12, md: 2, sm: 4 }}>
                 <Button
                   variant="outlined"
                   color="secondary"
-                  // fullWidth
+                  fullWidth
                   onClick={() => {
                     setAgentLevel('');
                     setCountry('');
@@ -968,7 +1060,7 @@ const Agent = () => {
                     setLga('');
                     setSearch('');
                   }}
-                  // sx={{ height: '48px' }}
+                  sx={{ height: '56px' }}
                 >
                   Clear Filters
                 </Button>
@@ -1040,6 +1132,21 @@ const Agent = () => {
           cancelText="Cancel"
           severity="error"
         />
+        <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+        <TotalTransactionModal
+          open={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+        />
+        <LoggedInUsersModal
+          open={isLoggedInUsersModalOpen}
+          onClose={() => setIsLoggedInUsersModalOpen(false)}
+          onViewUserList={() => setIsViewUsersListModalOpen(true)}
+        />
+        <ViewUsersListModal
+          open={isViewUsersListModalOpen}
+          onClose={() => setIsViewUsersListModalOpen(false)}
+        />
+        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
       </Box>
     </PageContainer>
   );

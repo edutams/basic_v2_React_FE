@@ -13,6 +13,7 @@ import {
   Alert,
   AlertTitle,
   Chip,
+  Typography
 } from '@mui/material';
 import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
@@ -36,18 +37,22 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
 
   const [formData, setFormData] = useState({
     tenant_name: selectedSchool?.tenant_name || '',
+    tenant_email: selectedSchool?.tenant_email || '',
     tenant_short_name: selectedSchool?.tenant_short_name || '',
+    session_term: selectedSchool?.session_term || '',
+    owner_fname: selectedSchool?.owner_fname || '',
+    owner_lname: selectedSchool?.owner_lname || '',
+    owner_email: selectedSchool?.owner_email || '',
+    owner_phone: selectedSchool?.owner_phone || '',
     admin_fname: selectedSchool?.admin_fname || '',
     admin_lname: selectedSchool?.admin_lname || '',
     admin_email: selectedSchool?.admin_email || '',
     admin_phone: selectedSchool?.admin_phone || '',
     address: selectedSchool?.address || '',
-    state_id: selectedSchool?.state_id || '',
+    state_id: selectedSchool?.state_lga?.state_id || '',
     lga_id: selectedSchool?.lga_id || '',
-    school_categories: selectedSchool?.school_categories?.map(c => c.id) || [],
-    school_divisions: selectedSchool?.school_divisions?.map(d => d.id) || [],
-    social_link: selectedSchool?.social_link || '',
-    payModuleType: selectedSchool?.payModuleType || '',
+    school_categories: selectedSchool?.school_categories?.map(c => c.id) || selectedSchool?.school_categories || [],
+    school_divisions: selectedSchool?.school_divisions?.map(d => d.id) || selectedSchool?.school_divisions || [],
     headcolor: selectedSchool?.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: selectedSchool?.color?.sidecolor || 'bg-dark text-lighter',
     bodycolor: selectedSchool?.color?.bodycolor || 'null',
@@ -139,6 +144,24 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     if (!formData.admin_phone.trim()) {
       newErrors.admin_phone = 'Administrator phone is required';
     }
+    if (!formData.tenant_email.trim()) {
+      newErrors.tenant_email = 'Institution email is required';
+    }
+    if (!formData.owner_fname.trim()) {
+      newErrors.owner_fname = 'Owner first name is required';
+    }
+    if (!formData.owner_lname.trim()) {
+      newErrors.owner_lname = 'Owner last name is required';
+    }
+    if (!formData.owner_email.trim()) {
+      newErrors.owner_email = 'Owner email is required';
+    }
+    if (!formData.owner_phone.trim()) {
+      newErrors.owner_phone = 'Owner phone is required';
+    }
+    if (!formData.session_term) {
+      newErrors.session_term = 'Session term is required';
+    }
     if (!formData.address.trim()) {
       newErrors.address = 'Institution address is required';
     }
@@ -193,7 +216,13 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
       // Reset form
       setFormData({
         tenant_name: '',
+        tenant_email: '',
         tenant_short_name: '',
+        session_term: '',
+        owner_fname: '',
+        owner_lname: '',
+        owner_email: '',
+        owner_phone: '',
         admin_fname: '',
         admin_lname: '',
         admin_email: '',
@@ -201,7 +230,6 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
         address: '',
         state_id: '',
         lga_id: '',
-        social_link: '',
         payModuleType: '',
         school_categories: [],
         school_divisions: [],
@@ -232,11 +260,11 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
         </Alert>
       )}
       <Grid container spacing={2}>
-        {/* Institution Details */}
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        {/* Row 1: School Name & School Mail */}
+        <Grid item size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
-            label="Institution Name"
+            label="School Name"
             name="tenant_name"
             value={formData.tenant_name}
             onChange={handleChange}
@@ -244,141 +272,44 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             helperText={errors.tenant_name?.[0] || errors.tenant_name}
           />
         </Grid>
-
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        <Grid item size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth
-            label="Institution Short Name"
-            name="tenant_short_name"
-            value={formData.tenant_short_name}
+            label="School Mail"
+            name="tenant_email"
+            value={formData.tenant_email}
             onChange={handleChange}
-            error={Boolean(errors.tenant_short_name)}
-            helperText={errors.tenant_short_name?.[0] || errors.tenant_short_name}
+            error={Boolean(errors.tenant_email)}
+            helperText={errors.tenant_email?.[0] || errors.tenant_email}
           />
         </Grid>
 
-        <Grid item size={{ xs: 12, md: 12, sm: 4 }}>
-          <TextField
-            fullWidth
-            label="Institution Address"
-            name="address"
-            multiline
-            rows={2}
-            value={formData.address}
-            onChange={handleChange}
-            error={Boolean(errors.address)}
-            helperText={errors.address?.[0] || errors.address}
-          />
-        </Grid>
-
-        {/* Admin Details */}
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Administrator First Name"
-            name="admin_fname"
-            value={formData.admin_fname}
-            onChange={handleChange}
-            error={Boolean(errors.admin_fname)}
-            helperText={errors.admin_fname?.[0] || errors.admin_fname}
-          />
-        </Grid>
-
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Administrator Last Name"
-            name="admin_lname"
-            value={formData.admin_lname}
-            onChange={handleChange}
-            error={Boolean(errors.admin_lname)}
-            helperText={errors.admin_lname?.[0] || errors.admin_lname}
-          />
-        </Grid>
-
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Administrator Email"
-            name="admin_email"
-            type="email"
-            value={formData.admin_email}
-            onChange={handleChange}
-            error={Boolean(errors.admin_email)}
-            helperText={errors.admin_email?.[0] || errors.admin_email}
-          />
-        </Grid>
-
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <TextField
-            fullWidth
-            label="Administrator Phone"
-            name="admin_phone"
-            value={formData.admin_phone}
-            onChange={handleChange}
-            error={Boolean(errors.admin_phone)}
-            helperText={errors.admin_phone?.[0] || errors.admin_phone}
-          />
-        </Grid>
-
-        {/* Location */}
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.state_id)}>
-            <InputLabel>State</InputLabel>
-            <Select name="state_id" value={formData.state_id} label="State" onChange={handleChange}>
-              <MenuItem value="">-- Select State --</MenuItem>
-              {states.map((state) => (
-                <MenuItem key={state.id} value={state.id}>
-                  {state.stname}
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.state_id && <FormHelperText>{errors.state_id}</FormHelperText>}
-          </FormControl>
-        </Grid>
-
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.lga_id)}>
-            <InputLabel>LGA</InputLabel>
-            <Select name="lga_id" value={formData.lga_id} label="LGA" onChange={handleChange}>
-              <MenuItem value="">-- Select LGA --</MenuItem>
-              {lgas.map((lga) => (
-                <MenuItem key={lga.id} value={lga.id}>
-                  {lga.lganame}
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.lga_id && <FormHelperText>{errors.lga_id}</FormHelperText>}
-          </FormControl>
-        </Grid>
-
-        {/* Module Type */}
-        <Grid item size={{ xs: 12, md: 12, sm: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.payModuleType)}>
-            <InputLabel>Module Type</InputLabel>
+        {/* Row 2: Session Term & School Category */}
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.session_term)}>
+            <InputLabel>Session Term</InputLabel>
             <Select
-              name="payModuleType"
-              value={formData.payModuleType}
-              label="Module Type"
+              name="session_term"
+              value={formData.session_term}
+              label="Session Term"
               onChange={handleChange}
             >
               <MenuItem value="">-- Select --</MenuItem>
-              <MenuItem value="mini">Mini Pay</MenuItem>
-              <MenuItem value="full">Full Pay</MenuItem>
+              <MenuItem value="First Term">First Term</MenuItem>
+              <MenuItem value="Second Term">Second Term</MenuItem>
+              <MenuItem value="Third Term">Third Term</MenuItem>
             </Select>
-            {errors.payModuleType && <FormHelperText>{errors.payModuleType}</FormHelperText>}
+            {errors.session_term && <FormHelperText>{errors.session_term}</FormHelperText>}
           </FormControl>
         </Grid>
-
-        {/* School Categorization */}
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        <Grid item size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.school_categories)}>
-            <InputLabel>School Categories</InputLabel>
+            <InputLabel>School Category</InputLabel>
             <Select
               name="school_categories"
               multiple
               value={formData.school_categories}
-              label="School Categories"
+              label="School Category"
               onChange={handleChange}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -398,7 +329,64 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
           </FormControl>
         </Grid>
 
-        <Grid item size={{ xs: 12, md: 6, sm: 6 }}>
+        {/* Row 3: State & LGA */}
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.state_id)}>
+            <InputLabel>State</InputLabel>
+            <Select name="state_id" value={formData.state_id} label="State" onChange={handleChange}>
+              <MenuItem value="">-- Select State --</MenuItem>
+              {states.map((state) => (
+                <MenuItem key={state.id} value={state.id}>
+                  {state.stname}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.state_id && <FormHelperText>{errors.state_id}</FormHelperText>}
+          </FormControl>
+        </Grid>
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.lga_id)}>
+            <InputLabel>LGA</InputLabel>
+            <Select name="lga_id" value={formData.lga_id} label="LGA" onChange={handleChange}>
+              <MenuItem value="">-- Select LGA --</MenuItem>
+              {lgas.map((lga) => (
+                <MenuItem key={lga.id} value={lga.id}>
+                  {lga.lganame}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.lga_id && <FormHelperText>{errors.lga_id}</FormHelperText>}
+          </FormControl>
+        </Grid>
+
+        {/* Row 4: School Address & Short Name */}
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            label="School Address"
+            name="address"
+            multiline
+            rows={3}
+            value={formData.address}
+            onChange={handleChange}
+            error={Boolean(errors.address)}
+            helperText={errors.address?.[0] || errors.address}
+          />
+        </Grid>
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            label="Short Name"
+            name="tenant_short_name"
+            value={formData.tenant_short_name}
+            onChange={handleChange}
+            error={Boolean(errors.tenant_short_name)}
+            helperText={errors.tenant_short_name?.[0] || errors.tenant_short_name}
+          />
+        </Grid>
+
+        {/* School Divisions (Preserved field) */}
+        {/* <Grid item size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.school_divisions)}>
             <InputLabel>School Divisions</InputLabel>
             <Select
@@ -423,6 +411,121 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             </Select>
             {errors.school_divisions && <FormHelperText>{errors.school_divisions}</FormHelperText>}
           </FormControl>
+        </Grid> */}
+      
+
+        {/* School Owner Details Section */}
+        <Grid item xs={12}>
+          <Box sx={{ p: 2, bgcolor: '#F1F8E9', borderRadius: '4px', border: '1px solid #DCEDC8' }}>
+            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2, color: '#33691E' }}>School Owner Details</Typography>
+            <Grid container spacing={2}>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  name="owner_fname"
+                  value={formData.owner_fname}
+                  onChange={handleChange}
+                  error={Boolean(errors.owner_fname)}
+                  helperText={errors.owner_fname?.[0] || errors.owner_fname}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="last name"
+                  name="owner_lname"
+                  value={formData.owner_lname}
+                  onChange={handleChange}
+                  error={Boolean(errors.owner_lname)}
+                  helperText={errors.owner_lname?.[0] || errors.owner_lname}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Phone no"
+                  name="owner_phone"
+                  value={formData.owner_phone}
+                  onChange={handleChange}
+                  error={Boolean(errors.owner_phone)}
+                  helperText={errors.owner_phone?.[0] || errors.owner_phone}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Name mail"
+                  name="owner_email"
+                  value={formData.owner_email}
+                  onChange={handleChange}
+                  error={Boolean(errors.owner_email)}
+                  helperText={errors.owner_email?.[0] || errors.owner_email}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+        </Grid>
+
+        {/* School Admin Owner Details Section */}
+        <Grid item xs={12}>
+          <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: '4px', border: '1px solid #E0E0E0' }}>
+            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2 }}>School Admin Owner Details</Typography>
+            <Grid container spacing={2}>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Admin First Name"
+                  name="admin_fname"
+                  value={formData.admin_fname}
+                  onChange={handleChange}
+                  error={Boolean(errors.admin_fname)}
+                  helperText={errors.admin_fname?.[0] || errors.admin_fname}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Admin last name"
+                  name="admin_lname"
+                  value={formData.admin_lname}
+                  onChange={handleChange}
+                  error={Boolean(errors.admin_lname)}
+                  helperText={errors.admin_lname?.[0] || errors.admin_lname}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Admin Phone no"
+                  name="admin_phone"
+                  value={formData.admin_phone}
+                  onChange={handleChange}
+                  error={Boolean(errors.admin_phone)}
+                  helperText={errors.admin_phone?.[0] || errors.admin_phone}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Admin Name mail"
+                  name="admin_email"
+                  value={formData.admin_email}
+                  onChange={handleChange}
+                  error={Boolean(errors.admin_email)}
+                  helperText={errors.admin_email?.[0] || errors.admin_email}
+                  sx={{ bgcolor: 'white' }}
+                />
+              </Grid>
+            </Grid>
+          </Box>
         </Grid>
 
         {/* Color Scheme */}
@@ -432,18 +535,6 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
           </Grid>
         )}
 
-        {/* Social Link */}
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Social Link (optional)"
-            name="social_link"
-            value={formData.social_link}
-            onChange={handleChange}
-            error={Boolean(errors.social_link)}
-            helperText={errors.social_link?.[0] || errors.social_link}
-          />
-        </Grid>
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

@@ -29,8 +29,17 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  Divider,
 } from '@mui/material';
-import { IconSchool, IconUserPlus, IconCheck, IconX, IconSettings } from '@tabler/icons-react';
+import {
+  IconSchool,
+  IconUserPlus,
+  IconCheck,
+  IconX,
+  IconSettings,
+  IconUsers,
+  IconChartBar,
+} from '@tabler/icons-react';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -53,10 +62,20 @@ import {
   deleteSchool,
 } from '../../context/AgentContext/services/school.service';
 
+import agentApi from '../../api/agent';
+
+// import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+// import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
+import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
+import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
+import LoginActivities from '../dashboard/components/LoginActivities';
+import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
+
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
 const SchoolDashboard = () => {
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [schoolList, setSchoolList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterValues, setFilterValues] = useState({});
@@ -65,7 +84,7 @@ const SchoolDashboard = () => {
   const [nameValue, setNameValue] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editSchoolData, setEditSchoolData] = useState(null);
@@ -74,32 +93,34 @@ const SchoolDashboard = () => {
   const [openGatewayModal, setOpenGatewayModal] = useState(false);
   const [openAgentModal, setOpenAgentModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('');
-  const [agentList] = useState([
-    { label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' },
-  ]);
-  
+  const [agentList] = useState([{ label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' }]);
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
   const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
-  
+
   const [openClear2FAConfirm, setOpenClear2FAConfirm] = useState(false);
   const [selectedSchoolFor2FA, setSelectedSchoolFor2FA] = useState(null);
   const [openFixImageConfirm, setOpenFixImageConfirm] = useState(false);
-  
+
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
-  
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  
+
   const [openColorSchemeModal, setOpenColorSchemeModal] = useState(false);
   const [selectedSchoolForColor, setSelectedSchoolForColor] = useState(null);
 
+  const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
+  const [openLoggedInUsersModal, setOpenLoggedInUsersModal] = useState(false);
+  const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
+
   const [filterClicked, setFilterClicked] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  
+
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
@@ -110,13 +131,42 @@ const SchoolDashboard = () => {
     setLoading(true);
     try {
       const data = await getSchools();
-      // Map backend data to frontend field names
       const mappedData = data.map((t) => {
         let colors = {};
         try {
-          colors = typeof t.color === 'string' ? JSON.parse(t.color) : (t.color || {});
+          if (t.color && typeof t.color === 'string') {
+            const parsed = JSON.parse(t.color);
+            if (parsed.headcolor && parsed.headcolor !== 'default') {
+              colors = parsed;
+            }
+          }
+
+          if (t.headcolor && t.headcolor !== 'default') {
+            colors.headcolor = t.headcolor;
+          }
+          if (t.sidecolor && t.sidecolor !== 'default') {
+            colors.sidecolor = t.sidecolor;
+          }
+          if (t.bodycolor && t.bodycolor !== 'default') {
+            colors.bodycolor = t.bodycolor;
+          }
         } catch (e) {
-          console.error('Error parsing color for tenant', t.id);
+          console.error('Error parsing color for tenant', t.id, e);
+        }
+
+        const eduTiers = t.schoolCategories?.map((cat) => cat.name) || [];
+        const flatEduTiers = t.school_categories?.map((cat) => cat.name) || [];
+        const allEduTiers = eduTiers.length > 0 ? eduTiers : flatEduTiers;
+
+        const schoolDivisions = t.school_divisions?.map((div) => div.name) || [];
+
+        let planSubstitute = t.payModuleType || null;
+        let populationSubstitute = null;
+        if (t.modular) {
+          try {
+            const modularArr = typeof t.modular === 'string' ? JSON.parse(t.modular) : t.modular;
+            populationSubstitute = modularArr.length;
+          } catch (e) {}
         }
 
         return {
@@ -124,14 +174,24 @@ const SchoolDashboard = () => {
           institutionName: t.tenant_name,
           schoolUrl: t.domains?.[0]?.domain || '',
           agent: t.agent?.name || 'My Agency',
+          agentEmail: t.agent?.email || '',
+          agentImage: t.agent?.image || '',
+          schoolImage: t.image || t.logo || '',
           gateway: t.tenant_gateway?.name || 'Default',
           date: t.created_at,
           socialLink: t.social_link,
+          contactEmail: t.admin_email || '',
+          contactPhone: t.admin_phone || t.phone || '',
           headerColor: colors.headcolor,
           sidebarColor: colors.sidecolor,
           bodyColor: colors.bodycolor,
           status: t.status === 'active' ? 'Active' : 'Inactive',
-          raw: t, // Keep raw data for editing
+          schoolCategories: allEduTiers,
+          schoolDivisions: schoolDivisions,
+          plan: planSubstitute,
+          population: populationSubstitute,
+
+          raw: t,
         };
       });
       setSchoolList(mappedData);
@@ -211,6 +271,28 @@ const SchoolDashboard = () => {
     setSnackbarOpen(true);
   };
 
+  const handleLoginAsAdmin = async (school) => {
+    try {
+      const response = await agentApi.impersonateTenant(school.id);
+      // response IS already the data (agentApi returns response.data)
+      console.log('impersonate response:', response);
+
+      if (response.status === 'success' && response.redirect_url) {
+        window.open(response.redirect_url, '_blank');
+      } else {
+        setSnackbarMessage(response.error || 'Failed to login as admin');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    } catch (err) {
+      console.error('Failed to login as admin', err);
+      setSnackbarMessage(err.response?.data?.error || 'Failed to login as admin');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+    handleActionClose();
+  };
+
   const filteredSchools = schoolList.filter((school) => {
     const matchesName = nameValue
       ? school.institutionName?.toLowerCase().includes(nameValue.toLowerCase())
@@ -230,42 +312,364 @@ const SchoolDashboard = () => {
 
   const schoolSummary = {
     total: schoolList.length,
-    myRegistered: schoolList.length,
     active: schoolList.filter((s) => s.status === 'Active').length,
     inactive: schoolList.filter((s) => s.status === 'Inactive').length,
+    subAgents: 0,
+    primary: schoolList.filter((s) => s.schoolDivisions?.includes('Primary')).length,
+    junior: schoolList.filter((s) => s.schoolDivisions?.includes('Junior')).length,
+    senior: schoolList.filter((s) => s.schoolDivisions?.includes('Senior')).length,
   };
+
+  const planSeries = [40, 15, 35, 10];
+
+  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
+
+  const planData = [
+    { name: 'Freemium', value: 40, color: '#EC468C' },
+    { name: 'Basic', value: 15, color: '#7987FF' },
+    { name: 'Basic +', value: 35, color: '#FFA5CB' },
+    { name: 'Basic ++', value: 10, color: '#8B48E3' },
+  ];
+
+  const planColors = planData.map((p) => p.color);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
-      
-      {/* Summary Stats */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
-        {[
-          { label: 'Total', value: schoolSummary.total, bg: 'primary', icon: <IconSchool width={22} color="#fff" /> },
-          { label: 'My Registered', value: schoolSummary.myRegistered, bg: 'secondary', icon: <IconUserPlus width={22} color="#fff" /> },
-          { label: 'Active', value: schoolSummary.active, bg: 'success', icon: <IconCheck width={22} color="#fff" /> },
-          { label: 'Inactive', value: schoolSummary.inactive, bg: 'warning', icon: <IconX width={22} color="#fff" /> },
-        ].map((item, index) => (
-          <Paper key={index} elevation={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2, borderRadius: 2, minHeight: 120 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box width={38} height={38} bgcolor={`${item.bg}.main`} display="flex" alignItems="center" justifyContent="center" borderRadius={1}>
-                {item.icon}
-              </Box>
-              <Box>
-                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{item.label}</Typography>
-                <Typography variant="body2" color="text.secondary">Schools</Typography>
-              </Box>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {/* TOTAL SCHOOL */}
+        <Paper
+          sx={{
+            px: 3,
+            py: 2,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          {/* Header */}
+          <Box
+            mb={3}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.secondary">
+              Onboarding
+            </Typography>
+          </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
+
+            <Box textAlign="right">
+              <Typography
+                sx={{
+                  fontSize: 40,
+                  fontWeight: 'bold',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
+                  lineHeight: 1,
+                }}
+              >
+                {schoolSummary.total}
+              </Typography>
+
+              <Typography variant="h5" color="text.primary">
+                Total Schools
+              </Typography>
             </Box>
-            <Typography variant="h2" sx={{ fontWeight: 'bold', fontSize: '36px', color: '#28a745' }}>{item.value}</Typography>
-          </Paper>
-        ))}
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Active School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.active}
+              size="small"
+              sx={{
+                background: '#BEEAA6',
+                color: '#0D47A1',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography sx={{ color: theme.palette.error.main, fontSize: 13, fontWeight: 'bold' }}>
+              Inactive School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.inactive}
+              size="small"
+              sx={{
+                background: '#F96459',
+                color: '#fff',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+        </Paper>
+
+        <Paper
+          sx={{
+            px: 3,
+            py: 2,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          {/* Header */}
+          <Box
+            mb={3}
+            sx={{
+              // p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.secondary">
+              Subscriptions
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setOpenTotalSchoolModal(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
+
+            <Box textAlign="right">
+              <Typography
+                sx={{
+                  fontSize: 40,
+                  fontWeight: 'bold',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
+                  lineHeight: 1,
+                }}
+              >
+                {schoolSummary.total}
+              </Typography>
+              <Typography variant="h5" color="text.primary">
+                Total Schools
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Primary School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.primary}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Senior School
+            </Typography>
+
+            <Chip
+              label={schoolSummary.senior}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+        </Paper>
+        <Paper
+          sx={{
+            px: 3,
+            py: 2,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          {/* Header */}
+          <Box
+            mb={2}
+            sx={{
+              // p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.primary">
+              Plan Distribution
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setOpenPlanDistributionModal(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box>
+            <Box
+              sx={{
+                height: 170,
+                display: 'flex',
+                alignItems: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              <ReusablePieChart
+                series={planSeries}
+                colors={planColors}
+                labels={planLabels}
+                height={180}
+                hideCard
+              />
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* SUB AGENTS */}
+        <Paper
+          sx={{
+            borderRadius: 2,
+            overflow: 'hidden',
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              color: theme.palette.mode === 'dark' ? '#fff' : '#5C5C5C',
+              bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F8F8F8',
+              borderRadius: '8px 8px 0 0',
+            }}
+          >
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 'bold',
+                color: theme.palette.mode === 'dark' ? '#fff' : '#5E5E5E',
+              }}
+            >
+              Login Activities
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setOpenLoggedInUsersModal(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Body */}
+          <Box sx={{ px: 2, py: 3 }}>
+            {[
+              { label: 'Teacher:', value: 0 },
+              { label: 'SPA', value: 0 },
+              { label: 'Student', value: 0 },
+              { label: 'Parent', value: 0 },
+            ].map((item, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h5" color="text.primary">
+                  {item.label}
+                </Typography>
+
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: theme.palette.error.main,
+                  }}
+                >
+                  {item.value}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
       </Box>
 
       <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={handleTabChange} aria-label="school dashboard tabs">
           <Tab icon={<IconSchool size={20} />} iconPosition="start" label="Schools List" />
-          <Tab icon={<IconSettings size={20} />} iconPosition="start" label="School Configuration" />
+          <Tab
+            icon={<IconSettings size={20} />}
+            iconPosition="start"
+            label="School Configuration"
+          />
         </Tabs>
       </Box>
 
@@ -274,14 +678,24 @@ const SchoolDashboard = () => {
           <Box sx={{ p: 3 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
               <Typography variant="h5">All Schools</Typography>
-              <Button variant="contained" color="primary" onClick={handleOpen} startIcon={<IconUserPlus size={18} />}>
-                Register New School
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleOpen}
+                startIcon={<IconUserPlus size={18} />}
+              >
+                Add New School
               </Button>
             </Stack>
 
             <Grid container spacing={2} mb={3} alignItems="center">
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Search School Name" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
+                <TextField
+                  fullWidth
+                  label="Search School Name"
+                  value={nameValue}
+                  onChange={(e) => setNameValue(e.target.value)}
+                />
               </Grid>
               <Grid item xs={12} md={2}>
                 <Button variant="contained" fullWidth onClick={fetchSchools} disabled={loading}>
@@ -294,37 +708,168 @@ const SchoolDashboard = () => {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell>S/N</TableCell>
                     <TableCell>School Name</TableCell>
-                    <TableCell>Url</TableCell>
-                    <TableCell>Date Created</TableCell>
-                    <TableCell>Colors</TableCell>
+                    {/* <TableCell>Url</TableCell> */}
+                    <TableCell>Contact Details</TableCell>
+                    <TableCell>Agent In Charge</TableCell>
+                    <TableCell>Plan (Population)</TableCell>
+                    <TableCell>Color Scheme</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="right">Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {paginatedSchools.length > 0 ? (
-                    paginatedSchools.map((row) => (
+                    paginatedSchools.map((row, index) => (
                       <TableRow key={row.id}>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>
-                          <Typography variant="subtitle2" fontWeight={600}>{row.institutionName}</Typography>
-                        </TableCell>
-                        <TableCell>{row.schoolUrl || '-'}</TableCell>
-                        <TableCell>{dayjs(row.date).format('DD MMM YYYY')}</TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', width: 40, height: 20, borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                            <Box sx={{ flex: 1, bgcolor: row.headerColor || '#eee' }} />
-                            <Box sx={{ flex: 1, bgcolor: row.sidebarColor || '#ddd' }} />
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <img
+                              src={row.schoolImage || '/src/assets/images/users/default_avatar.png'}
+                              alt={row.institutionName}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                              }}
+                            />
+
+                            <Box>
+                              <Typography variant="subtitle2">{row.institutionName}</Typography>
+                            </Box>
                           </Box>
                         </TableCell>
+                        {/* <TableCell>{row.schoolUrl || '-'}</TableCell> */}
                         <TableCell>
-                          <Chip 
-                            label={row.status} 
+                          {row.contactEmail || row.contactPhone ? (
+                            <>
+                              {row.contactEmail && (
+                                <Typography variant="body2">{row.contactEmail}</Typography>
+                              )}
+                              {row.contactPhone && (
+                                <Typography variant="caption" display="block" color="textSecondary">
+                                  {row.contactPhone}
+                                </Typography>
+                              )}
+                            </>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <img
+                              src={row.agentImage || '/src/assets/images/users/default_avatar.png'}
+                              alt={row.agent}
+                              style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                              }}
+                            />
+
+                            <Box>
+                              <Typography variant="subtitle2">{row.agent || '-'}</Typography>
+                              <Typography variant="caption" color="textSecondary">
+                                {row.agentEmail}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell>
+                          {row.plan || row.population ? (
+                            <Stack direction="column" spacing={0.5}>
+                              {row.plan && (
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="600"
+                                  sx={{ textTransform: 'capitalize' }}
+                                >
+                                  {row.plan}
+                                </Typography>
+                              )}
+                              {row.population !== null && row.population !== undefined && (
+                                <Typography variant="caption" color="textSecondary">
+                                  Modules: {row.population}
+                                </Typography>
+                              )}
+                            </Stack>
+                          ) : (
+                            <Typography variant="caption" color="textSecondary">
+                              -
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {row.headerColor || row.sidebarColor || row.bodyColor ? (
+                            <Box
+                              sx={{
+                                display: 'inline-block',
+                                width: 40,
+                                height: 30,
+                                borderRadius: '5px',
+                                overflow: 'hidden',
+                              }}
+                              title={`Header: ${row.headerColor} | Sidebar: ${row.sidebarColor} | Body: ${row.bodyColor}`}
+                            >
+                              <Box
+                                sx={{
+                                  width: '100%',
+                                  height: '30%',
+                                  backgroundColor: row.headerColor,
+                                  borderRadius: 0,
+                                }}
+                              />
+                              <Box sx={{ display: 'flex', height: '70%' }}>
+                                <Box
+                                  sx={{
+                                    width: '50%',
+                                    height: '100%',
+                                    backgroundColor: row.sidebarColor,
+                                    borderRadius: 0,
+                                  }}
+                                />
+                                <Box
+                                  sx={{
+                                    width: '50%',
+                                    height: '100%',
+                                    backgroundColor: row.bodyColor,
+                                    borderRadius: 0,
+                                  }}
+                                />
+                              </Box>
+                            </Box>
+                          ) : (
+                            <Typography variant="caption" color="textSecondary">
+                              -
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={row.status}
                             size="small"
-                            color={row.status === 'Active' ? 'success' : 'default'}
-                            variant="light"
+                            sx={{
+                              bgcolor:
+                                row.status === 'Active'
+                                  ? (theme) => theme.palette.success.light
+                                  : (theme) => theme.palette.error.light,
+                              color:
+                                row.status === 'Active'
+                                  ? (theme) => theme.palette.success.main
+                                  : (theme) => theme.palette.error.main,
+                              borderRadius: '8px',
+                              fontWeight: 600,
+                            }}
                           />
                         </TableCell>
+
                         <TableCell align="right">
                           <IconButton onClick={(e) => handleActionClick(e, row.id)}>
                             <MoreVertIcon />
@@ -334,17 +879,78 @@ const SchoolDashboard = () => {
                             open={Boolean(actionAnchorEl) && activeRow === row.id}
                             onClose={handleActionClose}
                           >
-                            <MenuItem onClick={() => { setEditSchoolData(row.raw); setOpenEditModal(true); handleActionClose(); }}>Edit Details</MenuItem>
-                            <MenuItem onClick={() => { setSchoolToDeactivate(row); setOpenDeactivateDialog(true); handleActionClose(); }}>Deactivate</MenuItem>
-                            <MenuItem onClick={() => { setSchoolToDelete(row); setOpenDeleteDialog(true); handleActionClose(); }} sx={{ color: 'error.main' }}>Delete</MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                handleLoginAsAdmin(row);
+                              }}
+                            >
+                              Login As Admin
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setEditSchoolData(row.raw);
+                                setOpenEditModal(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Edit School
+                            </MenuItem>
+                            <MenuItem
+                            // onClick={() => {
+                            //   setEditSchoolData(row.raw);
+                            //   setOpenEditModal(true);
+                            //   handleActionClose();
+                            // }}
+                            >
+                              Details
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setSchoolToDeactivate(row);
+                                setOpenDeactivateDialog(true);
+                                handleActionClose();
+                              }}
+                            >
+                              Deactivate
+                            </MenuItem>
+                            <MenuItem
+                            // onClick={() => {
+                            //   setSchoolToDeactivate(row);
+                            //   setOpenDeactivateDialog(true);
+                            //   handleActionClose();
+                            // }}
+                            >
+                              School
+                            </MenuItem>
+                            <MenuItem
+                            // onClick={() => {
+                            //   setSchoolToDeactivate(row);
+                            //   setOpenDeactivateDialog(true);
+                            //   handleActionClose();
+                            // }}
+                            >
+                              Change
+                            </MenuItem>
+                            {/* <MenuItem
+                              onClick={() => {
+                                setSchoolToDelete(row);
+                                setOpenDeleteDialog(true);
+                                handleActionClose();
+                              }}
+                              sx={{ color: 'error.main' }}
+                            >
+                              Delete
+                            </MenuItem> */}
                           </Menu>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                        <Typography variant="body1" color="textSecondary">No schools found.</Typography>
+                      <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
+                        <Typography variant="body1" color="textSecondary">
+                          No schools found.
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -370,33 +976,67 @@ const SchoolDashboard = () => {
       {activeTab === 1 && <SchoolCategorizationManager />}
 
       {/* Modals & Dialogs */}
-      <ReusableModal open={openRegisterModal || openEditModal} onClose={handleClose} title={openEditModal ? 'Edit School' : 'Register School'} size="large">
-        <RegisterSchoolForm actionType={openEditModal ? 'update' : 'create'} selectedAgent={editSchoolData} onSubmit={handleRefresh} onCancel={handleClose} />
+      <ReusableModal
+        open={openRegisterModal || openEditModal}
+        onClose={handleClose}
+        title={openEditModal ? 'Edit School' : 'Register School'}
+        size="large"
+      >
+        <RegisterSchoolForm
+          actionType={openEditModal ? 'update' : 'create'}
+          selectedSchool={editSchoolData}
+          onSubmit={handleRefresh}
+          onCancel={handleClose}
+        />
       </ReusableModal>
 
-      <ConfirmationDialog 
-        open={openDeleteDialog} 
-        onClose={() => setOpenDeleteDialog(false)} 
-        onConfirm={() => handleDeleteSchool(schoolToDelete)} 
-        title="Delete School" 
+      <ConfirmationDialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        onConfirm={() => handleDeleteSchool(schoolToDelete)}
+        title="Delete School"
         message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
         confirmText="Delete"
         severity="error"
       />
 
-      <ConfirmationDialog 
-        open={openDeactivateDialog} 
-        onClose={() => setOpenDeactivateDialog(false)} 
-        onConfirm={() => handleDeactivateSchool(schoolToDeactivate)} 
-        title="Deactivate School" 
+      <ConfirmationDialog
+        open={openDeactivateDialog}
+        onClose={() => setOpenDeactivateDialog(false)}
+        onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
+        title="Deactivate School"
         message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
         confirmText="Deactivate"
         severity="warning"
       />
 
-      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>{snackbarMessage}</Alert>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
+
+      <PlanDistributionModal
+        open={openPlanDistributionModal}
+        onClose={() => setOpenPlanDistributionModal(false)}
+      />
+      <LoginActivities
+        open={openLoggedInUsersModal}
+        onClose={() => setOpenLoggedInUsersModal(false)}
+      />
+      <TotalSchoolModal
+        open={openTotalSchoolModal}
+        onClose={() => setOpenTotalSchoolModal(false)}
+      />
     </LocalizationProvider>
   );
 };

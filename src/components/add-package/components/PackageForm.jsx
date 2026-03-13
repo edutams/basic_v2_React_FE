@@ -27,8 +27,8 @@ const PackageForm = ({
     package_description: '',
     package_status: 'active',
     package_icon: 'fas fa-box',
-    package_code: '',
-    package_order: 0
+    // package_code: '',
+    package_order: 0,
   },
   onSubmit,
   onCancel,
@@ -43,8 +43,8 @@ const PackageForm = ({
       package_description: initialValues.package_description || initialValues.pac_description || '',
       package_status: initialValues.package_status || initialValues.pac_status || 'active',
       package_icon: initialValues.package_icon || initialValues.pac_icon || 'fas fa-box',
-      package_code: initialValues.package_code || initialValues.pac_code || '',
-      package_order: initialValues.package_order || 0
+      // package_code: initialValues.package_code || initialValues.pac_code || '',
+      package_order: initialValues.package_order || 0,
     },
     validationSchema: packageValidationSchema,
     enableReinitialize: true,
@@ -103,7 +103,7 @@ const PackageForm = ({
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {/* <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Package Code"
             name="package_code"
@@ -115,7 +115,7 @@ const PackageForm = ({
             error={formik.touched.package_code && Boolean(formik.errors.package_code)}
             helperText={formik.touched.package_code && formik.errors.package_code}
           />
-        </Grid>
+        </Grid> */}
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
@@ -132,7 +132,7 @@ const PackageForm = ({
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid size={{ xs: 12 }}>
           <FormControl fullWidth variant="outlined">
             <InputLabel>Icon</InputLabel>
             <Select
@@ -173,7 +173,13 @@ const PackageForm = ({
 
         <Grid size={{ xs: 12 }}>
           <Box mt={4} display="flex" justifyContent="flex-end">
-            <Button onClick={onCancel} sx={{ mr: 1 }} color="inherit" type="button" disabled={isLoading}>
+            <Button
+              onClick={onCancel}
+              sx={{ mr: 1 }}
+              color="inherit"
+              type="button"
+              disabled={isLoading}
+            >
               Cancel
             </Button>
             <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>

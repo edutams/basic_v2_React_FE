@@ -130,11 +130,12 @@ const AlcManager = () => {
     });
   };
 
-  const handleSavePermissions = async () => {
+  const handleSavePermissions = async (permissions) => {
     try {
+      const permissionsToSave = permissions || selectedPermissions;
       await aclApi.attachPermissions(
         selectedRow.id,
-        selectedPermissions.map((p) => p.name),
+        permissionsToSave.map((p) => p.name),
       );
 
       notify.success('Permissions updated successfully!');
@@ -210,8 +211,23 @@ const AlcManager = () => {
     <PageContainer title="ACL Manager" description="Access Control List Management Dashboard">
       <Breadcrumb title="ACL Manager" items={BCrumb} />
 
-      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+      <Box
+        sx={{
+          mb: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+          overflowX: 'auto',
+          '& .MuiTabs-root': {
+            minWidth: '300px',
+          },
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
           <Tab label="Role Management" value="Role Management" />
           <Tab label="Permission Assignment" value="Assignment Management" />
           <Tab label="Access Analysis" value="Analysis Report" />
@@ -359,7 +375,6 @@ const AlcManager = () => {
         onClose={() => setPermissionModalOpen(false)}
         selectedRow={selectedRow}
         availablePermissions={allPermissions}
-        // availablePermissions={selectedRow?.permissions || []}
         selectedPermissions={selectedPermissions || []}
         permissionSearch={permissionSearch}
         onPermissionSearchChange={setPermissionSearch}

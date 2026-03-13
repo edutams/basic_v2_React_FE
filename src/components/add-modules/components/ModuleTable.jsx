@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -21,6 +21,8 @@ import {
   FormControl,
   InputLabel,
   Select,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,17 +32,58 @@ import {
 } from '@mui/icons-material';
 import ParentCard from '../../shared/ParentCard';
 import PropTypes from 'prop-types';
+import moduleApi from '../../../api/moduleApi';
 
-const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
+const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedModule, setSelectedModule] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [moduleList, setModuleList] = useState(modules);
+
+  const fetchModules = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await moduleApi.getTenantModules({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: searchTerm,
+        status: statusFilter === 'all' ? '' : statusFilter,
+      });
+
+      if (Array.isArray(response.data)) {
+        setModuleList(response.data);
+      } else if (response.data && Array.isArray(response.data.modules)) {
+        setModuleList(response.data.modules);
+      } else if (response.data && Array.isArray(response.data.data)) {
+        setModuleList(response.data.data);
+      } else {
+        setModuleList([]);
+      }
+    } catch (error) {
+      console.error('Error fetching tenant modules:', error);
+      // Fallback to prop modules if API fails
+      setModuleList(modules);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, rowsPerPage, searchTerm, statusFilter, modules]);
+
+  useEffect(() => {
+    fetchModules();
+  }, [fetchModules]);
+
+  useEffect(() => {
+    if (modules.length > 0 && !isLoading) {
+      setModuleList(modules);
+    }
+  }, [modules, isLoading]);
 
   const filteredModules = useMemo(() => {
-    return modules.filter((module) => {
+    return moduleList.filter((module) => {
       const name = module.module_name || module.mod_name || '';
       const description = module.module_description || module.mod_description || '';
       const status = module.module_status || module.mod_status || '';
@@ -53,7 +96,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [modules, searchTerm, statusFilter]);
+  }, [moduleList, searchTerm, statusFilter]);
 
   const paginatedModules = useMemo(() => {
     const start = page * rowsPerPage;
@@ -70,8 +113,35 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
     setSelectedModule(null);
   };
 
-  const handleAction = (action, module) => {
-    onModuleAction(action, module);
+  const handleAction = async (action, module) => {
+    try {
+      let response;
+      const moduleId = module.id || module.mod_id;
+
+      switch (action) {
+        case 'activate':
+          response = await moduleApi.activateTenantModule(moduleId);
+          break;
+        case 'deactivate':
+          response = await moduleApi.deactivateTenantModule(moduleId);
+          break;
+        case 'delete':
+          response = await moduleApi.deleteTenantModule(moduleId);
+          break;
+        default:
+          break;
+      }
+
+      // Refresh the module list after action
+      await fetchModules();
+
+      // Call the original action handler
+      onModuleAction(action, module);
+    } catch (error) {
+      console.error(`Error performing ${action}:`, error);
+      // Fallback to original handler
+      onModuleAction(action, module);
+    }
     handleMenuClose();
   };
 
@@ -165,8 +235,8 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <Typography>Loading...</Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
+                      <CircularProgress size={40} />
                     </TableCell>
                   </TableRow>
                 ) : paginatedModules.length > 0 ? (
@@ -207,7 +277,11 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
                             borderRadius: '8px',
                           }}
                           size="small"
-                          label={(module.module_status || module.mod_status || 'INACTIVE').toUpperCase()}
+                          label={(
+                            module.module_status ||
+                            module.mod_status ||
+                            'INACTIVE'
+                          ).toUpperCase()}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -225,7 +299,9 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
                           <MenuItem
                             onClick={() =>
                               handleAction(
-                                (module.module_status || module.mod_status) === 'active' ? 'deactivate' : 'activate',
+                                (module.module_status || module.mod_status) === 'active'
+                                  ? 'deactivate'
+                                  : 'activate',
                                 module,
                               )
                             }
@@ -243,10 +319,22 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading = false }) => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <Typography variant="body1" color="textSecondary">
-                        {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
-                      </Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        <Typography variant="body1" color="textSecondary">
+                          {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
+                        </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}
@@ -279,6 +367,11 @@ ModuleTable.propTypes = {
   modules: PropTypes.array,
   onModuleAction: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+};
+
+ModuleTable.defaultProps = {
+  modules: [],
+  isLoading: false,
 };
 
 export default ModuleTable;

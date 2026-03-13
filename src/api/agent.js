@@ -1,7 +1,7 @@
 import api from './auth';
 
 const agentApi = {
-  create: async (data) => {
+  createAgent: async (data) => {
     const response = await api.post('/agent/create_agent', data);
     return response.data;
   },

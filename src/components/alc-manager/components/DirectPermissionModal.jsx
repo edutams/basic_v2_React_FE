@@ -45,12 +45,10 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
     if (!currentAgent?.id) return;
 
     try {
-      // Get direct permissions only
       const directRes = await aclApi.getAgentDirectPermissions(currentAgent.id);
       const directPerms = directRes?.data || [];
       setDirectPermissions(directPerms);
 
-      // Also get role permissions for display purposes
       const rolesRes = await aclApi.getAgents();
       let agentData = null;
 

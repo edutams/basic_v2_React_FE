@@ -26,6 +26,21 @@ const AgentFormFields = ({ formik }) => {
     fetchStates();
   }, []);
 
+  // Fetch LGAs if stateFilter is prefilled (e.g., during Update)
+  useEffect(() => {
+    const fetchInitialLgas = async () => {
+      if (formik.values.stateFilter && lgas.length === 0) {
+        try {
+          const initialLgas = await locationApi.getLgas(formik.values.stateFilter);
+          setLgas(initialLgas);
+        } catch (error) {
+          console.error("Failed to fetch LGAs for prefilled state", error);
+        }
+      }
+    };
+    fetchInitialLgas();
+  }, [formik.values.stateFilter]);
+
   const handleStateChange = async (event) => {
     const newStateId = event.target.value;
     formik.setFieldValue('stateFilter', newStateId);

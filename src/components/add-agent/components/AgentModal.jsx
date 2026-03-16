@@ -63,19 +63,15 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
   const modalConfig = getModalConfig(actionType);
 
   const initialValues = {
-    organizationName: shouldPrefillForm ? selectedAgent?.organizationName || '' : '',
-    // agentDetails: shouldPrefillForm ? selectedAgent?.agentDetails || '' : '',
-    contactDetails: shouldPrefillForm ? selectedAgent?.contactDetails || '' : '',
-    agentPhone: shouldPrefillForm ? selectedAgent?.phoneNumber || '' : '',
-    contactAddress: shouldPrefillForm ? selectedAgent?.contactAddress || '' : '',
-    stateFilter: shouldPrefillForm ? selectedAgent?.stateFilter || '' : '',
-    lga: shouldPrefillForm ? selectedAgent?.lga || '' : '',
-    headerColor: shouldPrefillForm ? selectedAgent?.headerColor || '' : '',
-    sidebarColor: shouldPrefillForm ? selectedAgent?.sidebarColor || '' : '',
-    bodyColor: shouldPrefillForm ? selectedAgent?.bodyColor || '' : '',
-    // country: shouldPrefillForm ? selectedAgent?.country || 'Nigeria' : 'Nigeria',
-    // organizationTitle: shouldPrefillForm ? selectedAgent?.organizationTitle || '' : '',
-    // permissions: shouldPrefillForm ? selectedAgent?.permissions || [] : [],
+    organizationName: shouldPrefillForm ? (selectedAgent?.organizationName || selectedAgent?.name || '') : '',
+    contactDetails: shouldPrefillForm ? (selectedAgent?.contactDetails || selectedAgent?.email || '') : '',
+    agentPhone: shouldPrefillForm ? (selectedAgent?.phoneNumber || selectedAgent?.phone || '') : '',
+    contactAddress: shouldPrefillForm ? (selectedAgent?.contactAddress || selectedAgent?.address || '') : '',
+    stateFilter: shouldPrefillForm ? (selectedAgent?.state_id || selectedAgent?.stateFilter || '') : '',
+    lga: shouldPrefillForm ? (selectedAgent?.lga_id || selectedAgent?.lga || '') : '',
+    headerColor: shouldPrefillForm ? (selectedAgent?.headerColor || selectedAgent?.color?.headcolor || '') : '',
+    sidebarColor: shouldPrefillForm ? (selectedAgent?.sidebarColor || selectedAgent?.color?.sidecolor || '') : '',
+    bodyColor: shouldPrefillForm ? (selectedAgent?.bodyColor || selectedAgent?.color?.bodycolor || '') : '',
   };
 
   const formik = useFormik({
@@ -155,23 +151,21 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
     try {
       const payload = {
         org_name: values.organizationName,
-        name: values.agentDetails,
         email: values.contactDetails,
         phone: values.agentPhone,
         address: values.contactAddress,
         lga_id: values.lga,
-        country: values.country,
-        org_title: values.organizationTitle,
         access_level: selectedAgent?.access_level || '2',
         color: {
           headcolor: values.headerColor || 'default',
           sidecolor: values.sidebarColor || 'default',
           bodycolor: values.bodyColor || 'default',
         },
-        status: selectedAgent.status === 'Active' ? 'active' : 'inactive', // or handle status update logic separately
+        status: (selectedAgent?.status === 'Active' || selectedAgent?.status === 'active') ? 'active' : 'inactive',
       };
 
-      const response = await agentApi.update(selectedAgent.s_n, payload);
+      const agentId = selectedAgent?.id || selectedAgent?.s_n;
+      const response = await agentApi.update(agentId, payload);
 
       if (response.data) {
         // Check if data exists or success flag

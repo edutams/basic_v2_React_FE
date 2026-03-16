@@ -191,6 +191,7 @@ const Agent = () => {
               // organizationTitle: agent.org_title,
               contactDetails: agent.email,
               phoneNumber: agent.phone,
+              contactAddress: agent.address,
               imgsrc: agent.image,
               performance: 'School: ' + (agent.tenants_count || 0),
               tenants_count: agent.tenants_count || 0,

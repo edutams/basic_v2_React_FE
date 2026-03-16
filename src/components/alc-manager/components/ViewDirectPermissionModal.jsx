@@ -46,7 +46,7 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
           try {
             const rolePermsRes = await aclApi.getRolePermissions(role.id);
             if (rolePermsRes?.data) {
-              rolePerms = [...rolePermsRes.data.map((p) => p.name)];
+              rolePerms = [...rolePerms, ...rolePermsRes.data.map((p) => p.name)];
             }
           } catch (err) {
             console.error('Failed to fetch role permissions:', err);

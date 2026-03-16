@@ -78,14 +78,23 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
       // Set all permissions (for display), but only pre-select direct permissions
       const allPermissions = [...new Set([...directPerms, ...rolePermissions])];
       setCurrentPermissions(allPermissions);
-      // Only pre-select DIRECT permissions, not role permissions
       setSelectedPermissions(directPerms);
     } catch (err) {
       console.error('Failed to fetch current permissions:', err);
     }
   };
 
+  const isFromRole = (permissionName) => {
+    return (
+      currentPermissions.includes(permissionName) && !directPermissions.includes(permissionName)
+    );
+  };
+
   const handleToggle = (permission) => {
+    // Don't allow toggling if permission comes from a role (only direct permissions can be modified)
+    if (isFromRole(permission.name)) {
+      return;
+    }
     setSelectedPermissions((prev) => {
       const exists = prev.includes(permission.name);
       return exists ? prev.filter((p) => p !== permission.name) : [...prev, permission.name];
@@ -140,7 +149,7 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
 
         <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
           Current permissions: {currentPermissions.length} (Direct: {directPermissions.length}) -
-          Checked permissions will be saved as direct
+          Permissions from roles cannot be modified
         </Typography>
 
         {loading ? (
@@ -157,48 +166,60 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
               overflow: 'auto',
             }}
           >
-            {filteredPermissions.map((permission) => (
-              <Box
-                key={permission.id}
-                onClick={() => handleToggle(permission)}
-                sx={{
-                  padding: '8px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: isSelected(permission) ? 'primary.main' : 'divider',
-                  backgroundColor: isSelected(permission) ? 'primary.light' : 'transparent',
-                  '&:hover': {
-                    backgroundColor: isSelected(permission) ? 'primary.light' : 'action.hover',
-                  },
-                }}
-              >
+            {filteredPermissions.map((permission) => {
+              const fromRole = isFromRole(permission.name);
+              const alreadyHasDirect = directPermissions.includes(permission.name);
+              const isDisabled = fromRole;
+              const showCheck = isSelected(permission) || fromRole;
+
+              return (
                 <Box
+                  key={permission.id}
+                  onClick={() => handleToggle(permission)}
                   sx={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: '4px',
-                    border: '2px solid',
-                    borderColor: isSelected(permission) ? 'primary.main' : 'grey.400',
-                    backgroundColor: isSelected(permission) ? 'primary.main' : 'transparent',
+                    padding: '8px 12px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    mr: 1,
-                    '&::after': isSelected(permission)
-                      ? {
-                          content: '"✓"',
-                          color: '#fff',
-                          fontSize: '12px',
-                        }
-                      : {},
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    borderRadius: 1,
+                    border: '1px solid',
+                    borderColor: isSelected(permission) ? 'primary.main' : 'divider',
+                    backgroundColor: isSelected(permission) ? 'primary.light' : 'transparent',
+                    '&:hover': {
+                      backgroundColor: isSelected(permission) ? 'primary.light' : 'action.hover',
+                    },
                   }}
-                />
-                <Typography variant="body2">{permission.name}</Typography>
-              </Box>
-            ))}
+                >
+                  <Box
+                    sx={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '4px',
+                      border: '2px solid',
+                      borderColor: isSelected(permission) ? 'primary.main' : 'grey.400',
+                      backgroundColor: isSelected(permission) ? 'primary.main' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mr: 1,
+                      '&::after': isSelected(permission)
+                        ? {
+                            content: '"✓"',
+                            color: '#fff',
+                            fontSize: '12px',
+                          }
+                        : {},
+                    }}
+                  />
+                  <Typography variant="body2">{permission.name}</Typography>
+                  {fromRole && (
+                    <Typography variant="caption" color="textSecondary" sx={{ ml: 'auto' }}>
+                      (From role)
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })}
           </Box>
         )}
       </DialogContent>

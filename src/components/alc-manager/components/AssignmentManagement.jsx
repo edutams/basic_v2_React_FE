@@ -29,9 +29,12 @@ import DirectPermissionModal from './DirectPermissionModal';
 import ViewDirectPermissionModal from './ViewDirectPermissionModal';
 import aclApi from 'src/api/aclApi';
 import { useNotification } from '../../../hooks/useNotification';
+import useAuth from 'src/hooks/useAuth';
 
 const AssignmentManagement = () => {
   const notify = useNotification();
+  const { user: currentUser } = useAuth();
+  const currentUserLevel = currentUser?.access_level;
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -217,7 +220,6 @@ const AssignmentManagement = () => {
         setCurrentAgentForRole(updatedCurrentAgent);
       }
 
-      // Show appropriate success message
       if (actionType === 'added') {
         notify.success('Role(s) attached successfully!');
       } else if (actionType === 'removed') {
@@ -228,7 +230,6 @@ const AssignmentManagement = () => {
       setRoleAttachmentModalOpen(false);
     } catch (err) {
       console.error('Failed to assign roles:', err);
-      // Show appropriate error message
       if (actionType === 'removed') {
         notify.error(err?.response?.data?.message || 'Failed to remove role(s)');
       } else {
@@ -267,14 +268,32 @@ const AssignmentManagement = () => {
     handleMenuClose();
   };
 
-  const filteredUsers = users.filter((user) => {
-    const term = nameFilter.toLowerCase();
-    return (
-      user.name?.toLowerCase().includes(term) ||
-      user.email?.toLowerCase().includes(term) ||
-      user.userType?.toLowerCase().includes(term)
-    );
-  });
+  const filteredUsers = useMemo(() => {
+    let filtered = users.filter((user) => {
+      const term = nameFilter.toLowerCase();
+      return (
+        user.name?.toLowerCase().includes(term) ||
+        user.email?.toLowerCase().includes(term) ||
+        user.userType?.toLowerCase().includes(term)
+      );
+    });
+
+    // Any agent can see agents they created (their children)
+    // Level 1 agents can see ALL agents
+    const currentUserId = currentUser?.id;
+    if (currentUserLevel && currentUserLevel > 1) {
+      filtered = filtered.filter((user) => {
+        // Exclude the current user
+        if (user.id === currentUserId) {
+          return false;
+        }
+        // Only include agents created by current user (their children)
+        return user.parent_id === currentUserId;
+      });
+    }
+
+    return filtered;
+  }, [users, nameFilter, currentUserLevel, currentUser]);
 
   const paginatedFilteredUsers = useMemo(() => {
     const start = page * rowsPerPage;

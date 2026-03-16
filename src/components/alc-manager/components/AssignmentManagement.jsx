@@ -20,6 +20,10 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem as SelectMenuItem,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -43,6 +47,7 @@ const AssignmentManagement = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
   const [userTypeFilter, setUserTypeFilter] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
@@ -283,7 +288,6 @@ const AssignmentManagement = () => {
     const currentUserId = currentUser?.id;
     if (currentUserLevel && currentUserLevel > 1) {
       filtered = filtered.filter((user) => {
-        // Exclude the current user
         if (user.id === currentUserId) {
           return false;
         }
@@ -292,8 +296,16 @@ const AssignmentManagement = () => {
       });
     }
 
+    // Add level filter - only for Level 1 users
+    if (levelFilter !== '') {
+      filtered = filtered.filter((user) => {
+        const userLevel = parseInt(user.level, 10);
+        return userLevel === parseInt(levelFilter, 10);
+      });
+    }
+
     return filtered;
-  }, [users, nameFilter, currentUserLevel, currentUser]);
+  }, [users, nameFilter, userTypeFilter, levelFilter, currentUserLevel, currentUser]);
 
   const paginatedFilteredUsers = useMemo(() => {
     const start = page * rowsPerPage;
@@ -303,10 +315,11 @@ const AssignmentManagement = () => {
   const resetFilters = () => {
     setNameFilter('');
     setUserTypeFilter('');
+    setLevelFilter('');
     setPage(0);
   };
 
-  const hasFilters = nameFilter !== '' || userTypeFilter !== '';
+  const hasFilters = nameFilter !== '' || userTypeFilter !== '' || levelFilter !== '';
 
   return (
     <ParentCard
@@ -325,7 +338,7 @@ const AssignmentManagement = () => {
               setNameFilter(e.target.value);
               setPage(0);
             }}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, minWidth: 200 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -334,6 +347,28 @@ const AssignmentManagement = () => {
               ),
             }}
           />
+          {/* Agent Level Filter - Only for Level 1 users */}
+          {currentUserLevel === 1 && (
+            <FormControl sx={{ mb: 2, minWidth: 150 }}>
+              <InputLabel id="level-filter-label">Agent Level</InputLabel>
+              <Select
+                labelId="level-filter-label"
+                value={levelFilter}
+                label="Agent Level"
+                onChange={(e) => {
+                  setLevelFilter(e.target.value);
+                  setPage(0);
+                }}
+              >
+                <SelectMenuItem value="">All Levels</SelectMenuItem>
+                <SelectMenuItem value="1">Level 1</SelectMenuItem>
+                <SelectMenuItem value="2">Level 2</SelectMenuItem>
+                <SelectMenuItem value="3">Level 3</SelectMenuItem>
+                <SelectMenuItem value="4">Level 4</SelectMenuItem>
+                <SelectMenuItem value="5">Level 5</SelectMenuItem>
+              </Select>
+            </FormControl>
+          )}
           {hasFilters && (
             <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters

@@ -64,7 +64,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
 
   const initialValues = {
     organizationName: shouldPrefillForm ? selectedAgent?.organizationName || '' : '',
-    agentDetails: shouldPrefillForm ? selectedAgent?.agentDetails || '' : '',
+    // agentDetails: shouldPrefillForm ? selectedAgent?.agentDetails || '' : '',
     contactDetails: shouldPrefillForm ? selectedAgent?.contactDetails || '' : '',
     agentPhone: shouldPrefillForm ? selectedAgent?.phoneNumber || '' : '',
     contactAddress: shouldPrefillForm ? selectedAgent?.contactAddress || '' : '',
@@ -73,9 +73,9 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
     headerColor: shouldPrefillForm ? selectedAgent?.headerColor || '' : '',
     sidebarColor: shouldPrefillForm ? selectedAgent?.sidebarColor || '' : '',
     bodyColor: shouldPrefillForm ? selectedAgent?.bodyColor || '' : '',
-    country: shouldPrefillForm ? selectedAgent?.country || 'Nigeria' : 'Nigeria',
-    organizationTitle: shouldPrefillForm ? selectedAgent?.organizationTitle || '' : '',
-    permissions: shouldPrefillForm ? selectedAgent?.permissions || [] : [],
+    // country: shouldPrefillForm ? selectedAgent?.country || 'Nigeria' : 'Nigeria',
+    // organizationTitle: shouldPrefillForm ? selectedAgent?.organizationTitle || '' : '',
+    // permissions: shouldPrefillForm ? selectedAgent?.permissions || [] : [],
   };
 
   const formik = useFormik({
@@ -104,18 +104,19 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
     try {
       const payload = {
         org_name: values.organizationName,
-        name: values.agentDetails,
+        // name: values.agentDetails,
         email: values.contactDetails,
         phone: values.agentPhone,
         address: values.contactAddress,
         lga_id: values.lga,
-        country: values.country,
-        org_title: values.organizationTitle,
-        access_level: '2',
+        // country: values.country,
+        // org_title: values.organizationTitle,
+        // access_level: '2',
         headcolor: values.headerColor || 'default',
         sidecolor: values.sidebarColor || 'default',
         bodycolor: values.bodyColor || 'default',
       };
+
 
       const response = await agentApi.createAgent(payload);
 
@@ -136,7 +137,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
 
         // Map backend fields to formik fields
         if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
-        if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
+        // if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
         if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
         if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
         if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
@@ -187,7 +188,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
         const mappedErrors = {};
 
         if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
-        if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
+        // if (backendErrors.name) mappedErrors.agentDetails = backendErrors.name[0];
         if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
         if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
         if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];

@@ -32,13 +32,13 @@ const AgentFormFields = ({ formik }) => {
     formik.setFieldValue('lga', '');
     setLgas([]);
 
-    if(newStateId){
-        try {
-            const lgas = await locationApi.getLgas(newStateId);
-            setLgas(lgas);
-        } catch (error) {
-            console.error("Failed to fetch LGAs", error);
-        }
+    if (newStateId) {
+      try {
+        const lgas = await locationApi.getLgas(newStateId);
+        setLgas(lgas);
+      } catch (error) {
+        console.error("Failed to fetch LGAs", error);
+      }
     }
   };
 
@@ -47,15 +47,15 @@ const AgentFormFields = ({ formik }) => {
       {/* Row 1: Name & Mail */}
       <Grid item size={{ xs: 12, md: 6 }}>
         <TextField
-          key="agentDetails"
-          label="Name"
+          key="organizationName"
+          label="Organization Name"
           fullWidth
-          name="agentDetails"
-          value={formik.values.agentDetails}
+          name="organizationName"
+          value={formik.values.organizationName}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          error={formik.touched.agentDetails && Boolean(formik.errors.agentDetails)}
-          helperText={formik.touched.agentDetails && formik.errors.agentDetails}
+          error={formik.touched.organizationName && Boolean(formik.errors.organizationName)}
+          helperText={formik.touched.organizationName && formik.errors.organizationName}
         />
       </Grid>
       <Grid item size={{ xs: 12, md: 6 }}>
@@ -88,7 +88,7 @@ const AgentFormFields = ({ formik }) => {
           helperText={formik.touched.agentPhone && formik.errors.agentPhone}
         />
       </Grid>
-      <Grid item size={{ xs: 12, md: 6 }}>
+      {/* <Grid item size={{ xs: 12, md: 6 }}>
         <FormControl fullWidth error={formik.touched.country && Boolean(formik.errors.country)}>
           <InputLabel>Country</InputLabel>
           <Select
@@ -106,7 +106,7 @@ const AgentFormFields = ({ formik }) => {
             <FormHelperText>{formik.errors.country}</FormHelperText>
           )}
         </FormControl>
-      </Grid>
+      </Grid> */}
 
       {/* Row 3: State & LGA */}
       <Grid item size={{ xs: 12, md: 6 }}>
@@ -162,7 +162,7 @@ const AgentFormFields = ({ formik }) => {
       </Grid>
 
       {/* Row 4: Organization Name & Organization Title */}
-      <Grid item size={{ xs: 12, md: 6 }}>
+      {/* <Grid item size={{ xs: 12, md: 6 }}>
         <TextField
           key="organizationName"
           label="Organization Name"
@@ -174,8 +174,8 @@ const AgentFormFields = ({ formik }) => {
           error={formik.touched.organizationName && Boolean(formik.errors.organizationName)}
           helperText={formik.touched.organizationName && formik.errors.organizationName}
         />
-      </Grid>
-      <Grid item size={{ xs: 12, md: 6 }}>
+      </Grid> */}
+      {/* <Grid item size={{ xs: 12, md: 6 }}>
         <FormControl fullWidth error={formik.touched.organizationTitle && Boolean(formik.errors.organizationTitle)}>
           <InputLabel>Organization Title</InputLabel>
           <Select
@@ -193,9 +193,9 @@ const AgentFormFields = ({ formik }) => {
             <FormHelperText>{formik.errors.organizationTitle}</FormHelperText>
           )}
         </FormControl>
-      </Grid>
+      </Grid> */}
 
-      <Grid item size={{ xs: 12, md: 12 }}>
+      <Grid item size={{ xs: 12, md: 6 }}>
         <TextField
           key="contactAddress"
           label="Contact Address"

@@ -101,7 +101,7 @@ const Profile = () => {
 
   // Get user display name and email
   const displayUser = user?.user || user;
-  const displayName = displayUser?.name || 'Guest User';
+  const displayName = displayUser?.org_name || 'Guest User';
   const firstName = displayName.split(' ')[0];
   const userEmail = displayUser?.email || 'user@example.com';
   const userAvatar = displayUser?.image || user1;

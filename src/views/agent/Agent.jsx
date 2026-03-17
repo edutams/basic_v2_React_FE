@@ -28,6 +28,7 @@ import {
   Badge,
   Card,
   useTheme,
+  TablePagination,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -139,6 +140,11 @@ const Agent = () => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
 
+  // Pagination States
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+
   const navigate = useNavigate();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -161,6 +167,8 @@ const Agent = () => {
           status: status || undefined,
           search: search || undefined,
           access_level: agentLevel || undefined,
+          page: page + 1, // Laravel paginates 1-indexed, MUI is 0-indexed
+          per_page: rowsPerPage,
         };
         const response = await agentApi.getAll(params);
         if (response.success) {
@@ -176,12 +184,14 @@ const Agent = () => {
             }
 
             return {
-              s_n: agent.id,
-              agentDetails: agent.name,
+              s_n: index + 1,
+              id: agent.id,
+              // agentDetails: agent.name,
               organizationName: agent.org_name,
-              organizationTitle: agent.org_title,
+              // organizationTitle: agent.org_title,
               contactDetails: agent.email,
               phoneNumber: agent.phone,
+              contactAddress: agent.address,
               imgsrc: agent.image,
               performance: 'School: ' + (agent.tenants_count || 0),
               tenants_count: agent.tenants_count || 0,
@@ -194,29 +204,32 @@ const Agent = () => {
                 ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
                 : 'Inactive',
               lga: agent.lga_id,
-              stateFilter: agent.state_lga?.state_id,
+              state_name: agent.state_name,
+              state_id: agent.state_id,
+              lga_name: agent.lga_name,
+              lga_id: agent.lga_id,
             };
           });
           setData(mappedData);
 
-          // Calculate Analytics
-          const totalAgents = response.data.length;
-          const totalSubAgents = response.data.reduce(
-            (acc, curr) => acc + (curr.children_count || 0),
-            0,
-          );
-          const totalSchools = response.data.reduce(
-            (acc, curr) => acc + (curr.tenants_count || 0),
-            0,
-          );
-          setAnalytics({ totalAgents, totalSubAgents, totalSchools });
+          if (response.meta) {
+            setTotalRows(response.meta.total || 0);
+          }
+
+          if (response.analytics) {
+            setAnalytics({
+              totalAgents: response.analytics.totalAgents || 0,
+              totalSubAgents: response.analytics.totalSubAgents || 0,
+              totalSchools: response.analytics.totalSchools || 0,
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to fetch agents', error);
       }
     };
     fetchData();
-  }, [refreshKey]);
+  }, [refreshKey, page, rowsPerPage]);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
@@ -224,6 +237,7 @@ const Agent = () => {
   const [hasFiltered, setHasFiltered] = useState(false);
 
   const applyFilters = () => {
+    setPage(0); // Reset to first page
     setRefreshKey((prev) => prev + 1);
     setHasFiltered(true);
   };
@@ -422,44 +436,28 @@ const Agent = () => {
           />
         ) : (
           <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={info.row.original.imgsrc} alt={info.getValue()} width="35" />
+            <Avatar src={info.row.original.imgsrc} alt={info.row.original.organizationName} sx={{ width: 40, height: 40 }} />
             <Box>
-              <Typography variant="h6" fontWeight="600">
-                {info.row.original.organizationName}
+              <Typography variant="subtitle1" fontWeight="600" sx={{ lineHeight: 1.2 }}>
+                {info.row.original.organizationName || 'N/A'}
               </Typography>
-              <Typography color="textSecondary" variant="subtitle2">
-                {/* {info.row.original.contactDetails} */}
-                {info.getValue()}
+              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2, mt: 0.5 }}>
+                {info.row.original.phoneNumber || 'N/A'} | {info.row.original.state_name || 'N/A'} Region
               </Typography>
-              <Typography color="textSecondary" variant="caption">
-                {/* <Badge badgeContent={info.row.original.level} color="secondary">
-              </Badge> */}
-                {info.row.original.level}
+              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2 }}>
+                {info.row.original.contactDetails || 'N/A'}
               </Typography>
             </Box>
           </Stack>
         ),
     }),
-    columnHelper.accessor('contactDetails', {
-      header: () => 'Contact Details',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Stack direction="column" spacing={0} alignItems="flex-start">
-            <Typography variant="subtitle2" fontWeight="600">
-              {info.row.original.phoneNumber || '+23482103453956'}
-            </Typography>
-            <Typography color="textSecondary" variant="caption">
-              {info.row.original.contactDetails}
-            </Typography>
-          </Stack>
-        ),
+    columnHelper.accessor('gateway', {
+      header: () => 'Gateway',
+      cell: () => (
+        <Typography variant="subtitle2" fontWeight="500">
+          -
+        </Typography>
+      ),
     }),
     columnHelper.accessor('access_level', {
       header: () => 'Access Level',
@@ -490,16 +488,17 @@ const Agent = () => {
       cell: (info) => (
         <Box
           sx={{
-            bgcolor: '#e5e5f7',
+            bgcolor: '#eadeff',
             color: '#333',
-            borderRadius: '4px',
-            width: 35,
-            height: 30,
-            display: 'flex',
+            borderRadius: '6px',
+            px: 2,
+            py: 0.5,
+            display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: '700',
             fontSize: '14px',
+            minWidth: '40px'
           }}
         >
           {info.row.original.sub_agents_count ?? 0}
@@ -509,32 +508,25 @@ const Agent = () => {
     columnHelper.accessor('performance', {
       header: () => 'Performance',
       cell: (info) => (
-        <Stack
-          direction="row"
-          spacing={0}
-          sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0' }}
-        >
-          <Box sx={{ bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
-            <Typography variant="caption" fontWeight="600" color="textSecondary">
-              School
-            </Typography>
-          </Box>
-          <Box sx={{ bgcolor: '#b4ebc2', px: 1, py: 0.5 }}>
-            <Typography variant="caption" fontWeight="700" color="#333">
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
+          <Typography variant="subtitle2" fontWeight="500" color="#333">
+            School
+          </Typography>
+          <Box sx={{ bgcolor: '#87e8a9', px: 1.5, py: 0.5, borderRadius: '6px' }}>
+            <Typography variant="subtitle2" fontWeight="700" color="#000">
               {info.row.original.tenants_count ?? 0}
             </Typography>
           </Box>
         </Stack>
       ),
     }),
-    // Gateway column removed
     columnHelper.accessor('colourScheme', {
       header: () => 'Colour Scheme',
       cell: (info) => {
         const agent = info.row.original;
-        const headerColor = agent.headerColor || '#1976d2';
-        const sidebarColor = agent.sidebarColor || '#2196f3';
-        const bodyColor = agent.bodyColor || '#f5f5f5';
+        const headerColor = agent.headerColor || '#232FE6';
+        const sidebarColor = agent.sidebarColor || '#E51A4D';
+        const bodyColor = agent.bodyColor || '#E1B42C';
 
         return editRowId === info.row.original.s_n ? (
           <TextField
@@ -547,25 +539,36 @@ const Agent = () => {
           <Box
             sx={{
               display: 'inline-block',
-              width: 40,
-              height: 30,
-              borderRadius: '5px',
+              width: 36,
+              height: 36,
+              borderRadius: '4px',
               overflow: 'hidden',
+              border: '1px solid #e0e0e0'
             }}
             title={`Header: ${headerColor} | Sidebar: ${sidebarColor} | Body: ${bodyColor}`}
           >
-            <Box
-              sx={{
-                width: '100%',
-                height: '30%',
-                backgroundColor: headerColor,
-                borderRadius: 0,
-              }}
-            />
-            <Box sx={{ display: 'flex', height: '70%' }}>
+            <Box sx={{ display: 'flex', height: '50%' }}>
               <Box
                 sx={{
-                  width: '50%',
+                  width: '60%',
+                  height: '100%',
+                  backgroundColor: headerColor,
+                  borderRadius: 0,
+                }}
+              />
+              <Box
+                sx={{
+                  width: '40%',
+                  height: '100%',
+                  backgroundColor: '#43cd66',
+                  borderRadius: 0,
+                }}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', height: '50%' }}>
+              <Box
+                sx={{
+                  width: '30%',
                   height: '100%',
                   backgroundColor: sidebarColor,
                   borderRadius: 0,
@@ -573,7 +576,7 @@ const Agent = () => {
               />
               <Box
                 sx={{
-                  width: '50%',
+                  width: '70%',
                   height: '100%',
                   backgroundColor: bodyColor,
                   borderRadius: 0,
@@ -605,17 +608,19 @@ const Agent = () => {
             sx={{
               bgcolor:
                 info.getValue() === 'Active'
-                  ? (theme) => theme.palette.success.light
+                  ? '#dcfee6'
                   : info.getValue() === 'Inactive'
-                    ? (theme) => theme.palette.error.light
-                    : (theme) => theme.palette.secondary.light,
+                    ? '#ffe4e6'
+                    : '#f3f4f6',
               color:
                 info.getValue() === 'Active'
-                  ? (theme) => theme.palette.success.main
+                  ? '#16a34a'
                   : info.getValue() === 'Inactive'
-                    ? (theme) => theme.palette.error.main
-                    : (theme) => theme.palette.secondary.main,
-              borderRadius: '8px',
+                    ? '#e11d48'
+                    : '#4b5563',
+              borderRadius: '6px',
+              fontWeight: 600,
+              px: 2,
             }}
             size="small"
             label={info.getValue()}
@@ -666,7 +671,7 @@ const Agent = () => {
               <MenuItem
                 onClick={() => {
                   handleClose();
-                  navigate(`/agent/view/${row.original.s_n}`);
+                  navigate(`/agent/view/${row.original.id}`);
                 }}
               >
                 View Agent Profile
@@ -1041,25 +1046,6 @@ const Agent = () => {
                 Search
               </Button>
             </Grid>
-            {hasActiveFilters && (
-              <Grid size={{ xs: 12, md: 2, sm: 4 }}>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  fullWidth
-                  onClick={() => {
-                    setAgentLevel('');
-                    setCountry('');
-                    setState('');
-                    setLga('');
-                    setSearch('');
-                  }}
-                  sx={{ height: '56px' }}
-                >
-                  Clear Filters
-                </Button>
-              </Grid>
-            )}
           </Grid>
 
           <TableContainer component={Paper}>
@@ -1101,6 +1087,18 @@ const Agent = () => {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            component="div"
+            count={totalRows}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(event, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(event) => {
+              setRowsPerPage(parseInt(event.target.value, 10));
+              setPage(0);
+            }}
+          />
         </ParentCard>
         <AgentModal
           open={isRegisterModalOpen || isModalOpen}

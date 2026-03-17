@@ -6,11 +6,11 @@ export const agentValidationSchema = yup.object({
     .min(2, 'Organization name must be at least 2 characters')
     .max(100, 'Organization name must be less than 100 characters')
     .required('Organization name is required'),
-  agentDetails: yup
-    .string()
-    .min(2, 'Agent name must be at least 2 characters')
-    .max(100, 'Agent name must be less than 100 characters')
-    .required('Agent name is required'),
+  // agentDetails: yup
+  //   .string()
+  //   .min(2, 'Agent name must be at least 2 characters')
+  //   .max(100, 'Agent name must be less than 100 characters')
+  //   .required('Agent name is required'),
   contactDetails: yup
     .string()
     .email('Enter a valid email address')
@@ -19,18 +19,18 @@ export const agentValidationSchema = yup.object({
     .string()
     .matches(
       /^(\+234|234|0)?[789][01]\d{8}$/,
-      'Enter a valid Nigerian phone number (e.g., +234-801-234-5678)',
+      'Enter a valid Nigerian phone number (e.g., +2348012345678)',
     )
     .required('Agent phone is required'),
   contactAddress: yup
     .string()
-    .min(10, 'Contact address must be at least 10 characters')
-    .max(200, 'Contact address must be less than 200 characters')
+    // .min(10, 'Contact address must be at least 10 characters')
+    // .max(200, 'Contact address must be less than 200 characters')
     .required('Contact address is required'),
   stateFilter: yup.string().required('State selection is required'),
   lga: yup.string().required('LGA is required'),
-  country: yup.string().required('Country is required'),
-  organizationTitle: yup.string().required('Organization title is required'),
+  // country: yup.string().required('Country is required'),
+  // organizationTitle: yup.string().required('Organization title is required'),
 });
 
 export default agentValidationSchema;

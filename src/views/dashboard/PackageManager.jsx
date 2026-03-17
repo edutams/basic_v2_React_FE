@@ -31,6 +31,7 @@ import MyPlanTab from '../my-plan/MyPlan';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
 import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
+import useAuth from 'src/hooks/useAuth';
 
 const planSeries = [40, 15, 35, 10];
 
@@ -83,6 +84,8 @@ const EduTier = () => {
   const [value, setValue] = React.useState(0);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
+  const { user: currentUser } = useAuth();
+  const currentUserLevel = currentUser?.access_level;
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -388,7 +391,6 @@ const EduTier = () => {
                   label="Modules"
                   {...a11yProps(0)}
                 />
-
                 <Tab
                   iconPosition="start"
                   icon={<IconBell size="22" />}
@@ -401,12 +403,14 @@ const EduTier = () => {
                   label="Plan"
                   {...a11yProps(2)}
                 />
-                <Tab
-                  iconPosition="start"
-                  icon={<IconChecklist size="22" />}
-                  label="My Plan"
-                  {...a11yProps(3)}
-                />
+                {currentUserLevel !== 1 && (
+                  <Tab
+                    iconPosition="start"
+                    icon={<IconChecklist size="22" />}
+                    label="My Plan"
+                    {...a11yProps(3)}
+                  />
+                )}
               </Tabs>
             </Box>
             <Divider />
@@ -420,9 +424,11 @@ const EduTier = () => {
               <TabPanel value={value} index={2}>
                 <PlanTab />
               </TabPanel>
-              <TabPanel value={value} index={3}>
-                <MyPlanTab />
-              </TabPanel>
+              {currentUserLevel !== 1 && (
+                <TabPanel value={value} index={3}>
+                  <MyPlanTab />
+                </TabPanel>
+              )}
             </CardContent>
           </BlankCard>
         </Grid>

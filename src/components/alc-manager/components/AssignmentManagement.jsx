@@ -20,17 +20,25 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem as SelectMenuItem,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
 import DirectPermissionModal from './DirectPermissionModal';
+import ViewDirectPermissionModal from './ViewDirectPermissionModal';
 import aclApi from 'src/api/aclApi';
 import { useNotification } from '../../../hooks/useNotification';
+import useAuth from 'src/hooks/useAuth';
 
 const AssignmentManagement = () => {
   const notify = useNotification();
+  const { user: currentUser } = useAuth();
+  const currentUserLevel = currentUser?.access_level;
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -39,11 +47,13 @@ const AssignmentManagement = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
   const [userTypeFilter, setUserTypeFilter] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [currentAgentForRole, setCurrentAgentForRole] = useState(null);
   const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
+  const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -215,7 +225,6 @@ const AssignmentManagement = () => {
         setCurrentAgentForRole(updatedCurrentAgent);
       }
 
-      // Show appropriate success message
       if (actionType === 'added') {
         notify.success('Role(s) attached successfully!');
       } else if (actionType === 'removed') {
@@ -226,7 +235,6 @@ const AssignmentManagement = () => {
       setRoleAttachmentModalOpen(false);
     } catch (err) {
       console.error('Failed to assign roles:', err);
-      // Show appropriate error message
       if (actionType === 'removed') {
         notify.error(err?.response?.data?.message || 'Failed to remove role(s)');
       } else {
@@ -258,18 +266,46 @@ const AssignmentManagement = () => {
     } else if (action === 'directPermission') {
       setCurrentAgentForRole(row);
       setDirectPermissionModalOpen(true);
+    } else if (action === 'viewDirectPermission') {
+      setCurrentAgentForRole(row);
+      setViewDirectPermissionModalOpen(true);
     }
     handleMenuClose();
   };
 
-  const filteredUsers = users.filter((user) => {
-    const term = nameFilter.toLowerCase();
-    return (
-      user.name?.toLowerCase().includes(term) ||
-      user.email?.toLowerCase().includes(term) ||
-      user.userType?.toLowerCase().includes(term)
-    );
-  });
+  const filteredUsers = useMemo(() => {
+    let filtered = users.filter((user) => {
+      const term = nameFilter.toLowerCase();
+      return (
+        user.name?.toLowerCase().includes(term) ||
+        user.email?.toLowerCase().includes(term) ||
+        user.userType?.toLowerCase().includes(term)
+      );
+    });
+
+    // Any agent can see agents they created (their children)
+    // Level 1 agents can see ALL agents
+    const currentUserId = currentUser?.id;
+    if (currentUserLevel && currentUserLevel > 1) {
+      filtered = filtered.filter((user) => {
+        if (user.id === currentUserId) {
+          return false;
+        }
+        // Only include agents created by current user (their children)
+        return user.parent_id === currentUserId;
+      });
+    }
+
+    //level filter - only for Level 1 users
+    if (levelFilter !== '') {
+      filtered = filtered.filter((user) => {
+        const userLevel = parseInt(user.level, 10);
+        return userLevel === parseInt(levelFilter, 10);
+      });
+    }
+
+    return filtered;
+  }, [users, nameFilter, userTypeFilter, levelFilter, currentUserLevel, currentUser]);
 
   const paginatedFilteredUsers = useMemo(() => {
     const start = page * rowsPerPage;
@@ -279,10 +315,11 @@ const AssignmentManagement = () => {
   const resetFilters = () => {
     setNameFilter('');
     setUserTypeFilter('');
+    setLevelFilter('');
     setPage(0);
   };
 
-  const hasFilters = nameFilter !== '' || userTypeFilter !== '';
+  const hasFilters = nameFilter !== '' || userTypeFilter !== '' || levelFilter !== '';
 
   return (
     <ParentCard
@@ -301,7 +338,7 @@ const AssignmentManagement = () => {
               setNameFilter(e.target.value);
               setPage(0);
             }}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, minWidth: 200 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -310,6 +347,28 @@ const AssignmentManagement = () => {
               ),
             }}
           />
+          {/* Agent Level Filter - Only for Level 1 users */}
+          {currentUserLevel === 1 && (
+            <FormControl sx={{ mb: 2, minWidth: 150 }}>
+              <InputLabel id="level-filter-label">Agent Level</InputLabel>
+              <Select
+                labelId="level-filter-label"
+                value={levelFilter}
+                label="Agent Level"
+                onChange={(e) => {
+                  setLevelFilter(e.target.value);
+                  setPage(0);
+                }}
+              >
+                <SelectMenuItem value="">All Levels</SelectMenuItem>
+                <SelectMenuItem value="1">Level 1</SelectMenuItem>
+                <SelectMenuItem value="2">Level 2</SelectMenuItem>
+                <SelectMenuItem value="3">Level 3</SelectMenuItem>
+                <SelectMenuItem value="4">Level 4</SelectMenuItem>
+                <SelectMenuItem value="5">Level 5</SelectMenuItem>
+              </Select>
+            </FormControl>
+          )}
           {hasFilters && (
             <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters
@@ -418,6 +477,9 @@ const AssignmentManagement = () => {
                           <MenuItem onClick={() => handleAction('directPermission', user)}>
                             Assign Direct Permission
                           </MenuItem>
+                          <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                            View Direct Permission
+                          </MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
@@ -481,6 +543,11 @@ const AssignmentManagement = () => {
         onClose={() => setDirectPermissionModalOpen(false)}
         currentAgent={currentAgentForRole}
         onPermissionSave={handleDirectPermissionSave}
+      />
+      <ViewDirectPermissionModal
+        open={viewDirectPermissionModalOpen}
+        onClose={() => setViewDirectPermissionModalOpen(false)}
+        currentUser={currentAgentForRole}
       />
     </ParentCard>
   );

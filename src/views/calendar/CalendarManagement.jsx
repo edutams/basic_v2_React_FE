@@ -565,9 +565,7 @@ function TermsPanel({ isLevel1 }) {
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="subtitle1" fontWeight={600}>
-          Academic Terms
-        </Typography>
+        <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
           <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
             New Term
@@ -857,9 +855,7 @@ function MappingsPanel() {
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="subtitle1" fontWeight={600}>
-          My Session–Term Mappings
-        </Typography>
+        <Typography variant="h5">My Session–Term Mappings</Typography>
         <Button
           variant="contained"
           startIcon={<IconPlus size={16} />}

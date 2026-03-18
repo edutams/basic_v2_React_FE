@@ -57,16 +57,16 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
     handleMenuClose();
   };
 
-  // const getStatusColor = (status) => {
-  //   switch (status) {
-  //     case 'active':
-  //       return 'success';
-  //     case 'inactive':
-  //       return 'error';
-  //     default:
-  //       return 'default';
-  //   }
-  // };
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
 
   return (
     <ParentCard
@@ -131,20 +131,18 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                         <Chip
                           label={gateway.status.toUpperCase()}
                           size="small"
-                          // color={getStatusColor(gateway.status)}
                           sx={{
                             bgcolor:
-                              gateway.status === 'Active'
+                              gateway.status?.toLowerCase() === 'active'
                                 ? (theme) => theme.palette.success.light
                                 : (theme) => theme.palette.error.light,
                             color:
-                              gateway.status === 'Active'
+                              gateway.status?.toLowerCase() === 'active'
                                 ? (theme) => theme.palette.success.main
                                 : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                             fontWeight: 600,
                           }}
-                          // sx={{ borderRadius: '8px' }}
                         />
                       </TableCell>
                       <TableCell align="center">

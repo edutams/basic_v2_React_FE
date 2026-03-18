@@ -111,28 +111,6 @@ function SessionsPanel({ isLevel1 }) {
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getCurrentColor = (isCurrent) => {
-    switch (isCurrent) {
-      case 'yes':
-        return 'primary';
-      case 'no':
-        return 'default';
-      default:
-        return 'default';
-    }
-  };
-
   const fetchSessions = useCallback(async () => {
     setLoading(true);
     try {
@@ -316,16 +294,36 @@ function SessionsPanel({ isLevel1 }) {
                         <Chip
                           label={s.is_current === 'yes' ? 'Yes' : 'No'}
                           size="small"
-                          color={getCurrentColor(s.is_current)}
-                          sx={{ borderRadius: '8px' }}
+                          sx={{
+                            bgcolor:
+                              s.is_current === 'yes'
+                                ? (theme) => theme.palette.primary.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              s.is_current === 'yes'
+                                ? (theme) => theme.palette.primary.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
                         />
                       </TableCell>
                       <TableCell>
                         <Chip
                           label={s.status.toUpperCase()}
                           size="small"
-                          color={getStatusColor(s.status)}
-                          sx={{ borderRadius: '8px' }}
+                          sx={{
+                            bgcolor:
+                              s.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              s.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
                         />
                       </TableCell>
                       {isLevel1 && (
@@ -451,17 +449,6 @@ function TermsPanel({ isLevel1 }) {
   const [selectedTerm, setSelectedTerm] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
 
   const fetchTerms = useCallback(async () => {
     setLoading(true);
@@ -643,8 +630,20 @@ function TermsPanel({ isLevel1 }) {
                         <Chip
                           label={t.status.toUpperCase()}
                           size="small"
-                          color={getStatusColor(t.status)}
-                          sx={{ borderRadius: '8px' }}
+                          // color={getStatusColor(t.status)}
+                          // sx={{ borderRadius: '8px' }}
+                          sx={{
+                            bgcolor:
+                              t.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              t.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
                         />
                       </TableCell>
                       {isLevel1 && (
@@ -921,8 +920,18 @@ function MappingsPanel() {
                         <Chip
                           label={m.status.toUpperCase()}
                           size="small"
-                          color={getStatusColor(m.status)}
-                          sx={{ borderRadius: '8px' }}
+                          sx={{
+                            bgcolor:
+                              m.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              m.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
                         />
                       </TableCell>
                       <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>

@@ -18,6 +18,7 @@ import {
   MenuItem,
   Button,
   Chip,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -171,8 +172,22 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <Typography>No gateways found</Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        <Typography variant="body1" color="textSecondary">
+                          No gateways found
+                        </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}

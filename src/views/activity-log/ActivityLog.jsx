@@ -70,7 +70,7 @@ const ActivityLog = () => {
       <Breadcrumb title="Activity Log" items={BCrumb} />
       <BlankCard>
         <CardContent>
-          <Typography variant="h5" fontWeight={600} mb={3}>
+          <Typography variant="h5" mb={3}>
             System Activity Logs
           </Typography>
 
@@ -87,13 +87,13 @@ const ActivityLog = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell>
+                        <Typography variant="h6">Causer</Typography>
+                      </TableCell>
+                      <TableCell>
                         <Typography variant="h6">Description</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="h6">Subject</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6">Causer</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="h6">Date</Typography>
@@ -111,13 +111,18 @@ const ActivityLog = () => {
                       logs.map((log) => (
                         <TableRow key={log.id}>
                           <TableCell>
+                            <Typography variant="body1">{log.causer?.name || 'System'}</Typography>
+                          </TableCell>
+                          <TableCell>
                             <Typography variant="body1">{log.description}</Typography>
                           </TableCell>
                           <TableCell>
-                            <Chip label={log.subject_type || 'System'} size="small" color="primary" variant="outlined" />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body1">{log.causer?.name || 'System'}</Typography>
+                            <Chip
+                              label={log.subject_type || 'System'}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" color="textSecondary">

@@ -230,9 +230,7 @@ function SessionsPanel({ isLevel1 }) {
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="subtitle1" fontWeight={600}>
-          Academic Sessions
-        </Typography>
+        <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
           <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
             New Session

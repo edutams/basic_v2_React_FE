@@ -70,7 +70,7 @@ const ActivityLog = () => {
       <Breadcrumb title="Activity Log" items={BCrumb} />
       <BlankCard>
         <CardContent>
-          <Typography variant="h5" fontWeight={600} mb={3}>
+          <Typography variant="h5" mb={3}>
             System Activity Logs
           </Typography>
 
@@ -114,7 +114,12 @@ const ActivityLog = () => {
                             <Typography variant="body1">{log.description}</Typography>
                           </TableCell>
                           <TableCell>
-                            <Chip label={log.subject_type || 'System'} size="small" color="primary" variant="outlined" />
+                            <Chip
+                              label={log.subject_type || 'System'}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
                           </TableCell>
                           <TableCell>
                             <Typography variant="body1">{log.causer?.name || 'System'}</Typography>

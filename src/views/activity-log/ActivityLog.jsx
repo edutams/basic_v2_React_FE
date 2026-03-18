@@ -87,13 +87,13 @@ const ActivityLog = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell>
+                        <Typography variant="h6">Causer</Typography>
+                      </TableCell>
+                      <TableCell>
                         <Typography variant="h6">Description</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="h6">Subject</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6">Causer</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="h6">Date</Typography>
@@ -111,6 +111,9 @@ const ActivityLog = () => {
                       logs.map((log) => (
                         <TableRow key={log.id}>
                           <TableCell>
+                            <Typography variant="body1">{log.causer?.name || 'System'}</Typography>
+                          </TableCell>
+                          <TableCell>
                             <Typography variant="body1">{log.description}</Typography>
                           </TableCell>
                           <TableCell>
@@ -120,9 +123,6 @@ const ActivityLog = () => {
                               color="primary"
                               variant="outlined"
                             />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body1">{log.causer?.name || 'System'}</Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" color="textSecondary">

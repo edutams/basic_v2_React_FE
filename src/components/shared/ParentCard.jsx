@@ -12,9 +12,9 @@ const ParentCard = ({ title, children, footer, codeModel }) => {
       elevation={isCardShadow ? 9 : 0}
       variant={!isCardShadow ? 'outlined' : undefined}
     >
-      <CardHeader title={title} action={codeModel} />
+      <CardHeader title={title} action={codeModel} sx={{ py: 1 }} />
 
-      <CardContent>{children}</CardContent>
+      <CardContent sx={{ p: 2, pt: 1 }}>{children}</CardContent>
       {footer ? <Box p={3}>{footer}</Box> : ''}
     </Card>
   );

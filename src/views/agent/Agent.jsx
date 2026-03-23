@@ -394,8 +394,10 @@ const Agent = () => {
 
   const handleImpersonate = async (agent) => {
     try {
-      const result = await impersonateAgent(agent.s_n);
+      const result = await impersonateAgent(agent?.id);
       if (result.success) {
+        localStorage.setItem('impersonator_id', agent?.id);
+        localStorage.setItem('isImpersonating', 'true');
         window.location.href = '/'; // Refresh to dashboard as the new agent
       } else {
         alert(result.error);
@@ -436,15 +438,28 @@ const Agent = () => {
           />
         ) : (
           <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={info.row.original.imgsrc} alt={info.row.original.organizationName} sx={{ width: 40, height: 40 }} />
+            <Avatar
+              src={info.row.original.imgsrc}
+              alt={info.row.original.organizationName}
+              sx={{ width: 40, height: 40 }}
+            />
             <Box>
               <Typography variant="subtitle1" fontWeight="600" sx={{ lineHeight: 1.2 }}>
                 {info.row.original.organizationName || 'N/A'}
               </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2, mt: 0.5 }}>
-                {info.row.original.phoneNumber || 'N/A'} | {info.row.original.state_name || 'N/A'} Region
+              <Typography
+                color="textSecondary"
+                variant="caption"
+                sx={{ display: 'block', lineHeight: 1.2, mt: 0.5 }}
+              >
+                {info.row.original.phoneNumber || 'N/A'} | {info.row.original.state_name || 'N/A'}{' '}
+                Region
               </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2 }}>
+              <Typography
+                color="textSecondary"
+                variant="caption"
+                sx={{ display: 'block', lineHeight: 1.2 }}
+              >
                 {info.row.original.contactDetails || 'N/A'}
               </Typography>
             </Box>
@@ -498,7 +513,7 @@ const Agent = () => {
             justifyContent: 'center',
             fontWeight: '700',
             fontSize: '14px',
-            minWidth: '40px'
+            minWidth: '40px',
           }}
         >
           {info.row.original.sub_agents_count ?? 0}
@@ -508,7 +523,19 @@ const Agent = () => {
     columnHelper.accessor('performance', {
       header: () => 'Performance',
       cell: (info) => (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#f4f4f4', px: 1, py: 0.5, margin: 'auto', width: 'fit-content' }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{
+            borderRadius: '4px',
+            overflow: 'hidden',
+            border: '1px solid #e0e0e0',
+            bgcolor: '#f4f4f4',
+            px: 1,
+            py: 0.5,
+          }}
+        >
           <Typography variant="subtitle2" fontWeight="500" color="#333">
             School
           </Typography>
@@ -543,7 +570,7 @@ const Agent = () => {
               height: 36,
               borderRadius: '4px',
               overflow: 'hidden',
-              border: '1px solid #e0e0e0'
+              border: '1px solid #e0e0e0',
             }}
             title={`Header: ${headerColor} | Sidebar: ${sidebarColor} | Body: ${bodyColor}`}
           >

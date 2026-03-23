@@ -34,12 +34,12 @@ const GatewayModal = ({
     try {
       if (actionType === 'create') {
         const res = await gatewayApi.create(values);
-        onGatewayUpdate(res.data, 'create');
-        notify.success('Gateway created successfully');
+        onGatewayUpdate(res.data.data, 'create');
+        notify.success(res.data?.message || 'Gateway created successfully');
       } else if (actionType === 'update') {
         const res = await gatewayApi.update(selectedGateway.id, values);
-        onGatewayUpdate(res.data, 'update');
-        notify.success('Gateway updated successfully');
+        onGatewayUpdate(res.data.data, 'update');
+        notify.success(res.data?.message || 'Gateway updated successfully');
       }
       onClose();
     } catch (error) {

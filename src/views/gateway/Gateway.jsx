@@ -37,9 +37,9 @@ const GatewayManagement = ({ gateways = [], onGatewayUpdate, isLoading = false }
   const handleConfirmDelete = async () => {
     if (gatewayToDelete) {
       try {
-        await gatewayApi.delete(gatewayToDelete.id);
+        const res = await gatewayApi.delete(gatewayToDelete.id);
         onGatewayUpdate(gatewayToDelete, 'delete');
-        notify.success('Gateway deleted successfully');
+        notify.success(res.data?.message || 'Gateway deleted successfully');
       } catch (error) {
         notify.error(error.response?.data?.message || 'Failed to delete gateway');
       }
@@ -48,12 +48,13 @@ const GatewayManagement = ({ gateways = [], onGatewayUpdate, isLoading = false }
     setGatewayToDelete(null);
   };
 
-  const handleGatewayUpdate = (gatewayData, operation) => {
+  const handleGatewayUpdateInModal = (response, operation) => {
+    const gatewayData = response?.data || response;
     onGatewayUpdate(gatewayData, operation);
     if (operation === 'create') {
-      notify.success('Gateway registered successfully', 'Success');
+      notify.success(response?.message || 'Gateway registered successfully');
     } else if (operation === 'update') {
-      notify.success('Gateway updated successfully', 'Success');
+      notify.success(response?.message || 'Gateway updated successfully');
     }
   };
 
@@ -74,7 +75,7 @@ const GatewayManagement = ({ gateways = [], onGatewayUpdate, isLoading = false }
         onClose={() => setGatewayModalOpen(false)}
         actionType={actionType}
         selectedGateway={selectedGateway}
-        onGatewayUpdate={handleGatewayUpdate}
+        onGatewayUpdate={handleGatewayUpdateInModal}
         isLoading={isLoading}
       />
 
@@ -109,9 +110,9 @@ export default function GatewayPage() {
     setLoading(true);
     try {
       const res = await gatewayApi.getAll();
-      setGateways(res.data);
+      setGateways(res.data.data);
     } catch (error) {
-      notify.error('Failed to load gateways');
+      notify.error(error.response?.data?.message || 'Failed to load gateways');
     } finally {
       setLoading(false);
     }

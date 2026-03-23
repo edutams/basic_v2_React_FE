@@ -23,29 +23,31 @@ const SchoolsView = ({ selectedAgent }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSchool, setSelectedSchool] = useState(null);
 
-  const schools = selectedAgent?.schools || [
-    // {
-    //   id: 1,
-    //   schoolName: "Greenwood Elementary",
-    //   email: "admin@greenwood.edu",
-    //   address: "123 Main St, City",
-    //   status: "Active"
-    // },
-    // {
-    //   id: 2,
-    //   schoolName: "Riverside High School",
-    //   email: "contact@riverside.edu",
-    //   address: "456 Oak Ave, Town",
-    //   status: "Active"
-    // },
-    // {
-    //   id: 3,
-    //   schoolName: "Sunset Academy",
-    //   email: "info@sunset.edu",
-    //   address: "789 Pine Rd, Village",
-    //   status: "Inactive"
-    // }
-  ];
+  const schools =
+    selectedAgent?.schools ||
+    [
+      // {
+      //   id: 1,
+      //   schoolName: "Greenwood Elementary",
+      //   email: "admin@greenwood.edu",
+      //   address: "123 Main St, City",
+      //   status: "Active"
+      // },
+      // {
+      //   id: 2,
+      //   schoolName: "Riverside High School",
+      //   email: "contact@riverside.edu",
+      //   address: "456 Oak Ave, Town",
+      //   status: "Active"
+      // },
+      // {
+      //   id: 3,
+      //   schoolName: "Sunset Academy",
+      //   email: "info@sunset.edu",
+      //   address: "789 Pine Rd, Village",
+      //   status: "Inactive"
+      // }
+    ];
 
   const handleActionClick = (event, school) => {
     setAnchorEl(event.currentTarget);
@@ -58,7 +60,7 @@ const SchoolsView = ({ selectedAgent }) => {
   };
 
   const manageSubscription = () => {
-    console.log('Manage subscription:', selectedSchool);
+    // console.log('Manage subscription:', selectedSchool);
     handleActionClose();
   };
 
@@ -69,15 +71,14 @@ const SchoolsView = ({ selectedAgent }) => {
       if (response.redirect_url) {
         window.open(response.redirect_url, '_blank');
       } else {
-        alert(response.error || "Failed to impersonate tenant");
+        alert(response.error || 'Failed to impersonate tenant');
       }
     } catch (error) {
-      console.error("Impersonation error:", error);
-      alert("An error occurred during impersonation");
+      console.error('Impersonation error:', error);
+      alert('An error occurred during impersonation');
     }
     handleActionClose();
   };
-
 
   return (
     <Box>
@@ -93,8 +94,8 @@ const SchoolsView = ({ selectedAgent }) => {
             width: '100%',
             overflowX: 'auto',
             '& .MuiTable-root': {
-              minWidth: { xs: 300, sm: 650 }
-            }
+              minWidth: { xs: 300, sm: 650 },
+            },
           }}
         >
           <Table aria-label="schools table">
@@ -104,7 +105,9 @@ const SchoolsView = ({ selectedAgent }) => {
                 <TableCell sx={{ fontWeight: 'bold' }}>School Name</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -113,7 +116,7 @@ const SchoolsView = ({ selectedAgent }) => {
                   key={school.id || index}
                   sx={{
                     '&:last-child td, &:last-child th': { border: 0 },
-                    '&:hover': { bgcolor: 'grey.50' }
+                    '&:hover': { bgcolor: 'grey.50' },
                   }}
                 >
                   <TableCell component="th" scope="row">
@@ -132,9 +135,7 @@ const SchoolsView = ({ selectedAgent }) => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">
-                      {school.email}
-                    </Typography>
+                    <Typography variant="body2">{school.email}</Typography>
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -179,14 +180,8 @@ const SchoolsView = ({ selectedAgent }) => {
           },
         }}
       >
-        <MenuItem onClick={manageSubscription}>
-          Manage Subcription
-        </MenuItem>
-        {user?.access_level === 1 && (
-          <MenuItem onClick={handleLoginAs}>
-            Login As School
-          </MenuItem>
-        )}
+        <MenuItem onClick={manageSubscription}>Manage Subcription</MenuItem>
+        {user?.access_level === 1 && <MenuItem onClick={handleLoginAs}>Login As School</MenuItem>}
       </Menu>
     </Box>
   );

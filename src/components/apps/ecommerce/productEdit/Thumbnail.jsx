@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import Box from '@mui/material/Box';
 import { Typography } from '@mui/material';
@@ -35,7 +34,7 @@ const Thumbnail = () => {
 
     // Set the image file for upload
     setImageFile(file);
-    console.log(imageFile);
+    // console.log(imageFile);
   };
 
   return (

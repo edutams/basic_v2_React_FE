@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const CENTRAL_API_BASE_URL =
-  window.location.hostname === "localhost"
+  window.location.hostname === 'localhost'
     ? import.meta.env.VITE_API_BASE_URL_LOCAL
     : import.meta.env.VITE_API_BASE_URL_PROD;
 
@@ -21,14 +21,16 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
-    const isAuthRequest = originalRequest.url.includes('/agent/login') || originalRequest.url.includes('/agent/refresh_token');
+    const isAuthRequest =
+      originalRequest.url.includes('/agent/login') ||
+      originalRequest.url.includes('/agent/refresh_token');
 
-    console.log('Interceptor 401 check:', {
-      url: originalRequest.url,
-      status: error.response?.status,
-      _retry: originalRequest._retry,
-      isAuthRequest: isAuthRequest
-    });
+    // console.log('Interceptor 401 check:', {
+    //   url: originalRequest.url,
+    //   status: error.response?.status,
+    //   _retry: originalRequest._retry,
+    //   isAuthRequest: isAuthRequest
+    // });
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;

@@ -136,13 +136,11 @@ const SubscriptionHistoryList = () => {
   };
 
   const handleUpdateStatus = (transaction) => {
-    // Handle update status action
-    console.log('Update status for:', transaction);
+    // console.log('Update status for:', transaction);
     handleMenuClose();
   };
 
   const handlePrintReceipt = (transaction) => {
-    // Handle print receipt action
     setSelectedTransaction(transaction);
     setReceiptModalOpen(true);
     handleMenuClose();

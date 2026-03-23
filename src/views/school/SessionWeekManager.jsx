@@ -87,7 +87,7 @@ const SessionWeekManager = () => {
           notify.success('Session mapping deactivated successfully', 'Success');
         } else {
           // Handle other actions (delete, etc.)
-          console.log(`Action ${confirmAction} on session ${selectedSession.id}`);
+          // console.log(`Action ${confirmAction} on session ${selectedSession.id}`);
         }
         handleRefresh();
       } catch (error) {
@@ -118,7 +118,7 @@ const SessionWeekManager = () => {
   };
 
   const handleRefresh = () => {
-    console.log('Refreshing data...');
+    // console.log('Refreshing data...');
     if (isTenant) {
       const fetchMappings = async () => {
         setLoading(true);
@@ -152,13 +152,13 @@ const SessionWeekManager = () => {
   };
 
   const handleAddSessionSubmit = (newSession) => {
-    console.log('New session added:', newSession);
+    // console.log('New session added:', newSession);
     setSessionsData(newSession);
     setAddSessionModalOpen(false);
   };
 
   const handleSetSessionTermSubmit = (newSessionTerm) => {
-    console.log('New session/term set:', newSessionTerm);
+    // console.log('New session/term set:', newSessionTerm);
     setSessionsData(newSessionTerm);
     setSetSessionTermModalOpen(false);
   };
@@ -178,15 +178,15 @@ const SessionWeekManager = () => {
       <Card variant="outlined">
         <CardContent>
           {/* Main Tabs */}
-            <Tabs
-              value={mainTab}
-              onChange={handleMainTabChange}
-              sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
-            >
-              <Tab label="Session/Term Mapping" />
-              <Tab label="Week Manager" />
-              <Tab label="Set Holiday" />
-            </Tabs>
+          <Tabs
+            value={mainTab}
+            onChange={handleMainTabChange}
+            sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
+          >
+            <Tab label="Session/Term Mapping" />
+            <Tab label="Week Manager" />
+            <Tab label="Set Holiday" />
+          </Tabs>
 
           {mainTab === 0 && (
             <Box>
@@ -208,7 +208,9 @@ const SessionWeekManager = () => {
 
           {mainTab === 1 && (
             <Box>
-              <ManageWeeks sessionTermId={mappings.find(m => m.status?.toUpperCase() === 'ACTIVE')?.id} />
+              <ManageWeeks
+                sessionTermId={mappings.find((m) => m.status?.toUpperCase() === 'ACTIVE')?.id}
+              />
             </Box>
           )}
 

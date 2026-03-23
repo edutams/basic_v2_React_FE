@@ -46,30 +46,30 @@ const PackageModal = ({ open, onClose, handleRefresh, selectedPackage, actionTyp
     },
     onSubmit: async (values) => {
       try {
-        console.log('Package data:', values);
-        console.log('Action type:', actionType);
-        
+        // console.log('Package data:', values);
+        // console.log('Action type:', actionType);
+
         switch (actionType) {
           case 'create':
-            console.log('Creating new package:', values);
+            // console.log('Creating new package:', values);
             break;
           case 'update':
-            console.log('Updating package:', selectedPackage?.id, values);
+            // console.log('Updating package:', selectedPackage?.id, values);
             break;
           case 'activate':
-            console.log('Activating package:', selectedPackage?.id);
+            // console.log('Activating package:', selectedPackage?.id);
             break;
           case 'deactivate':
-            console.log('Deactivating package:', selectedPackage?.id);
+            // console.log('Deactivating package:', selectedPackage?.id);
             break;
           default:
-            console.log('Unknown action:', actionType);
+          // console.log('Unknown action:', actionType);/
         }
 
         handleRefresh();
         handleClose();
       } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
       }
     },
   });
@@ -121,11 +121,7 @@ const PackageModal = ({ open, onClose, handleRefresh, selectedPackage, actionTyp
               <Button variant="outlined" onClick={handleCloseModal}>
                 Cancel
               </Button>
-              <Button 
-                variant="contained" 
-                color="success"
-                onClick={() => formik.handleSubmit()}
-              >
+              <Button variant="contained" color="success" onClick={() => formik.handleSubmit()}>
                 Activate
               </Button>
             </Box>
@@ -145,11 +141,7 @@ const PackageModal = ({ open, onClose, handleRefresh, selectedPackage, actionTyp
               <Button variant="outlined" onClick={handleCloseModal}>
                 Cancel
               </Button>
-              <Button 
-                variant="contained" 
-                color="warning"
-                onClick={() => formik.handleSubmit()}
-              >
+              <Button variant="contained" color="warning" onClick={() => formik.handleSubmit()}>
                 Deactivate
               </Button>
             </Box>
@@ -187,13 +179,7 @@ PackageModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   handleRefresh: PropTypes.func.isRequired,
   selectedPackage: PropTypes.object,
-  actionType: PropTypes.oneOf([
-    'create',
-    'update',
-    'view',
-    'activate',
-    'deactivate',
-  ]),
+  actionType: PropTypes.oneOf(['create', 'update', 'view', 'activate', 'deactivate']),
 };
 
 export default PackageModal;

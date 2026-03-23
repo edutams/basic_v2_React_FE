@@ -157,7 +157,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
     <ParentCard
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6">Manage Modules</Typography>
+          <Typography variant="h5">Manage Modules</Typography>
           <Button
             variant="contained"
             color="primary"

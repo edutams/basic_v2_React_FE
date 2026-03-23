@@ -21,9 +21,8 @@ import TiptapEdit from 'src/views/forms/form-tiptap/TiptapEdit';
 import { useTheme } from '@mui/material/styles';
 
 const EmailContent = () => {
-  const { selectedEmail, deleteEmail, toggleStar, toggleImportant, sendEmail } = useContext(
-    EmailContext
-  );
+  const { selectedEmail, deleteEmail, toggleStar, toggleImportant, sendEmail } =
+    useContext(EmailContext);
   const [show, setShow] = useState(false);
   const [editorContent, setEditorContent] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -44,7 +43,12 @@ const EmailContent = () => {
   };
 
   const handleSendReply = () => {
-    if (selectedEmail && editorContent && editorContent.trim() !== '' && editorContent !== '<p></p>') {
+    if (
+      selectedEmail &&
+      editorContent &&
+      editorContent.trim() !== '' &&
+      editorContent !== '<p></p>'
+    ) {
       const newEmail = {
         id: `${Date.now()}`,
         subject: `Re: ${selectedEmail.subject || 'No Subject'}`,
@@ -69,7 +73,9 @@ const EmailContent = () => {
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
       } catch (error) {
-        setSnackbarMessage('Failed to send email: ' + (error && error.message ? error.message : 'Unknown error'));
+        setSnackbarMessage(
+          'Failed to send email: ' + (error && error.message ? error.message : 'Unknown error'),
+        );
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
@@ -141,7 +147,9 @@ const EmailContent = () => {
         </Box>
         <Box sx={{ py: 2 }}>
           <div
-            dangerouslySetInnerHTML={{ __html: selectedEmail?.message || selectedEmail?.emailContent || '' }}
+            dangerouslySetInnerHTML={{
+              __html: selectedEmail?.message || selectedEmail?.emailContent || '',
+            }}
           />
         </Box>
       </Box>
@@ -197,7 +205,7 @@ const EmailContent = () => {
                   variant="contained"
                   color="primary"
                   onClick={() => {
-                    console.log('Send button clicked');
+                    // console.log('Send button clicked');
                     handleSendReply();
                   }}
                 >

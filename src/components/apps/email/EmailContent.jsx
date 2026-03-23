@@ -21,7 +21,8 @@ import { EmailContext } from 'src/context/EmailContext';
 import TiptapEdit from 'src/views/forms/form-tiptap/TiptapEdit';
 
 const EmailContent = () => {
-  const { selectedEmail, deleteEmail, toggleStar, toggleImportant, sendEmail } = useContext(EmailContext);
+  const { selectedEmail, deleteEmail, toggleStar, toggleImportant, sendEmail } =
+    useContext(EmailContext);
   const [show, setShow] = useState(false);
   const [editorContent, setEditorContent] = useState(''); // State to store Tiptap editor content
   const theme = useTheme();
@@ -57,12 +58,12 @@ const EmailContent = () => {
         time: new Date().toISOString(),
         emailExcerpt: editorContent.substring(0, 60),
       };
-      console.log('Sending email:', newEmail); // Debug log
+      // console.log('Sending email:', newEmail);
       sendEmail(newEmail); // Call context function
       setShow(false); // Close editor
       setEditorContent(''); // Clear editor
     } else {
-      console.log('Cannot send: No selected email or empty content');
+      // console.log('Cannot send: No selected email or empty content');
     }
   };
 
@@ -124,7 +125,11 @@ const EmailContent = () => {
           <Typography variant="h4">{selectedEmail.subject}</Typography>
         </Box>
         <Box sx={{ py: 2 }}>
-          <div dangerouslySetInnerHTML={{ __html: selectedEmail.message || selectedEmail.emailContent }} />
+          <div
+            dangerouslySetInnerHTML={{
+              __html: selectedEmail.message || selectedEmail.emailContent,
+            }}
+          />
         </Box>
       </Box>
       {selectedEmail?.attchments?.length === 0 ? null : (
@@ -138,7 +143,11 @@ const EmailContent = () => {
                   <Stack direction="row" gap={2} mt={2}>
                     <Avatar
                       variant="rounded"
-                      sx={{ width: '48px', height: '48px', bgcolor: (theme) => theme.palette.grey[100] }}
+                      sx={{
+                        width: '48px',
+                        height: '48px',
+                        bgcolor: (theme) => theme.palette.grey[100],
+                      }}
                     >
                       <Avatar
                         src={attach.image}

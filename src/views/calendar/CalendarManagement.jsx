@@ -23,20 +23,16 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
+  Menu,
 } from '@mui/material';
 import {
   IconPlus,
   IconTrash,
   IconGripVertical,
   IconEdit,
+  IconDotsVertical,
 } from '@tabler/icons-react';
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -65,7 +61,9 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button variant="contained" color="error" onClick={onConfirm}>Yes, Proceed</Button>
+        <Button variant="contained" color="error" onClick={onConfirm}>
+          Yes, Proceed
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -73,7 +71,10 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
 
 // ─── Sortable Row Wrapper ──────────────────────────────────────────────────
 function SortableRow({ id, children, disabled }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+    disabled,
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -82,8 +83,14 @@ function SortableRow({ id, children, disabled }) {
   };
   return (
     <TableRow ref={setNodeRef} style={style} hover>
-      <TableCell sx={{ width: 32, color: 'text.disabled', cursor: disabled ? 'default' : 'grab', px: 1 }}>
-        {!disabled && <span {...attributes} {...listeners}><IconGripVertical size={18} /></span>}
+      <TableCell
+        sx={{ width: 32, color: 'text.disabled', cursor: disabled ? 'default' : 'grab', px: 1 }}
+      >
+        {!disabled && (
+          <span {...attributes} {...listeners}>
+            <IconGripVertical size={18} />
+          </span>
+        )}
       </TableCell>
       {children}
     </TableRow>
@@ -99,6 +106,8 @@ function SessionsPanel({ isLevel1 }) {
   const [form, setForm] = useState({ sesname: '', status: 'active', is_current: 'no' });
   const [errors, setErrors] = useState({});
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -107,27 +116,55 @@ function SessionsPanel({ isLevel1 }) {
     try {
       const res = await agentApi.get('/agent/calendar/sessions');
       setSessions(res.data);
-    } catch { notify.error('Failed to load sessions'); }
-    finally { setLoading(false); }
+    } catch {
+      notify.error('Failed to load sessions');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchSessions(); }, [fetchSessions]);
+  useEffect(() => {
+    fetchSessions();
+  }, [fetchSessions]);
 
-  const openCreate = () => { setEditTarget(null); setForm({ sesname: '', status: 'active', is_current: 'no' }); setErrors({}); setCreateOpen(true); };
-  const openEdit = (s) => { setEditTarget(s); setForm({ sesname: s.sesname, status: s.status, is_current: s.is_current }); setErrors({}); setCreateOpen(true); };
-  const closeDialog = () => { setCreateOpen(false); setEditTarget(null); setErrors({}); };
+  const openCreate = () => {
+    setEditTarget(null);
+    setForm({ sesname: '', status: 'active', is_current: 'no' });
+    setErrors({});
+    setCreateOpen(true);
+  };
+  const openEdit = (s) => {
+    setEditTarget(s);
+    setForm({ sesname: s.sesname, status: s.status, is_current: s.is_current });
+    setErrors({});
+    setCreateOpen(true);
+  };
+  const closeDialog = () => {
+    setCreateOpen(false);
+    setEditTarget(null);
+    setErrors({});
+  };
 
   const handleDragEnd = async ({ active, over }) => {
     if (!over || active.id === over.id) return;
-    const reordered = arrayMove(sessions, sessions.findIndex(s => s.id === active.id), sessions.findIndex(s => s.id === over.id));
+    const reordered = arrayMove(
+      sessions,
+      sessions.findIndex((s) => s.id === active.id),
+      sessions.findIndex((s) => s.id === over.id),
+    );
     setSessions(reordered);
-    try { await agentApi.put('/agent/calendar/sessions/reorder', { ids: reordered.map(s => s.id) }); }
-    catch { notify.error('Failed to save order'); fetchSessions(); }
+    try {
+      await agentApi.put('/agent/calendar/sessions/reorder', { ids: reordered.map((s) => s.id) });
+    } catch {
+      notify.error('Failed to save order');
+      fetchSessions();
+    }
   };
 
   const validate = () => {
     const errs = {};
-    if (!form.sesname || !/^\d{4}\/\d{4}$/.test(form.sesname)) errs.sesname = 'Must be YYYY/YYYY (e.g. 2024/2025)';
+    if (!form.sesname || !/^\d{4}\/\d{4}$/.test(form.sesname))
+      errs.sesname = 'Must be YYYY/YYYY (e.g. 2024/2025)';
     if (!form.status) errs.status = 'Required';
     if (!form.is_current) errs.is_current = 'Required';
     setErrors(errs);
@@ -153,24 +190,58 @@ function SessionsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (s) => setConfirm({
-    open: true,
-    title: 'Delete Session',
-    message: `Delete "${s.sesname}"? This cannot be undone.`,
-    onConfirm: async () => {
-      setConfirm(p => ({ ...p, open: false }));
-      try { await agentApi.delete(`/agent/calendar/sessions/${s.id}`); notify.success('Session deleted'); fetchSessions(); }
-      catch (err) { notify.error(err.response?.data?.message || 'Failed to delete'); }
-    },
-  });
+  const handleDelete = (s) =>
+    setConfirm({
+      open: true,
+      title: 'Delete Session',
+      message: `Delete "${s.sesname}"? This cannot be undone.`,
+      onConfirm: async () => {
+        setConfirm((p) => ({ ...p, open: false }));
+        try {
+          await agentApi.delete(`/agent/calendar/sessions/${s.id}`);
+          notify.success('Session deleted');
+          fetchSessions();
+        } catch (err) {
+          notify.error(err.response?.data?.message || 'Failed to delete');
+        }
+      },
+    });
+
+  const handleEdit = (s) => {
+    handleMenuClose();
+    openEdit(s);
+  };
+
+  const handleDeleteClick = (s) => {
+    handleMenuClose();
+    handleDelete(s);
+  };
+
+  const handleMenuOpen = (event, session) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedSession(session);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedSession(null);
+  };
 
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="subtitle1" fontWeight={600}>Academic Sessions</Typography>
-        {isLevel1 && <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>New Session</Button>}
+        <Typography variant="h5">Academic Sessions</Typography>
+        {isLevel1 && (
+          <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
+            New Session
+          </Button>
+        )}
       </Box>
-      {!isLevel1 && <Alert severity="info" sx={{ mb: 2 }}>Only Level 1 agents can manage global sessions.</Alert>}
+      {!isLevel1 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Only Level 1 agents can manage global sessions.
+        </Alert>
+      )}
       {isLevel1 && sessions.length > 1 && (
         <Alert severity="info" icon={<IconGripVertical size={16} />} sx={{ mb: 2 }}>
           Drag the grip handle on the left to reorder sessions.
@@ -191,37 +262,90 @@ function SessionsPanel({ isLevel1 }) {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
             ) : sessions.length === 0 ? (
-              <TableRow><TableCell colSpan={7} align="center">No sessions found</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  No sessions found
+                </TableCell>
+              </TableRow>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={sessions.map(s => s.id)} strategy={verticalListSortingStrategy}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sessions.map((s) => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   {sessions.map((s, idx) => (
                     <SortableRow key={s.id} id={s.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{s.sesname}</TableCell>
                       <TableCell>{s.sort_order}</TableCell>
                       <TableCell>
-                        <Chip label={s.is_current === 'yes' ? 'Yes' : 'No'} size="small"
-                          color={s.is_current === 'yes' ? 'primary' : 'default'} />
+                        <Chip
+                          label={s.is_current === 'yes' ? 'Yes' : 'No'}
+                          size="small"
+                          sx={{
+                            bgcolor:
+                              s.is_current === 'yes'
+                                ? (theme) => theme.palette.primary.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              s.is_current === 'yes'
+                                ? (theme) => theme.palette.primary.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Chip label={s.status.toUpperCase()} size="small"
-                          color={s.status === 'active' ? 'success' : 'error'} />
+                        <Chip
+                          label={s.status.toUpperCase()}
+                          size="small"
+                          sx={{
+                            bgcolor:
+                              s.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              s.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
+                        />
                       </TableCell>
                       {isLevel1 && (
                         <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                          <Tooltip title="Edit">
-                            <IconButton size="small" color="primary" onClick={() => openEdit(s)}>
-                              <IconEdit size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton size="small" color="error" onClick={() => handleDelete(s)}>
-                              <IconTrash size={16} />
-                            </IconButton>
-                          </Tooltip>
+                          <IconButton onClick={(e) => handleMenuOpen(e, s)}>
+                            <IconDotsVertical size={18} />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedSession?.id === s.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleEdit(s)}>
+                              <IconEdit size={16} style={{ marginRight: 8 }} />
+                              Edit
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => handleDeleteClick(s)}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <IconTrash size={16} style={{ marginRight: 8 }} />
+                              Delete
+                            </MenuItem>
+                          </Menu>
                         </TableCell>
                       )}
                     </SortableRow>
@@ -238,42 +362,74 @@ function SessionsPanel({ isLevel1 }) {
         <DialogTitle>{editTarget ? 'Edit Session' : 'Create New Session'}</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <TextField
-            fullWidth label="Session Name (e.g. 2024/2025)" value={form.sesname}
-            error={!!errors.sesname} helperText={errors.sesname}
-            onChange={e => {
-              setErrors(p => ({ ...p, sesname: undefined }));
+            fullWidth
+            label="Session Name (e.g. 2024/2025)"
+            value={form.sesname}
+            error={!!errors.sesname}
+            helperText={errors.sesname}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, sesname: undefined }));
               const raw = e.target.value;
-              if (raw.length < form.sesname.length) { setForm(p => ({ ...p, sesname: raw })); return; }
+              if (raw.length < form.sesname.length) {
+                setForm((p) => ({ ...p, sesname: raw }));
+                return;
+              }
               const digitsOnly = raw.replace(/[^0-9/]/g, '');
               const pure = digitsOnly.replace(/\//g, '');
               if (pure.length === 4 && !digitsOnly.includes('/')) {
                 const year = parseInt(pure, 10);
-                setForm(p => ({ ...p, sesname: `${year}/${year + 1}` }));
-              } else if (pure.length > 4) { return; }
-              else { setForm(p => ({ ...p, sesname: digitsOnly })); }
+                setForm((p) => ({ ...p, sesname: `${year}/${year + 1}` }));
+              } else if (pure.length > 4) {
+                return;
+              } else {
+                setForm((p) => ({ ...p, sesname: digitsOnly }));
+              }
             }}
-            margin="normal" inputProps={{ maxLength: 9, placeholder: '2024/2025' }}
+            margin="normal"
+            inputProps={{ maxLength: 9, placeholder: '2024/2025' }}
           />
-          <TextField fullWidth select label="Status" value={form.status}
-            error={!!errors.status} helperText={errors.status}
-            onChange={e => { setErrors(p => ({ ...p, status: undefined })); setForm(p => ({ ...p, status: e.target.value })); }} margin="normal">
+          <TextField
+            fullWidth
+            select
+            label="Status"
+            value={form.status}
+            error={!!errors.status}
+            helperText={errors.status}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, status: undefined }));
+              setForm((p) => ({ ...p, status: e.target.value }));
+            }}
+            margin="normal"
+          >
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
           </TextField>
-          <TextField fullWidth select label="Set as Current Session?" value={form.is_current}
-            error={!!errors.is_current} helperText={errors.is_current}
-            onChange={e => { setErrors(p => ({ ...p, is_current: undefined })); setForm(p => ({ ...p, is_current: e.target.value })); }} margin="normal">
+          <TextField
+            fullWidth
+            select
+            label="Set as Current Session?"
+            value={form.is_current}
+            error={!!errors.is_current}
+            helperText={errors.is_current}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, is_current: undefined }));
+              setForm((p) => ({ ...p, is_current: e.target.value }));
+            }}
+            margin="normal"
+          >
             <MenuItem value="yes">Yes</MenuItem>
             <MenuItem value="no">No</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>{editTarget ? 'Save Changes' : 'Create Session'}</Button>
+          <Button variant="contained" onClick={handleSubmit}>
+            {editTarget ? 'Save Changes' : 'Create Session'}
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <ConfirmDialog {...confirm} onCancel={() => setConfirm(p => ({ ...p, open: false }))} />
+      <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
     </>
   );
 }
@@ -287,6 +443,8 @@ function TermsPanel({ isLevel1 }) {
   const [form, setForm] = useState({ term_name: '', status: 'active' });
   const [errors, setErrors] = useState({});
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedTerm, setSelectedTerm] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -295,22 +453,49 @@ function TermsPanel({ isLevel1 }) {
     try {
       const res = await agentApi.get('/agent/calendar/terms');
       setTerms(res.data);
-    } catch { notify.error('Failed to load terms'); }
-    finally { setLoading(false); }
+    } catch {
+      notify.error('Failed to load terms');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchTerms(); }, [fetchTerms]);
+  useEffect(() => {
+    fetchTerms();
+  }, [fetchTerms]);
 
-  const openCreate = () => { setEditTarget(null); setForm({ term_name: '', status: 'active' }); setErrors({}); setCreateOpen(true); };
-  const openEdit = (t) => { setEditTarget(t); setForm({ term_name: t.term_name, status: t.status }); setErrors({}); setCreateOpen(true); };
-  const closeDialog = () => { setCreateOpen(false); setEditTarget(null); setErrors({}); };
+  const openCreate = () => {
+    setEditTarget(null);
+    setForm({ term_name: '', status: 'active' });
+    setErrors({});
+    setCreateOpen(true);
+  };
+  const openEdit = (t) => {
+    setEditTarget(t);
+    setForm({ term_name: t.term_name, status: t.status });
+    setErrors({});
+    setCreateOpen(true);
+  };
+  const closeDialog = () => {
+    setCreateOpen(false);
+    setEditTarget(null);
+    setErrors({});
+  };
 
   const handleDragEnd = async ({ active, over }) => {
     if (!over || active.id === over.id) return;
-    const reordered = arrayMove(terms, terms.findIndex(t => t.id === active.id), terms.findIndex(t => t.id === over.id));
+    const reordered = arrayMove(
+      terms,
+      terms.findIndex((t) => t.id === active.id),
+      terms.findIndex((t) => t.id === over.id),
+    );
     setTerms(reordered);
-    try { await agentApi.put('/agent/calendar/terms/reorder', { ids: reordered.map(t => t.id) }); }
-    catch { notify.error('Failed to save order'); fetchTerms(); }
+    try {
+      await agentApi.put('/agent/calendar/terms/reorder', { ids: reordered.map((t) => t.id) });
+    } catch {
+      notify.error('Failed to save order');
+      fetchTerms();
+    }
   };
 
   const validate = () => {
@@ -340,24 +525,58 @@ function TermsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (t) => setConfirm({
-    open: true,
-    title: 'Delete Term',
-    message: `Delete "${t.term_name}"? This cannot be undone.`,
-    onConfirm: async () => {
-      setConfirm(p => ({ ...p, open: false }));
-      try { await agentApi.delete(`/agent/calendar/terms/${t.id}`); notify.success('Term deleted'); fetchTerms(); }
-      catch (err) { notify.error(err.response?.data?.message || 'Failed to delete'); }
-    },
-  });
+  const handleDelete = (t) =>
+    setConfirm({
+      open: true,
+      title: 'Delete Term',
+      message: `Delete "${t.term_name}"? This cannot be undone.`,
+      onConfirm: async () => {
+        setConfirm((p) => ({ ...p, open: false }));
+        try {
+          await agentApi.delete(`/agent/calendar/terms/${t.id}`);
+          notify.success('Term deleted');
+          fetchTerms();
+        } catch (err) {
+          notify.error(err.response?.data?.message || 'Failed to delete');
+        }
+      },
+    });
+
+  const handleEdit = (t) => {
+    handleMenuClose();
+    openEdit(t);
+  };
+
+  const handleDeleteClick = (t) => {
+    handleMenuClose();
+    handleDelete(t);
+  };
+
+  const handleMenuOpen = (event, term) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedTerm(term);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedTerm(null);
+  };
 
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="subtitle1" fontWeight={600}>Academic Terms</Typography>
-        {isLevel1 && <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>New Term</Button>}
+        <Typography variant="h5">Academic Terms</Typography>
+        {isLevel1 && (
+          <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
+            New Term
+          </Button>
+        )}
       </Box>
-      {!isLevel1 && <Alert severity="info" sx={{ mb: 2 }}>Only Level 1 agents can manage global terms.</Alert>}
+      {!isLevel1 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Only Level 1 agents can manage global terms.
+        </Alert>
+      )}
       {isLevel1 && terms.length > 1 && (
         <Alert severity="info" icon={<IconGripVertical size={16} />} sx={{ mb: 2 }}>
           Drag the grip handle on the left to reorder terms.
@@ -377,33 +596,74 @@ function TermsPanel({ isLevel1 }) {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
             ) : terms.length === 0 ? (
-              <TableRow><TableCell colSpan={6} align="center">No terms found</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No terms found
+                </TableCell>
+              </TableRow>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={terms.map(t => t.id)} strategy={verticalListSortingStrategy}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={terms.map((t) => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   {terms.map((t, idx) => (
                     <SortableRow key={t.id} id={t.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{t.term_name}</TableCell>
                       <TableCell>{t.sort_order}</TableCell>
                       <TableCell>
-                        <Chip label={t.status.toUpperCase()} size="small"
-                          color={t.status === 'active' ? 'success' : 'error'} />
+                        <Chip
+                          label={t.status.toUpperCase()}
+                          size="small"
+                          // color={getStatusColor(t.status)}
+                          // sx={{ borderRadius: '8px' }}
+                          sx={{
+                            bgcolor:
+                              t.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              t.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
+                        />
                       </TableCell>
                       {isLevel1 && (
                         <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                          <Tooltip title="Edit">
-                            <IconButton size="small" color="primary" onClick={() => openEdit(t)}>
-                              <IconEdit size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton size="small" color="error" onClick={() => handleDelete(t)}>
-                              <IconTrash size={16} />
-                            </IconButton>
-                          </Tooltip>
+                          <IconButton onClick={(e) => handleMenuOpen(e, t)}>
+                            <IconDotsVertical size={18} />
+                          </IconButton>
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedTerm?.id === t.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleEdit(t)}>
+                              <IconEdit size={16} style={{ marginRight: 8 }} />
+                              Edit
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => handleDeleteClick(t)}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <IconTrash size={16} style={{ marginRight: 8 }} />
+                              Delete
+                            </MenuItem>
+                          </Menu>
                         </TableCell>
                       )}
                     </SortableRow>
@@ -419,24 +679,44 @@ function TermsPanel({ isLevel1 }) {
       <Dialog open={createOpen} onClose={closeDialog} maxWidth="sm" fullWidth>
         <DialogTitle>{editTarget ? 'Edit Term' : 'Create New Term'}</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          <TextField fullWidth label="Term Name (e.g. First Term)" value={form.term_name}
-            error={!!errors.term_name} helperText={errors.term_name}
-            onChange={e => { setErrors(p => ({ ...p, term_name: undefined })); setForm(p => ({ ...p, term_name: e.target.value })); }}
-            margin="normal" />
-          <TextField fullWidth select label="Status" value={form.status}
-            error={!!errors.status} helperText={errors.status}
-            onChange={e => { setErrors(p => ({ ...p, status: undefined })); setForm(p => ({ ...p, status: e.target.value })); }} margin="normal">
+          <TextField
+            fullWidth
+            label="Term Name (e.g. First Term)"
+            value={form.term_name}
+            error={!!errors.term_name}
+            helperText={errors.term_name}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, term_name: undefined }));
+              setForm((p) => ({ ...p, term_name: e.target.value }));
+            }}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            select
+            label="Status"
+            value={form.status}
+            error={!!errors.status}
+            helperText={errors.status}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, status: undefined }));
+              setForm((p) => ({ ...p, status: e.target.value }));
+            }}
+            margin="normal"
+          >
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>{editTarget ? 'Save Changes' : 'Create Term'}</Button>
+          <Button variant="contained" onClick={handleSubmit}>
+            {editTarget ? 'Save Changes' : 'Create Term'}
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <ConfirmDialog {...confirm} onCancel={() => setConfirm(p => ({ ...p, open: false }))} />
+      <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
     </>
   );
 }
@@ -451,8 +731,21 @@ function MappingsPanel() {
   const [form, setForm] = useState({ session_id: '', term_id: '', status: 'active' });
   const [errors, setErrors] = useState({});
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedMapping, setSelectedMapping] = useState(null);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -462,19 +755,34 @@ function MappingsPanel() {
         agentApi.get('/agent/calendar/sessions'),
         agentApi.get('/agent/calendar/terms'),
       ]);
-      setMappings(mRes.data); setSessions(sRes.data); setTerms(tRes.data);
-    } catch { notify.error('Failed to load data'); }
-    finally { setLoading(false); }
+      setMappings(mRes.data);
+      setSessions(sRes.data);
+      setTerms(tRes.data);
+    } catch {
+      notify.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const handleDragEnd = async ({ active, over }) => {
     if (!over || active.id === over.id) return;
-    const reordered = arrayMove(mappings, mappings.findIndex(m => m.id === active.id), mappings.findIndex(m => m.id === over.id));
+    const reordered = arrayMove(
+      mappings,
+      mappings.findIndex((m) => m.id === active.id),
+      mappings.findIndex((m) => m.id === over.id),
+    );
     setMappings(reordered);
-    try { await agentApi.put('/agent/calendar/mappings/reorder', { ids: reordered.map(m => m.id) }); }
-    catch { notify.error('Failed to save order'); fetchAll(); }
+    try {
+      await agentApi.put('/agent/calendar/mappings/reorder', { ids: reordered.map((m) => m.id) });
+    } catch {
+      notify.error('Failed to save order');
+      fetchAll();
+    }
   };
 
   const validate = () => {
@@ -491,36 +799,70 @@ function MappingsPanel() {
     try {
       await agentApi.post('/agent/calendar/mappings', form);
       notify.success('Mapping saved');
-      setDialogOpen(false); setErrors({}); setForm({ session_id: '', term_id: '', status: 'active' });
+      setDialogOpen(false);
+      setErrors({});
+      setForm({ session_id: '', term_id: '', status: 'active' });
       fetchAll();
-    } catch (err) { notify.error(err.response?.data?.message || 'Failed to save mapping'); }
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to save mapping');
+    }
   };
 
-  const handleDelete = (m) => setConfirm({
-    open: true, title: 'Delete Mapping',
-    message: `Delete "${m.session?.sesname} / ${m.term?.term_name}"? This cannot be undone.`,
-    onConfirm: async () => {
-      setConfirm(p => ({ ...p, open: false }));
-      try { await agentApi.delete(`/agent/calendar/mappings/${m.id}`); notify.success('Mapping removed'); fetchAll(); }
-      catch (err) { notify.error(err.response?.data?.message || 'Failed'); }
-    },
-  });
+  const handleDelete = (m) =>
+    setConfirm({
+      open: true,
+      title: 'Delete Mapping',
+      message: `Delete "${m.session?.sesname} / ${m.term?.term_name}"? This cannot be undone.`,
+      onConfirm: async () => {
+        setConfirm((p) => ({ ...p, open: false }));
+        try {
+          await agentApi.delete(`/agent/calendar/mappings/${m.id}`);
+          notify.success('Mapping removed');
+          fetchAll();
+        } catch (err) {
+          notify.error(err.response?.data?.message || 'Failed');
+        }
+      },
+    });
 
-  const handleActivate = (m) => setConfirm({
-    open: true, title: 'Activate Mapping',
-    message: `Activate "${m.session?.sesname} / ${m.term?.term_name}"? All others will be set to inactive.`,
-    onConfirm: async () => {
-      setConfirm(p => ({ ...p, open: false }));
-      try { await agentApi.put(`/agent/calendar/mappings/${m.id}/activate`); notify.success('Mapping activated'); fetchAll(); }
-      catch (err) { notify.error(err.response?.data?.message || 'Failed'); }
-    },
-  });
+  const handleActivate = (m) =>
+    setConfirm({
+      open: true,
+      title: 'Activate Mapping',
+      message: `Activate "${m.session?.sesname} / ${m.term?.term_name}"? All others will be set to inactive.`,
+      onConfirm: async () => {
+        setConfirm((p) => ({ ...p, open: false }));
+        try {
+          await agentApi.put(`/agent/calendar/mappings/${m.id}/activate`);
+          notify.success('Mapping activated');
+          fetchAll();
+        } catch (err) {
+          notify.error(err.response?.data?.message || 'Failed');
+        }
+      },
+    });
+
+  const handleMenuOpen = (event, mapping) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedMapping(mapping);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedMapping(null);
+  };
 
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="subtitle1" fontWeight={600}>My Session–Term Mappings</Typography>
-        <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={() => setDialogOpen(true)}>Add Mapping</Button>
+        <Typography variant="h5">My Session–Term Mappings</Typography>
+        <Button
+          variant="contained"
+          startIcon={<IconPlus size={16} />}
+          onClick={() => setDialogOpen(true)}
+        >
+          Add Mapping
+        </Button>
       </Box>
       <Alert severity="info" sx={{ mb: 2 }}>
         Tenants only see the session-term pairs you've mapped here.
@@ -541,12 +883,27 @@ function MappingsPanel() {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
             ) : mappings.length === 0 ? (
-              <TableRow><TableCell colSpan={7} align="center">No mappings yet. Add a session-term pair.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  No mappings yet. Add a session-term pair.
+                </TableCell>
+              </TableRow>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={mappings.map(m => m.id)} strategy={verticalListSortingStrategy}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={mappings.map((m) => m.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   {mappings.map((m, idx) => (
                     <SortableRow key={m.id} id={m.id}>
                       <TableCell>{idx + 1}</TableCell>
@@ -554,20 +911,53 @@ function MappingsPanel() {
                       <TableCell>{m.term?.term_name}</TableCell>
                       <TableCell>{m.sort_order}</TableCell>
                       <TableCell>
-                        <Chip label={m.status.toUpperCase()} size="small"
-                          color={m.status === 'active' ? 'success' : 'error'} />
+                        <Chip
+                          label={m.status.toUpperCase()}
+                          size="small"
+                          sx={{
+                            bgcolor:
+                              m.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              m.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
+                        />
                       </TableCell>
                       <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                        {m.status === 'inactive' && (
-                          <Button size="small" variant="outlined" color="success" sx={{ mr: 1 }} onClick={() => handleActivate(m)}>
-                            Activate
-                          </Button>
-                        )}
-                        <Tooltip title="Delete">
-                          <IconButton color="error" size="small" onClick={() => handleDelete(m)}>
-                            <IconTrash size={16} />
-                          </IconButton>
-                        </Tooltip>
+                        <IconButton onClick={(e) => handleMenuOpen(e, m)}>
+                          <IconDotsVertical size={18} />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl) && selectedMapping?.id === m.id}
+                          onClose={handleMenuClose}
+                        >
+                          {m.status === 'inactive' && (
+                            <MenuItem
+                              onClick={() => {
+                                handleMenuClose();
+                                handleActivate(m);
+                              }}
+                            >
+                              Activate
+                            </MenuItem>
+                          )}
+                          <MenuItem
+                            onClick={() => {
+                              handleMenuClose();
+                              handleDelete(m);
+                            }}
+                            sx={{ color: 'error.main' }}
+                          >
+                            <IconTrash size={16} style={{ marginRight: 8 }} />
+                            Delete
+                          </MenuItem>
+                        </Menu>
                       </TableCell>
                     </SortableRow>
                   ))}
@@ -581,32 +971,72 @@ function MappingsPanel() {
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Session–Term Mapping</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          <TextField fullWidth select label="Session" value={form.session_id}
-            error={!!errors.session_id} helperText={errors.session_id}
-            onChange={e => { setErrors(p => ({ ...p, session_id: undefined })); setForm(p => ({ ...p, session_id: e.target.value })); }} margin="normal">
+          <TextField
+            fullWidth
+            select
+            label="Session"
+            value={form.session_id}
+            error={!!errors.session_id}
+            helperText={errors.session_id}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, session_id: undefined }));
+              setForm((p) => ({ ...p, session_id: e.target.value }));
+            }}
+            margin="normal"
+          >
             <MenuItem value="">Select Session</MenuItem>
-            {sessions.map(s => <MenuItem key={s.id} value={s.id}>{s.sesname}</MenuItem>)}
+            {sessions.map((s) => (
+              <MenuItem key={s.id} value={s.id}>
+                {s.sesname}
+              </MenuItem>
+            ))}
           </TextField>
-          <TextField fullWidth select label="Term" value={form.term_id}
-            error={!!errors.term_id} helperText={errors.term_id}
-            onChange={e => { setErrors(p => ({ ...p, term_id: undefined })); setForm(p => ({ ...p, term_id: e.target.value })); }} margin="normal">
+          <TextField
+            fullWidth
+            select
+            label="Term"
+            value={form.term_id}
+            error={!!errors.term_id}
+            helperText={errors.term_id}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, term_id: undefined }));
+              setForm((p) => ({ ...p, term_id: e.target.value }));
+            }}
+            margin="normal"
+          >
             <MenuItem value="">Select Term</MenuItem>
-            {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
+            {terms.map((t) => (
+              <MenuItem key={t.id} value={t.id}>
+                {t.term_name}
+              </MenuItem>
+            ))}
           </TextField>
-          <TextField fullWidth select label="Status" value={form.status}
-            error={!!errors.status} helperText={errors.status}
-            onChange={e => { setErrors(p => ({ ...p, status: undefined })); setForm(p => ({ ...p, status: e.target.value })); }} margin="normal">
+          <TextField
+            fullWidth
+            select
+            label="Status"
+            value={form.status}
+            error={!!errors.status}
+            helperText={errors.status}
+            onChange={(e) => {
+              setErrors((p) => ({ ...p, status: undefined }));
+              setForm((p) => ({ ...p, status: e.target.value }));
+            }}
+            margin="normal"
+          >
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>Save Mapping</Button>
+          <Button variant="contained" onClick={handleSubmit}>
+            Save Mapping
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <ConfirmDialog {...confirm} onCancel={() => setConfirm(p => ({ ...p, open: false }))} />
+      <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
     </>
   );
 }
@@ -622,7 +1052,9 @@ const CalendarManagement = () => {
     return (
       <>
         <Breadcrumb title="Calendar Management" items={BCrumb} />
-        <ParentCard title="Session–Term Mappings"><MappingsPanel /></ParentCard>
+        <ParentCard title="Session–Term Mappings">
+          <MappingsPanel />
+        </ParentCard>
       </>
     );
   }
@@ -630,15 +1062,25 @@ const CalendarManagement = () => {
   return (
     <>
       <Breadcrumb title="Calendar Management" items={BCrumb} />
-      <ParentCard title="Calendar Management">
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
+      <ParentCard>
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}
+        >
           <Tab label="Sessions" />
           <Tab label="Terms" />
           <Tab label="My Mappings" />
         </Tabs>
-        <TabPanel value={tab} index={0}><SessionsPanel isLevel1={isLevel1} /></TabPanel>
-        <TabPanel value={tab} index={1}><TermsPanel isLevel1={isLevel1} /></TabPanel>
-        <TabPanel value={tab} index={2}><MappingsPanel /></TabPanel>
+        <TabPanel value={tab} index={0}>
+          <SessionsPanel isLevel1={isLevel1} />
+        </TabPanel>
+        <TabPanel value={tab} index={1}>
+          <TermsPanel isLevel1={isLevel1} />
+        </TabPanel>
+        <TabPanel value={tab} index={2}>
+          <MappingsPanel />
+        </TabPanel>
       </ParentCard>
     </>
   );

@@ -1,20 +1,13 @@
 import React from 'react';
-import {
-  Box,
-  Grid,
-  TextField,
-  Button,
-  FormControl,
-  Select,
-  MenuItem,
-} from '@mui/material';
+import { Box, Grid, TextField, Button, FormControl, Select, MenuItem } from '@mui/material';
 import { useFormik } from 'formik';
 import PropTypes from 'prop-types';
 
 const GatewayForm = ({
   initialValues = {
     gateway_name: '',
-    gateway_status: 'active',
+    code: '',
+    status: 'active',
   },
   onSubmit,
   onCancel,
@@ -41,10 +34,20 @@ const GatewayForm = ({
         </Grid>
 
         <Grid item xs={12}>
+          <TextField
+            label="Gateway Code"
+            name="code"
+            value={formik.values.code || ''}
+            onChange={formik.handleChange}
+            fullWidth
+          />
+        </Grid>
+
+        <Grid item xs={12}>
           <FormControl fullWidth>
             <Select
-              name="gateway_status"
-              value={formik.values.gateway_status || ''}
+              name="status"
+              value={formik.values.status || ''}
               onChange={formik.handleChange}
               displayEmpty
             >

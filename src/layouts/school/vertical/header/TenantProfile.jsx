@@ -15,17 +15,12 @@ import { useTenantAuth } from '../../../../hooks/useTenantAuth';
 import { useNotification } from '../../../../hooks/useNotification';
 import user1 from '../../../../assets/images/users/1.jpg';
 
-import {
-  IconChevronDown,
-  IconCurrencyDollar,
-  IconMail,
-  IconLogout,
-} from '@tabler/icons-react';
+import { IconChevronDown, IconCurrencyDollar, IconMail, IconLogout } from '@tabler/icons-react';
 
 const TenantProfile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const { user, logout } = useTenantAuth();
-  console.log('TenantProfile user:', user);
+  // console.log('TenantProfile user:', user);
 
   const navigate = useNavigate();
   const notify = useNotification();

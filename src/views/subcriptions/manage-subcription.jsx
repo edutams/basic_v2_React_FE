@@ -67,9 +67,7 @@ const DUMMY_ROWS = [
 ];
 
 const ManageSubscriptions = () => {
-  return (
-    <ManageSubscriptionList />
-  );
+  return <ManageSubscriptionList />;
 };
 
 const ManageSubscriptionList = () => {
@@ -93,7 +91,7 @@ const ManageSubscriptionList = () => {
     try {
       setLoading(true);
       const res = await tenantApi.get('/subscription-status');
-      // For now, status endpoint returns current subscription. 
+      // For now, status endpoint returns current subscription.
       // If we want history, we might need another endpoint, but let's adapt to what we have.
       if (res.data.data) {
         setRows([res.data.data]);
@@ -113,13 +111,12 @@ const ManageSubscriptionList = () => {
   }, []);
 
   const filteredRows = rows.filter((row) => {
-    const sessionTermStr = row.sessionterm 
-      ? row.sessionterm 
+    const sessionTermStr = row.sessionterm
+      ? row.sessionterm
       : `${row.sessions?.sesname || ''} ${row.terms?.term_name || ''}`;
-    
+
     return sessionTermStr.toLowerCase().includes(searchTerm.toLowerCase());
   });
-
 
   const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -185,7 +182,7 @@ const ManageSubscriptionList = () => {
 
   const handleRevertPlanClick = (row) => {
     // Handle revert plan action
-    console.log('Revert plan for:', row);
+    // console.log('Revert plan for:', row);
     handleMenuClose();
   };
 
@@ -204,7 +201,7 @@ const ManageSubscriptionList = () => {
           term_id: data.term || null,
           subscription_mode: 'online', // adapt as needed
         };
-        
+
         await tenantApi.post('/subscribe', payload);
         notify.success('Subscription plan successfully initiated', 'Success');
         fetchSubscriptions();

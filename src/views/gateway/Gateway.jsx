@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -7,17 +7,11 @@ import GatewayModal from '../../components/gateway/components/GatewayModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PropTypes from 'prop-types';
 import { useNotification } from '../../hooks/useNotification';
+import gatewayApi from '../../api/gatewayApi';
 
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { title: 'Gateways' },
-];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Gateways' }];
 
-const GatewayManagement = ({
-  gateways = [],
-  onGatewayUpdate,
-  isLoading = false,
-}) => {
+const GatewayManagement = ({ gateways = [], onGatewayUpdate, isLoading = false }) => {
   const [gatewayModalOpen, setGatewayModalOpen] = useState(false);
   const [selectedGateway, setSelectedGateway] = useState(null);
   const [actionType, setActionType] = useState('create');
@@ -40,21 +34,27 @@ const GatewayManagement = ({
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (gatewayToDelete) {
-      onGatewayUpdate(gatewayToDelete, 'delete');
-      notify.success('Gateway deleted successfully', 'Success');
+      try {
+        const res = await gatewayApi.delete(gatewayToDelete.id);
+        onGatewayUpdate(gatewayToDelete, 'delete');
+        notify.success(res.data?.message || 'Gateway deleted successfully');
+      } catch (error) {
+        notify.error(error.response?.data?.message || 'Failed to delete gateway');
+      }
     }
     setDeleteDialogOpen(false);
     setGatewayToDelete(null);
   };
 
-  const handleGatewayUpdate = (gatewayData, operation) => {
+  const handleGatewayUpdateInModal = (response, operation) => {
+    const gatewayData = response?.data || response;
     onGatewayUpdate(gatewayData, operation);
     if (operation === 'create') {
-      notify.success('Gateway registered successfully', 'Success');
+      notify.success(response?.message || 'Gateway registered successfully');
     } else if (operation === 'update') {
-      notify.success('Gateway updated successfully', 'Success');
+      notify.success(response?.message || 'Gateway updated successfully');
     }
   };
 
@@ -75,7 +75,7 @@ const GatewayManagement = ({
         onClose={() => setGatewayModalOpen(false)}
         actionType={actionType}
         selectedGateway={selectedGateway}
-        onGatewayUpdate={handleGatewayUpdate}
+        onGatewayUpdate={handleGatewayUpdateInModal}
         isLoading={isLoading}
       />
 
@@ -102,15 +102,31 @@ GatewayManagement.propTypes = {
 };
 
 export default function GatewayPage() {
-  const [gateways, setGateways] = useState([
-    { id: 1, gateway_name: 'Auto_credit', gateway_status: 'active' },
-  ]);
+  const [gateways, setGateways] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const notify = useNotification();
+
+  const fetchGateways = async () => {
+    setLoading(true);
+    try {
+      const res = await gatewayApi.getAll();
+      setGateways(res.data.data);
+    } catch (error) {
+      notify.error(error.response?.data?.message || 'Failed to load gateways');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGateways();
+  }, []);
 
   const handleGatewayUpdate = (gatewayData, operation) => {
     if (operation === 'create') {
       setGateways((prev) => [...prev, gatewayData]);
     } else if (operation === 'update') {
-      setGateways((prev) => prev.map((g) => g.id === gatewayData.id ? gatewayData : g));
+      setGateways((prev) => prev.map((g) => (g.id === gatewayData.id ? gatewayData : g)));
     } else if (operation === 'delete') {
       setGateways((prev) => prev.filter((g) => g.id !== gatewayData.id));
     }
@@ -120,7 +136,7 @@ export default function GatewayPage() {
     <GatewayManagement
       gateways={gateways}
       onGatewayUpdate={handleGatewayUpdate}
-      isLoading={false}
+      isLoading={loading}
     />
   );
 }

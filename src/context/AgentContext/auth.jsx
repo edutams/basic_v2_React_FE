@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
 
       const { access_token, expires_in, user: apiUser, data: apiData } = res.data;
       const userData = apiUser || apiData;
-      console.log('login user data:', userData);
+      // console.log('login user data:', userData);
 
       localStorage.setItem('access_token', access_token);
       localStorage.setItem('token_expires_in', expires_in.toString());

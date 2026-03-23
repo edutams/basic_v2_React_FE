@@ -24,7 +24,15 @@ const getModalConfig = (actionType) => {
   return configs[actionType] || configs.update;
 };
 
-const ModuleModal = ({ open, onClose, handleRefresh, updateModule, updateModuleStatus, selectedModule, actionType }) => {
+const ModuleModal = ({
+  open,
+  onClose,
+  handleRefresh,
+  updateModule,
+  updateModuleStatus,
+  selectedModule,
+  actionType,
+}) => {
   const modalConfig = getModalConfig(actionType);
 
   const formik = useFormik({
@@ -36,20 +44,18 @@ const ModuleModal = ({ open, onClose, handleRefresh, updateModule, updateModuleS
     },
     onSubmit: async (values) => {
       try {
-        console.log('Module data:', values);
-        console.log('Action type:', actionType);
-        
+        // console.log('Module data:', values);
+        // console.log('Action type:', actionType);
+
         switch (actionType) {
-
-
           case 'activate':
-            console.log('Activating module:', selectedModule?.id);
+            // console.log('Activating module:', selectedModule?.id);
             break;
           case 'deactivate':
-            console.log('Deactivating module:', selectedModule?.id);
+            // console.log('Deactivating module:', selectedModule?.id);
             break;
           default:
-            console.log('Unknown action:', actionType);
+          // console.log('Unknown action:', actionType);
         }
 
         handleRefresh();
@@ -66,7 +72,7 @@ const ModuleModal = ({ open, onClose, handleRefresh, updateModule, updateModuleS
   };
 
   const handleUpdate = (moduleData) => {
-    console.log('Module updated:', moduleData);
+    // console.log('Module updated:', moduleData);
     if (updateModule) {
       updateModule(moduleData);
     }
@@ -78,11 +84,7 @@ const ModuleModal = ({ open, onClose, handleRefresh, updateModule, updateModuleS
     switch (actionType) {
       case 'update':
         return (
-          <EditModule
-            selectedModule={selectedModule}
-            onSave={handleUpdate}
-            onClose={handleClose}
-          />
+          <EditModule selectedModule={selectedModule} onSave={handleUpdate} onClose={handleClose} />
         );
 
       case 'activate':
@@ -116,17 +118,15 @@ const ModuleModal = ({ open, onClose, handleRefresh, updateModule, updateModuleS
 
       case 'deactivate':
         return (
-          <Box sx={{ p: 0}}>
+          <Box sx={{ p: 0 }}>
             <Typography variant="h6" gutterBottom>
-            Change Module Status
+              Change Module Status
             </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
               Are you sure you want to deactivate "{selectedModule?.mod_name}"?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button  onClick={handleClose}>
-                Cancel
-              </Button>
+              <Button onClick={handleClose}>Cancel</Button>
               <Button
                 variant="contained"
                 color="warning"
@@ -169,11 +169,7 @@ ModuleModal.propTypes = {
   updateModule: PropTypes.func,
   updateModuleStatus: PropTypes.func,
   selectedModule: PropTypes.object,
-  actionType: PropTypes.oneOf([
-    'update',
-    'activate',
-    'deactivate',
-  ]),
+  actionType: PropTypes.oneOf(['update', 'activate', 'deactivate']),
 };
 
 export default ModuleModal;

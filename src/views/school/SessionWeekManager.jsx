@@ -152,13 +152,13 @@ const SessionWeekManager = () => {
   };
 
   const handleAddSessionSubmit = (newSession) => {
-    console.log('New session added:', newSession);
+    // console.log('New session added:', newSession);
     setSessionsData(newSession);
     setAddSessionModalOpen(false);
   };
 
   const handleSetSessionTermSubmit = (newSessionTerm) => {
-    console.log('New session/term set:', newSessionTerm);
+    // console.log('New session/term set:', newSessionTerm);
     setSessionsData(newSessionTerm);
     setSetSessionTermModalOpen(false);
   };

@@ -69,6 +69,13 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
     }
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setPage(0);
+  };
+
+  const hasFilters = searchTerm !== '';
+
   return (
     <ParentCard
       title={
@@ -88,7 +95,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
         </Box>
       }
     >
-      <Box sx={{ p: 0 }}>
+      <Box sx={{ p: 0, display: 'flex', gap: 2 }}>
         <TextField
           placeholder="Search gateways..."
           value={searchTerm}
@@ -102,116 +109,121 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
             ),
           }}
         />
-
-        <Paper variant="outlined">
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Gateway Name</TableCell>
-                  <TableCell>Code</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      <Typography>Loading...</Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : paginatedGateways.length > 0 ? (
-                  paginatedGateways.map((gateway, index) => (
-                    <TableRow key={gateway.id} hover>
-                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                      <TableCell>{gateway.gateway_name}</TableCell>
-                      <TableCell>{gateway.code}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={gateway.status.toUpperCase()}
-                          size="small"
-                          sx={{
-                            bgcolor:
-                              gateway.status?.toLowerCase() === 'active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.error.light,
-                            color:
-                              gateway.status?.toLowerCase() === 'active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.error.main,
-                            borderRadius: '8px',
-                            fontWeight: 600,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton onClick={(e) => handleMenuOpen(e, gateway)}>
-                          <MoreVertIcon />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedGateway?.id === gateway.id}
-                          onClose={handleMenuClose}
-                        >
-                          <MenuItem onClick={() => handleAction('update', gateway)}>
-                            <IconEdit size={16} style={{ marginRight: 8 }} />
-                            Edit
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => handleAction('delete', gateway)}
-                            sx={{ color: 'error.main' }}
-                          >
-                            <IconTrash size={16} style={{ marginRight: 8 }} />
-                            Delete
-                          </MenuItem>
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
-                      <Alert
-                        severity="info"
-                        sx={{
-                          mb: 0,
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          '& .MuiAlert-icon': {
-                            mr: 1.5,
-                          },
-                        }}
-                      >
-                        <Typography variant="body1" color="textSecondary">
-                          No gateways found
-                        </Typography>
-                      </Alert>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredGateways.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                    colSpan={5}
-                  />
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </TableContainer>
-        </Paper>
+        {hasFilters && (
+          <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 0.5 }}>
+            Clear Filters
+          </Button>
+        )}
       </Box>
+
+      <Paper variant="outlined">
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell>Gateway Name</TableCell>
+                <TableCell>Code</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    <Typography>Loading...</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedGateways.length > 0 ? (
+                paginatedGateways.map((gateway, index) => (
+                  <TableRow key={gateway.id} hover>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>{gateway.gateway_name}</TableCell>
+                    <TableCell>{gateway.code}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={gateway.status.toUpperCase()}
+                        size="small"
+                        sx={{
+                          bgcolor:
+                            gateway.status?.toLowerCase() === 'active'
+                              ? (theme) => theme.palette.success.light
+                              : (theme) => theme.palette.error.light,
+                          color:
+                            gateway.status?.toLowerCase() === 'active'
+                              ? (theme) => theme.palette.success.main
+                              : (theme) => theme.palette.error.main,
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={(e) => handleMenuOpen(e, gateway)}>
+                        <MoreVertIcon />
+                      </IconButton>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl) && selectedGateway?.id === gateway.id}
+                        onClose={handleMenuClose}
+                      >
+                        <MenuItem onClick={() => handleAction('update', gateway)}>
+                          <IconEdit size={16} style={{ marginRight: 8 }} />
+                          Edit
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => handleAction('delete', gateway)}
+                          sx={{ color: 'error.main' }}
+                        >
+                          <IconTrash size={16} style={{ marginRight: 8 }} />
+                          Delete
+                        </MenuItem>
+                      </Menu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                    <Alert
+                      severity="info"
+                      sx={{
+                        mb: 0,
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        '& .MuiAlert-icon': {
+                          mr: 1.5,
+                        },
+                      }}
+                    >
+                      <Typography variant="body1" color="textSecondary">
+                        No gateways found
+                      </Typography>
+                    </Alert>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  count={filteredGateways.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  colSpan={5}
+                />
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </TableContainer>
+      </Paper>
     </ParentCard>
   );
 };

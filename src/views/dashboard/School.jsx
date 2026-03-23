@@ -275,7 +275,7 @@ const SchoolDashboard = () => {
     try {
       const response = await agentApi.impersonateTenant(school.id);
       // response IS already the data (agentApi returns response.data)
-      console.log('impersonate response:', response);
+      // console.log('impersonate response:', response);
 
       if (response.status === 'success' && response.redirect_url) {
         window.open(response.redirect_url, '_blank');

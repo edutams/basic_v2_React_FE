@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import { Grid, Typography } from '@mui/material';
@@ -9,11 +8,11 @@ const StatusCard = () => {
   const [status, setStatus] = useState(0);
   const handleChange = (event) => {
     setStatus(event.target.value);
-    console.log('test');
+    // console.log('test');
   };
 
   return (
-    (<Box p={3}>
+    <Box p={3}>
       <Box display="flex" alignItems="center" justifyContent="space-between">
         <Typography variant="h5">Status</Typography>
 
@@ -23,12 +22,12 @@ const StatusCard = () => {
               status === 0
                 ? 'primary.main'
                 : status === 1
-                  ? 'error.main'
-                  : status === 2
-                    ? 'secondary.main'
-                    : status === 3
-                      ? 'warning.main'
-                      : 'error.main',
+                ? 'error.main'
+                : status === 2
+                ? 'secondary.main'
+                : status === 3
+                ? 'warning.main'
+                : 'error.main',
             '& svg': { display: 'none' },
             width: 15,
             height: 15,
@@ -46,7 +45,7 @@ const StatusCard = () => {
           <Typography variant="body2">Set the product status.</Typography>
         </Grid>
       </Grid>
-    </Box>)
+    </Box>
   );
 };
 

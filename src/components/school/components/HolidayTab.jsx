@@ -80,7 +80,7 @@ const HolidayTab = ({ handleRefresh }) => {
   };
 
   const handleTermChange = (event, newValue) => {
-    console.log('HolidayTab: activeTerm changing from', activeTerm, 'to', newValue);
+    // console.log('HolidayTab: activeTerm changing from', activeTerm, 'to', newValue);
     setActiveTerm(newValue);
     setSelectedSession(''); // Reset session filter when changing terms
   };
@@ -113,7 +113,7 @@ const HolidayTab = ({ handleRefresh }) => {
   };
 
   const handleSetHolidayClick = () => {
-    console.log('HolidayTab: Opening modal with activeTerm:', activeTerm);
+    // console.log('HolidayTab: Opening modal with activeTerm:', activeTerm);
     setModalMode('create');
     setSelectedHoliday(null);
     setHolidayModalOpen(true);
@@ -136,7 +136,7 @@ const HolidayTab = ({ handleRefresh }) => {
   };
 
   const handleSave = () => {
-    console.log('Saving holidays:', holidays);
+    // console.log('Saving holidays:', holidays);
     handleRefresh();
   };
 

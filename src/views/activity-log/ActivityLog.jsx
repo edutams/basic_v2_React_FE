@@ -11,13 +11,19 @@ import {
   TableRow,
   Paper,
   Chip,
+  TextField,
+  InputAdornment,
+  Button,
+  CircularProgress,
+  Alert,
+  TablePagination,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import BlankCard from 'src/components/shared/BlankCard';
 import dayjs from 'dayjs';
 import api from 'src/api/auth';
-import { CircularProgress, Alert, TablePagination } from '@mui/material';
+import { IconSearch } from '@tabler/icons-react';
 
 const BCrumb = [
   {
@@ -36,11 +42,14 @@ const ActivityLog = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
 
-  const fetchLogs = async (currentPage, limit) => {
+  const fetchLogs = async (currentPage, limit, searchQuery = search) => {
     setLoading(true);
     try {
-      const response = await api.get(`/agent/activity-logs?page=${currentPage + 1}&limit=${limit}`);
+      const response = await api.get(
+        `/agent/activity-logs?page=${currentPage + 1}&limit=${limit}&search=${searchQuery}`,
+      );
       setLogs(response.data.data);
       setTotal(response.data.total);
       setError(null);
@@ -55,6 +64,14 @@ const ActivityLog = () => {
   useEffect(() => {
     fetchLogs(page, rowsPerPage);
   }, [page, rowsPerPage]);
+
+  const handleSearch = () => {
+    if (page === 0) {
+      fetchLogs(0, rowsPerPage, search);
+    } else {
+      setPage(0);
+    }
+  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -73,6 +90,30 @@ const ActivityLog = () => {
           <Typography variant="h5" mb={3}>
             System Activity Logs
           </Typography>
+          <Box display="flex" gap={2} mb={3} alignItems="center">
+            <TextField
+              size="small"
+              placeholder="Search logs..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+              sx={{ width: '300px' }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size="18" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button variant="contained" color="primary" onClick={handleSearch}>
+              Search
+            </Button>
+          </Box>
 
           {loading ? (
             <Box display="flex" justifyContent="center" py={5}>
@@ -92,9 +133,9 @@ const ActivityLog = () => {
                       <TableCell>
                         <Typography variant="h6">Description</Typography>
                       </TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <Typography variant="h6">Subject</Typography>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <Typography variant="h6">Date</Typography>
                       </TableCell>
@@ -111,19 +152,19 @@ const ActivityLog = () => {
                       logs.map((log) => (
                         <TableRow key={log.id}>
                           <TableCell>
-                            <Typography variant="body1">{log.causer?.name || 'System'}</Typography>
+                            <Typography variant="body1">{log.causer?.org_name || 'System'}</Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body1">{log.description}</Typography>
                           </TableCell>
-                          <TableCell>
+                          {/* <TableCell>
                             <Chip
                               label={log.subject_type || 'System'}
                               size="small"
                               color="primary"
                               variant="outlined"
                             />
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell>
                             <Typography variant="body2" color="textSecondary">
                               {dayjs(log.created_at).format('MMM D, YYYY HH:mm')}

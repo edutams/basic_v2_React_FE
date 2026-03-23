@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../../api/auth';
 import { PermissionProvider } from './permissions';
+import axios from 'axios';
 
 export const AuthContext = createContext(undefined);
 
@@ -12,35 +13,57 @@ const defaultAuthState = {
   permissions: [],
 };
 
+const tokenManager = {
+  get: () => localStorage.getItem('access_token'),
+
+  set: (token) => {
+    localStorage.setItem('access_token', token);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  },
+
+  clear: () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('isImpersonating');
+    localStorage.removeItem('impersonator_id');
+    delete axios.defaults.headers.common['Authorization'];
+  },
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(defaultAuthState.user);
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
   const [permissions, setPermissions] = useState(defaultAuthState.permissions);
+  const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonatorId, setImpersonatorId] = useState(null);
+
+  useEffect(() => {
+    const token = tokenManager.get();
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }, []);
 
   useEffect(() => {
     const restoreUser = async () => {
-      const token = localStorage.getItem('access_token');
-
+      const token = tokenManager.get();
       if (!token) {
         setIsLoading(false);
-        setIsAuthenticated(false);
         return;
       }
 
-      setIsLoading(true);
       try {
         const res = await api.get('/agent/get_agent');
-
         const payload = res.data?.data;
 
         setUser(payload.user);
-        setPermissions(payload.permissions);
+        setPermissions(payload.permissions ?? []);
+        setIsImpersonating(payload.is_impersonating ?? false);
+        setImpersonatorId(payload.impersonator_id ?? null);
         setIsAuthenticated(true);
-      } catch (err) {
-        localStorage.removeItem('access_token');
-        setUser(null);
+      } catch {
+        tokenManager.clear();
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
@@ -55,15 +78,16 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post('/agent/login', credentials);
-
       const { access_token, expires_in, user: apiUser, data: apiData } = res.data;
-      const userData = apiUser || apiData;
-      // console.log('login user data:', userData);
 
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('token_expires_in', expires_in.toString());
+      tokenManager.set(access_token);
+      localStorage.setItem('token_expires_in', String(expires_in));
+
+      const userData = apiUser || apiData;
       setUser(userData);
       setIsAuthenticated(true);
+      setIsImpersonating(false);
+      setImpersonatorId(null);
 
       return { success: true, user: userData };
     } catch (err) {
@@ -73,6 +97,23 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await api.post('/agent/logout');
+    } catch {
+      /* best-effort */
+    } finally {
+      tokenManager.clear();
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsImpersonating(false);
+      setImpersonatorId(null);
+      setIsLoading(false);
+    }
+    return { success: true };
   };
 
   const register = async (credentials) => {
@@ -85,24 +126,6 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: credentials };
     } catch (err) {
       const msg = err.response?.data?.error || 'Registration failed';
-      setError(msg);
-      return { success: false, error: msg };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await api.post('/agent/logout');
-      localStorage.removeItem('access_token');
-      setUser(null);
-      setIsAuthenticated(false);
-      return { success: true };
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Logout failed';
       setError(msg);
       return { success: false, error: msg };
     } finally {
@@ -151,17 +174,50 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post(`/agent/impersonate/agent/${id}`);
-      const { access_token, expires_in, user: apiUser, data: apiData } = res.data;
-      const userData = apiUser || apiData;
+      const { access_token, expires_in, user: apiUser, data: apiData, impersonator_id } = res.data;
 
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('token_expires_in', expires_in.toString());
+      // Replace token atomically
+      tokenManager.set(access_token);
+      localStorage.setItem('token_expires_in', String(expires_in));
+
+      const userData = apiUser || apiData;
       setUser(userData);
       setIsAuthenticated(true);
+      setIsImpersonating(true);
+      setImpersonatorId(impersonator_id);
 
       return { success: true, user: userData };
     } catch (err) {
       const msg = err.response?.data?.error || 'Impersonation failed';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const stopImpersonation = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Send impersonator_id as fallback; backend prefers JWT claims
+      const res = await api.post('/agent/impersonate/stop', {
+        impersonator_id: impersonatorId,
+      });
+
+      const { access_token, user: apiUser, data: apiData } = res.data;
+
+      tokenManager.set(access_token);
+
+      const userData = apiUser || apiData;
+      setUser(userData);
+      setIsImpersonating(false);
+      setImpersonatorId(null);
+
+      window.location.href = '/';
+      return { success: true };
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Failed to stop impersonation';
       setError(msg);
       return { success: false, error: msg };
     } finally {
@@ -184,6 +240,9 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     refreshToken,
     impersonateAgent,
+    stopImpersonation,
+    impersonatorId,
+    isImpersonating,
     clearError,
     permissions,
   };

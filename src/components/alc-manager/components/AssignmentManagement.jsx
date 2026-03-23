@@ -59,7 +59,7 @@ const AssignmentManagement = () => {
     try {
       setLoading(true);
       const res = await aclApi.getAgents();
-      console.log('fetchUsers response:', res);
+      // console.log('fetchUsers response:', res);
 
       let usersData = [];
       if (Array.isArray(res.data)) {
@@ -68,14 +68,14 @@ const AssignmentManagement = () => {
         usersData = res.data.data;
       }
 
-      console.log('Users data:', usersData);
-      console.log('Sample user from API:', usersData[0]);
+      // console.log('Users data:', usersData);
+      // console.log('Sample user from API:', usersData[0]);
 
       const normalized = (usersData || []).map((u) => ({
         ...u,
         assignedRoles: u.roles || [],
       }));
-      console.log('Normalized users:', normalized);
+      // console.log('Normalized users:', normalized);
 
       setUsers(normalized);
     } catch (err) {
@@ -178,9 +178,9 @@ const AssignmentManagement = () => {
   const handleRoleSelection = async (roleIds) => {
     if (!currentAgentForRole) return;
 
-    console.log('Current agent for role:', currentAgentForRole);
-    console.log('Agent ID being sent:', currentAgentForRole.id);
-    console.log('Role IDs being attached:', roleIds);
+    // console.log('Current agent for role:', currentAgentForRole);
+    // console.log('Agent ID being sent:', currentAgentForRole.id);
+    // console.log('Role IDs being attached:', roleIds);
 
     // Determine if we're adding or removing roles
     const currentRoleIds = currentAgentForRole.assignedRoles?.map((r) => r.id) || [];
@@ -215,8 +215,8 @@ const AssignmentManagement = () => {
         assignedRoles: u.roles || [],
       }));
 
-      console.log('Sample user from API:', usersData[0]);
-      console.log('Normalized users:', normalized);
+      // console.log('Sample user from API:', usersData[0]);
+      // console.log('Normalized users:', normalized);
 
       setUsers(normalized);
 

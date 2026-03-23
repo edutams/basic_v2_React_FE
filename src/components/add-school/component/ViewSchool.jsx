@@ -3,17 +3,15 @@ import { Typography, Box, Paper } from '@mui/material';
 import { useParams } from 'react-router-dom';
 
 const ViewSchool = () => {
-    
-    const params = useParams();
-    console.log('params:', params);
+  const params = useParams();
+  // console.log('params:', params);
 
-    const { id } = params;
-    console.log(id);
-    
-    const [school, setSchool] = useState(null);
+  const { id } = params;
+  // console.log(id);
 
-  useEffect(() => {
-  }, [id]);
+  const [school, setSchool] = useState(null);
+
+  useEffect(() => {}, [id]);
 
   if (!school) {
     return <Typography>No school data available.</Typography>;
@@ -25,10 +23,18 @@ const ViewSchool = () => {
         {school.name}
       </Typography>
       <Box sx={{ mt: 2 }}>
-        <Typography><strong>Address:</strong> {school.address}</Typography>
-        <Typography><strong>Phone:</strong> {school.phone}</Typography>
-        <Typography><strong>Email:</strong> {school.email}</Typography>
-        <Typography><strong>Administrator:</strong> {school.adminName}</Typography>
+        <Typography>
+          <strong>Address:</strong> {school.address}
+        </Typography>
+        <Typography>
+          <strong>Phone:</strong> {school.phone}
+        </Typography>
+        <Typography>
+          <strong>Email:</strong> {school.email}
+        </Typography>
+        <Typography>
+          <strong>Administrator:</strong> {school.adminName}
+        </Typography>
       </Box>
     </Paper>
   );

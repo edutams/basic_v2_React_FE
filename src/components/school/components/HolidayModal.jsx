@@ -13,7 +13,7 @@ const HolidayModal = ({
   activeTerm = 'First',
 }) => {
   useEffect(() => {
-    console.log('HolidayModal activeTerm changed:', activeTerm);
+    // console.log('HolidayModal activeTerm changed:', activeTerm);
   }, [activeTerm]);
 
   React.useEffect(() => {

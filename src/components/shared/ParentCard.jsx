@@ -1,8 +1,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { Card, CardHeader, CardContent, Divider, Box } from '@mui/material';
+import { Card, CardHeader, CardContent, Box } from '@mui/material';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-
 
 const ParentCard = ({ title, children, footer, codeModel }) => {
   const { isCardShadow } = useContext(CustomizerContext);
@@ -13,18 +12,10 @@ const ParentCard = ({ title, children, footer, codeModel }) => {
       elevation={isCardShadow ? 9 : 0}
       variant={!isCardShadow ? 'outlined' : undefined}
     >
-      <CardHeader title={title} action={codeModel} />
-      <Divider />
+      <CardHeader title={title} action={codeModel} sx={{ py: 1 }} />
 
-      <CardContent>{children}</CardContent>
-      {footer ? (
-        <>
-          <Divider />
-          <Box p={3}>{footer}</Box>
-        </>
-      ) : (
-        ''
-      )}
+      <CardContent sx={{ p: 2, pt: 1 }}>{children}</CardContent>
+      {footer ? <Box p={3}>{footer}</Box> : ''}
     </Card>
   );
 };

@@ -26,12 +26,12 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import { 
-  Search as SearchIcon, 
+import {
+  Search as SearchIcon,
   MoreVert as MoreVertIcon,
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 
 import axios from 'src/api/auth';
@@ -50,12 +50,11 @@ const AgentSubscriptionList = ({ status }) => {
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const notify = useNotification();
 
-
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
       const res = await axios.get('/agent/subscriptions', {
-        params: { status }
+        params: { status },
       });
       setRows(res.data.data);
     } catch (error) {
@@ -73,7 +72,9 @@ const AgentSubscriptionList = ({ status }) => {
   const handleUpdateStatus = async (id, newStatus) => {
     try {
       await axios.patch(`/agent/subscriptions/${id}/status`, { status: newStatus });
-      notify.success(`Subscription successfully ${newStatus === 'active' ? 'approved' : 'updated'}`);
+      notify.success(
+        `Subscription successfully ${newStatus === 'active' ? 'approved' : 'updated'}`,
+      );
       fetchSubscriptions();
       handleMenuClose();
     } catch (error) {
@@ -107,7 +108,9 @@ const AgentSubscriptionList = ({ status }) => {
   };
 
   const filteredRows = rows.filter((row) => {
-    const searchStr = `${row.tenant?.tenant_name || ''} ${row.sessions?.sesname || ''} ${row.terms?.term_name || ''} ${row.my_plans?.display_name || ''}`.toLowerCase();
+    const searchStr = `${row.tenant?.tenant_name || ''} ${row.sessions?.sesname || ''} ${
+      row.terms?.term_name || ''
+    } ${row.my_plans?.display_name || ''}`.toLowerCase();
     return searchStr.includes(searchTerm.toLowerCase());
   });
 
@@ -125,10 +128,14 @@ const AgentSubscriptionList = ({ status }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'pending': return 'warning';
-      case 'expired': return 'error';
-      default: return 'default';
+      case 'active':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'expired':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
@@ -137,7 +144,7 @@ const AgentSubscriptionList = ({ status }) => {
       <Box sx={{ mb: 3 }}>
         <TextField
           placeholder="Search by school, session, or plan..."
-          fullWidth
+          sx={{ width: { xs: '100%', sm: 350, md: 350 } }}
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -229,7 +236,7 @@ const AgentSubscriptionList = ({ status }) => {
                           open={Boolean(anchorEl) && selectedRow?.id === row.id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={() => {/* TODO: Implement detail view */}}>
+                          <MenuItem onClick={() => {}}>
                             <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Details
                           </MenuItem>
                           {row.status !== 'active' && (
@@ -244,13 +251,26 @@ const AgentSubscriptionList = ({ status }) => {
                           )}
                         </Menu>
                       </TableCell>
-
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <Alert severity="info">No subscriptions found</Alert>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        <Typography variant="body1" color="textSecondary">
+                          No subscriptions found
+                        </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}
@@ -275,13 +295,12 @@ const AgentSubscriptionList = ({ status }) => {
           </TableContainer>
         </Paper>
       )}
-      <ConfirmationDialog 
-        {...confirm} 
-        onClose={() => setConfirm((prev) => ({ ...prev, open: false }))} 
+      <ConfirmationDialog
+        {...confirm}
+        onClose={() => setConfirm((prev) => ({ ...prev, open: false }))}
       />
     </Box>
   );
 };
-
 
 export default AgentSubscriptionList;

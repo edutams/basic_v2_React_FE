@@ -18,12 +18,10 @@ import {
   MenuItem,
   Button,
   Chip,
+  Alert,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  MoreVert as MoreVertIcon,
-  Add as AddIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '../../shared/ParentCard';
 import PropTypes from 'prop-types';
 
@@ -60,11 +58,22 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
     handleMenuClose();
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
   return (
     <ParentCard
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h6">Available Gateways</Typography>
+          <Typography variant="h5">Available Gateways</Typography>
           <Button
             variant="contained"
             //  startIcon={<AddIcon />}
@@ -101,6 +110,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                 <TableRow>
                   <TableCell>#</TableCell>
                   <TableCell>Gateway Name</TableCell>
+                  <TableCell>Code</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="center">Actions</TableCell>
                 </TableRow>
@@ -108,7 +118,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       <Typography>Loading...</Typography>
                     </TableCell>
                   </TableRow>
@@ -117,20 +127,22 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                     <TableRow key={gateway.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>{gateway.gateway_name}</TableCell>
+                      <TableCell>{gateway.code}</TableCell>
                       <TableCell>
                         <Chip
-                          label={gateway.gateway_status.toUpperCase()}
+                          label={gateway.status.toUpperCase()}
                           size="small"
                           sx={{
                             bgcolor:
-                              gateway.gateway_status === 'active'
+                              gateway.status?.toLowerCase() === 'active'
                                 ? (theme) => theme.palette.success.light
                                 : (theme) => theme.palette.error.light,
                             color:
-                              gateway.gateway_status === 'active'
+                              gateway.status?.toLowerCase() === 'active'
                                 ? (theme) => theme.palette.success.main
                                 : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
+                            fontWeight: 600,
                           }}
                         />
                       </TableCell>
@@ -144,19 +156,38 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                           onClose={handleMenuClose}
                         >
                           <MenuItem onClick={() => handleAction('update', gateway)}>
-                            Edit Gateway
+                            <IconEdit size={16} style={{ marginRight: 8 }} />
+                            Edit
                           </MenuItem>
-                          {/* <MenuItem onClick={() => handleAction('delete', gateway)}>
-                            Delete Gateway
-                          </MenuItem> */}
+                          <MenuItem
+                            onClick={() => handleAction('delete', gateway)}
+                            sx={{ color: 'error.main' }}
+                          >
+                            <IconTrash size={16} style={{ marginRight: 8 }} />
+                            Delete
+                          </MenuItem>
                         </Menu>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      <Typography>No gateways found</Typography>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        <Typography variant="body1" color="textSecondary">
+                          No gateways found
+                        </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 )}
@@ -173,7 +204,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                       setRowsPerPage(parseInt(e.target.value, 10));
                       setPage(0);
                     }}
-                    colSpan={4}
+                    colSpan={5}
                   />
                 </TableRow>
               </TableFooter>

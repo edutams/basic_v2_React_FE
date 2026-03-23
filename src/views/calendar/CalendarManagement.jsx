@@ -370,19 +370,28 @@ function SessionsPanel({ isLevel1 }) {
             onChange={(e) => {
               setErrors((p) => ({ ...p, sesname: undefined }));
               const raw = e.target.value;
-              if (raw.length < form.sesname.length) {
+              if (raw.length < (form.sesname || '').length) {
                 setForm((p) => ({ ...p, sesname: raw }));
                 return;
               }
               const digitsOnly = raw.replace(/[^0-9/]/g, '');
-              const pure = digitsOnly.replace(/\//g, '');
-              if (pure.length === 4 && !digitsOnly.includes('/')) {
-                const year = parseInt(pure, 10);
-                setForm((p) => ({ ...p, sesname: `${year}/${year + 1}` }));
-              } else if (pure.length > 4) {
-                return;
-              } else {
-                setForm((p) => ({ ...p, sesname: digitsOnly }));
+              const parts = digitsOnly.split('/');
+              if (parts[0].length === 4) {
+                const firstYear = parseInt(parts[0], 10);
+                const nextYear = (firstYear + 1).toString();
+                if (parts.length === 1) {
+                  setForm((p) => ({ ...p, sesname: `${parts[0]}/${nextYear}` }));
+                  return;
+                }
+                if (parts.length === 2) {
+                  if (nextYear.startsWith(parts[1])) {
+                    setForm((p) => ({ ...p, sesname: digitsOnly }));
+                  }
+                  return;
+                }
+              }
+              if (parts.length === 1 && parts[0].length <= 4) {
+                setForm((p) => ({ ...p, sesname: parts[0] }));
               }
             }}
             margin="normal"
@@ -1070,7 +1079,7 @@ const CalendarManagement = () => {
         >
           <Tab label="Sessions" />
           <Tab label="Terms" />
-          <Tab label="My Mappings" />
+          {/* <Tab label="My Mappings" /> */}
         </Tabs>
         <TabPanel value={tab} index={0}>
           <SessionsPanel isLevel1={isLevel1} />
@@ -1078,9 +1087,9 @@ const CalendarManagement = () => {
         <TabPanel value={tab} index={1}>
           <TermsPanel isLevel1={isLevel1} />
         </TabPanel>
-        <TabPanel value={tab} index={2}>
+        {/* <TabPanel value={tab} index={2}>
           <MappingsPanel />
-        </TabPanel>
+        </TabPanel> */}
       </ParentCard>
     </>
   );

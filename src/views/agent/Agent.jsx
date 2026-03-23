@@ -508,7 +508,7 @@ const Agent = () => {
     columnHelper.accessor('performance', {
       header: () => 'Performance',
       cell: (info) => (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#f4f4f4', px: 1, py: 0.5, margin: 'auto', width: 'fit-content' }}>
           <Typography variant="subtitle2" fontWeight="500" color="#333">
             School
           </Typography>

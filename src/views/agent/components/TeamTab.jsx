@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { 
+import {
     Table, TableBody, TableCell, TableHead, TableRow, Avatar, Chip, Typography, Box, TableContainer, Select, MenuItem, Button,
     IconButton, Menu, ListItemIcon, ListItemText, useTheme
 } from '@mui/material';
@@ -30,17 +30,17 @@ const TeamTab = ({ team, onAddAgent }) => {
             <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '8px', overflow: 'hidden' }}>
                 <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: theme.palette.background.paper }}>
                     <Box display="flex" alignItems="center" gap={1}>
-                         <IconGridDots size={20} color={theme.palette.primary.main} />
-                         <Typography variant="h6" fontWeight={700} sx={{ color: theme.palette.text.primary }}>List of Agents</Typography>
+                        <IconGridDots size={20} color={theme.palette.primary.main} />
+                        <Typography variant="h6" fontWeight={700} sx={{ color: theme.palette.text.primary }}>List of Agents</Typography>
                     </Box>
                     <Box display="flex" gap={2}>
                         <Select value="Level" size="small" sx={{ borderRadius: '8px', minWidth: 150 }}>
                             <MenuItem value="Level">Level</MenuItem>
                         </Select>
-                        <Button 
-                            variant="contained" 
+                        <Button
+                            variant="contained"
                             onClick={onAddAgent}
-                            startIcon={<IconUserPlus size={18} />} 
+                            startIcon={<IconUserPlus size={18} />}
                             sx={{ bgcolor: '#3B82F6', textTransform: 'none', borderRadius: '8px' }}
                         >
                             Add New Agent
@@ -78,7 +78,7 @@ const TeamTab = ({ team, onAddAgent }) => {
                                     </TableCell>
                                     <TableCell><Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.text.primary }}># {row.transaction}</Typography></TableCell>
                                     <TableCell>
-                                        <Box display="flex" alignItems="center" gap={1}>
+                                        <Box display="flex" alignItems="center" gap={1} sx={{ margin: 'auto', width: 'fit-content' }}>
                                             <Typography variant="caption" color="textSecondary">School</Typography>
                                             <Chip label={row.performance} size="small" sx={{ bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.1)' : '#EAFDF6', color: isDarkMode ? '#4ade80' : '#10B981', fontWeight: 700, borderRadius: '4px' }} />
                                         </Box>
@@ -92,16 +92,16 @@ const TeamTab = ({ team, onAddAgent }) => {
                                         <Typography variant="subtitle2" color="error" fontWeight={700} align="center">{row.descendent}</Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Chip 
-                                            label={row.status} 
-                                            size="small" 
-                                            sx={{ 
-                                                bgcolor: row.status === 'Active' ? (isDarkMode ? 'rgba(34, 197, 94, 0.2)' : '#DCFCE7') : (isDarkMode ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2'), 
+                                        <Chip
+                                            label={row.status}
+                                            size="small"
+                                            sx={{
+                                                bgcolor: row.status === 'Active' ? (isDarkMode ? 'rgba(34, 197, 94, 0.2)' : '#DCFCE7') : (isDarkMode ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2'),
                                                 color: row.status === 'Active' ? (isDarkMode ? '#4ade80' : '#166534') : (isDarkMode ? '#ef4444' : '#991B1B'),
                                                 fontWeight: 700,
                                                 borderRadius: '4px',
                                                 minWidth: 70
-                                            }} 
+                                            }}
                                         />
                                     </TableCell>
                                     <TableCell>

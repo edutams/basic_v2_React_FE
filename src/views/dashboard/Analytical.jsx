@@ -92,7 +92,6 @@ export default function Dashboard() {
       try {
         const response = await agentApi.getAll();
         if (response.success) {
-          // Map and take top 10
           const mappedData = response.data.slice(0, 10).map((agent) => ({
             s_n: agent.id,
             agentDetails: agent.name,
@@ -209,14 +208,14 @@ export default function Dashboard() {
               info.getValue() === 'Active'
                 ? theme.palette.success.light
                 : info.getValue() === 'Inactive'
-                ? theme.palette.error.light
-                : theme.palette.secondary.light,
+                  ? theme.palette.error.light
+                  : theme.palette.secondary.light,
             color:
               info.getValue() === 'Active'
                 ? theme.palette.success.main
                 : info.getValue() === 'Inactive'
-                ? theme.palette.error.main
-                : theme.palette.secondary.main,
+                  ? theme.palette.error.main
+                  : theme.palette.secondary.main,
             borderRadius: '8px',
           }}
           size="small"
@@ -332,15 +331,15 @@ export default function Dashboard() {
                 </Stack>
               </Box>
               {/* <Box sx={{ p: 2 }}> */}
-                <ReusableBarChart
-                  series={revenueSeries}
-                  categories={months}
-                  colors={['#3949ab']}
-                  height={250}
-                  yAxisPrefix="N"
-                  yAxisFormatter={(val) => `${val.toFixed(1)}M`}
-                  xAxisTitle="Month"
-                />
+              <ReusableBarChart
+                series={revenueSeries}
+                categories={months}
+                colors={['#3949ab']}
+                height={250}
+                yAxisPrefix="N"
+                yAxisFormatter={(val) => `${val.toFixed(1)}M`}
+                xAxisTitle="Month"
+              />
               {/* </Box> */}
             </Card>
           </Grid>
@@ -424,9 +423,9 @@ export default function Dashboard() {
                     </Box>
                     <Typography variant="h5">List of top 10 performing agent</Typography>
                   </Stack>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
+                  <Button
+                    variant="contained"
+                    color="primary"
                     onClick={() => navigate('/agent')}
                     sx={{ borderRadius: '8px', textTransform: 'none' }}
                   >

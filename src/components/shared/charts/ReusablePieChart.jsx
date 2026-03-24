@@ -34,7 +34,7 @@ const ReusablePieChart = ({
     plotOptions: {
       pie: {
         donut: {
-          size: '70%',
+          size: '50%',
           background: 'transparent',
         },
       },
@@ -47,7 +47,8 @@ const ReusablePieChart = ({
       style: {
         fontSize: '10px',
         fontWeight: '600',
-        colors: [theme.palette.text.primary],
+        // colors: [theme.palette.text.primary],
+        colors: ['#ffffff'],
       },
       dropShadow: {
         enabled: false,
@@ -68,8 +69,8 @@ const ReusablePieChart = ({
       },
       itemMargin: {
         horizontal: 5,
-        vertical: 5
-      }
+        vertical: 5,
+      },
     },
     tooltip: {
       theme: theme.palette.mode,
@@ -89,10 +90,7 @@ const ReusablePieChart = ({
 
   return (
     <DashboardCard title={title} subtitle={subtitle}>
-      <Box>
-        {chartContent}
-
-      </Box>
+      <Box>{chartContent}</Box>
     </DashboardCard>
   );
 };

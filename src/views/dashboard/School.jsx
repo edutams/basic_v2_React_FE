@@ -315,9 +315,15 @@ const SchoolDashboard = () => {
     active: schoolList.filter((s) => s.status === 'Active').length,
     inactive: schoolList.filter((s) => s.status === 'Inactive').length,
     subAgents: 0,
+    creche: schoolList.filter((s) => s.schoolDivisions?.includes('Creche')).length,
+    nursery: schoolList.filter((s) => s.schoolDivisions?.includes('Nursery')).length,
     primary: schoolList.filter((s) => s.schoolDivisions?.includes('Primary')).length,
-    junior: schoolList.filter((s) => s.schoolDivisions?.includes('Junior')).length,
-    senior: schoolList.filter((s) => s.schoolDivisions?.includes('Senior')).length,
+    juniorSecondary: schoolList.filter((s) => s.schoolDivisions?.includes('Junior Secondary'))
+      .length,
+    seniorSecondary: schoolList.filter((s) => s.schoolDivisions?.includes('Senior Secondary'))
+      .length,
+    vocational: schoolList.filter((s) => s.schoolDivisions?.includes('Vocational')).length,
+    tertiary: schoolList.filter((s) => s.schoolDivisions?.includes('Tertiary')).length,
   };
 
   const planSeries = [40, 15, 35, 10];
@@ -486,7 +492,43 @@ const SchoolDashboard = () => {
 
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
             <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
-              Primary School
+              Creche
+            </Typography>
+
+            <Chip
+              label={schoolSummary.creche}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Nursery
+            </Typography>
+
+            <Chip
+              label={schoolSummary.nursery}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Primary
             </Typography>
 
             <Chip
@@ -501,13 +543,68 @@ const SchoolDashboard = () => {
               }}
             />
           </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
             <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
-              Senior School
+              Junior Secondary
             </Typography>
 
             <Chip
-              label={schoolSummary.senior}
+              label={schoolSummary.juniorSecondary}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Senior Secondary
+            </Typography>
+
+            <Chip
+              label={schoolSummary.seniorSecondary}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Vocational
+            </Typography>
+
+            <Chip
+              label={schoolSummary.vocational}
+              size="small"
+              sx={{
+                background: '#52932E',
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                borderRadius: '20px',
+                px: 4,
+              }}
+            />
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+              Tertiary
+            </Typography>
+
+            <Chip
+              label={schoolSummary.tertiary}
               size="small"
               sx={{
                 background: '#52932E',

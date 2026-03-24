@@ -118,7 +118,6 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                   ),
                 },
               }}
-              // sx={{ flexGrow: 1, minWidth: 200 }}
             />
             {hasActiveFilters && (
               <Button variant="outlined" onClick={clearFilters} sx={{ height: 'fit-content' }}>

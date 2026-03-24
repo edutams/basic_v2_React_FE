@@ -52,7 +52,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
   };
 
   const filteredTopics = topics.filter((topic) =>
-    topic.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    topic.topic.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedTopics = filteredTopics.slice(
@@ -69,7 +69,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
               <>
                 Manage Topics in{' '}
                 <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  {selectedSubject.name}
+                  {selectedSubject.subject_name}
                 </Box>
               </>
             ) : (
@@ -128,7 +128,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                   {paginatedTopics.length > 0 ? (
                     paginatedTopics.map((t) => (
                       <TableRow key={t.id} hover>
-                        <TableCell>{t.name}</TableCell>
+                        <TableCell>{t.topic}</TableCell>
                         <TableCell>
                           <Chip
                             label={t.status.toUpperCase()}

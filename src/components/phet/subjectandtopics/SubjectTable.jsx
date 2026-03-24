@@ -35,7 +35,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const filteredSubjects = subjects.filter((subj) =>
-    subj.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    subj.subject_name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedSubjects = filteredSubjects.slice(
@@ -109,7 +109,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                   paginatedSubjects.map((subject, index) => (
                     <TableRow key={subject.id || index} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                      <TableCell>{subject.name}</TableCell>
+                      <TableCell>{subject.subject_name}</TableCell>
                       <TableCell>
                         <Chip
                           label={subject.status.toUpperCase()}

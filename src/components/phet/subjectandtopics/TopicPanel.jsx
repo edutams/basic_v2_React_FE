@@ -55,6 +55,13 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
     topic.topic.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setPage(0);
+  };
+
+  const hasActiveFilters = searchTerm !== '';
+
   const paginatedTopics = filteredTopics.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
@@ -94,7 +101,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
         <Typography sx={{ p: 2 }}>Loading...</Typography>
       ) : (
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
               placeholder="Search topics..."
               value={searchTerm}
@@ -102,14 +109,22 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                 setSearchTerm(e.target.value);
                 setPage(0);
               }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
               }}
+              // sx={{ flexGrow: 1, minWidth: 200 }}
             />
+            {hasActiveFilters && (
+              <Button variant="outlined" onClick={clearFilters} sx={{ height: 'fit-content' }}>
+                Clear Filters
+              </Button>
+            )}
           </Box>
 
           <Paper variant="outlined">
@@ -117,6 +132,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
               <Table sx={{ whiteSpace: 'nowrap' }}>
                 <TableHead>
                   <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Topic</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                     <TableCell align="center" sx={{ fontWeight: 'bold' }}>
@@ -126,8 +142,9 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                 </TableHead>
                 <TableBody>
                   {paginatedTopics.length > 0 ? (
-                    paginatedTopics.map((t) => (
-                      <TableRow key={t.id} hover>
+                    paginatedTopics.map((t, index) => (
+                      <TableRow key={t.id || index} hover>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                         <TableCell>{t.topic}</TableCell>
                         <TableCell>
                           <Chip

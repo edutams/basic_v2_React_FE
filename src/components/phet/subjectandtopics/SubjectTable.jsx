@@ -58,6 +58,13 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
     handleMenuClose();
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setPage(0);
+  };
+
+  const hasActiveFilters = searchTerm !== '';
+
   return (
     <ParentCard
       title={
@@ -70,7 +77,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
       }
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search subjects..."
             value={searchTerm}
@@ -87,8 +94,13 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                 ),
               },
             }}
-            sx={{ flexGrow: 1 }}
+            // sx={{ flexGrow: 1, minWidth: 200 }}
           />
+          {hasActiveFilters && (
+            <Button variant="outlined" onClick={clearFilters} sx={{ height: 'fit-content' }}>
+              Clear Filters
+            </Button>
+          )}
         </Box>
 
         <Paper variant="outlined">
@@ -96,7 +108,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Subject Name</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 'bold' }}>

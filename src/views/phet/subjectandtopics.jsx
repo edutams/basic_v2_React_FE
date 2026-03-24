@@ -10,6 +10,7 @@ import TopicModal from '../../components/phet/subjectandtopics/TopicModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
 import phetApi from 'src/api/phet/phetApi';
+import ParentCard from 'src/components/shared/ParentCard';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -198,26 +199,28 @@ const SubjectTopicView = () => {
       description="View, edit and manage Phet subjects and their topics"
     >
       <Breadcrumb title="Manage Phet Subjects And Topics" items={BCrumb} />
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <SubjectTable
-            subjects={subjects}
-            onSelect={handleSubjectSelect}
-            selectedId={selectedSubject?.id}
-            onAddSubject={() => setAddModalOpen(true)}
-            onSubjectAction={handleSubjectAction}
-            loading={loading}
-          />
+      <ParentCard>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 7 }}>
+            <SubjectTable
+              subjects={subjects}
+              onSelect={handleSubjectSelect}
+              selectedId={selectedSubject?.id}
+              onAddSubject={() => setAddModalOpen(true)}
+              onSubjectAction={handleSubjectAction}
+              loading={loading}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 5 }}>
+            <TopicPanel
+              selectedSubject={selectedSubject}
+              topics={filteredTopics}
+              onAction={handleTopicAction}
+              isLoading={topicsLoading}
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
-          <TopicPanel
-            selectedSubject={selectedSubject}
-            topics={filteredTopics}
-            onAction={handleTopicAction}
-            isLoading={topicsLoading}
-          />
-        </Grid>
-      </Grid>
+      </ParentCard>
 
       <AddSubjectModal
         open={addModalOpen}

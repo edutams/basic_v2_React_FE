@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  TextField,
-  Button,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-} from '@mui/material';
+import { Box, TextField, Button, MenuItem, FormControl, InputLabel, Select } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const SubjectForm = ({
-  initialValues = {},
-  onSubmit,
-  onCancel,
-  submitText,
-  isLoading,
-}) => {
+const SubjectForm = ({ initialValues = {}, onSubmit, onCancel, submitText, isLoading }) => {
+  // Map API field names to form field names
+  const name = initialValues.name || initialValues.subject_name || '';
+  const code = initialValues.code || initialValues.subject_code || '';
+  const status = initialValues.status || 'active';
+
   const [form, setForm] = useState({
-    name: initialValues.name || '',
-    code: initialValues.code || '',
-    status: initialValues.status || 'active',
+    name,
+    code,
+    status,
   });
 
   const handleChange = (e) => {
@@ -36,40 +27,21 @@ const SubjectForm = ({
   return (
     <form onSubmit={handleSubmit}>
       <Box display="flex" flexDirection="column" gap={2}>
-        <TextField
-          label="Subject Name"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-        />
-        <TextField
-          label="Subject Code"
-          name="code"
-          value={form.code}
-          onChange={handleChange}
-        />
+        <TextField label="Subject Name" name="name" value={form.name} onChange={handleChange} />
+        <TextField label="Subject Code" name="code" value={form.code} onChange={handleChange} />
         <FormControl fullWidth>
           <InputLabel>Status</InputLabel>
-          <Select
-            name="status"
-            value={form.status}
-            label="Status"
-            onChange={handleChange}
-          >
+          <Select name="status" value={form.status} label="Status" onChange={handleChange}>
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
           </Select>
         </FormControl>
 
         <Box display="flex" justifyContent="flex-end">
-          <Button sx={{ mr: 1 }} color="inherit"  onClick={onCancel}>
+          <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            type="submit"
-            disabled={isLoading}
-          >
+          <Button variant="contained" type="submit" disabled={isLoading}>
             {submitText}
           </Button>
         </Box>

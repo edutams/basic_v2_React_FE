@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Grid } from '@mui/material';
 import SubjectTable from '../../components/phet/subjectandtopics/SubjectTable';
 import TopicPanel from '../../components/phet/subjectandtopics/TopicPanel';
@@ -9,6 +9,8 @@ import SubjectModal from '../../components/phet/subjectandtopics/SubjectModal';
 import TopicModal from '../../components/phet/subjectandtopics/TopicModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
+import phetApi from 'src/api/phet/phetApi';
+import ParentCard from 'src/components/shared/ParentCard';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -17,17 +19,11 @@ const BCrumb = [
 ];
 
 const SubjectTopicView = () => {
-  const [subjects, setSubjects] = useState([
-    { id: 1, name: 'English', code: 'ENG', status: 'active' },
-    { id: 2, name: 'Mathematic', code: 'MTH', status: 'active' },
-  ]);
+  const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
-  const [topics, setTopics] = useState([
-    { id: 1, subjectId: 1, name: 'Comprehension', code: 'ENG101', status: 'active' },
-    { id: 2, subjectId: 1, name: 'Essay Writing', code: 'ENG102', status: 'active' },
-    { id: 3, subjectId: 2, name: 'Algebra', code: 'MTH101', status: 'active' },
-    { id: 4, subjectId: 2, name: 'Geometry', code: 'MTH102', status: 'active' },
-  ]);
+  const [topics, setTopics] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [topicsLoading, setTopicsLoading] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState('edit');
@@ -42,17 +38,66 @@ const SubjectTopicView = () => {
 
   const notify = useNotification();
 
+  // Fetch subjects on mount
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  // Fetch topics when selected subject changes
+  useEffect(() => {
+    if (selectedSubject) {
+      fetchTopicsBySubject(selectedSubject.id);
+    } else {
+      setTopics([]);
+    }
+  }, [selectedSubject]);
+
+  const fetchSubjects = async () => {
+    try {
+      setLoading(true);
+      const response = await phetApi.getSubjects();
+      setSubjects(response || []);
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+      notify.error('Failed to load subjects', 'Error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTopicsBySubject = async (subjectId) => {
+    try {
+      setTopicsLoading(true);
+      const response = await phetApi.getTopicsBySubject(subjectId);
+      setTopics(response || []);
+    } catch (error) {
+      console.error('Error fetching topics:', error);
+      notify.error('Failed to load topics', 'Error');
+    } finally {
+      setTopicsLoading(false);
+    }
+  };
+
   const handleSubjectSelect = (subject) => {
     setSelectedSubject(subject);
   };
 
-  const handleAddSubject = (newSubject) => {
-    setSubjects((prev) => [
-      ...prev,
-      { ...newSubject, id: prev.length ? Math.max(...prev.map((s) => s.id)) + 1 : 1 },
-    ]);
-    setAddModalOpen(false);
-    notify.success('Subject added successfully', 'Success');
+  const handleAddSubject = async (newSubject) => {
+    try {
+      // Map frontend field names to backend field names
+      const apiData = {
+        subject_name: newSubject.name,
+        subject_code: newSubject.code,
+        status: newSubject.status,
+      };
+      const createdSubject = await phetApi.createSubject(apiData);
+      setSubjects((prev) => [...prev, createdSubject]);
+      setAddModalOpen(false);
+      notify.success('Subject added successfully', 'Success');
+    } catch (error) {
+      console.error('Error adding subject:', error);
+      notify.error('Failed to add subject', 'Error');
+    }
   };
 
   const handleSubjectAction = (type, subject) => {
@@ -61,18 +106,31 @@ const SubjectTopicView = () => {
     setModalOpen(true);
   };
 
-  const handleSubjectUpdate = (updated, type) => {
-    if (type === 'edit') {
-      setSubjects((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-      notify.success('Subject updated successfully', 'Success');
-    } else if (type === 'delete') {
-      setSubjects((prev) => prev.filter((s) => s.id !== updated.id));
-      if (selectedSubject?.id === updated.id) {
-        setSelectedSubject(null);
+  const handleSubjectUpdate = async (updated, type) => {
+    try {
+      if (type === 'edit') {
+        // Map frontend field names to backend field names
+        const apiData = {
+          subject_name: updated.name,
+          subject_code: updated.code,
+          status: updated.status,
+        };
+        const result = await phetApi.updateSubject(updated.id, apiData);
+        setSubjects((prev) => prev.map((s) => (s.id === updated.id ? result : s)));
+        notify.success('Subject updated successfully', 'Success');
+      } else if (type === 'delete') {
+        await phetApi.deleteSubject(updated.id);
+        setSubjects((prev) => prev.filter((s) => s.id !== updated.id));
+        if (selectedSubject?.id === updated.id) {
+          setSelectedSubject(null);
+        }
+        notify.success('Subject deleted successfully', 'Success');
       }
-      notify.success('Subject deleted successfully', 'Success');
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error updating subject:', error);
+      notify.error('Failed to update subject', 'Error');
     }
-    setModalOpen(false);
   };
 
   const handleTopicAction = (action, topic) => {
@@ -86,56 +144,83 @@ const SubjectTopicView = () => {
     }
   };
 
-  const handleTopicSubmit = (data, type) => {
-    if (type === 'create') {
-      const newTopic = {
-        ...data,
-        id: Date.now(),
-        subjectId: selectedSubject.id,
-      };
-      setTopics((prev) => [...prev, newTopic]);
-      notify.success('Topic added successfully', 'Success');
-    } else if (type === 'update') {
-      setTopics((prev) => prev.map((t) => (t.id === data.id ? data : t)));
-      notify.success('Topic updated successfully', 'Success');
+  const handleTopicSubmit = async (data, type) => {
+    try {
+      if (type === 'create') {
+        // Map frontend field names to backend field names
+        const apiData = {
+          topic: data.topic,
+          subject_id: selectedSubject.id,
+          status: data.status,
+        };
+        const newTopic = await phetApi.createTopic(apiData);
+        setTopics((prev) => [...prev, newTopic]);
+        notify.success('Topic added successfully', 'Success');
+      } else if (type === 'update') {
+        const apiData = {
+          topic: data.topic,
+          status: data.status,
+        };
+        const result = await phetApi.updateTopic(data.id, apiData);
+        setTopics((prev) => prev.map((t) => (t.id === data.id ? result : t)));
+        notify.success('Topic updated successfully', 'Success');
+      }
+      setTopicModalOpen(false);
+    } catch (error) {
+      console.error('Error submitting topic:', error);
+      notify.error('Failed to submit topic', 'Error');
     }
-    setTopicModalOpen(false);
   };
 
-  const handleDeleteTopicConfirmed = () => {
+  const handleDeleteTopicConfirmed = async () => {
     if (topicToDelete) {
-      setTopics((prev) => prev.filter((t) => t.id !== topicToDelete.id));
-      notify.success('Topic deleted successfully', 'Success');
-      setTopicToDelete(null);
+      try {
+        await phetApi.deleteTopic(topicToDelete.id);
+        setTopics((prev) => prev.filter((t) => t.id !== topicToDelete.id));
+        notify.success('Topic deleted successfully', 'Success');
+        setTopicToDelete(null);
+      } catch (error) {
+        console.error('Error deleting topic:', error);
+        notify.error('Failed to delete topic', 'Error');
+      }
     }
     setConfirmDeleteOpen(false);
   };
 
   const filteredTopics = selectedSubject
-    ? topics.filter((t) => t.subjectId === selectedSubject.id)
+    ? topics.filter(
+        (t) => t.subject_id === selectedSubject.id || t.subjectId === selectedSubject.id,
+      )
     : [];
 
   return (
-    <PageContainer title="Manage Phet Subjects And Topics" description="View, edit and manage Phet subjects and their topics">
+    <PageContainer
+      title="Manage Phet Subjects And Topics"
+      description="View, edit and manage Phet subjects and their topics"
+    >
       <Breadcrumb title="Manage Phet Subjects And Topics" items={BCrumb} />
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 7 }}>
-          <SubjectTable
-            subjects={subjects}
-            onSelect={handleSubjectSelect}
-            selectedId={selectedSubject?.id}
-            onAddSubject={() => setAddModalOpen(true)}
-            onSubjectAction={handleSubjectAction}
-          />
+      <ParentCard>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 7 }}>
+            <SubjectTable
+              subjects={subjects}
+              onSelect={handleSubjectSelect}
+              selectedId={selectedSubject?.id}
+              onAddSubject={() => setAddModalOpen(true)}
+              onSubjectAction={handleSubjectAction}
+              loading={loading}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 5 }}>
+            <TopicPanel
+              selectedSubject={selectedSubject}
+              topics={filteredTopics}
+              onAction={handleTopicAction}
+              isLoading={topicsLoading}
+            />
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, md: 5 }}>
-          <TopicPanel
-            selectedSubject={selectedSubject}
-            topics={filteredTopics}
-            onAction={handleTopicAction}
-          />
-        </Grid>
-      </Grid>
+      </ParentCard>
 
       <AddSubjectModal
         open={addModalOpen}
@@ -158,7 +243,7 @@ const SubjectTopicView = () => {
         selectedTopic={selectedTopic}
         selectedSubject={selectedSubject}
         onTopicUpdate={handleTopicSubmit}
-        isLoading={false}
+        isLoading={loading}
       />
 
       <ConfirmationDialog

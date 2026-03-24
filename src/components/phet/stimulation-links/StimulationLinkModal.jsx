@@ -78,23 +78,19 @@ const StimulationLinkModal = ({
         );
       case 'delete':
         return (
-          <Box >
+          <Box>
             <Typography variant="h6" gutterBottom>
               Delete Simulation Link
             </Typography>
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              Are you sure you want to delete "{selectedSimulation?.title}"?
+              Are you sure you want to delete "{selectedSimulation?.title || 'this simulation link'}
+              "?
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <Button onClick={onClose} sx={{ mr: 1 }} color="inherit" disabled={isLoading}>
                 Cancel
               </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDelete}
-                disabled={isLoading}
-              >
+              <Button variant="contained" color="error" onClick={handleDelete} disabled={isLoading}>
                 {isLoading ? 'Deleting...' : 'Delete'}
               </Button>
             </Box>

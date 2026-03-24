@@ -56,7 +56,11 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
       selectedSchool?.school_categories ||
       [],
     school_divisions:
-      selectedSchool?.school_divisions?.map((d) => d.id) || selectedSchool?.school_divisions || [],
+      selectedSchool?.school_divisions?.map((d) => d.id) ||
+      selectedSchool?.school_divisions ||
+      selectedSchool?.school_categories?.map((c) => c.id) ||
+      selectedSchool?.school_categories ||
+      [],
     headcolor: selectedSchool?.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: selectedSchool?.color?.sidecolor || 'bg-dark text-lighter',
     bodycolor: selectedSchool?.color?.bodycolor || 'null',
@@ -192,8 +196,8 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     //   newErrors.payModuleType = 'Module type is required';
     // }
 
-    if (!formData.school_categories || formData.school_categories.length === 0) {
-      newErrors.school_categories = 'At least one school category is required';
+    if (!formData.school_divisions || formData.school_divisions.length === 0) {
+      newErrors.school_divisions = 'At least one school division is required';
     }
 
     // Field is commented out in UI
@@ -324,35 +328,33 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
           </FormControl>
         </Grid>
         <Grid item size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.school_categories)}>
-            <InputLabel>School Category</InputLabel>
+          <FormControl fullWidth error={Boolean(errors.school_divisions)}>
+            <InputLabel>School Division</InputLabel>
             <Select
-              name="school_categories"
+              name="school_divisions"
               multiple
-              value={formData.school_categories}
-              label="School Category"
+              value={formData.school_divisions}
+              label="School Division"
               onChange={handleChange}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {selected.map((value) => (
                     <Chip
                       key={value}
-                      label={categories.find((c) => c.id === value)?.name}
+                      label={availableDivisions.find((d) => d.id === value)?.name}
                       size="small"
                     />
                   ))}
                 </Box>
               )}
             >
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}>
-                  {cat.name}
+              {availableDivisions.map((div) => (
+                <MenuItem key={div.id} value={div.id}>
+                  {div.name}
                 </MenuItem>
               ))}
             </Select>
-            {errors.school_categories && (
-              <FormHelperText>{errors.school_categories}</FormHelperText>
-            )}
+            {errors.school_divisions && <FormHelperText>{errors.school_divisions}</FormHelperText>}
           </FormControl>
         </Grid>
 
@@ -580,8 +582,8 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
           {loading
             ? 'Processing...'
             : actionType === 'update'
-              ? 'Update School'
-              : 'Register School'}
+            ? 'Update School'
+            : 'Register School'}
         </Button>
       </Box>
     </Box>

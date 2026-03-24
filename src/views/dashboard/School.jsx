@@ -166,7 +166,7 @@ const SchoolDashboard = () => {
           try {
             const modularArr = typeof t.modular === 'string' ? JSON.parse(t.modular) : t.modular;
             populationSubstitute = modularArr.length;
-          } catch (e) {}
+          } catch (e) { }
         }
 
         return {
@@ -245,13 +245,15 @@ const SchoolDashboard = () => {
 
   const handleDeactivateSchool = async (school) => {
     try {
-      await updateSchool(school.id, { status: 'inactive' });
+      let status = school.status == 'active' ? 'inactive' : 'active'
+      await updateSchool(school.id, { status: status });
+      // await updateSchool(school.id, { status: 'inactive' });
       await fetchSchools();
       setOpenDeactivateDialog(false);
-      setSnackbarMessage('School deactivated successfully');
+      setSnackbarMessage('School ' + status + ' successfully');
       setSnackbarSeverity('success');
     } catch (err) {
-      setSnackbarMessage('Failed to deactivate school');
+      setSnackbarMessage('Failed to ' + status + ' school');
       setSnackbarSeverity('error');
     }
     setSnackbarOpen(true);
@@ -293,11 +295,12 @@ const SchoolDashboard = () => {
     handleActionClose();
   };
 
+  const isActive = String(schoolToDeactivate?.status).trim().toLowerCase() === 'active';
+
   const filteredSchools = schoolList.filter((school) => {
     const matchesName = nameValue
       ? school.institutionName?.toLowerCase().includes(nameValue.toLowerCase())
       : true;
-
     const matchesDateRange =
       (!fromDate || dayjs(school.date).isAfter(fromDate.subtract(1, 'day'))) &&
       (!toDate || dayjs(school.date).isBefore(toDate.add(1, 'day')));
@@ -911,7 +914,7 @@ const SchoolDashboard = () => {
                                 handleActionClose();
                               }}
                             >
-                              Deactivate
+                              {row?.status?.trim().toLowerCase() === 'active' ? 'Deactivate' : 'Activate'}
                             </MenuItem>
                             <MenuItem
                             // onClick={() => {
@@ -1000,14 +1003,17 @@ const SchoolDashboard = () => {
         severity="error"
       />
 
+
+
       <ConfirmationDialog
         open={openDeactivateDialog}
         onClose={() => setOpenDeactivateDialog(false)}
         onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
-        title="Deactivate School"
-        message={`Are you sure you want to deactivate ${schoolToDeactivate?.institutionName}?`}
-        confirmText="Deactivate"
-        severity="warning"
+        title={isActive ? 'Deactivate School' : 'Activate School'}
+        message={`Are you sure you want to ${isActive ? 'deactivate' : 'activate'
+          } ${schoolToDeactivate?.institutionName}?`}
+        confirmText={isActive ? 'Deactivate' : 'Activate'}
+        severity={isActive ? 'warning' : 'success'}
       />
 
       <Snackbar

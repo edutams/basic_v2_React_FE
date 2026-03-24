@@ -17,13 +17,18 @@ import {
   CircularProgress,
   Alert,
   TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import BlankCard from 'src/components/shared/BlankCard';
 import dayjs from 'dayjs';
 import api from 'src/api/auth';
-import { IconSearch } from '@tabler/icons-react';
+import { IconSearch, IconEye, IconX } from '@tabler/icons-react';
 
 const BCrumb = [
   {
@@ -43,6 +48,8 @@ const ActivityLog = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
 
   const fetchLogs = async (currentPage, limit, searchQuery = search) => {
     setLoading(true);
@@ -80,6 +87,16 @@ const ActivityLog = () => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleOpenModal = (log) => {
+    setSelectedLog(log);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedLog(null);
   };
 
   return (
@@ -128,23 +145,26 @@ const ActivityLog = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell>
-                        <Typography variant="h6">Causer</Typography>
+                        <Typography variant="h6">Activity</Typography>
                       </TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <Typography variant="h6">Description</Typography>
-                      </TableCell>
+                      </TableCell> */}
                       {/* <TableCell>
                         <Typography variant="h6">Subject</Typography>
                       </TableCell> */}
                       <TableCell>
                         <Typography variant="h6">Date</Typography>
                       </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="h6">Action</Typography>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {logs.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} align="center">
+                        <TableCell colSpan={5} align="center">
                           No activity logs found
                         </TableCell>
                       </TableRow>
@@ -152,11 +172,12 @@ const ActivityLog = () => {
                       logs.map((log) => (
                         <TableRow key={log.id}>
                           <TableCell>
-                            <Typography variant="body1">{log.causer?.org_name || 'System'}</Typography>
+                            <Typography variant="body1">
+                              <a href="#" className='text-success'>{log.causer?.org_name || 'System'}</a> {log.description}</Typography>
                           </TableCell>
-                          <TableCell>
+                          {/* <TableCell>
                             <Typography variant="body1">{log.description}</Typography>
-                          </TableCell>
+                          </TableCell> */}
                           {/* <TableCell>
                             <Chip
                               label={log.subject_type || 'System'}
@@ -167,8 +188,19 @@ const ActivityLog = () => {
                           </TableCell> */}
                           <TableCell>
                             <Typography variant="body2" color="textSecondary">
-                              {dayjs(log.created_at).format('MMM D, YYYY HH:mm')}
+                              {log.my_updated_at}
+                              {/* {dayjs(log.created_at).format('MMM D, YYYY HH:mm')} */}
                             </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<IconEye size={18} />}
+                              onClick={() => handleOpenModal(log)}
+                            >
+                              View Details
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))
@@ -189,6 +221,55 @@ const ActivityLog = () => {
           )}
         </CardContent>
       </BlankCard>
+
+      {/* Details Modal */}
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Activity Details
+          <IconButton onClick={handleCloseModal}>
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedLog && selectedLog.properties && Object.keys(selectedLog.properties).length > 0 ? (
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell><Typography variant="subtitle2">Property Key</Typography></TableCell>
+                    <TableCell><Typography variant="subtitle2">Value</Typography></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Object.entries(selectedLog.properties).map(([key, value]) => (
+                    <TableRow key={key}>
+                      <TableCell sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
+                        {key.replace(/_/g, ' ').toUpperCase()}
+                      </TableCell>
+                      <TableCell>
+                        {typeof value === 'object' && value !== null ? (
+                          <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {JSON.stringify(value, null, 2)}
+                          </pre>
+                        ) : (
+                          String(value)
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography>No additional properties available for this activity.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

@@ -310,28 +310,6 @@ const SchoolDashboard = () => {
     page * rowsPerPage + rowsPerPage,
   );
 
-  // const schoolSummary = {
-  //   total: schoolList.length,
-  //   active: schoolList.filter((s) => s.status === 'Active').length,
-  //   inactive: schoolList.filter((s) => s.status === 'Inactive').length,
-  //   subAgents: 0,
-  //   // Group into Primary: Creche, Nursery, Primary
-  //   primary: schoolList.filter(
-  //     (s) =>
-  //       s.schoolDivisions?.includes('Creche') ||
-  //       s.schoolDivisions?.includes('Nursery') ||
-  //       s.schoolDivisions?.includes('Primary'),
-  //   ).length,
-  //   // Group into Secondary: Junior Secondary, Senior Secondary, Vocational, Tertiary
-  //   secondary: schoolList.filter(
-  //     (s) =>
-  //       s.schoolDivisions?.includes('Junior Secondary') ||
-  //       s.schoolDivisions?.includes('Senior Secondary') ||
-  //       s.schoolDivisions?.includes('Vocational') ||
-  //       s.schoolDivisions?.includes('Tertiary'),
-  //   ).length,
-  // };
-
   const primaryLevels = ['Creche', 'Nursery', 'Primary'];
   const secondaryLevels = ['Junior Secondary', 'Senior Secondary', 'Vocational', 'Tertiary'];
 
@@ -373,7 +351,6 @@ const SchoolDashboard = () => {
           mb: 3,
         }}
       >
-        {/* TOTAL SCHOOL */}
         <Paper
           sx={{
             px: 3,
@@ -383,7 +360,6 @@ const SchoolDashboard = () => {
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          {/* Header */}
           <Box
             mb={3}
             sx={{
@@ -463,7 +439,6 @@ const SchoolDashboard = () => {
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          {/* Header */}
           <Box
             mb={3}
             sx={{
@@ -557,7 +532,6 @@ const SchoolDashboard = () => {
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          {/* Header */}
           <Box
             mb={2}
             sx={{
@@ -607,7 +581,6 @@ const SchoolDashboard = () => {
           </Box>
         </Paper>
 
-        {/* SUB AGENTS */}
         <Paper
           sx={{
             borderRadius: 2,
@@ -616,7 +589,6 @@ const SchoolDashboard = () => {
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          {/* Header */}
           <Box
             sx={{
               p: 2,
@@ -656,7 +628,6 @@ const SchoolDashboard = () => {
 
           <Divider />
 
-          {/* Body */}
           <Box sx={{ px: 2, py: 3 }}>
             {[
               { label: 'Teacher:', value: 0 },

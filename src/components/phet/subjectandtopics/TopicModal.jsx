@@ -65,24 +65,24 @@ const TopicModal = ({
     onClose();
   };
 
- const renderContent = () => {
-  switch (actionType) {
-    case 'create':
-    case 'update':
-      return (
-        <TopicForm
-          initialValues={selectedTopic || {}}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-          submitText={actionType === 'create' ? 'Create Topic' : 'Update Topic'}
-          isLoading={isLoading}
-        />
-      );
-    default:
-      return null;
-  }
-};
-
+  const renderContent = () => {
+    switch (actionType) {
+      case 'create':
+      case 'update':
+        return (
+          <TopicForm
+            initialValues={selectedTopic || {}}
+            onSubmit={handleSubmit}
+            onCancel={onClose}
+            submitText={actionType === 'create' ? 'Create Topic' : 'Update Topic'}
+            isLoading={isLoading}
+            selectedSubject={selectedSubject}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -90,9 +90,7 @@ const TopicModal = ({
         <ConfirmationDialog
           open={open}
           onClose={onClose}
-          onConfirm={() =>
-            handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')
-          }
+          onConfirm={() => handleStatusChange(actionType === 'activate' ? 'active' : 'inactive')}
           title={modalConfig.title}
           message={`Are you sure you want to ${actionType} "${selectedTopic?.name}"?`}
           confirmText={actionType === 'activate' ? 'Activate' : 'Deactivate'}

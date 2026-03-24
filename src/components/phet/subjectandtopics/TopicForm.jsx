@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { topicValidationSchema } from './validation/topicValidationSchema';
 
 const TopicForm = ({
-  initialValues = {}, 
+  initialValues = {},
   onSubmit,
   onCancel,
   submitText,
@@ -12,8 +12,8 @@ const TopicForm = ({
   selectedSubject,
 }) => {
   const [form, setForm] = useState({
-    name: initialValues?.name || '',
-    code: initialValues?.code || '',
+    topic: initialValues?.topic || '',
+    subject_name: initialValues?.subject_name || '',
     status: initialValues?.status || 'active',
   });
   const [errors, setErrors] = useState({});
@@ -46,19 +46,23 @@ const TopicForm = ({
       <Box display="flex" flexDirection="column" gap={2}>
         <TextField
           label="Topic Name"
-          name="name"
-          value={form.name}
+          name="topic"
+          value={form.topic}
           onChange={handleChange}
-          error={!!errors.name}
-          helperText={errors.name}
+          error={!!errors.topic}
+          helperText={errors.topic}
         />
         <TextField
-          label="Topic Code"
-          name="code"
-          value={form.code}
-          onChange={handleChange}
-          error={!!errors.code}
-          helperText={errors.code}
+          label="subject name"
+          name="subject_name"
+          value={form.subject_name || selectedSubject?.subject_name || ''}
+          disabled
+          error={!!errors.subject_name}
+          // helperText={errors.subject_name || 'Subject is auto-selected'}
+          sx={{
+            backgroundColor: '#f5f5f5',
+            borderRadius: 1,
+          }}
         />
         <TextField
           select

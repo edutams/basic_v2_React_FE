@@ -148,7 +148,7 @@ const SubjectTopicView = () => {
       if (type === 'create') {
         // Map frontend field names to backend field names
         const apiData = {
-          topic: data.name,
+          topic: data.topic,
           subject_id: selectedSubject.id,
           status: data.status,
         };
@@ -157,7 +157,7 @@ const SubjectTopicView = () => {
         notify.success('Topic added successfully', 'Success');
       } else if (type === 'update') {
         const apiData = {
-          topic: data.name,
+          topic: data.topic,
           status: data.status,
         };
         const result = await phetApi.updateTopic(data.id, apiData);

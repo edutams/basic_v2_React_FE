@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -26,33 +26,7 @@ import ParentCard from 'src/components/shared/ParentCard';
 import StimulationLinkModal from '../../components/phet/stimulation-links/StimulationLinkModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
-
-const DUMMY_ROWS = [
-  {
-    id: 1,
-    title: 'The Water Cycle Simulation',
-    topic: 'Water Cycle',
-    subject: 'Science',
-    link: 'https://phet.colorado.edu/en/simulation/water-cycle',
-    status: 'inactive',
-  },
-  {
-    id: 2,
-    title: 'Basic Algebra Balancing',
-    topic: 'Equations',
-    subject: 'Mathematics',
-    link: 'https://phet.colorado.edu/en/simulation/balancing-equations',
-    status: 'active',
-  },
-  {
-    id: 3,
-    title: 'Sound Waves Visualizer',
-    topic: 'Sound',
-    subject: 'Physics',
-    link: 'https://phet.colorado.edu/en/simulation/sound',
-    status: 'active',
-  },
-];
+import phetApi from 'src/api/phet/phetApi';
 
 const StimulationLinks = () => {
   return (
@@ -71,7 +45,8 @@ const StimulationLinks = () => {
 };
 
 const ManagePhETLinks = () => {
-  const [rows, setRows] = useState(DUMMY_ROWS);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -83,11 +58,36 @@ const ManagePhETLinks = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const notify = useNotification();
 
+  // Fetch simulation links from API
+  const fetchSimulationLinks = async () => {
+    try {
+      setLoading(true);
+      const data = await phetApi.getSimulationLinks({ search: searchTerm });
+      setRows(data);
+    } catch (error) {
+      console.error('Error fetching simulation links:', error);
+      notify.error('Failed to fetch simulation links');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSimulationLinks();
+  }, [searchTerm]);
+
   const filteredRows = rows.filter((row) =>
-    row.title.toLowerCase().includes(searchTerm.toLowerCase()),
+    (row.title || '').toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setPage(0);
+  };
+
+  const hasActiveFilters = searchTerm !== '';
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -117,28 +117,44 @@ const ManagePhETLinks = () => {
     handleMenuClose();
   };
 
-  const handleModalSubmit = (data) => {
-    if (modalType === 'create') {
-      setRows((prev) => [...prev, { ...data, id: Date.now() }]);
-      notify.success('Stimulation link added successfully', 'Success');
-    } else if (modalType === 'update') {
-      setRows((prev) => prev.map((row) => (row.id === data.id ? data : row)));
-      notify.success('Stimulation link updated successfully', 'Success');
+  const handleModalSubmit = async (data) => {
+    try {
+      if (modalType === 'create') {
+        const newLink = await phetApi.createSimulationLink({
+          topic_id: data.topic_id,
+          title: data.title,
+          link: data.link,
+          status: data.status,
+        });
+        setRows((prev) => [newLink, ...prev]);
+        notify.success('Stimulation link added successfully', 'Success');
+      } else if (modalType === 'update') {
+        const updatedLink = await phetApi.updateSimulationLink(data.id, {
+          topic_id: data.topic_id,
+          title: data.title,
+          link: data.link,
+          status: data.status,
+        });
+        setRows((prev) => prev.map((row) => (row.id === data.id ? updatedLink : row)));
+        notify.success('Stimulation link updated successfully', 'Success');
+      }
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error submitting simulation link:', error);
+      notify.error('Failed to submit simulation link', 'Error');
     }
-    setModalOpen(false);
   };
 
-  const handleDeleteConfirm = () => {
-    setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
-    setConfirmOpen(false);
-    setRowToDelete(null);
-    notify.success('Stimulation link deleted successfully', 'Success');
-  };
-
-  const handleSimulationUpdate = (data, action) => {
-    if (action === 'create') {
-    } else if (action === 'update') {
-    } else if (action === 'delete') {
+  const handleDeleteConfirm = async () => {
+    try {
+      await phetApi.deleteSimulationLink(rowToDelete.id);
+      setRows((prev) => prev.filter((row) => row.id !== rowToDelete.id));
+      setConfirmOpen(false);
+      setRowToDelete(null);
+      notify.success('Stimulation link deleted successfully', 'Success');
+    } catch (error) {
+      console.error('Error deleting simulation link:', error);
+      notify.error('Failed to delete simulation link', 'Error');
     }
   };
 
@@ -147,7 +163,7 @@ const ManagePhETLinks = () => {
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h5">Manage Gateways</Typography>
+            <Typography variant="h5">Manage Simulation Links</Typography>
             <Button
               variant="contained"
               color="primary"
@@ -163,7 +179,7 @@ const ManagePhETLinks = () => {
         }
       >
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
               placeholder="Search by title..."
               value={searchTerm}
@@ -171,14 +187,22 @@ const ManagePhETLinks = () => {
                 setSearchTerm(e.target.value);
                 setPage(0);
               }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
               }}
+              // sx={{ flexGrow: 1, minWidth: 200 }}
             />
+            {hasActiveFilters && (
+              <Button variant="outlined" onClick={clearFilters} sx={{ height: 'fit-content' }}>
+                Clear Filters
+              </Button>
+            )}
           </Box>
 
           <Paper variant="outlined">
@@ -188,29 +212,35 @@ const ManagePhETLinks = () => {
                   <TableRow>
                     <TableCell>#</TableCell>
                     <TableCell>Title</TableCell>
-                    <TableCell>Topic</TableCell>
                     <TableCell>Subject</TableCell>
+                    <TableCell>Topic</TableCell>
                     <TableCell>Link</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell align="center">Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedRows.length > 0 ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        <Typography variant="body2">Loading...</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : paginatedRows.length > 0 ? (
                     paginatedRows.map((row, index) => (
                       <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{row.title}</TableCell>
-                        <TableCell>{row.topic}</TableCell>
-                        <TableCell>{row.subject}</TableCell>
+                        <TableCell>{row.title || '-'}</TableCell>
+                        <TableCell>{row.subject_name || '-'}</TableCell>
+                        <TableCell>{row.topic_name || '-'}</TableCell>
                         <TableCell>
-                          <a href={row.link} target="_blank" rel="noopener noreferrer">
-                            {row.link}
+                          <a href={row.link || '#'} target="_blank" rel="noopener noreferrer">
+                            {row.link || '-'}
                           </a>
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={row.status.toUpperCase()}
+                            label={(row.status || 'inactive').toUpperCase()}
                             size="small"
                             sx={{
                               bgcolor:

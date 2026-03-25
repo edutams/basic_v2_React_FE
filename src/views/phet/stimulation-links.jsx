@@ -122,7 +122,7 @@ const ManagePhETLinks = () => {
       if (modalType === 'create') {
         const newLink = await phetApi.createSimulationLink({
           topic_id: data.topic_id,
-          title: data.title,
+          sub_topic: data.sub_topic,
           link: data.link,
           status: data.status,
         });
@@ -131,7 +131,7 @@ const ManagePhETLinks = () => {
       } else if (modalType === 'update') {
         const updatedLink = await phetApi.updateSimulationLink(data.id, {
           topic_id: data.topic_id,
-          title: data.title,
+          sub_topic: data.sub_topic,
           link: data.link,
           status: data.status,
         });
@@ -313,7 +313,7 @@ const ManagePhETLinks = () => {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDeleteConfirm}
         title="Delete Simulation Link"
-        message={`Are you sure you want to delete "${rowToDelete?.title}"?`}
+        message={`Are you sure you want to delete "${rowToDelete?.sub_topic}"?`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

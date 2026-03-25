@@ -77,7 +77,7 @@ const ManagePhETLinks = () => {
   }, [searchTerm]);
 
   const filteredRows = rows.filter((row) =>
-    (row.title || '').toLowerCase().includes(searchTerm.toLowerCase()),
+    (row.sub_topic || '').toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -122,7 +122,7 @@ const ManagePhETLinks = () => {
       if (modalType === 'create') {
         const newLink = await phetApi.createSimulationLink({
           topic_id: data.topic_id,
-          title: data.title,
+          title: data.sub_topic,
           link: data.link,
           status: data.status,
         });
@@ -131,7 +131,7 @@ const ManagePhETLinks = () => {
       } else if (modalType === 'update') {
         const updatedLink = await phetApi.updateSimulationLink(data.id, {
           topic_id: data.topic_id,
-          title: data.title,
+          title: data.sub_topic,
           link: data.link,
           status: data.status,
         });
@@ -230,7 +230,7 @@ const ManagePhETLinks = () => {
                     paginatedRows.map((row, index) => (
                       <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{row.title || '-'}</TableCell>
+                        <TableCell>{row.sub_topic || '-'}</TableCell>
                         <TableCell>{row.subject_name || '-'}</TableCell>
                         <TableCell>{row.topic_name || '-'}</TableCell>
                         <TableCell>
@@ -313,7 +313,7 @@ const ManagePhETLinks = () => {
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleDeleteConfirm}
         title="Delete Simulation Link"
-        message={`Are you sure you want to delete "${rowToDelete?.title}"?`}
+        message={`Are you sure you want to delete "${rowToDelete?.sub_topic}"?`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

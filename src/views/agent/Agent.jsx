@@ -394,9 +394,10 @@ const Agent = () => {
 
   const handleImpersonate = async (agent) => {
     try {
-      const result = await impersonateAgent(agent.s_n);
+      const result = await impersonateAgent(agent.id);
       if (result.success) {
-        window.location.href = '/'; // Refresh to dashboard as the new agent
+       localStorage.setItem('impersonator_id', agent?.id);
+        localStorage.setItem('isImpersonating', 'true');
       } else {
         alert(result.error);
       }

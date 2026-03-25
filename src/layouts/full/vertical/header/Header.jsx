@@ -113,6 +113,60 @@ const Header = () => {
           </>
         ) : null}
         {lgUp ? <>{/* <Navigation /> */}</> : null}
+
+        {isImpersonating && (
+          <Box
+            sx={{
+              // bgcolor: 'warning.main',
+              bgcolor:'#593196',
+              color: 'warning.contrastText',
+              px: { xs: 1, sm: 2 },
+              py: 0.5,
+              borderRadius: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: { xs: 0.5, sm: 1 },
+              ml: { xs: 1, sm: 2 },
+              maxWidth: { xs: '160px', sm: 'none' },
+              overflow: 'hidden',
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                display: { xs: 'none', sm: 'block' },
+                whiteSpace: 'nowrap',
+              }}
+            >
+              You are impersonating an agent
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                display: { xs: 'block', sm: 'none' },
+                whiteSpace: 'nowrap',
+                fontSize: '11px',
+              }}
+            >
+              Impersonating
+            </Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              color="inherit"
+              onClick={stopImpersonation}
+              sx={{
+                whiteSpace: 'nowrap',
+                fontSize: { xs: '10px', sm: '13px' },
+                px: { xs: 0.75, sm: 1.5 },
+                minWidth: 'unset',
+              }}
+            >
+              {lgUp ? 'Return to my account' : 'Exit'}
+            </Button>
+          </Box>
+        )}
+
         <Box flexGrow={1} />
         <Stack direction="row" gap={1} alignItems="center">
           {/* ------------------------------------------- */}
@@ -125,6 +179,7 @@ const Header = () => {
               <IconSun size="21" onClick={() => setActiveMode('light')} />
             )}
           </IconButton>
+          
 
           {/* ------------------------------------------- */}
           {/* Language Dropdown */}
@@ -151,26 +206,7 @@ const Header = () => {
 
           {/* ------------------------------------------- */}
 
-          {isImpersonating && (
-            <Box
-              sx={{
-                bgcolor: 'warning.main',
-                color: 'warning.contrastText',
-                px: 2,
-                py: 0.5,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Typography variant="body2">You are impersonating an agent</Typography>
-              <Button size="small" variant="outlined" color="inherit" onClick={stopImpersonation}>
-                Return to my account
-              </Button>
-            </Box>
-          )}
-
+         
           <Profile />
 
           {isVisible && (

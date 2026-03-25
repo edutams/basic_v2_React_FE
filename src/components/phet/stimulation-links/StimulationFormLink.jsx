@@ -20,7 +20,7 @@ const StimulationFormLink = ({
   const mapInitialValues = (values) => ({
     subject_id: values.subject_id || '',
     topic_id: values.topic_id || '',
-    title: values.title || '',
+    sub_topic: values.title || values.sub_topic || '',
     link: values.link || '',
     status: values.status || 'active',
   });
@@ -110,13 +110,13 @@ const StimulationFormLink = ({
       </FormControl> */}
       <TextField
         fullWidth
-        label="Title"
-        name="title"
-        value={form.title || ''}
+        label="Sub Topic"
+        name="sub_topic"
+        value={form.sub_topic || ''}
         onChange={handleChange}
         margin="normal"
-        error={!!errors.title}
-        helperText={errors.title}
+        error={!!errors.sub_topic}
+        helperText={errors.sub_topic}
       />
 
       <FormControl fullWidth margin="normal" error={!!errors.topic_id}>

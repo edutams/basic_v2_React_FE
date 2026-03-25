@@ -10,7 +10,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Chip,
   TextField,
   InputAdornment,
   Button,
@@ -26,7 +25,6 @@ import {
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import BlankCard from 'src/components/shared/BlankCard';
-import dayjs from 'dayjs';
 import api from 'src/api/auth';
 import { IconSearch, IconEye, IconX } from '@tabler/icons-react';
 
@@ -48,15 +46,23 @@ const ActivityLog = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [selectedLog, setSelectedLog] = useState(null);
   const [openModal, setOpenModal] = useState(false);
 
-  const fetchLogs = async (currentPage, limit, searchQuery = search) => {
+  const fetchLogs = async (currentPage, limit, searchQuery = search, from = dateFrom, to = dateTo) => {
     setLoading(true);
     try {
-      const response = await api.get(
-        `/agent/activity-logs?page=${currentPage + 1}&limit=${limit}&search=${searchQuery}`,
-      );
+      const params = new URLSearchParams({
+        page: currentPage + 1,
+        limit,
+        search: searchQuery,
+      });
+      if (from) params.append('date_from', from);
+      if (to) params.append('date_to', to);
+
+      const response = await api.get(`/agent/activity-logs?${params.toString()}`);
       setLogs(response.data.data);
       setTotal(response.data.total);
       setError(null);
@@ -74,7 +80,18 @@ const ActivityLog = () => {
 
   const handleSearch = () => {
     if (page === 0) {
-      fetchLogs(0, rowsPerPage, search);
+      fetchLogs(0, rowsPerPage, search, dateFrom, dateTo);
+    } else {
+      setPage(0);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setDateFrom('');
+    setDateTo('');
+    if (page === 0) {
+      fetchLogs(0, rowsPerPage, '', '', '');
     } else {
       setPage(0);
     }
@@ -107,18 +124,14 @@ const ActivityLog = () => {
           <Typography variant="h5" mb={3}>
             System Activity Logs
           </Typography>
-          <Box display="flex" gap={2} mb={3} alignItems="center">
+          <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
             <TextField
               size="small"
               placeholder="Search logs..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
-              sx={{ width: '300px' }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+              sx={{ width: '250px' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -127,9 +140,33 @@ const ActivityLog = () => {
                 ),
               }}
             />
+            <TextField
+              size="small"
+              label="Date From"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: '160px' }}
+            />
+            <TextField
+              size="small"
+              label="Date To"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: dateFrom || undefined }}
+              sx={{ width: '160px' }}
+            />
             <Button variant="contained" color="primary" onClick={handleSearch}>
               Search
             </Button>
+            {(search || dateFrom || dateTo) && (
+              <Button variant="outlined" color="secondary" onClick={handleClearFilters}>
+                Clear
+              </Button>
+            )}
           </Box>
 
           {loading ? (
@@ -144,6 +181,9 @@ const ActivityLog = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
+                      <TableCell>
+                        <Typography variant="h6">S/N</Typography>
+                      </TableCell>
                       <TableCell>
                         <Typography variant="h6">Activity</Typography>
                       </TableCell>
@@ -169,8 +209,11 @@ const ActivityLog = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      logs.map((log) => (
+                      logs.map((log,idx) => (
                         <TableRow key={log.id}>
+                            <TableCell>
+                            <Typography variant="body1">{idx + 1}</Typography>
+                          </TableCell>
                           <TableCell>
                             <Typography variant="body1">
                               <a href="#" className='text-success'>{log.causer?.org_name || 'System'}</a> {log.description}</Typography>
@@ -236,15 +279,15 @@ const ActivityLog = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell><Typography variant="subtitle2">Property Key</Typography></TableCell>
+                    <TableCell><Typography variant="subtitle2">Updated Properties</Typography></TableCell>
                     <TableCell><Typography variant="subtitle2">Value</Typography></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {Object.entries(selectedLog.properties).map(([key, value]) => (
                     <TableRow key={key}>
-                      <TableCell sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
-                        {key.replace(/_/g, ' ').toUpperCase()}
+                      <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        {key}
                       </TableCell>
                       <TableCell>
                         {typeof value === 'object' && value !== null ? (

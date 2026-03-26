@@ -217,27 +217,27 @@ const OverviewTab = ({ data }) => {
 
     return (
         <Box sx={{ p: { xs: 1, md: 2 }, bgcolor: isDarkMode ? 'transparent' : '#F8FAFC' }}>
-            {/* Year Filter */}
-            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', maxWidth: { xs: '100%', sm: 200 }, border: `1px solid ${theme.palette.divider}`, borderRadius: '8px', overflow: 'hidden', bgcolor: theme.palette.background.paper }}>
-                <Box sx={{ bgcolor: isDarkMode ? theme.palette.action.hover : '#EEF2FF', px: 2, py: 1, borderRight: `1px solid ${theme.palette.divider}` }}>
-                    <Typography variant="caption" fontWeight="800" color="primary" sx={{ textTransform: 'uppercase', fontSize: '10px' }}>
-                        Year
-                    </Typography>
+            {/* Year Filter — right aligned, consistent style */}
+            <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end" mb={3}>
+                <Box sx={{ display: 'flex', alignItems: 'center', border: `1px solid ${isDarkMode ? '#444' : '#E2E8F0'}`, borderRadius: '6px', bgcolor: isDarkMode ? '#2d2d2d' : 'white', overflow: 'hidden' }}>
+                    <Select
+                        size="small"
+                        value="2026"
+                        renderValue={(v) => `Year ${v}`}
+                        sx={{ '& fieldset': { border: 'none' }, minWidth: 120, fontSize: '13px', fontWeight: 600, color: isDarkMode ? '#fff' : '#333' }}
+                    >
+                        <MenuItem value="2026">2026</MenuItem>
+                        <MenuItem value="2025">2025</MenuItem>
+                    </Select>
                 </Box>
-                <Select 
-                    fullWidth
-                    value="2026" 
-                    size="small" 
-                    sx={{ 
-                        '& fieldset': { border: 'none' },
-                        fontSize: '14px', 
-                        fontWeight: 700,
-                        '& .MuiSelect-select': { py: 0.5, pl: 1.5 }
-                    }}
+                <Button
+                    variant="contained"
+                    size="small"
+                    sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', textTransform: 'none', fontWeight: 600, '&:hover': { bgcolor: '#1e3a8a' } }}
                 >
-                    <MenuItem value="2026">2026</MenuItem>
-                </Select>
-            </Box>
+                    Filter
+                </Button>
+            </Stack>
 
             <Grid container spacing={3}>
                 {/* Column 1: Transaction Chart */}

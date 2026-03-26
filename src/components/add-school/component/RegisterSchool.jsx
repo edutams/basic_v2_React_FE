@@ -14,6 +14,9 @@ import {
   AlertTitle,
   Chip,
   Typography,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
@@ -44,6 +47,10 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     owner_lname: selectedSchool?.owner_lname || '',
     owner_email: selectedSchool?.owner_email || '',
     owner_phone: selectedSchool?.owner_phone || '',
+    portal_fname: selectedSchool?.portal_fname || '',
+    portal_lname: selectedSchool?.portal_lname || '',
+    portal_email: selectedSchool?.portal_email || '',
+    portal_phone: selectedSchool?.portal_phone || '',
     admin_fname: selectedSchool?.admin_fname || '',
     admin_lname: selectedSchool?.admin_lname || '',
     admin_email: selectedSchool?.admin_email || '',
@@ -67,6 +74,40 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
   });
 
   const [errors, setErrors] = useState({});
+
+  // 'none' = fill manually | 'owner' = copy from owner
+  const [portalSource, setPortalSource] = useState('none');
+  // 'none' | 'owner' | 'portal'
+  const [adminSource, setAdminSource] = useState('none');
+
+  const copyFields = (source) => ({
+    fname: formData[`${source}_fname`],
+    lname: formData[`${source}_lname`],
+    email: formData[`${source}_email`],
+    phone: formData[`${source}_phone`],
+  });
+
+  const handlePortalSourceChange = (e) => {
+    const src = e.target.value;
+    setPortalSource(src);
+    if (src === 'owner') {
+      const f = copyFields('owner');
+      setFormData((prev) => ({ ...prev, portal_fname: f.fname, portal_lname: f.lname, portal_email: f.email, portal_phone: f.phone }));
+    } else {
+      setFormData((prev) => ({ ...prev, portal_fname: '', portal_lname: '', portal_email: '', portal_phone: '' }));
+    }
+  };
+
+  const handleAdminSourceChange = (e) => {
+    const src = e.target.value;
+    setAdminSource(src);
+    if (src === 'owner' || src === 'portal') {
+      const f = copyFields(src);
+      setFormData((prev) => ({ ...prev, admin_fname: f.fname, admin_lname: f.lname, admin_email: f.email, admin_phone: f.phone }));
+    } else {
+      setFormData((prev) => ({ ...prev, admin_fname: '', admin_lname: '', admin_email: '', admin_phone: '' }));
+    }
+  };
 
   // Fetch states on mount
   useEffect(() => {
@@ -501,60 +542,109 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
           </Box>
         </Grid>
 
-        {/* School Admin Owner Details Section */}
+        {/* School Portal Admin Section */}
         <Grid item xs={12}>
-          <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: '4px', border: '1px solid #E0E0E0' }}>
-            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2 }}>
-              School Admin Owner Details
+          <Box sx={{ p: 2, bgcolor: '#E3F2FD', borderRadius: '4px', border: '1px solid #BBDEFB' }}>
+            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 1.5, color: '#0D47A1' }}>
+              School Portal Admin Details
             </Typography>
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: '#EEF2FF', borderRadius: '4px', border: '1px solid #C7D2FE' }}>
+              <Typography variant="caption" fontWeight={600} sx={{ color: '#3949ab', display: 'block', mb: 0.5 }}>
+                Do you want to use the existing info for Portal Admin?
+              </Typography>
+              <RadioGroup row value={portalSource} onChange={handlePortalSourceChange}>
+                <FormControlLabel value="owner" control={<Radio size="small" />} label="Yes" />
+                <FormControlLabel value="none" control={<Radio size="small" />} label="No" />
+              </RadioGroup>
+            </Box>
             <Grid container spacing={2}>
               <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Admin First Name"
-                  name="admin_fname"
-                  value={formData.admin_fname}
-                  onChange={handleChange}
-                  error={Boolean(errors.admin_fname)}
-                  helperText={errors.admin_fname?.[0] || errors.admin_fname}
-                  sx={{ bgcolor: 'white' }}
-                />
+                <TextField fullWidth label="Portal Admin First Name" name="portal_fname"
+                  value={formData.portal_fname} onChange={handleChange}
+                  error={Boolean(errors.portal_fname)} helperText={errors.portal_fname?.[0] || errors.portal_fname}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
               </Grid>
               <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Admin last name"
-                  name="admin_lname"
-                  value={formData.admin_lname}
-                  onChange={handleChange}
-                  error={Boolean(errors.admin_lname)}
-                  helperText={errors.admin_lname?.[0] || errors.admin_lname}
-                  sx={{ bgcolor: 'white' }}
-                />
+                <TextField fullWidth label="Portal Admin Last Name" name="portal_lname"
+                  value={formData.portal_lname} onChange={handleChange}
+                  error={Boolean(errors.portal_lname)} helperText={errors.portal_lname?.[0] || errors.portal_lname}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
               </Grid>
               <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Admin Phone no"
-                  name="admin_phone"
-                  value={formData.admin_phone}
-                  onChange={handleChange}
-                  error={Boolean(errors.admin_phone)}
-                  helperText={errors.admin_phone?.[0] || errors.admin_phone}
-                  sx={{ bgcolor: 'white' }}
-                />
+                <TextField fullWidth label="Portal Admin Phone" name="portal_phone"
+                  value={formData.portal_phone} onChange={handleChange}
+                  error={Boolean(errors.portal_phone)} helperText={errors.portal_phone?.[0] || errors.portal_phone}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
               </Grid>
               <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Admin Name mail"
-                  name="admin_email"
-                  value={formData.admin_email}
-                  onChange={handleChange}
-                  error={Boolean(errors.admin_email)}
-                  helperText={errors.admin_email?.[0] || errors.admin_email}
-                  sx={{ bgcolor: 'white' }}
-                />
+                <TextField fullWidth label="Portal Admin Email" name="portal_email"
+                  value={formData.portal_email} onChange={handleChange}
+                  error={Boolean(errors.portal_email)} helperText={errors.portal_email?.[0] || errors.portal_email}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
+              </Grid>
+            </Grid>
+          </Box>
+        </Grid>
+
+        {/* School Head Admin Section */}
+        <Grid item xs={12}>
+          <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: '4px', border: '1px solid #E0E0E0' }}>
+            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 1.5 }}>
+              School Head Admin Details
+            </Typography>
+
+            {/* Step 1: Yes/No */}
+            <Box sx={{ mb: 1.5, p: 1.5, bgcolor: '#EEF2FF', borderRadius: '4px', border: '1px solid #C7D2FE' }}>
+              <Typography variant="caption" fontWeight={600} sx={{ color: '#3949ab', display: 'block', mb: 0.5 }}>
+                Do you want to use the existing info for Head Admin?
+              </Typography>
+              <RadioGroup row value={adminSource === 'none' ? 'no' : 'yes'}
+                onChange={(e) => {
+                  if (e.target.value === 'no') handleAdminSourceChange({ target: { value: 'none' } });
+                  else handleAdminSourceChange({ target: { value: 'owner' } }); // default to owner when yes
+                }}>
+                <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
+                <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
+              </RadioGroup>
+            </Box>
+
+            {/* Step 2: Which source — only shown when Yes */}
+            {adminSource !== 'none' && (
+              <Box sx={{ mb: 2, p: 1.5, bgcolor: '#F0FDF4', borderRadius: '4px', border: '1px solid #BBF7D0' }}>
+                <Typography variant="caption" fontWeight={600} sx={{ color: '#166534', display: 'block', mb: 0.5 }}>
+                  Which existing info do you want to use for Head Admin?
+                </Typography>
+                <RadioGroup row value={adminSource} onChange={handleAdminSourceChange}>
+                  <FormControlLabel value="owner" control={<Radio size="small" />} label="School Owner Info" />
+                  <FormControlLabel value="portal" control={<Radio size="small" />} label="Portal Admin Info" />
+                </RadioGroup>
+              </Box>
+            )}
+
+            <Grid container spacing={2}>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField fullWidth label="Head Admin First Name" name="admin_fname"
+                  value={formData.admin_fname} onChange={handleChange}
+                  error={Boolean(errors.admin_fname)} helperText={errors.admin_fname?.[0] || errors.admin_fname}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField fullWidth label="Head Admin Last Name" name="admin_lname"
+                  value={formData.admin_lname} onChange={handleChange}
+                  error={Boolean(errors.admin_lname)} helperText={errors.admin_lname?.[0] || errors.admin_lname}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField fullWidth label="Head Admin Phone" name="admin_phone"
+                  value={formData.admin_phone} onChange={handleChange}
+                  error={Boolean(errors.admin_phone)} helperText={errors.admin_phone?.[0] || errors.admin_phone}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
+              </Grid>
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <TextField fullWidth label="Head Admin Email" name="admin_email"
+                  value={formData.admin_email} onChange={handleChange}
+                  error={Boolean(errors.admin_email)} helperText={errors.admin_email?.[0] || errors.admin_email}
+                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
               </Grid>
             </Grid>
           </Box>

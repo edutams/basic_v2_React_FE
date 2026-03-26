@@ -1,15 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { Box, Tab, Stack, Grid, Divider, useTheme, CircularProgress } from '@mui/material';
+import { Box, Tab, Grid, useTheme, CircularProgress } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { IconLayoutDashboard, IconUsers, IconSchool, } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
 import { useParams } from 'react-router';
 import { useAuth } from '../../hooks/useAuth';
 
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 
-// New Components
 import ProfileHeader from './components/ProfileHeader';
 import StatCards from './components/StatCards';
 import OverviewTab from './components/OverviewTab';
@@ -21,7 +19,6 @@ import AgentModal from '../../components/add-agent/components/AgentModal';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 
-// API & Mock Data
 import agentApi from '../../api/agent';
 import { mockAgentData } from './mockData';
 
@@ -29,13 +26,12 @@ const ViewAgent = () => {
     const { user: currentUser } = useAuth();
     const { id: paramId } = useParams();
     const id = paramId || currentUser?.id;
-    const [value, setValue] = React.useState('1');
+    const [value, setValue] = useState('1');
     const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
     const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
     const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
     const theme = useTheme();
-    const isDark = theme.palette.mode === 'dark';
 
     const isOwnProfile = currentUser && currentUser.id == id;
     const isDashboard = !paramId;
@@ -48,7 +44,6 @@ const ViewAgent = () => {
             setIsLoading(true);
             try {
                 const response = await agentApi.getDetails(id);
-                // The Controller returns: { success: true, message: "...", data: { ... } }
                 if (response.success && response.data) {
                     const data = response.data;
 
@@ -61,7 +56,6 @@ const ViewAgent = () => {
                         }
                     }
 
-                    // Map backend data to the expected component structure
                     const mappedData = {
                         profile: {
                             id: data.id,
@@ -73,19 +67,19 @@ const ViewAgent = () => {
                             color: parsedColor
                         },
                         stats: {
-                            totalTransaction: mockAgentData.stats.totalTransaction, // Mock
-                            transactionCount: mockAgentData.stats.transactionCount, // Mock
+                            totalTransaction: mockAgentData.stats.totalTransaction,
+                            transactionCount: mockAgentData.stats.transactionCount,
                             totalSchool: data.tenants_count || 0,
                             totalSubAgents: data.children ? data.children.length : (data.children_count || 0),
-                            commission: mockAgentData.stats.commission, // Mock
-                            volume: mockAgentData.stats.volume // Mock
+                            commission: mockAgentData.stats.commission,
+                            volume: mockAgentData.stats.volume
                         },
                         team: (data.children || []).map(child => ({
                             name: child.org_name || child.name,
                             handle: child.email,
                             phone: child.phone,
-                            transaction: '0', // Mock
-                            performance: '0', // Mock
+                            transaction: '0',
+                            performance: '0',
                             level: child.access_level,
                             descendent: child.children_count || 0,
                             status: child.status ? child.status.charAt(0).toUpperCase() + child.status.slice(1) : 'Inactive',
@@ -101,7 +95,6 @@ const ViewAgent = () => {
                             population: tenant.population || 0,
                             status: tenant.status ? tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1) : 'Active'
                         })),
-                        // Retain mock data for charts since they are not supported by the API yet
                         revenueData: mockAgentData.revenueData,
                         loginActivities: mockAgentData.loginActivities,
                         planDistribution: mockAgentData.planDistribution,
@@ -131,16 +124,14 @@ const ViewAgent = () => {
         { title: isDashboard || (isOwnProfile && currentUser.access_level > 1) ? 'Dashboard' : 'View Profile' },
     ];
 
-    const handleChange = (event, newValue) => {
-        setValue(newValue);
-    };
+    const isDark = theme.palette.mode === 'dark';
 
     return (
         <PageContainer
             title={isOwnProfile && currentUser.access_level > 1 ? "Agent Dashboard" : "View Agent Profile"}
             description="Detailed agent profile view"
         >
-            <Box sx={{ bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF', minHeight: '100vh', p: { xs: 1, md: 2 } }}>
+            <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
                 <Breadcrumb title={isOwnProfile && currentUser.access_level > 1 ? "Dashboard" : "View Profile"} items={BCrumb} />
 
                 <Box mt={3}>
@@ -150,14 +141,14 @@ const ViewAgent = () => {
                         </Box>
                     ) : agentData ? (
                         <Grid container spacing={3} alignItems="stretch">
-                            <Grid size={{ xs: 12, md: 5, lg: 5 }}>
+                            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
                                 <ProfileHeader
                                     profile={agentData.profile}
-                                    onAddAgent={() => setIsAddAgentModalOpen(true)}
-                                    onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                                    onManageSchools={() => setValue('3')}
+                                    onManageAgent={() => setValue('2')}
                                 />
                             </Grid>
-                            <Grid size={{ xs: 12, md: 7, lg: 7 }}>
+                            <Grid size={{ xs: 12, md: 8, lg: 8 }}>
                                 <StatCards
                                     stats={agentData.stats}
                                     onTransactionClick={() => setIsTransactionModalOpen(true)}
@@ -171,27 +162,10 @@ const ViewAgent = () => {
                 </Box>
 
                 {/* Modals */}
-                <TotalSchoolModal
-                    open={isSchoolModalOpen}
-                    onClose={() => setIsSchoolModalOpen(false)}
-                />
-                <TotalTransactionModal
-                    open={isTransactionModalOpen}
-                    onClose={() => setIsTransactionModalOpen(false)}
-                />
-
-                <AgentModal
-                    open={isAddAgentModalOpen}
-                    onClose={() => setIsAddAgentModalOpen(false)}
-                    handleRefresh={() => { }}
-                />
-
-                <ReusableModal
-                    open={isAddSchoolModalOpen}
-                    onClose={() => setIsAddSchoolModalOpen(false)}
-                    title="Register School"
-                    size="large"
-                >
+                <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+                <TotalTransactionModal open={isTransactionModalOpen} onClose={() => setIsTransactionModalOpen(false)} />
+                <AgentModal open={isAddAgentModalOpen} onClose={() => setIsAddAgentModalOpen(false)} handleRefresh={() => {}} />
+                <ReusableModal open={isAddSchoolModalOpen} onClose={() => setIsAddSchoolModalOpen(false)} title="Register School" size="large">
                     <RegisterSchoolForm
                         actionType="create"
                         onSubmit={() => setIsAddSchoolModalOpen(false)}
@@ -200,76 +174,67 @@ const ViewAgent = () => {
                 </ReusableModal>
 
                 <Box mt={4}>
-                    <Box sx={{ bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF', borderRadius: '12px', overflow: 'hidden', border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    <Box sx={{
+                        bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)'
+                    }}>
                         <TabContext value={value}>
-                            <Box sx={{ borderBottom: 1, borderColor: theme.palette.mode === 'dark' ? '#333' : '#E2E8F0', bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF', px: 2 }}>
+                            <Box sx={{
+                                borderBottom: 1,
+                                borderColor: isDark ? '#333' : '#E2E8F0',
+                                bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+                                px: 2
+                            }}>
                                 <TabList
-                                    onChange={handleChange}
+                                    onChange={(_, newValue) => setValue(newValue)}
                                     aria-label="agent tabs"
                                     variant="scrollable"
                                     scrollButtons="auto"
                                     allowScrollButtonsMobile
                                     sx={{
                                         '& .MuiTabs-indicator': {
-                                            height: 4,
+                                            height: 3,
                                             borderRadius: '4px 4px 0 0',
-                                            bgcolor: '#1E293B'
+                                            bgcolor: '#1E40AF'
                                         },
                                         '& .MuiTab-root': {
-                                            minHeight: 64,
+                                            minHeight: 56,
                                             fontSize: '14px',
-                                            fontWeight: 700,
-                                            color: theme.palette.mode === 'dark' ? '#fff' : '#64748B',
-                                            '&.Mui-selected': {
-                                                color: theme.palette.mode === 'dark' ? '#fff' : '#1E293B'
-                                            }
+                                            fontWeight: 600,
+                                            color: isDark ? '#aaa' : '#64748B',
+                                            textTransform: 'none',
+                                            
                                         }
                                     }}
                                 >
-                                    <Tab
-                                        icon={<IconLayoutDashboard size={20} />}
-                                        iconPosition="start"
-                                        label="Overview"
-                                        value="1"
-                                        sx={{ textTransform: 'none' }}
-                                    />
-                                    <Tab
-                                        icon={<IconUsers size={20} />}
-                                        iconPosition="start"
-                                        label="Team (Descendent)"
-                                        value="2"
-                                        sx={{ textTransform: 'none' }}
-                                    />
-                                    <Tab
-                                        icon={<IconSchool size={20} />}
-                                        iconPosition="start"
-                                        label="Schools"
-                                        value="3"
-                                        sx={{ textTransform: 'none' }}
-                                    />
+                                    <Tab icon={<IconLayoutDashboard size={18} />} iconPosition="start" label="Overview" value="1" />
+                                    <Tab icon={<IconUsers size={18} />} iconPosition="start" label="Agents" value="2" />
+                                    <Tab icon={<IconSchool size={18} />} iconPosition="start" label="Schools" value="3" />
                                 </TabList>
                             </Box>
-                            <Box sx={{ p: 0 }}>
-                                {isLoading ? null : (
-                                    <>
-                                        <TabPanel value="1" sx={{ p: 0 }}>
-                                            <OverviewTab data={agentData || mockAgentData} />
-                                        </TabPanel>
-                                        <TabPanel value="2" sx={{ p: 3 }}>
-                                            <TeamTab
-                                                team={agentData?.team || []}
-                                                onAddAgent={() => setIsAddAgentModalOpen(true)}
-                                            />
-                                        </TabPanel>
-                                        <TabPanel value="3" sx={{ p: 3 }}>
-                                            <SchoolsTab
-                                                schools={agentData?.schools || []}
-                                                onAddSchool={() => setIsAddSchoolModalOpen(true)}
-                                            />
-                                        </TabPanel>
-                                    </>
-                                )}
-                            </Box>
+
+                            {!isLoading && (
+                                <Box>
+                                    <TabPanel value="1" sx={{ p: 0 }}>
+                                        <OverviewTab data={agentData || mockAgentData} />
+                                    </TabPanel>
+                                    <TabPanel value="2" sx={{ p: 3 }}>
+                                        <TeamTab
+                                            team={agentData?.team || []}
+                                            onAddAgent={() => setIsAddAgentModalOpen(true)}
+                                        />
+                                    </TabPanel>
+                                    <TabPanel value="3" sx={{ p: 3 }}>
+                                        <SchoolsTab
+                                            schools={agentData?.schools || []}
+                                            onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                                        />
+                                    </TabPanel>
+                                </Box>
+                            )}
                         </TabContext>
                     </Box>
                 </Box>

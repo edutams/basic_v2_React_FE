@@ -1,18 +1,12 @@
 import React from 'react';
-import {
-  Grid,
-  Box,
-  Button,
-} from '@mui/material';
+import { Grid, Box, Button } from '@mui/material';
 import AgentFormFields from './AgentFormFields';
-import ColorSchemeSelector from './ColorSchemeSelector';
 
 const AgentForm = ({ formik, onCancel, actionType, loading, canSelectColor = true }) => {
   return (
     <form onSubmit={formik.handleSubmit}>
       <Grid container spacing={2} mb={3}>
-        <AgentFormFields formik={formik} />
-        {actionType !== 'update' && canSelectColor && <ColorSchemeSelector formik={formik} />}
+        <AgentFormFields formik={formik} canSelectColor={actionType !== 'update' && canSelectColor} />
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>

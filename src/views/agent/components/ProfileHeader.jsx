@@ -1,117 +1,112 @@
-import { Grid, Card, Box, Typography, Avatar, Button, Stack, Chip, useTheme } from '@mui/material';
-import { IconAdjustmentsHorizontal, IconCash } from '@tabler/icons-react';
-import { useNavigate } from 'react-router';
+import { Card, Box, Typography, Avatar, Button, Stack, Chip, useTheme } from '@mui/material';
+import { IconBuildingStore, IconUsers } from '@tabler/icons-react';
 
-const ProfileHeader = ({ profile, onAddAgent, onAddSchool }) => {
-    const navigate = useNavigate();
+const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
     const theme = useTheme();
-    const isDarkMode = theme.palette.mode === 'dark';
+    const isDark = theme.palette.mode === 'dark';
 
     return (
-        <Card sx={{ 
-            p: { xs: 3, sm: 4 }, 
-            height: '100%', 
-            borderRadius: '16px', 
-            overflow: 'hidden', 
-            bgcolor: isDarkMode ? theme.palette.primary.dark : '#03A9F4',
+        <Card sx={{
+            p: { xs: 3, sm: 3.5 },
+            height: '100%',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            bgcolor: isDark ? theme.palette.primary.dark : '#4E67CE',
             color: 'white',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            position: 'relative',
             boxShadow: 'none'
         }}>
-            <Box sx={{ 
-                display: 'flex', 
+            {/* Profile info */}
+            <Box sx={{
+                display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'center', sm: 'center' }, 
+                alignItems: { xs: 'center', sm: 'center' },
                 textAlign: { xs: 'center', sm: 'left' },
-                gap: 3, 
-                mb: 4 
+                gap: 2.5,
+                mb: 3
             }}>
-                <Avatar 
-                    src={profile.image} 
-                    sx={{ 
-                        width: { xs: 100, sm: 120 }, 
-                        height: { xs: 100, sm: 120 }, 
-                        border: 'none',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
-                    }} 
+                <Avatar
+                    src={profile.image}
+                    sx={{
+                        width: { xs: 80, sm: 90 },
+                        height: { xs: 80, sm: 90 },
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                        flexShrink: 0
+                    }}
                 />
                 <Box>
-                    <Typography variant="h3" fontWeight={700} sx={{ mb: 0.5, fontSize: { xs: '28px', sm: '35px' }, letterSpacing: '-0.02em', color: 'white' }}>
+                    <Typography variant="h4" fontWeight={700} sx={{ mb: 0.3, fontSize: { xs: '22px', sm: '26px' }, color: 'white', lineHeight: 1.2 }}>
                         Hi, {profile.name}!
                     </Typography>
-                    <Typography variant="body1" sx={{ opacity: 1, mb: 2, fontSize: { xs: '16px', sm: '18px' }, fontWeight: 400, color: 'white' }}>
+                    <Typography variant="body2" sx={{ mb: 1.5, fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>
                         {profile.handle}
                     </Typography>
-                    
-                    <Stack direction="row" spacing={1.5} alignItems="center" justifyContent={{ xs: 'center', sm: 'flex-start' }}>
-                        <Chip 
-                            label="Active" 
-                            size="small" 
-                            sx={{ 
-                                bgcolor: isDarkMode ? 'rgba(76, 175, 80, 0.2)' : '#E8F5E9', 
-                                color: isDarkMode ? '#81C784' : '#4CAF50', 
-                                fontWeight: 600, 
-                                fontSize: '12px', 
-                                height: 28,
-                                borderRadius: '6px',
-                                px: 1
-                            }} 
+                    <Stack direction="row" spacing={1} alignItems="center" justifyContent={{ xs: 'center', sm: 'flex-start' }}>
+                        <Chip
+                            label={profile.status || 'Active'}
+                            size="small"
+                            sx={{
+                                bgcolor: '#DEFEDE',
+                                color: '#21A943',
+                                fontWeight: 600,
+                                fontSize: '11px',
+                                height: 22,
+                                borderRadius: '5px',
+                            }}
                         />
-                        <Typography variant="h4" fontWeight={600} sx={{ fontSize: '15px', color: 'white' }}>
+                        <Typography variant="body2" fontWeight={600} sx={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)' }}>
                             {profile.level}
                         </Typography>
                     </Stack>
                 </Box>
             </Box>
 
-            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} justifyContent={'space-between'}>
-                <Button 
-                    variant="outlined" 
+            {/* Action buttons */}
+            <Stack spacing={1.5} direction={{ xs: 'column', sm: 'row' }}>
+                <Button
+                    variant="outlined"
                     fullWidth
-                    onClick={() => navigate('/school')}
-                    startIcon={<IconAdjustmentsHorizontal size={24} />} 
-                    sx={{ 
-                        color: 'white', 
-                        borderColor: 'white', 
-                        borderWidth: '1px',
-                        textTransform: 'none', 
-                        borderRadius: '12px',
-                        fontWeight: 300,
-                        fontSize: '18px',
-                        flex: 1,
+                    onClick={onManageSchools}
+                    startIcon={<IconBuildingStore size={18} />}
+                    sx={{
+                        color: 'white',
+                        borderColor: 'rgba(255,255,255,0.5)',
+                        textTransform: 'none',
+                        borderRadius: '10px',
+                        fontWeight: 500,
+                        fontSize: '13px',
+                        py: 1,
                         '&:hover': {
                             borderColor: 'white',
-                            bgcolor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: '1px',
+                            bgcolor: 'rgba(255,255,255,0.1)',
                         }
                     }}
                 >
-                    Add New Schools
+                    Manage Schools
                 </Button>
-                <Button 
-                    variant="contained" 
+                <Button
+                    variant="contained"
                     fullWidth
-                    onClick={() => navigate('/agent')}
-                    startIcon={<IconCash size={24} />} 
-                    sx={{ 
-                        bgcolor: 'white', 
-                        color: isDarkMode ? theme.palette.primary.dark : '#03A9F4', 
-                        textTransform: 'none', 
-                        borderRadius: '12px', 
+                    onClick={onManageAgent}
+                    startIcon={<IconUsers size={18} />}
+                    sx={{
+                        bgcolor: 'white',
+                        color: '#1E40AF',
+                        textTransform: 'none',
+                        borderRadius: '10px',
                         fontWeight: 600,
-                        fontSize: '18px',
-                        flex: 1,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        fontSize: '13px',
+                        py: 1,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                         '&:hover': {
-                            bgcolor: isDarkMode ? '#e0e0e0' : '#F5F5F5',
-                            boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+                            bgcolor: '#f0f4ff',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                         }
                     }}
                 >
-                    Add New Agent
+                    Manage Agent
                 </Button>
             </Stack>
         </Card>

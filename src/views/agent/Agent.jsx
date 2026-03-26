@@ -111,8 +111,8 @@ const Agent = () => {
   ];
 
   // Plan Distribution Mock Data
-  const planSeries = [65, 52, 39];
-  const planLabels = ['Basic', 'Basic+', 'Basic++'];
+  const planSeries = [65, 52, 39, 25];
+  const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
 
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
@@ -427,8 +427,15 @@ const Agent = () => {
     }),
     columnHelper.accessor('agentDetails', {
       header: () => 'Agent Details',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
+      cell: (info) => {
+        const agent = info.row.original;
+        const initials = (agent.organizationName || 'NA')
+          .split(' ')
+          .slice(0, 2)
+          .map((w) => w[0])
+          .join('')
+          .toUpperCase();
+        return editRowId === agent.s_n ? (
           <TextField
             variant="outlined"
             value={editedData?.[info.column.id] || ''}
@@ -436,21 +443,35 @@ const Agent = () => {
             fullWidth
           />
         ) : (
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={info.row.original.imgsrc} alt={info.row.original.organizationName} sx={{ width: 40, height: 40 }} />
+          <Stack direction="row" spacing={1.5} alignItems="flex-start">
+            <Avatar
+              src={agent.imgsrc}
+              alt={agent.organizationName}
+              sx={{
+                width: 36,
+                height: 36,
+                fontSize: '12px',
+                fontWeight: 700,
+                bgcolor: '#3949ab',
+                flexShrink: 0,
+              }}
+            >
+              {!agent.imgsrc && initials}
+            </Avatar>
             <Box>
-              <Typography variant="subtitle1" fontWeight="600" sx={{ lineHeight: 1.2 }}>
-                {info.row.original.organizationName || 'N/A'}
+              <Typography variant="subtitle2" fontWeight="700" sx={{ lineHeight: 1.3, color: 'text.primary' }}>
+                {agent.organizationName || 'N/A'}
               </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2, mt: 0.5 }}>
-                {info.row.original.phoneNumber || 'N/A'} | {info.row.original.state_name || 'N/A'} Region
+              <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
               </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2 }}>
-                {info.row.original.contactDetails || 'N/A'}
+              <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                {agent.contactDetails || 'N/A'}
               </Typography>
             </Box>
           </Stack>
-        ),
+        );
+      },
     }),
     columnHelper.accessor('gateway', {
       header: () => 'Gateway',
@@ -473,7 +494,7 @@ const Agent = () => {
         return (
           <Chip
             size="small"
-            label={`Level ${level}`}
+            label={`${level}`}
             sx={{
               bgcolor: config.bg,
               color: config.color,
@@ -489,17 +510,17 @@ const Agent = () => {
       cell: (info) => (
         <Box
           sx={{
-            bgcolor: '#eadeff',
-            color: '#333',
-            borderRadius: '6px',
+            bgcolor: '#ede9fe',
+            color: '#6d28d9',
+            borderRadius: '20px',
             px: 2,
-            py: 0.5,
+            py: 0.4,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: '700',
-            fontSize: '14px',
-            minWidth: '40px'
+            fontWeight: 700,
+            fontSize: '13px',
+            minWidth: '36px',
           }}
         >
           {info.row.original.sub_agents_count ?? 0}
@@ -509,85 +530,40 @@ const Agent = () => {
     columnHelper.accessor('performance', {
       header: () => 'Performance',
       cell: (info) => (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#f4f4f4', px: 1, py: 0.5, margin: 'auto', width: 'fit-content' }}>
-          <Typography variant="subtitle2" fontWeight="500" color="#333">
-            School
-          </Typography>
-          <Box sx={{ bgcolor: '#87e8a9', px: 1.5, py: 0.5, borderRadius: '6px' }}>
-            <Typography variant="subtitle2" fontWeight="700" color="#000">
-              {info.row.original.tenants_count ?? 0}
-            </Typography>
-          </Box>
-        </Stack>
+        <Stack
+                direction="row"
+                spacing={0}
+                sx={{ borderRadius: '6px', overflow: 'hidden',fontWeight:"800", width: 'fit-content' }}
+              >
+                <Box sx={{ px: 1.5, py: 0.5 }}>
+                  <Typography  variant="subtitle3" fontWeight="800" color="#333333">School</Typography>
+                </Box>
+                <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+                  <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
+                    {info.row.original.tenants_count ?? 0}
+                  </Typography>
+                </Box>
+              </Stack>
       ),
     }),
-    columnHelper.accessor('colourScheme', {
-      header: () => 'Colour Scheme',
-      cell: (info) => {
-        const agent = info.row.original;
-        const headerColor = agent.headerColor || '#232FE6';
-        const sidebarColor = agent.sidebarColor || '#E51A4D';
-        const bodyColor = agent.bodyColor || '#E1B42C';
-
-        return editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Box
-            sx={{
-              display: 'inline-block',
-              width: 36,
-              height: 36,
-              borderRadius: '4px',
-              overflow: 'hidden',
-              border: '1px solid #e0e0e0'
-            }}
-            title={`Header: ${headerColor} | Sidebar: ${sidebarColor} | Body: ${bodyColor}`}
-          >
-            <Box sx={{ display: 'flex', height: '50%' }}>
+     columnHelper.accessor('primaryColor', {
+          header: () => 'Primary Color',
+          cell: (info) => {
+            const color = info.getValue() || '#3949ab';
+            return (
               <Box
                 sx={{
-                  width: '60%',
-                  height: '100%',
-                  backgroundColor: headerColor,
-                  borderRadius: 0,
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  bgcolor: color,
+                  border: '2px solid rgba(255,255,255,0.8)',
+                  boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
                 }}
               />
-              <Box
-                sx={{
-                  width: '40%',
-                  height: '100%',
-                  backgroundColor: '#43cd66',
-                  borderRadius: 0,
-                }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', height: '50%' }}>
-              <Box
-                sx={{
-                  width: '30%',
-                  height: '100%',
-                  backgroundColor: sidebarColor,
-                  borderRadius: 0,
-                }}
-              />
-              <Box
-                sx={{
-                  width: '70%',
-                  height: '100%',
-                  backgroundColor: bodyColor,
-                  borderRadius: 0,
-                }}
-              />
-            </Box>
-          </Box>
-        );
-      },
-    }),
+            );
+          },
+        }),
     columnHelper.accessor('status', {
       header: () => 'Status',
       cell: (info) =>
@@ -785,147 +761,111 @@ const Agent = () => {
       </Box>
 
       {/* Analytics Section */}
-      <Grid container spacing={2} mb={3} mt={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+      <Grid container spacing={2} mb={3} mt={2} sx={{ alignItems: 'stretch' }}>
+        {/* Card 1: Total School */}
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+          <DashboardStatCard
+            compact
+            title="Total School"
+            value={analytics.totalSchools || '2,050'}
+            valueColor="#2ca87f"
+            valueBg={theme.palette.mode === 'dark' ? '#0d2e1e' : '#d6f5eb'}
+            subStats={[
+              { label: 'Active School', value: '3,010' },
+              { label: 'Inactive School', value: '304' },
+            ]}
+            onIconClick={() => setIsSchoolModalOpen(true)}
+            sx={{ width: '100%' }}
+          />
+        </Grid>
+
+        {/* Card 2: Subscriptions */}
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
+          <DashboardStatCard
+            compact
+            title="Subscriptions"
+            value={analytics.totalAgents || '503'}
+            valueColor="#4a3aff"
+            valueBg={theme.palette.mode === 'dark' ? '#1e2a4a' : '#e8e6ff'}
+            subStats={[
+              { label: 'Primary School', value: '300' },
+              { label: 'Senior Secondary', value: '203' },
+            ]}
+            sx={{ width: '100%' }}
+          />
+        </Grid>
+
+        {/* Card 3: Login Activities */}
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
           <Card
             sx={{
-              px: 4,
-              py: 3,
-              borderRadius: '6px',
-              boxShadow: 'none',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              height: '95px',
               width: '100%',
+              borderRadius: '16px',
+              boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 1px 8px rgba(0,0,0,0.06)',
+              border: `1px solid ${theme.palette.mode === 'dark' ? theme.palette.divider : '#f0f0f0'}`,
+              bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#fff',
             }}
           >
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '18px',
-                  fontWeight: 300,
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
-                }}
-              >
-                Total agent
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                height: '40px',
-                width: '1px',
-                bgcolor: '#D1D5DB',
-                mx: 2,
-              }}
-            />
-            <Box sx={{ width: 60, textAlign: 'right' }}>
-              <Typography
-                sx={{
-                  fontSize: '25px',
-                  fontWeight: 700,
-                  color: '#2F8F46',
-                }}
-              >
-                {analytics.totalAgents}
-              </Typography>
+            <Box sx={{ p: '14px 16px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle2" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#ccc' : '#444', fontSize: '12px' }}>
+                  Login Activities
+                </Typography>
+                <Box
+                  onClick={() => setIsLoggedInUsersModalOpen(true)}
+                  sx={{ bgcolor: '#3d3d3d', p: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#111' } }}
+                >
+                  <IconChartBar size={13} color="white" />
+                </Box>
+              </Box>
+              <Stack spacing={1} sx={{ flex: 1, justifyContent: 'center' }}>
+                {loginActivities.map((item, i) => (
+                  <Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" sx={{ color: theme.palette.mode === 'dark' ? '#bbb' : '#555', fontSize: '13px' }}>
+                      {item.label}
+                    </Typography>
+                    <Typography variant="body2" fontWeight="700" sx={{ color: '#e11d48', fontSize: '13px' }}>
+                      {item.value}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
             </Box>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        {/* Card 4: Plan Distribution donut */}
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
           <Card
             sx={{
-              px: 4,
-              py: 3,
-              borderRadius: '6px',
-              boxShadow: 'none',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              height: '95px',
               width: '100%',
+              borderRadius: '16px',
+              overflow: 'visible',
+              boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 1px 8px rgba(0,0,0,0.06)',
+              border: `1px solid ${theme.palette.mode === 'dark' ? theme.palette.divider : '#f0f0f0'}`,
+              bgcolor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#fff',
             }}
           >
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '18px',
-                  fontWeight: 300,
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
-                }}
-              >
-                Total Sub Agent
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                height: '40px',
-                width: '1px',
-                bgcolor: '#D1D5DB',
-                mx: 2,
-              }}
-            />
-            <Box sx={{ width: 60, textAlign: 'right' }}>
-              <Typography
-                sx={{
-                  fontSize: '25px',
-                  fontWeight: 700,
-                  color: '#2F8F46',
-                }}
-              >
-                {analytics.totalSubAgents}
-              </Typography>
-            </Box>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card
-            sx={{
-              px: 4,
-              py: 3,
-              borderRadius: '6px',
-              boxShadow: 'none',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              height: '95px',
-              width: '100%',
-            }}
-          >
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '18px',
-                  fontWeight: 300,
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
-                }}
-              >
-                Total School
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                height: '40px',
-                width: '1px',
-                bgcolor: '#D1D5DB',
-                mx: 2,
-              }}
-            />
-            <Box sx={{ width: 60, textAlign: 'right' }}>
-              <Typography
-                sx={{
-                  fontSize: '25px',
-                  fontWeight: 700,
-                  color: '#2F8F46',
-                }}
-              >
-                {analytics.totalSchools}
-              </Typography>
+            <Box sx={{ p: '14px 16px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography variant="subtitle2" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#ccc' : '#444', fontSize: '12px' }}>
+                  Total School
+                </Typography>
+                <Box
+                  onClick={() => setIsPlanModalOpen(true)}
+                  sx={{ bgcolor: '#3d3d3d', p: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#111' } }}
+                >
+                  <IconChartBar size={13} color="white" />
+                </Box>
+              </Box>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <ReusablePieChart
+                  series={planSeries}
+                  labels={planLabels}
+                  colors={['#3949ab', '#2ca87f', '#ff4081', '#9c27b0']}
+                  height={150}
+                />
+              </Box>
             </Box>
           </Card>
         </Grid>

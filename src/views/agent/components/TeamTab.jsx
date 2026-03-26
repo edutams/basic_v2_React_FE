@@ -1,160 +1,295 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-    Table, TableBody, TableCell, TableHead, TableRow, Avatar, Chip, Typography, Box, TableContainer, Select, MenuItem, Button,
-    IconButton, Menu, ListItemIcon, ListItemText, useTheme
+    Table, TableBody, TableCell, TableHead, TableRow, Typography, Box,
+    TableContainer, Select, MenuItem, Button, TextField, Paper, Stack,
+    useTheme, TablePagination, Grid, Avatar, Chip, IconButton, Menu,
+    FormControl, InputLabel,
 } from '@mui/material';
-import { IconGridDots, IconUserPlus, IconDotsVertical, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconUsers } from '@tabler/icons-react';
+import AgentModal from '../../../components/add-agent/components/AgentModal';
+import {
+    createColumnHelper,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+} from '@tanstack/react-table';
 import { useNavigate } from 'react-router';
 
-const TeamTab = ({ team, onAddAgent }) => {
+const columnHelper = createColumnHelper();
+
+const TeamTab = ({ team = [], onAddAgent }) => {
     const navigate = useNavigate();
     const theme = useTheme();
-    const isDarkMode = theme.palette.mode === 'dark';
+    const isDark = theme.palette.mode === 'dark';
 
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [selectedRow, setSelectedRow] = useState(null);
-    const open = Boolean(anchorEl);
+    // Filter state
+    const [search, setSearch] = useState('');
+    const [agentLevel, setAgentLevel] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
 
-    const handleMenuClick = (event, row) => {
-        setAnchorEl(event.currentTarget);
-        setSelectedRow(row);
+    // Pagination
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    // Modal state
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedAgent, setSelectedAgent] = useState(null);
+    const [actionType, setActionType] = useState('create');
+
+    const handleAction = (agent, type) => {
+        setSelectedAgent(agent);
+        setActionType(type);
+        setIsModalOpen(true);
     };
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setSelectedRow(null);
-    };
+    // Apply filters client-side (team data comes from parent)
+    const filteredData = useMemo(() => {
+        return team.filter((row) => {
+            const matchSearch = !search || (row.name || '').toLowerCase().includes(search.toLowerCase());
+            const matchLevel = !agentLevel || String(row.level) === String(agentLevel);
+            const matchStatus = !filterStatus || (row.status || '').toLowerCase() === filterStatus.toLowerCase();
+            return matchSearch && matchLevel && matchStatus;
+        });
+    }, [team, search, agentLevel, filterStatus]);
+
+    const paginatedData = useMemo(() => {
+        const start = page * rowsPerPage;
+        return filteredData.slice(start, start + rowsPerPage);
+    }, [filteredData, page, rowsPerPage]);
+
+    // ── Columns ──────────────────────────────────────────────────────────
+    const columns = useMemo(() => [
+        columnHelper.display({
+            id: 's_n',
+            header: () => 'S/N',
+            cell: (info) => (
+                <Typography color="textSecondary" variant="body2" fontWeight={400}>
+                    {page * rowsPerPage + info.row.index + 1}
+                </Typography>
+            ),
+        }),
+        columnHelper.accessor('name', {
+            header: () => 'Agent Details',
+            cell: (info) => {
+                const row = info.row.original;
+                const initials = (row.name || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+                return (
+                    <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                        <Avatar sx={{ width: 36, height: 36, fontSize: '12px', fontWeight: 700, bgcolor: '#3949ab', flexShrink: 0 }}>
+                            {initials}
+                        </Avatar>
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>{row.name}</Typography>
+                            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                                {row.phone || 'N/A'}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                                {row.handle || 'N/A'}
+                            </Typography>
+                        </Box>
+                    </Stack>
+                );
+            },
+        }),
+        columnHelper.accessor('transaction', {
+            header: () => 'Transaction',
+            cell: (info) => (
+                <Typography variant="body2" fontWeight={700} color="textPrimary">
+                    #{info.getValue() || '0'}
+                </Typography>
+            ),
+        }),
+        columnHelper.accessor('performance', {
+            header: () => 'Performance',
+            cell: (info) => (
+                <Stack direction="row" spacing={0} sx={{ borderRadius: '6px', overflow: 'hidden', width: 'fit-content' }}>
+                    <Box sx={{ px: 1.5, py: 0.5 }}>
+                        <Typography variant="caption" fontWeight={800} color="textPrimary">School</Typography>
+                    </Box>
+                    <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+                        <Typography variant="caption" fontWeight={700} sx={{ color: '#fff' }}>
+                            {info.getValue() || 0}
+                        </Typography>
+                    </Box>
+                </Stack>
+            ),
+        }),
+        columnHelper.accessor('level', {
+            header: () => 'Level',
+            cell: (info) => (
+                <Chip
+                    size="small"
+                    label={`${info.getValue()}`}
+                    sx={{ bgcolor: '#e8eaf6', color: '#3949ab', fontWeight: 700, borderRadius: '8px' }}
+                />
+            ),
+        }),
+        columnHelper.accessor('descendent', {
+            header: () => 'Descendent',
+            cell: (info) => (
+                <Box sx={{ bgcolor: '#ede9fe', color: '#6d28d9', borderRadius: '20px', px: 2, py: 0.4, display: 'inline-flex', fontWeight: 700, fontSize: '13px' }}>
+                    {info.getValue() ?? 0}
+                </Box>
+            ),
+        }),
+        columnHelper.accessor('status', {
+            header: () => 'Status',
+            cell: (info) => (
+                <Chip
+                    size="small"
+                    label={info.getValue()}
+                    sx={{
+                        bgcolor: info.getValue() === 'Active' ? '#dcfee6' : '#ffe4e6',
+                        color: info.getValue() === 'Active' ? '#16a34a' : '#e11d48',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                    }}
+                />
+            ),
+        }),
+        columnHelper.display({
+            id: 'action',
+            header: () => 'Action',
+            cell: (info) => {
+                const row = info.row.original;
+                const [anchor, setAnchor] = useState(null);
+                return (
+                    <>
+                        <IconButton size="small" onClick={(e) => setAnchor(e.currentTarget)}>
+                            <Typography variant="body2" fontWeight={700} color="textSecondary">···</Typography>
+                        </IconButton>
+                        <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}
+                            PaperProps={{ sx: { borderRadius: '8px', minWidth: 160 } }}>
+                            <MenuItem onClick={() => { setAnchor(null); navigate(`/agent/view/${row.id}`); }}>
+                                View Profile
+                            </MenuItem>
+                            <MenuItem onClick={() => { setAnchor(null); handleAction(row, 'update'); }}>
+                                Update Info
+                            </MenuItem>
+                        </Menu>
+                    </>
+                );
+            },
+        }),
+    ], [page, rowsPerPage, navigate]);
+
+    const table = useReactTable({
+        data: paginatedData,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+    });
 
     return (
-        <Box mt={3}>
-            <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '8px', overflow: 'hidden' }}>
-                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: theme.palette.background.paper }}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                        <IconGridDots size={20} color={theme.palette.primary.main} />
-                        <Typography variant="h6" fontWeight={700} sx={{ color: theme.palette.text.primary }}>List of Agents</Typography>
+        <Box>
+            {/* Header */}
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <Box sx={{ width: 24, height: 24, bgcolor: '#2ca87f', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <IconUsers size={16} />
                     </Box>
-                    <Box display="flex" gap={2}>
-                        <Select value="Level" size="small" sx={{ borderRadius: '8px', minWidth: 150 }}>
-                            <MenuItem value="Level">Level</MenuItem>
+                    <Typography variant="h5">List of Agents</Typography>
+                </Stack>
+                <Button
+                    variant="contained"
+                    startIcon={<IconUsers size={16} />}
+                    onClick={onAddAgent}
+                    sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', '&:hover': { bgcolor: '#303f9f' } }}
+                >
+                    Add New Agent
+                </Button>
+            </Stack>
+
+            {/* Filters */}
+            <Grid container spacing={2} mb={3} alignItems="center">
+                <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        label="Search by Name"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <FormControl fullWidth size="small">
+                        <InputLabel>Agent Level</InputLabel>
+                        <Select value={agentLevel} label="Agent Level" onChange={(e) => setAgentLevel(e.target.value)}>
+                            <MenuItem value="">All Levels</MenuItem>
+                            {[1, 2, 3, 4, 5].map(l => <MenuItem key={l} value={l}>Level {l}</MenuItem>)}
                         </Select>
-                        <Button
-                            variant="contained"
-                            onClick={onAddAgent}
-                            startIcon={<IconUserPlus size={18} />}
-                            sx={{ bgcolor: '#3B82F6', textTransform: 'none', borderRadius: '8px' }}
-                        >
-                            Add New Agent
-                        </Button>
-                    </Box>
-                </Box>
+                    </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <FormControl fullWidth size="small">
+                        <InputLabel>Status</InputLabel>
+                        <Select value={filterStatus} label="Status" onChange={(e) => setFilterStatus(e.target.value)}>
+                            <MenuItem value="">All</MenuItem>
+                            <MenuItem value="Active">Active</MenuItem>
+                            <MenuItem value="Inactive">Inactive</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 2 }}>
+                    <Button fullWidth variant="contained" size="small" onClick={() => setPage(0)}
+                        sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', py: 1 }}>
+                        Search
+                    </Button>
+                </Grid>
+            </Grid>
 
-                <TableContainer>
-                    <Table>
-                        <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.1)' : '#EAFDF6' }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>S/N</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Agent Details</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Transaction</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Performance</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Level</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Descendent</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Status</TableCell>
-                                <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.primary }}>Action</TableCell>
+            {/* Table */}
+            <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
+                <Table>
+                    <TableHead>
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map(header => (
+                                    <TableCell key={header.id} sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}>
+                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                    </TableCell>
+                                ))}
                             </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {team.map((row, idx) => (
-                                <TableRow key={idx} sx={{ '&:nth-of-type(odd)': { bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' } }}>
-                                    <TableCell sx={{ color: theme.palette.text.primary }}>{idx + 1}</TableCell>
-                                    <TableCell>
-                                        <Box display="flex" alignItems="center" gap={1.5}>
-                                            <Avatar sx={{ width: 40, height: 40 }} />
-                                            <Box>
-                                                <Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.text.primary }}>{row.name}</Typography>
-                                                <Typography variant="caption" color="textSecondary" display="block">{row.handle}</Typography>
-                                                <Typography variant="caption" color="textSecondary">{row.phone}</Typography>
-                                            </Box>
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell><Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.text.primary }}># {row.transaction}</Typography></TableCell>
-                                    <TableCell>
-                                        <Box display="flex" alignItems="center" gap={1} sx={{ margin: 'auto', width: 'fit-content' }}>
-                                            <Typography variant="caption" color="textSecondary">School</Typography>
-                                            <Chip label={row.performance} size="small" sx={{ bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.1)' : '#EAFDF6', color: isDarkMode ? '#4ade80' : '#10B981', fontWeight: 700, borderRadius: '4px' }} />
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Box sx={{ bgcolor: isDarkMode ? 'rgba(250, 204, 21, 0.2)' : '#FEF9C3', color: isDarkMode ? '#fde047' : '#854D0E', borderRadius: '4px', textAlign: 'center', width: 40, py: 0.5, fontSize: '12px' }}>
-                                            {row.level}
-                                        </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="subtitle2" color="error" fontWeight={700} align="center">{row.descendent}</Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={row.status}
-                                            size="small"
-                                            sx={{
-                                                bgcolor: row.status === 'Active' ? (isDarkMode ? 'rgba(34, 197, 94, 0.2)' : '#DCFCE7') : (isDarkMode ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2'),
-                                                color: row.status === 'Active' ? (isDarkMode ? '#4ade80' : '#166534') : (isDarkMode ? '#ef4444' : '#991B1B'),
-                                                fontWeight: 700,
-                                                borderRadius: '4px',
-                                                minWidth: 70
-                                            }}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                                            <IconDotsVertical size={18} color={theme.palette.text.secondary} />
-                                        </IconButton>
-                                    </TableCell>
+                        ))}
+                    </TableHead>
+                    <TableBody>
+                        {table.getRowModel().rows.length > 0 ? (
+                            table.getRowModel().rows.map(row => (
+                                <TableRow key={row.id} hover>
+                                    {row.getVisibleCells().map(cell => (
+                                        <TableCell key={cell.id} sx={{ py: 1.5 }}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                                    No agents found
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
-            {/* Action Menu */}
-            <Menu
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleMenuClose}
-                PaperProps={{
-                    elevation: 0,
-                    sx: {
-                        borderRadius: '8px',
-                        border: `1px solid ${theme.palette.divider}`,
-                        bgcolor: theme.palette.background.paper,
-                        boxShadow: theme.shadows[3],
-                        minWidth: 150,
-                        '& .MuiMenuItem-root': {
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: theme.palette.text.secondary,
-                            py: 1,
-                            px: 2,
-                            '&:hover': { bgcolor: isDarkMode ? theme.palette.action.hover : '#F8FAFC', color: theme.palette.primary.main }
-                        }
-                    },
-                }}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            >
-                <MenuItem onClick={handleMenuClose}>
-                    <ListItemIcon><IconEye size={18} /></ListItemIcon>
-                    <ListItemText primary="View Detail" />
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose}>
-                    <ListItemIcon><IconEdit size={18} /></ListItemIcon>
-                    <ListItemText primary="Edit Record" />
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose} sx={{ color: `${theme.palette.error.main} !important` }}>
-                    <ListItemIcon sx={{ color: theme.palette.error.main }}><IconTrash size={18} /></ListItemIcon>
-                    <ListItemText primary="Delete" />
-                </MenuItem>
-            </Menu>
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredData.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+            />
+
+            <AgentModal
+                open={isModalOpen}
+                onClose={() => { setIsModalOpen(false); setSelectedAgent(null); }}
+                handleRefresh={() => {}}
+                selectedAgent={selectedAgent}
+                actionType={actionType}
+            />
         </Box>
     );
 };

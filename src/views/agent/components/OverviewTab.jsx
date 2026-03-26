@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-    Grid, Card, Box, Typography, Stack, MenuItem, Select, FormControl, 
-    Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Avatar, Chip, IconButton, Button,
+    Grid, Card, Box, Typography, Stack, MenuItem, Select,
+    Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper, Avatar, Chip, IconButton, Button,
     Menu, ListItemIcon, ListItemText, Divider, useTheme
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import { IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
+import {
+    createColumnHelper,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+} from '@tanstack/react-table';
+
+const agentColumnHelper = createColumnHelper();
+const schoolColumnHelper = createColumnHelper();
 
 const OverviewTab = ({ data }) => {
     const theme = useTheme();
@@ -23,6 +32,123 @@ const OverviewTab = ({ data }) => {
         setAnchorEl(null);
         setSelectedRow(null);
     };
+
+    // ── Top Agents columns ──────────────────────────────────────────────
+    const agentColumns = useMemo(() => [
+        agentColumnHelper.display({
+            id: 's_n',
+            header: () => 'S/N',
+            cell: (info) => (
+                <Typography variant="body2" color="textSecondary" fontWeight={400}>
+                    {info.row.index + 1}
+                </Typography>
+            ),
+        }),
+        agentColumnHelper.accessor('name', {
+            header: () => 'Name',
+            cell: (info) => {
+                const row = info.row.original;
+                const initials = (row.name || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+                return (
+                    <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                        <Avatar sx={{color:"#3949ab",bgcolor: '#EEEFF9', width: 34, height: 34, fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+                            {initials}
+                        </Avatar>
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight={700} fontSize={12} sx={{ lineHeight: 1.3 }}>{row.name}</Typography>
+                            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                                {row.handle} | {row.location}
+                            </Typography>
+                        </Box>
+                    </Stack>
+                );
+            },
+        }),
+        agentColumnHelper.accessor('level', {
+            header: () => 'Level',
+            cell: (info) => (
+                <Box sx={{ bgcolor: '#3949ab', color: '#fff', borderRadius: '4px', px: 1.5, py: 0.3, display: 'inline-block', fontSize: '12px', fontWeight: 700 }}>
+                    {info.getValue()}
+                </Box>
+            ),
+        }),
+        agentColumnHelper.accessor('transaction', {
+            header: () => 'Transaction',
+            cell: (info) => (
+                <Typography variant="body2" fontWeight={700} color="textPrimary" fontSize={12}>
+                    #{info.getValue()}
+                </Typography>
+            ),
+        }),
+        agentColumnHelper.display({
+            id: 'action',
+            header: () => 'Action',
+            cell: (info) => (
+                <IconButton size="small" onClick={(e) => handleMenuClick(e, info.row.original)}>
+                    <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+                </IconButton>
+            ),
+        }),
+    ], [theme]);
+
+    // ── Top Schools columns ─────────────────────────────────────────────
+    const schoolColumns = useMemo(() => [
+        schoolColumnHelper.display({
+            id: 's_n',
+            header: () => 'S/N',
+            cell: (info) => (
+                <Typography variant="body2" color="textSecondary" fontWeight={400}>
+                    {info.row.index + 1}
+                </Typography>
+            ),
+        }),
+        schoolColumnHelper.accessor('school', {
+            header: () => 'School Name',
+            cell: (info) => (
+                <Typography variant="subtitle2" fontWeight={800} color="textPrimary" fontSize={12}>
+                    {info.getValue()}
+                </Typography>
+            ),
+        }),
+        schoolColumnHelper.accessor('agent', {
+            header: () => 'Agent Detail',
+            cell: (info) => {
+                const row = info.row.original;
+                const initials = (row.agent || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+                return (
+                    <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                        <Avatar sx={{ width: 34, height: 34, fontSize: '11px', fontWeight: 700, color:"#3949ab",bgcolor: '#EEEFF9', flexShrink: 0 }}>
+                            {initials}
+                        </Avatar>
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }} fontSize={12}>{row.agent}</Typography>
+                            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>{row.handle}</Typography>
+                        </Box>
+                    </Stack>
+                );
+            },
+        }),
+        schoolColumnHelper.accessor('transaction', {
+            header: () => 'Transaction',
+            cell: (info) => (
+                <Typography variant="body2" fontWeight={700} color="textPrimary" fontSize={12}>
+                    #{info.getValue()}
+                </Typography>
+            ),
+        }),
+        schoolColumnHelper.display({
+            id: 'action',
+            header: () => 'Action',
+            cell: (info) => (
+                <IconButton size="small" onClick={(e) => handleMenuClick(e, info.row.original)}>
+                    <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+                </IconButton>
+            ),
+        }),
+    ], [theme]);
+
+    const agentTable = useReactTable({ data: data.topAgents, columns: agentColumns, getCoreRowModel: getCoreRowModel() });
+    const schoolTable = useReactTable({ data: data.topRevenueSchools, columns: schoolColumns, getCoreRowModel: getCoreRowModel() });
 
     const revenueOptions = {
         chart: { type: 'bar', toolbar: { show: false }, stacked: false, fontFamily: "'DM Sans', sans-serif" },
@@ -176,8 +302,8 @@ const OverviewTab = ({ data }) => {
 
                 {/* Column 3: Recent Onboarding School */}
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Card sx={{ borderRadius: '12px', height: '100%', border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none', overflow: 'hidden' }}>
-                        <Box sx={{ bgcolor: isDarkMode ? theme.palette.action.hover : '#EEF2FF', p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                    <Card>
+                        <Box sx={{  p: 2,}}>
                             <Typography variant="subtitle2" fontWeight={800} color="textPrimary">Recent Onboarding School</Typography>
                         </Box>
                         <TableContainer sx={{ height: 'calc(100% - 60px)' }}>
@@ -220,49 +346,33 @@ const OverviewTab = ({ data }) => {
                     </Card>
                 </Grid>
 
-                {/* Bottom Row: Summaries */}
+                {/* Bottom Row: Top Agents */}
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <Card sx={{ borderRadius: '12px', border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none', overflow: 'hidden' }}>
-                        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                            <Typography variant="subtitle1" fontWeight={800} color="textPrimary">TOP 10 AGENT</Typography>
+                    <Card>
+                        <Box sx={{ p: 2}}>
+                            <Typography variant="subtitle1" fontWeight={800} color="textPrimary">TOP 10 AGENT BY REVENUE</Typography>
                         </Box>
-                        <TableContainer>
+                        <TableContainer component={Paper} elevation={0}>
                             <Table>
-                                <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.1)' : '#EAFDF6' }}>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>S/N</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Location</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Level</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Transaction</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Action</TableCell>
-                                    </TableRow>
+                                <TableHead>
+                                    {agentTable.getHeaderGroups().map(headerGroup => (
+                                        <TableRow key={headerGroup.id} sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}>
+                                            {headerGroup.headers.map(header => (
+                                                <TableCell key={header.id} sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary, py: 1.2 }}>
+                                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
                                 </TableHead>
                                 <TableBody>
-                                    {data.topAgents.map((row, idx) => (
-                                        <TableRow key={idx} sx={{ '&:nth-of-type(odd)': { bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' } }}>
-                                            <TableCell sx={{ fontWeight: 700, color: theme.palette.text.primary }}>{idx + 1}</TableCell>
-                                            <TableCell>
-                                                <Stack direction="row" spacing={1.5} alignItems="center">
-                                                    <Avatar sx={{ width: 32, height: 32 }} />
-                                                    <Box>
-                                                        <Typography variant="caption" fontWeight={800} sx={{ color: theme.palette.text.primary }}>{row.name}</Typography>
-                                                        <Typography variant="caption" display="block" sx={{ color: theme.palette.text.secondary, fontSize: '10px' }}>{row.handle}</Typography>
-                                                    </Box>
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell><Typography variant="caption" fontWeight={700} color="textPrimary">{row.location}</Typography></TableCell>
-                                            <TableCell>
-                                                <Box sx={{ bgcolor: isDarkMode ? 'rgba(250, 204, 21, 0.2)' : '#FEF9C3', color: isDarkMode ? '#fde047' : '#854D0E', borderRadius: '4px', px: 1, py: 0.2, textAlign: 'center', width: 'fit-content', fontSize: '11px', fontWeight: 800 }}>
-                                                    {row.level}
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell><Typography variant="caption" fontWeight={800} color="textPrimary"># {row.transaction}</Typography></TableCell>
-                                            <TableCell>
-                                                <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                                                    <IconDotsVertical size={18} color={theme.palette.text.secondary} />
-                                                </IconButton>
-                                            </TableCell>
+                                    {agentTable.getRowModel().rows.map(row => (
+                                        <TableRow key={row.id} hover sx={{ '& td': { borderBottom: `1px solid ${theme.palette.divider}` } }}>
+                                            {row.getVisibleCells().map(cell => (
+                                                <TableCell key={cell.id} sx={{ py: 1.5 }}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </TableCell>
+                                            ))}
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -271,43 +381,34 @@ const OverviewTab = ({ data }) => {
                     </Card>
                 </Grid>
 
+                {/* Bottom Row: Top Schools */}
                 <Grid size={{ xs: 12, md: 6 }}>
-                    <Card sx={{ borderRadius: '12px', border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none', overflow: 'hidden' }}>
-                        <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="subtitle1" fontWeight={800} color="textPrimary">TOP REVENUE BY SCHOOLS</Typography>
+                    <Card>
+                        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="subtitle1" fontWeight={800} color="textPrimary">TOP SCHOOLS BY REVENUE</Typography>
                             <IconChartBar size={20} color={theme.palette.text.secondary} />
                         </Box>
-                        <TableContainer>
+                        <TableContainer component={Paper} elevation={0}>
                             <Table>
-                                <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.1)' : '#EAFDF6' }}>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>S/N</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>School Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Agent detail</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Transaction</TableCell>
-                                        <TableCell sx={{ fontWeight: 800, fontSize: '12px', color: theme.palette.text.primary }}>Action</TableCell>
-                                    </TableRow>
+                                <TableHead>
+                                    {schoolTable.getHeaderGroups().map(headerGroup => (
+                                        <TableRow key={headerGroup.id} sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}>
+                                            {headerGroup.headers.map(header => (
+                                                <TableCell key={header.id} sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary, py: 1.2 }}>
+                                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
                                 </TableHead>
                                 <TableBody>
-                                    {data.topRevenueSchools.map((row, idx) => (
-                                        <TableRow key={idx} sx={{ '&:nth-of-type(odd)': { bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' } }}>
-                                            <TableCell sx={{ fontWeight: 700, color: theme.palette.text.primary }}>{idx + 1}</TableCell>
-                                            <TableCell><Typography variant="caption" fontWeight={800} color="textPrimary">{row.school}</Typography></TableCell>
-                                            <TableCell>
-                                                <Stack direction="row" spacing={1.5} alignItems="center">
-                                                    <Avatar sx={{ width: 32, height: 32 }} />
-                                                    <Box>
-                                                        <Typography variant="caption" fontWeight={800} sx={{ color: theme.palette.text.primary }}>{row.agent}</Typography>
-                                                        <Typography variant="caption" display="block" sx={{ color: theme.palette.text.secondary, fontSize: '10px' }}>{row.handle}</Typography>
-                                                    </Box>
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell><Typography variant="caption" fontWeight={800} color="textPrimary"># {row.transaction}</Typography></TableCell>
-                                            <TableCell>
-                                                <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                                                    <IconDotsVertical size={18} color={theme.palette.text.secondary} />
-                                                </IconButton>
-                                            </TableCell>
+                                    {schoolTable.getRowModel().rows.map(row => (
+                                        <TableRow key={row.id} hover sx={{ '& td': { borderBottom: `1px solid ${theme.palette.divider}` } }}>
+                                            {row.getVisibleCells().map(cell => (
+                                                <TableCell key={cell.id} sx={{ py: 1.5 }}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </TableCell>
+                                            ))}
                                         </TableRow>
                                     ))}
                                 </TableBody>

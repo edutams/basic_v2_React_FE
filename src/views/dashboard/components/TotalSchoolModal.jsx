@@ -103,28 +103,37 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 3 }} mb={3}>
           <Paper
             sx={{
-              border: '1px solid #f3a6ff',
-              borderRadius: 2,
-              px: 4,
-              py: 3,
+              borderRadius: 3,
+              px: 3,
+              py: 2,
               width: { xs: '100%', sm: 320 },
-              height: 95,
+              background: '#F5F5F5',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+              gap: 2,
             }}
           >
-            <IconSchool size={32} color="#1DA1F2" />
-            <Box textAlign="right">
-              <Typography
-                fontSize={28}
-                fontWeight={700}
-                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}
-              >
+            {/* Icon circle */}
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: '#E3E8F8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconSchool size={22} color="#3B5BDB" />
+            </Box>
+
+            {/* Text */}
+            <Box>
+              <Typography fontSize={26} fontWeight={700}>
                 700
               </Typography>
-              <Typography color="text.secondary" fontSize={14}>
+              <Typography fontSize={14} color="#6B7280">
                 Total School
               </Typography>
             </Box>
@@ -132,43 +141,48 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
 
           <Paper
             sx={{
-              border: '1px solid #f3a6ff',
-              borderRadius: 2,
-              px: 4,
-              py: 3,
+              borderRadius: 3,
+              px: 3,
+              py: 2,
               width: { xs: '100%', sm: 320 },
-              height: 95,
+              // background: '#F5F5F5',
               display: 'flex',
               alignItems: 'center',
-              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+              gap: 2,
             }}
           >
-            <Stack spacing={1} width="100%">
+            {/* Icon circle */}
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: '#FDE4E4',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <IconSchool size={22} color="#EF4444" />
+            </Box>
+
+            {/* Text */}
+            <Stack spacing={0.5} width="100%">
               <Stack direction="row" justifyContent="space-between">
-                <Typography
-                  fontSize={15}
-                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
-                >
+                <Typography fontSize={14} color="#374151">
                   Primary Sch -
                 </Typography>
-                <Typography
-                  fontWeight={600}
-                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
-                >
+                <Typography fontSize={14} fontWeight={600}>
                   34
                 </Typography>
               </Stack>
+
               <Stack direction="row" justifyContent="space-between">
-                <Typography
-                  fontSize={15}
-                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
-                >
+                <Typography fontSize={14} color="#374151">
                   Senior Sec -
                 </Typography>
-                <Typography
-                  fontWeight={600}
-                  sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
-                >
+                <Typography fontSize={14} fontWeight={600}>
                   34
                 </Typography>
               </Stack>

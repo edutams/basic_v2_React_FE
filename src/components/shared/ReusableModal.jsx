@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Box,
-  Typography,
-  Divider,
-  IconButton,
-} from '@mui/material';
+import { Modal, Box, Typography, Divider, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PropTypes from 'prop-types';
 

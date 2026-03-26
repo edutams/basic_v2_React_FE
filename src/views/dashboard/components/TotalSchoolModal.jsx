@@ -102,7 +102,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 3 }} mb={3}>
           <Paper
             sx={{
-              borderRadius: 3,
+              borderRadius: 2,
               px: 3,
               py: 2,
               width: { xs: '100%', sm: 320 },
@@ -138,7 +138,7 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
 
           <Paper
             sx={{
-              borderRadius: 3,
+              borderRadius: 2,
               px: 3,
               py: 2,
               width: { xs: '100%', sm: 320 },

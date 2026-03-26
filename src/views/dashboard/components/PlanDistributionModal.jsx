@@ -7,12 +7,15 @@ import {
   Select,
   MenuItem,
   Button,
-  Card,
+  Paper,
   useTheme,
+  Divider,
+  Card,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
-// import StandardModal from 'src/components/shared/StandardModal';
+import { IconCreditCard } from '@tabler/icons-react';
 import ReusableModal from 'src/components/shared/ReusableModal';
+import { IconBuildingBank } from '@tabler/icons-react';
 
 const PlanDistributionModal = ({ open, onClose }) => {
   const theme = useTheme();
@@ -23,6 +26,8 @@ const PlanDistributionModal = ({ open, onClose }) => {
     { label: 'Basic +', value: '7,000,234.00', color: '#FA7CEB', bg: 'white', border: '#FA7CEB' },
     { label: 'Basic ++', value: '7,000,234.00', color: '#E697FF', bg: 'white', border: '#E697FF' },
   ];
+
+  const totalSchools = plans.reduce((sum, p) => sum + p.schoolCount, 0);
 
   const chartOptions = {
     chart: {
@@ -131,70 +136,52 @@ const PlanDistributionModal = ({ open, onClose }) => {
         </Typography>
       }
     >
-      <Box
-        sx={{
-          // p: 4,
-          bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f8fafc',
-          position: 'relative',
-        }}
-      >
-        <Grid container spacing={2} mb={4} mt={2}>
-          {plans.map((plan, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+      <Box sx={{ bgcolor: isDark ? theme.palette.background.default : '#f8fafc' }}>
+        {/* Top Plan Value Cards */}
+        <Grid container spacing={2} mb={3}>
+          {plans.map((plan, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
               <Card
                 sx={{
                   p: 2,
+                  boxShadow: 'none',
                   borderRadius: '12px',
-                  bgcolor: theme.palette.background.paper,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                  border: `1px solid ${isDark ? '#333' : '#e8eaf6'}`,
+                  bgcolor: isDark ? '#1e1e1e' : '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
-                  height: '90px',
                 }}
               >
-                {/* Icon circle */}
                 <Box
                   sx={{
-                    width: 45,
-                    height: 45,
-                    borderRadius: '50%',
-                    bgcolor: `${plan.color}20`,
-                    flexShrink: 0,
+                    width: 44,
+                    height: 44,
+                    borderRadius: '10px',
+                    bgcolor: isDark ? '#2a2a2a' : plan.iconBg,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  💳
+                  <IconBuildingBank size={22} color={plan.color} />
                 </Box>
-
-                {/* Text section */}
                 <Box>
                   <Typography
-                    fontWeight={700}
-                    sx={{
-                      color: plan.color,
-                      fontSize: '18px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '140px', // control width
-                    }}
+                    variant="h6"
+                    fontWeight="800"
+                    sx={{ color: plan.color, fontSize: '16px', lineHeight: 1.2 }}
                   >
-                    ₦{plan.value}
+                    {plan.value}
                   </Typography>
-
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Box
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        bgcolor: plan.color,
-                      }}
-                    />
-                    <Typography fontSize={13} color="text.secondary">
+                  <Stack direction="row" alignItems="center" spacing={0.5} mt={0.3}>
+                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: plan.color }} />
+                    <Typography
+                      variant="caption"
+                      fontWeight="600"
+                      sx={{ color: isDark ? '#aaa' : '#666' }}
+                    >
                       {plan.label}
                     </Typography>
                   </Stack>
@@ -204,159 +191,201 @@ const PlanDistributionModal = ({ open, onClose }) => {
           ))}
         </Grid>
 
+        {/* Chart Section */}
         <Box
           sx={{
-            borderRadius: '8px',
+            borderRadius: '12px',
             overflow: 'hidden',
-            bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : 'white',
-            p: 0,
-            border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #e2e8f0',
+            bgcolor: isDark ? '#1e1e1e' : '#fff',
+            border: isDark ? '1px solid #333' : '1px solid #e2e8f0',
           }}
         >
+          {/* Filter Bar */}
           <Box
-            sx={{ bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f2fdf5', px: 3, py: 1 }}
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              p: 2,
+              gap: 2,
+              bgcolor: isDark ? '#1e1e1e' : '#f0fdf4',
+              borderBottom: `1px solid ${isDark ? '#333' : '#d1fae5'}`,
+            }}
           >
-            <Grid container alignItems="center" justifyContent="flex-end">
-              <Grid item xs={12}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mr: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
-                        borderRadius: '4px',
-                        bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          px: 2,
-                          py: 0.5,
-                          bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
-                          borderRight:
-                            theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight="500"
-                          sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
-                        >
-                          Year
-                        </Typography>
-                      </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                border: `1px solid ${isDark ? '#444' : '#ddd'}`,
+                borderRadius: '6px',
+                bgcolor: isDark ? '#2d2d2d' : '#fff',
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                sx={{
+                  px: 2,
+                  py: 0.5,
+                  bgcolor: isDark ? '#1e1e1e' : '#e0f7fa',
+                  borderRight: `1px solid ${isDark ? '#444' : '#ddd'}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  fontWeight="800"
+                  sx={{ textTransform: 'uppercase', color: isDark ? '#fff' : '#0369A1' }}
+                >
+                  Year
+                </Typography>
+              </Box>
+              <Select
+                size="small"
+                value="2026"
+                sx={{
+                  border: 'none',
+                  '& fieldset': { border: 'none' },
+                  '.MuiSelect-select': {
+                    py: 0.5,
+                    fontWeight: 700,
+                    minWidth: '70px',
+                    fontSize: '13px',
+                    color: isDark ? '#fff' : '#333',
+                  },
+                }}
+              >
+                <MenuItem value="2026">2026</MenuItem>
+                <MenuItem value="2025">2025</MenuItem>
+              </Select>
+            </Box>
+            <Button variant="primary" sx={{ height: '36px', px: 4 }}>
+              Filter
+            </Button>
+          </Box>
 
-                      <Select
-                        size="small"
-                        value="2026"
-                        sx={{
-                          '& fieldset': { border: 'none' },
-                          '.MuiSelect-select': {
-                            py: 0.5,
-                            fontWeight: 600,
-                            minWidth: '70px',
-                            color: theme.palette.mode === 'dark' ? '#fff' : '#333',
-                          },
-                        }}
-                      >
-                        <MenuItem value="2026">2026</MenuItem>
-                      </Select>
-                    </Box>
+          <Box sx={{ p: 3 }}>
+            <Grid container spacing={3}>
+              {/* Bar Chart */}
+              <Grid size={{ xs: 12, md: 8 }}>
+                <Chart options={chartOptions} series={chartSeries} type="bar" height={420} />
+              </Grid>
 
-                    <Button
-                      variant="contained"
-                      sx={{
-                        bgcolor: '#2ca87f',
-                        '&:hover': { bgcolor: '#238a68' },
-                        textTransform: 'none',
-                        px: 3,
-                        fontWeight: 600,
-                        height: '32px',
-                      }}
-                    >
-                      Filter
-                    </Button>
-                  </Stack>
-
-                  {/* Right Side Title */}
+              {/* Plan per School Summary */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Typography
+                    variant="subtitle1"
                     fontWeight="700"
-                    sx={{
-                      fontSize: '16px',
-                      color: theme.palette.mode === 'dark' ? '#fff' : '#555',
-                    }}
+                    sx={{ color: isDark ? '#fff' : '#1E3A5F', mb: 2, fontSize: '15px' }}
                   >
                     Plan per School
                   </Typography>
-                </Stack>
-              </Grid>
-            </Grid>
-          </Box>
+                  <Divider sx={{ mb: 2 }} />
 
-          <Box
-            sx={{
-              p: 4,
-              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
-            }}
-          >
-            <Grid container spacing={4} sx={{ display: 'flex' }}>
-              <Grid size={{ xs: 12, md: 9 }}>
-                <Box sx={{ p: 1, position: 'relative' }}>
-                  <Chart options={chartOptions} series={chartSeries} type="bar" height={450} />
-                </Box>
-              </Grid>
+                  <Stack spacing={2} sx={{ flex: 1 }}>
+                    {plans.map((plan, i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          py: 1,
+                        }}
+                      >
+                        <Stack direction="row" alignItems="center" spacing={1.5}>
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: '8px',
+                              bgcolor: isDark ? '#2a2a2a' : plan.iconBg,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <IconBuildingBank size={18} color={plan.color} />
+                          </Box>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Box
+                              sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }}
+                            />
+                            <Typography
+                              variant="subtitle2"
+                              fontWeight="700"
+                              sx={{ color: isDark ? '#fff' : '#1a3353' }}
+                            >
+                              {plan.label}
+                            </Typography>
+                          </Stack>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#888' }}>
+                            School
+                          </Typography>
+                          <Box
+                            sx={{
+                              bgcolor: plan.color,
+                              color: '#fff',
+                              px: 1.5,
+                              py: 0.3,
+                              borderRadius: '4px',
+                              minWidth: 40,
+                              textAlign: 'center',
+                            }}
+                          >
+                            <Typography variant="caption" fontWeight="700">
+                              {plan.schoolCount}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
 
-              <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex' }}>
-                <Stack
-                  spacing={2}
-                  sx={{ width: '100%', height: '450px', justifyContent: 'space-between' }}
-                >
-                  {plans.map((plan, index) => (
-                    <Card
-                      key={index}
+                  {/* Total */}
+                  <Divider sx={{ my: 2 }} />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      p: 2,
+                      borderRadius: '10px',
+                      bgcolor: isDark ? '#2a2a2a' : '#EEF2FF',
+                    }}
+                  >
+                    <Box
                       sx={{
-                        p: 2,
-                        border: `1.5px solid ${plan.border}`,
-                        boxShadow: 'none',
-                        borderRadius: '4px',
-                        flex: 1,
+                        width: 40,
+                        height: 40,
+                        borderRadius: '10px',
+                        bgcolor: isDark ? '#3949ab33' : '#c7d2fe',
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
                         alignItems: 'center',
-                        textAlign: 'center',
-                        background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
-                        <Box
-                          sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }}
-                        />
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight="700"
-                          sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1a3353' }}
-                        >
-                          {plan.label}
-                        </Typography>
-                      </Stack>
-
+                      <IconBuildingBank size={20} color="#4a3aff" />
+                    </Box>
+                    <Box>
                       <Typography
                         variant="h4"
                         fontWeight="800"
-                        sx={{ color: '#AE18B3', fontWeight: 600 }}
+                        sx={{ color: isDark ? '#fff' : '#1E3A5F', lineHeight: 1 }}
                       >
-                        {index === 1 ? '400' : index === 2 ? '30' : index === 3 ? '800' : '300'}
+                        {totalSchools.toLocaleString()}
                       </Typography>
-
-                      <Typography variant="caption" sx={{ color: '#66696C', fontWeight: 600 }}>
-                        School
+                      <Typography
+                        variant="caption"
+                        sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 600 }}
+                      >
+                        Total School
                       </Typography>
-                    </Card>
-                  ))}
-                </Stack>
+                    </Box>
+                  </Box>
+                </Box>
               </Grid>
             </Grid>
           </Box>

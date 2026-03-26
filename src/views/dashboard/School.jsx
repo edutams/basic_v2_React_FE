@@ -652,7 +652,7 @@ const SchoolDashboard = () => {
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
-              onClick={() => setOpenPlanDistributionModal(true)}
+              onClick={() => setOpenLoggedInUsersModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>

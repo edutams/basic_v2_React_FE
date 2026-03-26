@@ -9,7 +9,7 @@ import {
   MenuItem,
   TextField,
   Menu,
-  Card,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -19,10 +19,12 @@ import {
   TablePagination,
   TableFooter,
   useTheme,
+  Card,
+  Button,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { IconUsers } from '@tabler/icons-react';
+import { IconUsers, IconUser, IconSchool, IconUsersGroup } from '@tabler/icons-react';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 
@@ -86,68 +88,65 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
       }
     >
       {/* Top Stat Cards */}
-      <Grid container spacing={2} mb={3} mt={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 3 }} mb={3} mt={2}>
         {[
-          { label: 'Teacher', count: 20 },
-          { label: 'Student', count: 20 },
-          { label: 'SPA', count: 20 },
-          { label: 'Parent', count: 20 },
+          { label: 'Teacher', count: 20, icon: IconUser, bgColor: '#E3E8F8', iconColor: '#3B5BDB' },
+          {
+            label: 'Student',
+            count: 20,
+            icon: IconSchool,
+            bgColor: '#DCFCE7',
+            iconColor: '#22C55E',
+          },
+          { label: 'SPA', count: 20, icon: IconUsers, bgColor: '#FEF3C7', iconColor: '#F59E0B' },
+          {
+            label: 'Parent',
+            count: 20,
+            icon: IconUsersGroup,
+            bgColor: '#FCE7F3',
+            iconColor: '#EC4899',
+          },
         ].map((stat, idx) => (
-          //   <Grid item xs={12} sm={6} md={3} key={idx}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
-            <Card
+          <Paper
+            key={idx}
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              py: 2,
+              width: { xs: '100%', sm: 320 },
+              background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFF',
+              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <Box
               sx={{
-                px: 4,
-                py: 3,
-                borderRadius: '6px',
-                boxShadow: 'none',
-                border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-                bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: stat.bgColor,
                 display: 'flex',
                 alignItems: 'center',
-                height: '95px',
-                width: '100%',
+                justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              {/* Left Label */}
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  sx={{
-                    fontSize: '18px',
-                    fontWeight: 300,
-                    color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-              </Box>
+              <stat.icon size={22} color={stat.iconColor} />
+            </Box>
 
-              {/* Divider */}
-              <Box
-                sx={{
-                  height: '40px',
-                  width: '1px',
-                  bgcolor: '#D1D5DB',
-                  mx: 2,
-                }}
-              />
-
-              {/* Number */}
-              <Box sx={{ width: 60, textAlign: 'right' }}>
-                <Typography
-                  sx={{
-                    fontSize: '25px',
-                    fontWeight: 700,
-                    color: '#2F8F46',
-                  }}
-                >
-                  {stat.count}
-                </Typography>
-              </Box>
-            </Card>
-          </Grid>
+            <Box>
+              <Typography fontSize={26} fontWeight={700}>
+                {stat.count}
+              </Typography>
+              <Typography fontSize={14} color="#6B7280">
+                {stat.label}
+              </Typography>
+            </Box>
+          </Paper>
         ))}
-      </Grid>
+      </Stack>
 
       {/* Table Section */}
       <Card
@@ -181,7 +180,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             </Typography>
           </Stack>
 
-          <PrimaryButton
+          {/* <PrimaryButton
             startIcon={<GetAppIcon />}
             sx={{
               bgcolor: '#2ca87f',
@@ -190,7 +189,16 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             }}
           >
             Export to Excel
-          </PrimaryButton>
+          </PrimaryButton> */}
+
+          <Button
+            variant="contained"
+            color="primary"
+            // onClick={handleOpen}
+            startIcon={<GetAppIcon size={18} />}
+          >
+            Export to Excel
+          </Button>
         </Box>
 
         {/* Filter Bar */}
@@ -200,7 +208,7 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
             flexWrap: 'wrap',
             gap: 2,
             p: 2,
-            bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#f2fdf5',
+            bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F9F9F9',
             borderTop: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #e2e8f0',
           }}
         >
@@ -213,22 +221,6 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
             }}
           >
-            <Box
-              sx={{
-                px: 2,
-                py: 0.8,
-                bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
-                borderRight: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
-              >
-                Agent
-              </Typography>
-            </Box>
-
             <Select
               size="small"
               defaultValue="Agent 2"
@@ -247,22 +239,6 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               bgcolor: theme.palette.mode === 'dark' ? '#333' : 'white',
             }}
           >
-            <Box
-              sx={{
-                px: 2,
-                py: 0.8,
-                bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#e0f7fa',
-                borderRight: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #ddd',
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#333' }}
-              >
-                User Type
-              </Typography>
-            </Box>
-
             <Select size="small" defaultValue="Teacher" sx={{ minWidth: 120 }}>
               <MenuItem value="Teacher">Teacher</MenuItem>
             </Select>
@@ -272,15 +248,20 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           <TextField size="small" type="date" />
           <TextField size="small" type="date" />
 
-          <PrimaryButton
-            sx={{
-              bgcolor: '#2ca87f',
-              '&:hover': { bgcolor: '#238a68' },
-              color: '#ffffff !important',
+          <button
+            style={{
+              backgroundColor: [theme.palette.primary.main],
+              color: '#fff',
+              border: 'none',
+              borderRadius: 4,
+              padding: '6px 12px',
+              fontSize: 14,
+              cursor: 'pointer',
             }}
+            onClick={() => console.log('Filter applied')}
           >
             Filter
-          </PrimaryButton>
+          </button>
         </Box>
 
         {/* DataTable */}

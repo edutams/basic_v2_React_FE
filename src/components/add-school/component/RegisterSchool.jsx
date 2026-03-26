@@ -51,16 +51,8 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     address: selectedSchool?.address || '',
     state_id: selectedSchool?.state_lga?.state_id || '',
     lga_id: selectedSchool?.lga_id || '',
-    school_categories:
-      selectedSchool?.school_categories?.map((c) => c.id) ||
-      selectedSchool?.school_categories ||
-      [],
     school_divisions:
-      selectedSchool?.school_divisions?.map((d) => d.id) ||
-      selectedSchool?.school_divisions ||
-      selectedSchool?.school_categories?.map((c) => c.id) ||
-      selectedSchool?.school_categories ||
-      [],
+      selectedSchool?.school_divisions?.map((d) => d.id) || selectedSchool?.school_divisions || [],
     headcolor: selectedSchool?.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: selectedSchool?.color?.sidecolor || 'bg-dark text-lighter',
     bodycolor: selectedSchool?.color?.bodycolor || 'null',
@@ -226,12 +218,11 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
 
       let res;
       if (actionType === 'update') {
-        res = await updateSchool(selectedSchool.id, payload);
+        const { school_categories, ...updatePayload } = payload;
+        res = await updateSchool(selectedSchool.id, updatePayload);
       } else {
-        delete payload.headcolor;
-        delete payload.sidecolor;
-        delete payload.bodycolor;
-        res = await createSchool(payload);
+        const { headcolor, sidecolor, bodycolor, school_categories, ...createPayload } = payload;
+        res = await createSchool(createPayload);
       }
 
       notify.success(res.message || 'School processed successfully');
@@ -255,7 +246,6 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
         state_id: '',
         lga_id: '',
         payModuleType: '',
-        school_categories: [],
         school_divisions: [],
         headcolor: 'bg-night-sky text-lighter',
         sidecolor: 'bg-dark text-lighter',
@@ -309,7 +299,7 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
           />
         </Grid>
 
-        {/* Row 2: Session Term & School Category */}
+        {/* Row 2: Session Term & School Division */}
         <Grid item size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.session_term)}>
             <InputLabel>Session Term</InputLabel>

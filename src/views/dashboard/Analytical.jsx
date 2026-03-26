@@ -18,6 +18,8 @@ import {
   Select,
   MenuItem,
   Button,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import { useNavigate } from 'react-router';
 import PageContainer from '../../components/container/PageContainer';
@@ -30,12 +32,13 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table';
 
+// Shared reusable stat card
+import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
+
 // Agent Analytics Components
-import AgentSubAgentsCard from '../agent/components/AgentSubAgentsCard';
-import AgentRevenueCard from '../agent/components/AgentRevenueCard';
-import AgentSchoolCard from '../agent/components/AgentSchoolCard';
 import LoginActivitiesCard from '../agent/components/LoginActivitiesCard';
-import { IconSchool, IconUsers, IconCurrencyNaira, IconChartBar } from '@tabler/icons-react';
+import { IconSchool, IconListTree, IconSearch } from '@tabler/icons-react';
+import { IconChartBar } from '@tabler/icons-react';
 
 // Charts
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
@@ -53,28 +56,24 @@ const columnHelper = createColumnHelper();
 export default function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const isDark = theme.palette.mode === 'dark';
 
   // Revenue Trend Mock Data
   const revenueSeries = [
-    {
-      name: 'Revenue',
-      data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5],
-    },
+    { name: 'Revenue', data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5] },
   ];
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // Plan Distribution Mock Data
   const planSeries = [65, 52, 39, 25];
-  const planLabels = ['Basic', 'Basic+', 'Basic++', 'Basic+++'];
+  const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
 
   const loginActivities = [
     { label: 'Teacher', value: 12 },
     { label: 'SPA', value: 45 },
     { label: 'Student', value: 23 },
     { label: 'Parent', value: 12 },
-    { label: 'agents', value: 72 },
+    { label: 'Agents', value: 72 },
   ];
 
   // Modal States
@@ -83,7 +82,13 @@ export default function Dashboard() {
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-  const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
+  const [selectedSchoolForUsers] = useState('');
+
+  // Table filter states
+  const [searchName, setSearchName] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
+  const [filterGateway, setFilterGateway] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   const [data, setData] = useState([]);
 
@@ -102,6 +107,7 @@ export default function Dashboard() {
             access_level: agent.access_level,
             phoneNumber: agent.phone,
             contactDetails: agent.email,
+            primaryColor: agent.primary_color || '#4a3aff',
             status: agent.status
               ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
               : 'Inactive',
@@ -127,56 +133,66 @@ export default function Dashboard() {
     }),
     columnHelper.accessor('agentDetails', {
       header: () => 'Agent Details',
-      cell: (info) => (
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar src={info.row.original.imgsrc} alt={info.getValue()} width="35" />
-          <Box>
-            <Typography variant="h6" fontWeight="600">
-              {info.row.original.organizationName}
-            </Typography>
-            <Typography color="textSecondary" variant="subtitle2">
-              {info.getValue()}
-            </Typography>
-          </Box>
-        </Stack>
-      ),
-    }),
-    columnHelper.accessor('contactDetails', {
-      header: () => 'Contact Details',
-      cell: (info) => (
-        <Stack direction="column" spacing={0} alignItems="flex-start">
-          <Typography variant="subtitle2" fontWeight="600">
-            {info.row.original.phoneNumber || 'N/A'}
-          </Typography>
-          <Typography color="textSecondary" variant="caption">
-            {info.getValue()}
-          </Typography>
-        </Stack>
-      ),
-    }),
-    columnHelper.accessor('access_level', {
-      header: () => 'Access Level',
       cell: (info) => {
-        const level = Number(info.getValue());
-        const colorMap = {
-          1: { color: '#2ca87f', bg: '#e6f4ee' },
-          2: { color: '#3949ab', bg: '#e8eaf6' },
-          3: { color: '#f57c00', bg: '#fff3e0' },
-        };
-        const config = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
+        const agent = info.row.original;
+        const initials = (agent.organizationName || 'NA')
+          .split(' ')
+          .slice(0, 2)
+          .map((w) => w[0])
+          .join('')
+          .toUpperCase();
         return (
-          <Chip
-            size="small"
-            label={`Level ${level}`}
-            sx={{
-              bgcolor: config.bg,
-              color: config.color,
-              fontWeight: 600,
-              borderRadius: '8px',
-            }}
-          />
+          <Stack direction="row" spacing={1.5} alignItems="flex-start">
+            <Avatar
+              src={agent.imgsrc}
+              alt={agent.organizationName}
+              sx={{ width: 36, height: 36, fontSize: '12px', fontWeight: 700, bgcolor: '#3949ab', flexShrink: 0 }}
+            >
+              {!agent.imgsrc && initials}
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle2" fontWeight="700" sx={{ lineHeight: 1.3 }}>
+                {agent.organizationName}
+              </Typography>
+              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.4 }}>
+                {agent.phoneNumber || 'N/A'} | Region
+              </Typography>
+              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.4 }}>
+                {info.getValue()}
+              </Typography>
+            </Box>
+          </Stack>
         );
       },
+    }),
+    columnHelper.display({
+      id: 'gateway',
+      header: () => 'Gateway',
+      cell: () => (
+        <Typography variant="subtitle2" fontWeight="500" color="textSecondary">-</Typography>
+      ),
+    }),
+    columnHelper.accessor('sub_agents_count', {
+      header: () => 'Sub Agent',
+      cell: (info) => (
+        <Box
+          sx={{
+            bgcolor: '#ede9fe',
+            color: '#6d28d9',
+            borderRadius: '20px',
+            px: 2,
+            py: 0.4,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 700,
+            fontSize: '13px',
+            minWidth: '36px',
+          }}
+        >
+          {info.getValue() ?? 0}
+        </Box>
+      ),
     }),
     columnHelper.accessor('performance', {
       header: () => 'Performance',
@@ -184,20 +200,36 @@ export default function Dashboard() {
         <Stack
           direction="row"
           spacing={0}
-          sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0', width: 'fit-content' }}
+          sx={{ borderRadius: '6px', overflow: 'hidden',fontWeight:"800", width: 'fit-content' }}
         >
-          <Box sx={{ bgcolor: '#f4f4f4', px: 1, py: 0.5 }}>
-            <Typography variant="caption" fontWeight="600" color="textSecondary">
-              School
-            </Typography>
+          <Box sx={{ px: 1.5, py: 0.5 }}>
+            <Typography  variant="subtitle3" fontWeight="800" color="#333333">School</Typography>
           </Box>
-          <Box sx={{ bgcolor: '#b4ebc2', px: 1, py: 0.5 }}>
-            <Typography variant="caption" fontWeight="700" color="#333">
+          <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
               {info.row.original.tenants_count ?? 0}
             </Typography>
           </Box>
         </Stack>
       ),
+    }),
+    columnHelper.accessor('primaryColor', {
+      header: () => 'Primary Color',
+      cell: (info) => {
+        const color = info.getValue() || '#3949ab';
+        return (
+          <Box
+            sx={{
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              bgcolor: color,
+              border: '2px solid rgba(255,255,255,0.8)',
+              boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+            }}
+          />
+        );
+      },
     }),
     columnHelper.accessor('status', {
       header: () => 'Status',
@@ -205,18 +237,15 @@ export default function Dashboard() {
         <Chip
           sx={{
             bgcolor:
-              info.getValue() === 'Active'
-                ? theme.palette.success.light
-                : info.getValue() === 'Inactive'
-                  ? theme.palette.error.light
-                  : theme.palette.secondary.light,
+              info.getValue() === 'Active' ? '#dcfee6'
+              : info.getValue() === 'Inactive' ? '#ffe4e6'
+              : '#f3f4f6',
             color:
-              info.getValue() === 'Active'
-                ? theme.palette.success.main
-                : info.getValue() === 'Inactive'
-                  ? theme.palette.error.main
-                  : theme.palette.secondary.main,
-            borderRadius: '8px',
+              info.getValue() === 'Active' ? '#16a34a'
+              : info.getValue() === 'Inactive' ? '#e11d48'
+              : '#4b5563',
+            borderRadius: '6px',
+            fontWeight: 600,
           }}
           size="small"
           label={info.getValue()}
@@ -234,66 +263,50 @@ export default function Dashboard() {
   return (
     <PageContainer title="Analytical Dashboard" description="this is Dashboard">
       <Box mt={3}>
-        {/* Row 1: Stat Cards */}
+        {/* Row 1: Stat Cards — new design */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, lg: 4 }}>
-            <AgentSchoolCard
+            <DashboardStatCard
               title="Total School"
-              value="123"
-              icon={IconSchool}
-              bgcolor="#C9EBD2"
-              iconBgColor="#2ca87f"
+              value="459"
+              valueColor="#4a3aff"
+              valueBg={isDark ? '#1e2a4a' : '#EEF2FF'}
+              subStats={[
+                { label: 'Primary School', value: '300' },
+                { label: 'Senior Secondary', value: '30' },
+              ]}
+              onIconClick={() => setIsSchoolModalOpen(true)}
               onClick={() => setIsSchoolModalOpen(true)}
-              rightContent={
-                <Stack spacing={0.5}>
-                  {['Primary Sch', 'Junior Sec', 'Primary Sch', 'Primary Sch'].map((label, idx) => (
-                    <Stack
-                      key={idx}
-                      direction="row"
-                      justifyContent="space-between"
-                      spacing={2}
-                      sx={{ minWidth: 120 }}
-                    >
-                      <Typography
-                        variant="caption"
-                        color="textSecondary"
-                        fontWeight="600"
-                        sx={{ fontSize: '14px', color: theme.palette.mode === 'dark' ? '#1E3A5F' : '#1E3A5F' }}
-                      >
-                        {label} -
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        fontWeight="700"
-                        sx={{ fontSize: '14px' }}
-                      >
-                        34
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <AgentSubAgentsCard
-              title="Total Sub Agents"
-              value="36"
-              icon={IconUsers}
-              bgcolor="#E8F2F3"
-              iconBgColor="#2ca87f"
             />
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>
-            <AgentRevenueCard
+            <DashboardStatCard
               title="Total Transaction Value"
-              value="70,234.00"
-              icon={IconCurrencyNaira}
-              commission="100,000,000,000"
-              volume="110,344,300,000"
+              value="₦7,000,234.00"
+              valueColor="#2ca87f"
+              valueBg={isDark ? '#0d2e1e' : '#E6F7F1'}
+              subStats={[
+                { label: 'Commission', value: '₦100,000,000' },
+                { label: 'Volume', value: '304,043,000' },
+              ]}
+              onIconClick={() => setIsTransactionModalOpen(true)}
               onClick={() => setIsTransactionModalOpen(true)}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <DashboardStatCard
+              title="Total Sub Agents"
+              value="32"
+              valueColor="#f59e0b"
+              valueBg={isDark ? '#2e1e00' : '#FEF3C7'}
+              subStats={[
+                { label: 'Lv2', value: '35' },
+                { label: 'Lv3', value: '32' },
+                { label: 'Lv4', value: '21' },
+                { label: 'Lv5', value: '43' },
+              ]}
             />
           </Grid>
         </Grid>
@@ -310,27 +323,19 @@ export default function Dashboard() {
                 border: '1px solid rgba(0,0,0,0.05)',
               }}
             >
-              <Box
-                sx={{
-                  p: 2,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography variant="h5" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#4a3aff' }}>
+              <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h5" fontWeight="600" sx={{ color: isDark ? '#fff' : '#4a3aff' }}>
                   Transaction
                 </Typography>
                 <Stack direction="row" spacing={1}>
-                  <Select size="small" value="Year" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="Year">Year</MenuItem>
+                  <Select size="small" value="year" sx={{ minWidth: 100, height: '35px' }}>
+                    <MenuItem value="year">Year</MenuItem>
                   </Select>
-                  <Select size="small" value="Bank" sx={{ minWidth: 100, height: '35px' }}>
-                    <MenuItem value="Bank">Bank</MenuItem>
+                  <Select size="small" value="gateway" sx={{ minWidth: 100, height: '35px' }}>
+                    <MenuItem value="gateway">Gateway</MenuItem>
                   </Select>
                 </Stack>
               </Box>
-              {/* <Box sx={{ p: 2 }}> */}
               <ReusableBarChart
                 series={revenueSeries}
                 categories={months}
@@ -340,7 +345,6 @@ export default function Dashboard() {
                 yAxisFormatter={(val) => `${val.toFixed(1)}M`}
                 xAxisTitle="Month"
               />
-              {/* </Box> */}
             </Card>
           </Grid>
 
@@ -363,15 +367,8 @@ export default function Dashboard() {
                 position: 'relative',
               }}
             >
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  mb: 2,
-                }}
-              >
-                <Typography variant="subtitle2" fontWeight="600" sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="subtitle2" fontWeight="600" sx={{ color: isDark ? '#fff' : '#1E3A5F' }}>
                   Plan Distribution
                 </Typography>
                 <Box
@@ -393,7 +390,7 @@ export default function Dashboard() {
               <ReusablePieChart
                 series={planSeries}
                 labels={planLabels}
-                colors={['#ff4081', '#2196f3', '#ff80ab', '#b39ddb']}
+                colors={['#3949ab', '#2196f3', '#ff4081', '#9c27b0']}
                 height={200}
               />
             </Card>
@@ -421,19 +418,106 @@ export default function Dashboard() {
                     >
                       <IconSchool size={16} />
                     </Box>
-                    <Typography variant="h5">List of top 10 performing agent</Typography>
+                    <Typography variant="h5">List of Agents</Typography>
                   </Stack>
                   <Button
                     variant="contained"
-                    color="primary"
                     onClick={() => navigate('/agent')}
-                    sx={{ borderRadius: '8px', textTransform: 'none' }}
+                    sx={{
+                      borderRadius: '8px',
+                      textTransform: 'none',
+                      bgcolor: '#DCE0F0',
+                      color: '#4E67CE',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      boxShadow: 'none',
+                      '&:hover': { bgcolor: '#c8cfe8', boxShadow: 'none' },
+                    }}
                   >
-                    Go To Agent Manager
+                    <IconListTree size={16} />
+                    View All
                   </Button>
                 </Stack>
               }
             >
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 1,
+                  borderRadius: '8px',
+                  bgcolor: isDark ? theme.palette.background.default : '#f8fafc',
+                }}
+              >
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={2}
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  flexWrap="wrap"
+                >
+                  <TextField
+                    size="small"
+                    placeholder="Search by Name"
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconSearch size={16} color="#888" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ minWidth: 200, flex: 1 }}
+                  />
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
+                    sx={{ minWidth: 140 }}
+                  >
+                    <MenuItem value="">Agent Levels</MenuItem>
+                    <MenuItem value="1">Level 1</MenuItem>
+                    <MenuItem value="2">Level 2</MenuItem>
+                    <MenuItem value="3">Level 3</MenuItem>
+                  </Select>
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value={filterGateway}
+                    onChange={(e) => setFilterGateway(e.target.value)}
+                    sx={{ minWidth: 140 }}
+                  >
+                    <MenuItem value="">Gateway</MenuItem>
+                    <MenuItem value="skoolpay">Skoolpay</MenuItem>
+                  </Select>
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    sx={{ minWidth: 120 }}
+                  >
+                    <MenuItem value="">Status</MenuItem>
+                    <MenuItem value="Active">Active</MenuItem>
+                    <MenuItem value="Inactive">Inactive</MenuItem>
+                  </Select>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      bgcolor: '#4a3aff',
+                      color: '#fff',
+                      borderRadius: '8px',
+                      textTransform: 'none',
+                      px: 3,
+                      boxShadow: 'none',
+                      '&:hover': { bgcolor: '#3929ee', boxShadow: 'none' },
+                    }}
+                  >
+                    Filter
+                  </Button>
+                </Stack>
+              </Box>
               <TableContainer component={Paper} elevation={0}>
                 <Table>
                   <TableHead>
@@ -464,6 +548,9 @@ export default function Dashboard() {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+             
+              
             </ParentCard>
           </Grid>
         </Grid>

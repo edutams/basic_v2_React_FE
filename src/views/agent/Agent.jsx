@@ -79,7 +79,28 @@ const statusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'Inactive' },
 ];
+ const schoolSummary = {
+    total: 350,
+    active: 200,
+    inactive: 100,
+    subAgents: 0,
 
+    primary: 30,
+
+    secondary: 900,
+  };
+    const planSeries = [40, 15, 35, 10];
+
+  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
+
+  const planData = [
+    { name: 'Freemium', value: 40, color: '#EC468C' },
+    { name: 'Basic', value: 15, color: '#7987FF' },
+    { name: 'Basic +', value: 35, color: '#FFA5CB' },
+    { name: 'Basic ++', value: 10, color: '#8B48E3' },
+  ];
+
+  const planColors = planData.map((p) => p.color);
 const columnHelper = createColumnHelper();
 
 import locationApi from '../../api/location';
@@ -111,8 +132,8 @@ const Agent = () => {
   ];
 
   // Plan Distribution Mock Data
-  const planSeries = [65, 52, 39];
-  const planLabels = ['Basic', 'Basic+', 'Basic++'];
+  const planSeries = [65, 52, 39, 25];
+  const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
 
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
@@ -427,8 +448,15 @@ const Agent = () => {
     }),
     columnHelper.accessor('agentDetails', {
       header: () => 'Agent Details',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
+      cell: (info) => {
+        const agent = info.row.original;
+        const initials = (agent.organizationName || 'NA')
+          .split(' ')
+          .slice(0, 2)
+          .map((w) => w[0])
+          .join('')
+          .toUpperCase();
+        return editRowId === agent.s_n ? (
           <TextField
             variant="outlined"
             value={editedData?.[info.column.id] || ''}
@@ -436,21 +464,35 @@ const Agent = () => {
             fullWidth
           />
         ) : (
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={info.row.original.imgsrc} alt={info.row.original.organizationName} sx={{ width: 40, height: 40 }} />
+          <Stack direction="row" spacing={1.5} alignItems="flex-start">
+            <Avatar
+              src={agent.imgsrc}
+              alt={agent.organizationName}
+              sx={{
+                width: 36,
+                height: 36,
+                fontSize: '12px',
+                fontWeight: 700,
+                bgcolor: '#3949ab',
+                flexShrink: 0,
+              }}
+            >
+              {!agent.imgsrc && initials}
+            </Avatar>
             <Box>
-              <Typography variant="subtitle1" fontWeight="600" sx={{ lineHeight: 1.2 }}>
-                {info.row.original.organizationName || 'N/A'}
+              <Typography variant="subtitle2" fontWeight="700" sx={{ lineHeight: 1.3, color: 'text.primary' }}>
+                {agent.organizationName || 'N/A'}
               </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2, mt: 0.5 }}>
-                {info.row.original.phoneNumber || 'N/A'} | {info.row.original.state_name || 'N/A'} Region
+              <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
               </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.2 }}>
-                {info.row.original.contactDetails || 'N/A'}
+              <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                {agent.contactDetails || 'N/A'}
               </Typography>
             </Box>
           </Stack>
-        ),
+        );
+      },
     }),
     columnHelper.accessor('gateway', {
       header: () => 'Gateway',
@@ -473,7 +515,7 @@ const Agent = () => {
         return (
           <Chip
             size="small"
-            label={`Level ${level}`}
+            label={`${level}`}
             sx={{
               bgcolor: config.bg,
               color: config.color,
@@ -489,17 +531,17 @@ const Agent = () => {
       cell: (info) => (
         <Box
           sx={{
-            bgcolor: '#eadeff',
-            color: '#333',
-            borderRadius: '6px',
+            bgcolor: '#ede9fe',
+            color: '#6d28d9',
+            borderRadius: '20px',
             px: 2,
-            py: 0.5,
+            py: 0.4,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: '700',
-            fontSize: '14px',
-            minWidth: '40px'
+            fontWeight: 700,
+            fontSize: '13px',
+            minWidth: '36px',
           }}
         >
           {info.row.original.sub_agents_count ?? 0}
@@ -509,85 +551,40 @@ const Agent = () => {
     columnHelper.accessor('performance', {
       header: () => 'Performance',
       cell: (info) => (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ borderRadius: '4px', overflow: 'hidden', border: '1px solid #e0e0e0', bgcolor: '#f4f4f4', px: 1, py: 0.5, margin: 'auto', width: 'fit-content' }}>
-          <Typography variant="subtitle2" fontWeight="500" color="#333">
-            School
-          </Typography>
-          <Box sx={{ bgcolor: '#87e8a9', px: 1.5, py: 0.5, borderRadius: '6px' }}>
-            <Typography variant="subtitle2" fontWeight="700" color="#000">
-              {info.row.original.tenants_count ?? 0}
-            </Typography>
-          </Box>
-        </Stack>
+        <Stack
+                direction="row"
+                spacing={0}
+                sx={{ borderRadius: '6px', overflow: 'hidden',fontWeight:"800", width: 'fit-content' }}
+              >
+                <Box sx={{ px: 1.5, py: 0.5 }}>
+                  <Typography  variant="subtitle3" fontWeight="800" color="#333333">School</Typography>
+                </Box>
+                <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+                  <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
+                    {info.row.original.tenants_count ?? 0}
+                  </Typography>
+                </Box>
+              </Stack>
       ),
     }),
-    columnHelper.accessor('colourScheme', {
-      header: () => 'Colour Scheme',
-      cell: (info) => {
-        const agent = info.row.original;
-        const headerColor = agent.headerColor || '#232FE6';
-        const sidebarColor = agent.sidebarColor || '#E51A4D';
-        const bodyColor = agent.bodyColor || '#E1B42C';
-
-        return editRowId === info.row.original.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Box
-            sx={{
-              display: 'inline-block',
-              width: 36,
-              height: 36,
-              borderRadius: '4px',
-              overflow: 'hidden',
-              border: '1px solid #e0e0e0'
-            }}
-            title={`Header: ${headerColor} | Sidebar: ${sidebarColor} | Body: ${bodyColor}`}
-          >
-            <Box sx={{ display: 'flex', height: '50%' }}>
+     columnHelper.accessor('primaryColor', {
+          header: () => 'Primary Color',
+          cell: (info) => {
+            const color = info.getValue() || '#3949ab';
+            return (
               <Box
                 sx={{
-                  width: '60%',
-                  height: '100%',
-                  backgroundColor: headerColor,
-                  borderRadius: 0,
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  bgcolor: color,
+                  border: '2px solid rgba(255,255,255,0.8)',
+                  boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
                 }}
               />
-              <Box
-                sx={{
-                  width: '40%',
-                  height: '100%',
-                  backgroundColor: '#43cd66',
-                  borderRadius: 0,
-                }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', height: '50%' }}>
-              <Box
-                sx={{
-                  width: '30%',
-                  height: '100%',
-                  backgroundColor: sidebarColor,
-                  borderRadius: 0,
-                }}
-              />
-              <Box
-                sx={{
-                  width: '70%',
-                  height: '100%',
-                  backgroundColor: bodyColor,
-                  borderRadius: 0,
-                }}
-              />
-            </Box>
-          </Box>
-        );
-      },
-    }),
+            );
+          },
+        }),
     columnHelper.accessor('status', {
       header: () => 'Status',
       cell: (info) =>
@@ -784,152 +781,487 @@ const Agent = () => {
         <Breadcrumb title="Agent" items={BCrumb} />
       </Box>
 
-      {/* Analytics Section */}
-      <Grid container spacing={2} mb={3} mt={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card
-            sx={{
-              px: 4,
-              py: 3,
-              borderRadius: '6px',
-              boxShadow: 'none',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              height: '95px',
-              width: '100%',
-            }}
-          >
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '18px',
-                  fontWeight: 300,
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
-                }}
-              >
-                Total agent
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                height: '40px',
-                width: '1px',
-                bgcolor: '#D1D5DB',
-                mx: 2,
-              }}
-            />
-            <Box sx={{ width: 60, textAlign: 'right' }}>
-              <Typography
-                sx={{
-                  fontSize: '25px',
-                  fontWeight: 700,
-                  color: '#2F8F46',
-                }}
-              >
-                {analytics.totalAgents}
-              </Typography>
-            </Box>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card
-            sx={{
-              px: 4,
-              py: 3,
-              borderRadius: '6px',
-              boxShadow: 'none',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              height: '95px',
-              width: '100%',
-            }}
-          >
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '18px',
-                  fontWeight: 300,
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
-                }}
-              >
-                Total Sub Agent
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                height: '40px',
-                width: '1px',
-                bgcolor: '#D1D5DB',
-                mx: 2,
-              }}
-            />
-            <Box sx={{ width: 60, textAlign: 'right' }}>
-              <Typography
-                sx={{
-                  fontSize: '25px',
-                  fontWeight: 700,
-                  color: '#2F8F46',
-                }}
-              >
-                {analytics.totalSubAgents}
-              </Typography>
-            </Box>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <Card
-            sx={{
-              px: 4,
-              py: 3,
-              borderRadius: '6px',
-              boxShadow: 'none',
-              border: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #E5E7EB',
-              bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              height: '95px',
-              width: '100%',
-            }}
-          >
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                sx={{
-                  fontSize: '18px',
-                  fontWeight: 300,
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#240606',
-                }}
-              >
-                Total School
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                height: '40px',
-                width: '1px',
-                bgcolor: '#D1D5DB',
-                mx: 2,
-              }}
-            />
-            <Box sx={{ width: 60, textAlign: 'right' }}>
-              <Typography
-                sx={{
-                  fontSize: '25px',
-                  fontWeight: 700,
-                  color: '#2F8F46',
-                }}
-              >
-                {analytics.totalSchools}
-              </Typography>
-            </Box>
-          </Card>
-        </Grid>
-      </Grid>
+      <Box
+             sx={{
+               display: 'grid',
+               gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+               gap: 2,
+               mb: 3,
+             }}
+           >
+             {/* <Paper
+               sx={{
+                 px: 3,
+                 py: 2,
+                 borderRadius: 2,
+                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+               }}
+             >
+               <Box
+                 mb={3}
+                 sx={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                 }}
+               >
+                 <Typography variant="h5" color="text.secondary">
+                   Onboarding
+                 </Typography>
+               </Box>
+               <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                 <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
+     
+                 <Box textAlign="right">
+                   <Typography
+                     sx={{
+                       fontSize: 40,
+                       fontWeight: 'bold',
+                       color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
+                       lineHeight: 1,
+                     }}
+                   >
+                     {schoolSummary.total}
+                   </Typography>
+     
+                   <Typography variant="h5" color="text.primary">
+                     Total Schools
+                   </Typography>
+                 </Box>
+               </Box>
+     
+               <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                 <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
+                   Active School
+                 </Typography>
+     
+                 <Chip
+                   label={schoolSummary.active}
+                   size="small"
+                   sx={{
+                     background: '#BEEAA6',
+                     color: '#0D47A1',
+                     fontWeight: 'bold',
+                     borderRadius: '20px',
+                     px: 4,
+                   }}
+                 />
+               </Box>
+     
+               <Box display="flex" justifyContent="space-between" alignItems="center">
+                 <Typography sx={{ color: theme.palette.error.main, fontSize: 13, fontWeight: 'bold' }}>
+                   Inactive School
+                 </Typography>
+     
+                 <Chip
+                   label={schoolSummary.inactive}
+                   size="small"
+                   sx={{
+                     background: '#F96459',
+                     color: '#fff',
+                     fontWeight: 'bold',
+                     borderRadius: '20px',
+                     px: 4,
+                   }}
+                 />
+               </Box>
+             </Paper> */}
+             <Paper
+               sx={{
+                 p: 3,
+                 borderRadius: 2,
+                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+               }}
+             >
+               <Box
+                 sx={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                   mb: 2,
+                 }}
+               >
+                 <Typography variant="h6" fontWeight={600}>
+                   Total School
+                 </Typography>
+     
+                 <Box
+                   sx={{
+                     width: 30,
+                     height: 30,
+                     borderRadius: 1,
+                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     cursor: 'pointer',
+                   }}
+                   onClick={() => setIsSchoolModalOpen(true)}
+                 >
+                   <IconChartBar size={22} color="#FFFFFF" />
+                 </Box>
+               </Box>
+     
+               <Box
+                 sx={{
+                   background: '#E6F7F1',
+                   borderRadius: 1,
+                   px: 3,
+                   py: 1,
+                   // width: '50%',
+                   // maxWidth: 250,
+                   display: 'inline-flex',
+                   alignItems: 'center',
+                   mb: 4,
+                 }}
+               >
+                 <Typography
+                   sx={{
+                     fontSize: 20,
+                     fontWeight: 700,
+                     color: '#2CA87F',
+                   }}
+                 >
+                   {schoolSummary.total}
+                 </Typography>
+               </Box>
+     
+               <Box
+                 sx={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                 }}
+               >
+                 <Box>
+                   <Typography variant="h6" color="text.primary">
+                     Active School
+                   </Typography>
+                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.active}</Typography>
+                 </Box>
+     
+                 <Box
+                   sx={{
+                     width: '1px',
+                     height: 40,
+                     background: '#E5E7EB',
+                   }}
+                 />
+     
+                 <Box>
+                   <Typography variant="h6" color="text.primary">
+                     Inactive School
+                   </Typography>
+                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                     {schoolSummary.inactive}
+                   </Typography>
+                 </Box>
+               </Box>
+             </Paper>
+     
+             <Paper
+               sx={{
+                 p: 3,
+                 borderRadius: 2,
+                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+               }}
+             >
+               <Box
+                 sx={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                   mb: 2,
+                 }}
+               >
+                 <Typography variant="h6" fontWeight={600}>
+                   Subscriptions
+                 </Typography>
+     
+                 <Box
+                   sx={{
+                     width: 30,
+                     height: 30,
+                     borderRadius: 1,
+                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     cursor: 'pointer',
+                   }}
+                   onClick={() => setIsSchoolModalOpen(true)}
+                 >
+                   <IconChartBar size={22} color="#FFFFFF" />
+                 </Box>
+               </Box>
+     
+               <Box
+                 sx={{
+                   background: '#EEF2FF',
+                   borderRadius: 1,
+                   px: 3,
+                   py: 1,
+                   display: 'inline-flex',
+                   alignItems: 'center',
+                   mb: 4,
+                 }}
+               >
+                 <Typography
+                   sx={{
+                     fontSize: 20,
+                     fontWeight: 700,
+                     color: '#4A3AFF',
+                   }}
+                 >
+                   {schoolSummary.total}
+                 </Typography>
+               </Box>
+     
+               <Box
+                 sx={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                 }}
+               >
+                 <Box>
+                   <Typography variant="h6" color="text.primary">
+                     Primary School
+                   </Typography>
+                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                     {schoolSummary.primary}
+                   </Typography>
+                 </Box>
+     
+                 <Box
+                   sx={{
+                     width: '1px',
+                     height: 40,
+                     background: '#E5E7EB',
+                   }}
+                 />
+     
+                 <Box>
+                   <Typography variant="h6" color="text.primary">
+                     Secondary School
+                   </Typography>
+                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                     {schoolSummary.secondary}
+                   </Typography>
+                 </Box>
+               </Box>
+             </Paper>
+     
+             <Paper
+               sx={{
+                 // px: 3,
+                 // py: 2,
+                 borderRadius: 2,
+                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+               }}
+             >
+               <Box
+                 // mb={2}
+                 sx={{
+                   p: 2,
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                 }}
+               >
+                 <Typography variant="h5" color="text.primary">
+                   Login Activities
+                 </Typography>
+     
+                 <Box
+                   sx={{ bgcolor: '#3d3d3d', p: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#111' } }}
+                   onClick={() => setIsPlanModalOpen(true)}
+                 >
+                   <IconChartBar size={22} color="#FFFFFF" />
+                 </Box>
+               </Box>
+     
+               <Box
+                 sx={{
+                   px: 3,
+                   // py: 1,
+                   mt: 1,
+                 }}
+               >
+                 {[
+                   { label: 'Teacher:', value: 0 },
+                   { label: 'SPA', value: 0 },
+                   { label: 'Student', value: 0 },
+                   { label: 'Parent', value: 0 },
+                 ].map((item, index) => (
+                   <Box
+                     key={index}
+                     sx={{
+                       display: 'flex',
+                       justifyContent: 'space-between',
+                       alignItems: 'center',
+                       mb: 1,
+                     }}
+                   >
+                     <Typography variant="h5" color="text.primary">
+                       {item.label}
+                     </Typography>
+     
+                     <Typography
+                       variant="h5"
+                       sx={{
+                         color: theme.palette.error.main,
+                       }}
+                     >
+                       {item.value}
+                     </Typography>
+                   </Box>
+                 ))}
+               </Box>
+             </Paper>
+     
+             {/* <Paper
+               sx={{
+                 borderRadius: 2,
+                 overflow: 'hidden',
+                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+               }}
+             >
+               <Box
+                 sx={{
+                   p: 2,
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                   color: theme.palette.mode === 'dark' ? '#fff' : '#5C5C5C',
+                   bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F8F8F8',
+                   borderRadius: '8px 8px 0 0',
+                 }}
+               >
+                 <Typography
+                   variant="h5"
+                   sx={{
+                     fontWeight: 'bold',
+                     color: theme.palette.mode === 'dark' ? '#fff' : '#5E5E5E',
+                   }}
+                 >
+                   Login Activities
+                 </Typography>
+     
+                 <Box
+                   sx={{
+                     width: 30,
+                     height: 30,
+                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     cursor: 'pointer',
+                   }}
+                   onClick={() => setIsLoggedInUsersModalOpen(true)}
+                 >
+                   <IconChartBar size={22} color="#FFFFFF" />
+                 </Box>
+               </Box>
+     
+               <Divider />
+     
+               <Box sx={{ p: 2 }}>
+                 {[
+                   { label: 'Teacher:', value: 0 },
+                   { label: 'SPA', value: 0 },
+                   { label: 'Student', value: 0 },
+                   { label: 'Parent', value: 0 },
+                 ].map((item, index) => (
+                   <Box
+                     key={index}
+                     sx={{
+                       display: 'flex',
+                       justifyContent: 'space-between',
+                       alignItems: 'center',
+                       mb: 1,
+                     }}
+                   >
+                     <Typography variant="h5" color="text.primary">
+                       {item.label}
+                     </Typography>
+     
+                     <Typography
+                       variant="h5"
+                       sx={{
+                         color: theme.palette.error.main,
+                       }}
+                     >
+                       {item.value}
+                     </Typography>
+                   </Box>
+                 ))}
+               </Box>
+             </Paper> */}
+     
+             <Paper
+               sx={{
+                 // px: 3,
+                 // py: 2,
+                 borderRadius: 2,
+                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+               }}
+             >
+               <Box
+                 // mb={2}
+                 sx={{
+                   p: 2,
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                 }}
+               >
+                 <Typography variant="h5" color="text.primary">
+                   Plan Distribution
+                 </Typography>
+     
+                 <Box
+                   sx={{
+                     width: 30,
+                     height: 30,
+                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     cursor: 'pointer',
+                   }}
+                   onClick={() => setIsPlanModalOpen(true)}
+                 >
+                   <IconChartBar size={22} color="#FFFFFF" />
+                 </Box>
+               </Box>
+     
+               <Box>
+                 <Box
+                   sx={{
+                     height: 170,
+                     display: 'flex',
+                     alignItems: 'center',
+                     overflow: 'hidden',
+                   }}
+                 >
+                   <ReusablePieChart
+                     series={planSeries}
+                     colors={planColors}
+                     labels={planLabels}
+                     height={180}
+                     hideCard
+                   />
+                 </Box>
+               </Box>
+             </Paper>
+           </Box>
 
       <Box sx={{ mt: 3 }}>
         <ParentCard

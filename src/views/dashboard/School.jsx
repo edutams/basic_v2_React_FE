@@ -166,7 +166,7 @@ const SchoolDashboard = () => {
           try {
             const modularArr = typeof t.modular === 'string' ? JSON.parse(t.modular) : t.modular;
             populationSubstitute = modularArr.length;
-          } catch (e) { }
+          } catch (e) {}
         }
 
         return {
@@ -245,7 +245,7 @@ const SchoolDashboard = () => {
 
   const handleDeactivateSchool = async (school) => {
     try {
-      let status = school.status == 'active' ? 'inactive' : 'active'
+      let status = school.status == 'active' ? 'inactive' : 'active';
       await updateSchool(school.id, { status: status });
       // await updateSchool(school.id, { status: 'inactive' });
       await fetchSchools();
@@ -354,7 +354,7 @@ const SchoolDashboard = () => {
           mb: 3,
         }}
       >
-        <Paper
+        {/* <Paper
           sx={{
             px: 3,
             py: 2,
@@ -431,34 +431,32 @@ const SchoolDashboard = () => {
               }}
             />
           </Box>
-        </Paper>
-
+        </Paper> */}
         <Paper
           sx={{
-            px: 3,
-            py: 2,
+            p: 3,
             borderRadius: 2,
             background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           <Box
-            mb={3}
             sx={{
-              // p: 2,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              mb: 2,
             }}
           >
-            <Typography variant="h5" color="text.secondary">
-              Subscriptions
+            <Typography variant="h6" fontWeight={600}>
+              Total School
             </Typography>
 
             <Box
               sx={{
                 width: 30,
                 height: 30,
+                borderRadius: 1,
                 background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
                 display: 'flex',
                 alignItems: 'center',
@@ -470,82 +468,178 @@ const SchoolDashboard = () => {
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
           </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
 
-            <Box textAlign="right">
-              <Typography
-                sx={{
-                  fontSize: 40,
-                  fontWeight: 'bold',
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
-                  lineHeight: 1,
-                }}
-              >
-                {schoolSummary.total}
+          <Box
+            sx={{
+              background: '#E6F7F1',
+              borderRadius: 1,
+              px: 3,
+              py: 1,
+              // width: '50%',
+              // maxWidth: 250,
+              display: 'inline-flex',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#2CA87F',
+              }}
+            >
+              {schoolSummary.total}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Active School
               </Typography>
-              <Typography variant="h5" color="text.primary">
-                Total Schools
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.active}</Typography>
+            </Box>
+
+            <Box
+              sx={{
+                width: '1px',
+                height: 40,
+                background: '#E5E7EB',
+              }}
+            />
+
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Inactive School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {schoolSummary.inactive}
               </Typography>
             </Box>
           </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
-              Primary School
-            </Typography>
-
-            <Chip
-              label={schoolSummary.primary}
-              size="small"
-              sx={{
-                background: '#52932E',
-                color: '#FFFFFF',
-                fontWeight: 'bold',
-                borderRadius: '20px',
-                px: 4,
-              }}
-            />
-          </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
-              Secondary School
-            </Typography>
-
-            <Chip
-              label={schoolSummary.secondary}
-              size="small"
-              sx={{
-                background: '#52932E',
-                color: '#FFFFFF',
-                fontWeight: 'bold',
-                borderRadius: '20px',
-                px: 4,
-              }}
-            />
-          </Box>
         </Paper>
+
         <Paper
           sx={{
-            px: 3,
-            py: 2,
+            p: 3,
             borderRadius: 2,
             background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           <Box
-            mb={2}
             sx={{
-              // p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Subscriptions
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: 1,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setOpenTotalSchoolModal(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              background: '#EEF2FF',
+              borderRadius: 1,
+              px: 3,
+              py: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#4A3AFF',
+              }}
+            >
+              {schoolSummary.total}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Primary School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {schoolSummary.primary}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                width: '1px',
+                height: 40,
+                background: '#E5E7EB',
+              }}
+            />
+
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Secondary School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {schoolSummary.secondary}
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        <Paper
+          sx={{
+            // px: 3,
+            // py: 2,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            // mb={2}
+            sx={{
+              p: 2,
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
             }}
           >
             <Typography variant="h5" color="text.primary">
-              Plan Distribution
+              Login Activities
             </Typography>
 
             <Box
@@ -564,27 +658,46 @@ const SchoolDashboard = () => {
             </Box>
           </Box>
 
-          <Box>
-            <Box
-              sx={{
-                height: 170,
-                display: 'flex',
-                alignItems: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              <ReusablePieChart
-                series={planSeries}
-                colors={planColors}
-                labels={planLabels}
-                height={180}
-                hideCard
-              />
-            </Box>
+          <Box
+            sx={{
+              px: 3,
+              // py: 1,
+              mt: 1,
+            }}
+          >
+            {[
+              { label: 'Teacher:', value: 0 },
+              { label: 'SPA', value: 0 },
+              { label: 'Student', value: 0 },
+              { label: 'Parent', value: 0 },
+            ].map((item, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h5" color="text.primary">
+                  {item.label}
+                </Typography>
+
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: theme.palette.error.main,
+                  }}
+                >
+                  {item.value}
+                </Typography>
+              </Box>
+            ))}
           </Box>
         </Paper>
 
-        <Paper
+        {/* <Paper
           sx={{
             borderRadius: 2,
             overflow: 'hidden',
@@ -631,7 +744,7 @@ const SchoolDashboard = () => {
 
           <Divider />
 
-          <Box sx={{ px: 2, py: 3 }}>
+          <Box sx={{ p: 2 }}>
             {[
               { label: 'Teacher:', value: 0 },
               { label: 'SPA', value: 0 },
@@ -661,6 +774,64 @@ const SchoolDashboard = () => {
                 </Typography>
               </Box>
             ))}
+          </Box>
+        </Paper> */}
+
+        <Paper
+          sx={{
+            // px: 3,
+            // py: 2,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            // mb={2}
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.primary">
+              Plan Distribution
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setOpenPlanDistributionModal(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box>
+            <Box
+              sx={{
+                height: 170,
+                display: 'flex',
+                alignItems: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              <ReusablePieChart
+                series={planSeries}
+                colors={planColors}
+                labels={planLabels}
+                height={180}
+                hideCard
+              />
+            </Box>
           </Box>
         </Paper>
       </Box>
@@ -914,7 +1085,9 @@ const SchoolDashboard = () => {
                                 handleActionClose();
                               }}
                             >
-                              {row?.status?.trim().toLowerCase() === 'active' ? 'Deactivate' : 'Activate'}
+                              {row?.status?.trim().toLowerCase() === 'active'
+                                ? 'Deactivate'
+                                : 'Activate'}
                             </MenuItem>
                             <MenuItem
                             // onClick={() => {
@@ -1003,15 +1176,14 @@ const SchoolDashboard = () => {
         severity="error"
       />
 
-
-
       <ConfirmationDialog
         open={openDeactivateDialog}
         onClose={() => setOpenDeactivateDialog(false)}
         onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
         title={isActive ? 'Deactivate School' : 'Activate School'}
-        message={`Are you sure you want to ${isActive ? 'deactivate' : 'activate'
-          } ${schoolToDeactivate?.institutionName}?`}
+        message={`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} ${
+          schoolToDeactivate?.institutionName
+        }?`}
         confirmText={isActive ? 'Deactivate' : 'Activate'}
         severity={isActive ? 'warning' : 'success'}
       />

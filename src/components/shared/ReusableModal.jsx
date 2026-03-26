@@ -1,15 +1,15 @@
 import React from 'react';
-import { Modal, Box, Typography, Divider, IconButton } from '@mui/material';
+import { Modal, Box, Typography, Divider, IconButton, useTheme } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PropTypes from 'prop-types';
 
-const getModalStyle = (size = 'medium', customStyle = {}) => {
+const getModalStyle = (size = 'medium', customStyle = {}, theme) => {
   const baseStyle = {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    bgcolor: 'background.paper',
+    bgcolor: theme?.palette?.background?.paper || '#F1F4F6',
     boxShadow: 24,
     p: 4,
     maxHeight: '90vh',
@@ -56,8 +56,11 @@ const ReusableModal = ({
   keepMounted = false,
   disableEnforceFocus = false,
   disableAutoFocus = false,
+  bgColor,
   ...modalProps
 }) => {
+  const theme = useTheme();
+
   return (
     <Modal
       open={open}
@@ -67,7 +70,7 @@ const ReusableModal = ({
       disableAutoFocus={disableAutoFocus}
       {...modalProps}
     >
-      <Box sx={getModalStyle(size, customStyle)}>
+      <Box sx={getModalStyle(size, customStyle, theme)}>
         {/* Close Button */}
         {showCloseButton && (
           <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
@@ -114,6 +117,7 @@ ReusableModal.propTypes = {
   keepMounted: PropTypes.bool,
   disableEnforceFocus: PropTypes.bool,
   disableAutoFocus: PropTypes.bool,
+  bgColor: PropTypes.string,
 };
 
 export default ReusableModal;

@@ -98,13 +98,10 @@ const TotalTransactionModal = ({ open, onClose }) => {
         </Grid>
       </Grid>
 
-      {/* Chart + side panel */}
-      <Grid container spacing={2}>
-        {/* Left: filters + chart */}
-        <Grid size={{ xs: 12, md: 9 }}>
-          {/* Filter row */}
-          <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
-            {/* Year dropdown */}
+      {/* Filter row — full width, floated right */}
+      <Grid container spacing={2} mb={1}>
+        <Grid size={{ xs: 12 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end">
             <Box sx={{ display: 'flex', alignItems: 'center', border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`, borderRadius: '6px', bgcolor: isDark ? '#2d2d2d' : 'white', overflow: 'hidden' }}>
               <Select size="small" value={year} onChange={(e) => setYear(e.target.value)}
                 renderValue={(v) => `Year ${v}`}
@@ -113,21 +110,23 @@ const TotalTransactionModal = ({ open, onClose }) => {
                 <MenuItem value="2025">2025</MenuItem>
               </Select>
             </Box>
-
-            {/* Transaction option dropdown — blue border */}
             <Box sx={{ display: 'flex', alignItems: 'center', border: `2px solid #3B82F6`, borderRadius: '6px', bgcolor: isDark ? '#2d2d2d' : 'white', overflow: 'hidden' }}>
               <Select size="small" value={option} onChange={(e) => setOption(e.target.value)}
                 sx={{ '& fieldset': { border: 'none' }, minWidth: 180, fontSize: '13px', fontWeight: 600, color: isDark ? '#fff' : '#333' }}>
                 <MenuItem value="All">Transaction option</MenuItem>
               </Select>
             </Box>
-
             <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', '&:hover': { bgcolor: '#1e3a8a' } }}>
               Filter
             </PrimaryButton>
           </Stack>
+        </Grid>
+      </Grid>
 
-          {/* Chart */}
+      {/* Chart + side panel */}
+      <Grid container spacing={2}>
+        {/* Left: chart */}
+        <Grid size={{ xs: 12, md: 9 }}>
           <Box sx={{ border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`, borderRadius: '10px', bgcolor: isDark ? '#1e1e1e' : 'white', p: 1 }}>
             <Chart options={chartOptions} series={chartSeries} type="bar" height={360} />
           </Box>

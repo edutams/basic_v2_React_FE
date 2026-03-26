@@ -7,12 +7,24 @@ const ColorSchemeSelector = ({ formik }) => {
     const value = formik.values.headerColor || '';
     const displayValue = value.startsWith('#') ? value.slice(1) : value;
 
+    // const handleHexInput = (e) => {
+    //     const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+    //     const color = raw ? `#${raw}` : '';
+    //     formik.setFieldValue('headerColor', color);
+    //     formik.setFieldValue('sidebarColor', color);
+    //     formik.setFieldValue('bodyColor', color);
+    // };
     const handleHexInput = (e) => {
-        const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
-        const color = raw ? `#${raw}` : '';
-        formik.setFieldValue('headerColor', color);
-        formik.setFieldValue('sidebarColor', color);
-        formik.setFieldValue('bodyColor', color);
+        let raw = e.target.value.slice(0, 6); // allow anything
+
+        // Optional: clean only when saving
+        const isValidHex = /^[0-9a-fA-F]{0,6}$/.test(raw);
+
+        formik.setFieldValue('headerColor', raw ? `#${raw}` : '');
+        formik.setFieldValue('sidebarColor', raw ? `#${raw}` : '');
+        formik.setFieldValue('bodyColor', raw ? `#${raw}` : '');
+
+        // You can store validation state if needed
     };
 
     const handlePickerChange = (color) => {

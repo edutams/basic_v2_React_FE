@@ -131,7 +131,7 @@ const ViewAgent = () => {
             title={isOwnProfile && currentUser.access_level > 1 ? "Agent Dashboard" : "View Agent Profile"}
             description="Detailed agent profile view"
         >
-            <Box sx={{ bgcolor: isDark ? '#1e1e1e' : '#f5f6fa', minHeight: '100vh', p: { xs: 1, md: 2 } }}>
+            <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
                 <Breadcrumb title={isOwnProfile && currentUser.access_level > 1 ? "Dashboard" : "View Profile"} items={BCrumb} />
 
                 <Box mt={3}>

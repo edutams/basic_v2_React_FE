@@ -23,32 +23,6 @@ const TopCard = ({ label, value, icon: Icon, iconBg, valueColor }) => {
   );
 };
 
-const SchoolTypeCard = ({ label1, val1, label2, val2, icon: Icon, iconBg, iconColor }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  return (
-    <Card sx={{ p: 2.5, borderRadius: '12px', boxShadow: 'none', border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`, bgcolor: isDark ? theme.palette.background.paper : '#fff', height: '100%' }}>
-      <Stack direction="row" spacing={2} alignItems="center" height="100%">
-        <Box sx={{ width: 44, height: 44, borderRadius: '10px', bgcolor: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon size={22} color={iconColor} />
-        </Box>
-        <Box>
-          <Stack direction="row" spacing={3}>
-            <Box>
-              <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#64748B' }}>{label1}</Typography>
-              <Typography fontWeight={800} sx={{ fontSize: '20px', color: isDark ? '#fff' : '#1a1a1a' }}>{val1}</Typography>
-            </Box>
-            <Box>
-              <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#64748B' }}>{label2}</Typography>
-              <Typography fontWeight={800} sx={{ fontSize: '20px', color: isDark ? '#fff' : '#1a1a1a' }}>{val2}</Typography>
-            </Box>
-          </Stack>
-        </Box>
-      </Stack>
-    </Card>
-  );
-};
-
 const TotalSchoolModal = ({ open, onClose }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -93,30 +67,37 @@ const TotalSchoolModal = ({ open, onClose }) => {
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
       sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
     >
-      {/* Top stat cards */}
+      {/* Top stat cards — only 2 */}
       <Grid container spacing={2} mb={3}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <TopCard label="Total School" value="700" valueColor="#2ca87f" iconBg={isDark ? '#0d2e1e' : '#d6f5eb'} icon={IconSchool} />
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <TopCard label="Total School" value="700" valueColor="#4a3aff" iconBg={isDark ? '#1e2a4a' : '#e8e6ff'} icon={IconSchool} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <SchoolTypeCard
-            label1="Primary Sch -" val1="34"
-            label2="Senior Sec" val2="34"
-            icon={IconBuildingCommunity}
-            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
-            iconColor="#e11d48"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <TopCard label="Junior Secondary" value="203" valueColor="#f59e0b" iconBg={isDark ? '#2e1e00' : '#fef3c7'} icon={IconSchool} />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <TopCard label="Senior Secondary" value="197" valueColor="#4a3aff" iconBg={isDark ? '#1e2a4a' : '#e8e6ff'} icon={IconSchool} />
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <Card sx={{ p: 2.5, borderRadius: '12px', boxShadow: 'none', border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`, bgcolor: isDark ? theme.palette.background.paper : '#fff', height: '100%' }}>
+            <Stack direction="row" spacing={2} alignItems="center" height="100%">
+              <Box sx={{ width: 44, height: 44, borderRadius: '10px', bgcolor: isDark ? '#2e0d1a' : '#ffe4e6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <IconBuildingCommunity size={22} color="#e11d48" />
+              </Box>
+              <Box>
+                <Stack spacing={0.5}>
+                  <Stack direction="row" justifyContent="space-between" spacing={4}>
+                    <Typography variant="body2" sx={{ color: isDark ? '#aaa' : '#64748B' }}>Primary Sch -</Typography>
+                    <Typography variant="body2" fontWeight={800} sx={{ color: isDark ? '#fff' : '#1a1a1a' }}>34</Typography>
+                  </Stack>
+                  <Stack direction="row" justifyContent="space-between" spacing={4}>
+                    <Typography variant="body2" sx={{ color: isDark ? '#aaa' : '#64748B' }}>Senior Sec</Typography>
+                    <Typography variant="body2" fontWeight={800} sx={{ color: isDark ? '#fff' : '#1a1a1a' }}>34</Typography>
+                  </Stack>
+                </Stack>
+              </Box>
+            </Stack>
+          </Card>
         </Grid>
       </Grid>
 
-      {/* Tabs */}
-      <Box sx={{ mb: 2 }}>
+      {/* Tabs + Filters row */}
+      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" mb={2} spacing={1.5}>
+        {/* Tabs left */}
         <Tabs
           value={tabValue}
           onChange={(_, v) => setTabValue(v)}
@@ -136,33 +117,31 @@ const TotalSchoolModal = ({ open, onClose }) => {
           <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconChartBar size={16} /><span>Overview</span></Stack>} value="1" />
           <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconSchool size={16} /><span>Agent Performance</span></Stack>} value="2" />
         </Tabs>
-      </Box>
 
-      {/* Filters */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="flex-end" mb={2}>
-        {tabValue === '2' && (
-          <Box sx={{ display: 'flex', alignItems: 'center', border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`, borderRadius: '6px', bgcolor: isDark ? '#2d2d2d' : 'white', overflow: 'hidden' }}>
-            <Box sx={{ px: 2, py: 1, bgcolor: isDark ? '#1e1e1e' : '#EEF2FF', borderRight: `1px solid ${isDark ? '#444' : '#E2E8F0'}` }}>
-              <Typography variant="caption" fontWeight={800} sx={{ textTransform: 'uppercase', color: isDark ? '#fff' : '#4a3aff', fontSize: '11px' }}>Agent</Typography>
+        {/* Filters right */}
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          {tabValue === '2' && (
+            <Box sx={{ display: 'flex', alignItems: 'center', border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`, borderRadius: '6px', bgcolor: isDark ? '#2d2d2d' : 'white', overflow: 'hidden' }}>
+              <Select size="small" value={agent} onChange={(e) => setAgent(e.target.value)}
+                renderValue={(v) => v === 'All' ? 'All Agents' : `Agent ${v}`}
+                sx={{ '& fieldset': { border: 'none' }, minWidth: 140, fontSize: '13px', fontWeight: 600, color: isDark ? '#fff' : '#333' }}>
+                <MenuItem value="All">All Agents</MenuItem>
+                <MenuItem value="1">Agent 1</MenuItem>
+              </Select>
             </Box>
-            <Select size="small" value={agent} onChange={(e) => setAgent(e.target.value)} sx={{ '& fieldset': { border: 'none' }, minWidth: 140, fontSize: '13px', fontWeight: 600 }}>
-              <MenuItem value="All">All Agents</MenuItem>
-              <MenuItem value="1">Agent 1</MenuItem>
+          )}
+          <Box sx={{ display: 'flex', alignItems: 'center', border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`, borderRadius: '6px', bgcolor: isDark ? '#2d2d2d' : 'white', overflow: 'hidden' }}>
+            <Select size="small" value={year} onChange={(e) => setYear(e.target.value)}
+              renderValue={(v) => `Year ${v}`}
+              sx={{ '& fieldset': { border: 'none' }, minWidth: 110, fontSize: '13px', fontWeight: 600, color: isDark ? '#fff' : '#333' }}>
+              <MenuItem value="2026">2026</MenuItem>
+              <MenuItem value="2025">2025</MenuItem>
             </Select>
           </Box>
-        )}
-        <Box sx={{ display: 'flex', alignItems: 'center', border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`, borderRadius: '6px', bgcolor: isDark ? '#2d2d2d' : 'white', overflow: 'hidden' }}>
-          <Box sx={{ px: 2, py: 1, bgcolor: isDark ? '#1e1e1e' : '#EEF2FF', borderRight: `1px solid ${isDark ? '#444' : '#E2E8F0'}` }}>
-            <Typography variant="caption" fontWeight={800} sx={{ textTransform: 'uppercase', color: isDark ? '#fff' : '#4a3aff', fontSize: '11px' }}>Year</Typography>
-          </Box>
-          <Select size="small" value={year} onChange={(e) => setYear(e.target.value)} sx={{ '& fieldset': { border: 'none' }, minWidth: 90, fontSize: '13px', fontWeight: 600 }}>
-            <MenuItem value="2026">2026</MenuItem>
-            <MenuItem value="2025">2025</MenuItem>
-          </Select>
-        </Box>
-        {tabValue === '2' && (
-          <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', '&:hover': { bgcolor: '#1e3a8a' } }}>Filter</PrimaryButton>
-        )}
+          <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', '&:hover': { bgcolor: '#1e3a8a' } }}>
+            Filter
+          </PrimaryButton>
+        </Stack>
       </Stack>
 
       {/* Chart */}

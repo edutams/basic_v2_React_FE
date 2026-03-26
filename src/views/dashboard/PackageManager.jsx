@@ -31,6 +31,7 @@ import MyPlanTab from '../my-plan/MyPlan';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
 import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
+import TotalTransactionModal from './components/TotalTransactionModal';
 import useAuth from 'src/hooks/useAuth';
 
 const planSeries = [40, 15, 35, 10];
@@ -84,6 +85,7 @@ const EduTier = () => {
   const [value, setValue] = React.useState(0);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
+  const [openTotalTransactionModal, setOpenTotalTransactionModal] = useState(false);
   const { user: currentUser } = useAuth();
   const currentUserLevel = currentUser?.access_level;
 
@@ -134,6 +136,7 @@ const EduTier = () => {
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
+              onClick={() => setOpenTotalTransactionModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -270,7 +273,7 @@ const EduTier = () => {
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
-              onClick={() => setOpenTotalSchoolModal(true)}
+              // onClick={() => setOpenTotalSchoolModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
@@ -627,6 +630,11 @@ const EduTier = () => {
       <TotalSchoolModal
         open={openTotalSchoolModal}
         onClose={() => setOpenTotalSchoolModal(false)}
+      />
+
+      <TotalTransactionModal
+        open={openTotalTransactionModal}
+        onClose={() => setOpenTotalTransactionModal(false)}
       />
     </PageContainer>
   );

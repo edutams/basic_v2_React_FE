@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Typography,
   Table,
@@ -62,7 +62,7 @@ import {
   deleteSchool,
 } from '../../context/AgentContext/services/school.service';
 
-import agentApi from '../../api/agent';
+import { AuthContext } from '../../context/AgentContext/auth';
 
 // import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 // import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
@@ -74,6 +74,7 @@ import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
 const SchoolDashboard = () => {
+  const { impersonateTenant } = useContext(AuthContext);
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const [schoolList, setSchoolList] = useState([]);
@@ -275,14 +276,18 @@ const SchoolDashboard = () => {
 
   const handleLoginAsAdmin = async (school) => {
     try {
-      const response = await agentApi.impersonateTenant(school.id);
-      // response IS already the data (agentApi returns response.data)
-      // console.log('impersonate response:', response);
-
-      if (response.status === 'success' && response.redirect_url) {
-        window.open(response.redirect_url, '_blank');
+      const result = await impersonateTenant(school.id);
+      if (result.success) {
+        // If there's a redirect URL, open in new tab
+        if (result.redirect_url) {
+          window.open(result.redirect_url, '_blank');
+        } else {
+          // Otherwise, set localStorage for isImpersonating
+          localStorage.setItem('isImpersonating', 'true');
+          localStorage.setItem('impersonator_id', school?.id);
+        }
       } else {
-        setSnackbarMessage(response.error || 'Failed to login as admin');
+        setSnackbarMessage(result.error || 'Failed to login as admin');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
@@ -557,7 +562,6 @@ const SchoolDashboard = () => {
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
-              onClick={() => setOpenTotalSchoolModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>

@@ -105,6 +105,99 @@ const EduTier = () => {
       >
         <Paper
           sx={{
+            p: 3,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Total Payment
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: 1,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              background: '#EEF2FF',
+              borderRadius: 1,
+              px: 3,
+              py: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#4A3AFF',
+              }}
+            >
+              {/* {schoolSummary.total} */}0
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Commission
+              </Typography>
+              <Typography sx={{ fontSize: 18, fontWeight: 500 }}>
+                {/* {schoolSummary.primary} */}100,000,000
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                width: '1px',
+                height: 40,
+                background: '#E5E7EB',
+              }}
+            />
+
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Volume
+              </Typography>
+              <Typography sx={{ fontSize: 18, fontWeight: 500 }}>
+                {/* {schoolSummary.secondary} */} 304,043,000
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* <Paper
+          sx={{
             px: 3,
             py: 2,
             borderRadius: 2,
@@ -136,7 +229,7 @@ const EduTier = () => {
                   lineHeight: 1,
                 }}
               >
-                {/* {schoolSummary.total} */}0
+           0
               </Typography>
 
               <Typography variant="h5" color="text.primary">
@@ -144,9 +237,103 @@ const EduTier = () => {
               </Typography>
             </Box>
           </Box>
-        </Paper>
+        </Paper> */}
 
         <Paper
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Subscriptions
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: 1,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setOpenTotalSchoolModal(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              background: '#EEF2FF',
+              borderRadius: 1,
+              px: 3,
+              py: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#4A3AFF',
+              }}
+            >
+              {/* {schoolSummary.total} */}0
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Primary School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {/* {schoolSummary.primary} */} 0
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                width: '1px',
+                height: 40,
+                background: '#E5E7EB',
+              }}
+            />
+
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Secondary School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {/* {schoolSummary.secondary} */}0
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* <Paper
           sx={{
             px: 3,
             py: 2,
@@ -193,7 +380,7 @@ const EduTier = () => {
                   lineHeight: 1,
                 }}
               >
-                {/* {schoolSummary.total} */} 0
+                0
               </Typography>
               <Typography variant="h5" color="text.primary">
                 Total School
@@ -207,7 +394,6 @@ const EduTier = () => {
             </Typography>
 
             <Chip
-              // label={schoolSummary.primary}
               label={0}
               size="small"
               sx={{
@@ -225,7 +411,6 @@ const EduTier = () => {
             </Typography>
 
             <Chip
-              // label={schoolSummary.senior}
               label={0}
               size="small"
               sx={{
@@ -237,18 +422,18 @@ const EduTier = () => {
               }}
             />
           </Box>
-        </Paper>
+        </Paper> */}
         <Paper
           sx={{
-            px: 3,
-            py: 2,
+            p: 2,
+            // py: 2,
             borderRadius: 2,
             background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
           <Box
-            mb={2}
+            // mb={1}
             sx={{
               display: 'flex',
               justifyContent: 'space-between',

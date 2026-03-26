@@ -122,14 +122,18 @@ const PlanDistributionModal = ({ open, onClose }) => {
       size="extraLarge"
       padding={0}
       title={
-        <Typography fontSize={24} fontWeight={700} sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>
+        <Typography
+          fontSize={24}
+          fontWeight={700}
+          sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}
+        >
           Plan Distribution
         </Typography>
       }
     >
       <Box
         sx={{
-          p: 4,
+          // p: 4,
           bgcolor: theme.palette.mode === 'dark' ? '#1e1e1e' : '#f8fafc',
           position: 'relative',
         }}
@@ -140,36 +144,61 @@ const PlanDistributionModal = ({ open, onClose }) => {
               <Card
                 sx={{
                   p: 2,
-                  border: `1.5px solid ${plan.border}`,
-                  boxShadow: 'none',
-                  borderRadius: '4px',
-                  height: '80px',
+                  borderRadius: '12px',
+                  bgcolor: theme.palette.background.paper,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
                   alignItems: 'center',
-                  textAlign: 'center',
-                  background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+                  gap: 2,
+                  height: '90px',
                 }}
               >
-                <Typography
-                  variant="h5"
-                  fontWeight="700"
-                  sx={{ color: plan.color, fontSize: '22px' }}
+                {/* Icon circle */}
+                <Box
+                  sx={{
+                    width: 45,
+                    height: 45,
+                    borderRadius: '50%',
+                    bgcolor: `${plan.color}20`,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
-                  # {plan.value}
-                </Typography>
+                  💳
+                </Box>
 
-                <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: plan.color }} />
+                {/* Text section */}
+                <Box>
                   <Typography
-                    variant="caption"
-                    fontWeight="700"
-                    sx={{ color: theme.palette.mode === 'dark' ? '#aaa' : '#444' }}
+                    fontWeight={700}
+                    sx={{
+                      color: plan.color,
+                      fontSize: '18px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '140px', // control width
+                    }}
                   >
-                    {plan.label}
+                    ₦{plan.value}
                   </Typography>
-                </Stack>
+
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        bgcolor: plan.color,
+                      }}
+                    />
+                    <Typography fontSize={13} color="text.secondary">
+                      {plan.label}
+                    </Typography>
+                  </Stack>
+                </Box>
               </Card>
             </Grid>
           ))}

@@ -203,7 +203,7 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
                 formik.setFieldValue('bodyColor', color);
               }}
               onFocus={() => setColorPickerOpen(true)}
-              placeholder="e.g. 3949AB"
+              placeholder="Enter Hex e.g. 3949AB"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

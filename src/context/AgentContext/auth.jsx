@@ -196,6 +196,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const impersonateTenant = async (id) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await api.post(`/agent/impersonate/tenant/${id}`);
+      const { access_token, expires_in, user: apiUser, data: apiData, redirect_url } = res.data;
+
+      // Check if there's a redirect URL (open in new tab approach)
+      if (redirect_url) {
+        window.open(redirect_url, '_blank');
+        return { success: true, redirect_url };
+      }
+
+      // Otherwise, replace token atomically (same as agent impersonation)
+      if (access_token) {
+        tokenManager.set(access_token);
+        localStorage.setItem('token_expires_in', String(expires_in));
+
+        const userData = apiUser || apiData;
+        setUser(userData);
+        setIsAuthenticated(true);
+        setIsImpersonating(true);
+
+        return { success: true, user: userData };
+      }
+
+      return { success: false, error: 'No valid response from server' };
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Tenant impersonation failed';
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const stopImpersonation = async () => {
     setIsLoading(true);
     setError(null);
@@ -240,6 +276,7 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     refreshToken,
     impersonateAgent,
+    impersonateTenant,
     stopImpersonation,
     impersonatorId,
     isImpersonating,

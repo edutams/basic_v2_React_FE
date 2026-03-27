@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Table,
@@ -18,7 +18,12 @@ import {
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
 
-const UploadLearnersTab = () => {
+const UploadLearnersTab = ({ onSaveAndContinue }) => {
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleChange = () => {
+    setHasChanges(true);
+  };
   return (
     <TableContainer>
       <Table
@@ -69,6 +74,7 @@ const UploadLearnersTab = () => {
                     <TextField
                       size="small"
                       defaultValue={item}
+                      onChange={handleChange}
                       sx={{
                         width: 70,
                         '& .MuiOutlinedInput-root': {
@@ -170,6 +176,11 @@ const UploadLearnersTab = () => {
           })}
         </TableBody>
       </Table>
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
+          Save & Continue
+        </Button>
+      </Box>
     </TableContainer>
   );
 };

@@ -33,7 +33,15 @@ import {
   IconUserPlus,
   IconPlus,
   IconDotsVertical,
+  IconDownload,
+  IconUpload,
+  IconRefresh,
 } from '@tabler/icons-react';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+  Add as AddIcon,
+} from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 
 const CompleteSetup = () => {
@@ -89,8 +97,8 @@ const CompleteSetup = () => {
         </Box>
 
         {/* BODY */}
-        <Box sx={{ px: 2, py: 2 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 3 }} mb={3}>
+        <Box sx={{ p: 2, pb: 1 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 2 }} mb={1}>
             <Paper
               sx={{
                 borderRadius: 2,
@@ -331,7 +339,7 @@ const CompleteSetup = () => {
                                 },
 
                                 '&.Mui-focused fieldset': {
-                                  borderColor: '#7CB518',
+                                  borderColor: '#1976d2',
                                   borderWidth: '2px',
                                 },
                               },
@@ -367,7 +375,7 @@ const CompleteSetup = () => {
                                 },
 
                                 '&.Mui-focused fieldset': {
-                                  borderColor: '#7CB518',
+                                  borderColor: '#1976d2',
                                   borderWidth: '2px',
                                 },
                               },
@@ -376,13 +384,13 @@ const CompleteSetup = () => {
 
                           <Button
                             variant="contained"
-                            sx={{
-                              bgcolor: '#7CB518',
-                              textTransform: 'none',
-                              '&:hover': {
-                                bgcolor: '#6aa314',
-                              },
-                            }}
+                            // sx={{
+                            //   bgcolor: '#7CB518',
+                            //   textTransform: 'none',
+                            //   '&:hover': {
+                            //     bgcolor: '#6aa314',
+                            //   },
+                            // }}
                           >
                             Generate
                           </Button>
@@ -424,7 +432,7 @@ const CompleteSetup = () => {
                                   },
 
                                   '&.Mui-focused fieldset': {
-                                    borderColor: '#7CB518',
+                                    borderColor: '#1976d2',
                                     borderWidth: '2px',
                                   },
                                 },
@@ -441,12 +449,591 @@ const CompleteSetup = () => {
           </TableContainer>
         )}
         {activeTab === 1 && (
-          <Typography sx={{ p: 2 }}>Upload Learners content goes here</Typography>
+          <TableContainer>
+            <Table
+              sx={{
+                borderCollapse: 'separate',
+                borderSpacing: '12px 10px',
+              }}
+            >
+              {/* Header */}
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>No. Uploaded</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>Upload Using Forms</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>Upload Using Excel File </TableCell>
+                </TableRow>
+              </TableHead>
+
+              {/* Body */}
+              <TableBody>
+                {['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'].map((item, index) => {
+                  const highlight = item === 'JSS 3';
+                  const cellBg = highlight ? '#fbe4e4' : '#f6f7f9';
+
+                  return (
+                    <TableRow key={index}>
+                      {/* Classes + cancel icon together */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <IconButton size="small" color="error">
+                            ✕
+                          </IconButton>
+
+                          {/* <TextField size="small" fullWidth defaultValue={item} /> */}
+                          <TextField
+                            size="small"
+                            defaultValue={item}
+                            sx={{
+                              width: 70,
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
+
+                                '& fieldset': {
+                                  borderColor: '#e5e7eb',
+                                },
+
+                                '&:hover fieldset': {
+                                  borderColor: '#cbd5e1',
+                                },
+
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#1976d2',
+                                  borderWidth: '2px',
+                                },
+                              },
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+
+                      {/* Arms column */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <TextField
+                            size="small"
+                            defaultValue="40"
+                            sx={{
+                              width: 80,
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+
+                      {/* Arm names */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                          display: 'flex',
+                          justifyContent: 'center', // horizontal center
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Button
+                          startIcon={<IconPlus size={18} />}
+                          variant="contained"
+                          sx={{
+                            background: '#E9F0FF',
+                            color: '#222',
+                            boxShadow: 'none',
+                            textTransform: 'none',
+                          }}
+                        >
+                          Add New Learner
+                        </Button>
+                      </TableCell>
+
+                      {/* Arms column */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 2,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <Button
+                            startIcon={<IconDownload size={18} />}
+                            variant="outlined"
+                            sx={{
+                              textTransform: 'none',
+                            }}
+                          >
+                            Download Template
+                          </Button>
+
+                          <Button
+                            startIcon={<IconUpload size={18} />}
+                            variant="contained"
+                            // sx={{
+                            //   bgcolor: '#7CB518',
+                            //   textTransform: 'none',
+                            //   '&:hover': {
+                            //     bgcolor: '#6aa314',
+                            //   },
+                            // }}
+                          >
+                            Upload Template
+                          </Button>
+                        </Box>
+                      </TableCell>
+
+                      {/* <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                      
+                      </TableCell> */}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
         {activeTab === 2 && (
-          <Typography sx={{ p: 2 }}>Upload Teachers content goes here</Typography>
+          <TableContainer>
+            <Table
+              sx={{
+                borderCollapse: 'separate',
+                borderSpacing: '12px 10px',
+              }}
+            >
+              {/* Header */}
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>No. Uploaded</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>Upload Using Forms</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>Upload Using Excel File </TableCell>
+                </TableRow>
+              </TableHead>
+
+              {/* Body */}
+              <TableBody>
+                {['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'].map((item, index) => {
+                  const highlight = item === 'JSS 3';
+                  const cellBg = highlight ? '#fbe4e4' : '#f6f7f9';
+
+                  return (
+                    <TableRow key={index}>
+                      {/* Classes + cancel icon together */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <IconButton size="small" color="error">
+                            ✕
+                          </IconButton>
+
+                          {/* <TextField size="small" fullWidth defaultValue={item} /> */}
+                          <TextField
+                            size="small"
+                            defaultValue={item}
+                            sx={{
+                              width: 70,
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
+
+                                '& fieldset': {
+                                  borderColor: '#e5e7eb',
+                                },
+
+                                '&:hover fieldset': {
+                                  borderColor: '#cbd5e1',
+                                },
+
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#1976d2',
+                                  borderWidth: '2px',
+                                },
+                              },
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+
+                      {/* Arms column */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <TextField
+                            size="small"
+                            defaultValue="40"
+                            sx={{
+                              width: 80,
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+
+                      {/* Arm names */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                          display: 'flex',
+                          justifyContent: 'center', // horizontal center
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Button
+                          startIcon={<IconPlus size={18} />}
+                          variant="contained"
+                          sx={{
+                            background: '#E9F0FF',
+                            color: '#222',
+                            boxShadow: 'none',
+                            textTransform: 'none',
+                          }}
+                        >
+                          Add New Teacher
+                        </Button>
+                      </TableCell>
+
+                      {/* Arms column */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 2,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <Button
+                            startIcon={<IconDownload size={18} />}
+                            variant="outlined"
+                            sx={{
+                              textTransform: 'none',
+                            }}
+                          >
+                            Download Template
+                          </Button>
+
+                          <Button
+                            startIcon={<IconUpload size={18} />}
+                            variant="contained"
+                            // sx={{
+                            //   bgcolor: '#7CB518',
+                            //   textTransform: 'none',
+                            //   '&:hover': {
+                            //     bgcolor: '#6aa314',
+                            //   },
+                            // }}
+                          >
+                            Upload Template
+                          </Button>
+                        </Box>
+                      </TableCell>
+
+                      {/* <TableCell
+                       sx={{
+                         bgcolor: cellBg,
+                         borderRadius: 2,
+                       }}
+                     >
+                     
+                     </TableCell> */}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
-        {activeTab === 3 && <Typography sx={{ p: 2 }}>Set Calendar content goes here</Typography>}
+        {activeTab === 3 && (
+          <Box sx={{ p: 2 }}>
+            <Grid container spacing={3}>
+              {/* LEFT COLUMN — Academic Terms */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <ParentCard
+                  title={
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h5">Academic Terms</Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => onPackageAction('create')}
+                      >
+                        Add Term
+                      </Button>
+                    </Box>
+                  }
+                >
+                  <Paper variant="outlined">
+                    {/* Table */}
+                    <TableContainer>
+                      <Table sx={{ whiteSpace: 'nowrap' }}>
+                        <TableHead>
+                          <TableRow>
+                            {/* <TableRow sx={{ bgcolor: '#e5e7eb' }}> */}
+                            <TableCell />
+                            <TableCell sx={{ fontWeight: 'bold' }}>Term</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }} align="center">
+                              Action
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                          {[
+                            {
+                              term: 'First Term',
+                              start: '2026-01-12',
+                              end: '2026-03-21',
+                              active: true,
+                            },
+                            {
+                              term: 'Second Term',
+                              start: '2026-01-12',
+                              end: '2026-03-21',
+                              active: false,
+                            },
+                            {
+                              term: 'Third Term',
+                              start: '2026-01-12',
+                              end: '2026-03-21',
+                              active: false,
+                            },
+                          ].map((item, i) => (
+                            <TableRow key={i} hover>
+                              {/* Active selector */}
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: '50%',
+                                    border: '2px solid #cbd5e1',
+                                    bgcolor: item.active ? '#2e7d32' : '#fff',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    color: '#fff',
+                                    fontSize: 14,
+                                  }}
+                                >
+                                  {item.active && '✓'}
+                                </Box>
+                              </TableCell>
+
+                              <TableCell sx={{ fontWeight: 500 }}>{item.term}</TableCell>
+
+                              <TableCell>{item.start}</TableCell>
+
+                              <TableCell>{item.end}</TableCell>
+
+                              <TableCell align="center">
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.4,
+                                    borderRadius: '999px',
+                                    bgcolor: item.active ? '#2e7d32' : '#f97316',
+                                    color: '#fff',
+                                    display: 'inline-block',
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {item.active ? 'Active' : 'inactive'}
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </ParentCard>
+              </Grid>
+
+              {/* RIGHT COLUMN — Generate Week */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <ParentCard
+                  title={
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h5">Generate Week</Typography>
+                      <Box
+                        sx={{
+                          border: '1px solid #7CB518',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: '999px',
+                          fontSize: 13,
+                          color: '#7CB518',
+                          fontWeight: 500,
+                        }}
+                      >
+                        13 Weeks · 65 school days
+                      </Box>
+                    </Box>
+                  }
+                >
+                  {/* Controls */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 2,
+                      p: 2,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <TextField
+                      size="small"
+                      label="No. of Weeks"
+                      defaultValue="2"
+                      sx={{ width: 140 }}
+                    />
+
+                    <TextField
+                      size="small"
+                      label="Start Date"
+                      placeholder="DD/MM/YYYY"
+                      sx={{ width: 180 }}
+                    />
+
+                    {/* <Button
+                      variant="contained"
+                      startIcon={<IconRefresh size={18} />}
+                      sx={{
+                        bgcolor: '#7CB518',
+                        textTransform: 'none',
+                        height: 40, 
+                      }}
+                    >
+                      Generate Week
+                    </Button> */}
+
+                    <Button
+                      variant="contained"
+                      startIcon={<IconRefresh size={15} />}
+                      onClick={() => onPackageAction('create')}
+                      sx={{ height: 40 }}
+                    >
+                      Generate
+                    </Button>
+                  </Box>
+
+                  {/* Week Table */}
+                  <Paper variant="outlined">
+                    <TableContainer>
+                      <Table sx={{ whiteSpace: 'nowrap' }}>
+                        <TableHead>
+                          <TableRow>
+                            {/* <TableRow sx={{ bgcolor: '#d4d4d8' }}> */}
+                            <TableCell sx={{ fontWeight: 600 }}>Week</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Start Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>End Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                          </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                          {[1, 2, 3, 4, 5, 6, 7].map((week) => (
+                            <TableRow key={week} hover>
+                              <TableCell>{week}</TableCell>
+
+                              <TableCell>2026-03-20</TableCell>
+
+                              <TableCell>2026-06-20</TableCell>
+
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    borderRadius: '999px',
+                                    border: '1px solid #6b8e23',
+                                    color: '#6b8e23',
+                                    display: 'inline-block',
+                                    fontSize: 13,
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Completed
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </ParentCard>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
       </ParentCard>
       {/* </Card> */}
     </Box>

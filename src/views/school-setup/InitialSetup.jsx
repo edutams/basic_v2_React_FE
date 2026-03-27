@@ -13,7 +13,7 @@ import {
   Card,
 } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
-import ParentCard from '../../components/shared/ParentCard';
+import ParentCard from 'src/components/shared/ParentCard';
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
@@ -105,7 +105,17 @@ const SchoolInformationPage = () => {
                     <Typography fontSize={14} mb={0.5}>
                       School Name
                     </Typography>
-                    <TextField fullWidth placeholder="Enter School Name" />
+                    <TextField
+                      fullWidth
+                      placeholder="Enter School Name"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
+                        },
+                      }}
+                    />
                   </Box>
 
                   <Box>
@@ -114,7 +124,17 @@ const SchoolInformationPage = () => {
                     </Typography>
 
                     <Stack direction="row" spacing={1}>
-                      <TextField fullWidth placeholder="e.g. GSS" />
+                      <TextField
+                        fullWidth
+                        placeholder="e.g. GSS"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#1976d2',
+                            },
+                          },
+                        }}
+                      />
                       <Button>Check</Button>
                     </Stack>
                   </Box>
@@ -128,7 +148,18 @@ const SchoolInformationPage = () => {
                     <Typography fontSize={14} mb={0.5}>
                       Category
                     </Typography>
-                    <TextField fullWidth select defaultValue="">
+                    <TextField
+                      fullWidth
+                      select
+                      defaultValue=""
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
+                        },
+                      }}
+                    >
                       <MenuItem value="">Select School Category</MenuItem>
                       <MenuItem value="primary">Primary</MenuItem>
                       <MenuItem value="secondary">Secondary</MenuItem>
@@ -140,7 +171,17 @@ const SchoolInformationPage = () => {
                       Address
                     </Typography>
                     {/* <TextField fullWidth multiline rows={2} /> */}
-                    <TextField fullWidth placeholder="Enter school address" />
+                    <TextField
+                      fullWidth
+                      placeholder="Enter school address"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
+                        },
+                      }}
+                    />
                   </Box>
                 </Stack>
               </Box>
@@ -195,11 +236,61 @@ const SchoolInformationPage = () => {
                 <Divider sx={{ mb: 2 }} />
 
                 <Stack spacing={1.5}>
-                  <TextField placeholder="Surname" fullWidth />
-                  <TextField placeholder="First Name" fullWidth />
-                  <TextField placeholder="Other Name" fullWidth />
-                  <TextField placeholder="Phone" fullWidth />
-                  <TextField placeholder="Email" fullWidth />
+                  <TextField
+                    placeholder="Surname"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1976d2',
+                        },
+                      },
+                    }}
+                  />
+                  <TextField
+                    placeholder="First Name"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1976d2',
+                        },
+                      },
+                    }}
+                  />
+                  <TextField
+                    placeholder="Other Name"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1976d2',
+                        },
+                      },
+                    }}
+                  />
+                  <TextField
+                    placeholder="Phone"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1976d2',
+                        },
+                      },
+                    }}
+                  />
+                  <TextField
+                    placeholder="Email"
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#1976d2',
+                        },
+                      },
+                    }}
+                  />
                 </Stack>
               </Box>
             ))}

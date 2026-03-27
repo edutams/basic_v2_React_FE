@@ -127,9 +127,18 @@ const UploadLearnersTab = () => {
                     bgcolor: cellBg,
                     borderRadius: 2,
                   }}
+                  align="center"
                 >
-                  <Button variant="outlined" size="small">
-                    Add
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      bgcolor: '#EDF3FF',
+                      color: '#000000',
+                      // '&:hover': { bgcolor: '#dbe8ff' },
+                    }}
+                  >
+                    Add New Learner
                   </Button>
                 </TableCell>
 
@@ -139,10 +148,16 @@ const UploadLearnersTab = () => {
                     bgcolor: cellBg,
                     borderRadius: 2,
                   }}
+                  align="center"
                 >
-                  <Button variant="outlined" size="small">
-                    Upload
-                  </Button>
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                    <Button variant="outlined" size="small">
+                      Download Template
+                    </Button>
+                    <Button variant="contained" size="small">
+                      Upload Template
+                    </Button>
+                  </Box>
                 </TableCell>
               </TableRow>
             );

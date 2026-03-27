@@ -13,7 +13,6 @@ import {
   Card,
 } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
-import ParentCard from 'src/components/shared/ParentCard';
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
@@ -222,7 +221,6 @@ const SchoolInformationPage = () => {
                   bgcolor: 'white',
                   boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
                   transition: 'transform 0.3s, box-shadow 0.3s',
-                  boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
                   '&:hover': {
                     transform: 'scale(1.05)',
                     boxShadow: '0px 10px 20px rgba(0,0,0,0.15)',

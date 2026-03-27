@@ -13,6 +13,14 @@ import {
   Paper,
   Tabs,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Chip,
 } from '@mui/material';
 import {
   IconSchool,
@@ -23,8 +31,10 @@ import {
   IconBooks,
   IconCalendar,
   IconUserPlus,
+  IconPlus,
+  IconDotsVertical,
 } from '@tabler/icons-react';
-import ParentCard from '../../components/shared/ParentCard';
+import ParentCard from 'src/components/shared/ParentCard';
 
 const CompleteSetup = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -72,14 +82,14 @@ const CompleteSetup = () => {
       </Box>
 
       {/* ACADEMIC SESSION SETUP */}
-      <Card sx={{ p: 0, mb: 2, borderRadius: 0 }}>
+      <Card sx={{ p: 0, mb: 1, borderRadius: 0 }}>
         {/* HEADER */}
         <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
           <Typography fontWeight={600}>Class Details </Typography>
         </Box>
 
         {/* BODY */}
-        <Box sx={{ px: 2, py: 0, mt: 2 }}>
+        <Box sx={{ px: 2, py: 2 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 3 }} mb={3}>
             <Paper
               sx={{
@@ -256,11 +266,187 @@ const CompleteSetup = () => {
       </Box>
 
       {/* TAB CONTENT */}
-      <ParentCard sx={{ p: 3 }}>
-        {activeTab === 0 && <Typography>Set-Up Classes content goes here</Typography>}
-        {activeTab === 1 && <Typography>Upload Learners content goes here</Typography>}
-        {activeTab === 2 && <Typography>Upload Teachers content goes here</Typography>}
-        {activeTab === 3 && <Typography>Set Calendar content goes here</Typography>}
+      <ParentCard sx={{ p: 0 }}>
+        {activeTab === 0 && (
+          <TableContainer>
+            <Table
+              sx={{
+                borderCollapse: 'separate',
+                borderSpacing: '12px 10px',
+              }}
+            >
+              {/* Header */}
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>No. of Arms</TableCell>
+
+                  <TableCell sx={{ fontWeight: 600 }}>Class Arm Names</TableCell>
+                </TableRow>
+              </TableHead>
+
+              {/* Body */}
+              <TableBody>
+                {['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'].map((item, index) => {
+                  const highlight = item === 'JSS 3';
+                  const cellBg = highlight ? '#fbe4e4' : '#f6f7f9';
+
+                  return (
+                    <TableRow key={index}>
+                      {/* Classes + cancel icon together */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <IconButton size="small" color="error">
+                            ✕
+                          </IconButton>
+
+                          {/* <TextField size="small" fullWidth defaultValue={item} /> */}
+                          <TextField
+                            size="small"
+                            fullWidth
+                            defaultValue={item}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
+
+                                '& fieldset': {
+                                  borderColor: '#e5e7eb',
+                                },
+
+                                '&:hover fieldset': {
+                                  borderColor: '#cbd5e1',
+                                },
+
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#7CB518',
+                                  borderWidth: '2px',
+                                },
+                              },
+                            }}
+                          />
+                        </Box>
+                      </TableCell>
+
+                      {/* Arms column */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box display="flex" gap={1}>
+                          {/* <TextField size="small" defaultValue="2" sx={{ width: 70 }} /> */}
+                          <TextField
+                            size="small"
+                            defaultValue={item}
+                            sx={{
+                              width: 70,
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
+
+                                '& fieldset': {
+                                  borderColor: '#e5e7eb',
+                                },
+
+                                '&:hover fieldset': {
+                                  borderColor: '#cbd5e1',
+                                },
+
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#7CB518',
+                                  borderWidth: '2px',
+                                },
+                              },
+                            }}
+                          />
+
+                          <Button
+                            variant="contained"
+                            sx={{
+                              bgcolor: '#7CB518',
+                              textTransform: 'none',
+                              '&:hover': {
+                                bgcolor: '#6aa314',
+                              },
+                            }}
+                          >
+                            Generate
+                          </Button>
+                        </Box>
+                      </TableCell>
+
+                      {/* Arm names */}
+                      <TableCell
+                        sx={{
+                          bgcolor: cellBg,
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 1,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          {['Alpha', 'Beta', 'Arm 3', 'Arm 4', 'Arm 5'].map((arm, i) => (
+                            <TextField
+                              key={i}
+                              size="small"
+                              defaultValue={arm}
+                              sx={{
+                                width: 90,
+
+                                '& .MuiOutlinedInput-root': {
+                                  backgroundColor: '#fff',
+                                  borderRadius: '8px',
+
+                                  '& fieldset': {
+                                    borderColor: '#e5e7eb',
+                                  },
+
+                                  '&:hover fieldset': {
+                                    borderColor: '#cbd5e1',
+                                  },
+
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: '#7CB518',
+                                    borderWidth: '2px',
+                                  },
+                                },
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+        {activeTab === 1 && (
+          <Typography sx={{ p: 2 }}>Upload Learners content goes here</Typography>
+        )}
+        {activeTab === 2 && (
+          <Typography sx={{ p: 2 }}>Upload Teachers content goes here</Typography>
+        )}
+        {activeTab === 3 && <Typography sx={{ p: 2 }}>Set Calendar content goes here</Typography>}
       </ParentCard>
       {/* </Card> */}
     </Box>

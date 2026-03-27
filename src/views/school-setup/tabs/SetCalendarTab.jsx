@@ -15,6 +15,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  TextField,
 } from '@mui/material';
 import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -166,11 +167,22 @@ const SetCalendarTab = () => {
             title={
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">Generate Week</Typography>
-                <Button variant="contained">Generate</Button>
               </Box>
             }
           >
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                <TextField label="No. of Weeks" type="number" size="small" sx={{ width: 150 }} />
+                <TextField
+                  label="Select Date"
+                  type="date"
+                  size="small"
+                  sx={{ width: 180 }}
+                  InputLabelProps={{ shrink: true }}
+                />
+                <Button variant="contained">Generate</Button>
+              </Box>
+
               <TableContainer>
                 <Table sx={{ whiteSpace: 'nowrap' }}>
                   <TableHead>

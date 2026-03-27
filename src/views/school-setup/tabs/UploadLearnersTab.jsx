@@ -94,6 +94,7 @@ const UploadLearnersTab = () => {
                     bgcolor: cellBg,
                     borderRadius: 2,
                   }}
+                  align="center"
                 >
                   <TextField
                     size="small"

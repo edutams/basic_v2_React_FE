@@ -10,6 +10,8 @@ const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')))
 const SchoolDashboardMain = Loadable(
   lazy(() => import('../views/school-dashboard/SchoolDashboard')),
 );
+const InitialSetup = Loadable(lazy(() => import('../views/school-setup/InitialSetup')));
+const CompleteSetup = Loadable(lazy(() => import('../views/school-setup/CompleteSetup')));
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
@@ -52,6 +54,22 @@ const TenantRoutes = [
         element: (
           <PermissionGate permissions={['dashboard.view']}>
             <SchoolDashboardMain />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: 'initial-setup',
+        element: (
+          <PermissionGate permissions={['dashboard.view']}>
+            <InitialSetup />
+          </PermissionGate>
+        ),
+      },
+      {
+        path: 'complete-setup',
+        element: (
+          <PermissionGate permissions={['dashboard.view']}>
+            <CompleteSetup />
           </PermissionGate>
         ),
       },

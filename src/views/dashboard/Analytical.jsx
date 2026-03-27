@@ -50,6 +50,7 @@ import LoggedInUsersModal from '../agent/components/LoggedInUsersModal';
 import ViewUsersListModal from '../agent/components/ViewUsersListModal';
 import TotalSchoolModal from '../agent/components/TotalSchoolModal';
 import TotalTransactionModal from '../agent/components/TotalTransactionModal';
+import TotalSubAgentModal from '../agent/components/TotalSubAgentModal';
 
 const columnHelper = createColumnHelper();
 
@@ -62,7 +63,20 @@ export default function Dashboard() {
   const revenueSeries = [
     { name: 'Revenue', data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5] },
   ];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 
   // Plan Distribution Mock Data
   const planSeries = [65, 52, 39, 25];
@@ -82,6 +96,7 @@ export default function Dashboard() {
   const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
   const [selectedSchoolForUsers] = useState('');
 
   // Table filter states
@@ -121,138 +136,169 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  const columns = useMemo(() => [
-    columnHelper.display({
-      id: 's_n',
-      header: () => 'S/N',
-      cell: (info) => (
-        <Typography color="textSecondary" variant="h6" fontWeight="400">
-          {info.row.index + 1}
-        </Typography>
-      ),
-    }),
-    columnHelper.accessor('agentDetails', {
-      header: () => 'Agent Details',
-      cell: (info) => {
-        const agent = info.row.original;
-        const initials = (agent.organizationName || 'NA')
-          .split(' ')
-          .slice(0, 2)
-          .map((w) => w[0])
-          .join('')
-          .toUpperCase();
-        return (
-          <Stack direction="row" spacing={1.5} alignItems="flex-start">
-            <Avatar
-              src={agent.imgsrc}
-              alt={agent.organizationName}
-              sx={{ width: 36, height: 36, fontSize: '12px', fontWeight: 700, bgcolor: '#3949ab', flexShrink: 0 }}
-            >
-              {!agent.imgsrc && initials}
-            </Avatar>
-            <Box>
-              <Typography variant="subtitle2" fontWeight="700" sx={{ lineHeight: 1.3 }}>
-                {agent.organizationName}
+  const columns = useMemo(
+    () => [
+      columnHelper.display({
+        id: 's_n',
+        header: () => 'S/N',
+        cell: (info) => (
+          <Typography color="textSecondary" variant="h6" fontWeight="400">
+            {info.row.index + 1}
+          </Typography>
+        ),
+      }),
+      columnHelper.accessor('agentDetails', {
+        header: () => 'Agent Details',
+        cell: (info) => {
+          const agent = info.row.original;
+          const initials = (agent.organizationName || 'NA')
+            .split(' ')
+            .slice(0, 2)
+            .map((w) => w[0])
+            .join('')
+            .toUpperCase();
+          return (
+            <Stack direction="row" spacing={1.5} alignItems="flex-start">
+              <Avatar
+                src={agent.imgsrc}
+                alt={agent.organizationName}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  bgcolor: '#3949ab',
+                  flexShrink: 0,
+                }}
+              >
+                {!agent.imgsrc && initials}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle2" fontWeight="700" sx={{ lineHeight: 1.3 }}>
+                  {agent.organizationName}
+                </Typography>
+                <Typography
+                  color="textSecondary"
+                  variant="caption"
+                  sx={{ display: 'block', lineHeight: 1.4 }}
+                >
+                  {agent.phoneNumber || 'N/A'} | Region
+                </Typography>
+                <Typography
+                  color="textSecondary"
+                  variant="caption"
+                  sx={{ display: 'block', lineHeight: 1.4 }}
+                >
+                  {info.getValue()}
+                </Typography>
+              </Box>
+            </Stack>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: 'gateway',
+        header: () => 'Gateway',
+        cell: () => (
+          <Typography variant="subtitle2" fontWeight="500" color="textSecondary">
+            -
+          </Typography>
+        ),
+      }),
+      columnHelper.accessor('sub_agents_count', {
+        header: () => 'Sub Agent',
+        cell: (info) => (
+          <Box
+            sx={{
+              bgcolor: '#ede9fe',
+              color: '#6d28d9',
+              borderRadius: '20px',
+              px: 2,
+              py: 0.4,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '13px',
+              minWidth: '36px',
+            }}
+          >
+            {info.getValue() ?? 0}
+          </Box>
+        ),
+      }),
+      columnHelper.accessor('performance', {
+        header: () => 'Performance',
+        cell: (info) => (
+          <Stack
+            direction="row"
+            spacing={0}
+            sx={{
+              borderRadius: '6px',
+              overflow: 'hidden',
+              fontWeight: '800',
+              width: 'fit-content',
+            }}
+          >
+            <Box sx={{ px: 1.5, py: 0.5 }}>
+              <Typography variant="subtitle3" fontWeight="800" color="#333333">
+                School
               </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.4 }}>
-                {agent.phoneNumber || 'N/A'} | Region
-              </Typography>
-              <Typography color="textSecondary" variant="caption" sx={{ display: 'block', lineHeight: 1.4 }}>
-                {info.getValue()}
+            </Box>
+            <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+              <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
+                {info.row.original.tenants_count ?? 0}
               </Typography>
             </Box>
           </Stack>
-        );
-      },
-    }),
-    columnHelper.display({
-      id: 'gateway',
-      header: () => 'Gateway',
-      cell: () => (
-        <Typography variant="subtitle2" fontWeight="500" color="textSecondary">-</Typography>
-      ),
-    }),
-    columnHelper.accessor('sub_agents_count', {
-      header: () => 'Sub Agent',
-      cell: (info) => (
-        <Box
-          sx={{
-            bgcolor: '#ede9fe',
-            color: '#6d28d9',
-            borderRadius: '20px',
-            px: 2,
-            py: 0.4,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '13px',
-            minWidth: '36px',
-          }}
-        >
-          {info.getValue() ?? 0}
-        </Box>
-      ),
-    }),
-    columnHelper.accessor('performance', {
-      header: () => 'Performance',
-      cell: (info) => (
-        <Stack
-          direction="row"
-          spacing={0}
-          sx={{ borderRadius: '6px', overflow: 'hidden',fontWeight:"800", width: 'fit-content' }}
-        >
-          <Box sx={{ px: 1.5, py: 0.5 }}>
-            <Typography  variant="subtitle3" fontWeight="800" color="#333333">School</Typography>
-          </Box>
-          <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
-            <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
-              {info.row.original.tenants_count ?? 0}
-            </Typography>
-          </Box>
-        </Stack>
-      ),
-    }),
-    columnHelper.accessor('primaryColor', {
-      header: () => 'Primary Color',
-      cell: (info) => {
-        const color = info.getValue() || '#3949ab';
-        return (
-          <Box
+        ),
+      }),
+      columnHelper.accessor('primaryColor', {
+        header: () => 'Primary Color',
+        cell: (info) => {
+          const color = info.getValue() || '#3949ab';
+          return (
+            <Box
+              sx={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                bgcolor: color,
+                border: '2px solid rgba(255,255,255,0.8)',
+                boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+              }}
+            />
+          );
+        },
+      }),
+      columnHelper.accessor('status', {
+        header: () => 'Status',
+        cell: (info) => (
+          <Chip
             sx={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              bgcolor: color,
-              border: '2px solid rgba(255,255,255,0.8)',
-              boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+              bgcolor:
+                info.getValue() === 'Active'
+                  ? '#dcfee6'
+                  : info.getValue() === 'Inactive'
+                  ? '#ffe4e6'
+                  : '#f3f4f6',
+              color:
+                info.getValue() === 'Active'
+                  ? '#16a34a'
+                  : info.getValue() === 'Inactive'
+                  ? '#e11d48'
+                  : '#4b5563',
+              borderRadius: '6px',
+              fontWeight: 600,
             }}
+            size="small"
+            label={info.getValue()}
           />
-        );
-      },
-    }),
-    columnHelper.accessor('status', {
-      header: () => 'Status',
-      cell: (info) => (
-        <Chip
-          sx={{
-            bgcolor:
-              info.getValue() === 'Active' ? '#dcfee6'
-              : info.getValue() === 'Inactive' ? '#ffe4e6'
-              : '#f3f4f6',
-            color:
-              info.getValue() === 'Active' ? '#16a34a'
-              : info.getValue() === 'Inactive' ? '#e11d48'
-              : '#4b5563',
-            borderRadius: '6px',
-            fontWeight: 600,
-          }}
-          size="small"
-          label={info.getValue()}
-        />
-      ),
-    }),
-  ], [theme]);
+        ),
+      }),
+    ],
+    [theme],
+  );
 
   const table = useReactTable({
     data,
@@ -307,6 +353,8 @@ export default function Dashboard() {
                 { label: 'Lv4', value: '21' },
                 { label: 'Lv5', value: '43' },
               ]}
+              onIconClick={() => setIsSubAgentModalOpen(true)}
+              onClick={() => setIsSubAgentModalOpen(true)}
             />
           </Grid>
         </Grid>
@@ -323,8 +371,19 @@ export default function Dashboard() {
                 border: '1px solid rgba(0,0,0,0.05)',
               }}
             >
-              <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h5" fontWeight="600" sx={{ color: isDark ? '#fff' : '#4a3aff' }}>
+              <Box
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  fontWeight="600"
+                  sx={{ color: isDark ? '#fff' : '#4a3aff' }}
+                >
                   Transaction
                 </Typography>
                 <Stack direction="row" spacing={1}>
@@ -367,8 +426,19 @@ export default function Dashboard() {
                 position: 'relative',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Typography variant="subtitle2" fontWeight="600" sx={{ color: isDark ? '#fff' : '#1E3A5F' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  fontWeight="600"
+                  sx={{ color: isDark ? '#fff' : '#1E3A5F' }}
+                >
                   Plan Distribution
                 </Typography>
                 <Box
@@ -402,7 +472,13 @@ export default function Dashboard() {
           <Grid size={12}>
             <ParentCard
               title={
-                <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ width: '100%' }}
+                >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
                       sx={{
@@ -548,9 +624,6 @@ export default function Dashboard() {
                   </TableBody>
                 </Table>
               </TableContainer>
-
-             
-              
             </ParentCard>
           </Grid>
         </Grid>
@@ -575,6 +648,10 @@ export default function Dashboard() {
       <TotalTransactionModal
         open={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
+      />
+      <TotalSubAgentModal
+        open={isSubAgentModalOpen}
+        onClose={() => setIsSubAgentModalOpen(false)}
       />
     </PageContainer>
   );

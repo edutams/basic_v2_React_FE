@@ -88,6 +88,13 @@ const SchoolSidebarItems = () => {
             permission: null,
           },
           {
+            id: 'complete-setup',
+            title: 'Complete Setup',
+            icon: IconListCheck,
+            href: '/complete-setup',
+            permission: null,
+          },
+          {
             navlabel: true,
             subheader: 'Modules',
           },

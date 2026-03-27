@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router';
 import {
   Box,
   Grid,
@@ -15,6 +16,7 @@ import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 import ParentCard from '../../components/shared/ParentCard';
 
 const SchoolInformationPage = () => {
+  const navigate = useNavigate();
   return (
     <Box>
       {/* PAGE HEADER */}
@@ -60,9 +62,9 @@ const SchoolInformationPage = () => {
       </Box>
 
       {/* SCHOOL DETAILS */}
-      <Card sx={{ p: 0, mb: 2 }}>
+      <Card sx={{ p: 0, mb: 2, borderRadius: 0 }}>
         {/* HEADER */}
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: '#F9F9F9', borderBottom: '1px solid #e0e0e0' }}>
           <Typography fontWeight={600}>School Details</Typography>
         </Box>
 
@@ -113,7 +115,7 @@ const SchoolInformationPage = () => {
 
                     <Stack direction="row" spacing={1}>
                       <TextField fullWidth placeholder="e.g. GSS" />
-                      <Button sx={{ height: 56, minWidth: 90 }}>Check</Button>
+                      <Button>Check</Button>
                     </Stack>
                   </Box>
                 </Stack>
@@ -148,7 +150,7 @@ const SchoolInformationPage = () => {
       </Card>
 
       {/* ADMINISTRATIVE ACCOUNTS */}
-      <Card sx={{ p: 0 }}>
+      <Card sx={{ p: 0, borderRadius: 0 }}>
         <Box
           sx={{
             px: 3,
@@ -206,7 +208,7 @@ const SchoolInformationPage = () => {
       </Card>
 
       <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button variant="contained" color="primary" onClick={() => setNewRoleModalOpen(true)}>
+        <Button variant="contained" color="primary" onClick={() => navigate('/complete-setup')}>
           Save & Continue
         </Button>
       </Box>

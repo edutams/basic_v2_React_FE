@@ -16,6 +16,18 @@ import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
+
+  const handleBrowseClick = () => {
+    document.getElementById('school-logo-input').click();
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      console.log('Selected file:', file.name);
+      // Add your upload logic here
+    }
+  };
   return (
     <Box>
       {/* PAGE HEADER */}
@@ -78,6 +90,13 @@ const SchoolInformationPage = () => {
           >
             {/* LOGO */}
             <Box sx={{ width: 140, flexShrink: 0, textAlign: 'center' }}>
+              <input
+                type="file"
+                id="school-logo-input"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
               <Avatar
                 sx={{
                   width: 110,
@@ -90,7 +109,13 @@ const SchoolInformationPage = () => {
                 <IconSchool size={40} color="#9e9e9e" />
               </Avatar>
 
-              <Button variant="outlined" size="small" sx={{ mt: 2, textTransform: 'none' }}>
+              <Button
+                variant="outlined"
+                size="small"
+                sx={{ mt: 2, textTransform: 'none' }}
+                onClick={handleBrowseClick}
+                startIcon={<span>↓</span>}
+              >
                 Browse
               </Button>
             </Box>

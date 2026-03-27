@@ -157,10 +157,10 @@ const UploadLearnersTab = () => {
                   align="center"
                 >
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <Button variant="outlined" size="small">
+                    <Button variant="outlined" size="small" startIcon={<span>↓</span>}>
                       Download Template
                     </Button>
-                    <Button variant="contained" size="small">
+                    <Button variant="contained" size="small" startIcon={<span>↑</span>}>
                       Upload Template
                     </Button>
                   </Box>

@@ -19,6 +19,7 @@ import {
   IconClipboardList,
   IconPoint,
   IconCircle,
+  IconListCheck,
 } from '@tabler/icons-react';
 
 const iconMapper = {
@@ -32,6 +33,7 @@ const iconMapper = {
   ClipboardList: IconClipboardList,
   Point: IconPoint,
   Circle: IconCircle,
+  ListCheck: IconListCheck,
 };
 
 const SchoolSidebarItems = () => {
@@ -77,6 +79,17 @@ const SchoolSidebarItems = () => {
           {
             navlabel: true,
             subheader: 'School Dashboard',
+          },
+          {
+            id: 'initial-setup',
+            title: 'Initial Setup',
+            icon: IconListCheck,
+            href: '/initial-setup',
+            permission: null,
+          },
+          {
+            navlabel: true,
+            subheader: 'Modules',
           },
           ...formattedMenu,
         ]);

@@ -9,6 +9,7 @@ import {
   IconPoint,
   IconHistory,
   IconTimeline,
+  IconListCheck,
 } from '@tabler/icons-react';
 
 const SchoolMenuItems = [
@@ -20,6 +21,12 @@ const SchoolMenuItems = [
     title: 'Dashboard',
     icon: IconChartPie,
     href: '/',
+    permission: ['dashboard.view'],
+  },
+  {
+    title: 'Initial Setup',
+    icon: IconListCheck,
+    href: '/initial-setup',
     permission: ['dashboard.view'],
   },
 

@@ -22,6 +22,11 @@ import { Add as AddIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 
 const SetCalendarTab = ({ onSaveAndContinue }) => {
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleChange = () => {
+    setHasChanges(true);
+  };
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
@@ -192,7 +197,13 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
           >
             <Paper variant="outlined" sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                <TextField label="No. of Weeks" type="number" size="small" sx={{ width: 150 }} />
+                <TextField
+                  label="No. of Weeks"
+                  type="number"
+                  size="small"
+                  sx={{ width: 150 }}
+                  onChange={handleChange}
+                />
                 <TextField
                   label="Select Date"
                   type="date"
@@ -240,7 +251,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
         </Grid>
       </Grid>
       <Box mt={2} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={onSaveAndContinue}>
+        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
           Save & Continue
         </Button>
       </Box>

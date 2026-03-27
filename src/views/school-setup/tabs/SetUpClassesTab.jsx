@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Table,
@@ -14,6 +14,11 @@ import {
 import { IconDotsVertical } from '@tabler/icons-react';
 
 const SetUpClassesTab = ({ onSaveAndContinue }) => {
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleChange = () => {
+    setHasChanges(true);
+  };
   return (
     <TableContainer>
       <Table
@@ -63,6 +68,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       size="small"
                       fullWidth
                       defaultValue={item}
+                      onChange={handleChange}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           backgroundColor: '#fff',
@@ -173,7 +179,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
         </TableBody>
       </Table>
       <Box mt={2} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={onSaveAndContinue}>
+        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
           Save & Continue
         </Button>
       </Box>

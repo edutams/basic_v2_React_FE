@@ -60,6 +60,13 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     setTerms(terms.map((term) => ({ ...term, selected: newSelectAll })));
   };
 
+  const handleToggleSelect = (termName) => {
+    setTerms(
+      terms.map((term) => (term.term === termName ? { ...term, selected: !term.selected } : term)),
+    );
+    setHasChanges(true);
+  };
+
   const generateWeeks = [
     { week: 'Week 1', start: '2026-01-12', end: '2026-01-18', status: 'Generated' },
     { week: 'Week 2', start: '2026-01-19', end: '2026-01-25', status: 'Generated' },
@@ -125,6 +132,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                       <TableRow key={i} hover>
                         <TableCell>
                           <Box
+                            onClick={() => handleToggleSelect(item.term)}
                             sx={{
                               width: 24,
                               height: 24,

@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { IconDotsVertical } from '@tabler/icons-react';
 
-const SetUpClassesTab = () => {
+const SetUpClassesTab = ({ onSaveAndContinue }) => {
   return (
     <TableContainer>
       <Table
@@ -172,6 +172,11 @@ const SetUpClassesTab = () => {
           })}
         </TableBody>
       </Table>
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue}>
+          Save & Continue
+        </Button>
+      </Box>
     </TableContainer>
   );
 };

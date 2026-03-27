@@ -18,7 +18,7 @@ import {
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
 
-const UploadTeachersTab = () => {
+const UploadTeachersTab = ({ onSaveAndContinue }) => {
   return (
     <TableContainer>
       <Table
@@ -170,6 +170,11 @@ const UploadTeachersTab = () => {
           })}
         </TableBody>
       </Table>
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue}>
+          Save & Continue
+        </Button>
+      </Box>
     </TableContainer>
   );
 };

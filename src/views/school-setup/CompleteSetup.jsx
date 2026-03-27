@@ -20,6 +20,12 @@ import SetCalendarTab from './tabs/SetCalendarTab';
 const CompleteSetup = () => {
   const [activeTab, setActiveTab] = useState(0);
 
+  const handleSaveAndContinue = () => {
+    if (activeTab < 3) {
+      setActiveTab(activeTab + 1);
+    }
+  };
+
   return (
     <Box>
       {/* PAGE HEADER */}
@@ -248,10 +254,10 @@ const CompleteSetup = () => {
 
       {/* TAB CONTENT */}
       <ParentCard sx={{ p: 0 }}>
-        {activeTab === 0 && <SetUpClassesTab />}
-        {activeTab === 1 && <UploadLearnersTab />}
-        {activeTab === 2 && <UploadTeachersTab />}
-        {activeTab === 3 && <SetCalendarTab />}
+        {activeTab === 0 && <SetUpClassesTab onSaveAndContinue={handleSaveAndContinue} />}
+        {activeTab === 1 && <UploadLearnersTab onSaveAndContinue={handleSaveAndContinue} />}
+        {activeTab === 2 && <UploadTeachersTab onSaveAndContinue={handleSaveAndContinue} />}
+        {activeTab === 3 && <SetCalendarTab onSaveAndContinue={handleSaveAndContinue} />}
       </ParentCard>
     </Box>
   );

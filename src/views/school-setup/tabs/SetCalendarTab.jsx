@@ -21,7 +21,7 @@ import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { Add as AddIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 
-const SetCalendarTab = () => {
+const SetCalendarTab = ({ onSaveAndContinue }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
@@ -239,6 +239,11 @@ const SetCalendarTab = () => {
           </ParentCard>
         </Grid>
       </Grid>
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue}>
+          Save & Continue
+        </Button>
+      </Box>
     </Box>
   );
 };

@@ -1,42 +1,79 @@
 import React from 'react';
-import { Card, CardContent, Typography, Grid, useTheme } from '@mui/material';
+import { Card, Box, CardContent, Typography, Grid, useTheme } from '@mui/material';
 import { mockSummaryStats } from '../mockData';
 
 const CommissionSummaryCards = () => {
-    const theme = useTheme();
+  const theme = useTheme();
 
-    return (
-        <Grid container spacing={3}>
-            {mockSummaryStats.map((stat, index) => {
-                const isDefaultColor = stat.color === '#333';
-                const borderColor = isDefaultColor ? theme.palette.divider : stat.color;
-                const textColor = isDefaultColor ? theme.palette.text.primary : stat.color;
+  return (
+    <Grid container spacing={3}>
+      {mockSummaryStats.map((stat, index) => {
+        const Icon = stat.icon;
 
-                return (
-                    <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
-                        <Card 
-                            sx={{ 
-                                borderRadius: '16px',
-                                border: `1px solid ${borderColor}`,
-                                boxShadow: 'none',
-                                height: '100%',
-                                bgcolor: theme.palette.background.paper
-                            }}
-                        >
-                            <CardContent sx={{ p: '24px !important', textAlign: 'center' }}>
-                                <Typography variant="h3" sx={{ fontWeight: 700, color: textColor, mb: 1 }}>
-                                    {stat.value}
-                                </Typography>
-                                <Typography variant="subtitle2" sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
-                                    {stat.title}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                );
-            })}
-        </Grid>
-    );
+        return (
+          <Grid item xs={12} sm={6} lg={3} key={index}>
+            <Card
+              sx={{
+                borderRadius: '18px',
+                bgcolor: '#F7F8FA',
+                boxShadow: '0px 8px 20px rgba(0,0,0,0.04)',
+                height: '100%',
+              }}
+            >
+              <CardContent
+                sx={{
+                  p: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                {/* ICON CIRCLE */}
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    bgcolor: stat.lightColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon size={22} color={stat.color} stroke={2} />
+                </Box>
+
+                {/* TEXT */}
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: stat.color,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {stat.value}
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      color: '#9AA0A6',
+                      fontWeight: 500,
+                      mt: 0.5,
+                    }}
+                  >
+                    {stat.title}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
 };
 
 export default CommissionSummaryCards;

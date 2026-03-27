@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../../api/tenant_api';
+import authApi from '../../api/auth';
 import { PermissionProvider } from './permissions';
 
 export const TenantAuthContext = createContext(undefined);
@@ -10,6 +11,8 @@ const defaultAuthState = {
   isLoading: true,
   error: null,
   permissions: [],
+  isImpersonated: false,
+  impersonatorId: null,
 };
 
 export const TenantAuthProvider = ({ children }) => {
@@ -19,6 +22,8 @@ export const TenantAuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
   const [permissions, setPermissions] = useState(defaultAuthState.permissions);
+  const [isImpersonated, setIsImpersonated] = useState(false);
+  const [impersonatorId, setImpersonatorId] = useState(null);
 
   useEffect(() => {
     const restoreUser = async () => {
@@ -29,6 +34,12 @@ export const TenantAuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         return;
       }
+
+      // Check if this is an impersonation token
+      const isImpersonating = localStorage.getItem('isImpersonating') === 'true';
+      const impId = localStorage.getItem('impersonator_id');
+      setIsImpersonated(isImpersonating);
+      setImpersonatorId(impId);
 
       setIsLoading(true);
       try {
@@ -41,8 +52,12 @@ export const TenantAuthProvider = ({ children }) => {
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('tenant_access_token');
+        localStorage.removeItem('isImpersonating');
+        localStorage.removeItem('impersonator_id');
         setUser(null);
         setIsAuthenticated(false);
+        setIsImpersonated(false);
+        setImpersonatorId(null);
       } finally {
         setIsLoading(false);
       }
@@ -122,6 +137,44 @@ export const TenantAuthProvider = ({ children }) => {
     }
   };
 
+  const stopImpersonation = async () => {
+    setIsLoading(true);
+    try {
+      // Get the stored agent token (if any)
+      const agentToken = localStorage.getItem('access_token');
+      const impersonatorId = localStorage.getItem('impersonator_id');
+
+      // Try to stop impersonation via direct fetch if we have an agent token
+      if (agentToken && impersonatorId) {
+        try {
+          await fetch('http://basic_v2.test/api/v1/agent/impersonate/stop', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${agentToken}`,
+            },
+            body: JSON.stringify({ impersonator_id: impersonatorId }),
+          });
+        } catch (apiErr) {
+          console.log('API call failed, continuing anyway:', apiErr);
+        }
+      }
+    } finally {
+      // Clear impersonation data
+      localStorage.removeItem('isImpersonating');
+      localStorage.removeItem('impersonator_id');
+      localStorage.removeItem('tenant_access_token');
+
+      setIsImpersonated(false);
+      setImpersonatorId(null);
+
+      // Redirect to agent dashboard
+      window.location.href = 'http://basic_v2.test:5174';
+
+      setIsLoading(false);
+    }
+  };
+
   const contextValue = {
     user,
     isAuthenticated,
@@ -133,6 +186,9 @@ export const TenantAuthProvider = ({ children }) => {
     changePassword,
     clearError,
     permissions,
+    isImpersonated,
+    impersonatorId,
+    stopImpersonation,
   };
 
   // console.log('TenantAuthProvider contextValue:', contextValue);

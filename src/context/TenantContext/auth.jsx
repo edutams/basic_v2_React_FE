@@ -140,12 +140,26 @@ export const TenantAuthProvider = ({ children }) => {
   const stopImpersonation = async () => {
     setIsLoading(true);
     try {
-      // Call the agent API to stop impersonation
+      // Get the stored agent token (if any)
+      const agentToken = localStorage.getItem('access_token');
       const impersonatorId = localStorage.getItem('impersonator_id');
-      await authApi.post('/agent/impersonate/stop', {
-        impersonator_id: impersonatorId,
-      });
 
+      // Try to stop impersonation via direct fetch if we have an agent token
+      if (agentToken && impersonatorId) {
+        try {
+          await fetch('http://basic_v2.test/api/v1/agent/impersonate/stop', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${agentToken}`,
+            },
+            body: JSON.stringify({ impersonator_id: impersonatorId }),
+          });
+        } catch (apiErr) {
+          console.log('API call failed, continuing anyway:', apiErr);
+        }
+      }
+    } finally {
       // Clear impersonation data
       localStorage.removeItem('isImpersonating');
       localStorage.removeItem('impersonator_id');
@@ -157,18 +171,6 @@ export const TenantAuthProvider = ({ children }) => {
       // Redirect to agent dashboard
       window.location.href = 'http://basic_v2.test:5174';
 
-      return { success: true };
-    } catch (err) {
-      console.error('Failed to stop impersonation:', err);
-      // Even if API fails, allow user to return to agent
-      localStorage.removeItem('isImpersonating');
-      localStorage.removeItem('impersonator_id');
-      localStorage.removeItem('tenant_access_token');
-      setIsImpersonated(false);
-      setImpersonatorId(null);
-      window.location.href = 'http://basic_v2.test:5174';
-      return { success: true };
-    } finally {
       setIsLoading(false);
     }
   };

@@ -1,152 +1,80 @@
 import React from 'react';
 import {
-  Grid,
   Box,
   Typography,
-  Stack,
-  Select,
-  MenuItem,
-  Card,
-  useTheme,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Avatar,
+  Stack,
+  Chip,
+  useTheme,
 } from '@mui/material';
 import StandardModal from 'src/components/shared/StandardModal';
-import Chart from 'react-apexcharts';
-import PrimaryButton from 'src/components/shared/PrimaryButton';
-import { IconCash, IconTrendingUp, IconCoins } from '@tabler/icons-react';
-
-const TopCard = ({ label, value, valueColor, iconBg, icon: Icon }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  return (
-    <Card
-      sx={{
-        p: 2.5,
-        borderRadius: '12px',
-        boxShadow: 'none',
-        border: `1px solid ${isDark ? theme.palette.divider : '#f0f0f0'}`,
-        bgcolor: isDark ? theme.palette.background.paper : '#fff',
-        height: '100%',
-      }}
-    >
-      <Stack direction="row" spacing={2} alignItems="center">
-        <Box
-          sx={{
-            width: 42,
-            height: 42,
-            borderRadius: '10px',
-            bgcolor: iconBg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Icon size={20} color={valueColor} />
-        </Box>
-        <Box>
-          <Typography
-            fontWeight={800}
-            sx={{ fontSize: '22px', color: valueColor, lineHeight: 1.2 }}
-          >
-            ₦ {value}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: isDark ? '#aaa' : '#64748B', fontWeight: 500, fontSize: '12px' }}
-          >
-            {label}
-          </Typography>
-        </Box>
-      </Stack>
-    </Card>
-  );
-};
-
-const SideStatRow = ({ label, value, valueColor, iconBg, icon: Icon }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  return (
-    <Stack
-      direction="row"
-      spacing={1.5}
-      alignItems="center"
-      sx={{
-        py: 1.2,
-        borderBottom: `1px solid ${isDark ? '#333' : '#f0f0f0'}`,
-        '&:last-child': { borderBottom: 'none' },
-      }}
-    >
-      <Box
-        sx={{
-          width: 32,
-          height: 32,
-          borderRadius: '8px',
-          bgcolor: iconBg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <Icon size={16} color={valueColor} />
-      </Box>
-      <Box>
-        <Typography fontWeight={800} sx={{ fontSize: '14px', color: valueColor, lineHeight: 1.2 }}>
-          ₦{value}
-        </Typography>
-        <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#64748B', fontSize: '11px' }}>
-          {label}
-        </Typography>
-      </Box>
-    </Stack>
-  );
-};
 
 const TotalSubAgentModal = ({ open, onClose }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const getLevelColors = (level) => {
+    const colors = {
+      'Level 1': { bg: '#dcfce7', color: '#166534' },
+      'Level 2': { bg: '#dbeafe', color: '#1d4ed8' },
+      'Level 3': { bg: '#fef3c7', color: '#92400e' },
+      'Level 4': { bg: '#fce7f3', color: '#be185d' },
+      'Level 5': { bg: '#e0e7ff', color: '#4338ca' },
+    };
+    return colors[level] || { bg: '#f3f4f6', color: '#4b5563' };
+  };
+
   const agentData = [
     {
       sn: 1,
       agentName: 'John Doe',
+      email: 'john@example.com',
+      phone: '08012345678',
       level: 'Level 1',
       transaction: '₦50,000',
-      school: 'ABC School',
+      school: '10',
     },
     {
       sn: 2,
       agentName: 'Jane Smith',
+      email: 'jane@example.com',
+      phone: '08023456789',
       level: 'Level 2',
       transaction: '₦75,000',
-      school: 'XYZ Academy',
+      school: '20',
     },
     {
       sn: 3,
       agentName: 'Mike Johnson',
+      email: 'mike@example.com',
+      phone: '08034567890',
       level: 'Level 1',
       transaction: '₦30,000',
-      school: 'DEF High',
+      school: '30',
     },
     {
       sn: 4,
       agentName: 'Sarah Williams',
+      email: 'sarah@example.com',
+      phone: '08045678901',
       level: 'Level 3',
       transaction: '₦100,000',
-      school: 'GHI College',
+      school: '20',
     },
     {
       sn: 5,
       agentName: 'David Brown',
+      email: 'david@example.com',
+      phone: '08056789012',
       level: 'Level 2',
       transaction: '₦45,000',
-      school: 'JKL Institute',
+      school: '10',
     },
   ];
 
@@ -155,7 +83,7 @@ const TotalSubAgentModal = ({ open, onClose }) => {
       open={open}
       onClose={onClose}
       title="Total Sub Agents"
-      maxWidth="lg"
+      maxWidth="md"
       padding={3}
       dividers={false}
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
@@ -173,15 +101,70 @@ const TotalSubAgentModal = ({ open, onClose }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {agentData.map((agent) => (
-              <TableRow key={agent.sn} hover>
-                <TableCell>{agent.sn}</TableCell>
-                <TableCell>{agent.agentName}</TableCell>
-                <TableCell>{agent.level}</TableCell>
-                <TableCell>{agent.transaction}</TableCell>
-                <TableCell>{agent.school}</TableCell>
-              </TableRow>
-            ))}
+            {agentData.map((agent) => {
+              const levelColors = getLevelColors(agent.level);
+              return (
+                <TableRow key={agent.sn} hover>
+                  <TableCell>{agent.sn}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar sx={{ width: 36, height: 36, fontSize: '14px' }}>
+                        {agent.agentName
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')}
+                      </Avatar>
+                      <Box>
+                        <Typography fontWeight={600} fontSize="14px">
+                          {agent.agentName}
+                        </Typography>
+                        <Typography fontSize="12px" color="text.secondary">
+                          {agent.email}
+                        </Typography>
+                        <Typography fontSize="12px" color="text.secondary">
+                          {agent.phone}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={agent.level}
+                      size="small"
+                      sx={{
+                        bgcolor: levelColors.bg,
+                        color: levelColors.color,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>{agent.transaction}</TableCell>
+                  <TableCell>
+                    <Stack
+                      direction="row"
+                      spacing={0}
+                      sx={{
+                        borderRadius: '6px',
+                        overflow: 'hidden',
+                        fontWeight: '800',
+                        width: 'fit-content',
+                      }}
+                    >
+                      <Box sx={{ px: 1.5, py: 0.5 }}>
+                        <Typography variant="subtitle3" fontWeight="800" color="#333333">
+                          School
+                        </Typography>
+                      </Box>
+                      <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+                        <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
+                          {agent.school ?? 0}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>

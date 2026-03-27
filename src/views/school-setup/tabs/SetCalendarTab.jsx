@@ -25,6 +25,11 @@ const SetCalendarTab = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
+  const [terms, setTerms] = useState([
+    { term: 'First Term', start: '2026-01-12', end: '2026-03-21', active: true, selected: false },
+    { term: 'Second Term', start: '2026-01-12', end: '2026-03-21', active: false, selected: false },
+    { term: 'Third Term', start: '2026-01-12', end: '2026-03-21', active: false, selected: false },
+  ]);
 
   const handleMenuOpen = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -36,11 +41,11 @@ const SetCalendarTab = () => {
     setSelectedItem(null);
   };
 
-  const academicTerms = [
-    { term: 'First Term', start: '2026-01-12', end: '2026-03-21', active: true },
-    { term: 'Second Term', start: '2026-01-12', end: '2026-03-21', active: false },
-    { term: 'Third Term', start: '2026-01-12', end: '2026-03-21', active: false },
-  ];
+  const handleSelectAll = () => {
+    const newSelectAll = !selectAll;
+    setSelectAll(newSelectAll);
+    setTerms(terms.map((term) => ({ ...term, selected: newSelectAll })));
+  };
 
   const generateWeeks = [
     { week: 'Week 1', start: '2026-01-12', end: '2026-01-18', status: 'Generated' },
@@ -83,7 +88,7 @@ const SetCalendarTab = () => {
                             alignItems: 'center',
                             cursor: 'pointer',
                           }}
-                          onClick={() => setSelectAll(!selectAll)}
+                          onClick={handleSelectAll}
                         >
                           {selectAll && (
                             <Box sx={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>✓</Box>
@@ -103,7 +108,7 @@ const SetCalendarTab = () => {
                   </TableHead>
 
                   <TableBody>
-                    {academicTerms.map((item, i) => (
+                    {terms.map((item, i) => (
                       <TableRow key={i} hover>
                         <TableCell>
                           <Box
@@ -111,16 +116,17 @@ const SetCalendarTab = () => {
                               width: 24,
                               height: 24,
                               borderRadius: '50%',
-                              border: '2px solid #cbd5e1',
-                              bgcolor: item.active ? '#1976d2' : '#fff',
+                              border: item.selected ? 'none' : '2px solid #cbd5e1',
+                              bgcolor: item.selected ? '#1976d2' : '#fff',
                               display: 'flex',
                               justifyContent: 'center',
                               alignItems: 'center',
-                              color: '#fff',
-                              fontSize: 14,
+                              cursor: 'pointer',
                             }}
                           >
-                            {item.active && '✓'}
+                            {item.selected && (
+                              <Box sx={{ color: '#fff', fontSize: 14, fontWeight: 'bold' }}>✓</Box>
+                            )}
                           </Box>
                         </TableCell>
                         <TableCell sx={{ fontWeight: 500 }}>{item.term}</TableCell>

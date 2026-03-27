@@ -11,6 +11,11 @@ import {
   IconButton,
   Button,
 } from '@mui/material';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+  Add as AddIcon,
+} from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
 
 const UploadTeachersTab = () => {
@@ -133,6 +138,7 @@ const UploadTeachersTab = () => {
                   <Button
                     variant="contained"
                     size="small"
+                    startIcon={<AddIcon />}
                     sx={{
                       bgcolor: '#EDF3FF',
                       color: '#000000',

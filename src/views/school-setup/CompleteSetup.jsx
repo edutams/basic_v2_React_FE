@@ -65,156 +65,156 @@ const CompleteSetup = () => {
       </Box>
 
       {/* CLASS DETAILS CARD */}
-      <Card sx={{ p: 0, mb: 1, borderRadius: 0 }}>
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
+      {/* <Card sx={{ p: 0, mb: 1, borderRadius: 0 }}> */}
+      {/* <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
           <Typography fontWeight={600}>Class Details</Typography>
-        </Box>
+        </Box> */}
 
-        <Box sx={{ p: 2, pb: 1 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 2 }} mb={1}>
-            <Paper
+      <Box sx={{ p: 2, pb: 1 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 2 }} mb={1}>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              py: 2,
+              width: { xs: '100%', sm: 320 },
+              background: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box
               sx={{
-                borderRadius: 2,
-                px: 3,
-                py: 2,
-                width: { xs: '100%', sm: 320 },
-                background: '#FFFFFF',
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: '#E3E8F8',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
               }}
             >
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  background: '#E3E8F8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <IconSchool size={22} color="#3B5BDB" />
-              </Box>
+              <IconSchool size={22} color="#3B5BDB" />
+            </Box>
 
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography fontSize={26} fontWeight={700}>
-                  6
-                </Typography>
-                <Typography fontSize={14} color="#6B7280">
-                  Classes
-                </Typography>
-              </Box>
-            </Paper>
-            <Paper
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography fontSize={26} fontWeight={700}>
+                6
+              </Typography>
+              <Typography fontSize={14} color="#6B7280">
+                Classes
+              </Typography>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              py: 2,
+              width: { xs: '100%', sm: 320 },
+              background: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box
               sx={{
-                borderRadius: 2,
-                px: 3,
-                py: 2,
-                width: { xs: '100%', sm: 320 },
-                background: '#FFFFFF',
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: '#E3E8F8',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
               }}
             >
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  background: '#E3E8F8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <IconSchool size={22} color="#3B5BDB" />
-              </Box>
+              <IconSchool size={22} color="#3B5BDB" />
+            </Box>
 
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography fontSize={26} fontWeight={700}>
-                  16
-                </Typography>
-                <Typography fontSize={14} color="#6B7280">
-                  Arms
-                </Typography>
-              </Box>
-            </Paper>
-            <Paper
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography fontSize={26} fontWeight={700}>
+                16
+              </Typography>
+              <Typography fontSize={14} color="#6B7280">
+                Arms
+              </Typography>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              py: 2,
+              width: { xs: '100%', sm: 320 },
+              background: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box
               sx={{
-                borderRadius: 2,
-                px: 3,
-                py: 2,
-                width: { xs: '100%', sm: 320 },
-                background: '#FFFFFF',
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: '#E3E8F8',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
               }}
             >
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  background: '#E3E8F8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <IconSchool size={22} color="#3B5BDB" />
-              </Box>
+              <IconSchool size={22} color="#3B5BDB" />
+            </Box>
 
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography fontSize={26} fontWeight={700}>
-                  209
-                </Typography>
-                <Typography fontSize={14} color="#6B7280">
-                  Learners
-                </Typography>
-              </Box>
-            </Paper>
-            <Paper
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography fontSize={26} fontWeight={700}>
+                209
+              </Typography>
+              <Typography fontSize={14} color="#6B7280">
+                Learners
+              </Typography>
+            </Box>
+          </Paper>
+          <Paper
+            sx={{
+              borderRadius: 2,
+              px: 3,
+              py: 2,
+              width: { xs: '100%', sm: 320 },
+              background: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box
               sx={{
-                borderRadius: 2,
-                px: 3,
-                py: 2,
-                width: { xs: '100%', sm: 320 },
-                background: '#FFFFFF',
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: '#E3E8F8',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
               }}
             >
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '50%',
-                  background: '#E3E8F8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <IconSchool size={22} color="#3B5BDB" />
-              </Box>
+              <IconSchool size={22} color="#3B5BDB" />
+            </Box>
 
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography fontSize={26} fontWeight={700}>
-                  36
-                </Typography>
-                <Typography fontSize={14} color="#6B7280">
-                  Teachers
-                </Typography>
-              </Box>
-            </Paper>
-          </Stack>
-        </Box>
-      </Card>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography fontSize={26} fontWeight={700}>
+                36
+              </Typography>
+              <Typography fontSize={14} color="#6B7280">
+                Teachers
+              </Typography>
+            </Box>
+          </Paper>
+        </Stack>
+      </Box>
+      {/* </Card> */}
 
       {/* TABS SECTION */}
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>

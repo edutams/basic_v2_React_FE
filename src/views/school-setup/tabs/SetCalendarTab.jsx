@@ -167,6 +167,20 @@ const SetCalendarTab = () => {
             title={
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">Generate Week</Typography>
+
+                <Box
+                  sx={{
+                    ml: 'auto',
+                    px: 2,
+                    py: 1,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                  }}
+                >
+                  <Typography variant="h6">13 Weeks • 65 school days</Typography>
+                </Box>
               </Box>
             }
           >

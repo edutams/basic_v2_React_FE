@@ -46,6 +46,14 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     setSelectedItem(null);
   };
 
+  const handleToggleActive = (termName) => {
+    setTerms(
+      terms.map((term) => (term.term === termName ? { ...term, active: !term.active } : term)),
+    );
+    setHasChanges(true);
+    handleMenuClose();
+  };
+
   const handleSelectAll = () => {
     const newSelectAll = !selectAll;
     setSelectAll(newSelectAll);
@@ -157,7 +165,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                             open={Boolean(anchorEl) && selectedItem?.term === item.term}
                             onClose={handleMenuClose}
                           >
-                            <MenuItem onClick={handleMenuClose}>
+                            <MenuItem onClick={() => handleToggleActive(item.term)}>
                               {item.active ? 'Deactivate' : 'Activate'}
                             </MenuItem>
                             <MenuItem onClick={handleMenuClose}>Delete Term</MenuItem>

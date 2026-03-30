@@ -15,6 +15,7 @@ import TeamTab from './components/TeamTab';
 import SchoolsTab from './components/SchoolsTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
+import TotalSubAgentModal from './components/TotalSubAgentModal';
 import AgentModal from '../../components/add-agent/components/AgentModal';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
@@ -29,6 +30,7 @@ const ViewAgent = () => {
     const [value, setValue] = useState('1');
     const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+    const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
     const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
     const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
     const theme = useTheme();
@@ -47,15 +49,6 @@ const ViewAgent = () => {
                 if (response.success && response.data) {
                     const data = response.data;
 
-                    let parsedColor = {};
-                    if (data.color) {
-                        try {
-                            parsedColor = typeof data.color === 'string' ? JSON.parse(data.color) : data.color;
-                        } catch (e) {
-                            console.error('Failed to parse color', e);
-                        }
-                    }
-
                     const mappedData = {
                         profile: {
                             id: data.id,
@@ -64,7 +57,7 @@ const ViewAgent = () => {
                             level: `Level ${data.access_level} Agent`,
                             status: data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'Inactive',
                             image: data.image || mockAgentData.profile.image,
-                            color: parsedColor
+                            primaryColor: data.primary_color || null,
                         },
                         stats: {
                             totalTransaction: mockAgentData.stats.totalTransaction,
@@ -153,6 +146,7 @@ const ViewAgent = () => {
                                     stats={agentData.stats}
                                     onTransactionClick={() => setIsTransactionModalOpen(true)}
                                     onSchoolClick={() => setIsSchoolModalOpen(true)}
+                                    onSubAgentClick={() => setIsSubAgentModalOpen(true)}
                                 />
                             </Grid>
                         </Grid>
@@ -164,6 +158,7 @@ const ViewAgent = () => {
                 {/* Modals */}
                 <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
                 <TotalTransactionModal open={isTransactionModalOpen} onClose={() => setIsTransactionModalOpen(false)} />
+                <TotalSubAgentModal open={isSubAgentModalOpen} onClose={() => setIsSubAgentModalOpen(false)} totalSubAgents={agentData?.stats?.totalSubAgents} />
                 <AgentModal open={isAddAgentModalOpen} onClose={() => setIsAddAgentModalOpen(false)} handleRefresh={() => {}} />
                 <ReusableModal open={isAddSchoolModalOpen} onClose={() => setIsAddSchoolModalOpen(false)} title="Register School" size="large">
                     <RegisterSchoolForm

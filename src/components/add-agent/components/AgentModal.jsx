@@ -69,9 +69,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
     contactAddress: shouldPrefillForm ? (selectedAgent?.contactAddress || selectedAgent?.address || '') : '',
     stateFilter: shouldPrefillForm ? (selectedAgent?.state_id || selectedAgent?.stateFilter || '') : '',
     lga: shouldPrefillForm ? (selectedAgent?.lga_id || selectedAgent?.lga || '') : '',
-    headerColor: shouldPrefillForm ? (selectedAgent?.headerColor || selectedAgent?.color?.headcolor || '') : '',
-    sidebarColor: shouldPrefillForm ? (selectedAgent?.sidebarColor || selectedAgent?.color?.sidecolor || '') : '',
-    bodyColor: shouldPrefillForm ? (selectedAgent?.bodyColor || selectedAgent?.color?.bodycolor || '') : '',
+    primaryColor: shouldPrefillForm ? (selectedAgent?.primaryColor || selectedAgent?.primary_color || '') : '',
   };
 
   const formik = useFormik({
@@ -105,12 +103,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
         phone: values.agentPhone,
         address: values.contactAddress,
         lga_id: values.lga,
-        // country: values.country,
-        // org_title: values.organizationTitle,
-        // access_level: '2',
-        headcolor: values.headerColor || 'default',
-        sidecolor: values.sidebarColor || 'default',
-        bodycolor: values.bodyColor || 'default',
+        primary_color: values.primaryColor || null,
       };
 
 
@@ -156,11 +149,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
         address: values.contactAddress,
         lga_id: values.lga,
         access_level: selectedAgent?.access_level || '2',
-        color: {
-          headcolor: values.headerColor || 'default',
-          sidecolor: values.sidebarColor || 'default',
-          bodycolor: values.bodyColor || 'default',
-        },
+        primary_color: values.primaryColor || null,
         status: (selectedAgent?.status === 'Active' || selectedAgent?.status === 'active') ? 'active' : 'inactive',
       };
 

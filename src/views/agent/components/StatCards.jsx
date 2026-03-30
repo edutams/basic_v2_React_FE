@@ -78,7 +78,7 @@ const StatCard = ({ title, value, valueColor, valueBg, subStats = [], onIconClic
     );
 };
 
-const StatCards = ({ stats, onTransactionClick, onSchoolClick }) => {
+const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick }) => {
     return (
         <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
             {/* Total Transaction Value */}
@@ -109,6 +109,8 @@ const StatCards = ({ stats, onTransactionClick, onSchoolClick }) => {
                         { label: 'Lv4', value: '21' },
                         { label: 'Lv5', value: '43' },
                     ]}
+                    onIconClick={onSubAgentClick}
+                    onClick={onSubAgentClick}
                 />
             </Grid>
 
@@ -140,6 +142,7 @@ StatCards.propTypes = {
         volume: PropTypes.string,
     }).isRequired,
     onTransactionClick: PropTypes.func,
+    onSubAgentClick: PropTypes.func,
     onSchoolClick: PropTypes.func,
 };
 

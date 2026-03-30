@@ -1,87 +1,165 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import {
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Box,
-  useTheme,
-  OutlinedInput,
-  InputLabel,
-  MenuItem,
-  FormControl,
-  Select,
-  Grid,
-  Stack,
-  TextField,
-  IconButton,
-  Menu,
-  Button,
-  TableFooter,
-  TablePagination,
-  Snackbar,
-  Alert,
-  Chip,
-  CircularProgress,
-  Tabs,
-  Tab,
-  Divider,
+  Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Box, useTheme, Grid, Stack, TextField, IconButton, Menu, MenuItem,
+  Button, TableFooter, TablePagination, Snackbar, Alert, Chip, CircularProgress,
+  Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Divider,
 } from '@mui/material';
-import {
-  IconSchool,
-  IconUserPlus,
-  IconCheck,
-  IconX,
-  IconSettings,
-  IconUsers,
-  IconChartBar,
-} from '@tabler/icons-react';
-import ReusableModal from '../../components/shared/ReusableModal';
-import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
+import { IconSchool, IconUserPlus, IconChartBar, IconEye } from '@tabler/icons-react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
-import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
-import ManageTenantDomain from '../../components/add-school/component/ManageSchoolDomain';
-import ManageSchoolGateway from '../../components/add-school/component/ManageSchoolGateway';
-import ChangeAgent from '../../components/add-school/component/ChangeAgent';
+
+import ReusableModal from '../../components/shared/ReusableModal';
+import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import BlankCard from '../../components/shared/BlankCard';
-import ChangeColorScheme from '../../components/add-school/component/ChangeColorScheme';
-import SchoolCategorizationManager from './SchoolCategorizationManager';
-import { Link } from 'react-router';
-import {
-  getSchools,
-  updateSchool,
-  deleteSchool,
-} from '../../context/AgentContext/services/school.service';
-
-import { AuthContext } from '../../context/AgentContext/auth';
-
-// import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
-// import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
+import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
 import LoginActivities from '../dashboard/components/LoginActivities';
 import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
+import SchoolCategorizationManager from './SchoolCategorizationManager';
+
+import { AuthContext } from '../../context/AgentContext/auth';
+import {
+  getSchools, updateSchool, deleteSchool,
+  getProspectiveTenants, createProspectiveTenant,
+  approveProspectiveTenant, rejectProspectiveTenant,
+} from '../../context/AgentContext/services/school.service';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 
+const statusChip = (status) => {
+  const map = {
+    Active: { bg: '#dcfce7', color: '#16a34a' },
+    Inactive: { bg: '#ffe4e6', color: '#e11d48' },
+    active: { bg: '#dcfce7', color: '#16a34a' },
+    inactive: { bg: '#ffe4e6', color: '#e11d48' },
+    pending: { bg: '#fef3c7', color: '#d97706' },
+    approved: { bg: '#dcfce7', color: '#16a34a' },
+    reject: { bg: '#ffe4e6', color: '#e11d48' },
+  };
+  const s = map[status] || { bg: '#f3f4f6', color: '#6b7280' };
+  return (
+    <Chip size="small" label={status}
+      sx={{ bgcolor: s.bg, color: s.color, fontWeight: 600, borderRadius: '6px', textTransform: 'capitalize' }} />
+  );
+};
+
+// ── Review Modal ─────────────────────────────────────────────────────────────
+const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) => {
+  const [rejectReason, setRejectReason] = useState('');
+  const [showRejectInput, setShowRejectInput] = useState(false);
+
+  if (!prospect) return null;
+
+  const field = (label, value) => (
+    <Box mb={1.5}>
+      <Typography variant="caption" color="textSecondary" fontWeight={600}>{label}</Typography>
+      <Typography variant="body2" fontWeight={500}>{value || '—'}</Typography>
+    </Box>
+  );
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ fontWeight: 700 }}>
+        Review Application — {prospect.tenant_name}
+        <Chip size="small" label={prospect.status}
+          sx={{
+            ml: 2, textTransform: 'capitalize',
+            bgcolor: prospect.status === 'pending' ? '#fef3c7' : prospect.status === 'approved' ? '#dcfce7' : '#ffe4e6',
+            color: prospect.status === 'pending' ? '#d97706' : prospect.status === 'approved' ? '#16a34a' : '#e11d48',
+            fontWeight: 600
+          }} />
+      </DialogTitle>
+      <Divider />
+      <DialogContent>
+        <Grid container spacing={2} mt={0.5}>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">School Info</Typography>
+            {field('School Name', prospect.tenant_name)}
+            {field('Short Name', prospect.tenant_short_name)}
+            {field('School Email', prospect.tenant_email)}
+            {field('Address', prospect.address)}
+            {field('State / LGA', prospect.state_lga?.state?.stname
+              ? `${prospect.state_lga.state.stname} / ${prospect.state_lga.lganame}`
+              : null)}
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">Owner Details</Typography>
+            {field('Owner Name', `${prospect.owner_fname} ${prospect.owner_lname}`)}
+            {field('Owner Email', prospect.owner_email)}
+            {field('Owner Phone', prospect.owner_phone)}
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">Admin Details</Typography>
+            {field('Admin Name', `${prospect.admin_fname} ${prospect.admin_lname}`)}
+            {field('Admin Email', prospect.admin_email)}
+            {field('Admin Phone', prospect.admin_phone)}
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">Agent</Typography>
+            {field('Agent', prospect.agent?.org_name || prospect.agent?.name)}
+            {field('Agent Email', prospect.agent?.email)}
+            {field('Session Term', prospect.session_term)}
+            {field('Social Link', prospect.social_link)}
+          </Grid>
+          {prospect.rejection_reason && (
+            <Grid item xs={12}>
+              <Alert severity="error">Rejection reason: {prospect.rejection_reason}</Alert>
+            </Grid>
+          )}
+          {showRejectInput && (
+            <Grid item xs={12}>
+              <TextField fullWidth multiline rows={3} label="Rejection Reason (optional)"
+                value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
+            </Grid>
+          )}
+        </Grid>
+      </DialogContent>
+      <Divider />
+      <DialogActions sx={{ p: 2, gap: 1 }}>
+        <Button onClick={onClose} color="inherit">Close</Button>
+        {prospect.status === 'pending' && (
+          <>
+            {!showRejectInput ? (
+              <Button variant="outlined" color="error" startIcon={<CancelOutlinedIcon />}
+                onClick={() => setShowRejectInput(true)} disabled={loading}>
+                Reject
+              </Button>
+            ) : (
+              <Button variant="contained" color="error" startIcon={<CancelOutlinedIcon />}
+                onClick={() => onReject(prospect.id, rejectReason)} disabled={loading}>
+                {loading ? <CircularProgress size={18} /> : 'Confirm Reject'}
+              </Button>
+            )}
+            <Button variant="contained" color="success" startIcon={<CheckCircleOutlineIcon />}
+              onClick={() => onApprove(prospect.id)} disabled={loading}>
+              {loading ? <CircularProgress size={18} /> : 'Submit for Approval'}
+            </Button>
+          </>
+        )}
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// ── Main Component ────────────────────────────────────────────────────────────
 const SchoolDashboard = () => {
   const { impersonateTenant } = useContext(AuthContext);
   const theme = useTheme();
-  const isDarkMode = theme.palette.mode === 'dark';
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState(0);
   const [schoolList, setSchoolList] = useState([]);
+  const [prospectList, setProspectList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterValues, setFilterValues] = useState({});
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
+  const [prospectLoading, setProspectLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
   const [nameValue, setNameValue] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -89,354 +167,196 @@ const SchoolDashboard = () => {
   const [openRegisterModal, setOpenRegisterModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [editSchoolData, setEditSchoolData] = useState(null);
-  const [openTenantModal, setOpenTenantModal] = useState(false);
-  const [selectedTenantDomain, setSelectedTenantDomain] = useState(null);
-  const [openGatewayModal, setOpenGatewayModal] = useState(false);
-  const [openAgentModal, setOpenAgentModal] = useState(false);
-  const [selectedAgent, setSelectedAgent] = useState('');
-  const [agentList] = useState([{ label: 'Crownbirth - Crownbirth Limited', value: 'crownbirth' }]);
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
   const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
 
-  const [openClear2FAConfirm, setOpenClear2FAConfirm] = useState(false);
-  const [selectedSchoolFor2FA, setSelectedSchoolFor2FA] = useState(null);
-  const [openFixImageConfirm, setOpenFixImageConfirm] = useState(false);
-
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
 
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewProspect, setReviewProspect] = useState(null);
 
-  const [openColorSchemeModal, setOpenColorSchemeModal] = useState(false);
-  const [selectedSchoolForColor, setSelectedSchoolForColor] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
-  const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
-  const [openLoggedInUsersModal, setOpenLoggedInUsersModal] = useState(false);
+  const [openPlanModal, setOpenPlanModal] = useState(false);
+  const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
 
-  const [filterClicked, setFilterClicked] = useState(false);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-
-  const [activeTab, setActiveTab] = useState(0);
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
-
-  const fetchSchools = async () => {
+  // ── Data fetching ──────────────────────────────────────────────────────────
+  const fetchSchools = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getSchools();
-      const mappedData = data.map((t) => {
-        let colors = {};
-        try {
-          if (t.color && typeof t.color === 'string') {
-            const parsed = JSON.parse(t.color);
-            if (parsed.headcolor && parsed.headcolor !== 'default') {
-              colors = parsed;
-            }
-          }
-
-          if (t.headcolor && t.headcolor !== 'default') {
-            colors.headcolor = t.headcolor;
-          }
-          if (t.sidecolor && t.sidecolor !== 'default') {
-            colors.sidecolor = t.sidecolor;
-          }
-          if (t.bodycolor && t.bodycolor !== 'default') {
-            colors.bodycolor = t.bodycolor;
-          }
-        } catch (e) {
-          console.error('Error parsing color for tenant', t.id, e);
-        }
-
-        const eduTiers = t.schoolCategories?.map((cat) => cat.name) || [];
-        const flatEduTiers = t.school_categories?.map((cat) => cat.name) || [];
-        const allEduTiers = eduTiers.length > 0 ? eduTiers : flatEduTiers;
-
-        const schoolDivisions = t.school_divisions?.map((div) => div.name) || [];
-
-        let planSubstitute = t.payModuleType || null;
-        let populationSubstitute = null;
-        if (t.modular) {
-          try {
-            const modularArr = typeof t.modular === 'string' ? JSON.parse(t.modular) : t.modular;
-            populationSubstitute = modularArr.length;
-          } catch (e) {}
-        }
-
-        return {
-          id: t.id,
-          institutionName: t.tenant_name,
-          schoolUrl: t.domains?.[0]?.domain || '',
-          agent: t.agent?.name || 'My Agency',
-          agentEmail: t.agent?.email || '',
-          agentImage: t.agent?.image || '',
-          schoolImage: t.image || t.logo || '',
-          gateway: t.tenant_gateway?.name || 'Default',
-          date: t.created_at,
-          socialLink: t.social_link,
-          contactEmail: t.admin_email || '',
-          contactPhone: t.admin_phone || t.phone || '',
-          headerColor: colors.headcolor,
-          sidebarColor: colors.sidecolor,
-          bodyColor: colors.bodycolor,
-          status: t.status === 'active' ? 'Active' : 'Inactive',
-          schoolCategories: allEduTiers,
-          schoolDivisions: schoolDivisions,
-          plan: planSubstitute,
-          population: populationSubstitute,
-
-          raw: t,
-        };
-      });
-      setSchoolList(mappedData);
-    } catch (err) {
-      console.error('Failed to fetch schools', err);
-      setSnackbarMessage('Failed to fetch schools');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+      setSchoolList((data || []).map((t) => ({
+        id: t.id,
+        institutionName: t.tenant_name,
+        schoolUrl: t.domains?.[0]?.domain || '',
+        agent: t.agent?.org_name || t.agent?.name || 'My Agency',
+        agentEmail: t.agent?.email || '',
+        agentImage: t.agent?.image || '',
+        schoolImage: t.image || t.logo || '',
+        contactEmail: t.admin_email || '',
+        contactPhone: t.admin_phone || t.phone || '',
+        status: t.status,
+        schoolDivisions: t.school_divisions?.map((d) => d.name) || [],
+        raw: t,
+      })));
+    } catch {
+      notify('Failed to fetch schools', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const fetchProspects = useCallback(async () => {
+    setProspectLoading(true);
+    try {
+      const data = await getProspectiveTenants();
+      console.log('[School.jsx] prospective data:', data);
+      setProspectList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('[School.jsx] fetchProspects error:', err);
+      notify(err?.message || 'Failed to fetch applications', 'error');
+    } finally {
+      setProspectLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchSchools();
-  }, []);
+    fetchProspects();
+  }, [fetchSchools, fetchProspects]);
 
-  const handleActionClick = (event, rowId) => {
-    setActionAnchorEl(event.currentTarget);
-    setActiveRow(rowId);
-  };
-
-  const handleActionClose = () => {
-    setActionAnchorEl(null);
-    setActiveRow(null);
-  };
-
-  const handleOpen = () => setOpenRegisterModal(true);
-  const handleClose = () => {
-    setOpenRegisterModal(false);
-    setOpenEditModal(false);
-    setEditSchoolData(null);
-  };
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const handleActionClick = (e, rowId) => { setActionAnchorEl(e.currentTarget); setActiveRow(rowId); };
+  const handleActionClose = () => { setActionAnchorEl(null); setActiveRow(null); };
 
   const handleRefresh = async () => {
     await fetchSchools();
-    handleClose();
-    setSnackbarMessage('Action completed successfully');
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
+    await fetchProspects();
+    setOpenRegisterModal(false);
+    setOpenEditModal(false);
+    setEditSchoolData(null);
+    notify('Action completed successfully');
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleDeactivateSchool = async (school) => {
+  const handleDeactivate = async (school) => {
     try {
-      let status = school.status == 'active' ? 'inactive' : 'active';
-      await updateSchool(school.id, { status: status });
-      // await updateSchool(school.id, { status: 'inactive' });
+      const newStatus = school.status === 'active' ? 'inactive' : 'active';
+      await updateSchool(school.id, { status: newStatus });
       await fetchSchools();
       setOpenDeactivateDialog(false);
-      setSnackbarMessage('School ' + status + ' successfully');
-      setSnackbarSeverity('success');
-    } catch (err) {
-      setSnackbarMessage('Failed to ' + status + ' school');
-      setSnackbarSeverity('error');
+      notify(`School ${newStatus} successfully`);
+    } catch {
+      notify('Failed to update school status', 'error');
     }
-    setSnackbarOpen(true);
   };
 
-  const handleDeleteSchool = async (school) => {
+  const handleDelete = async (school) => {
     try {
       await deleteSchool(school.id);
       await fetchSchools();
       setOpenDeleteDialog(false);
-      setSnackbarMessage('School deleted successfully');
-      setSnackbarSeverity('success');
-    } catch (err) {
-      setSnackbarMessage('Failed to delete school');
-      setSnackbarSeverity('error');
+      notify('School deleted successfully');
+    } catch {
+      notify('Failed to delete school', 'error');
     }
-    setSnackbarOpen(true);
   };
 
   const handleLoginAsAdmin = async (school) => {
+    handleActionClose();
     try {
       const result = await impersonateTenant(school.id);
       if (result.success) {
-        // If there's a redirect URL, open in new tab
-        if (result.redirect_url) {
-          window.open(result.redirect_url, '_blank');
-        } else {
-          // Otherwise, set localStorage for isImpersonating
-          localStorage.setItem('isImpersonating', 'true');
-          localStorage.setItem('impersonator_id', school?.id);
-        }
+        if (result.redirect_url) window.open(result.redirect_url, '_blank');
+        else { localStorage.setItem('isImpersonating', 'true'); localStorage.setItem('impersonator_id', school.id); }
       } else {
-        setSnackbarMessage(result.error || 'Failed to login as admin');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
+        notify(result.error || 'Failed to login as admin', 'error');
       }
     } catch (err) {
-      console.error('Failed to login as admin', err);
-      setSnackbarMessage(err.response?.data?.error || 'Failed to login as admin');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+      notify(err?.response?.data?.error || 'Failed to login as admin', 'error');
     }
-    handleActionClose();
   };
 
-  const isActive = String(schoolToDeactivate?.status).trim().toLowerCase() === 'active';
+  const handleApprove = async (id) => {
+    setActionLoading(true);
+    try {
+      await approveProspectiveTenant(id);
+      await fetchProspects();
+      await fetchSchools();
+      setReviewOpen(false);
+      notify('School approved and provisioned successfully');
+    } catch (err) {
+      notify(err?.message || 'Approval failed', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-  const filteredSchools = schoolList.filter((school) => {
-    const matchesName = nameValue
-      ? school.institutionName?.toLowerCase().includes(nameValue.toLowerCase())
-      : true;
-    const matchesDateRange =
-      (!fromDate || dayjs(school.date).isAfter(fromDate.subtract(1, 'day'))) &&
-      (!toDate || dayjs(school.date).isBefore(toDate.add(1, 'day')));
+  const handleReject = async (id, reason) => {
+    setActionLoading(true);
+    try {
+      await rejectProspectiveTenant(id, reason);
+      await fetchProspects();
+      setReviewOpen(false);
+      notify('Application rejected');
+    } catch {
+      notify('Rejection failed', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
-    return matchesName && matchesDateRange;
-  });
+  // ── Derived data ───────────────────────────────────────────────────────────
+  const pendingProspects = prospectList.filter((p) => p.status === 'pending');
+  const approvedSchools = schoolList;
 
-  const paginatedSchools = filteredSchools.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
+  const filteredAll = prospectList.filter((p) =>
+    !nameValue || p.tenant_name?.toLowerCase().includes(nameValue.toLowerCase())
   );
+  const filteredSchools = schoolList.filter((s) =>
+    !nameValue || s.institutionName?.toLowerCase().includes(nameValue.toLowerCase())
+  );
+  const filteredPending = pendingProspects.filter((p) =>
+    !nameValue || p.tenant_name?.toLowerCase().includes(nameValue.toLowerCase())
+  );
+  const filteredApproved = approvedSchools.filter((s) =>
+    !nameValue || s.institutionName?.toLowerCase().includes(nameValue.toLowerCase())
+  );
+
+  const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const primaryLevels = ['Creche', 'Nursery', 'Primary'];
   const secondaryLevels = ['Junior Secondary', 'Senior Secondary', 'Vocational', 'Tertiary'];
 
   const schoolSummary = {
     total: schoolList.length,
-    active: schoolList.filter((s) => s.status === 'Active').length,
-    inactive: schoolList.filter((s) => s.status === 'Inactive').length,
-    subAgents: 0,
-
-    primary: schoolList.filter((s) => s.schoolDivisions?.some((d) => primaryLevels.includes(d)))
-      .length,
-
-    secondary: schoolList.filter((s) => s.schoolDivisions?.some((d) => secondaryLevels.includes(d)))
-      .length,
+    active: schoolList.filter((s) => s.status === 'active').length,
+    inactive: schoolList.filter((s) => s.status === 'inactive').length,
+    pending: pendingProspects.length,
+    primary: schoolList.filter((s) => s.schoolDivisions?.some((d) => primaryLevels.includes(d))).length,
+    secondary: schoolList.filter((s) => s.schoolDivisions?.some((d) => secondaryLevels.includes(d))).length,
   };
 
   const planSeries = [40, 15, 35, 10];
-
   const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
+  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
 
-  const planData = [
-    { name: 'Freemium', value: 40, color: '#EC468C' },
-    { name: 'Basic', value: 15, color: '#7987FF' },
-    { name: 'Basic +', value: 35, color: '#FFA5CB' },
-    { name: 'Basic ++', value: 10, color: '#8B48E3' },
-  ];
+  const isActive = String(schoolToDeactivate?.status).toLowerCase() === 'active';
 
-  const planColors = planData.map((p) => p.color);
+  // ── Shared table header cell style ────────────────────────────────────────
+  const thSx = { fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Breadcrumb title="School" items={BCrumb} />
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        {/* <Paper
-          sx={{
-            px: 3,
-            py: 2,
-            borderRadius: 2,
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-          }}
-        >
-          <Box
-            mb={3}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="h5" color="text.secondary">
-              Onboarding
-            </Typography>
-          </Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
-
-            <Box textAlign="right">
-              <Typography
-                sx={{
-                  fontSize: 40,
-                  fontWeight: 'bold',
-                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
-                  lineHeight: 1,
-                }}
-              >
-                {schoolSummary.total}
-              </Typography>
-
-              <Typography variant="h5" color="text.primary">
-                Total Schools
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-            <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
-              Active School
-            </Typography>
-
-            <Chip
-              label={schoolSummary.active}
-              size="small"
-              sx={{
-                background: '#BEEAA6',
-                color: '#0D47A1',
-                fontWeight: 'bold',
-                borderRadius: '20px',
-                px: 4,
-              }}
-            />
-          </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography sx={{ color: theme.palette.error.main, fontSize: 13, fontWeight: 'bold' }}>
-              Inactive School
-            </Typography>
-
-            <Chip
-              label={schoolSummary.inactive}
-              size="small"
-              sx={{
-                background: '#F96459',
-                color: '#fff',
-                fontWeight: 'bold',
-                borderRadius: '20px',
-                px: 4,
-              }}
-            />
-          </Box>
-        </Paper> */}
+      {/* ── Stat Cards ─────────────────────────────────────────────────────── */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' }, gap: 2, mb: 3 }}>
         <Paper
           sx={{
             p: 3,
@@ -445,88 +365,27 @@ const SchoolDashboard = () => {
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography variant="h6" fontWeight={600}>
-              Total School
-            </Typography>
-
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" fontWeight={600}>Total School</Typography>
             <Box
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
+              sx={{ width: 30, height: 30, borderRadius: 1, background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               onClick={() => setOpenTotalSchoolModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
           </Box>
-
-          <Box
-            sx={{
-              background: '#E6F7F1',
-              borderRadius: 1,
-              px: 3,
-              py: 1,
-              // width: '50%',
-              // maxWidth: 250,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 4,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#2CA87F',
-              }}
-            >
-              {schoolSummary.total}
-            </Typography>
+          <Box sx={{ background: '#E6F7F1', borderRadius: 1, px: 3, py: 1, display: 'inline-flex', alignItems: 'center', mb: 4 }}>
+            <Typography sx={{ fontSize: 20, fontWeight: 700, color: '#2CA87F' }}>{schoolSummary.total}</Typography>
           </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Active School
-              </Typography>
+              <Typography variant="h6" color="text.primary">Active School</Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.active}</Typography>
             </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: '#E5E7EB',
-              }}
-            />
-
+            <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Inactive School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {schoolSummary.inactive}
-              </Typography>
+              <Typography variant="h6" color="text.primary">Inactive School</Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.inactive}</Typography>
             </Box>
           </Box>
         </Paper>
@@ -539,687 +398,336 @@ const SchoolDashboard = () => {
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography variant="h6" fontWeight={600}>
-              Subscriptions
-            </Typography>
-
-            <Box
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" fontWeight={600}>Subscriptions</Typography>
+            <Box sx={{ width: 30, height: 30, borderRadius: 1, background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
           </Box>
-
-          <Box
-            sx={{
-              background: '#EEF2FF',
-              borderRadius: 1,
-              px: 3,
-              py: 1,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 4,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#4A3AFF',
-              }}
-            >
-              {schoolSummary.total}
-            </Typography>
+          <Box sx={{ background: '#EEF2FF', borderRadius: 1, px: 3, py: 1, display: 'inline-flex', alignItems: 'center', mb: 4 }}>
+            <Typography sx={{ fontSize: 20, fontWeight: 700, color: '#4A3AFF' }}>{schoolSummary.total}</Typography>
           </Box>
-
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Primary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {schoolSummary.primary}
-              </Typography>
+              <Typography variant="h6" color="text.primary">Primary School</Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.primary}</Typography>
             </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: '#E5E7EB',
-              }}
-            />
-
+            <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Secondary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {schoolSummary.secondary}
-              </Typography>
+              <Typography variant="h6" color="text.primary">Secondary School</Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.secondary}</Typography>
             </Box>
           </Box>
         </Paper>
 
         <Paper
           sx={{
-            // px: 3,
-            // py: 2,
             borderRadius: 2,
             background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          <Box
-            // mb={2}
-            sx={{
-              p: 2,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="h5" color="text.primary">
-              Login Activities
-            </Typography>
-
+          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5" color="text.primary">Login Activities</Typography>
             <Box
-              sx={{
-                width: 30,
-                height: 30,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-              onClick={() => setOpenLoggedInUsersModal(true)}
+              sx={{ bgcolor: '#3d3d3d', p: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#111' } }}
+              onClick={() => setOpenLoginModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
           </Box>
-
-          <Box
-            sx={{
-              px: 3,
-              // py: 1,
-              mt: 1,
-            }}
-          >
-            {[
-              { label: 'Teacher:', value: 0 },
-              { label: 'SPA', value: 0 },
-              { label: 'Student', value: 0 },
-              { label: 'Parent', value: 0 },
-            ].map((item, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 1,
-                }}
-              >
-                <Typography variant="h5" color="text.primary">
-                  {item.label}
-                </Typography>
-
-                <Typography
-                  variant="h5"
-                  sx={{
-                    color: theme.palette.error.main,
-                  }}
-                >
-                  {item.value}
-                </Typography>
+          <Box sx={{ px: 3, mt: 1 }}>
+            {[{ label: 'Teacher:', value: 0 }, { label: 'SPA', value: 0 }, { label: 'Student', value: 0 }, { label: 'Parent', value: 0 }].map((item, index) => (
+              <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="h5" color="text.primary">{item.label}</Typography>
+                <Typography variant="h5" sx={{ color: theme.palette.error.main }}>{item.value}</Typography>
               </Box>
             ))}
           </Box>
         </Paper>
-
-        {/* <Paper
-          sx={{
-            borderRadius: 2,
-            overflow: 'hidden',
-            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-          }}
-        >
-          <Box
-            sx={{
-              p: 2,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              color: theme.palette.mode === 'dark' ? '#fff' : '#5C5C5C',
-              bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F8F8F8',
-              borderRadius: '8px 8px 0 0',
-            }}
-          >
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 'bold',
-                color: theme.palette.mode === 'dark' ? '#fff' : '#5E5E5E',
-              }}
-            >
-              Login Activities
-            </Typography>
-
-            <Box
-              sx={{
-                width: 30,
-                height: 30,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-              onClick={() => setOpenLoggedInUsersModal(true)}
-            >
-              <IconChartBar size={22} color="#FFFFFF" />
-            </Box>
-          </Box>
-
-          <Divider />
-
-          <Box sx={{ p: 2 }}>
-            {[
-              { label: 'Teacher:', value: 0 },
-              { label: 'SPA', value: 0 },
-              { label: 'Student', value: 0 },
-              { label: 'Parent', value: 0 },
-            ].map((item, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 1,
-                }}
-              >
-                <Typography variant="h5" color="text.primary">
-                  {item.label}
-                </Typography>
-
-                <Typography
-                  variant="h5"
-                  sx={{
-                    color: theme.palette.error.main,
-                  }}
-                >
-                  {item.value}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        </Paper> */}
 
         <Paper
           sx={{
-            // px: 3,
-            // py: 2,
             borderRadius: 2,
             background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
             border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
           }}
         >
-          <Box
-            // mb={2}
-            sx={{
-              p: 2,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="h5" color="text.primary">
-              Plan Distribution
-            </Typography>
-
+          <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5" color="text.primary">Plan Distribution</Typography>
             <Box
-              sx={{
-                width: 30,
-                height: 30,
-                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-              onClick={() => setOpenPlanDistributionModal(true)}
+              sx={{ width: 30, height: 30, background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              onClick={() => setOpenPlanModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>
           </Box>
-
-          <Box>
-            <Box
-              sx={{
-                height: 170,
-                display: 'flex',
-                alignItems: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              <ReusablePieChart
-                series={planSeries}
-                colors={planColors}
-                labels={planLabels}
-                height={180}
-                hideCard
-              />
-            </Box>
+          <Box sx={{ height: 170, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+            <ReusablePieChart series={planSeries} colors={planColors} labels={planLabels} height={180} hideCard />
           </Box>
         </Paper>
       </Box>
 
-      <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={handleTabChange} aria-label="school dashboard tabs">
-          <Tab icon={<IconSchool size={20} />} iconPosition="start" label="Schools List" />
-          <Tab
-            icon={<IconSettings size={20} />}
-            iconPosition="start"
-            label="School Configuration"
-          />
-        </Tabs>
-      </Box>
+      {/* ── Tabs ───────────────────────────────────────────────────────────── */}
+      <BlankCard>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+          <Tabs value={activeTab} onChange={(_, v) => { setActiveTab(v); setPage(0); setNameValue(''); }}
+            sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' } }}>
+            <Tab label="Application" />
+            <Tab label={<Stack direction="row" spacing={1} alignItems="center">
+              <span>Pending Approvals</span>
+              {pendingProspects.length > 0 && (
+                <Chip size="small" label={pendingProspects.length}
+                  sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, height: 20, fontSize: '11px' }} />
+              )}
+            </Stack>} />
+            <Tab label="Approved" />
+          </Tabs>
+        </Box>
 
-      {activeTab === 0 && (
-        <BlankCard>
-          <Box sx={{ p: 3 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h5">All Schools</Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleOpen}
-                startIcon={<IconUserPlus size={18} />}
-              >
+        <Box sx={{ p: 3 }}>
+          {/* Search + Add button row */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2} mb={3}>
+            <TextField size="small" label="Search by name" value={nameValue}
+              onChange={(e) => { setNameValue(e.target.value); setPage(0); }}
+              sx={{ minWidth: 260 }} />
+            {activeTab === 0 && (
+              <Button variant="contained" startIcon={<IconUserPlus size={18} />}
+                onClick={() => setOpenRegisterModal(true)}
+                sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', '&:hover': { bgcolor: '#303f9f' } }}>
                 Add New School
               </Button>
-            </Stack>
+            )}
+          </Stack>
 
-            <Grid container spacing={2} mb={3} alignItems="center">
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="Search School Name"
-                  value={nameValue}
-                  onChange={(e) => setNameValue(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} md={2}>
-                <Button variant="contained" fullWidth onClick={fetchSchools} disabled={loading}>
-                  {loading ? <CircularProgress size={24} /> : 'Refresh'}
-                </Button>
-              </Grid>
-            </Grid>
+          {/* ── Tab 0: Application — all prospective records ── */}
+          {activeTab === 0 && (
+            prospectLoading ? (
+              <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
+            ) : (
+              <TableContainer component={Paper} elevation={0} variant="outlined">
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={thSx}>S/N</TableCell>
+                      <TableCell sx={thSx}>School Name</TableCell>
+                      <TableCell sx={thSx}>Admin Contact</TableCell>
+                      <TableCell sx={thSx}>Agent</TableCell>
+                      <TableCell sx={thSx}>Submitted</TableCell>
+                      <TableCell sx={thSx}>Status</TableCell>
+                      <TableCell sx={thSx} align="right">Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {paginate(filteredAll).length > 0 ? paginate(filteredAll).map((row, i) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>{page * rowsPerPage + i + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="subtitle2" fontWeight={700}>{row.tenant_name}</Typography>
+                          <Typography variant="caption" color="textSecondary">{row.tenant_short_name}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="caption" display="block">{row.admin_email}</Typography>
+                          <Typography variant="caption" color="textSecondary">{row.admin_phone}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{row.agent?.org_name || row.agent?.name || '—'}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="caption">{row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}</Typography>
+                        </TableCell>
+                        <TableCell>{statusChip(row.status)}</TableCell>
+                        <TableCell align="right">
+                          <Button size="small" variant="outlined" startIcon={<IconEye size={14} />}
+                            onClick={() => { setReviewProspect(row); setReviewOpen(true); }}
+                            sx={{ textTransform: 'none', borderRadius: '6px' }}>
+                            View / Review
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow><TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                        <Typography color="textSecondary">No applications found.</Typography>
+                      </TableCell></TableRow>
+                    )}
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TablePagination rowsPerPageOptions={[5, 10, 25]} count={filteredAll.length}
+                        rowsPerPage={rowsPerPage} page={page}
+                        onPageChange={(_, p) => setPage(p)}
+                        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
+                    </TableRow>
+                  </TableFooter>
+                </Table>
+              </TableContainer>
+            )
+          )}
 
+          {/* ── Tab 1: Pending Approvals ─────────────────────────────── */}
+          {activeTab === 1 && (
             <TableContainer component={Paper} elevation={0} variant="outlined">
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>S/N</TableCell>
-                    <TableCell>School Name</TableCell>
-                    {/* <TableCell>Url</TableCell> */}
-                    <TableCell>Contact Details</TableCell>
-                    <TableCell>Agent In Charge</TableCell>
-                    <TableCell>Plan (Population)</TableCell>
-                    <TableCell>Color Scheme</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Action</TableCell>
+                    <TableCell sx={thSx}>S/N</TableCell>
+                    <TableCell sx={thSx}>School Name</TableCell>
+                    <TableCell sx={thSx}>Admin Contact</TableCell>
+                    <TableCell sx={thSx}>Agent</TableCell>
+                    <TableCell sx={thSx}>Submitted</TableCell>
+                    <TableCell sx={thSx}>Status</TableCell>
+                    <TableCell sx={thSx} align="right">Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedSchools.length > 0 ? (
-                    paginatedSchools.map((row, index) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <img
-                              src={row.schoolImage || '/src/assets/images/users/default_avatar.png'}
-                              alt={row.institutionName}
-                              style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                              }}
-                            />
-
-                            <Box>
-                              <Typography variant="subtitle2">{row.institutionName}</Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        {/* <TableCell>{row.schoolUrl || '-'}</TableCell> */}
-                        <TableCell>
-                          {row.contactEmail || row.contactPhone ? (
-                            <>
-                              {row.contactEmail && (
-                                <Typography variant="body2">{row.contactEmail}</Typography>
-                              )}
-                              {row.contactPhone && (
-                                <Typography variant="caption" display="block" color="textSecondary">
-                                  {row.contactPhone}
-                                </Typography>
-                              )}
-                            </>
-                          ) : (
-                            '-'
-                          )}
-                        </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <img
-                              src={row.agentImage || '/src/assets/images/users/default_avatar.png'}
-                              alt={row.agent}
-                              style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                              }}
-                            />
-
-                            <Box>
-                              <Typography variant="subtitle2">{row.agent || '-'}</Typography>
-                              <Typography variant="caption" color="textSecondary">
-                                {row.agentEmail}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          {row.plan || row.population ? (
-                            <Stack direction="column" spacing={0.5}>
-                              {row.plan && (
-                                <Typography
-                                  variant="body2"
-                                  fontWeight="600"
-                                  sx={{ textTransform: 'capitalize' }}
-                                >
-                                  {row.plan}
-                                </Typography>
-                              )}
-                              {row.population !== null && row.population !== undefined && (
-                                <Typography variant="caption" color="textSecondary">
-                                  Modules: {row.population}
-                                </Typography>
-                              )}
-                            </Stack>
-                          ) : (
-                            <Typography variant="caption" color="textSecondary">
-                              -
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {row.headerColor || row.sidebarColor || row.bodyColor ? (
-                            <Box
-                              sx={{
-                                display: 'inline-block',
-                                width: 40,
-                                height: 30,
-                                borderRadius: '5px',
-                                overflow: 'hidden',
-                              }}
-                              title={`Header: ${row.headerColor} | Sidebar: ${row.sidebarColor} | Body: ${row.bodyColor}`}
-                            >
-                              <Box
-                                sx={{
-                                  width: '100%',
-                                  height: '30%',
-                                  backgroundColor: row.headerColor,
-                                  borderRadius: 0,
-                                }}
-                              />
-                              <Box sx={{ display: 'flex', height: '70%' }}>
-                                <Box
-                                  sx={{
-                                    width: '50%',
-                                    height: '100%',
-                                    backgroundColor: row.sidebarColor,
-                                    borderRadius: 0,
-                                  }}
-                                />
-                                <Box
-                                  sx={{
-                                    width: '50%',
-                                    height: '100%',
-                                    backgroundColor: row.bodyColor,
-                                    borderRadius: 0,
-                                  }}
-                                />
-                              </Box>
-                            </Box>
-                          ) : (
-                            <Typography variant="caption" color="textSecondary">
-                              -
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={row.status}
-                            size="small"
-                            sx={{
-                              bgcolor:
-                                row.status === 'Active'
-                                  ? (theme) => theme.palette.success.light
-                                  : (theme) => theme.palette.error.light,
-                              color:
-                                row.status === 'Active'
-                                  ? (theme) => theme.palette.success.main
-                                  : (theme) => theme.palette.error.main,
-                              borderRadius: '8px',
-                              fontWeight: 600,
-                            }}
-                          />
-                        </TableCell>
-
-                        <TableCell align="right">
-                          <IconButton onClick={(e) => handleActionClick(e, row.id)}>
-                            <MoreVertIcon />
-                          </IconButton>
-                          <Menu
-                            anchorEl={actionAnchorEl}
-                            open={Boolean(actionAnchorEl) && activeRow === row.id}
-                            onClose={handleActionClose}
-                          >
-                            <MenuItem
-                              onClick={() => {
-                                handleLoginAsAdmin(row);
-                              }}
-                            >
-                              Login As Admin
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setEditSchoolData(row.raw);
-                                setOpenEditModal(true);
-                                handleActionClose();
-                              }}
-                            >
-                              Edit School
-                            </MenuItem>
-                            <MenuItem
-                            // onClick={() => {
-                            //   setEditSchoolData(row.raw);
-                            //   setOpenEditModal(true);
-                            //   handleActionClose();
-                            // }}
-                            >
-                              Details
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => {
-                                setSchoolToDeactivate(row);
-                                setOpenDeactivateDialog(true);
-                                handleActionClose();
-                              }}
-                            >
-                              {row?.status?.trim().toLowerCase() === 'active'
-                                ? 'Deactivate'
-                                : 'Activate'}
-                            </MenuItem>
-                            <MenuItem
-                            // onClick={() => {
-                            //   setSchoolToDeactivate(row);
-                            //   setOpenDeactivateDialog(true);
-                            //   handleActionClose();
-                            // }}
-                            >
-                              School
-                            </MenuItem>
-                            <MenuItem
-                            // onClick={() => {
-                            //   setSchoolToDeactivate(row);
-                            //   setOpenDeactivateDialog(true);
-                            //   handleActionClose();
-                            // }}
-                            >
-                              Change
-                            </MenuItem>
-                            {/* <MenuItem
-                              onClick={() => {
-                                setSchoolToDelete(row);
-                                setOpenDeleteDialog(true);
-                                handleActionClose();
-                              }}
-                              sx={{ color: 'error.main' }}
-                            >
-                              Delete
-                            </MenuItem> */}
-                          </Menu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
-                        <Typography variant="body1" color="textSecondary">
-                          No schools found.
-                        </Typography>
+                  {paginate(filteredPending).length > 0 ? paginate(filteredPending).map((row, i) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell>{page * rowsPerPage + i + 1}</TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight={700}>{row.tenant_name}</Typography>
+                        <Typography variant="caption" color="textSecondary">{row.tenant_short_name}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" display="block">{row.admin_email}</Typography>
+                        <Typography variant="caption" color="textSecondary">{row.admin_phone}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{row.agent?.org_name || row.agent?.name || '—'}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption">{row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}</Typography>
+                      </TableCell>
+                      <TableCell>{statusChip(row.status)}</TableCell>
+                      <TableCell align="right">
+                        <Button size="small" variant="outlined" startIcon={<IconEye size={14} />}
+                          onClick={() => { setReviewProspect(row); setReviewOpen(true); }}
+                          sx={{ textTransform: 'none', borderRadius: '6px' }}>
+                          View / Review
+                        </Button>
                       </TableCell>
                     </TableRow>
+                  )) : (
+                    <TableRow><TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                      <Typography color="textSecondary">No pending applications.</Typography>
+                    </TableCell></TableRow>
                   )}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TablePagination
-                      rowsPerPageOptions={[5, 10, 25]}
-                      count={filteredSchools.length}
-                      rowsPerPage={rowsPerPage}
-                      page={page}
-                      onPageChange={handleChangePage}
-                      onRowsPerPageChange={handleChangeRowsPerPage}
-                    />
+                    <TablePagination rowsPerPageOptions={[5, 10, 25]} count={filteredPending.length}
+                      rowsPerPage={rowsPerPage} page={page}
+                      onPageChange={(_, p) => setPage(p)}
+                      onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
                   </TableRow>
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Box>
-        </BlankCard>
-      )}
+          )}
 
-      {activeTab === 1 && <SchoolCategorizationManager />}
+          {/* ── Tab 2: Approved ──────────────────────────────────────── */}
+          {activeTab === 2 && (
+            <TableContainer component={Paper} elevation={0} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={thSx}>S/N</TableCell>
+                    <TableCell sx={thSx}>School Name</TableCell>
+                    <TableCell sx={thSx}>Contact</TableCell>
+                    <TableCell sx={thSx}>Agent</TableCell>
+                    <TableCell sx={thSx}>Status</TableCell>
+                    <TableCell sx={thSx} align="right">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginate(filteredApproved).length > 0 ? paginate(filteredApproved).map((row, i) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell>{page * rowsPerPage + i + 1}</TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <img src={row.schoolImage || '/src/assets/images/users/default_avatar.png'}
+                            alt={row.institutionName} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={700}>{row.institutionName}</Typography>
+                            <Typography variant="caption" color="textSecondary">{row.schoolUrl}</Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="caption" display="block">{row.contactEmail}</Typography>
+                        <Typography variant="caption" color="textSecondary">{row.contactPhone}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{row.agent}</Typography>
+                      </TableCell>
+                      <TableCell>{statusChip(row.status)}</TableCell>
+                      <TableCell align="right">
+                        <IconButton size="small" onClick={(e) => handleActionClick(e, row.id)}>
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                        <Menu anchorEl={actionAnchorEl} open={Boolean(actionAnchorEl) && activeRow === row.id} onClose={handleActionClose}
+                          PaperProps={{ sx: { borderRadius: '8px', minWidth: 160 } }}>
+                          <MenuItem onClick={() => handleLoginAsAdmin(row)}>Login As Admin</MenuItem>
+                          <MenuItem onClick={() => { setEditSchoolData(row.raw); setOpenEditModal(true); handleActionClose(); }}>Edit School</MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow><TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+                      <Typography color="textSecondary">No approved schools yet.</Typography>
+                    </TableCell></TableRow>
+                  )}
+                </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination rowsPerPageOptions={[5, 10, 25]} count={filteredApproved.length}
+                      rowsPerPage={rowsPerPage} page={page}
+                      onPageChange={(_, p) => setPage(p)}
+                      onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      </BlankCard>
 
-      {/* Modals & Dialogs */}
-      <ReusableModal
-        open={openRegisterModal || openEditModal}
-        onClose={handleClose}
-        title={openEditModal ? 'Edit School' : 'Register School'}
-        size="large"
-      >
+      {/* ── Modals & Dialogs ───────────────────────────────────────────────── */}
+      <ReusableModal open={openRegisterModal || openEditModal} onClose={() => { setOpenRegisterModal(false); setOpenEditModal(false); setEditSchoolData(null); }}
+        title={openEditModal ? 'Edit School' : 'Register School'} size="large">
         <RegisterSchoolForm
           actionType={openEditModal ? 'update' : 'create'}
           selectedSchool={editSchoolData}
           onSubmit={handleRefresh}
-          onCancel={handleClose}
+          onCancel={() => { setOpenRegisterModal(false); setOpenEditModal(false); setEditSchoolData(null); }}
+          useProspective={!openEditModal}
         />
       </ReusableModal>
 
-      <ConfirmationDialog
-        open={openDeleteDialog}
-        onClose={() => setOpenDeleteDialog(false)}
-        onConfirm={() => handleDeleteSchool(schoolToDelete)}
-        title="Delete School"
-        message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This action is irreversible.`}
-        confirmText="Delete"
-        severity="error"
-      />
+      <ReviewModal open={reviewOpen} onClose={() => setReviewOpen(false)}
+        prospect={reviewProspect} onApprove={handleApprove} onReject={handleReject} loading={actionLoading} />
 
-      <ConfirmationDialog
-        open={openDeactivateDialog}
-        onClose={() => setOpenDeactivateDialog(false)}
-        onConfirm={() => handleDeactivateSchool(schoolToDeactivate)}
+      <ConfirmationDialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}
+        onConfirm={() => handleDelete(schoolToDelete)} title="Delete School"
+        message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This is irreversible.`}
+        confirmText="Delete" severity="error" />
+
+      <ConfirmationDialog open={openDeactivateDialog} onClose={() => setOpenDeactivateDialog(false)}
+        onConfirm={() => handleDeactivate(schoolToDeactivate)}
         title={isActive ? 'Deactivate School' : 'Activate School'}
-        message={`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} ${
-          schoolToDeactivate?.institutionName
-        }?`}
-        confirmText={isActive ? 'Deactivate' : 'Activate'}
-        severity={isActive ? 'warning' : 'success'}
-      />
+        message={`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} ${schoolToDeactivate?.institutionName}?`}
+        confirmText={isActive ? 'Deactivate' : 'Activate'} severity={isActive ? 'warning' : 'success'} />
 
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))} sx={{ width: '100%' }}>
+          {snackbar.message}
         </Alert>
       </Snackbar>
 
-      <PlanDistributionModal
-        open={openPlanDistributionModal}
-        onClose={() => setOpenPlanDistributionModal(false)}
-      />
-      <LoginActivities
-        open={openLoggedInUsersModal}
-        onClose={() => setOpenLoggedInUsersModal(false)}
-      />
-      <TotalSchoolModal
-        open={openTotalSchoolModal}
-        onClose={() => setOpenTotalSchoolModal(false)}
-      />
-    </LocalizationProvider>
+      <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} />
+      <LoginActivities open={openLoginModal} onClose={() => setOpenLoginModal(false)} />
+      <TotalSchoolModal open={openTotalSchoolModal} onClose={() => setOpenTotalSchoolModal(false)} />
+    </LocalizationProvider >
   );
 };
 

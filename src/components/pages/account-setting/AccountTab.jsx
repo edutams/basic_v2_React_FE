@@ -41,11 +41,12 @@ const AccountTab = () => {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   const hostname = window.location.hostname;
-  const centralHost = import.meta.env.VITE_API_BASE_URL 
-    ? new URL(import.meta.env.VITE_API_BASE_URL).hostname 
+  const centralHost = import.meta.env.VITE_API_BASE_URL
+    ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
     : 'basic_v2.test';
-  
-  const isTenantSubdomain = hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
+
+  const isTenantSubdomain =
+    hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
 
   // Prefill fields when user data is available
   useEffect(() => {
@@ -189,7 +190,7 @@ const AccountTab = () => {
                 <CustomTextField
                   id="name"
                   name="name"
-                  value={formData.name}
+                  value={formData.org_name || formData.name}
                   onChange={handleProfileChange}
                   fullWidth
                   disabled={isTenantSubdomain}
@@ -241,28 +242,28 @@ const AccountTab = () => {
                   />
                 </Box>
               )}
-                {!isTenantSubdomain && (
-                  <Stack direction="row" spacing={2} mt={3}>
-                    <Box>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        type="submit"
-                        disabled={isProfileLoading}
-                        startIcon={
-                          isProfileLoading ? <CircularProgress size={20} color="inherit" /> : null
-                        }
-                      >
-                        {isProfileLoading ? 'Saving...' : 'Save Changes'}
-                      </Button>
-                    </Box>
-                    <Box>
-                      <Button variant="outlined" color="error" disabled={isProfileLoading}>
-                        Cancel
-                      </Button>
-                    </Box>
-                  </Stack>
-                )}
+              {!isTenantSubdomain && (
+                <Stack direction="row" spacing={2} mt={3}>
+                  <Box>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      type="submit"
+                      disabled={isProfileLoading}
+                      startIcon={
+                        isProfileLoading ? <CircularProgress size={20} color="inherit" /> : null
+                      }
+                    >
+                      {isProfileLoading ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </Box>
+                  <Box>
+                    <Button variant="outlined" color="error" disabled={isProfileLoading}>
+                      Cancel
+                    </Button>
+                  </Box>
+                </Stack>
+              )}
             </Box>
           </CardContent>
         </BlankCard>

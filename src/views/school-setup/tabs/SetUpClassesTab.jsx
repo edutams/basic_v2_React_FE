@@ -15,10 +15,13 @@ import { IconDotsVertical } from '@tabler/icons-react';
 
 const SetUpClassesTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
+  const [iconHovered, setIconHovered] = useState(null);
+  const [iconClicked, setIconClicked] = useState(null);
 
   const handleChange = () => {
     setHasChanges(true);
   };
+
   return (
     <TableContainer>
       <Table
@@ -41,8 +44,8 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
         {/* Body */}
         <TableBody>
           {['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'].map((item, index) => {
-            const highlight = item === 'JSS 3';
-            const cellBg = highlight ? '#fbe4e4' : '#f6f7f9';
+            const isHighlighted = iconHovered === index || iconClicked === index;
+            const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
             return (
               <TableRow key={index}>
@@ -60,7 +63,13 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       gap: 1,
                     }}
                   >
-                    <IconButton size="small" color="error">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onMouseEnter={() => setIconHovered(index)}
+                      onMouseLeave={() => setIconHovered(null)}
+                      onClick={() => setIconClicked(iconClicked === index ? null : index)}
+                    >
                       ✕
                     </IconButton>
 
@@ -100,7 +109,13 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                     p: 1,
                   }}
                 >
-                  <Box display="flex" gap={1}>
+                  <Box
+                    display="flex"
+                    gap={1}
+                    justifyContent="center"
+                    alignItems="center"
+                    width="100%"
+                  >
                     <TextField
                       size="small"
                       defaultValue={item}

@@ -58,6 +58,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
                   <Box
@@ -104,6 +105,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                   align="center"
                 >
@@ -138,6 +140,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                   align="center"
                 >
@@ -159,6 +162,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                   align="center"
                 >

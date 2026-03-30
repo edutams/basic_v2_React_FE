@@ -46,11 +46,11 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
 
             return (
               <TableRow key={index}>
-                {/* Classes + cancel icon together */}
                 <TableCell
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
                   <Box
@@ -97,6 +97,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
                   <Box display="flex" gap={1}>
@@ -134,6 +135,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
                   <Box

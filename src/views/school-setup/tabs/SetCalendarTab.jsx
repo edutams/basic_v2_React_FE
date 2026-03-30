@@ -198,15 +198,15 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                 <Box
                   sx={{
                     ml: 'auto',
-                    px: 2,
-                    py: 1,
+                    px: 1.5,
+                    py: 0.5,
                     borderRadius: 3,
                     border: '1px solid',
                     borderColor: 'primary.main',
                     color: 'primary.main',
                   }}
                 >
-                  <Typography variant="h6">13 Weeks • 65 school days</Typography>
+                  <Typography variant="caption">13 Weeks • 65 school days</Typography>
                 </Box>
               </Box>
             }

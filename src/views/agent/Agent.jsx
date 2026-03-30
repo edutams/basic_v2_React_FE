@@ -194,16 +194,6 @@ const Agent = () => {
         const response = await agentApi.getAll(params);
         if (response.success) {
           const mappedData = response.data.map((agent, index) => {
-            let parsedColor = agent.color;
-            if (typeof agent.color === 'string') {
-              try {
-                parsedColor = JSON.parse(agent.color);
-              } catch (e) {
-                console.error('Error parsing color JSON', e);
-                parsedColor = {};
-              }
-            }
-
             return {
               s_n: index + 1,
               id: agent.id,
@@ -218,9 +208,7 @@ const Agent = () => {
               tenants_count: agent.tenants_count || 0,
               sub_agents_count: agent.children_count || 0,
               access_level: agent.access_level,
-              headerColor: parsedColor?.headcolor,
-              sidebarColor: parsedColor?.sidecolor,
-              bodyColor: parsedColor?.bodycolor,
+              primaryColor: agent.primary_color || null,
               status: agent.status
                 ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
                 : 'Inactive',
@@ -992,7 +980,7 @@ const Agent = () => {
                      justifyContent: 'center',
                      cursor: 'pointer',
                    }}
-                   onClick={() => setIsSchoolModalOpen(true)}
+                   onClick={() => setIsPlanModalOpen(true)}
                  >
                    <IconChartBar size={22} color="#FFFFFF" />
                  </Box>
@@ -1079,7 +1067,7 @@ const Agent = () => {
      
                  <Box
                    sx={{ bgcolor: '#3d3d3d', p: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#111' } }}
-                   onClick={() => setIsPlanModalOpen(true)}
+                   onClick={() => setIsLoggedInUsersModalOpen(true)}
                  >
                    <IconChartBar size={22} color="#FFFFFF" />
                  </Box>

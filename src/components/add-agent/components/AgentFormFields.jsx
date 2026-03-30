@@ -192,15 +192,13 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
               fullWidth
               label="Primary Color"
               value={(() => {
-                const v = formik.values.headerColor || '';
+                const v = formik.values.primaryColor || '';
                 return v.startsWith('#') ? v.slice(1).toUpperCase() : v.toUpperCase();
               })()}
               onChange={(e) => {
                 const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
                 const color = raw ? `#${raw}` : '';
-                formik.setFieldValue('headerColor', color);
-                formik.setFieldValue('sidebarColor', color);
-                formik.setFieldValue('bodyColor', color);
+                formik.setFieldValue('primaryColor', color);
               }}
               onFocus={() => setColorPickerOpen(true)}
               placeholder="Enter Hex e.g. 3949AB"
@@ -213,7 +211,7 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
                         width: 22,
                         height: 22,
                         borderRadius: '4px',
-                        bgcolor: (formik.values.headerColor || '').length >= 4 ? formik.values.headerColor : '#e0e0e0',
+                        bgcolor: (formik.values.primaryColor || '').length >= 4 ? formik.values.primaryColor : '#e0e0e0',
                         border: '1px solid rgba(0,0,0,0.2)',
                         cursor: 'pointer',
                         flexShrink: 0,
@@ -241,11 +239,9 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
                 '& .react-colorful__pointer': { width: '20px', height: '20px', borderWidth: '3px' },
               }}>
                 <HexColorPicker
-                  color={(formik.values.headerColor || '').length >= 4 ? formik.values.headerColor : '#3949ab'}
+                  color={(formik.values.primaryColor || '').length >= 4 ? formik.values.primaryColor : '#3949ab'}
                   onChange={(color) => {
-                    formik.setFieldValue('headerColor', color);
-                    formik.setFieldValue('sidebarColor', color);
-                    formik.setFieldValue('bodyColor', color);
+                    formik.setFieldValue('primaryColor', color);
                   }}
                 />
                 <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
@@ -254,7 +250,7 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
                   </Box>
                   <Box sx={{ bgcolor: '#2d2d2d', borderRadius: '6px', px: 1.5, py: 0.6, flex: 1 }}>
                     <Typography variant="caption" sx={{ color: '#fff', fontFamily: 'monospace', fontSize: '12px' }}>
-                      {(formik.values.headerColor || '').replace('#', '').toUpperCase() || '------'}
+                      {(formik.values.primaryColor || '').replace('#', '').toUpperCase() || '------'}
                     </Typography>
                   </Box>
                 </Box>

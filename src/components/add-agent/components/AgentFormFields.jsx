@@ -21,6 +21,7 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
   const [lgas, setLgas] = useState([]);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
+
   useEffect(() => {
     const fetchStates = async () => {
       try {
@@ -185,80 +186,178 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
 
       {/* Primary Color — same row as LGA */}
       {canSelectColor && (
-      <Grid item size={{ xs: 12, md: 6 }}>
-        <ClickAwayListener onClickAway={() => setColorPickerOpen(false)}>
-          <Box sx={{ position: 'relative' }}>
-            <TextField
-              fullWidth
-              label="Primary Color"
-              value={(() => {
-                const v = formik.values.primaryColor || '';
-                return v.startsWith('#') ? v.slice(1).toUpperCase() : v.toUpperCase();
-              })()}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
-                const color = raw ? `#${raw}` : '';
-                formik.setFieldValue('primaryColor', color);
-              }}
-              onFocus={() => setColorPickerOpen(true)}
-              placeholder="Enter Hex e.g. 3949AB"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box
-                      onClick={() => setColorPickerOpen(true)}
-                      sx={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: '4px',
-                        bgcolor: (formik.values.primaryColor || '').length >= 4 ? formik.values.primaryColor : '#e0e0e0',
-                        border: '1px solid rgba(0,0,0,0.2)',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Typography variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontFamily: 'monospace' }}>#</Typography>
-                  </InputAdornment>
-                ),
-              }}
-              inputProps={{ style: { fontFamily: 'monospace' } }}
-            />
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <ClickAwayListener onClickAway={() => setColorPickerOpen(false)}>
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                fullWidth
+                label="Primary Color"
+                value={formik.values.primaryColor || ''}
+                onChange={(e) => {
+                  let value = e.target.value.trim();
 
-            {colorPickerOpen && (
-              <Paper elevation={8} sx={{
-                position: 'absolute',
-                zIndex: 1400,
-                top: 'calc(100% + 6px)',
-                left: 0,
-                borderRadius: '12px',
-                p: 1.5,
-                bgcolor: '#1e1e1e',
-                '& .react-colorful': { width: '220px', height: '200px' },
-                '& .react-colorful__saturation': { borderRadius: '8px 8px 0 0' },
-                '& .react-colorful__hue': { height: '14px', borderRadius: '8px', mt: '10px' },
-                '& .react-colorful__pointer': { width: '20px', height: '20px', borderWidth: '3px' },
-              }}>
-                <HexColorPicker
-                  color={(formik.values.primaryColor || '').length >= 4 ? formik.values.primaryColor : '#3949ab'}
-                  onChange={(color) => {
-                    formik.setFieldValue('primaryColor', color);
+                  const themeColorMap = {
+                    primary: '#1976d2',
+                    secondary: '#9c27b0',
+                    success: '#2e7d32',
+                    error: '#d32f2f',
+                    warning: '#ed6c02',
+                  };
+
+                  // 🔥 Theme keyword support
+                  if (themeColorMap[value.toLowerCase()]) {
+                    formik.setFieldValue(
+                      'primaryColor',
+                      themeColorMap[value.toLowerCase()]
+                    );
+                    return;
+                  }
+
+                  // HEX without #
+                  if (/^[0-9a-fA-F]{3,6}$/.test(value)) {
+                    formik.setFieldValue('primaryColor', `#${value}`);
+                    return;
+                  }
+
+                  // HEX with #
+                  if (/^#[0-9a-fA-F]{3,6}$/.test(value)) {
+                    formik.setFieldValue('primaryColor', value);
+                    return;
+                  }
+
+                  // Named colors (red, blue, etc.)
+                  formik.setFieldValue('primaryColor', value.toLowerCase());
+                }}
+                onFocus={() => setColorPickerOpen(true)}
+                placeholder="e.g. 3949AB, #3949AB, red, primary"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Box
+                        onClick={() => setColorPickerOpen(true)}
+                        sx={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: '4px',
+                          bgcolor: (() => {
+                            const color = formik.values.primaryColor;
+                            const s = new Option().style;
+                            s.color = color;
+                            return s.color ? color : '#e0e0e0';
+                          })(),
+                          border: '1px solid rgba(0,0,0,0.2)',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          ml: 0.5,
+                          color: 'text.secondary',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        #
+                      </Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                inputProps={{ style: { fontFamily: 'monospace' } }}
+              />
+
+              {colorPickerOpen && (
+                <Paper
+                  elevation={8}
+                  sx={{
+                    position: 'absolute',
+                    zIndex: 1400,
+                    top: 'calc(100% + 6px)',
+                    left: 0,
+                    borderRadius: '12px',
+                    p: 1.5,
+                    bgcolor: '#1e1e1e',
+                    '& .react-colorful': { width: '220px', height: '200px' },
+                    '& .react-colorful__saturation': {
+                      borderRadius: '8px 8px 0 0',
+                    },
+                    '& .react-colorful__hue': {
+                      height: '14px',
+                      borderRadius: '8px',
+                      mt: '10px',
+                    },
+                    '& .react-colorful__pointer': {
+                      width: '20px',
+                      height: '20px',
+                      borderWidth: '3px',
+                    },
                   }}
-                />
-                <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
-                  <Box sx={{ bgcolor: '#2d2d2d', borderRadius: '6px', px: 1.5, py: 0.6 }}>
-                    <Typography variant="caption" sx={{ color: '#fff', fontFamily: 'monospace', fontSize: '12px', fontWeight: 600 }}>Hex</Typography>
+                >
+                  <HexColorPicker
+                    color={(() => {
+                      const color = formik.values.primaryColor;
+                      const s = new Option().style;
+                      s.color = color;
+                      return s.color ? color : '#3949ab';
+                    })()}
+                    onChange={(color) => {
+                      formik.setFieldValue('primaryColor', color);
+                    }}
+                  />
+
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+                    <Box
+                      sx={{
+                        bgcolor: '#2d2d2d',
+                        borderRadius: '6px',
+                        px: 1.5,
+                        py: 0.6,
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: '#fff',
+                          fontFamily: 'monospace',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Value
+                      </Typography>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        bgcolor: (() => {
+                          const color = formik.values.primaryColor;
+                          const s = new Option().style;
+                          s.color = color;
+                          return s.color ? color : '#2d2d2d';
+                        })(),
+                        borderRadius: '6px',
+                        px: 1.5,
+                        py: 0.6,
+                        flex: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: '#fff',
+                          fontFamily: 'monospace',
+                          fontSize: '12px',
+                        }}
+                      >
+                        {formik.values.primaryColor || '------'}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box sx={{ bgcolor: '#2d2d2d', borderRadius: '6px', px: 1.5, py: 0.6, flex: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#fff', fontFamily: 'monospace', fontSize: '12px' }}>
-                      {(formik.values.primaryColor || '').replace('#', '').toUpperCase() || '------'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            )}
-          </Box>
-        </ClickAwayListener>
-      </Grid>
+                </Paper>
+              )}
+            </Box>
+          </ClickAwayListener>
+        </Grid>
       )}
 
       {/* Row 4: Organization Name & Organization Title */}

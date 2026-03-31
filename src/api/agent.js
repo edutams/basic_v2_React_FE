@@ -30,5 +30,4 @@ const agentApi = {
   },
 };
 
-
 export default agentApi;

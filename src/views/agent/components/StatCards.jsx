@@ -142,19 +142,19 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick }
 
       {/* Total Sub Agents */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-        {/* <StatCard
-                    title="Total Sub Agents"
-                    value={stats.totalSubAgents}
-                    valueColor="#f59e0b"
-                    valueBg="#fef3c7"
-                    subStats={[
-                        { label: 'Lv3', value: '32' },
-                        { label: 'Lv4', value: '21' },
-                        { label: 'Lv5', value: '43' },
-                    ]}
-                    onIconClick={onSubAgentClick}
-                    onClick={onSubAgentClick}
-                /> */}
+        <StatCard
+          title="Total Sub Agents"
+          value={stats.totalSubAgents}
+          valueColor="#f59e0b"
+          valueBg="#fef3c7"
+          subStats={[
+            { label: 'Lv3', value: stats.subAgentBreakdown?.lv3?.toString() || '0' },
+            { label: 'Lv4', value: stats.subAgentBreakdown?.lv4?.toString() || '0' },
+            { label: 'Lv5', value: stats.subAgentBreakdown?.lv5?.toString() || '0' },
+          ]}
+          onIconClick={onSubAgentClick}
+          onClick={onSubAgentClick}
+        />
       </Grid>
 
       {/* Total School */}
@@ -165,8 +165,11 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick }
           valueColor="#4a3aff"
           valueBg="#e8e6ff"
           subStats={[
-            { label: 'Primary School', value: '300' },
-            { label: 'Senior Secondary', value: '30' },
+            { label: 'Primary School', value: stats.schoolBreakdown?.primary?.toString() || '0' },
+            {
+              label: 'Senior Secondary',
+              value: stats.schoolBreakdown?.secondary?.toString() || '0',
+            },
           ]}
           onIconClick={onSchoolClick}
           onClick={onSchoolClick}
@@ -178,11 +181,21 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick }
 
 StatCards.propTypes = {
   stats: PropTypes.shape({
-    totalTransaction: PropTypes.string,
+    totalTransaction: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    transactionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     totalSchool: PropTypes.number,
     totalSubAgents: PropTypes.number,
-    commission: PropTypes.string,
-    volume: PropTypes.string,
+    commission: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    volume: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    subAgentBreakdown: PropTypes.shape({
+      lv3: PropTypes.number,
+      lv4: PropTypes.number,
+      lv5: PropTypes.number,
+    }),
+    schoolBreakdown: PropTypes.shape({
+      primary: PropTypes.number,
+      secondary: PropTypes.number,
+    }),
   }).isRequired,
   onTransactionClick: PropTypes.func,
   onSubAgentClick: PropTypes.func,

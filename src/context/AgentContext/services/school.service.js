@@ -140,7 +140,7 @@ export const deleteSchoolDivision = async (id) => {
 
 export const getProspectiveTenants = async () => {
     try {
-        const res = await api.get('/agent/prospective-tenants');
+        const res = await api.get('/agent/prospective-tenants/get-prospective-tenants');
         return res.data?.data;
     } catch (error) {
         throw error.response?.data || error;
@@ -149,7 +149,7 @@ export const getProspectiveTenants = async () => {
 
 export const createProspectiveTenant = async (data) => {
     try {
-        const res = await api.post('/agent/prospective-tenants', data);
+        const res = await api.post('/agent/prospective-tenants/create-prospective-tenant', data);
         return res.data;
     } catch (error) {
         throw error.response?.data || error;
@@ -158,7 +158,7 @@ export const createProspectiveTenant = async (data) => {
 
 export const getProspectiveTenant = async (id) => {
     try {
-        const res = await api.get(`/agent/prospective-tenants/${id}`);
+        const res = await api.get(`/agent/prospective-tenants/get-single-prospective-tenant/${id}`);
         return res.data?.data;
     } catch (error) {
         throw error.response?.data || error;
@@ -167,7 +167,7 @@ export const getProspectiveTenant = async (id) => {
 
 export const approveProspectiveTenant = async (id) => {
     try {
-        const res = await api.post(`/agent/prospective-tenants/${id}/approve`);
+        const res = await api.post(`/agent/prospective-tenants/create-prospective-tenant/${id}/approve`);
         return res.data;
     } catch (error) {
         throw error.response?.data || error;
@@ -176,7 +176,7 @@ export const approveProspectiveTenant = async (id) => {
 
 export const rejectProspectiveTenant = async (id, reason = '') => {
     try {
-        const res = await api.post(`/agent/prospective-tenants/${id}/reject`, { reason });
+        const res = await api.post(`/agent/prospective-tenants/reject-prospective-tenant/${id}/reject`, { reason });
         return res.data;
     } catch (error) {
         throw error.response?.data || error;

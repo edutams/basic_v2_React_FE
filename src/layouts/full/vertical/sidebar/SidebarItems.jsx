@@ -66,7 +66,7 @@ const SidebarItems = () => {
     const fetchModules = async () => {
       try {
         const response = await api.get('/agent/sidebar-modules');
-        console.log('modules', response.data?.data);
+        // console.log('modules', response.data?.data);
 
         const packageModules = response.data?.data;
 

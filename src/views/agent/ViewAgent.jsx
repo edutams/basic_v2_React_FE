@@ -13,8 +13,10 @@ import StatCards from './components/StatCards';
 import OverviewTab from './components/OverviewTab';
 import TeamTab from './components/TeamTab';
 import SchoolsTab from './components/SchoolsTab';
+import ManageTeamTab from './components/ManageTeamTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
+import TotalSubAgentModal from './components/TotalSubAgentModal';
 import AgentModal from '../../components/add-agent/components/AgentModal';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
@@ -23,224 +25,430 @@ import agentApi from '../../api/agent';
 import { mockAgentData } from './mockData';
 
 const ViewAgent = () => {
-    const { user: currentUser } = useAuth();
-    const { id: paramId } = useParams();
-    const id = paramId || currentUser?.id;
-    const [value, setValue] = useState('1');
-    const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
-    const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-    const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
-    const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
-    const theme = useTheme();
+  const { user: currentUser } = useAuth();
+  const { id: paramId } = useParams();
+  const id = paramId || currentUser?.id;
+  const [value, setValue] = useState('1');
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
+  const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
+  const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
+  const theme = useTheme();
 
-    const isOwnProfile = currentUser && currentUser.id == id;
-    const isDashboard = !paramId;
+  const isOwnProfile = currentUser && currentUser.id == id;
+  const isDashboard = !paramId;
 
-    const [agentData, setAgentData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+  const [agentData, setAgentData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchAgentDetails = async () => {
-            setIsLoading(true);
-            try {
-                const response = await agentApi.getDetails(id);
-                if (response.success && response.data) {
-                    const data = response.data;
+  useEffect(() => {
+    const fetchAgentDetails = async () => {
+      setIsLoading(true);
+      try {
+        const detailsResponse = await agentApi.getDetails(id);
 
-                    let parsedColor = {};
-                    if (data.color) {
-                        try {
-                            parsedColor = typeof data.color === 'string' ? JSON.parse(data.color) : data.color;
-                        } catch (e) {
-                            console.error('Failed to parse color', e);
-                        }
-                    }
+        if (detailsResponse.success && detailsResponse.data) {
+          const data = detailsResponse.data;
 
-                    const mappedData = {
-                        profile: {
-                            id: data.id,
-                            name: data.org_name || data.name,
-                            handle: data.email,
-                            level: `Level ${data.access_level} Agent`,
-                            status: data.status ? data.status.charAt(0).toUpperCase() + data.status.slice(1) : 'Inactive',
-                            image: data.image || mockAgentData.profile.image,
-                            color: parsedColor
-                        },
-                        stats: {
-                            totalTransaction: mockAgentData.stats.totalTransaction,
-                            transactionCount: mockAgentData.stats.transactionCount,
-                            totalSchool: data.tenants_count || 0,
-                            totalSubAgents: data.children ? data.children.length : (data.children_count || 0),
-                            commission: mockAgentData.stats.commission,
-                            volume: mockAgentData.stats.volume
-                        },
-                        team: (data.children || []).map(child => ({
-                            name: child.org_name || child.name,
-                            handle: child.email,
-                            phone: child.phone,
-                            transaction: '0',
-                            performance: '0',
-                            level: child.access_level,
-                            descendent: child.children_count || 0,
-                            status: child.status ? child.status.charAt(0).toUpperCase() + child.status.slice(1) : 'Inactive',
-                        })),
-                        schools: (data.tenants || []).map(tenant => ({
-                            school: tenant.school_name || tenant.name || 'Unknown School',
-                            contact: tenant.phone || 'N/A',
-                            email: tenant.email || 'N/A',
-                            agent: data.org_name || data.name,
-                            agentContact: data.phone,
-                            agentEmail: data.email,
-                            plan: tenant.plan?.name || 'Basic',
-                            population: tenant.population || 0,
-                            status: tenant.status ? tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1) : 'Active'
-                        })),
-                        revenueData: mockAgentData.revenueData,
-                        loginActivities: mockAgentData.loginActivities,
-                        planDistribution: mockAgentData.planDistribution,
-                        recentOnboarding: mockAgentData.recentOnboarding,
-                        topAgents: mockAgentData.topAgents,
-                        topRevenueSchools: mockAgentData.topRevenueSchools,
-                    };
-                    setAgentData(mappedData);
-                }
-            } catch (error) {
-                console.error("Failed to fetch agent details", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+          const mappedData = {
+            profile: {
+              id: data.id,
+              name: data.org_name || data.name,
+              handle: data.email,
+              level: `Level ${data.access_level} Agent`,
+              status: data.status
+                ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
+                : 'Inactive',
+              image: data.image || mockAgentData.profile.image,
+              primaryColor: data.primary_color || null,
+            },
+            stats: {
+              totalTransaction:
+                data.total_transaction_value ||
+                data.total_transaction ||
+                mockAgentData.stats.totalTransaction,
+              transactionCount: data.transaction_count || mockAgentData.stats.transactionCount,
+              totalSchool: data.tenants_count || 0,
+              totalSubAgents: data.children ? data.children.length : data.children_count || 0,
+              commission:
+                data.total_commission || data.commission || mockAgentData.stats.commission,
+              volume: data.transaction_volume || data.volume || mockAgentData.stats.volume,
+              // Sub-agent breakdown by level - computed from children data
+              subAgentBreakdown: (() => {
+                const children = data.children || [];
+                return {
+                  lv3: children.filter((c) => c.access_level === 3).length,
+                  lv4: children.filter((c) => c.access_level === 4).length,
+                  lv5: children.filter((c) => c.access_level === 5).length,
+                };
+              })(),
+              // School breakdown by type - computed from tenants data
+              schoolBreakdown: (() => {
+                const tenants = data.tenants || [];
+                const primaryKeywords = ['Primary', 'Nursery', 'Creche'];
+                const secondaryKeywords = ['Secondary', 'Junior Secondary', 'Senior Secondary'];
 
-        if (id) {
-            fetchAgentDetails();
-        } else {
-            setIsLoading(false);
+                let primary = 0;
+                let secondary = 0;
+
+                tenants.forEach((tenant) => {
+                  const divisions = tenant.school_divisions || [];
+                  const hasPrimary = divisions.some((d) =>
+                    primaryKeywords.some((k) => d.toLowerCase().includes(k.toLowerCase())),
+                  );
+                  const hasSecondary = divisions.some((d) =>
+                    secondaryKeywords.some((k) => d.toLowerCase().includes(k.toLowerCase())),
+                  );
+
+                  if (hasPrimary) primary++;
+                  if (hasSecondary) secondary++;
+                });
+
+                return { primary, secondary };
+              })(),
+            },
+            team: (data.children || []).map((child) => ({
+              name: child.org_name || child.name,
+              handle: child.email,
+              phone: child.phone,
+              id: child.id,
+              transaction: '0',
+              performance: '0',
+              level: child.access_level,
+              descendent: child.children_count || 0,
+              status: child.status
+                ? child.status.charAt(0).toUpperCase() + child.status.slice(1)
+                : 'Inactive',
+            })),
+            schools: (data.tenants || []).map((tenant) => ({
+              school: tenant.school_name || tenant.name || 'Unknown School',
+              contact: tenant.phone || 'N/A',
+              email: tenant.email || 'N/A',
+              agent: data.org_name || data.name,
+              agentContact: data.phone,
+              agentEmail: data.email,
+              plan: tenant.plan?.name || 'Basic',
+              population: tenant.population || 0,
+              status: tenant.status
+                ? tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)
+                : 'Active',
+            })),
+            revenueData: mockAgentData.revenueData,
+            loginActivities: mockAgentData.loginActivities,
+            planDistribution: mockAgentData.planDistribution,
+            recentOnboarding: mockAgentData.recentOnboarding,
+            topAgents: mockAgentData.topAgents,
+            topRevenueSchools: mockAgentData.topRevenueSchools,
+          };
+          setAgentData(mappedData);
         }
-    }, [id]);
+      } catch (error) {
+        console.error('Failed to fetch agent details', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    const BCrumb = [
-        { to: '/', title: 'Home' },
-        ...(isDashboard || (isOwnProfile && currentUser.access_level > 1) ? [] : [{ to: '/agent', title: 'Agent' }]),
-        { title: isDashboard || (isOwnProfile && currentUser.access_level > 1) ? 'Dashboard' : 'View Profile' },
-    ];
+    if (id) {
+      fetchAgentDetails();
+    } else {
+      setIsLoading(false);
+    }
+  }, [id]);
 
-    const isDark = theme.palette.mode === 'dark';
+  const BCrumb = [
+    { to: '/', title: 'Home' },
+    ...(isDashboard || (isOwnProfile && currentUser.access_level > 1)
+      ? []
+      : [{ to: '/agent', title: 'Agent' }]),
+    {
+      title:
+        isDashboard || (isOwnProfile && currentUser.access_level > 1)
+          ? 'Dashboard'
+          : 'View Profile',
+    },
+  ];
 
-    return (
-        <PageContainer
-            title={isOwnProfile && currentUser.access_level > 1 ? "Agent Dashboard" : "View Agent Profile"}
-            description="Detailed agent profile view"
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <PageContainer
+      title={
+        isOwnProfile && currentUser.access_level > 1 ? 'Agent Dashboard' : 'View Agent Profile'
+      }
+      description="Detailed agent profile view"
+    >
+      <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
+        <Breadcrumb
+          title={isOwnProfile && currentUser.access_level > 1 ? 'Dashboard' : 'View Profile'}
+          items={BCrumb}
+        />
+
+        {/* Modals */}
+        <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+        <TotalTransactionModal
+          open={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+        />
+        <TotalSubAgentModal
+          open={isSubAgentModalOpen}
+          onClose={() => setIsSubAgentModalOpen(false)}
+          totalSubAgents={agentData?.stats?.totalSubAgents}
+        />
+        <AgentModal
+          open={isAddAgentModalOpen}
+          onClose={() => setIsAddAgentModalOpen(false)}
+          handleRefresh={() => {}}
+        />
+        <ReusableModal
+          open={isAddSchoolModalOpen}
+          onClose={() => setIsAddSchoolModalOpen(false)}
+          title="Register School"
+          size="large"
         >
-            <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
-                <Breadcrumb title={isOwnProfile && currentUser.access_level > 1 ? "Dashboard" : "View Profile"} items={BCrumb} />
+          <RegisterSchoolForm
+            actionType="create"
+            onSubmit={() => setIsAddSchoolModalOpen(false)}
+            onCancel={() => setIsAddSchoolModalOpen(false)}
+          />
+        </ReusableModal>
 
-                <Box mt={3}>
-                    {isLoading ? (
-                        <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-                            <CircularProgress />
-                        </Box>
-                    ) : agentData ? (
-                        <Grid container spacing={3} alignItems="stretch">
-                            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-                                <ProfileHeader
-                                    profile={agentData.profile}
-                                    onManageSchools={() => setValue('3')}
-                                    onManageAgent={() => setValue('2')}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, md: 8, lg: 8 }}>
-                                <StatCards
-                                    stats={agentData.stats}
-                                    onTransactionClick={() => setIsTransactionModalOpen(true)}
-                                    onSchoolClick={() => setIsSchoolModalOpen(true)}
-                                />
-                            </Grid>
-                        </Grid>
-                    ) : (
-                        <Box p={3}>Failed to load agent data.</Box>
-                    )}
-                </Box>
+        <Box mt={4}>
+          <Box
+            sx={{
+              bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+            }}
+          >
+            <TabContext value={value}>
+              <Box
+                sx={{
+                  borderBottom: 1,
+                  borderColor: isDark ? '#333' : '#E2E8F0',
+                  bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+                  px: 2,
+                }}
+              >
+                <TabList
+                  onChange={(_, newValue) => setValue(newValue)}
+                  aria-label="agent tabs"
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  allowScrollButtonsMobile
+                  sx={{
+                    '& .MuiTabs-indicator': {
+                      height: 3,
+                      borderRadius: '4px 4px 0 0',
+                      bgcolor: '#1E40AF',
+                    },
+                    '& .MuiTab-root': {
+                      minHeight: 56,
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: isDark ? '#aaa' : '#64748B',
+                      textTransform: 'none',
+                    },
+                  }}
+                >
+                  <Tab
+                    icon={<IconLayoutDashboard size={18} />}
+                    iconPosition="start"
+                    label="Overview"
+                    value="1"
+                  />
+                  <Tab
+                    icon={<IconUsers size={18} />}
+                    iconPosition="start"
+                    label="Agents"
+                    value="2"
+                  />
+                  <Tab
+                    icon={<IconSchool size={18} />}
+                    iconPosition="start"
+                    label="Schools"
+                    value="3"
+                  />
+                  <Tab
+                    icon={<IconUsers size={18} />}
+                    iconPosition="start"
+                    label="Manage Team"
+                    value="4"
+                  />
+                </TabList>
+              </Box>
 
-                {/* Modals */}
-                <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
-                <TotalTransactionModal open={isTransactionModalOpen} onClose={() => setIsTransactionModalOpen(false)} />
-                <AgentModal open={isAddAgentModalOpen} onClose={() => setIsAddAgentModalOpen(false)} handleRefresh={() => {}} />
-                <ReusableModal open={isAddSchoolModalOpen} onClose={() => setIsAddSchoolModalOpen(false)} title="Register School" size="large">
-                    <RegisterSchoolForm
-                        actionType="create"
-                        onSubmit={() => setIsAddSchoolModalOpen(false)}
-                        onCancel={() => setIsAddSchoolModalOpen(false)}
+              {!isLoading && (
+                <Box>
+                  <TabPanel value="1" sx={{ p: 0 }}>
+                    <OverviewTab data={agentData || mockAgentData} />
+                  </TabPanel>
+                  <TabPanel value="2" sx={{ p: 3 }}>
+                    <TeamTab
+                      team={agentData?.team || []}
+                      onAddAgent={() => setIsAddAgentModalOpen(true)}
                     />
-                </ReusableModal>
-
-                <Box mt={4}>
-                    <Box sx={{
-                        bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)'
-                    }}>
-                        <TabContext value={value}>
-                            <Box sx={{
-                                borderBottom: 1,
-                                borderColor: isDark ? '#333' : '#E2E8F0',
-                                bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
-                                px: 2
-                            }}>
-                                <TabList
-                                    onChange={(_, newValue) => setValue(newValue)}
-                                    aria-label="agent tabs"
-                                    variant="scrollable"
-                                    scrollButtons="auto"
-                                    allowScrollButtonsMobile
-                                    sx={{
-                                        '& .MuiTabs-indicator': {
-                                            height: 3,
-                                            borderRadius: '4px 4px 0 0',
-                                            bgcolor: '#1E40AF'
-                                        },
-                                        '& .MuiTab-root': {
-                                            minHeight: 56,
-                                            fontSize: '14px',
-                                            fontWeight: 600,
-                                            color: isDark ? '#aaa' : '#64748B',
-                                            textTransform: 'none',
-                                            
-                                        }
-                                    }}
-                                >
-                                    <Tab icon={<IconLayoutDashboard size={18} />} iconPosition="start" label="Overview" value="1" />
-                                    <Tab icon={<IconUsers size={18} />} iconPosition="start" label="Agents" value="2" />
-                                    <Tab icon={<IconSchool size={18} />} iconPosition="start" label="Schools" value="3" />
-                                </TabList>
-                            </Box>
-
-                            {!isLoading && (
-                                <Box>
-                                    <TabPanel value="1" sx={{ p: 0 }}>
-                                        <OverviewTab data={agentData || mockAgentData} />
-                                    </TabPanel>
-                                    <TabPanel value="2" sx={{ p: 3 }}>
-                                        <TeamTab
-                                            team={agentData?.team || []}
-                                            onAddAgent={() => setIsAddAgentModalOpen(true)}
-                                        />
-                                    </TabPanel>
-                                    <TabPanel value="3" sx={{ p: 3 }}>
-                                        <SchoolsTab
-                                            schools={agentData?.schools || []}
-                                            onAddSchool={() => setIsAddSchoolModalOpen(true)}
-                                        />
-                                    </TabPanel>
-                                </Box>
-                            )}
-                        </TabContext>
-                    </Box>
+                  </TabPanel>
+                  <TabPanel value="3" sx={{ p: 3 }}>
+                    <SchoolsTab
+                      schools={agentData?.schools || []}
+                      onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                    />
+                  </TabPanel>
+                  <TabPanel value="4" sx={{ p: 3 }}>
+                    <ManageTeamTab />
+                  </TabPanel>
                 </Box>
+              )}
+            </TabContext>
+          </Box>
+        </Box>
+        <Box mt={3}>
+          {isLoading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+              <CircularProgress />
             </Box>
-        </PageContainer>
-    );
+          ) : agentData ? (
+            <Grid container spacing={3} alignItems="stretch">
+              <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                <ProfileHeader
+                  profile={agentData.profile}
+                  onManageSchools={() => setValue('3')}
+                  onManageAgent={() => setValue('2')}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 8, lg: 8 }}>
+                <StatCards
+                  stats={agentData.stats}
+                  onTransactionClick={() => setIsTransactionModalOpen(true)}
+                  onSchoolClick={() => setIsSchoolModalOpen(true)}
+                  onSubAgentClick={() => setIsSubAgentModalOpen(true)}
+                />
+              </Grid>
+            </Grid>
+          ) : (
+            <Box p={3}>Failed to load agent data.</Box>
+          )}
+        </Box>
+
+        {/* Modals */}
+        <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+        <TotalTransactionModal
+          open={isTransactionModalOpen}
+          onClose={() => setIsTransactionModalOpen(false)}
+        />
+        <TotalSubAgentModal
+          open={isSubAgentModalOpen}
+          onClose={() => setIsSubAgentModalOpen(false)}
+          totalSubAgents={agentData?.stats?.totalSubAgents}
+        />
+        <AgentModal
+          open={isAddAgentModalOpen}
+          onClose={() => setIsAddAgentModalOpen(false)}
+          handleRefresh={() => {}}
+        />
+        <ReusableModal
+          open={isAddSchoolModalOpen}
+          onClose={() => setIsAddSchoolModalOpen(false)}
+          title="Register School"
+          size="large"
+        >
+          <RegisterSchoolForm
+            actionType="create"
+            onSubmit={() => setIsAddSchoolModalOpen(false)}
+            onCancel={() => setIsAddSchoolModalOpen(false)}
+          />
+        </ReusableModal>
+
+        <Box mt={4}>
+          <Box
+            sx={{
+              bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+            }}
+          >
+            <TabContext value={value}>
+              <Box
+                sx={{
+                  borderBottom: 1,
+                  borderColor: isDark ? '#333' : '#E2E8F0',
+                  bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+                  px: 2,
+                }}
+              >
+                <TabList
+                  onChange={(_, newValue) => setValue(newValue)}
+                  aria-label="agent tabs"
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  allowScrollButtonsMobile
+                  sx={{
+                    '& .MuiTabs-indicator': {
+                      height: 3,
+                      borderRadius: '4px 4px 0 0',
+                      bgcolor: '#1E40AF',
+                    },
+                    '& .MuiTab-root': {
+                      minHeight: 56,
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: isDark ? '#aaa' : '#64748B',
+                      textTransform: 'none',
+                    },
+                  }}
+                >
+                  <Tab
+                    icon={<IconLayoutDashboard size={18} />}
+                    iconPosition="start"
+                    label="Overview"
+                    value="1"
+                  />
+                  <Tab
+                    icon={<IconUsers size={18} />}
+                    iconPosition="start"
+                    label="Agents"
+                    value="2"
+                  />
+                  <Tab
+                    icon={<IconSchool size={18} />}
+                    iconPosition="start"
+                    label="Schools"
+                    value="3"
+                  />
+                </TabList>
+              </Box>
+
+              {!isLoading && (
+                <Box>
+                  <TabPanel value="1" sx={{ p: 0 }}>
+                    <OverviewTab data={agentData || mockAgentData} />
+                  </TabPanel>
+                  <TabPanel value="2" sx={{ p: 3 }}>
+                    <TeamTab
+                      team={agentData?.team || []}
+                      onAddAgent={() => setIsAddAgentModalOpen(true)}
+                    />
+                  </TabPanel>
+                  <TabPanel value="3" sx={{ p: 3 }}>
+                    <SchoolsTab
+                      schools={agentData?.schools || []}
+                      onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                    />
+                  </TabPanel>
+                </Box>
+              )}
+            </TabContext>
+          </Box>
+        </Box>
+      </Box>
+    </PageContainer>
+  );
 };
 
 export default ViewAgent;

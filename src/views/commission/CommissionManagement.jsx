@@ -25,7 +25,7 @@ const BCrumb = [
 ];
 
 const CommissionManagement = () => {
-  const [value, setValue] = useState('1'); // Current tab index
+  const [value, setValue] = useState('1');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
@@ -86,120 +86,112 @@ const CommissionManagement = () => {
 
   return (
     <PageContainer title="Manage Commission" description="Commission management dashboard">
+      <Breadcrumb title="Manage Commission" items={BCrumb} />
+
+      <Box mt={3}>
+        <CommissionSummaryCards />
+      </Box>
+
       <Box
+        mt={4}
         sx={{
-          p: { xs: 1, md: 3 },
-          bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
-          minHeight: '100vh',
+          bgcolor: theme.palette.background.paper,
+          borderRadius: '16px',
+          border: `1px solid ${theme.palette.divider}`,
+          overflow: 'hidden',
         }}
       >
-        <Breadcrumb title="Manage Commission" items={BCrumb} />
-
-        <Box mt={3}>
-          <CommissionSummaryCards />
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pb: 0 }}>
+          <Tabs
+            value={value}
+            onChange={handleTabChange}
+            //   textColor="inherit"
+            //   indicatorColor="primary"
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+          >
+            <Tab
+              label="Overview"
+              value="1"
+              icon={<IconLayoutDashboard size={18} />}
+              iconPosition="start"
+              // sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab
+              label="Manage"
+              value="2"
+              // icon={<IconChartBar size={18} />}
+              icon={<IconLayoutDashboard size={18} />}
+              iconPosition="start"
+              // sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab
+              label="Commission by Subscription"
+              value="3"
+              // icon={<IconSchool size={18} />}
+              icon={<IconLayoutDashboard size={18} />}
+              iconPosition="start"
+              // sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+            <Tab
+              label="Commission by Transaction"
+              value="4"
+              // icon={<IconChartBar size={18} />}
+              icon={<IconLayoutDashboard size={18} />}
+              iconPosition="start"
+              // sx={{ textTransform: 'none', fontWeight: 600 }}
+            />
+          </Tabs>
         </Box>
 
-        <Box
-          mt={4}
-          sx={{
-            bgcolor: theme.palette.background.paper,
-            borderRadius: '16px',
-            border: `1px solid ${theme.palette.divider}`,
-            overflow: 'hidden',
-          }}
-        >
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pb: 0 }}>
-            <Tabs
-              value={value}
-              onChange={handleTabChange}
-              //   textColor="inherit"
-              //   indicatorColor="primary"
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
-            >
-              <Tab
-                label="Overview"
-                value="1"
-                icon={<IconLayoutDashboard size={18} />}
-                iconPosition="start"
-                // sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-              <Tab
-                label="Manage"
-                value="2"
-                // icon={<IconChartBar size={18} />}
-                icon={<IconLayoutDashboard size={18} />}
-                iconPosition="start"
-                // sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-              <Tab
-                label="Commission by Subscription"
-                value="3"
-                // icon={<IconSchool size={18} />}
-                icon={<IconLayoutDashboard size={18} />}
-                iconPosition="start"
-                // sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-              <Tab
-                label="Commission by Transaction"
-                value="4"
-                // icon={<IconChartBar size={18} />}
-                icon={<IconLayoutDashboard size={18} />}
-                iconPosition="start"
-                // sx={{ textTransform: 'none', fontWeight: 600 }}
-              />
-            </Tabs>
+        <Box sx={{ p: 4 }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+          >
+            <Typography
+              variant="h5"
+              fontWeight={700}
+              sx={{ color: theme.palette.text.primary }}
+            ></Typography>
+            {value === '1' && (
+              <Select value="2026" size="small" sx={{ borderRadius: '8px', minWidth: 100 }}>
+                <MenuItem value="2026">2026</MenuItem>
+                <MenuItem value="2025">2025</MenuItem>
+              </Select>
+            )}
           </Box>
 
-          <Box sx={{ p: 4 }}>
-            <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
-            >
-              <Typography
-                variant="h5"
-                fontWeight={700}
-                sx={{ color: theme.palette.text.primary }}
-              ></Typography>
-              {value === '1' && (
-                <Select value="2026" size="small" sx={{ borderRadius: '8px', minWidth: 100 }}>
-                  <MenuItem value="2026">2026</MenuItem>
-                  <MenuItem value="2025">2025</MenuItem>
-                </Select>
-              )}
-            </Box>
+          {/* Paginated data */}
+          {(() => {
+            const filteredData = getFilteredData();
+            const paginatedData = filteredData.slice(
+              page * rowsPerPage,
+              page * rowsPerPage + rowsPerPage,
+            );
 
-            {/* Paginated data */}
-            {(() => {
-              const filteredData = getFilteredData();
-              const paginatedData = filteredData.slice(
-                page * rowsPerPage,
-                page * rowsPerPage + rowsPerPage,
-              );
-
-              return (
-                <>
-                  <CommissionTable
-                    data={paginatedData}
-                    activeTab={value}
-                    onEditCommission={handleEditCommission}
-                    onChangeType={handleChangeType}
-                    rowsPerPage={rowsPerPage}
-                  />
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    count={filteredData.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                    component="Box"
-                    sx={{ borderTop: `1px solid ${theme.palette.divider}` }}
-                  />
-                </>
-              );
-            })()}
-          </Box>
+            return (
+              <>
+                <CommissionTable
+                  data={paginatedData}
+                  activeTab={value}
+                  onEditCommission={handleEditCommission}
+                  onChangeType={handleChangeType}
+                  rowsPerPage={rowsPerPage}
+                />
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  count={filteredData.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  component="Box"
+                  sx={{ borderTop: `1px solid ${theme.palette.divider}` }}
+                />
+              </>
+            );
+          })()}
         </Box>
       </Box>
 

@@ -2,11 +2,11 @@ import axios from 'axios';
 
 const CENTRAL_API_BASE_URL =
   window.location.hostname === 'localhost'
-    ? import.meta.env.VITE_API_BASE_URL_LOCAL
+    ? import.meta.env.VITE_API_BASE_URL_LOCAL || 'http://127.0.0.1:8000'
     : import.meta.env.VITE_API_BASE_URL_PROD;
 
 const api = axios.create({
-  baseURL: CENTRAL_API_BASE_URL + '/api/v1',
+  baseURL: CENTRAL_API_BASE_URL + '/api/',
 });
 
 api.interceptors.request.use((config) => {
@@ -22,14 +22,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const isAuthRequest =
-      originalRequest.url.includes('/agent/login') ||
-      originalRequest.url.includes('/agent/refresh_token');
-
+      originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/refresh');
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
       try {
-        const refreshRes = await api.post('/agent/refresh_token');
+        const refreshRes = await api.post('/auth/refresh');
         const newToken = refreshRes.data.access_token;
         localStorage.setItem('access_token', newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -37,8 +35,8 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.error('Refresh token failed:', refreshError);
         localStorage.removeItem('access_token');
-        if (window.location.pathname !== '/agent/login') {
-          window.location.href = '/agent/login';
+        if (window.location.pathname !== '/auth/login') {
+          window.location.href = '/auth/login';
         }
       }
     }

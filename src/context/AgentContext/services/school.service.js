@@ -135,3 +135,50 @@ export const deleteSchoolDivision = async (id) => {
         throw error.response?.data || error;
     }
 };
+
+// ── Prospective Tenant (School Applications) ──────────────────────────────
+
+export const getProspectiveTenants = async () => {
+    try {
+        const res = await api.get('/agent/prospective-tenants/get-prospective-tenants');
+        return res.data?.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const createProspectiveTenant = async (data) => {
+    try {
+        const res = await api.post('/agent/prospective-tenants/create-prospective-tenant', data);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const getProspectiveTenant = async (id) => {
+    try {
+        const res = await api.get(`/agent/prospective-tenants/get-single-prospective-tenant/${id}`);
+        return res.data?.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const approveProspectiveTenant = async (id) => {
+    try {
+        const res = await api.post(`/agent/prospective-tenants/create-prospective-tenant/${id}/approve`);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+export const rejectProspectiveTenant = async (id, reason = '') => {
+    try {
+        const res = await api.post(`/agent/prospective-tenants/reject-prospective-tenant/${id}/reject`, { reason });
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};

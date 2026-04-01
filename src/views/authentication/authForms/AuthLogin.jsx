@@ -22,7 +22,7 @@ import { useNotification } from '../../../hooks/useNotification';
 
 const AuthLogin = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({
-    email: '',
+    login: '',
     password: '',
     rememberMe: false,
   });
@@ -55,8 +55,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   const validateForm = () => {
     const errors = {};
 
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+    if (!formData.login.trim()) {
+      errors.login = 'Login is required';
     }
 
     if (!formData.password.trim()) {
@@ -78,7 +78,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
     clearError();
 
     const result = await login({
-      email: formData.email,
+      login: formData.login,
       password: formData.password,
       remember: formData.rememberMe,
     });
@@ -130,16 +130,16 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={0}>
           <Box>
-            <CustomFormLabel htmlFor="email">Email</CustomFormLabel>
+            <CustomFormLabel htmlFor="login">Email Or Phone</CustomFormLabel>
             <CustomTextField
-              id="email"
-              name="email"
+              id="login"
+              name="login"
               variant="outlined"
               fullWidth
-              value={formData.email}
+              value={formData.login}
               onChange={handleInputChange}
-              error={!!formErrors.email}
-              helperText={formErrors.email}
+              error={!!formErrors.login}
+              helperText={formErrors.login}
               disabled={isLoading}
             />
           </Box>
@@ -174,7 +174,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
             </FormGroup>
             <Typography
               component={Link}
-              to="/agent/forgot_password"
+              to="/auth/forgot_password"
               fontWeight="500"
               sx={{
                 textDecoration: 'none',

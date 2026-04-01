@@ -21,7 +21,12 @@ import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { Add as AddIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 
-const SetCalendarTab = () => {
+const SetCalendarTab = ({ onSaveAndContinue }) => {
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleChange = () => {
+    setHasChanges(true);
+  };
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
@@ -41,10 +46,25 @@ const SetCalendarTab = () => {
     setSelectedItem(null);
   };
 
+  const handleToggleActive = (termName) => {
+    setTerms(
+      terms.map((term) => (term.term === termName ? { ...term, active: !term.active } : term)),
+    );
+    setHasChanges(true);
+    handleMenuClose();
+  };
+
   const handleSelectAll = () => {
     const newSelectAll = !selectAll;
     setSelectAll(newSelectAll);
     setTerms(terms.map((term) => ({ ...term, selected: newSelectAll })));
+  };
+
+  const handleToggleSelect = (termName) => {
+    setTerms(
+      terms.map((term) => (term.term === termName ? { ...term, selected: !term.selected } : term)),
+    );
+    setHasChanges(true);
   };
 
   const generateWeeks = [
@@ -112,6 +132,7 @@ const SetCalendarTab = () => {
                       <TableRow key={i} hover>
                         <TableCell>
                           <Box
+                            onClick={() => handleToggleSelect(item.term)}
                             sx={{
                               width: 24,
                               height: 24,
@@ -152,7 +173,7 @@ const SetCalendarTab = () => {
                             open={Boolean(anchorEl) && selectedItem?.term === item.term}
                             onClose={handleMenuClose}
                           >
-                            <MenuItem onClick={handleMenuClose}>
+                            <MenuItem onClick={() => handleToggleActive(item.term)}>
                               {item.active ? 'Deactivate' : 'Activate'}
                             </MenuItem>
                             <MenuItem onClick={handleMenuClose}>Delete Term</MenuItem>
@@ -177,22 +198,28 @@ const SetCalendarTab = () => {
                 <Box
                   sx={{
                     ml: 'auto',
-                    px: 2,
-                    py: 1,
+                    px: 1.5,
+                    py: 0.5,
                     borderRadius: 3,
                     border: '1px solid',
                     borderColor: 'primary.main',
                     color: 'primary.main',
                   }}
                 >
-                  <Typography variant="h6">13 Weeks • 65 school days</Typography>
+                  <Typography variant="caption">13 Weeks • 65 school days</Typography>
                 </Box>
               </Box>
             }
           >
             <Paper variant="outlined" sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                <TextField label="No. of Weeks" type="number" size="small" sx={{ width: 150 }} />
+                <TextField
+                  label="No. of Weeks"
+                  type="number"
+                  size="small"
+                  sx={{ width: 150 }}
+                  onChange={handleChange}
+                />
                 <TextField
                   label="Select Date"
                   type="date"
@@ -239,6 +266,11 @@ const SetCalendarTab = () => {
           </ParentCard>
         </Grid>
       </Grid>
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
+          Save & Continue
+        </Button>
+      </Box>
     </Box>
   );
 };

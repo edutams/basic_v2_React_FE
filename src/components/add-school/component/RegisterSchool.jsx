@@ -27,10 +27,11 @@ import {
   getLgasByState,
   getSchoolCategories,
   getSchoolDivisions,
+  createProspectiveTenant,
 } from '../../../context/AgentContext/services/school.service';
 import useNotification from '../../../hooks/useNotification';
 
-const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCancel }) => {
+const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCancel, useProspective = false }) => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -261,6 +262,9 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
       if (actionType === 'update') {
         const { school_categories, ...updatePayload } = payload;
         res = await updateSchool(selectedSchool.id, updatePayload);
+      } else if (useProspective) {
+        // Save to prospective_tenants — no DB provisioned yet
+        res = await createProspectiveTenant(payload);
       } else {
         const { headcolor, sidecolor, bodycolor, school_categories, ...createPayload } = payload;
         res = await createSchool(createPayload);
@@ -310,9 +314,10 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     <Box component="form" onSubmit={handleSubmit}>
       {loading && actionType !== 'update' && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          <AlertTitle>Initialzation Processing</AlertTitle>
-          Please wait while the initialization setup is processing. This may take up to{' '}
-          <strong>1 minute</strong>.
+          <AlertTitle>{useProspective ? 'Submitting Application' : 'Initialization Processing'}</AlertTitle>
+          {useProspective
+            ? 'Your school application is being submitted for review.'
+            : <>Please wait while the initialization setup is processing. This may take up to <strong>1 minute</strong>.</>}
         </Alert>
       )}
       <Grid container spacing={2}>
@@ -662,8 +667,8 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
           {loading
             ? 'Processing...'
             : actionType === 'update'
-            ? 'Update School'
-            : 'Register School'}
+              ? 'Update School'
+              : 'Register School'}
         </Button>
       </Box>
     </Box>

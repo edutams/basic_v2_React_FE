@@ -11,7 +11,7 @@ const CommissionSummaryCards = () => {
         const Icon = stat.icon;
 
         return (
-          <Grid item xs={12} sm={6} lg={3} key={index}>
+          <Box item xs={12} sm={6} lg={3} key={index}>
             <Card
               sx={{
                 borderRadius: '18px',
@@ -69,7 +69,7 @@ const CommissionSummaryCards = () => {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         );
       })}
     </Grid>

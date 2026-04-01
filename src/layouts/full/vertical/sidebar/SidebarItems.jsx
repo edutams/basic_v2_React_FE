@@ -7,7 +7,6 @@ import NavGroup from './NavGroup/NavGroup';
 
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useAuth } from 'src/hooks/useAuth';
-import api from 'src/api/auth';
 import {
   IconChartPie,
   IconCurrencyDollar,
@@ -29,6 +28,7 @@ import {
   IconArchive,
 } from '@tabler/icons-react';
 import { useParams } from 'react-router';
+import api from '../../../../api/auth';
 
 const iconMapper = {
   ChartPie: IconChartPie,
@@ -65,7 +65,7 @@ const SidebarItems = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const response = await api.get('/agent/sidebar-modules');
+        const response = await api.get('/v1/sidebar-modules');
 
         const packageModules = response.data?.data;
 
@@ -80,7 +80,7 @@ const SidebarItems = () => {
             const menuItem = {
               id: `${packIndex}-${modIndex}`, // unique id
               title: mod.title,
-              href: mod.href || "#",
+              href: mod.href || '#',
               icon: iconMapper[mod.icon] || IconCircle,
             };
 
@@ -88,7 +88,7 @@ const SidebarItems = () => {
               menuItem.children = mod.subModules.map((sub, subIndex) => ({
                 id: `${packIndex}-${modIndex}-${subIndex}`,
                 title: sub.title,
-                href: sub.href || "#",
+                href: sub.href || '#',
                 icon: iconMapper[sub.icon] || IconPoint,
               }));
             }

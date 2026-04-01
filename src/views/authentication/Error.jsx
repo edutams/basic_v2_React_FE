@@ -2,7 +2,7 @@ import { Box, Container, Typography, Button } from '@mui/material';
 import { Link } from 'react-router';
 import ErrorImg from 'src/assets/images/backgrounds/errorimg.svg';
 
-const Error = () => (
+const Error = ({ message = "This page you are looking for could not be found." }) => (
   <Box
     display="flex"
     flexDirection="column"
@@ -16,7 +16,7 @@ const Error = () => (
         Opps!!!
       </Typography>
       <Typography align="center" variant="h4" mb={4}>
-        This page you are looking for could not be found.
+        {message}
       </Typography>
       <Button
         color="primary"

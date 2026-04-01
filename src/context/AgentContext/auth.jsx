@@ -78,12 +78,15 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post('/auth/login', credentials);
-      const { access_token, expires_in, user: apiUser, data: apiData } = res.data;
+
+      const { access_token, expires_in, user, permissions, roles } = res.data;
+
+
 
       tokenManager.set(access_token);
       localStorage.setItem('token_expires_in', String(expires_in));
 
-      const userData = apiUser || apiData;
+      const userData = user;
       setUser(userData);
       setIsAuthenticated(true);
       setIsImpersonating(false);

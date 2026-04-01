@@ -172,10 +172,15 @@ const AgentRouteWrapper = () => {
 
 const DashboardRouteWrapper = () => {
   const { user } = useAuth();
-  if (user && user.access_level > 1) {
+  if (user && user.organization.access_level > 1 && user.organization.access_level <= 5) {
     return <ViewAgent />;
   }
-  return <AnalyticalDashboard />;
+
+  if (user && user.organization.access_level === 1) {
+    return <AnalyticalDashboard />;
+  }
+
+  return <Error message="You are not authorized to be in this app" />;
 };
 
 const AgentRoutes = [

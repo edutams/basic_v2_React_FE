@@ -13,6 +13,7 @@ import StatCards from './components/StatCards';
 import OverviewTab from './components/OverviewTab';
 import TeamTab from './components/TeamTab';
 import SchoolsTab from './components/SchoolsTab';
+import ManageTeamTab from './components/ManageTeamTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import TotalSubAgentModal from './components/TotalSubAgentModal';
@@ -208,6 +209,7 @@ const ViewAgent = () => {
                                     <Tab icon={<IconLayoutDashboard size={18} />} iconPosition="start" label="Overview" value="1" />
                                     <Tab icon={<IconUsers size={18} />} iconPosition="start" label="Agents" value="2" />
                                     <Tab icon={<IconSchool size={18} />} iconPosition="start" label="Schools" value="3" />
+                                    <Tab icon={<IconUsers size={18} />} iconPosition="start" label="Manage Team" value="4" />
                                 </TabList>
                             </Box>
 
@@ -227,6 +229,9 @@ const ViewAgent = () => {
                                             schools={agentData?.schools || []}
                                             onAddSchool={() => setIsAddSchoolModalOpen(true)}
                                         />
+                                    </TabPanel>
+                                    <TabPanel value="4" sx={{ p: 3 }}>
+                                        <ManageTeamTab />
                                     </TabPanel>
                                 </Box>
                             )}

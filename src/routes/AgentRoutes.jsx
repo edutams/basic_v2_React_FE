@@ -175,7 +175,7 @@ const DashboardRouteWrapper = () => {
   if (user && user.access_level > 1) {
     return <ViewAgent />;
   }
-  return <AnalyticalDashboard />;
+  if (user && user.access_level === 1) return <AnalyticalDashboard />;
 };
 
 const AgentRoutes = [

@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post('/agent/login', credentials);
+      const res = await api.post('/auth/login', credentials);
       const { access_token, expires_in, user: apiUser, data: apiData } = res.data;
 
       tokenManager.set(access_token);
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await api.post('/agent/logout');
+      await api.post('/auth/logout');
     } catch {
       /* best-effort */
     } finally {

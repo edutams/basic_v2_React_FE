@@ -15,6 +15,7 @@ import {
     approveProspectiveTenant,
     rejectProspectiveTenant,
 } from '../../../context/AgentContext/services/school.service';
+import SchoolProfileModal from '../../../components/shared/SchoolProfileModal';
 
 // ── Status chip ───────────────────────────────────────────────────────────────
 const statusChip = (status) => {
@@ -150,6 +151,8 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
     const [openAddModal, setOpenAddModal] = useState(false);
 
     const [anchorEl, setAnchorEl] = useState(null);
+    const [activeRow, setActiveRow] = useState(null);
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     const [feedback, setFeedback] = useState(null);
     const notify = (msg, severity = 'success') => {
@@ -252,7 +255,7 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
             </TableCell>
             <TableCell>{statusChip(row.status)}</TableCell>
             <TableCell>
-                <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)}>
+                <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setActiveRow(row); }}>
                     <IconDotsVertical size={18} color={theme.palette.text.secondary} />
                 </IconButton>
             </TableCell>
@@ -481,9 +484,9 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             >
-                <MenuItem onClick={() => setAnchorEl(null)}>
+                <MenuItem onClick={() => { setAnchorEl(null); setProfileModalOpen(true); }}>
                     <ListItemIcon><IconEye size={18} /></ListItemIcon>
-                    <ListItemText primary="View Detail" />
+                    <ListItemText primary="View school Profile" />
                 </MenuItem>
                 <MenuItem onClick={() => setAnchorEl(null)}>
                     <ListItemIcon><IconEdit size={18} /></ListItemIcon>
@@ -494,6 +497,12 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
                     <ListItemText primary="Delete" />
                 </MenuItem>
             </Menu>
+
+            <SchoolProfileModal 
+                open={profileModalOpen} 
+                onClose={() => setProfileModalOpen(false)} 
+                school={activeRow} 
+            />
 
             {/* Review Modal */}
             <ReviewModal open={reviewOpen} onClose={() => setReviewOpen(false)}

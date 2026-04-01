@@ -79,28 +79,28 @@ const statusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'Inactive' },
 ];
- const schoolSummary = {
-    total: 350,
-    active: 200,
-    inactive: 100,
-    subAgents: 0,
+const schoolSummary = {
+  total: 350,
+  active: 200,
+  inactive: 100,
+  subAgents: 0,
 
-    primary: 30,
+  primary: 30,
 
-    secondary: 900,
-  };
-    const planSeries = [40, 15, 35, 10];
+  secondary: 900,
+};
+const planSeries = [40, 15, 35, 10];
 
-  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
+const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
 
-  const planData = [
-    { name: 'Freemium', value: 40, color: '#EC468C' },
-    { name: 'Basic', value: 15, color: '#7987FF' },
-    { name: 'Basic +', value: 35, color: '#FFA5CB' },
-    { name: 'Basic ++', value: 10, color: '#8B48E3' },
-  ];
+const planData = [
+  { name: 'Freemium', value: 40, color: '#EC468C' },
+  { name: 'Basic', value: 15, color: '#7987FF' },
+  { name: 'Basic +', value: 35, color: '#FFA5CB' },
+  { name: 'Basic ++', value: 10, color: '#8B48E3' },
+];
 
-  const planColors = planData.map((p) => p.color);
+const planColors = planData.map((p) => p.color);
 const columnHelper = createColumnHelper();
 
 import locationApi from '../../api/location';
@@ -405,7 +405,7 @@ const Agent = () => {
     try {
       const result = await impersonateAgent(agent.id);
       if (result.success) {
-       localStorage.setItem('impersonator_id', agent?.id);
+        localStorage.setItem('impersonator_id', agent?.id);
         localStorage.setItem('isImpersonating', 'true');
       } else {
         alert(result.error);
@@ -468,13 +468,25 @@ const Agent = () => {
               {!agent.imgsrc && initials}
             </Avatar>
             <Box>
-              <Typography variant="subtitle2" fontWeight="700" sx={{ lineHeight: 1.3, color: 'text.primary' }}>
+              <Typography
+                variant="subtitle2"
+                fontWeight="700"
+                sx={{ lineHeight: 1.3, color: 'text.primary' }}
+              >
                 {agent.organizationName || 'N/A'}
               </Typography>
-              <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+              <Typography
+                variant="caption"
+                color="textSecondary"
+                sx={{ display: 'block', lineHeight: 1.4 }}
+              >
                 {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
               </Typography>
-              <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+              <Typography
+                variant="caption"
+                color="textSecondary"
+                sx={{ display: 'block', lineHeight: 1.4 }}
+              >
                 {agent.contactDetails || 'N/A'}
               </Typography>
             </Box>
@@ -540,39 +552,41 @@ const Agent = () => {
       header: () => 'Performance',
       cell: (info) => (
         <Stack
-                direction="row"
-                spacing={0}
-                sx={{ borderRadius: '6px', overflow: 'hidden',fontWeight:"800", width: 'fit-content' }}
-              >
-                <Box sx={{ px: 1.5, py: 0.5 }}>
-                  <Typography  variant="subtitle3" fontWeight="800" color="#333333">School</Typography>
-                </Box>
-                <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
-                  <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
-                    {info.row.original.tenants_count ?? 0}
-                  </Typography>
-                </Box>
-              </Stack>
+          direction="row"
+          spacing={0}
+          sx={{ borderRadius: '6px', overflow: 'hidden', fontWeight: '800', width: 'fit-content' }}
+        >
+          <Box sx={{ px: 1.5, py: 0.5 }}>
+            <Typography variant="subtitle3" fontWeight="800" color="#333333">
+              School
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+            <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
+              {info.row.original.tenants_count ?? 0}
+            </Typography>
+          </Box>
+        </Stack>
       ),
     }),
-     columnHelper.accessor('primaryColor', {
-          header: () => 'Primary Color',
-          cell: (info) => {
-            const color = info.getValue() || '#3949ab';
-            return (
-              <Box
-                sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: '50%',
-                  bgcolor: color,
-                  border: '2px solid rgba(255,255,255,0.8)',
-                  boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
-                }}
-              />
-            );
-          },
-        }),
+    columnHelper.accessor('primaryColor', {
+      header: () => 'Primary Color',
+      cell: (info) => {
+        const color = info.getValue() || '#3949ab';
+        return (
+          <Box
+            sx={{
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              bgcolor: color,
+              border: '2px solid rgba(255,255,255,0.8)',
+              boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+            }}
+          />
+        );
+      },
+    }),
     columnHelper.accessor('status', {
       header: () => 'Status',
       cell: (info) =>
@@ -596,14 +610,14 @@ const Agent = () => {
                 info.getValue() === 'Active'
                   ? '#dcfee6'
                   : info.getValue() === 'Inactive'
-                    ? '#ffe4e6'
-                    : '#f3f4f6',
+                  ? '#ffe4e6'
+                  : '#f3f4f6',
               color:
                 info.getValue() === 'Active'
                   ? '#16a34a'
                   : info.getValue() === 'Inactive'
-                    ? '#e11d48'
-                    : '#4b5563',
+                  ? '#e11d48'
+                  : '#4b5563',
               borderRadius: '6px',
               fontWeight: 600,
               px: 2,
@@ -770,14 +784,14 @@ const Agent = () => {
       </Box>
 
       <Box
-             sx={{
-               display: 'grid',
-               gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
-               gap: 2,
-               mb: 3,
-             }}
-           >
-             {/* <Paper
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {/* <Paper
                sx={{
                  px: 3,
                  py: 2,
@@ -855,264 +869,272 @@ const Agent = () => {
                  />
                </Box>
              </Paper> */}
-             <Paper
-               sx={{
-                 p: 3,
-                 borderRadius: 2,
-                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-               }}
-             >
-               <Box
-                 sx={{
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                   mb: 2,
-                 }}
-               >
-                 <Typography variant="h6" fontWeight={600}>
-                   Total School
-                 </Typography>
-     
-                 <Box
-                   sx={{
-                     width: 30,
-                     height: 30,
-                     borderRadius: 1,
-                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     cursor: 'pointer',
-                   }}
-                   onClick={() => setIsSchoolModalOpen(true)}
-                 >
-                   <IconChartBar size={22} color="#FFFFFF" />
-                 </Box>
-               </Box>
-     
-               <Box
-                 sx={{
-                   background: '#E6F7F1',
-                   borderRadius: 1,
-                   px: 3,
-                   py: 1,
-                   // width: '50%',
-                   // maxWidth: 250,
-                   display: 'inline-flex',
-                   alignItems: 'center',
-                   mb: 4,
-                 }}
-               >
-                 <Typography
-                   sx={{
-                     fontSize: 20,
-                     fontWeight: 700,
-                     color: '#2CA87F',
-                   }}
-                 >
-                   {schoolSummary.total}
-                 </Typography>
-               </Box>
-     
-               <Box
-                 sx={{
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                 }}
-               >
-                 <Box>
-                   <Typography variant="h6" color="text.primary">
-                     Active School
-                   </Typography>
-                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.active}</Typography>
-                 </Box>
-     
-                 <Box
-                   sx={{
-                     width: '1px',
-                     height: 40,
-                     background: '#E5E7EB',
-                   }}
-                 />
-     
-                 <Box>
-                   <Typography variant="h6" color="text.primary">
-                     Inactive School
-                   </Typography>
-                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                     {schoolSummary.inactive}
-                   </Typography>
-                 </Box>
-               </Box>
-             </Paper>
-     
-             <Paper
-               sx={{
-                 p: 3,
-                 borderRadius: 2,
-                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-               }}
-             >
-               <Box
-                 sx={{
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                   mb: 2,
-                 }}
-               >
-                 <Typography variant="h6" fontWeight={600}>
-                   Subscriptions
-                 </Typography>
-     
-                 <Box
-                   sx={{
-                     width: 30,
-                     height: 30,
-                     borderRadius: 1,
-                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     cursor: 'pointer',
-                   }}
-                   onClick={() => setIsPlanModalOpen(true)}
-                 >
-                   <IconChartBar size={22} color="#FFFFFF" />
-                 </Box>
-               </Box>
-     
-               <Box
-                 sx={{
-                   background: '#EEF2FF',
-                   borderRadius: 1,
-                   px: 3,
-                   py: 1,
-                   display: 'inline-flex',
-                   alignItems: 'center',
-                   mb: 4,
-                 }}
-               >
-                 <Typography
-                   sx={{
-                     fontSize: 20,
-                     fontWeight: 700,
-                     color: '#4A3AFF',
-                   }}
-                 >
-                   {schoolSummary.total}
-                 </Typography>
-               </Box>
-     
-               <Box
-                 sx={{
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                 }}
-               >
-                 <Box>
-                   <Typography variant="h6" color="text.primary">
-                     Primary School
-                   </Typography>
-                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                     {schoolSummary.primary}
-                   </Typography>
-                 </Box>
-     
-                 <Box
-                   sx={{
-                     width: '1px',
-                     height: 40,
-                     background: '#E5E7EB',
-                   }}
-                 />
-     
-                 <Box>
-                   <Typography variant="h6" color="text.primary">
-                     Secondary School
-                   </Typography>
-                   <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                     {schoolSummary.secondary}
-                   </Typography>
-                 </Box>
-               </Box>
-             </Paper>
-     
-             <Paper
-               sx={{
-                 // px: 3,
-                 // py: 2,
-                 borderRadius: 2,
-                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-               }}
-             >
-               <Box
-                 // mb={2}
-                 sx={{
-                   p: 2,
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                 }}
-               >
-                 <Typography variant="h5" color="text.primary">
-                   Login Activities
-                 </Typography>
-     
-                 <Box
-                   sx={{ bgcolor: '#3d3d3d', p: '4px', borderRadius: '6px', display: 'flex', alignItems: 'center', cursor: 'pointer', '&:hover': { bgcolor: '#111' } }}
-                   onClick={() => setIsLoggedInUsersModalOpen(true)}
-                 >
-                   <IconChartBar size={22} color="#FFFFFF" />
-                 </Box>
-               </Box>
-     
-               <Box
-                 sx={{
-                   px: 3,
-                   // py: 1,
-                   mt: 1,
-                 }}
-               >
-                 {[
-                   { label: 'Teacher:', value: 0 },
-                   { label: 'SPA', value: 0 },
-                   { label: 'Student', value: 0 },
-                   { label: 'Parent', value: 0 },
-                 ].map((item, index) => (
-                   <Box
-                     key={index}
-                     sx={{
-                       display: 'flex',
-                       justifyContent: 'space-between',
-                       alignItems: 'center',
-                       mb: 1,
-                     }}
-                   >
-                     <Typography variant="h5" color="text.primary">
-                       {item.label}
-                     </Typography>
-     
-                     <Typography
-                       variant="h5"
-                       sx={{
-                         color: theme.palette.error.main,
-                       }}
-                     >
-                       {item.value}
-                     </Typography>
-                   </Box>
-                 ))}
-               </Box>
-             </Paper>
-     
-             {/* <Paper
+        <Paper
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Total School
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: 1,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setIsSchoolModalOpen(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              background: '#E6F7F1',
+              borderRadius: 1,
+              px: 3,
+              py: 1,
+              // width: '50%',
+              // maxWidth: 250,
+              display: 'inline-flex',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#2CA87F',
+              }}
+            >
+              {schoolSummary.total}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Active School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.active}</Typography>
+            </Box>
+
+            <Box
+              sx={{
+                width: '1px',
+                height: 40,
+                background: '#E5E7EB',
+              }}
+            />
+
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Inactive School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {schoolSummary.inactive}
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        <Paper
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              Subscriptions
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: 1,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setIsPlanModalOpen(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              background: '#EEF2FF',
+              borderRadius: 1,
+              px: 3,
+              py: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              mb: 4,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#4A3AFF',
+              }}
+            >
+              {schoolSummary.total}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Primary School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {schoolSummary.primary}
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                width: '1px',
+                height: 40,
+                background: '#E5E7EB',
+              }}
+            />
+
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Secondary School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {schoolSummary.secondary}
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        <Paper
+          sx={{
+            // px: 3,
+            // py: 2,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            // mb={2}
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.primary">
+              Login Activities
+            </Typography>
+
+            <Box
+              sx={{
+                bgcolor: '#3d3d3d',
+                p: '4px',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                '&:hover': { bgcolor: '#111' },
+              }}
+              onClick={() => setIsLoggedInUsersModalOpen(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              px: 3,
+              // py: 1,
+              mt: 1,
+            }}
+          >
+            {[
+              { label: 'Teacher:', value: 0 },
+              { label: 'SPA', value: 0 },
+              { label: 'Student', value: 0 },
+              { label: 'Parent', value: 0 },
+            ].map((item, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography variant="h5" color="text.primary">
+                  {item.label}
+                </Typography>
+
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: theme.palette.error.main,
+                  }}
+                >
+                  {item.value}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+
+        {/* <Paper
                sx={{
                  borderRadius: 2,
                  overflow: 'hidden',
@@ -1191,65 +1213,65 @@ const Agent = () => {
                  ))}
                </Box>
              </Paper> */}
-     
-             <Paper
-               sx={{
-                 // px: 3,
-                 // py: 2,
-                 borderRadius: 2,
-                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-               }}
-             >
-               <Box
-                 // mb={2}
-                 sx={{
-                   p: 2,
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                 }}
-               >
-                 <Typography variant="h5" color="text.primary">
-                   Plan Distribution
-                 </Typography>
-     
-                 <Box
-                   sx={{
-                     width: 30,
-                     height: 30,
-                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     cursor: 'pointer',
-                   }}
-                   onClick={() => setIsPlanModalOpen(true)}
-                 >
-                   <IconChartBar size={22} color="#FFFFFF" />
-                 </Box>
-               </Box>
-     
-               <Box>
-                 <Box
-                   sx={{
-                     height: 170,
-                     display: 'flex',
-                     alignItems: 'center',
-                     overflow: 'hidden',
-                   }}
-                 >
-                   <ReusablePieChart
-                     series={planSeries}
-                     colors={planColors}
-                     labels={planLabels}
-                     height={180}
-                     hideCard
-                   />
-                 </Box>
-               </Box>
-             </Paper>
-           </Box>
+
+        <Paper
+          sx={{
+            // px: 3,
+            // py: 2,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
+            border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          }}
+        >
+          <Box
+            // mb={2}
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h5" color="text.primary">
+              Plan Distribution
+            </Typography>
+
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              onClick={() => setIsPlanModalOpen(true)}
+            >
+              <IconChartBar size={22} color="#FFFFFF" />
+            </Box>
+          </Box>
+
+          <Box>
+            <Box
+              sx={{
+                height: 170,
+                display: 'flex',
+                alignItems: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              <ReusablePieChart
+                series={planSeries}
+                colors={planColors}
+                labels={planLabels}
+                height={180}
+                hideCard
+              />
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
 
       <Box sx={{ mt: 3 }}>
         <ParentCard

@@ -30,7 +30,6 @@ import {
 } from '@tabler/icons-react';
 import { useParams } from 'react-router';
 
-
 const iconMapper = {
   ChartPie: IconChartPie,
   CurrencyDollar: IconCurrencyDollar,
@@ -67,32 +66,22 @@ const SidebarItems = () => {
     const fetchModules = async () => {
       try {
         const response = await api.get('/agent/sidebar-modules');
-        const modules = response.data?.data;
+        // console.log('modules', response.data?.data);
 
-        const formattedMenu = modules.map((mod) => ({
-          id: mod.id,
-          title: mod.module_name,
-          icon: iconMapper[mod.module_icon] || IconCircle,
-          href: mod.module_links?.link || '#',
-          permission: mod.module_links?.permission ? [mod.module_links.permission] : null,
-          children:
-            mod.sub_modules?.length > 0
-              ? mod.sub_modules.map((sub) => ({
-                  id: sub.id,
-                  title: sub.module_name,
-                  icon: iconMapper[sub.module_icon] || IconPoint,
-                  href: sub.module_links?.link || '#',
-                }))
-              : null,
+        const packageModules = response.data?.data;
+
+        const formattedMenu = packageModules.map((pack, packIndex) => ({
+          subheader: pack.package_name, // For NavGroup
+          children: pack.modules.map((mod, modIndex) => ({
+            id: `${packIndex}-${modIndex}`, // unique id
+            title: mod.title,
+            href: mod.module_links?.link || null,
+            icon: iconMapper[mod.module_icon] || IconCircle, // use a real default icon
+          })),
         }));
+        console.log(formattedMenu, 8888);
 
-        setMenuItems([
-          {
-            navlabel: true,
-            subheader: 'Main Navigation',
-          },
-          ...formattedMenu,
-        ]);
+        setMenuItems(formattedMenu);
       } catch (error) {
         console.error('Error fetching sidebar modules:', error);
       }
@@ -104,40 +93,32 @@ const SidebarItems = () => {
   return (
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav">
-        {menuItems
-          .filter((item) => {
-            if (!item.permission) return true;
-            if (user?.is_super_admin) return true;
-            const userPermissions = user?.permissions || [];
-            return item.permission.some((p) => userPermissions.includes(p));
-          })
-          .map((item) => {
-            if (item.subheader) {
-              return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;
-            } else if (item.children) {
-              return (
-                <NavCollapse
-                  menu={item}
-                  pathDirect={pathDirect}
-                  hideMenu={hideMenu}
-                  pathWithoutLastPart={pathWithoutLastPart}
-                  level={1}
-                  key={item.id}
-                  onClick={() => setIsMobileSidebar(!isMobileSidebar)}
-                />
-              );
-            } else {
-              return (
-                <NavItem
-                  item={item}
-                  key={item.id}
-                  pathDirect={pathDirect}
-                  hideMenu={hideMenu}
-                  onClick={() => setIsMobileSidebar(!isMobileSidebar)}
-                />
-              );
-            }
-          })}
+        {menuItems.map((item) => {
+          if (item.subheader) {
+            return <NavGroup item={item} hideMenu={hideMenu} key={item.subheader} />;
+          } else if (item.children) {
+            return (
+              <NavCollapse
+                menu={item}
+                pathDirect={pathDirect}
+                hideMenu={hideMenu}
+                pathWithoutLastPart={pathWithoutLastPart}
+                key={item.id}
+                onClick={() => setIsMobileSidebar(!isMobileSidebar)}
+              />
+            );
+          } else {
+            return (
+              <NavItem
+                item={item}
+                key={item.id}
+                pathDirect={pathDirect}
+                hideMenu={hideMenu}
+                onClick={() => setIsMobileSidebar(!isMobileSidebar)}
+              />
+            );
+          }
+        })}
       </List>
     </Box>
   );

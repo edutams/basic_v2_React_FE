@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Table,
@@ -13,7 +13,15 @@ import {
 } from '@mui/material';
 import { IconDotsVertical } from '@tabler/icons-react';
 
-const SetUpClassesTab = () => {
+const SetUpClassesTab = ({ onSaveAndContinue }) => {
+  const [hasChanges, setHasChanges] = useState(false);
+  const [iconHovered, setIconHovered] = useState(null);
+  const [iconClicked, setIconClicked] = useState(null);
+
+  const handleChange = () => {
+    setHasChanges(true);
+  };
+
   return (
     <TableContainer>
       <Table
@@ -36,16 +44,16 @@ const SetUpClassesTab = () => {
         {/* Body */}
         <TableBody>
           {['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'].map((item, index) => {
-            const highlight = item === 'JSS 3';
-            const cellBg = highlight ? '#fbe4e4' : '#f6f7f9';
+            const isHighlighted = iconHovered === index || iconClicked === index;
+            const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
             return (
               <TableRow key={index}>
-                {/* Classes + cancel icon together */}
                 <TableCell
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
                   <Box
@@ -55,7 +63,13 @@ const SetUpClassesTab = () => {
                       gap: 1,
                     }}
                   >
-                    <IconButton size="small" color="error">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onMouseEnter={() => setIconHovered(index)}
+                      onMouseLeave={() => setIconHovered(null)}
+                      onClick={() => setIconClicked(iconClicked === index ? null : index)}
+                    >
                       ✕
                     </IconButton>
 
@@ -63,6 +77,7 @@ const SetUpClassesTab = () => {
                       size="small"
                       fullWidth
                       defaultValue={item}
+                      onChange={handleChange}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           backgroundColor: '#fff',
@@ -91,9 +106,16 @@ const SetUpClassesTab = () => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
-                  <Box display="flex" gap={1}>
+                  <Box
+                    display="flex"
+                    gap={1}
+                    justifyContent="center"
+                    alignItems="center"
+                    width="100%"
+                  >
                     <TextField
                       size="small"
                       defaultValue={item}
@@ -128,6 +150,7 @@ const SetUpClassesTab = () => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
                   <Box
@@ -172,6 +195,11 @@ const SetUpClassesTab = () => {
           })}
         </TableBody>
       </Table>
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
+          Save & Continue
+        </Button>
+      </Box>
     </TableContainer>
   );
 };

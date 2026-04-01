@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const CENTRAL_API_BASE_URL =
   window.location.hostname === 'localhost'
-    ? import.meta.env.VITE_API_BASE_URL_LOCAL
+    ? import.meta.env.VITE_API_BASE_URL_LOCAL || 'http://127.0.0.1:8000'
     : import.meta.env.VITE_API_BASE_URL_PROD;
 
 const api = axios.create({
@@ -22,9 +22,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const isAuthRequest =
-      originalRequest.url.includes('/auth/login') ||
-      originalRequest.url.includes('/auth/refresh');
-
+      originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/refresh');
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;

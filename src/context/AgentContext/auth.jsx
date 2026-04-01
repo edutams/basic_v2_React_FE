@@ -25,6 +25,9 @@ const tokenManager = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('isImpersonating');
     localStorage.removeItem('impersonator_id');
+    localStorage.removeItem('user');
+    localStorage.removeItem('permissions');
+    localStorage.removeItem('roles');
     delete axios.defaults.headers.common['Authorization'];
   },
 };
@@ -54,14 +57,19 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await api.get('/agent/get_agent');
-        const payload = res.data?.data;
-
-        setUser(payload.user);
-        setPermissions(payload.permissions ?? []);
-        setIsImpersonating(payload.is_impersonating ?? false);
-        setImpersonatorId(payload.impersonator_id ?? null);
-        setIsAuthenticated(true);
+        const storedUser = localStorage.getItem('user');
+        const storedPermissions = localStorage.getItem('permissions');
+        
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+          setPermissions(storedPermissions ? JSON.parse(storedPermissions) : []);
+          setIsImpersonating(localStorage.getItem('isImpersonating') === 'true');
+          setImpersonatorId(localStorage.getItem('impersonator_id') ?? null);
+          setIsAuthenticated(true);
+        } else {
+          tokenManager.clear();
+          setIsAuthenticated(false);
+        }
       } catch {
         tokenManager.clear();
         setIsAuthenticated(false);
@@ -81,13 +89,15 @@ export const AuthProvider = ({ children }) => {
 
       const { access_token, expires_in, user, permissions, roles } = res.data;
 
-
-
       tokenManager.set(access_token);
       localStorage.setItem('token_expires_in', String(expires_in));
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('permissions', JSON.stringify(permissions || []));
+      localStorage.setItem('roles', JSON.stringify(roles || []));
 
       const userData = user;
       setUser(userData);
+      setPermissions(permissions || []);
       setIsAuthenticated(true);
       setIsImpersonating(false);
       setImpersonatorId(null);

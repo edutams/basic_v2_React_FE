@@ -348,7 +348,7 @@ const ViewAgent = () => {
         <AgentModal
           open={isAddAgentModalOpen}
           onClose={() => setIsAddAgentModalOpen(false)}
-          handleRefresh={() => {}}
+          handleRefresh={() => { }}
         />
         <ReusableModal
           open={isAddSchoolModalOpen}

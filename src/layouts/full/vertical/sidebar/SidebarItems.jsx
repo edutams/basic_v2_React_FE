@@ -66,20 +66,36 @@ const SidebarItems = () => {
     const fetchModules = async () => {
       try {
         const response = await api.get('/agent/sidebar-modules');
-        // console.log('modules', response.data?.data);
 
         const packageModules = response.data?.data;
 
-        const formattedMenu = packageModules.map((pack, packIndex) => ({
-          subheader: pack.package_name, // For NavGroup
-          children: pack.modules.map((mod, modIndex) => ({
-            id: `${packIndex}-${modIndex}`, // unique id
-            title: mod.title,
-            href: mod.module_links?.link || null,
-            icon: iconMapper[mod.module_icon] || IconCircle, // use a real default icon
-          })),
-        }));
-        console.log(formattedMenu, 8888);
+        const formattedMenu = [];
+        packageModules.forEach((pack, packIndex) => {
+          formattedMenu.push({
+            navlabel: true,
+            subheader: pack.package_name, // For NavGroup
+          });
+
+          pack.modules.forEach((mod, modIndex) => {
+            const menuItem = {
+              id: `${packIndex}-${modIndex}`, // unique id
+              title: mod.title,
+              href: mod.href || "#",
+              icon: iconMapper[mod.icon] || IconCircle,
+            };
+
+            if (mod.subModules && mod.subModules.length > 0) {
+              menuItem.children = mod.subModules.map((sub, subIndex) => ({
+                id: `${packIndex}-${modIndex}-${subIndex}`,
+                title: sub.title,
+                href: sub.href || "#",
+                icon: iconMapper[sub.icon] || IconPoint,
+              }));
+            }
+
+            formattedMenu.push(menuItem);
+          });
+        });
 
         setMenuItems(formattedMenu);
       } catch (error) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Table,
@@ -18,7 +18,14 @@ import {
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
 
-const UploadTeachersTab = () => {
+const UploadTeachersTab = ({ onSaveAndContinue }) => {
+  const [hasChanges, setHasChanges] = useState(false);
+  const [iconHovered, setIconHovered] = useState(null);
+  const [iconClicked, setIconClicked] = useState(null);
+
+  const handleChange = () => {
+    setHasChanges(true);
+  };
   return (
     <TableContainer>
       <Table
@@ -43,8 +50,8 @@ const UploadTeachersTab = () => {
         {/* Body */}
         <TableBody>
           {['JSS 1', 'JSS 2', 'JSS 3', 'SSS 1', 'SSS 2', 'SSS 3'].map((item, index) => {
-            const highlight = item === 'JSS 3';
-            const cellBg = highlight ? '#fbe4e4' : '#f6f7f9';
+            const isHighlighted = iconHovered === index || iconClicked === index;
+            const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
             return (
               <TableRow key={index}>
@@ -53,6 +60,7 @@ const UploadTeachersTab = () => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                 >
                   <Box
@@ -62,13 +70,20 @@ const UploadTeachersTab = () => {
                       gap: 1,
                     }}
                   >
-                    <IconButton size="small" color="error">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onMouseEnter={() => setIconHovered(index)}
+                      onMouseLeave={() => setIconHovered(null)}
+                      onClick={() => setIconClicked(iconClicked === index ? null : index)}
+                    >
                       ✕
                     </IconButton>
 
                     <TextField
                       size="small"
                       defaultValue={item}
+                      onChange={handleChange}
                       sx={{
                         width: 70,
                         '& .MuiOutlinedInput-root': {
@@ -98,6 +113,7 @@ const UploadTeachersTab = () => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                   align="center"
                 >
@@ -132,6 +148,7 @@ const UploadTeachersTab = () => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                   align="center"
                 >
@@ -153,6 +170,7 @@ const UploadTeachersTab = () => {
                   sx={{
                     bgcolor: cellBg,
                     borderRadius: 2,
+                    p: 1,
                   }}
                   align="center"
                 >
@@ -170,6 +188,11 @@ const UploadTeachersTab = () => {
           })}
         </TableBody>
       </Table>
+      <Box mt={2} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
+          Save & Continue
+        </Button>
+      </Box>
     </TableContainer>
   );
 };

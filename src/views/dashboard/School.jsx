@@ -22,6 +22,7 @@ import PlanDistributionModal from '../dashboard/components/PlanDistributionModal
 import LoginActivities from '../dashboard/components/LoginActivities';
 import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 import SchoolCategorizationManager from './SchoolCategorizationManager';
+import SchoolProfileModal from '../../components/shared/SchoolProfileModal';
 
 import { AuthContext } from '../../context/AgentContext/auth';
 import {
@@ -178,6 +179,8 @@ const SchoolDashboard = () => {
 
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewProspect, setReviewProspect] = useState(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
@@ -666,6 +669,7 @@ const SchoolDashboard = () => {
                         </IconButton>
                         <Menu anchorEl={actionAnchorEl} open={Boolean(actionAnchorEl) && activeRow === row.id} onClose={handleActionClose}
                           PaperProps={{ sx: { borderRadius: '8px', minWidth: 160 } }}>
+                          <MenuItem onClick={() => { setSelectedProfile(row); setProfileModalOpen(true); handleActionClose(); }}>View School Profile</MenuItem>
                           <MenuItem onClick={() => handleLoginAsAdmin(row)}>Login As Admin</MenuItem>
                           <MenuItem onClick={() => { setEditSchoolData(row.raw); setOpenEditModal(true); handleActionClose(); }}>Edit School</MenuItem>
                         </Menu>
@@ -692,6 +696,12 @@ const SchoolDashboard = () => {
       </BlankCard>
 
       {/* ── Modals & Dialogs ───────────────────────────────────────────────── */}
+      <SchoolProfileModal 
+        open={profileModalOpen} 
+        onClose={() => setProfileModalOpen(false)} 
+        school={selectedProfile} 
+      />
+
       <ReusableModal open={openRegisterModal || openEditModal} onClose={() => { setOpenRegisterModal(false); setOpenEditModal(false); setEditSchoolData(null); }}
         title={openEditModal ? 'Edit School' : 'Register School'} size="large">
         <RegisterSchoolForm

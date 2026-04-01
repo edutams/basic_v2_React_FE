@@ -13,6 +13,7 @@ import StatCards from './components/StatCards';
 import OverviewTab from './components/OverviewTab';
 import TeamTab from './components/TeamTab';
 import SchoolsTab from './components/SchoolsTab';
+import ManageTeamTab from './components/ManageTeamTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import TotalSubAgentModal from './components/TotalSubAgentModal';

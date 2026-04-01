@@ -18,9 +18,13 @@ export const mockAgentData = {
       lv4: 21,
       lv5: 43,
     },
-    schoolBreakdown: {
-      primary: 300,
-      secondary: 30,
+    stats: {
+        totalTransaction: '70,234.00',
+        transactionCount: '1,3443',
+        totalSchool: 70,
+        totalSubAgents: 36,
+        commission: '100,000,000,000',
+        volume: '110,344,300'
     },
   },
   revenueData: [

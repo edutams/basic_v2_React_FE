@@ -16,10 +16,10 @@ import {
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import agentApi from '../../../api/agent';
-import { AuthContext } from '../../../context/AgentContext/auth';
+import { useAuth } from '../../../hooks/useAuth';
 
 const SchoolsView = ({ selectedAgent }) => {
-  const { user } = React.useContext(AuthContext);
+  const { user } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSchool, setSelectedSchool] = useState(null);
 

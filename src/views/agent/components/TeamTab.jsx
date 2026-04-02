@@ -90,7 +90,7 @@ const TeamTab = ({ team = [], onAddAgent }) => {
         ),
       }),
       columnHelper.accessor('name', {
-        header: () => 'Agent Details',
+        header: () => 'Organization Details',
         cell: (info) => {
           const row = info.row.original;
           const initials = (row.name || 'NA')
@@ -412,7 +412,7 @@ const TeamTab = ({ team = [], onAddAgent }) => {
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => {}}
+        handleRefresh={() => { }}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />

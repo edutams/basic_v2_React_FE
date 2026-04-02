@@ -197,35 +197,27 @@ const AgentRoutes = [
         path: '/dashboards/school',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.dashboard']}>
             <SchoolDashboard />
-          </PermissionGate>
         ),
       },
       {
-        path: '/alc-manager',
+        path: '/acl_manager',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.acl.index']}>
             <AlcManager />
-          </PermissionGate>
         ),
       },
       {
-        path: '/agent',
+        path: '/organization',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.acl.user.manage.role']}>
             <AgentRouteWrapper />
-          </PermissionGate>
         ),
       },
       {
         path: '/agent/view/:id',
         element: (
-          <PermissionGate permissions={['censis.acl.user.manage.role']}>
             <ViewAgent />
-          </PermissionGate>
         ),
       },
       { path: '/gateway', exact: true, element: <Gateway /> },
@@ -233,9 +225,7 @@ const AgentRoutes = [
         path: '/calendar',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.calendar.view']}>
             <CalendarManagement />
-          </PermissionGate>
         ),
       },
       { path: '/chat', exact: true, element: <Chat /> },
@@ -244,45 +234,42 @@ const AgentRoutes = [
         path: '/school',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.tenant.view']}>
             <SchoolDashboard />
-          </PermissionGate>
         ),
       },
       {
         path: '/view-school/:id',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.tenant.view']}>
-            <ViewSchool />
-          </PermissionGate>
+          <ViewSchool />
         ),
       },
       {
-        path: '/agent/subscriptions',
+        path: '/organization/subscriptions',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.subscription.view']}>
             <AgentSubscriptionManagement />
-          </PermissionGate>
         ),
       },
       {
-        path: '/activity-log',
+        path: '/subscription',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.activity_log.view']}>
+            <AgentSubscriptionManagement />
+        ),
+      },
+      {
+        path: '/activity_log',
+        exact: true,
+        element: (
             <ActivityLog />
-          </PermissionGate>
         ),
       },
       {
-        path: '/agent/commissions',
+        path: '/organization/commissions',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.acl.user.manage.role']}>
             <CommissionManagement />
-          </PermissionGate>
         ),
       },
       { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
@@ -290,16 +277,14 @@ const AgentRoutes = [
       { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
       { path: '/modern', exact: true, element: <ModernDashboard /> },
       {
-        path: '/edutier',
+        path: '/plan',
         exact: true,
         element: (
-          <PermissionGate permissions={['censis.edutier.manage']}>
-            <PackageManager />
-          </PermissionGate>
+          <PackageManager />
         ),
       },
-      { path: '/phet/subjectandtopics', element: <SubjectAndTopics /> },
-      { path: '/phet/stimulation-links', element: <StimulationLinks /> },
+      { path: '/phet/subject_topics', element: <SubjectAndTopics /> },
+      { path: '/phet/stimulation_links', element: <StimulationLinks /> },
       { path: '/', element: <Navigate to="/agent/login" /> },
       {
         path: '/pages/account-settings',

@@ -17,9 +17,9 @@ const AgentForm = ({ formik, onCancel, actionType, loading, canSelectColor = tru
           <Button
             type="submit"
             variant="contained"
-            disabled={!formik.isValid || formik.isSubmitting || loading}
+            disabled={loading}
           >
-            {loading ? 'Saving...' : (actionType === 'update' ? 'Update Agent' : 'Save')}
+            {loading ? 'Saving...' : (actionType === 'update' ? 'Update Organization' : 'Create Organization')}
           </Button>
         )}
       </Box>

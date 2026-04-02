@@ -11,6 +11,9 @@ export const agentValidationSchema = yup.object({
   //   .min(2, 'Agent name must be at least 2 characters')
   //   .max(100, 'Agent name must be less than 100 characters')
   //   .required('Agent name is required'),
+  organizationDomain: yup
+    .string()
+    .required('Organization domain is required'),
   contactDetails: yup
     .string()
     .email('Enter a valid email address')
@@ -24,13 +27,16 @@ export const agentValidationSchema = yup.object({
     .required('Agent phone is required'),
   contactAddress: yup
     .string()
-    // .min(10, 'Contact address must be at least 10 characters')
-    // .max(200, 'Contact address must be less than 200 characters')
     .required('Contact address is required'),
   stateFilter: yup.string().required('State selection is required'),
   lga: yup.string().required('LGA is required'),
-  // country: yup.string().required('Country is required'),
-  // organizationTitle: yup.string().required('Organization title is required'),
+  fname: yup.string().required('First name is required'),
+  lname: yup.string().required('Last name is required'),
+  mname: yup.string().nullable(),
+  email: yup.string().email('Enter a valid email address').required('Admin email is required'),
+  phone: yup.string().required('Admin phone is required'),
+  organizationLogo: yup.string().nullable(),
+  adminAvatar: yup.string().nullable(),
 });
 
 export default agentValidationSchema;

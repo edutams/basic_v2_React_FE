@@ -163,7 +163,7 @@ const Agent = () => {
 
   // Pagination States
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [totalRows, setTotalRows] = useState(0);
 
   const navigate = useNavigate();
@@ -173,6 +173,7 @@ const Agent = () => {
   const [actionType, setActionType] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
+  const [tableLoading, setTableLoading] = useState(false);
   const [analytics, setAnalytics] = useState({
     totalAgents: 0,
     totalSubAgents: 0,
@@ -180,7 +181,22 @@ const Agent = () => {
   });
 
   useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await agentApi.getAnalytics();
+        if (response.status === true && response.data) {
+          setAnalytics(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch analytics', error);
+      }
+    };
+    fetchAnalytics();
+  }, [refreshKey]);
+
+  useEffect(() => {
     const fetchData = async () => {
+      setTableLoading(true);
       try {
         const params = {
           state: state || undefined,
@@ -188,53 +204,45 @@ const Agent = () => {
           status: status || undefined,
           search: search || undefined,
           access_level: agentLevel || undefined,
-          page: page + 1, // Laravel paginates 1-indexed, MUI is 0-indexed
+          page: page + 1,
           per_page: rowsPerPage,
         };
         const response = await agentApi.getAll(params);
-        if (response.success) {
-          const mappedData = response.data.map((agent, index) => {
-            return {
-              s_n: index + 1,
-              id: agent.id,
-              // agentDetails: agent.name,
-              organizationName: agent.org_name,
-              // organizationTitle: agent.org_title,
-              contactDetails: agent.email,
-              phoneNumber: agent.phone,
-              contactAddress: agent.address,
-              imgsrc: agent.image,
-              performance: 'School: ' + (agent.tenants_count || 0),
-              tenants_count: agent.tenants_count || 0,
-              sub_agents_count: agent.children_count || 0,
-              access_level: agent.access_level,
-              primaryColor: agent.primary_color || null,
-              status: agent.status
-                ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
-                : 'Inactive',
-              lga: agent.lga_id,
-              state_name: agent.state_name,
-              state_id: agent.state_id,
-              lga_name: agent.lga_name,
-              lga_id: agent.lga_id,
-            };
-          });
-          setData(mappedData);
 
-          if (response.meta) {
-            setTotalRows(response.meta.total || 0);
-          }
+        // Handle Laravel Paginator structure (possibly wrapped in {data: ..., status: true})
+        const paginator = response.status === true ? response.data : response;
+        const agentsArray = paginator.data || [];
 
-          if (response.analytics) {
-            setAnalytics({
-              totalAgents: response.analytics.totalAgents || 0,
-              totalSubAgents: response.analytics.totalSubAgents || 0,
-              totalSchools: response.analytics.totalSchools || 0,
-            });
-          }
-        }
+        const mappedData = agentsArray.map((agent, index) => {
+          return {
+            s_n: page * rowsPerPage + index + 1,
+            id: agent.id,
+            organizationName: agent.organization_name,
+            contactDetails: agent.organization_email,
+            phoneNumber: agent.organization_phone,
+            contactAddress: agent.organization_address,
+            imgsrc: agent.organization_logo || agent.image || null,
+            performance: 'School: ' + (agent.tenants_count || 0),
+            tenants_count: agent.tenants_count || 0,
+            sub_agents_count: agent.sub_organizations_count || 0,
+            access_level: agent.access_level,
+            primaryColor: agent.primary_color || null,
+            status: agent.status
+              ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
+              : 'Inactive',
+            lga: agent.lga_id,
+            state_name: agent.state_lga?.state?.state_name || agent.state_name,
+            state_id: agent.state_lga?.state_id || agent.state_id,
+            lga_name: agent.state_lga?.lga_name || agent.lga_name,
+            lga_id: agent.lga_id,
+          };
+        });
+        setData(mappedData);
+        setTotalRows(paginator.total || 0);
       } catch (error) {
         console.error('Failed to fetch agents', error);
+      } finally {
+        setTableLoading(false);
       }
     };
     fetchData();
@@ -275,7 +283,7 @@ const Agent = () => {
           // The filters currently use state name (string).
           // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
           // Based on previous code, state filter uses names.
-          const selectedState = states.find((s) => (s.stname || s.name) === state);
+          const selectedState = states.find((s) => (s.state_name || s.name) === state);
           if (selectedState) {
             const response = await locationApi.getLgas(selectedState.id);
             setLgas(response);
@@ -435,7 +443,7 @@ const Agent = () => {
       ),
     }),
     columnHelper.accessor('agentDetails', {
-      header: () => 'Agent Details',
+      header: () => 'Organization Details',
       cell: (info) => {
         const agent = info.row.original;
         const initials = (agent.organizationName || 'NA')
@@ -461,7 +469,7 @@ const Agent = () => {
                 height: 36,
                 fontSize: '12px',
                 fontWeight: 700,
-                bgcolor: '#3949ab',
+                bgcolor: agent.primaryColor || '#3949ab',
                 flexShrink: 0,
               }}
             >
@@ -610,14 +618,14 @@ const Agent = () => {
                 info.getValue() === 'Active'
                   ? '#dcfee6'
                   : info.getValue() === 'Inactive'
-                  ? '#ffe4e6'
-                  : '#f3f4f6',
+                    ? '#ffe4e6'
+                    : '#f3f4f6',
               color:
                 info.getValue() === 'Active'
                   ? '#16a34a'
                   : info.getValue() === 'Inactive'
-                  ? '#e11d48'
-                  : '#4b5563',
+                    ? '#e11d48'
+                    : '#4b5563',
               borderRadius: '6px',
               fontWeight: 600,
               px: 2,
@@ -778,9 +786,9 @@ const Agent = () => {
   };
 
   return (
-    <PageContainer title="Agent Page" description="This is the Agent page">
+    <PageContainer title="Organization Page" description="This is the Organization page">
       <Box sx={{ mt: 1 }}>
-        <Breadcrumb title="Agent" items={BCrumb} />
+        <Breadcrumb title="Organization" items={BCrumb} />
       </Box>
 
       <Box
@@ -791,84 +799,6 @@ const Agent = () => {
           mb: 3,
         }}
       >
-        {/* <Paper
-               sx={{
-                 px: 3,
-                 py: 2,
-                 borderRadius: 2,
-                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-               }}
-             >
-               <Box
-                 mb={3}
-                 sx={{
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                 }}
-               >
-                 <Typography variant="h5" color="text.secondary">
-                   Onboarding
-                 </Typography>
-               </Box>
-               <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                 <IconSchool size={50} color={theme.palette.mode === 'dark' ? '#1DA1F2' : '#1DA1F2'} />
-     
-                 <Box textAlign="right">
-                   <Typography
-                     sx={{
-                       fontSize: 40,
-                       fontWeight: 'bold',
-                       color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
-                       lineHeight: 1,
-                     }}
-                   >
-                     {schoolSummary.total}
-                   </Typography>
-     
-                   <Typography variant="h5" color="text.primary">
-                     Total Schools
-                   </Typography>
-                 </Box>
-               </Box>
-     
-               <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                 <Typography sx={{ color: '#52932E', fontSize: 13, fontWeight: 'bold' }}>
-                   Active School
-                 </Typography>
-     
-                 <Chip
-                   label={schoolSummary.active}
-                   size="small"
-                   sx={{
-                     background: '#BEEAA6',
-                     color: '#0D47A1',
-                     fontWeight: 'bold',
-                     borderRadius: '20px',
-                     px: 4,
-                   }}
-                 />
-               </Box>
-     
-               <Box display="flex" justifyContent="space-between" alignItems="center">
-                 <Typography sx={{ color: theme.palette.error.main, fontSize: 13, fontWeight: 'bold' }}>
-                   Inactive School
-                 </Typography>
-     
-                 <Chip
-                   label={schoolSummary.inactive}
-                   size="small"
-                   sx={{
-                     background: '#F96459',
-                     color: '#fff',
-                     fontWeight: 'bold',
-                     borderRadius: '20px',
-                     px: 4,
-                   }}
-                 />
-               </Box>
-             </Paper> */}
         <Paper
           sx={{
             p: 3,
@@ -1134,85 +1064,6 @@ const Agent = () => {
           </Box>
         </Paper>
 
-        {/* <Paper
-               sx={{
-                 borderRadius: 2,
-                 overflow: 'hidden',
-                 background: theme.palette.mode === 'dark' ? '#1e1e1e' : '#FFFFFF',
-                 border: theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-               }}
-             >
-               <Box
-                 sx={{
-                   p: 2,
-                   display: 'flex',
-                   justifyContent: 'space-between',
-                   alignItems: 'center',
-                   color: theme.palette.mode === 'dark' ? '#fff' : '#5C5C5C',
-                   bgcolor: theme.palette.mode === 'dark' ? '#2d2d2d' : '#F8F8F8',
-                   borderRadius: '8px 8px 0 0',
-                 }}
-               >
-                 <Typography
-                   variant="h5"
-                   sx={{
-                     fontWeight: 'bold',
-                     color: theme.palette.mode === 'dark' ? '#fff' : '#5E5E5E',
-                   }}
-                 >
-                   Login Activities
-                 </Typography>
-     
-                 <Box
-                   sx={{
-                     width: 30,
-                     height: 30,
-                     background: theme.palette.mode === 'dark' ? '#333' : '#5C5C5C',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     cursor: 'pointer',
-                   }}
-                   onClick={() => setIsLoggedInUsersModalOpen(true)}
-                 >
-                   <IconChartBar size={22} color="#FFFFFF" />
-                 </Box>
-               </Box>
-     
-               <Divider />
-     
-               <Box sx={{ p: 2 }}>
-                 {[
-                   { label: 'Teacher:', value: 0 },
-                   { label: 'SPA', value: 0 },
-                   { label: 'Student', value: 0 },
-                   { label: 'Parent', value: 0 },
-                 ].map((item, index) => (
-                   <Box
-                     key={index}
-                     sx={{
-                       display: 'flex',
-                       justifyContent: 'space-between',
-                       alignItems: 'center',
-                       mb: 1,
-                     }}
-                   >
-                     <Typography variant="h5" color="text.primary">
-                       {item.label}
-                     </Typography>
-     
-                     <Typography
-                       variant="h5"
-                       sx={{
-                         color: theme.palette.error.main,
-                       }}
-                     >
-                       {item.value}
-                     </Typography>
-                   </Box>
-                 ))}
-               </Box>
-             </Paper> */}
 
         <Paper
           sx={{
@@ -1298,7 +1149,7 @@ const Agent = () => {
                 >
                   <IconSchool size={16} />
                 </Box>
-                <Typography variant="h5">List of Agents</Typography>
+                <Typography variant="h5">List of Organizations</Typography>
               </Stack>
               <Button
                 variant="contained"
@@ -1357,8 +1208,8 @@ const Agent = () => {
                 <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
                   <MenuItem value="">-- Select --</MenuItem>
                   {states.map((s) => (
-                    <MenuItem key={s.id} value={s.stname || s.name}>
-                      {s.stname || s.name}
+                    <MenuItem key={s.id} value={s.state_name || s.name}>
+                      {s.state_name || s.name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -1409,7 +1260,19 @@ const Agent = () => {
                 ))}
               </TableHead>
               <TableBody>
-                {!emptyState.isEmpty ? (
+                {tableLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={table.getHeaderGroups()[0]?.headers.length || 7}
+                      align="center"
+                      sx={{ py: 6 }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Loading organizations...
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : !emptyState.isEmpty ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id} hover>
                       {row.getVisibleCells().map((cell) => (
@@ -1431,7 +1294,7 @@ const Agent = () => {
             </Table>
           </TableContainer>
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25, 50]}
+            rowsPerPageOptions={[5, 10, 20, 50, 100]}
             component="div"
             count={totalRows}
             rowsPerPage={rowsPerPage}

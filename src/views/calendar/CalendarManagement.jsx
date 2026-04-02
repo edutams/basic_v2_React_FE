@@ -114,7 +114,7 @@ function SessionsPanel({ isLevel1 }) {
   const fetchSessions = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await agentApi.get('/agent/calendar/sessions');
+      const res = await agentApi.get('/landlord/v1/calendar/sessions');
       setSessions(res.data);
     } catch {
       notify.error('Failed to load sessions');
@@ -154,7 +154,9 @@ function SessionsPanel({ isLevel1 }) {
     );
     setSessions(reordered);
     try {
-      await agentApi.put('/agent/calendar/sessions/reorder', { ids: reordered.map((s) => s.id) });
+      await agentApi.put('/landlord/v1/calendar/sessions/reorder', {
+        ids: reordered.map((s) => s.id),
+      });
     } catch {
       notify.error('Failed to save order');
       fetchSessions();
@@ -175,10 +177,10 @@ function SessionsPanel({ isLevel1 }) {
     if (!validate()) return;
     try {
       if (editTarget) {
-        await agentApi.put(`/agent/calendar/sessions/${editTarget.id}`, form);
+        await agentApi.put(`/landlord/v1/calendar/sessions/${editTarget.id}`, form);
         notify.success('Session updated');
       } else {
-        await agentApi.post('/agent/calendar/sessions', form);
+        await agentApi.post('/landlord/v1/calendar/sessions', form);
         notify.success('Session created');
       }
       closeDialog();
@@ -198,7 +200,7 @@ function SessionsPanel({ isLevel1 }) {
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/agent/calendar/sessions/${s.id}`);
+          await agentApi.delete(`/landlord/v1/calendar/sessions/${s.id}`);
           notify.success('Session deleted');
           fetchSessions();
         } catch (err) {
@@ -460,7 +462,7 @@ function TermsPanel({ isLevel1 }) {
   const fetchTerms = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await agentApi.get('/agent/calendar/terms');
+      const res = await agentApi.get('/landlord/v1/calendar/terms');
       setTerms(res.data);
     } catch {
       notify.error('Failed to load terms');
@@ -500,7 +502,9 @@ function TermsPanel({ isLevel1 }) {
     );
     setTerms(reordered);
     try {
-      await agentApi.put('/agent/calendar/terms/reorder', { ids: reordered.map((t) => t.id) });
+      await agentApi.put('/landlord/v1/calendar/terms/reorder', {
+        ids: reordered.map((t) => t.id),
+      });
     } catch {
       notify.error('Failed to save order');
       fetchTerms();
@@ -519,10 +523,10 @@ function TermsPanel({ isLevel1 }) {
     if (!validate()) return;
     try {
       if (editTarget) {
-        await agentApi.put(`/agent/calendar/terms/${editTarget.id}`, form);
+        await agentApi.put(`/landlord/v1/calendar/terms/${editTarget.id}`, form);
         notify.success('Term updated');
       } else {
-        await agentApi.post('/agent/calendar/terms', form);
+        await agentApi.post('/landlord/v1/calendar/terms', form);
         notify.success('Term created');
       }
       closeDialog();
@@ -542,7 +546,7 @@ function TermsPanel({ isLevel1 }) {
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/agent/calendar/terms/${t.id}`);
+          await agentApi.delete(`/landlord/v1/calendar/terms/${t.id}`);
           notify.success('Term deleted');
           fetchTerms();
         } catch (err) {
@@ -760,9 +764,9 @@ function MappingsPanel() {
     setLoading(true);
     try {
       const [mRes, sRes, tRes] = await Promise.all([
-        agentApi.get('/agent/calendar/mappings'),
-        agentApi.get('/agent/calendar/sessions'),
-        agentApi.get('/agent/calendar/terms'),
+        agentApi.get('/landlord/v1/calendar/mappings'),
+        agentApi.get('/landlord/v1/calendar/sessions'),
+        agentApi.get('/landlord/v1/calendar/terms'),
       ]);
       setMappings(mRes.data);
       setSessions(sRes.data);
@@ -787,7 +791,9 @@ function MappingsPanel() {
     );
     setMappings(reordered);
     try {
-      await agentApi.put('/agent/calendar/mappings/reorder', { ids: reordered.map((m) => m.id) });
+      await agentApi.put('/landlord/v1/calendar/mappings/reorder', {
+        ids: reordered.map((m) => m.id),
+      });
     } catch {
       notify.error('Failed to save order');
       fetchAll();
@@ -806,7 +812,7 @@ function MappingsPanel() {
   const handleSubmit = async () => {
     if (!validate()) return;
     try {
-      await agentApi.post('/agent/calendar/mappings', form);
+      await agentApi.post('/landlord/v1/calendar/mappings', form);
       notify.success('Mapping saved');
       setDialogOpen(false);
       setErrors({});
@@ -825,7 +831,7 @@ function MappingsPanel() {
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/agent/calendar/mappings/${m.id}`);
+          await agentApi.delete(`/landlord/v1/calendar/mappings/${m.id}`);
           notify.success('Mapping removed');
           fetchAll();
         } catch (err) {
@@ -842,7 +848,7 @@ function MappingsPanel() {
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.put(`/agent/calendar/mappings/${m.id}/activate`);
+          await agentApi.put(`/landlord/v1/calendar/mappings/${m.id}/activate`);
           notify.success('Mapping activated');
           fetchAll();
         } catch (err) {

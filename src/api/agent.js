@@ -14,12 +14,15 @@ const agentApi = {
     return response.data;
   },
   update: async (id, data) => {
-    const url = id ? `/landlord/v1/update_agent_profile/${id}` : `/landlord/v1/update_agent_profile`;
-    const response = await api.post(url, data);
+    const response = await api.post(`/landlord/v1/organizations/update/${id}`, data);
     return response.data;
   },
   getDetails: async (id) => {
     const response = await api.get(`/landlord/v1/organizations/get_agent_details/${id}`);
+    return response.data;
+  },
+  getTeamMembers: async (id) => {
+    const response = await api.get(`/landlord/v1/organizations/team/${id}`);
     return response.data;
   },
   impersonateAgent: async (id) => {

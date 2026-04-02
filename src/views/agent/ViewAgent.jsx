@@ -42,6 +42,7 @@ const ViewAgent = () => {
   const [agentData, setAgentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchAgentDetails = async () => {
@@ -110,6 +111,8 @@ const ViewAgent = () => {
             recentOnboarding: [],
             topAgents: [],
             topRevenueSchools: [],
+            raw: data,
+            leadUser: (data.users || []).find(u => u.is_lead === 'yes') || null,
           };
           setAgentData(mappedData);
         }
@@ -263,7 +266,7 @@ const ViewAgent = () => {
                       />
                     </TabPanel>
                     <TabPanel value="4" sx={{ p: 3 }}>
-                      <ManageTeamTab />
+                      <ManageTeamTab organizationId={id} />
                     </TabPanel>
                   </Box>
                 </TabContext>
@@ -291,6 +294,19 @@ const ViewAgent = () => {
           open={isAddAgentModalOpen}
           onClose={() => setIsAddAgentModalOpen(false)}
           handleRefresh={() => setRefreshKey?.(prev => prev + 1)}
+        />
+        <AgentModal
+          open={isUpdateModalOpen}
+          onClose={() => setIsUpdateModalOpen(false)}
+          handleRefresh={() => setRefreshKey(prev => prev + 1)}
+          actionType="update"
+          selectedAgent={agentData ? {
+            ...agentData.raw,
+            ...agentData.leadUser,
+            id: id,
+            organization_logo: agentData.raw?.organization_logo,
+            avatar: agentData.leadUser?.avatar,
+          } : null}
         />
         <ReusableModal
           open={isAddSchoolModalOpen}

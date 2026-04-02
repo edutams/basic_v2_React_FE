@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 const PermissionGate = ({ children, permissions = [], all = false }) => {
-  const { user } = useAuth();
+  const { user, permissions: userPermissions = [] } = useAuth();
   
   // If no permissions are required, allow access
   if (!permissions || permissions.length === 0) {
@@ -13,8 +13,6 @@ const PermissionGate = ({ children, permissions = [], all = false }) => {
   if (user?.is_super_admin) {
     return <>{children}</>;
   }
-
-  const userPermissions = user?.permissions || [];
 
   const hasPermission = all
     ? permissions.every((p) => userPermissions.includes(p))

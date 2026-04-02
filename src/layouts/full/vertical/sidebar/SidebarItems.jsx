@@ -65,7 +65,7 @@ const SidebarItems = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const response = await api.get('/v1/sidebar-modules');
+        const response = await api.get('/landlord/v1/sidebar-modules');
 
         const packageModules = response.data?.data;
 

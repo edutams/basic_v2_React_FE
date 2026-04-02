@@ -70,8 +70,8 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                         {field('Short Name', prospect.tenant_short_name)}
                         {field('School Email', prospect.tenant_email)}
                         {field('Address', prospect.address)}
-                        {field('State / LGA', prospect.state_lga?.state?.stname
-                            ? `${prospect.state_lga.state.stname} / ${prospect.state_lga.lganame}`
+                        {field('State / LGA', prospect.state_lga?.state?.state_name
+                            ? `${prospect.state_lga.state.state_name} / ${prospect.state_lga.lganame}`
                             : null)}
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -498,10 +498,10 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
                 </MenuItem>
             </Menu>
 
-            <SchoolProfileModal 
-                open={profileModalOpen} 
-                onClose={() => setProfileModalOpen(false)} 
-                school={activeRow} 
+            <SchoolProfileModal
+                open={profileModalOpen}
+                onClose={() => setProfileModalOpen(false)}
+                school={activeRow}
             />
 
             {/* Review Modal */}

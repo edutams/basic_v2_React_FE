@@ -186,7 +186,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post(`/landlord/v1/impersonate/${id}`);
+      const res = await api.post(`/landlord/v1/impersonate/agent/${id}`);
       const { access_token, expires_in, user: apiUser, data: apiData, impersonator_id } = res.data;
 
       // Replace token atomically

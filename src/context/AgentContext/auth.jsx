@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const storedUser = localStorage.getItem('user');
         const storedPermissions = localStorage.getItem('permissions');
-        
+
         if (storedUser) {
           setUser(JSON.parse(storedUser));
           setPermissions(storedPermissions ? JSON.parse(storedPermissions) : []);
@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post('/auth/login', credentials);
+      const res = await api.post('/landlord/v1/auth/login', credentials);
 
       const { access_token, expires_in, user, permissions, roles } = res.data;
 
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await api.post('/auth/logout');
+      await api.post('/landlord/v1/auth/logout');
     } catch {
       /* best-effort */
     } finally {
@@ -133,7 +133,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/agent/register', credentials);
+      await api.post('/landlord/v1/auth/register', credentials);
       setUser(credentials);
       setIsAuthenticated(true);
       return { success: true, user: credentials };
@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }) => {
   const updateAgentProfile = async (data, isMultipart = false) => {
     setError(null);
     try {
-      const res = await api.post('/agent/update_agent_profile', data, {
+      const res = await api.post('/landlord/v1/update_agent_profile', data, {
         headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
       });
       const userData = res.data?.user || res.data?.data;
@@ -165,7 +165,7 @@ export const AuthProvider = ({ children }) => {
   const changePassword = async (passwordData) => {
     setError(null);
     try {
-      await api.put('/agent/change_password', passwordData);
+      await api.put('/landlord/v1/change_password', passwordData);
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.error || 'Password change failed';
@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      await api.post('/agent/refresh_token');
+      await api.post('/landlord/v1/refresh_token');
     } catch (err) {
       console.error('Token refresh failed', err);
     }
@@ -186,7 +186,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post(`/agent/impersonate/agent/${id}`);
+      const res = await api.post(`/landlord/v1/impersonate/${id}`);
       const { access_token, expires_in, user: apiUser, data: apiData, impersonator_id } = res.data;
 
       // Replace token atomically
@@ -213,7 +213,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post(`/agent/impersonate/tenant/${id}`);
+      const res = await api.post(`/landlord/v1/impersonate/tenant/${id}`);
       const { access_token, expires_in, user: apiUser, data: apiData, redirect_url } = res.data;
 
       // Check if there's a redirect URL (open in new tab approach)
@@ -250,7 +250,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       // Send impersonator_id as fallback; backend prefers JWT claims
-      const res = await api.post('/agent/impersonate/stop', {
+      const res = await api.post('/landlord/v1/impersonate/stop', {
         impersonator_id: impersonatorId,
       });
 

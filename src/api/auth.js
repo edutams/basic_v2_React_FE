@@ -7,6 +7,8 @@ const CENTRAL_API_BASE_URL =
     : import.meta.env.VITE_API_BASE_URL_PROD;
 
     console.log(import.meta.env.MODE)
+    console.log('api url', CENTRAL_API_BASE_URL);
+    
 
 const api = axios.create({
   baseURL: CENTRAL_API_BASE_URL + '/api/',

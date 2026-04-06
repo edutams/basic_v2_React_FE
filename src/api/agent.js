@@ -18,7 +18,7 @@ const agentApi = {
     return response.data;
   },
   getDetails: async (id) => {
-    const response = await api.get(`/landlord/v1/organizations/get_agent_details/${id}`);
+    const response = await api.get(`/landlord/v1/organizations/get_organization_details/${id}`);
     return response.data;
   },
   getTeamMembers: async (id) => {
@@ -26,11 +26,11 @@ const agentApi = {
     return response.data;
   },
   impersonateAgent: async (id) => {
-    const response = await api.post(`/landlord/v1/impersonation/agent/${id}`);
+    const response = await api.post(`/landlord/v1/impersonation/landlord/${id}`);
     return response.data;
   },
   impersonateTenant: async (id) => {
-    const response = await api.post(`/agent/impersonate/tenant/${id}`);
+    const response = await api.post(`/landlord/v1/impersonation/tenant/${id}`);
     return response.data;
   },
 };

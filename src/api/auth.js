@@ -1,13 +1,9 @@
-console.log('AXIOS FILE LOADED');
 import axios from 'axios';
 
 const CENTRAL_API_BASE_URL =
   import.meta.env.MODE !== 'production'
     ? import.meta.env.VITE_API_BASE_URL_LOCAL || 'http://127.0.0.1:8000'
     : import.meta.env.VITE_API_BASE_URL_PROD;
-
-    console.log(import.meta.env.MODE)
-    console.log('api url', CENTRAL_API_BASE_URL);
     
 
 const api = axios.create({

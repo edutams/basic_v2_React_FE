@@ -52,51 +52,39 @@ const TenantRoutes = [
       {
         index: true,
         element: (
-          <PermissionGate permissions={['dashboard.view']}>
             <SchoolDashboardMain />
-          </PermissionGate>
         ),
       },
       {
         path: 'initial-setup',
         element: (
-          <PermissionGate permissions={['dashboard.view']}>
             <InitialSetup />
-          </PermissionGate>
         ),
       },
       {
         path: 'complete-setup',
         element: (
-          <PermissionGate permissions={['dashboard.view']}>
             <CompleteSetup />
-          </PermissionGate>
         ),
       },
       {
         path: 'session-week-manager',
         element: (
-          <PermissionGate permissions={['setup.academics.school']}>
             <SessionWeekManager />
-          </PermissionGate>
         ),
       },
       { path: 'scheme-of-work', element: <SchemeOfWork /> },
       {
         path: 'manage-subscription',
         element: (
-          <PermissionGate permissions={['manage.subscription']}>
             <SubscriptionIndex />
-          </PermissionGate>
         ),
       },
       { path: 'subscription-history', element: <SubscriptionIndex /> },
       {
         path: 'alc-manager',
         element: (
-          <PermissionGate permissions={['api.v1.censis.acl.index']}>
             <AlcManager />
-          </PermissionGate>
         ),
       },
       { path: 'activity-logs', element: <ActivityLog /> },

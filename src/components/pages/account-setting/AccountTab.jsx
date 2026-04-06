@@ -52,10 +52,10 @@ const AccountTab = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user?.name || '',
+        name: user?.full_name || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        address: user?.address || '',
+        address: user?.organization?.organization_address || '',
         image: user?.image || '',
         org_name: user?.org_name || '',
         org_title: user?.org_title || '',
@@ -92,7 +92,7 @@ const AccountTab = () => {
 
     const payload = new FormData();
 
-    ['name', 'email', 'phone', 'address', 'org_name', 'org_title'].forEach((key) => {
+    ['full_name', 'email', 'phone', 'address', 'org_name', 'org_title'].forEach((key) => {
       payload.append(key, formData[key]);
     });
 
@@ -190,7 +190,7 @@ const AccountTab = () => {
                 <CustomTextField
                   id="name"
                   name="name"
-                  value={formData.org_name || formData.name}
+                  value={formData.full_name || formData.name}
                   onChange={handleProfileChange}
                   fullWidth
                   disabled={isTenantSubdomain}

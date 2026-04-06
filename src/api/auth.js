@@ -1,3 +1,4 @@
+console.log('AXIOS FILE LOADED');
 import axios from 'axios';
 
 const CENTRAL_API_BASE_URL =

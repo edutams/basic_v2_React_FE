@@ -71,8 +71,15 @@ const AssignmentManagement = () => {
       // console.log('Users data:', usersData);
       // console.log('Sample user from API:', usersData[0]);
 
+      // Map organization data to user format for the UI
       const normalized = (usersData || []).map((u) => ({
-        ...u,
+        id: u.id,
+        name: u.organization_name || u.name,
+        email: u.organization_email || u.email,
+        image: u.image || '/src/assets/images/users/default_avatar.png',
+        level: u.level || null,
+        parent_id: u.parent_id || null,
+        status: u.status || 'active',
         assignedRoles: u.roles || [],
       }));
       // console.log('Normalized users:', normalized);
@@ -182,8 +189,17 @@ const AssignmentManagement = () => {
     // console.log('Agent ID being sent:', currentAgentForRole.id);
     // console.log('Role IDs being attached:', roleIds);
 
-    // Determine if we're adding or removing roles
-    const currentRoleIds = currentAgentForRole.assignedRoles?.map((r) => r.id) || [];
+    const getCurrentRoleIds = () => {
+      const roles = currentAgentForRole.assignedRoles || [];
+      return roles.map((r) => {
+        if (typeof r === 'object' && r.id !== undefined) {
+          return r.id;
+        }
+        return r;
+      });
+    };
+
+    const currentRoleIds = getCurrentRoleIds();
     const addedRoles = roleIds.filter((id) => !currentRoleIds.includes(id));
     const removedRoles = currentRoleIds.filter((id) => !roleIds.includes(id));
 
@@ -210,8 +226,15 @@ const AssignmentManagement = () => {
       }
       // console.log('Users data after assignment:', usersData);
 
+      // Map organization data to user format for the UI (same as fetchUsers)
       const normalized = (usersData || []).map((u) => ({
-        ...u,
+        id: u.id,
+        name: u.organization_name || u.name,
+        email: u.organization_email || u.email,
+        image: u.image || '/src/assets/images/users/default_avatar.png',
+        level: u.level || null,
+        parent_id: u.parent_id || null,
+        status: u.status || 'active',
         assignedRoles: u.roles || [],
       }));
 

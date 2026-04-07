@@ -70,7 +70,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     if (!validateForm()) {
       return;
     }

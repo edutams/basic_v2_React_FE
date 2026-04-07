@@ -58,7 +58,7 @@ const SubjectTopicView = () => {
       const response = await phetApi.getSubjects();
       setSubjects(response || []);
     } catch (error) {
-      console.error('Error fetching subjects:', error);
+      // console.error('Error fetching subjects:', error);
       notify.error('Failed to load subjects', 'Error');
     } finally {
       setLoading(false);
@@ -69,6 +69,7 @@ const SubjectTopicView = () => {
     try {
       setTopicsLoading(true);
       const response = await phetApi.getTopicsBySubject(subjectId);
+      console.log('Topics response:', response); // Debug log
       setTopics(response || []);
     } catch (error) {
       console.error('Error fetching topics:', error);
@@ -95,7 +96,6 @@ const SubjectTopicView = () => {
       setAddModalOpen(false);
       notify.success('Subject added successfully', 'Success');
     } catch (error) {
-      console.error('Error adding subject:', error);
       notify.error('Failed to add subject', 'Error');
     }
   };
@@ -128,7 +128,7 @@ const SubjectTopicView = () => {
       }
       setModalOpen(false);
     } catch (error) {
-      console.error('Error updating subject:', error);
+      // console.error('Error updating subject:', error);
       notify.error('Failed to update subject', 'Error');
     }
   };
@@ -167,7 +167,7 @@ const SubjectTopicView = () => {
       }
       setTopicModalOpen(false);
     } catch (error) {
-      console.error('Error submitting topic:', error);
+      // console.error('Error submitting topic:', error);
       notify.error('Failed to submit topic', 'Error');
     }
   };
@@ -180,7 +180,7 @@ const SubjectTopicView = () => {
         notify.success('Topic deleted successfully', 'Success');
         setTopicToDelete(null);
       } catch (error) {
-        console.error('Error deleting topic:', error);
+        // console.error('Error deleting topic:', error);
         notify.error('Failed to delete topic', 'Error');
       }
     }
@@ -189,7 +189,10 @@ const SubjectTopicView = () => {
 
   const filteredTopics = selectedSubject
     ? topics.filter(
-        (t) => t.subject_id === selectedSubject.id || t.subjectId === selectedSubject.id,
+        (t) =>
+          t.phet_subject_id === selectedSubject.id ||
+          t.subject_id === selectedSubject.id ||
+          t.subjectId === selectedSubject.id,
       )
     : [];
 

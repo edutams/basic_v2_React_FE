@@ -82,8 +82,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (credentials) => {
-    console.log("I go here and i use: ", api);
-    
     setIsLoading(true);
     setError(null);
     try {

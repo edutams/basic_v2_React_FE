@@ -69,10 +69,10 @@ const SubjectTopicView = () => {
     try {
       setTopicsLoading(true);
       const response = await phetApi.getTopicsBySubject(subjectId);
-      console.log('Topics response:', response); // Debug log
+      // console.log('Topics response:', response);
       setTopics(response || []);
     } catch (error) {
-      console.error('Error fetching topics:', error);
+      // console.error('Error fetching topics:', error);
       notify.error('Failed to load topics', 'Error');
     } finally {
       setTopicsLoading(false);
@@ -96,6 +96,7 @@ const SubjectTopicView = () => {
       setAddModalOpen(false);
       notify.success('Subject added successfully', 'Success');
     } catch (error) {
+      // console.error('Error adding subject:', error);
       notify.error('Failed to add subject', 'Error');
     }
   };

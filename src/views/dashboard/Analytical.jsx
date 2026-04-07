@@ -148,7 +148,7 @@ export default function Dashboard() {
         ),
       }),
       columnHelper.accessor('agentDetails', {
-        header: () => 'Agent Details',
+        header: () => 'Organization Details',
         cell: (info) => {
           const agent = info.row.original;
           const initials = (agent.organizationName || 'NA')
@@ -280,14 +280,14 @@ export default function Dashboard() {
                 info.getValue() === 'Active'
                   ? '#dcfee6'
                   : info.getValue() === 'Inactive'
-                  ? '#ffe4e6'
-                  : '#f3f4f6',
+                    ? '#ffe4e6'
+                    : '#f3f4f6',
               color:
                 info.getValue() === 'Active'
                   ? '#16a34a'
                   : info.getValue() === 'Inactive'
-                  ? '#e11d48'
-                  : '#4b5563',
+                    ? '#e11d48'
+                    : '#4b5563',
               borderRadius: '6px',
               fontWeight: 600,
             }}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Tab, Grid, useTheme, CircularProgress } from '@mui/material';
+import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
 import { useParams } from 'react-router';
@@ -132,17 +132,17 @@ const ViewAgent = () => {
 
   const BCrumb = [
     { to: '/', title: 'Home' },
-    ...(isDashboard || (isOwnProfile && currentUser.access_level > 1)
+    ...(isDashboard || (isOwnProfile && currentUser?.organization.access_level > 1)
       ? []
-      : [{ to: '/agent', title: 'Agent' }]),
+      : [{ to: '/organization', title: 'Organization' }]),
     {
       title:
-        isDashboard || (isOwnProfile && currentUser.access_level > 1)
+        isDashboard || (isOwnProfile && currentUser?.organization.access_level > 1)
           ? 'Dashboard'
           : 'View Profile',
     },
   ];
-
+  console.log(currentUser, 65666556)
   const isDark = theme.palette.mode === 'dark';
 
   return (

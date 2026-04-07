@@ -348,7 +348,7 @@ const AssignmentManagement = () => {
     <ParentCard
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="h5">Assign Roles/Permission to Agents</Typography>
+          <Typography variant="h5">Assign Roles/Permission to Organizations</Typography>
         </Box>
       }
     >
@@ -405,7 +405,9 @@ const AssignmentManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '10%' }}>#</TableCell>
-                  <TableCell sx={{ width: { xs: '40%', md: '35%' } }}>Agent Details</TableCell>
+                  <TableCell sx={{ width: { xs: '40%', md: '35%' } }}>
+                    Organization Details
+                  </TableCell>
                   <TableCell sx={{ width: { xs: '35%', md: '35%' } }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Action

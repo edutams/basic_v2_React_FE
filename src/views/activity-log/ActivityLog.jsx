@@ -51,7 +51,13 @@ const ActivityLog = () => {
   const [selectedLog, setSelectedLog] = useState(null);
   const [openModal, setOpenModal] = useState(false);
 
-  const fetchLogs = async (currentPage, limit, searchQuery = search, from = dateFrom, to = dateTo) => {
+  const fetchLogs = async (
+    currentPage,
+    limit,
+    searchQuery = search,
+    from = dateFrom,
+    to = dateTo,
+  ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -62,7 +68,7 @@ const ActivityLog = () => {
       if (from) params.append('date_from', from);
       if (to) params.append('date_to', to);
 
-      const response = await api.get(`/agent/activity-logs?${params.toString()}`);
+      const response = await api.get(`/landlord/v1/activity-logs?${params.toString()}`);
       setLogs(response.data.data);
       setTotal(response.data.total);
       setError(null);
@@ -130,7 +136,9 @@ const ActivityLog = () => {
               placeholder="Search logs..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch();
+              }}
               sx={{ width: '250px' }}
               InputProps={{
                 startAdornment: (
@@ -209,14 +217,18 @@ const ActivityLog = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      logs.map((log,idx) => (
+                      logs.map((log, idx) => (
                         <TableRow key={log.id}>
-                            <TableCell>
+                          <TableCell>
                             <Typography variant="body1">{idx + 1}</Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body1">
-                              <a href="#" className='text-success'>{log.causer?.org_name || 'System'}</a> {log.description}</Typography>
+                              <a href="#" className="text-success">
+                                {log.causer?.org_name || 'System'}
+                              </a>{' '}
+                              {log.description}
+                            </Typography>
                           </TableCell>
                           {/* <TableCell>
                             <Typography variant="body1">{log.description}</Typography>
@@ -267,31 +279,45 @@ const ActivityLog = () => {
 
       {/* Details Modal */}
       <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           Activity Details
           <IconButton onClick={handleCloseModal}>
             <IconX size={20} />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          {selectedLog && selectedLog.properties && Object.keys(selectedLog.properties).length > 0 ? (
+          {selectedLog &&
+          selectedLog.properties &&
+          Object.keys(selectedLog.properties).length > 0 ? (
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell><Typography variant="subtitle2">Updated Properties</Typography></TableCell>
-                    <TableCell><Typography variant="subtitle2">Value</Typography></TableCell>
+                    <TableCell>
+                      <Typography variant="subtitle2">Updated Properties</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="subtitle2">Value</Typography>
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {Object.entries(selectedLog.properties).map(([key, value]) => (
                     <TableRow key={key}>
-                      <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                        {key}
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{key}</TableCell>
                       <TableCell>
                         {typeof value === 'object' && value !== null ? (
-                          <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          <pre
+                            style={{
+                              margin: 0,
+                              fontFamily: 'monospace',
+                              fontSize: '12px',
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                            }}
+                          >
                             {JSON.stringify(value, null, 2)}
                           </pre>
                         ) : (

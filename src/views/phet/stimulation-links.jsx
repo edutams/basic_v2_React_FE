@@ -65,7 +65,7 @@ const ManagePhETLinks = () => {
       const data = await phetApi.getSimulationLinks({ search: searchTerm });
       setRows(data);
     } catch (error) {
-      console.error('Error fetching simulation links:', error);
+      // console.error('Error fetching simulation links:', error);
       notify.error('Failed to fetch simulation links');
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ const ManagePhETLinks = () => {
   }, [searchTerm]);
 
   const filteredRows = rows.filter((row) =>
-    (row.title || '').toLowerCase().includes(searchTerm.toLowerCase()),
+    (row.sub_topic || '').toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -140,7 +140,7 @@ const ManagePhETLinks = () => {
       }
       setModalOpen(false);
     } catch (error) {
-      console.error('Error submitting simulation link:', error);
+      // console.error('Error submitting simulation link:', error);
       notify.error('Failed to submit simulation link', 'Error');
     }
   };
@@ -153,7 +153,7 @@ const ManagePhETLinks = () => {
       setRowToDelete(null);
       notify.success('Stimulation link deleted successfully', 'Success');
     } catch (error) {
-      console.error('Error deleting simulation link:', error);
+      // console.error('Error deleting simulation link:', error);
       notify.error('Failed to delete simulation link', 'Error');
     }
   };
@@ -181,7 +181,7 @@ const ManagePhETLinks = () => {
         <Box sx={{ p: 0 }}>
           <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
-              placeholder="Search by title..."
+              placeholder="Search by sub-topic..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -230,9 +230,11 @@ const ManagePhETLinks = () => {
                     paginatedRows.map((row, index) => (
                       <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{row.title || '-'}</TableCell>
-                        <TableCell>{row.subject_name || '-'}</TableCell>
-                        <TableCell>{row.topic_name || '-'}</TableCell>
+                        <TableCell>{row.sub_topic || '-'}</TableCell>
+                        <TableCell>
+                          {row.topic?.subject?.subject_name || row.subject?.subject_name || '-'}
+                        </TableCell>
+                        <TableCell>{row.topic?.topic || row.topic_name || '-'}</TableCell>
                         <TableCell>
                           <a href={row.link || '#'} target="_blank" rel="noopener noreferrer">
                             {row.link || '-'}

@@ -186,7 +186,7 @@ const AssignmentManagement = () => {
                     Total Role
                   </TableCell>
                   <TableCell sx={{ width: { xs: '25%', md: '15%' } }} align="center">
-                    Total Agents
+                    Total Organization
                   </TableCell>
                 </TableRow>
               </TableHead>

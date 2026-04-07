@@ -36,7 +36,7 @@ import { useNavigate } from 'react-router';
 
 const columnHelper = createColumnHelper();
 
-const TeamTab = ({ team = [], onAddAgent }) => {
+const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -280,19 +280,21 @@ const TeamTab = ({ team = [], onAddAgent }) => {
           </Box>
           <Typography variant="h5">List of Agents</Typography>
         </Stack>
-        <Button
-          variant="contained"
-          startIcon={<IconUsers size={16} />}
-          onClick={onAddAgent}
-          sx={{
-            bgcolor: '#3949ab',
-            textTransform: 'none',
-            borderRadius: '8px',
-            '&:hover': { bgcolor: '#303f9f' },
-          }}
-        >
-          Add New Agent
-        </Button>
+        {isDashboard && accessLevel === 1 ? null : (
+          <Button
+            variant="contained"
+            startIcon={<IconUsers size={16} />}
+            onClick={onAddAgent}
+            sx={{
+              bgcolor: '#3949ab',
+              textTransform: 'none',
+              borderRadius: '8px',
+              '&:hover': { bgcolor: '#303f9f' },
+            }}
+          >
+            Add New Agent
+          </Button>
+        )}
       </Stack>
 
       {/* Filters */}

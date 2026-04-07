@@ -214,7 +214,10 @@ const Agent = () => {
         const agentsArray = paginator.data || [];
 
         const mappedData = agentsArray.map((agent, index) => {
+          const leadUser = agent.users && agent.users.length > 0 ? agent.users[0] : {};
           return {
+            ...agent,
+            ...leadUser,
             s_n: page * rowsPerPage + index + 1,
             id: agent.id,
             organizationName: agent.organization_name,
@@ -230,11 +233,11 @@ const Agent = () => {
             status: agent.status
               ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
               : 'Inactive',
-            lga: agent.lga_id,
+            lga: agent.lga_id || agent.state_lga_id,
             state_name: agent.state_lga?.state?.state_name || agent.state_name,
             state_id: agent.state_lga?.state_id || agent.state_id,
             lga_name: agent.state_lga?.lga_name || agent.lga_name,
-            lga_id: agent.lga_id,
+            lga_id: agent.lga_id || agent.state_lga_id,
           };
         });
         setData(mappedData);
@@ -496,6 +499,58 @@ const Agent = () => {
                 sx={{ display: 'block', lineHeight: 1.4 }}
               >
                 {agent.contactDetails || 'N/A'}
+              </Typography>
+            </Box>
+          </Stack>
+        );
+      },
+    }),
+    columnHelper.accessor('adminDetails', {
+      header: () => 'Admin Details',
+      cell: (info) => {
+        const agent = info.row.original;
+        const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
+        const initials = fullName
+          ? fullName.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+          : 'NA';
+
+        return (
+          <Stack direction="row" spacing={1.5} alignItems="flex-start">
+            <Avatar
+              src={agent.avatar || agent.admin_avatar}
+              alt={fullName}
+              sx={{
+                width: 36,
+                height: 36,
+                fontSize: '12px',
+                fontWeight: 700,
+                bgcolor: '#2196f3', // Using a distinct color for admins
+                flexShrink: 0,
+              }}
+            >
+              {!(agent.avatar || agent.admin_avatar) && initials}
+            </Avatar>
+            <Box>
+              <Typography
+                variant="subtitle2"
+                fontWeight="700"
+                sx={{ lineHeight: 1.3, color: 'text.primary' }}
+              >
+                {fullName || 'N/A'}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="textSecondary"
+                sx={{ display: 'block', lineHeight: 1.4 }}
+              >
+                {agent.phone || 'N/A'}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="textSecondary"
+                sx={{ display: 'block', lineHeight: 1.4 }}
+              >
+                {agent.email || 'N/A'}
               </Typography>
             </Box>
           </Stack>

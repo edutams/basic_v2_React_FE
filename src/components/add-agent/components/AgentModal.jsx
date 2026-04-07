@@ -63,14 +63,14 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
   const modalConfig = getModalConfig(actionType);
 
   const initialValues = {
-    organizationName: shouldPrefillForm ? (selectedAgent?.organization_name || selectedAgent?.name || '') : '',
-    organizationDomain: shouldPrefillForm ? (selectedAgent?.organization_domain || '') : '',
-    contactDetails: shouldPrefillForm ? (selectedAgent?.organization_email || selectedAgent?.email || '') : '',
-    agentPhone: shouldPrefillForm ? (selectedAgent?.organization_phone || selectedAgent?.phone || '') : '',
-    contactAddress: shouldPrefillForm ? (selectedAgent?.organization_address || selectedAgent?.address || '') : '',
+    organizationName: shouldPrefillForm ? (selectedAgent?.organizationName || selectedAgent?.organization_name || selectedAgent?.name || '') : '',
+    organizationDomain: shouldPrefillForm ? (selectedAgent?.organizationDomain || selectedAgent?.organization_domain || '') : '',
+    contactDetails: shouldPrefillForm ? (selectedAgent?.contactDetails || selectedAgent?.organization_email || selectedAgent?.email || '') : '',
+    agentPhone: shouldPrefillForm ? (selectedAgent?.phoneNumber || selectedAgent?.agentPhone || selectedAgent?.organization_phone || selectedAgent?.phone || '') : '',
+    contactAddress: shouldPrefillForm ? (selectedAgent?.contactAddress || selectedAgent?.organization_address || selectedAgent?.address || '') : '',
     stateFilter: shouldPrefillForm ? (selectedAgent?.state_id || selectedAgent?.stateFilter || '') : '',
-    lga: shouldPrefillForm ? (selectedAgent?.state_lga_id || selectedAgent?.lga || '') : '',
-    primaryColor: shouldPrefillForm ? (selectedAgent?.primary_color || selectedAgent?.primaryColor || '') : '',
+    lga: shouldPrefillForm ? (selectedAgent?.lga_id || selectedAgent?.lga || selectedAgent?.state_lga_id || '') : '',
+    primaryColor: shouldPrefillForm ? (selectedAgent?.primaryColor || selectedAgent?.primary_color || '') : '',
     fname: shouldPrefillForm ? (selectedAgent?.fname || '') : '',
     lname: shouldPrefillForm ? (selectedAgent?.lname || '') : '',
     mname: shouldPrefillForm ? (selectedAgent?.mname || '') : '',

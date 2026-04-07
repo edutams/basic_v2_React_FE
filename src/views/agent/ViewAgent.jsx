@@ -27,7 +27,7 @@ import { mockAgentData } from './mockData';
 const ViewAgent = () => {
   const { user: currentUser } = useAuth();
   const { id: paramId } = useParams();
-  const id = paramId || currentUser?.id;
+  const id = paramId || currentUser?.organization?.id || currentUser?.organization_id;
   const [value, setValue] = useState('1');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -36,7 +36,7 @@ const ViewAgent = () => {
   const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
   const theme = useTheme();
 
-  const isOwnProfile = currentUser && currentUser.id == id;
+  const isOwnProfile = currentUser && currentUser.organization.id == id;
   const isDashboard = !paramId;
 
   const [agentData, setAgentData] = useState(null);
@@ -148,13 +148,13 @@ const ViewAgent = () => {
   return (
     <PageContainer
       title={
-        isOwnProfile && currentUser?.access_level > 1 ? 'Organization Dashboard' : 'View Organization Profile'
+        isOwnProfile && currentUser?.organization.access_level > 1 ? 'Organization Dashboard' : 'View Organization Profile'
       }
       description="Detailed organization profile view"
     >
       <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
         <Breadcrumb
-          title={isOwnProfile && currentUser?.access_level > 1 ? 'Dashboard' : 'View Profile'}
+          title={isOwnProfile && currentUser?.organization.access_level > 1 ? 'Dashboard' : 'View Profile'}
           items={BCrumb}
         />
 
@@ -257,6 +257,8 @@ const ViewAgent = () => {
                       <TeamTab
                         team={agentData.team || []}
                         onAddAgent={() => setIsAddAgentModalOpen(true)}
+                        isDashboard={isDashboard}
+                        accessLevel={currentUser?.organization?.access_level}
                       />
                     </TabPanel>
                     <TabPanel value="3" sx={{ p: 3 }}>

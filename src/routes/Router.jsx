@@ -10,11 +10,9 @@ const centralDomain =
     ? import.meta.env.VITE_CENTRAL_DOMAIN_PROD 
     : import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL;
 
-    console.log("The central domain is: ", centralDomain);
-    
-
 const isTenantSubdomain =
   hostname !== centralDomain && hostname !== 'localhost' && hostname !== '127.0.0.1';
+  
 
 const Router = isTenantSubdomain ? TenantRoutes : AgentRoutes;
 

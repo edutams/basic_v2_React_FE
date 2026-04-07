@@ -70,10 +70,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log("its me: ");
     
-
     if (!validateForm()) {
       return;
     }

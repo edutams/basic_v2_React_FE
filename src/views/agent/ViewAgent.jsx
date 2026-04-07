@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Tab, Grid, useTheme, CircularProgress } from '@mui/material';
+import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
 import { useParams } from 'react-router';

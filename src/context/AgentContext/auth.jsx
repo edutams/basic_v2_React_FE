@@ -263,6 +263,10 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setIsImpersonating(false);
       setImpersonatorId(null);
+      
+      localStorage.removeItem('isImpersonating');
+      localStorage.removeItem('impersonator_id');
+      localStorage.setItem('user', JSON.stringify(userData));
 
       window.location.href = '/';
       return { success: true };

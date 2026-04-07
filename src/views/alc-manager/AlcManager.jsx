@@ -113,7 +113,12 @@ const AlcManager = () => {
     try {
       setSelectedRow(row);
       const res = await aclApi.getRolePermissions(row.id);
-      setSelectedPermissions(res?.data ?? []);
+
+      // Extract permissions already attached to this role
+      setSelectedPermissions(res?.data?.permissions ?? []);
+
+      // Store all available permissions for the modal
+      setAllPermissions(res?.data?.available_permissions ?? []);
 
       setPermissionModalOpen(true);
       handleMenuClose();
@@ -133,9 +138,11 @@ const AlcManager = () => {
   const handleSavePermissions = async (permissions) => {
     try {
       const permissionsToSave = permissions || selectedPermissions;
+
+      // Send permission IDs to the backend (not names)
       await aclApi.attachPermissions(
         selectedRow.id,
-        permissionsToSave.map((p) => p.name),
+        permissionsToSave.map((p) => p.id),
       );
 
       notify.success('Permissions updated successfully!');
@@ -158,7 +165,7 @@ const AlcManager = () => {
   const handleViewPermission = async (row) => {
     try {
       const res = await aclApi.getRolePermissions(row.id);
-      setPermissionsToView(res.data ?? []);
+      setPermissionsToView(res.data?.permissions ?? []);
       setViewPermissionModalOpen(true);
       handleMenuClose();
     } catch (err) {

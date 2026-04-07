@@ -41,12 +41,28 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
       }
 
       let rolePerms = [];
-      if (agentData?.roles) {
+      if (agentData?.roles && Array.isArray(agentData.roles)) {
         for (const role of agentData.roles) {
           try {
-            const rolePermsRes = await aclApi.getRolePermissions(role.id);
-            if (rolePermsRes?.data) {
-              rolePerms = [...rolePerms, ...rolePermsRes.data.map((p) => p.name)];
+            // Handle both string role names and role objects
+            const roleId = typeof role === 'object' ? role.id : role;
+            const roleName = typeof role === 'object' ? role.name : role;
+
+            // Get all roles to find the ID if we only have a name
+            const allRolesRes = await aclApi.getRolesList();
+            const allRoles = allRolesRes?.data || [];
+
+            let targetRoleId = roleId;
+            if (!targetRoleId) {
+              const foundRole = allRoles.find((r) => r.name === roleName);
+              targetRoleId = foundRole?.id;
+            }
+
+            if (targetRoleId) {
+              const rolePermsRes = await aclApi.getRolePermissions(targetRoleId);
+              if (rolePermsRes?.data?.permissions) {
+                rolePerms = [...rolePerms, ...rolePermsRes.data.permissions.map((p) => p.name)];
+              }
             }
           } catch (err) {
             console.error('Failed to fetch role permissions:', err);

@@ -12,6 +12,7 @@ const centralDomain =
 
 const isTenantSubdomain =
   hostname !== centralDomain && hostname !== 'localhost' && hostname !== '127.0.0.1';
+  
 
 const Router = isTenantSubdomain ? TenantRoutes : AgentRoutes;
 

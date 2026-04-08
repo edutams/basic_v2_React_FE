@@ -18,6 +18,7 @@ const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/Subs
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
 const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
+const SchoolNotFound = Loadable(lazy(() => import('../views/authentication/SchoolNotFound')));
 const AlcManager = Loadable(
   lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
 );
@@ -37,6 +38,11 @@ const TenantRoutes = [
     element: <ImpersonateLogin />,
   },
   {
+    path: '/school-not-found',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <SchoolNotFound /> }],
+  },
+  {
     path: '/auth/404',
     element: <BlankLayout />,
     children: [{ index: true, element: <Error /> }],
@@ -52,39 +58,39 @@ const TenantRoutes = [
       {
         index: true,
         element: (
-            <SchoolDashboardMain />
+          <SchoolDashboardMain />
         ),
       },
       {
         path: 'initial-setup',
         element: (
-            <InitialSetup />
+          <InitialSetup />
         ),
       },
       {
         path: 'complete-setup',
         element: (
-            <CompleteSetup />
+          <CompleteSetup />
         ),
       },
       {
         path: 'session-week-manager',
         element: (
-            <SessionWeekManager />
+          <SessionWeekManager />
         ),
       },
       { path: 'scheme-of-work', element: <SchemeOfWork /> },
       {
         path: 'manage-subscription',
         element: (
-            <SubscriptionIndex />
+          <SubscriptionIndex />
         ),
       },
       { path: 'subscription-history', element: <SubscriptionIndex /> },
       {
         path: 'alc-manager',
         element: (
-            <AlcManager />
+          <AlcManager />
         ),
       },
       { path: 'activity-logs', element: <ActivityLog /> },

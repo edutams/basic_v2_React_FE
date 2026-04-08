@@ -262,12 +262,12 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setIsImpersonating(false);
       setImpersonatorId(null);
-      
+
       localStorage.removeItem('isImpersonating');
       localStorage.removeItem('impersonator_id');
       localStorage.setItem('user', JSON.stringify(userData));
 
-      window.location.href = '/';
+      window.location.href = '/agent';
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.error || 'Failed to stop impersonation';

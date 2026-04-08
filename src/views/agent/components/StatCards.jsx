@@ -202,4 +202,5 @@ StatCards.propTypes = {
   onSchoolClick: PropTypes.func,
 };
 
+export { StatCard };
 export default StatCards;

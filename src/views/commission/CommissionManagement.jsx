@@ -30,14 +30,12 @@ const CommissionManagement = () => {
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
 
-  // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
-  // Pagination handlers
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -49,7 +47,7 @@ const CommissionManagement = () => {
 
   const handleTabChange = (event, newValue) => {
     setValue(newValue);
-    setPage(0); // Reset to first page when tab changes
+    setPage(0);
   };
 
   const handleEditCommission = (agent) => {
@@ -62,7 +60,6 @@ const CommissionManagement = () => {
     setTypeModalOpen(true);
   };
 
-  // Filter data based on tab
   const getFilteredData = () => {
     if (value === '3') return mockCommissionData.filter((a) => a.commissionType === 'Subscription');
     if (value === '4') return mockCommissionData.filter((a) => a.commissionType === 'Transaction');

@@ -151,6 +151,14 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, rows
             </Typography>
           ),
         }),
+        columnHelper.accessor('action', {
+          header: 'Action',
+          cell: (info) => (
+            <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
+              {info.getValue()}
+            </Typography>
+          ),
+        }),
       );
     }
 

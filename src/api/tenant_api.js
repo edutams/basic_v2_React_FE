@@ -14,7 +14,7 @@ const getTenantBaseURL = () => {
   if (!isTenantSubdomain) {
     throw new Error('tenantApi should NOT be used on central/agent domain');
   }
-  return `${window.location.protocol}//${hostname}/api/v1`;
+  return `${window.location.protocol}//${hostname}/api/tenant/v1`;
 };
 
 const tenantApi = axios.create({ baseURL: '/' });

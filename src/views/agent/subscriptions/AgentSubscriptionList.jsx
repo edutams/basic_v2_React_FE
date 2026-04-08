@@ -53,7 +53,7 @@ const AgentSubscriptionList = ({ status }) => {
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/agent/subscriptions', {
+      const res = await axios.get('/landlord/v1/subscriptions', {
         params: { status },
       });
       setRows(res.data.data);
@@ -71,7 +71,7 @@ const AgentSubscriptionList = ({ status }) => {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await axios.patch(`/agent/subscriptions/${id}/status`, { status: newStatus });
+      await axios.patch(`/landlord/v1/subscriptions/${id}/status`, { status: newStatus });
       notify.success(
         `Subscription successfully ${newStatus === 'active' ? 'approved' : 'updated'}`,
       );

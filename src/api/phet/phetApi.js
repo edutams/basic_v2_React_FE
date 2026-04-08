@@ -5,7 +5,7 @@ const phetApi = {
    * @param {Object} params
    */
   getSubjects: async (params = {}) => {
-    const response = await api.get('/agent/phet/subjects', { params });
+    const response = await api.get('landlord/v1/phet/subjects', { params });
     return response.data.data;
   },
 
@@ -13,7 +13,7 @@ const phetApi = {
    * @param {number|string} id
    */
   getSubject: async (id) => {
-    const response = await api.get(`/agent/phet/subjects/${id}`);
+    const response = await api.get(`landlord/v1/phet/subjects/${id}`);
     return response.data.data;
   },
 
@@ -21,7 +21,7 @@ const phetApi = {
    * @param {Object} data
    */
   createSubject: async (data) => {
-    const response = await api.post('/agent/phet/subjects', data);
+    const response = await api.post('landlord/v1/phet/subjects', data);
     return response.data.data;
   },
 
@@ -30,7 +30,7 @@ const phetApi = {
    * @param {Object} data
    */
   updateSubject: async (id, data) => {
-    const response = await api.put(`/agent/phet/subjects/${id}`, data);
+    const response = await api.put(`landlord/v1/phet/subjects/${id}`, data);
     return response.data.data;
   },
 
@@ -38,7 +38,7 @@ const phetApi = {
    * @param {number|string} id
    */
   deleteSubject: async (id) => {
-    const response = await api.delete(`/agent/phet/subjects/${id}`);
+    const response = await api.delete(`landlord/v1/phet/subjects/${id}`);
     return response.data.data;
   },
 
@@ -46,7 +46,7 @@ const phetApi = {
    * @param {Object} params
    */
   getTopics: async (params = {}) => {
-    const response = await api.get('/agent/phet/topics', { params });
+    const response = await api.get('landlord/v1/phet/topics', { params });
     return response.data.data;
   },
 
@@ -54,7 +54,7 @@ const phetApi = {
    * @param {number|string} subjectId
    */
   getTopicsBySubject: async (subjectId) => {
-    const response = await api.get(`/agent/phet/subjects/${subjectId}/topics`);
+    const response = await api.get(`landlord/v1/phet/subjects/${subjectId}/topics`);
     return response.data.data;
   },
 
@@ -62,7 +62,7 @@ const phetApi = {
    * @param {number|string} id
    */
   getTopic: async (id) => {
-    const response = await api.get(`/agent/phet/topics/${id}`);
+    const response = await api.get(`landlord/v1/phet/topics/${id}`);
     return response.data.data;
   },
 
@@ -71,7 +71,7 @@ const phetApi = {
    * @param {Object} data
    */
   createTopic: async (data) => {
-    const response = await api.post('/agent/phet/topics', data);
+    const response = await api.post('landlord/v1/phet/topics', data);
     return response.data.data;
   },
 
@@ -80,7 +80,7 @@ const phetApi = {
    * @param {Object} data
    */
   updateTopic: async (id, data) => {
-    const response = await api.put(`/agent/phet/topics/${id}`, data);
+    const response = await api.put(`landlord/v1/phet/topics/${id}`, data);
     return response.data.data;
   },
 
@@ -88,7 +88,7 @@ const phetApi = {
    * @param {number|string} id
    */
   deleteTopic: async (id) => {
-    const response = await api.delete(`/agent/phet/topics/${id}`);
+    const response = await api.delete(`landlord/v1/phet/topics/${id}`);
     return response.data.data;
   },
 
@@ -96,7 +96,7 @@ const phetApi = {
    * @param {Object} params
    */
   getSimulationLinks: async (params = {}) => {
-    const response = await api.get('/agent/phet/simulation-links', { params });
+    const response = await api.get('landlord/v1/phet/simulation-links', { params });
     return response.data.data;
   },
 
@@ -104,7 +104,7 @@ const phetApi = {
    * @param {number|string} id
    */
   getSimulationLink: async (id) => {
-    const response = await api.get(`/agent/phet/simulation-links/${id}`);
+    const response = await api.get(`landlord/v1/phet/simulation-links/${id}`);
     return response.data.data;
   },
 
@@ -113,7 +113,7 @@ const phetApi = {
    * @param {Object} data
    */
   createSimulationLink: async (data) => {
-    const response = await api.post('/agent/phet/simulation-links', data);
+    const response = await api.post('landlord/v1/phet/simulation-links', data);
     return response.data.data;
   },
 
@@ -122,7 +122,7 @@ const phetApi = {
    * @param {Object} data
    */
   updateSimulationLink: async (id, data) => {
-    const response = await api.put(`/agent/phet/simulation-links/${id}`, data);
+    const response = await api.put(`landlord/v1/phet/simulation-links/${id}`, data);
     return response.data.data;
   },
 
@@ -130,18 +130,18 @@ const phetApi = {
    * @param {number|string} id
    */
   deleteSimulationLink: async (id) => {
-    const response = await api.delete(`/agent/phet/simulation-links/${id}`);
+    const response = await api.delete(`landlord/v1/phet/simulation-links/${id}`);
     return response.data.data;
   },
 
   getSubjectsForDropdown: async () => {
-    const response = await api.get('/agent/phet/subjects', { params: { limit: 1000 } });
+    const response = await api.get('landlord/v1/phet/subjects', { params: { limit: 1000 } });
     return response.data.data;
   },
 
   getTopicsForDropdown: async (subjectId = null) => {
     const params = subjectId ? { subject_id: subjectId, limit: 1000 } : { limit: 1000 };
-    const response = await api.get('/agent/phet/topics', { params });
+    const response = await api.get('landlord/v1/phet/topics', { params });
     return response.data.data;
   },
 };

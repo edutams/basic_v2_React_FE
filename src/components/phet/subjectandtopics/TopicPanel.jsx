@@ -28,6 +28,7 @@ import {
 import ParentCard from '../../shared/ParentCard';
 
 const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false }) => {
+  // console.log('TopicPanel props:', { selectedSubject, topics, isLoading });
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);

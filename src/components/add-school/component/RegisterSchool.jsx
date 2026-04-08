@@ -31,272 +31,330 @@ import {
 } from '../../../context/AgentContext/services/school.service';
 import useNotification from '../../../hooks/useNotification';
 
-const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCancel, useProspective = false }) => {
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+const emptyPerson = () => ({
+  first_name: '',
+  last_name: '',
+  middle_name: '',
+  email: '',
+  phone: '',
+  gender: '',
+});
+
+const emptyForm = () => ({
+  tenant_name: '',
+  tenant_email: '',
+  tenant_short_name: '',
+  session_term: '',
+  address: '',
+  state_id: '',
+  lga_id: '',
+  school_divisions: [],
+  headcolor: 'bg-night-sky text-lighter',
+  sidecolor: 'bg-dark text-lighter',
+  bodycolor: 'null',
+  owner: emptyPerson(),
+  spa: emptyPerson(),
+  head: emptyPerson(),
+});
+
+const fromSelected = (s) => {
+  if (!s) return emptyForm();
+  const info = s.administrator_info || {};
+  const spa = info.school_spa || {};
+  const head = info.school_head || {};
+  const owner = info.school_owner || {};
+  return {
+    tenant_name: s.tenant_name || '',
+    tenant_email: s.tenant_email || '',
+    tenant_short_name: s.tenant_short_name || '',
+    session_term: s.session_term || '',
+    address: s.address || '',
+    state_id: s.state_lga?.state_id || '',
+    lga_id: s.lga_id || '',
+    school_divisions: s.school_divisions?.map((d) => d.id ?? d) || [],
+    headcolor: s.color?.headcolor || 'bg-night-sky text-lighter',
+    sidecolor: s.color?.sidecolor || 'bg-dark text-lighter',
+    bodycolor: s.color?.bodycolor || 'null',
+    owner: {
+      first_name: owner.school_owner_first_name || '',
+      last_name: owner.school_owner_last_name || '',
+      middle_name: owner.school_owner_middle_name || '',
+      email: owner.school_owner_email || '',
+      phone: owner.school_owner_phone || '',
+      gender: owner.school_owner_gender || '',
+    },
+    spa: {
+      first_name: spa.admin_first_name || '',
+      last_name: spa.admin_last_name || '',
+      middle_name: spa.admin_middle_name || '',
+      email: spa.admin_email || '',
+      phone: spa.admin_phone || '',
+      gender: spa.admin_gender || '',
+    },
+    head: {
+      first_name: head.school_head_first_name || '',
+      last_name: head.school_head_last_name || '',
+      middle_name: head.school_head_middle_name || '',
+      email: head.school_head_email || '',
+      phone: head.school_head_phone || '',
+      gender: head.school_head_gender || '',
+    },
+  };
+};
+
+// ── PersonFields — defined OUTSIDE the parent to prevent remount on every render ──
+
+const PersonFields = ({ section, formData, errors, onPersonChange, readOnly = false }) => (
+  <Grid container spacing={2}>
+    {[
+      { key: 'first_name', label: 'First Name', md: 6 },
+      { key: 'last_name', label: 'Last Name', md: 6 },
+      { key: 'middle_name', label: 'Middle Name (optional)', md: 6 },
+      { key: 'phone', label: 'Phone', md: 6 },
+      { key: 'email', label: 'Email', md: 6 },
+    ].map(({ key, label, md }) => (
+      <Grid item size={{ xs: 12, md }} key={key}>
+        <TextField
+          fullWidth
+          label={label}
+          value={formData[section][key]}
+          onChange={(e) => onPersonChange(section, key, e.target.value)}
+          error={Boolean(errors[`${section}.${key}`])}
+          helperText={errors[`${section}.${key}`]}
+          sx={{ bgcolor: 'white' }}
+          InputProps={{ readOnly }}
+        />
+      </Grid>
+    ))}
+    <Grid item size={{ xs: 12, md: 6 }}>
+      <FormControl fullWidth error={Boolean(errors[`${section}.gender`])} sx={{ bgcolor: 'white' }}>
+        <InputLabel>Gender</InputLabel>
+        <Select
+          value={formData[section].gender}
+          label="Gender"
+          onChange={(e) => onPersonChange(section, 'gender', e.target.value)}
+          inputProps={{ readOnly }}
+        >
+          <MenuItem value="">-- Select --</MenuItem>
+          <MenuItem value="male">Male</MenuItem>
+          <MenuItem value="female">Female</MenuItem>
+        </Select>
+        {errors[`${section}.gender`] && (
+          <FormHelperText>{errors[`${section}.gender`]}</FormHelperText>
+        )}
+      </FormControl>
+    </Grid>
+  </Grid>
+);
+
+// ── component ─────────────────────────────────────────────────────────────────
+
+const RegisterSchoolForm = ({
+  actionType,
+  selectedSchool = null,
+  onSubmit,
+  onCancel,
+  useProspective = false,
+}) => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [availableDivisions, setAvailableDivisions] = useState([]);
   const [loading, setLoading] = useState(false);
   const notify = useNotification();
 
-  const [formData, setFormData] = useState({
-    tenant_name: selectedSchool?.tenant_name || '',
-    tenant_email: selectedSchool?.tenant_email || '',
-    tenant_short_name: selectedSchool?.tenant_short_name || '',
-    session_term: selectedSchool?.session_term || '',
-    owner_fname: selectedSchool?.owner_fname || '',
-    owner_lname: selectedSchool?.owner_lname || '',
-    owner_email: selectedSchool?.owner_email || '',
-    owner_phone: selectedSchool?.owner_phone || '',
-    portal_fname: selectedSchool?.portal_fname || '',
-    portal_lname: selectedSchool?.portal_lname || '',
-    portal_email: selectedSchool?.portal_email || '',
-    portal_phone: selectedSchool?.portal_phone || '',
-    admin_fname: selectedSchool?.admin_fname || '',
-    admin_lname: selectedSchool?.admin_lname || '',
-    admin_email: selectedSchool?.admin_email || '',
-    admin_phone: selectedSchool?.admin_phone || '',
-    address: selectedSchool?.address || '',
-    state_id: selectedSchool?.state_lga?.state_id || '',
-    lga_id: selectedSchool?.lga_id || '',
-    school_divisions:
-      selectedSchool?.school_divisions?.map((d) => d.id) || selectedSchool?.school_divisions || [],
-    headcolor: selectedSchool?.color?.headcolor || 'bg-night-sky text-lighter',
-    sidecolor: selectedSchool?.color?.sidecolor || 'bg-dark text-lighter',
-    bodycolor: selectedSchool?.color?.bodycolor || 'null',
-  });
-
+  const [formData, setFormData] = useState(() => fromSelected(selectedSchool));
   const [errors, setErrors] = useState({});
 
-  // 'none' = fill manually | 'owner' = copy from owner
-  const [portalSource, setPortalSource] = useState('none');
-  // 'none' | 'owner' | 'portal'
-  const [adminSource, setAdminSource] = useState('none');
+  // 'none' | 'owner'
+  const [spaSource, setSpaSource] = useState('none');
+  // 'none' | 'owner' | 'spa'
+  const [headSource, setHeadSource] = useState('none');
 
-  const copyFields = (source) => ({
-    fname: formData[`${source}_fname`],
-    lname: formData[`${source}_lname`],
-    email: formData[`${source}_email`],
-    phone: formData[`${source}_phone`],
-  });
+  // ── data fetching ────────────────────────────────────────────────────────
 
-  const handlePortalSourceChange = (e) => {
-    const src = e.target.value;
-    setPortalSource(src);
-    if (src === 'owner') {
-      const f = copyFields('owner');
-      setFormData((prev) => ({ ...prev, portal_fname: f.fname, portal_lname: f.lname, portal_email: f.email, portal_phone: f.phone }));
-    } else {
-      setFormData((prev) => ({ ...prev, portal_fname: '', portal_lname: '', portal_email: '', portal_phone: '' }));
-    }
-  };
-
-  const handleAdminSourceChange = (e) => {
-    const src = e.target.value;
-    setAdminSource(src);
-    if (src === 'owner' || src === 'portal') {
-      const f = copyFields(src);
-      setFormData((prev) => ({ ...prev, admin_fname: f.fname, admin_lname: f.lname, admin_email: f.email, admin_phone: f.phone }));
-    } else {
-      setFormData((prev) => ({ ...prev, admin_fname: '', admin_lname: '', admin_email: '', admin_phone: '' }));
-    }
-  };
-
-  // Fetch states on mount
   useEffect(() => {
-    const fetchStates = async () => {
-      try {
-        const data = await getAllStates();
-        setStates(data || []);
-      } catch (err) {
-        notify.error('Failed to load states');
-      }
-    };
-    fetchStates();
+    getAllStates()
+      .then((d) => setStates(d || []))
+      .catch(() => notify.error('Failed to load states'));
   }, []);
 
-  // Fetch categories and divisions on mount
   useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const [cats, divs] = await Promise.all([getSchoolCategories(), getSchoolDivisions()]);
-        setCategories(cats || []);
-        setAvailableDivisions(divs || []);
-      } catch (err) {
-        notify.error('Failed to load school categorization metadata');
-      }
-    };
-    fetchMetadata();
+    Promise.all([getSchoolCategories(), getSchoolDivisions()])
+      .then(([, divs]) => setAvailableDivisions(divs || []))
+      .catch(() => notify.error('Failed to load school metadata'));
   }, []);
 
-  // Fetch LGAs when state changes
   useEffect(() => {
     if (formData.state_id) {
-      const fetchLgas = async () => {
-        try {
-          const data = await getLgasByState(formData.state_id);
-          setLgas(data || []);
-        } catch (err) {
-          notify.error(err.error || 'Failed to load LGAs');
-        }
-      };
-      fetchLgas();
+      getLgasByState(formData.state_id)
+        .then((d) => setLgas(d || []))
+        .catch((err) => notify.error(err.error || 'Failed to load LGAs'));
     } else {
       setLgas([]);
       setFormData((prev) => ({ ...prev, lga_id: '' }));
     }
   }, [formData.state_id]);
 
+  // ── change handlers ──────────────────────────────────────────────────────
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  const handlePersonChange = (section, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [section]: { ...prev[section], [field]: value },
+    }));
+    const key = `${section}.${field}`;
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
   };
 
   const handleColorChange = (colorType, value) => {
-    setFormData({ ...formData, [colorType]: value });
+    setFormData((prev) => ({ ...prev, [colorType]: value }));
   };
+
+  const copyPerson = (src) => ({ ...formData[src] });
+
+  const handleSpaSourceChange = (e) => {
+    const src = e.target.value;
+    setSpaSource(src);
+    setFormData((prev) => ({
+      ...prev,
+      spa: src === 'owner' ? copyPerson('owner') : emptyPerson(),
+    }));
+  };
+
+  const handleHeadSourceChange = (e) => {
+    const src = e.target.value;
+    setHeadSource(src);
+    setFormData((prev) => ({
+      ...prev,
+      head: src !== 'none' ? copyPerson(src) : emptyPerson(),
+    }));
+  };
+
+  // ── validation ───────────────────────────────────────────────────────────
 
   const validateForm = () => {
-    const newErrors = {};
+    const e = {};
+    if (!formData.tenant_name.trim()) e.tenant_name = 'School name is required';
+    if (!formData.tenant_short_name.trim()) e.tenant_short_name = 'Short name is required';
+    if (!formData.tenant_email.trim()) e.tenant_email = 'School email is required';
+    if (!formData.session_term) e.session_term = 'Session term is required';
+    if (!formData.address.trim()) e.address = 'Address is required';
+    if (!formData.state_id) e.state_id = 'State is required';
+    if (!formData.lga_id) e.lga_id = 'LGA is required';
+    if (!formData.school_divisions.length) e.school_divisions = 'At least one division is required';
 
-    if (!formData.tenant_name.trim()) {
-      newErrors.tenant_name = 'Institution name is required';
-    }
+    const validatePerson = (section, label, fields) => {
+      fields.forEach(({ key, msg }) => {
+        const val = formData[section][key];
+        if (!val || !String(val).trim()) e[`${section}.${key}`] = msg || `${label} ${key} is required`;
+      });
+    };
 
-    if (!formData.tenant_short_name.trim()) {
-      newErrors.tenant_short_name = 'Institution short name is required';
-    }
+    validatePerson('owner', 'Owner', [
+      { key: 'first_name' }, { key: 'last_name' }, { key: 'email' }, { key: 'phone' }, { key: 'gender' },
+    ]);
+    validatePerson('spa', 'Portal Admin', [
+      { key: 'first_name' }, { key: 'last_name' }, { key: 'email' }, { key: 'phone' }, { key: 'gender' },
+    ]);
+    validatePerson('head', 'Head Admin', [
+      { key: 'first_name' }, { key: 'last_name' }, { key: 'email' }, { key: 'phone' }, { key: 'gender' },
+    ]);
 
-    if (!formData.admin_fname.trim()) {
-      newErrors.admin_fname = 'Administrator first name is required';
-    }
-
-    if (!formData.admin_lname.trim()) {
-      newErrors.admin_lname = 'Administrator last name is required';
-    }
-
-    if (!formData.admin_email.trim()) {
-      newErrors.admin_email = 'Administrator email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.admin_email)) {
-      newErrors.admin_email = 'Invalid email format';
-    }
-
-    if (!formData.admin_phone.trim()) {
-      newErrors.admin_phone = 'Administrator phone is required';
-    }
-
-    if (!formData.tenant_email.trim()) {
-      newErrors.tenant_email = 'Institution email is required';
-    }
-
-    if (!formData.owner_fname.trim()) {
-      newErrors.owner_fname = 'Owner first name is required';
-    }
-
-    if (!formData.owner_lname.trim()) {
-      newErrors.owner_lname = 'Owner last name is required';
-    }
-
-    if (!formData.owner_email.trim()) {
-      newErrors.owner_email = 'Owner email is required';
-    }
-
-    if (!formData.owner_phone.trim()) {
-      newErrors.owner_phone = 'Owner phone is required';
-    }
-
-    if (!formData.session_term) {
-      newErrors.session_term = 'Session term is required';
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = 'Institution address is required';
-    }
-
-    if (!formData.state_id) {
-      newErrors.state_id = 'State is required';
-    }
-
-    if (!formData.lga_id) {
-      newErrors.lga_id = 'LGA is required';
-    }
-
-    // Not currently in the form
-    // if (!formData.payModuleType) {
-    //   newErrors.payModuleType = 'Module type is required';
-    // }
-
-    if (!formData.school_divisions || formData.school_divisions.length === 0) {
-      newErrors.school_divisions = 'At least one school division is required';
-    }
-
-    // Field is commented out in UI
-    // if (formData.school_divisions.length === 0) {
-    //   newErrors.school_divisions = 'At least one school division is required';
-    // }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ── submit ───────────────────────────────────────────────────────────────
 
+  const handleSubmit = async (ev) => {
+    ev.preventDefault();
     if (!validateForm()) {
       notify.error('Please fill all required fields');
       return;
     }
-
     setLoading(true);
-
     try {
-      const payload = {
-        ...formData,
+      const isSpaOwner = formData.spa.email === formData.owner.email;
+      const isSpaHead = formData.spa.email === formData.head.email;
+      const isHeadOwner = formData.head.email === formData.owner.email;
+
+      const administrator_info = {
+        school_spa: {
+          admin_first_name: formData.spa.first_name,
+          admin_last_name: formData.spa.last_name,
+          admin_middle_name: formData.spa.middle_name,
+          admin_email: formData.spa.email,
+          admin_phone: formData.spa.phone,
+          admin_gender: formData.spa.gender,
+          is_spa: 'yes',
+          is_school_head: isSpaHead ? 'yes' : 'no',
+          is_school_owner: isSpaOwner ? 'yes' : 'no',
+          admin_session_term_id: 1,
+        },
+        school_head: {
+          school_head_first_name: formData.head.first_name,
+          school_head_last_name: formData.head.last_name,
+          school_head_middle_name: formData.head.middle_name,
+          school_head_email: formData.head.email,
+          school_head_phone: formData.head.phone,
+          school_head_gender: formData.head.gender,
+          session_term_id: 1,
+          is_school_head: 'yes',
+          is_spa: isSpaHead ? 'yes' : 'no',
+          is_school_owner: isHeadOwner ? 'yes' : 'no',
+        },
+        school_owner: {
+          school_owner_first_name: formData.owner.first_name,
+          school_owner_last_name: formData.owner.last_name,
+          school_owner_middle_name: formData.owner.middle_name,
+          school_owner_email: formData.owner.email,
+          school_owner_phone: formData.owner.phone,
+          school_owner_gender: formData.owner.gender,
+          is_school_owner: 'yes',
+          is_spa: isSpaOwner ? 'yes' : 'no',
+          is_school_head: isHeadOwner ? 'yes' : 'no',
+        },
+      };
+
+      const base = {
+        tenant_name: formData.tenant_name,
+        tenant_email: formData.tenant_email,
+        tenant_short_name: formData.tenant_short_name,
+        session_term: formData.session_term,
+        address: formData.address,
+        lga_id: formData.lga_id,
+        school_divisions: formData.school_divisions,
+        administrator_info,
       };
 
       let res;
       if (actionType === 'update') {
-        const { school_categories, ...updatePayload } = payload;
-        res = await updateSchool(selectedSchool.id, updatePayload);
+        res = await updateSchool(selectedSchool.id, {
+          ...base,
+          headcolor: formData.headcolor,
+          sidecolor: formData.sidecolor,
+          bodycolor: formData.bodycolor,
+        });
       } else if (useProspective) {
-        // Save to prospective_tenants — no DB provisioned yet
-        res = await createProspectiveTenant(payload);
+        res = await createProspectiveTenant(base);
       } else {
-        const { headcolor, sidecolor, bodycolor, school_categories, ...createPayload } = payload;
-        res = await createSchool(createPayload);
+        res = await createSchool(base);
       }
 
       notify.success(res.message || 'School processed successfully');
       onSubmit(res.tenant || res.data || res);
-
-      // Reset form
-      setFormData({
-        tenant_name: '',
-        tenant_email: '',
-        tenant_short_name: '',
-        session_term: '',
-        owner_fname: '',
-        owner_lname: '',
-        owner_email: '',
-        owner_phone: '',
-        admin_fname: '',
-        admin_lname: '',
-        admin_email: '',
-        admin_phone: '',
-        address: '',
-        state_id: '',
-        lga_id: '',
-        payModuleType: '',
-        school_divisions: [],
-        headcolor: 'bg-night-sky text-lighter',
-        sidecolor: 'bg-dark text-lighter',
-        bodycolor: 'null',
-      });
+      setFormData(emptyForm());
       setErrors({});
+      setSpaSource('none');
+      setHeadSource('none');
     } catch (err) {
       console.error('Registration error:', err);
       if (err.errors) {
@@ -310,51 +368,89 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
     }
   };
 
+  // ── sub-form renderer ────────────────────────────────────────────────────
+
+  const PersonFields = ({ section, readOnly = false }) => (
+    <Grid container spacing={2}>
+      {[
+        { key: 'first_name', label: 'First Name', md: 6 },
+        { key: 'last_name', label: 'Last Name', md: 6 },
+        { key: 'middle_name', label: 'Middle Name (optional)', md: 6 },
+        { key: 'phone', label: 'Phone', md: 6 },
+        { key: 'email', label: 'Email', md: 6 },
+      ].map(({ key, label, md }) => (
+        <Grid item size={{ xs: 12, md }} key={key}>
+          <TextField
+            fullWidth
+            label={label}
+            value={formData[section][key]}
+            onChange={(e) => handlePersonChange(section, key, e.target.value)}
+            error={Boolean(errors[`${section}.${key}`])}
+            helperText={errors[`${section}.${key}`]}
+            sx={{ bgcolor: 'white' }}
+            InputProps={{ readOnly }}
+          />
+        </Grid>
+      ))}
+      <Grid item size={{ xs: 12, md: 6 }}>
+        <FormControl fullWidth error={Boolean(errors[`${section}.gender`])} sx={{ bgcolor: 'white' }}>
+          <InputLabel>Gender</InputLabel>
+          <Select
+            value={formData[section].gender}
+            label="Gender"
+            onChange={(e) => handlePersonChange(section, 'gender', e.target.value)}
+            inputProps={{ readOnly }}
+          >
+            <MenuItem value="">-- Select --</MenuItem>
+            <MenuItem value="male">Male</MenuItem>
+            <MenuItem value="female">Female</MenuItem>
+          </Select>
+          {errors[`${section}.gender`] && (
+            <FormHelperText>{errors[`${section}.gender`]}</FormHelperText>
+          )}
+        </FormControl>
+      </Grid>
+    </Grid>
+  );
+
+  // ── render ───────────────────────────────────────────────────────────────
+
   return (
     <Box component="form" onSubmit={handleSubmit}>
       {loading && actionType !== 'update' && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          <AlertTitle>{useProspective ? 'Submitting Application' : 'Initialization Processing'}</AlertTitle>
+          <AlertTitle>
+            {useProspective ? 'Submitting Application' : 'Initialization Processing'}
+          </AlertTitle>
           {useProspective
             ? 'Your school application is being submitted for review.'
             : <>Please wait while the initialization setup is processing. This may take up to <strong>1 minute</strong>.</>}
         </Alert>
       )}
+
       <Grid container spacing={2}>
-        {/* Row 1: School Name & School Mail */}
+        {/* School Name & Email */}
         <Grid item size={{ xs: 12, md: 6 }}>
-          <TextField
-            fullWidth
-            label="School Name"
-            name="tenant_name"
-            value={formData.tenant_name}
-            onChange={handleChange}
-            error={Boolean(errors.tenant_name)}
-            helperText={errors.tenant_name?.[0] || errors.tenant_name}
-          />
+          <TextField fullWidth label="School Name" name="tenant_name"
+            value={formData.tenant_name} onChange={handleChange}
+            error={Boolean(errors.tenant_name)} helperText={errors.tenant_name} />
         </Grid>
         <Grid item size={{ xs: 12, md: 6 }}>
-          <TextField
-            fullWidth
-            label="School Mail"
-            name="tenant_email"
-            value={formData.tenant_email}
-            onChange={handleChange}
-            error={Boolean(errors.tenant_email)}
-            helperText={errors.tenant_email?.[0] || errors.tenant_email}
-          />
+          <TextField fullWidth label="School Email" name="tenant_email"
+            value={formData.tenant_email} onChange={handleChange}
+            error={Boolean(errors.tenant_email)} helperText={errors.tenant_email} />
         </Grid>
 
-        {/* Row 2: Session Term & School Division */}
+        {/* Short Name & Session Term */}
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <TextField fullWidth label="Short Name" name="tenant_short_name"
+            value={formData.tenant_short_name} onChange={handleChange}
+            error={Boolean(errors.tenant_short_name)} helperText={errors.tenant_short_name} />
+        </Grid>
         <Grid item size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.session_term)}>
             <InputLabel>Session Term</InputLabel>
-            <Select
-              name="session_term"
-              value={formData.session_term}
-              label="Session Term"
-              onChange={handleChange}
-            >
+            <Select name="session_term" value={formData.session_term} label="Session Term" onChange={handleChange}>
               <MenuItem value="">-- Select --</MenuItem>
               <MenuItem value="First Term">First Term</MenuItem>
               <MenuItem value="Second Term">Second Term</MenuItem>
@@ -363,48 +459,36 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             {errors.session_term && <FormHelperText>{errors.session_term}</FormHelperText>}
           </FormControl>
         </Grid>
+
+        {/* School Divisions */}
         <Grid item size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.school_divisions)}>
             <InputLabel>School Division</InputLabel>
-            <Select
-              name="school_divisions"
-              multiple
-              value={formData.school_divisions}
-              label="School Division"
-              onChange={handleChange}
+            <Select name="school_divisions" multiple value={formData.school_divisions}
+              label="School Division" onChange={handleChange}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip
-                      key={value}
-                      label={availableDivisions.find((d) => d.id === value)?.name}
-                      size="small"
-                    />
+                  {selected.map((v) => (
+                    <Chip key={v} label={availableDivisions.find((d) => d.id === v)?.name} size="small" />
                   ))}
                 </Box>
               )}
             >
               {availableDivisions.map((div) => (
-                <MenuItem key={div.id} value={div.id}>
-                  {div.name}
-                </MenuItem>
+                <MenuItem key={div.id} value={div.id}>{div.name}</MenuItem>
               ))}
             </Select>
             {errors.school_divisions && <FormHelperText>{errors.school_divisions}</FormHelperText>}
           </FormControl>
         </Grid>
 
-        {/* Row 3: State & LGA */}
+        {/* State & LGA */}
         <Grid item size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.state_id)}>
             <InputLabel>State</InputLabel>
             <Select name="state_id" value={formData.state_id} label="State" onChange={handleChange}>
               <MenuItem value="">-- Select State --</MenuItem>
-              {states.map((state) => (
-                <MenuItem key={state.id} value={state.id}>
-                  {state.stname}
-                </MenuItem>
-              ))}
+              {states.map((s) => <MenuItem key={s.id} value={s.id}>{s.state_name}</MenuItem>)}
             </Select>
             {errors.state_id && <FormHelperText>{errors.state_id}</FormHelperText>}
           </FormControl>
@@ -414,238 +498,69 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
             <InputLabel>LGA</InputLabel>
             <Select name="lga_id" value={formData.lga_id} label="LGA" onChange={handleChange}>
               <MenuItem value="">-- Select LGA --</MenuItem>
-              {lgas.map((lga) => (
-                <MenuItem key={lga.id} value={lga.id}>
-                  {lga.lganame}
-                </MenuItem>
-              ))}
+              {lgas.map((l) => <MenuItem key={l.id} value={l.id}>{l.lga_name}</MenuItem>)}
             </Select>
             {errors.lga_id && <FormHelperText>{errors.lga_id}</FormHelperText>}
           </FormControl>
         </Grid>
 
-        {/* Row 4: School Address & Short Name */}
-        <Grid item size={{ xs: 12, md: 6 }}>
-          <TextField
-            fullWidth
-            label="School Address"
-            name="address"
-            multiline
-            rows={3}
-            value={formData.address}
-            onChange={handleChange}
-            error={Boolean(errors.address)}
-            helperText={errors.address?.[0] || errors.address}
-          />
-        </Grid>
-        <Grid item size={{ xs: 12, md: 6 }}>
-          <TextField
-            fullWidth
-            label="Short Name"
-            name="tenant_short_name"
-            value={formData.tenant_short_name}
-            onChange={handleChange}
-            error={Boolean(errors.tenant_short_name)}
-            helperText={errors.tenant_short_name?.[0] || errors.tenant_short_name}
-          />
-        </Grid>
-
-        {/* School Divisions (Preserved field) */}
-        {/* <Grid item size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.school_divisions)}>
-            <InputLabel>School Divisions</InputLabel>
-            <Select
-              name="school_divisions"
-              multiple
-              value={formData.school_divisions}
-              label="School Divisions"
-              onChange={handleChange}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip key={value} label={availableDivisions.find(d => d.id === value)?.name} size="small" />
-                  ))}
-                </Box>
-              )}
-            >
-              {availableDivisions.map((div) => (
-                <MenuItem key={div.id} value={div.id}>
-                  {div.name}
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.school_divisions && <FormHelperText>{errors.school_divisions}</FormHelperText>}
-          </FormControl>
-        </Grid> */}
-
-        {/* School Owner Details Section */}
+        {/* Address */}
         <Grid item xs={12}>
-          <Box sx={{ p: 2, bgcolor: '#F1F8E9', borderRadius: '4px', border: '1px solid #DCEDC8' }}>
-            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 2, color: '#33691E' }}>
+          <TextField fullWidth label="School Address" name="address" multiline rows={3}
+            value={formData.address} onChange={handleChange}
+            error={Boolean(errors.address)} helperText={errors.address} />
+        </Grid>
+
+        {/* ── School Owner ─────────────────────────────────────────────── */}
+        <Grid item xs={12}>
+          <Box sx={{ p: 2, bgcolor: '#F1F8E9', borderRadius: 1, border: '1px solid #DCEDC8' }}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#33691E' }}>
               School Owner Details
             </Typography>
-            <Grid container spacing={2}>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="First Name"
-                  name="owner_fname"
-                  value={formData.owner_fname}
-                  onChange={handleChange}
-                  error={Boolean(errors.owner_fname)}
-                  helperText={errors.owner_fname?.[0] || errors.owner_fname}
-                  sx={{ bgcolor: 'white' }}
-                />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="last name"
-                  name="owner_lname"
-                  value={formData.owner_lname}
-                  onChange={handleChange}
-                  error={Boolean(errors.owner_lname)}
-                  helperText={errors.owner_lname?.[0] || errors.owner_lname}
-                  sx={{ bgcolor: 'white' }}
-                />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Phone no"
-                  name="owner_phone"
-                  value={formData.owner_phone}
-                  onChange={handleChange}
-                  error={Boolean(errors.owner_phone)}
-                  helperText={errors.owner_phone?.[0] || errors.owner_phone}
-                  sx={{ bgcolor: 'white' }}
-                />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Name mail"
-                  name="owner_email"
-                  value={formData.owner_email}
-                  onChange={handleChange}
-                  error={Boolean(errors.owner_email)}
-                  helperText={errors.owner_email?.[0] || errors.owner_email}
-                  sx={{ bgcolor: 'white' }}
-                />
-              </Grid>
-            </Grid>
+            <PersonFields section="owner" formData={formData} errors={errors} onPersonChange={handlePersonChange} />
           </Box>
         </Grid>
 
-        {/* School Portal Admin Section */}
+        {/* ── School Portal Admin (SPA) ─────────────────────────────────── */}
         <Grid item xs={12}>
-          <Box sx={{ p: 2, bgcolor: '#E3F2FD', borderRadius: '4px', border: '1px solid #BBDEFB' }}>
-            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 1.5, color: '#0D47A1' }}>
-              School Portal Admin Details
+          <Box sx={{ p: 2, bgcolor: '#E3F2FD', borderRadius: 1, border: '1px solid #BBDEFB' }}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, color: '#0D47A1' }}>
+              School Portal Admin (SPA) Details
             </Typography>
-            <Box sx={{ mb: 2, p: 1.5, bgcolor: '#EEF2FF', borderRadius: '4px', border: '1px solid #C7D2FE' }}>
+            <Box sx={{ mb: 2, p: 1.5, bgcolor: '#EEF2FF', borderRadius: 1, border: '1px solid #C7D2FE' }}>
               <Typography variant="caption" fontWeight={600} sx={{ color: '#3949ab', display: 'block', mb: 0.5 }}>
-                Do you want to use the existing info for Portal Admin?
+                Same as school owner?
               </Typography>
-              <RadioGroup row value={portalSource} onChange={handlePortalSourceChange}>
-                <FormControlLabel value="owner" control={<Radio size="small" />} label="Yes" />
-                <FormControlLabel value="none" control={<Radio size="small" />} label="No" />
+              <RadioGroup row value={spaSource} onChange={handleSpaSourceChange}>
+                <FormControlLabel value="owner" control={<Radio size="small" />} label="Yes, use owner info" />
+                <FormControlLabel value="none" control={<Radio size="small" />} label="No, fill separately" />
               </RadioGroup>
             </Box>
-            <Grid container spacing={2}>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Portal Admin First Name" name="portal_fname"
-                  value={formData.portal_fname} onChange={handleChange}
-                  error={Boolean(errors.portal_fname)} helperText={errors.portal_fname?.[0] || errors.portal_fname}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Portal Admin Last Name" name="portal_lname"
-                  value={formData.portal_lname} onChange={handleChange}
-                  error={Boolean(errors.portal_lname)} helperText={errors.portal_lname?.[0] || errors.portal_lname}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Portal Admin Phone" name="portal_phone"
-                  value={formData.portal_phone} onChange={handleChange}
-                  error={Boolean(errors.portal_phone)} helperText={errors.portal_phone?.[0] || errors.portal_phone}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Portal Admin Email" name="portal_email"
-                  value={formData.portal_email} onChange={handleChange}
-                  error={Boolean(errors.portal_email)} helperText={errors.portal_email?.[0] || errors.portal_email}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: portalSource === 'owner' }} />
-              </Grid>
-            </Grid>
+            <PersonFields section="spa" formData={formData} errors={errors} onPersonChange={handlePersonChange} readOnly={spaSource === 'owner'} />
           </Box>
         </Grid>
 
-        {/* School Head Admin Section */}
+        {/* ── School Head Admin ─────────────────────────────────────────── */}
         <Grid item xs={12}>
-          <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: '4px', border: '1px solid #E0E0E0' }}>
-            <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 1.5 }}>
+          <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: 1, border: '1px solid #E0E0E0' }}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
               School Head Admin Details
             </Typography>
-
-            {/* Step 1: Yes/No */}
-            <Box sx={{ mb: 1.5, p: 1.5, bgcolor: '#EEF2FF', borderRadius: '4px', border: '1px solid #C7D2FE' }}>
+            <Box sx={{ mb: 1.5, p: 1.5, bgcolor: '#EEF2FF', borderRadius: 1, border: '1px solid #C7D2FE' }}>
               <Typography variant="caption" fontWeight={600} sx={{ color: '#3949ab', display: 'block', mb: 0.5 }}>
-                Do you want to use the existing info for Head Admin?
+                Copy info from an existing person?
               </Typography>
-              <RadioGroup row value={adminSource === 'none' ? 'no' : 'yes'}
-                onChange={(e) => {
-                  if (e.target.value === 'no') handleAdminSourceChange({ target: { value: 'none' } });
-                  else handleAdminSourceChange({ target: { value: 'owner' } }); // default to owner when yes
-                }}>
-                <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
-                <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
+              <RadioGroup row value={headSource} onChange={handleHeadSourceChange}>
+                <FormControlLabel value="none" control={<Radio size="small" />} label="No, fill separately" />
+                <FormControlLabel value="owner" control={<Radio size="small" />} label="Use owner info" />
+                <FormControlLabel value="spa" control={<Radio size="small" />} label="Use portal admin info" />
               </RadioGroup>
             </Box>
-
-            {/* Step 2: Which source — only shown when Yes */}
-            {adminSource !== 'none' && (
-              <Box sx={{ mb: 2, p: 1.5, bgcolor: '#F0FDF4', borderRadius: '4px', border: '1px solid #BBF7D0' }}>
-                <Typography variant="caption" fontWeight={600} sx={{ color: '#166534', display: 'block', mb: 0.5 }}>
-                  Which existing info do you want to use for Head Admin?
-                </Typography>
-                <RadioGroup row value={adminSource} onChange={handleAdminSourceChange}>
-                  <FormControlLabel value="owner" control={<Radio size="small" />} label="School Owner Info" />
-                  <FormControlLabel value="portal" control={<Radio size="small" />} label="Portal Admin Info" />
-                </RadioGroup>
-              </Box>
-            )}
-
-            <Grid container spacing={2}>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Head Admin First Name" name="admin_fname"
-                  value={formData.admin_fname} onChange={handleChange}
-                  error={Boolean(errors.admin_fname)} helperText={errors.admin_fname?.[0] || errors.admin_fname}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Head Admin Last Name" name="admin_lname"
-                  value={formData.admin_lname} onChange={handleChange}
-                  error={Boolean(errors.admin_lname)} helperText={errors.admin_lname?.[0] || errors.admin_lname}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Head Admin Phone" name="admin_phone"
-                  value={formData.admin_phone} onChange={handleChange}
-                  error={Boolean(errors.admin_phone)} helperText={errors.admin_phone?.[0] || errors.admin_phone}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
-              </Grid>
-              <Grid item size={{ xs: 12, md: 6 }}>
-                <TextField fullWidth label="Head Admin Email" name="admin_email"
-                  value={formData.admin_email} onChange={handleChange}
-                  error={Boolean(errors.admin_email)} helperText={errors.admin_email?.[0] || errors.admin_email}
-                  sx={{ bgcolor: 'white' }} InputProps={{ readOnly: adminSource !== 'none' }} />
-              </Grid>
-            </Grid>
+            <PersonFields section="head" formData={formData} errors={errors} onPersonChange={handlePersonChange} readOnly={headSource !== 'none'} />
           </Box>
         </Grid>
 
-        {/* Color Scheme */}
+        {/* Color Scheme (update only) */}
         {actionType === 'update' && (
           <Grid item xs={12}>
             <ColorSchemeSelector formData={formData} onColorChange={handleColorChange} />
@@ -657,18 +572,9 @@ const RegisterSchoolForm = ({ actionType, selectedSchool = null, onSubmit, onCan
         <Button onClick={onCancel} color="inherit" variant="outlined" disabled={loading}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
-        >
-          {loading
-            ? 'Processing...'
-            : actionType === 'update'
-              ? 'Update School'
-              : 'Register School'}
+        <Button type="submit" variant="contained" color="primary" disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}>
+          {loading ? 'Processing...' : actionType === 'update' ? 'Update School' : 'Register School'}
         </Button>
       </Box>
     </Box>
@@ -680,6 +586,7 @@ RegisterSchoolForm.propTypes = {
   selectedSchool: PropTypes.object,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
+  useProspective: PropTypes.bool,
 };
 
 export default RegisterSchoolForm;

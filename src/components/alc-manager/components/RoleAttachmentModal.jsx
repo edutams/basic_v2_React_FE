@@ -26,12 +26,31 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
 
   useEffect(() => {
     if (open) {
-      const initialSelectedIds = currentAgent?.assignedRoles?.map((r) => r.id) || [];
+      const initialSelectedIds =
+        currentAgent?.assignedRoles?.map((r) => {
+          if (typeof r === 'object' && r.id !== undefined) {
+            return r.id;
+          }
+          return r;
+        }) || [];
       setSelectedRoleIds(initialSelectedIds);
       setSearchTerm('');
       fetchRoles();
     }
   }, [currentAgent, open]);
+
+  useEffect(() => {
+    if (availableRoles.length > 0 && currentAgent?.assignedRoles) {
+      const currentRoleIds = currentAgent.assignedRoles.map((r) => {
+        if (typeof r === 'object' && r.id !== undefined) {
+          return r.id;
+        }
+        const matchingRole = availableRoles.find((role) => role.name === r);
+        return matchingRole ? matchingRole.id : r;
+      });
+      setSelectedRoleIds(currentRoleIds);
+    }
+  }, [availableRoles, currentAgent]);
 
   const fetchRoles = async () => {
     setLoadingRoles(true);

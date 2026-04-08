@@ -167,7 +167,7 @@ export const getProspectiveTenant = async (id) => {
 
 export const approveProspectiveTenant = async (id) => {
     try {
-        const res = await api.post(`/landlord/v1/prospective-tenants/create-prospective-tenant/${id}/approve`);
+        const res = await api.post(`/landlord/v1/prospective-tenants/${id}/approve-prospective-tenant`);
         return res.data;
     } catch (error) {
         throw error.response?.data || error;
@@ -176,7 +176,7 @@ export const approveProspectiveTenant = async (id) => {
 
 export const rejectProspectiveTenant = async (id, reason = '') => {
     try {
-        const res = await api.post(`/landlord/v1/prospective-tenants/reject-prospective-tenant/${id}/reject`, { reason });
+        const res = await api.post(`/landlord/v1/prospective-tenants/${id}/reject-prospective-tenant`, { reason });
         return res.data;
     } catch (error) {
         throw error.response?.data || error;

@@ -85,7 +85,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      navigate('/', { replace: true });
+      navigate('/agent', { replace: true });
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }

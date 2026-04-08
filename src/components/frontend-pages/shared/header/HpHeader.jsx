@@ -71,7 +71,7 @@ const HpHeader = (props) => {
               <Button
                 color="primary"
                 variant="contained"
-                href="/auth/login"
+                href="/agent/login"
               >
                 Log In
               </Button>

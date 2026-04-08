@@ -1,4 +1,4 @@
-import React, { lazy } from 'react';
+import React, { lazy, useEffect } from 'react';
 import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
@@ -57,15 +57,23 @@ const CENTRAL_DOMAIN =
   appMode === 'production'
     ? import.meta.env.VITE_CENTRAL_DOMAIN_PROD
     : import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL;
-// redirect to website
+
 const WebsiteRedirect = () => {
-  const currentHost = window.location.origin;
+  useEffect(() => {
+    const currentHost = window.location.hostname;
+    const targetHost = new URL(CENTRAL_DOMAIN).hostname;
 
-  if (currentHost !== CENTRAL_DOMAIN) {
-    window.location.replace(CENTRAL_DOMAIN);
-  }
+    if (currentHost !== targetHost) {
+      window.location.replace(CENTRAL_DOMAIN);
+    }
+  }, []);
 
-  return null;
+  const currentHost = window.location.hostname;
+  const targetHost = new URL(CENTRAL_DOMAIN).hostname;
+
+  if (currentHost !== targetHost) return null;
+
+  return <FrontendPages />;
 };
 
 const DashboardRouteWrapper = () => {
@@ -80,7 +88,7 @@ const DashboardRouteWrapper = () => {
 };
 
 const AgentRoutes = [
-  // Root redirect to marketing website
+  // Root — renders FrontendPages on same host, or redirects externally
   {
     path: '/',
     element: <WebsiteRedirect />,
@@ -122,7 +130,7 @@ const AgentRoutes = [
     ],
   },
 
-  // Auth & blank layout routes
+  // Auth routes — blank layout, no FrontendPages wrapper
   {
     path: '/',
     element: <BlankLayout />,
@@ -132,12 +140,6 @@ const AgentRoutes = [
       { path: '/agent/forgot_password', element: <ForgotPassword /> },
       { path: '/agent/verify_otp', element: <VerifyOtp /> },
       { path: '/agent/reset_password', element: <ResetPassword /> },
-      { path: '/frontend-pages/homepage', element: <FrontendPages /> },
-      { path: '/frontend-pages/about', element: <FrontendPages /> },
-      { path: '/frontend-pages/contact', element: <FrontendPages /> },
-      { path: '/frontend-pages/pricing', element: <FrontendPages /> },
-      { path: '/frontend-pages/portfolio', element: <FrontendPages /> },
-      { path: '/frontend-pages/blog', element: <FrontendPages /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

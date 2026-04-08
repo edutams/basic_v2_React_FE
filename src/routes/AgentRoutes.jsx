@@ -40,6 +40,8 @@ const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtop
 
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 
+const FrontendPages = Loadable(lazy(() => import('../views/FrontendPages')));
+
 // Pages
 const AccountSetting = Loadable(
   lazy(() => import('../views/pages/account-setting/AccountSetting')),
@@ -178,6 +180,12 @@ const AgentRoutes = [
       { path: '/agent/forgot_password', element: <ForgotPassword /> },
       { path: '/agent/verify_otp', element: <VerifyOtp /> },
       { path: '/agent/reset_password', element: <ResetPassword /> },
+      { path: '/frontend-pages/homepage', element: <FrontendPages /> },
+      { path: '/frontend-pages/about', element: <FrontendPages /> },
+      { path: '/frontend-pages/contact', element: <FrontendPages /> },
+      { path: '/frontend-pages/pricing', element: <FrontendPages /> },
+      { path: '/frontend-pages/portfolio', element: <FrontendPages /> },
+      { path: '/frontend-pages/blog', element: <FrontendPages /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

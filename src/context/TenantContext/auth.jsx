@@ -44,11 +44,10 @@ export const TenantAuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const res = await api.get('/get-user');
+        const { user: userData, permissions: perms } = res.data;
 
-        const payload = res.data?.data;
-
-        setUser(payload.user);
-        setPermissions(payload.permissions || []);
+        setUser(userData);
+        setPermissions(perms || []);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('tenant_access_token');
@@ -71,17 +70,16 @@ export const TenantAuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post('/login', credentials);
-
-      const { access_token, data: userData } = res.data;
+      const { access_token, user: userData, permissions: perms, roles } = res.data;
 
       localStorage.setItem('tenant_access_token', access_token);
       setUser(userData);
-      setPermissions(userData.permissions || []);
+      setPermissions(perms || []);
       setIsAuthenticated(true);
 
-      return { success: true, user };
+      return { success: true, user: userData };
     } catch (err) {
-      const msg = err.response?.data?.error || 'Login failed';
+      const msg = err.response?.data?.message || err.response?.data?.error || 'Login failed';
       setError(msg);
       return { success: false, error: msg };
     } finally {

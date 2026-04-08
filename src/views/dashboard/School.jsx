@@ -255,8 +255,8 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
           {/* Logo placeholder */}
           <Box
             sx={{
-              width: 90,
-              height: 80,
+              width: 120,
+              height: 120,
               borderRadius: 2,
               border: '1px solid #e5e7eb',
               bgcolor: '#f9fafb',
@@ -271,8 +271,8 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               src={prospect.logo || prospect.image}
               variant="rounded"
               sx={{
-                width: 90,
-                height: 80,
+                width: 120,
+                height: 120,
                 borderRadius: 2,
                 bgcolor: '#e8eaf6',
                 fontSize: 28,
@@ -474,20 +474,56 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 const ProspectRow = ({ row, index, onReview }) => {
   const spa = getSpaContact(row);
   const agent = row.agent;
+  const schoolImage = row.logo || row.image;
+  const spaImage = row.administrator_info?.school_spa?.admin_image || '';
   return (
     <TableRow hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
       <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{index}</TableCell>
       <TableCell>
-        <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>
-          {row.tenant_name}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {row.tenant_short_name}
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="flex-start">
+          <Avatar
+            src={schoolImage}
+            alt={row.tenant_name}
+            sx={{
+              width: 50,
+              height: 50,
+              fontSize: '12px',
+              fontWeight: 700,
+              bgcolor: '#E7E9EB',
+              flexShrink: 0,
+            }}
+          >
+            {!schoolImage && <PersonOutlineIcon sx={{ color: '#000' }} />}
+            {/* {!schoolImage && (row.tenant_short_name?.[0] || '🏫')} */}
+          </Avatar>
+
+          <Box>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>
+              {row.tenant_name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {row.tenant_short_name}
+            </Typography>
+          </Box>
+        </Stack>
       </TableCell>
       <TableCell>
         <Stack direction="row" spacing={1} alignItems="flex-start">
-          <PersonOutlineIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+          {/* <PersonOutlineIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} /> */}
+          <Avatar
+            src={spaImage}
+            alt={spa.name}
+            sx={{
+              width: 50,
+              height: 50,
+              fontSize: '12px',
+              fontWeight: 700,
+              bgcolor: '#E7E9EB',
+              flexShrink: 0,
+            }}
+          >
+            {!spaImage && <PersonOutlineIcon sx={{ color: '#000' }} />}
+          </Avatar>
           <Box>
             <Typography variant="caption" fontWeight={600} display="block">
               {spa.name}
@@ -503,7 +539,20 @@ const ProspectRow = ({ row, index, onReview }) => {
       </TableCell>
       <TableCell>
         <Stack direction="row" spacing={1} alignItems="flex-start">
-          <BusinessIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+          <Avatar
+            src={agent?.org_logo || agent?.logo}
+            alt={agent?.org_name || agent?.name}
+            sx={{
+              width: 50,
+              height: 50,
+              fontSize: '12px',
+              fontWeight: 700,
+              bgcolor: '#E7E9EB',
+              flexShrink: 0,
+            }}
+          >
+            {!agent?.org_logo && !agent?.logo && <BusinessIcon sx={{ color: '#000' }} />}
+          </Avatar>
           <Box>
             <Typography variant="caption" fontWeight={600} display="block">
               {agent?.org_name || agent?.name || '—'}
@@ -1241,7 +1290,20 @@ const SchoolDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <Stack direction="row" spacing={1} alignItems="flex-start">
-                            <BusinessIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+                            <Avatar
+                              src={row.agentImage}
+                              alt={row.agent}
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                bgcolor: '#E7E9EB',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {!row.agentImage && <BusinessIcon sx={{ color: '#000' }} />}
+                            </Avatar>
                             <Typography variant="caption" fontWeight={600}>
                               {row.agent}
                             </Typography>

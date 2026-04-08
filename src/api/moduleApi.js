@@ -121,7 +121,7 @@ const moduleApi = {
    * @param {Object} params - Query parameters (page, limit, search, status)
    */
   getTenantModules: async (params) => {
-    const response = await api.get('/landlord/v1/edu_tier/modules', { params });
+    const response = await api.get('/landlord/v1/edu_tier/modules/get_modules', { params });
     return response.data.data;
   },
 

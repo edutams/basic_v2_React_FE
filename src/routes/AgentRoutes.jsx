@@ -2,7 +2,6 @@ import React, { lazy } from 'react';
 import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
-import PermissionGate from '../components/auth/PermissionGate';
 import { useAuth } from '../hooks/useAuth';
 
 /* ***Layouts**** */
@@ -37,25 +36,34 @@ const MyCommissionByTransaction = Loadable(
 );
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
-
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 
 // Pages
 const AccountSetting = Loadable(
   lazy(() => import('../views/pages/account-setting/AccountSetting')),
 );
-// authentication
+
+// Authentication
 const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
 const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
 const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/ResetPassword')));
 const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
-const TwoSteps = Loadable(lazy(() => import('../views/authentication/auth1/TwoSteps')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
-const Maintenance = Loadable(lazy(() => import('../views/authentication/Maintenance')));
 
-// landingpage
-const AgentRouteWrapper = () => {
-  return <Agent />;
+const appMode = import.meta.env.MODE;
+const CENTRAL_DOMAIN =
+  appMode === 'production'
+    ? import.meta.env.VITE_CENTRAL_DOMAIN_PROD
+    : import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL;
+// redirect to website
+const WebsiteRedirect = () => {
+  const currentHost = window.location.origin;
+
+  if (currentHost !== CENTRAL_DOMAIN) {
+    window.location.replace(CENTRAL_DOMAIN);
+  }
+
+  return null;
 };
 
 const DashboardRouteWrapper = () => {
@@ -63,112 +71,56 @@ const DashboardRouteWrapper = () => {
   if (user && user.organization.access_level > 1 && user.organization.access_level <= 5) {
     return <ViewAgent />;
   }
-
   if (user && user.organization.access_level === 1) {
     return <AnalyticalDashboard />;
   }
-
   return <Error message="You are not authorized to be in this app" />;
 };
 
 const AgentRoutes = [
+  // Root redirect to marketing website
   {
     path: '/',
+    element: <WebsiteRedirect />,
+  },
+
+  // Protected agent app routes — all under /agent/*
+  {
+    path: '/agent',
     element: (
       <ProtectedRoute>
         <FullLayout />
       </ProtectedRoute>
     ),
     children: [
-      { path: '/', element: <DashboardRouteWrapper /> },
-      {
-        path: '/dashboards/school',
-        exact: true,
-        element: <SchoolDashboard />,
-      },
-      {
-        path: '/acl_manager',
-        exact: true,
-        element: <AlcManager />,
-      },
-      {
-        path: '/organization',
-        exact: true,
-        element: <AgentRouteWrapper />,
-      },
-      {
-        path: '/agent/view/:id',
-        element: <ViewAgent />,
-      },
-      { path: '/gateway', exact: true, element: <Gateway /> },
-      {
-        path: '/calendar',
-        exact: true,
-        element: <CalendarManagement />,
-      },
-      {
-        path: '/school',
-        exact: true,
-        element: <SchoolDashboard />,
-      },
-      {
-        path: '/view-school/:id',
-        exact: true,
-        element: <ViewSchool />,
-      },
-      {
-        path: '/organization/subscriptions',
-        exact: true,
-        element: <AgentSubscriptionManagement />,
-      },
-      {
-        path: '/subscription',
-        exact: true,
-        element: <AgentSubscriptionManagement />,
-      },
-      {
-        path: '/activity_log',
-        exact: true,
-        element: <ActivityLog />,
-      },
-      {
-        path: '/organization/commissions',
-        exact: true,
-        element: <CommissionManagement />,
-      },
-      {
-        path: '/commission/subscription',
-        exact: true,
-        element: <MyCommissionBySubscription />,
-      },
-      {
-        path: '/commission/transaction',
-        exact: true,
-        element: <MyCommissionByTransaction />,
-      },
-      { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
-
-      { path: '/ecommerce', exact: true, element: <ECommerceDashboard /> },
-      { path: '/modern', exact: true, element: <ModernDashboard /> },
-      {
-        path: '/plan',
-        exact: true,
-        element: <PackageManager />,
-      },
-      { path: '/phet/subject_topics', element: <SubjectAndTopics /> },
-      { path: '/phet/stimulation_links', element: <StimulationLinks /> },
-      { path: '/', element: <Navigate to="/agent/login" /> },
-      {
-        path: '/pages/account-settings',
-        element: (
-          <ProtectedRoute>
-            <AccountSetting />
-          </ProtectedRoute>
-        ),
-      },
+      { index: true, element: <DashboardRouteWrapper /> },
+      { path: 'dashboard', element: <DashboardRouteWrapper /> },
+      { path: 'dashboard/school', element: <SchoolDashboard /> },
+      { path: 'acl_manager', element: <AlcManager /> },
+      { path: 'organization', element: <Agent /> },
+      { path: 'view/:id', element: <ViewAgent /> },
+      { path: 'gateway', element: <Gateway /> },
+      { path: 'calendar', element: <CalendarManagement /> },
+      { path: 'school', element: <SchoolDashboard /> },
+      { path: 'view-school/:id', element: <ViewSchool /> },
+      { path: 'school/sub-school/:id', element: <ViewSchool /> },
+      { path: 'organization/subscriptions', element: <AgentSubscriptionManagement /> },
+      { path: 'subscription', element: <AgentSubscriptionManagement /> },
+      { path: 'activity_log', element: <ActivityLog /> },
+      { path: 'organization/commissions', element: <CommissionManagement /> },
+      { path: 'commission/subscription', element: <MyCommissionBySubscription /> },
+      { path: 'commission/transaction', element: <MyCommissionByTransaction /> },
+      { path: 'ecommerce', element: <ECommerceDashboard /> },
+      { path: 'modern', element: <ModernDashboard /> },
+      { path: 'plan', element: <PackageManager /> },
+      { path: 'phet/subject_topics', element: <SubjectAndTopics /> },
+      { path: 'phet/stimulation_links', element: <StimulationLinks /> },
+      { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },
+
+  // Auth & blank layout routes
   {
     path: '/',
     element: <BlankLayout />,

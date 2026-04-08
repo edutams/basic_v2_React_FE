@@ -335,17 +335,19 @@ const CommissionTable = ({
             sx={{ color: theme.palette.text.secondary }}
           />
         </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleViewDetails(selectedItem);
-            handleClose();
-          }}
-        >
-          <ListItemIcon>
-            <IconEye size={18} color={theme.palette.text.secondary} />
-          </ListItemIcon>
-          <ListItemText primary="View Details" sx={{ color: theme.palette.text.secondary }} />
-        </MenuItem>
+        {(activeTab === '3' || activeTab === '4') && (
+          <MenuItem
+            onClick={() => {
+              handleViewDetails(selectedItem);
+              handleClose();
+            }}
+          >
+            <ListItemIcon>
+              <IconEye size={18} color={theme.palette.text.secondary} />
+            </ListItemIcon>
+            <ListItemText primary="View Details" sx={{ color: theme.palette.text.secondary }} />
+          </MenuItem>
+        )}
       </Menu>
     </Box>
   );

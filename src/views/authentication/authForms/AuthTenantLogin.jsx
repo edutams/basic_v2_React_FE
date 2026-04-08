@@ -19,7 +19,7 @@ import { useNotification } from '../../../hooks/useNotification';
 
 const AuthTenantLogin = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({
-    email: '',
+    login: '',
     password: '',
     rememberMe: false,
   });
@@ -50,8 +50,8 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
+    if (!formData.login.trim()) {
+      errors.login = 'login is required';
     }
     if (!formData.password.trim()) {
       errors.password = 'Password is required';
@@ -67,13 +67,15 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
     clearError();
 
     const result = await login({
-      email: formData.email,
+      login: formData.login,
       password: formData.password,
     });
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      navigate(from, { replace: true });
+      // Small tick to let React flush the isAuthenticated state update
+      // before TenantProtectedRoute evaluates it
+      setTimeout(() => navigate(from, { replace: true }), 50);
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }
@@ -102,16 +104,16 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={0}>
           <Box>
-            <CustomFormLabel htmlFor="email">Email</CustomFormLabel>
+            <CustomFormLabel htmlFor="login">Login</CustomFormLabel>
             <CustomTextField
-              id="email"
-              name="email"
+              id="login"
+              name="login"
               variant="outlined"
               fullWidth
-              value={formData.email}
+              value={formData.login}
               onChange={handleInputChange}
-              error={!!formErrors.email}
-              helperText={formErrors.email}
+              error={!!formErrors.login}
+              helperText={formErrors.login}
               disabled={isLoading}
             />
           </Box>

@@ -368,51 +368,6 @@ const RegisterSchoolForm = ({
     }
   };
 
-  // ── sub-form renderer ────────────────────────────────────────────────────
-
-  const PersonFields = ({ section, readOnly = false }) => (
-    <Grid container spacing={2}>
-      {[
-        { key: 'first_name', label: 'First Name', md: 6 },
-        { key: 'last_name', label: 'Last Name', md: 6 },
-        { key: 'middle_name', label: 'Middle Name (optional)', md: 6 },
-        { key: 'phone', label: 'Phone', md: 6 },
-        { key: 'email', label: 'Email', md: 6 },
-      ].map(({ key, label, md }) => (
-        <Grid item size={{ xs: 12, md }} key={key}>
-          <TextField
-            fullWidth
-            label={label}
-            value={formData[section][key]}
-            onChange={(e) => handlePersonChange(section, key, e.target.value)}
-            error={Boolean(errors[`${section}.${key}`])}
-            helperText={errors[`${section}.${key}`]}
-            sx={{ bgcolor: 'white' }}
-            InputProps={{ readOnly }}
-          />
-        </Grid>
-      ))}
-      <Grid item size={{ xs: 12, md: 6 }}>
-        <FormControl fullWidth error={Boolean(errors[`${section}.gender`])} sx={{ bgcolor: 'white' }}>
-          <InputLabel>Gender</InputLabel>
-          <Select
-            value={formData[section].gender}
-            label="Gender"
-            onChange={(e) => handlePersonChange(section, 'gender', e.target.value)}
-            inputProps={{ readOnly }}
-          >
-            <MenuItem value="">-- Select --</MenuItem>
-            <MenuItem value="male">Male</MenuItem>
-            <MenuItem value="female">Female</MenuItem>
-          </Select>
-          {errors[`${section}.gender`] && (
-            <FormHelperText>{errors[`${section}.gender`]}</FormHelperText>
-          )}
-        </FormControl>
-      </Grid>
-    </Grid>
-  );
-
   // ── render ───────────────────────────────────────────────────────────────
 
   return (
@@ -435,19 +390,19 @@ const RegisterSchoolForm = ({
             value={formData.tenant_name} onChange={handleChange}
             error={Boolean(errors.tenant_name)} helperText={errors.tenant_name} />
         </Grid>
-        <Grid item size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField fullWidth label="School Email" name="tenant_email"
             value={formData.tenant_email} onChange={handleChange}
             error={Boolean(errors.tenant_email)} helperText={errors.tenant_email} />
         </Grid>
 
         {/* Short Name & Session Term */}
-        <Grid item size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField fullWidth label="Short Name" name="tenant_short_name"
             value={formData.tenant_short_name} onChange={handleChange}
             error={Boolean(errors.tenant_short_name)} helperText={errors.tenant_short_name} />
         </Grid>
-        <Grid item size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.session_term)}>
             <InputLabel>Session Term</InputLabel>
             <Select name="session_term" value={formData.session_term} label="Session Term" onChange={handleChange}>
@@ -461,7 +416,7 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* School Divisions */}
-        <Grid item size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.school_divisions)}>
             <InputLabel>School Division</InputLabel>
             <Select name="school_divisions" multiple value={formData.school_divisions}
@@ -483,7 +438,7 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* State & LGA */}
-        <Grid item size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.state_id)}>
             <InputLabel>State</InputLabel>
             <Select name="state_id" value={formData.state_id} label="State" onChange={handleChange}>
@@ -493,7 +448,7 @@ const RegisterSchoolForm = ({
             {errors.state_id && <FormHelperText>{errors.state_id}</FormHelperText>}
           </FormControl>
         </Grid>
-        <Grid item size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.lga_id)}>
             <InputLabel>LGA</InputLabel>
             <Select name="lga_id" value={formData.lga_id} label="LGA" onChange={handleChange}>
@@ -505,14 +460,14 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* Address */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <TextField fullWidth label="School Address" name="address" multiline rows={3}
             value={formData.address} onChange={handleChange}
             error={Boolean(errors.address)} helperText={errors.address} />
         </Grid>
 
         {/* ── School Owner ─────────────────────────────────────────────── */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12, md: 12 }}>
           <Box sx={{ p: 2, bgcolor: '#F1F8E9', borderRadius: 1, border: '1px solid #DCEDC8' }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#33691E' }}>
               School Owner Details
@@ -522,7 +477,7 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* ── School Portal Admin (SPA) ─────────────────────────────────── */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12, md: 12 }}>
           <Box sx={{ p: 2, bgcolor: '#E3F2FD', borderRadius: 1, border: '1px solid #BBDEFB' }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, color: '#0D47A1' }}>
               School Portal Admin (SPA) Details
@@ -541,7 +496,7 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* ── School Head Admin ─────────────────────────────────────────── */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12, md: 12 }}>
           <Box sx={{ p: 2, bgcolor: '#F5F5F5', borderRadius: 1, border: '1px solid #E0E0E0' }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
               School Head Admin Details

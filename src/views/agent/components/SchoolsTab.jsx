@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Table, TableBody, TableCell, TableHead, TableRow, Avatar, Chip, Typography, Box,
-    TableContainer, Button, IconButton, Menu, ListItemIcon, ListItemText, useTheme,
-    MenuItem, Tabs, Tab, Stack, TextField, TablePagination, CircularProgress,
-    Dialog, DialogTitle, DialogContent, DialogActions, Divider, Grid, Alert,
+    Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+    Paper, Box, useTheme, Stack, TextField, IconButton, Menu, MenuItem,
+    Button, TableFooter, TablePagination, Alert, Chip, CircularProgress,
+    Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions, Divider,
+    Avatar, Tooltip,
 } from '@mui/material';
-import { IconGridDots, IconPlus, IconDotsVertical, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconGridDots, IconPlus, IconDotsVertical, IconEye, IconEdit, IconTrash, IconUserPlus } from '@tabler/icons-react';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import BusinessIcon from '@mui/icons-material/Business';
 import ReusableModal from '../../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../../components/add-school/component/RegisterSchool';
 import {
@@ -17,113 +20,170 @@ import {
 } from '../../../context/AgentContext/services/school.service';
 import SchoolProfileModal from '../../../components/shared/SchoolProfileModal';
 
-// ── Status chip ───────────────────────────────────────────────────────────────
-const statusChip = (status) => {
-    const map = {
-        Active: { bg: '#dcfce7', color: '#16a34a' },
-        Inactive: { bg: '#ffe4e6', color: '#e11d48' },
-        active: { bg: '#dcfce7', color: '#16a34a' },
-        inactive: { bg: '#ffe4e6', color: '#e11d48' },
-        pending: { bg: '#fef3c7', color: '#d97706' },
-        approved: { bg: '#dcfce7', color: '#16a34a' },
-        reject: { bg: '#ffe4e6', color: '#e11d48' },
-    };
-    const s = map[status] || { bg: '#f3f4f6', color: '#6b7280' };
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+const statusConfig = {
+    active: { bg: '#dcfce7', color: '#16a34a', label: 'Active' },
+    Active: { bg: '#dcfce7', color: '#16a34a', label: 'Active' },
+    inactive: { bg: '#ffe4e6', color: '#e11d48', label: 'Inactive' },
+    Inactive: { bg: '#ffe4e6', color: '#e11d48', label: 'Inactive' },
+    pending: { bg: '#fef3c7', color: '#d97706', label: 'Pending' },
+    approved: { bg: '#dcfce7', color: '#16a34a', label: 'Approved' },
+    rejected: { bg: '#ffe4e6', color: '#e11d48', label: 'Rejected' },
+};
+
+const StatusChip = ({ status }) => {
+    const s = statusConfig[status] || { bg: '#f3f4f6', color: '#6b7280', label: status };
     return (
-        <Chip size="small" label={status}
-            sx={{ bgcolor: s.bg, color: s.color, fontWeight: 600, borderRadius: '4px', textTransform: 'capitalize' }} />
+        <Chip size="small" label={s.label}
+            sx={{ bgcolor: s.bg, color: s.color, fontWeight: 600, borderRadius: '6px', textTransform: 'capitalize', fontSize: '11px' }} />
     );
 };
 
-// ── Review Modal ──────────────────────────────────────────────────────────────
+const getSpaContact = (row) => {
+    const spa = row?.administrator_info?.school_spa;
+    if (spa) return { name: `${spa.admin_first_name || ''} ${spa.admin_last_name || ''}`.trim(), email: spa.admin_email || '—', phone: spa.admin_phone || '—' };
+    return { name: `${row?.admin_fname || ''} ${row?.admin_lname || ''}`.trim() || '—', email: row?.admin_email || '—', phone: row?.admin_phone || '—' };
+};
+
+const getOwnerContact = (row) => {
+    const owner = row?.administrator_info?.school_owner;
+    if (owner) return { name: `${owner.school_owner_first_name || ''} ${owner.school_owner_last_name || ''}`.trim(), email: owner.school_owner_email || '—', phone: owner.school_owner_phone || '—' };
+    return { name: `${row?.owner_fname || ''} ${row?.owner_lname || ''}`.trim() || '—', email: row?.owner_email || '—', phone: row?.owner_phone || '—' };
+};
+
+const getHeadContact = (row) => {
+    const head = row?.administrator_info?.school_head;
+    if (head) return { name: `${head.school_head_first_name || ''} ${head.school_head_last_name || ''}`.trim(), email: head.school_head_email || '—', phone: head.school_head_phone || '—' };
+    return { name: '—', email: '—', phone: '—' };
+};
+
+// ── PersonCard ────────────────────────────────────────────────────────────────
+
+const PersonCard = ({ title, name, gender, email, phone, image }) => (
+    <Box sx={{
+        flex: 1, border: '1px solid #e5e7eb', borderRadius: 2, p: 2.5,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, minWidth: 0,
+    }}>
+        <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 0.5 }}>{title}</Typography>
+        <Avatar src={image} alt={name} sx={{ width: 52, height: 52, bgcolor: '#e0e0e0', color: '#9e9e9e', fontSize: 22 }}>
+            {!image && <PersonOutlineIcon sx={{ fontSize: 28 }} />}
+        </Avatar>
+        <Box sx={{ width: '100%' }}>
+            {[['Name', name], ['Sex', gender], ['Email', email], ['Phone', phone]].map(([label, val]) => (
+                <Box key={label} sx={{ display: 'flex', gap: 0.5, mb: 0.5 }}>
+                    <Typography variant="caption" fontWeight={700} sx={{ minWidth: 42, color: '#374151' }}>{label}:</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>{val || '—'}</Typography>
+                </Box>
+            ))}
+        </Box>
+    </Box>
+);
+
+// ── ReviewModal ───────────────────────────────────────────────────────────────
+
 const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) => {
     const [rejectReason, setRejectReason] = useState('');
     const [showRejectInput, setShowRejectInput] = useState(false);
 
+    useEffect(() => { if (!open) { setRejectReason(''); setShowRejectInput(false); } }, [open]);
+
     if (!prospect) return null;
 
-    const field = (label, value) => (
-        <Box mb={1.5}>
-            <Typography variant="caption" color="textSecondary" fontWeight={600}>{label}</Typography>
-            <Typography variant="body2" fontWeight={500}>{value || '—'}</Typography>
-        </Box>
-    );
+    const spa = getSpaContact(prospect);
+    const owner = getOwnerContact(prospect);
+    const head = getHeadContact(prospect);
+    const lga = prospect.state_lga?.lganame || prospect.state_lga?.lga_name || '';
+    const stateName = prospect.state_lga?.state?.state_name || '';
+    const agent = prospect.agent;
+    const ownerGender = prospect.administrator_info?.school_owner?.school_owner_gender || '';
+    const spaGender = prospect.administrator_info?.school_spa?.admin_gender || '';
+    const headGender = prospect.administrator_info?.school_head?.school_head_gender || '';
+    const spaImage = prospect.administrator_info?.school_spa?.admin_image || '';
+    const headImage = prospect.administrator_info?.school_head?.school_head_image || '';
+    const ownerImage = prospect.administrator_info?.school_owner?.school_owner_image || '';
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-            <DialogTitle sx={{ fontWeight: 700 }}>
-                Review Application — {prospect.tenant_name}
-                <Chip size="small" label={prospect.status}
-                    sx={{
-                        ml: 2, textTransform: 'capitalize',
-                        bgcolor: prospect.status === 'pending' ? '#fef3c7' : prospect.status === 'approved' ? '#dcfce7' : '#ffe4e6',
-                        color: prospect.status === 'pending' ? '#d97706' : prospect.status === 'approved' ? '#16a34a' : '#e11d48',
-                        fontWeight: 600,
-                    }} />
-            </DialogTitle>
-            <Divider />
-            <DialogContent>
-                <Grid container spacing={2} mt={0.5}>
-                    <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">School Info</Typography>
-                        {field('School Name', prospect.tenant_name)}
-                        {field('Short Name', prospect.tenant_short_name)}
-                        {field('School Email', prospect.tenant_email)}
-                        {field('Address', prospect.address)}
-                        {field('State / LGA', prospect.state_lga?.state?.state_name
-                            ? `${prospect.state_lga.state.state_name} / ${prospect.state_lga.lganame}`
-                            : null)}
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">Owner Details</Typography>
-                        {field('Owner Name', `${prospect.owner_fname} ${prospect.owner_lname}`)}
-                        {field('Owner Email', prospect.owner_email)}
-                        {field('Owner Phone', prospect.owner_phone)}
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">Admin Details</Typography>
-                        {field('Admin Name', `${prospect.admin_fname} ${prospect.admin_lname}`)}
-                        {field('Admin Email', prospect.admin_email)}
-                        {field('Admin Phone', prospect.admin_phone)}
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                        <Typography variant="subtitle2" fontWeight={700} mb={1} color="primary">Agent</Typography>
-                        {field('Agent', prospect.agent?.org_name || prospect.agent?.name)}
-                        {field('Agent Email', prospect.agent?.email)}
-                        {field('Session Term', prospect.session_term)}
-                    </Grid>
-                    {prospect.rejection_reason && (
-                        <Grid item xs={12}>
-                            <Alert severity="error">Rejection reason: {prospect.rejection_reason}</Alert>
-                        </Grid>
-                    )}
-                    {showRejectInput && (
-                        <Grid item xs={12}>
-                            <TextField fullWidth multiline rows={3} label="Rejection Reason (optional)"
-                                value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
-                        </Grid>
-                    )}
-                </Grid>
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}>
+            <Box sx={{ px: 3, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="subtitle1" fontWeight={700} color="#000">Review Application</Typography>
+                <StatusChip status={prospect.status} />
+            </Box>
+
+            <DialogContent sx={{ p: 0 }}>
+                {/* School hero */}
+                <Box sx={{ px: 3, pt: 3, pb: 2, display: 'flex', gap: 3, alignItems: 'flex-start', borderBottom: '1px solid #f0f0f0' }}>
+                    <Box sx={{ width: 90, height: 80, borderRadius: 2, border: '1px solid #e5e7eb', bgcolor: '#f9fafb', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Avatar src={prospect.logo || prospect.image} variant="rounded"
+                            sx={{ width: 90, height: 80, borderRadius: 2, bgcolor: '#e8eaf6', fontSize: 28, color: '#3949ab' }}>
+                            {prospect.tenant_short_name?.[0] || '🏫'}
+                        </Avatar>
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="h6" fontWeight={800} sx={{ lineHeight: 1.2, mb: 0.5 }}>{prospect.tenant_name}</Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: 1 }}>
+                            {lga && <Typography variant="body2" color="text.secondary">{lga}</Typography>}
+                            {stateName && <Chip label={stateName.toUpperCase()} size="small" sx={{ bgcolor: '#5e35b1', color: '#fff', fontWeight: 700, fontSize: '10px', height: 20, borderRadius: '4px' }} />}
+                            {prospect.session_term && <Chip label={prospect.session_term} size="small" sx={{ bgcolor: '#2e7d32', color: '#fff', fontWeight: 700, fontSize: '10px', height: 20, borderRadius: '4px' }} />}
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">
+                            <strong>School Address:</strong> {prospect.address || '—'}{stateName ? `, ${stateName} State, Nigeria` : ''}
+                        </Typography>
+                        {agent && (
+                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
+                                <BusinessIcon sx={{ fontSize: 14, color: '#9ca3af' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                    <strong>Agent:</strong> {agent.org_name || agent.name}{agent.email ? ` · ${agent.email}` : ''}
+                                </Typography>
+                            </Stack>
+                        )}
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                            Submitted: {prospect.created_at ? new Date(prospect.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </Typography>
+                    </Box>
+                </Box>
+
+                {/* Person cards */}
+                <Box sx={{ px: 3, py: 2.5, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <PersonCard title="School Owner" name={owner.name} gender={ownerGender} email={owner.email} phone={owner.phone} image={ownerImage} />
+                    <PersonCard title="School Head" name={head.name} gender={headGender} email={head.email} phone={head.phone} image={headImage} />
+                    <PersonCard title="School SPA/Admin" name={spa.name} gender={spaGender} email={spa.email} phone={spa.phone} image={spaImage} />
+                </Box>
+
+                {prospect.rejection_reason && (
+                    <Box sx={{ px: 3, pb: 2 }}>
+                        <Alert severity="error" sx={{ borderRadius: 2 }}><strong>Rejection reason:</strong> {prospect.rejection_reason}</Alert>
+                    </Box>
+                )}
+                {showRejectInput && (
+                    <Box sx={{ px: 3, pb: 2 }}>
+                        <TextField fullWidth multiline rows={3} label="Rejection Reason (optional)"
+                            value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                    </Box>
+                )}
             </DialogContent>
+
             <Divider />
-            <DialogActions sx={{ p: 2, gap: 1 }}>
-                <Button onClick={onClose} color="inherit">Close</Button>
+            <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+                <Button onClick={onClose} color="inherit" variant="outlined" sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}>Close</Button>
                 {prospect.status === 'pending' && (
                     <>
                         {!showRejectInput ? (
                             <Button variant="outlined" color="error" startIcon={<CancelOutlinedIcon />}
-                                onClick={() => setShowRejectInput(true)} disabled={loading}>
-                                Reject
-                            </Button>
+                                onClick={() => setShowRejectInput(true)} disabled={loading}
+                                sx={{ borderRadius: 2, textTransform: 'none' }}>Reject</Button>
                         ) : (
                             <Button variant="contained" color="error" startIcon={<CancelOutlinedIcon />}
-                                onClick={() => onReject(prospect.id, rejectReason)} disabled={loading}>
-                                {loading ? <CircularProgress size={18} /> : 'Confirm Reject'}
+                                onClick={() => onReject(prospect.id, rejectReason)} disabled={loading}
+                                sx={{ borderRadius: 2, textTransform: 'none' }}>
+                                {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
                             </Button>
                         )}
                         <Button variant="contained" color="success" startIcon={<CheckCircleOutlineIcon />}
-                            onClick={() => onApprove(prospect.id)} disabled={loading}>
-                            {loading ? <CircularProgress size={18} /> : 'Submit for Approval'}
+                            onClick={() => onApprove(prospect.id)} disabled={loading}
+                            sx={{ borderRadius: 2, textTransform: 'none', bgcolor: '#2e7d32', '&:hover': { bgcolor: '#1b5e20' } }}>
+                            {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
                         </Button>
                     </>
                 )}
@@ -132,18 +192,66 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
     );
 };
 
+// ── ProspectRow ───────────────────────────────────────────────────────────────
+
+const ProspectRow = ({ row, index, onReview }) => {
+    const spa = getSpaContact(row);
+    const agent = row.agent;
+    return (
+        <TableRow hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
+            <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{index}</TableCell>
+            <TableCell>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>{row.tenant_name}</Typography>
+                <Typography variant="caption" color="text.secondary">{row.tenant_short_name}</Typography>
+            </TableCell>
+            <TableCell>
+                <Stack direction="row" spacing={1} alignItems="flex-start">
+                    <PersonOutlineIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+                    <Box>
+                        <Typography variant="caption" fontWeight={600} display="block">{spa.name}</Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">{spa.email}</Typography>
+                        <Typography variant="caption" color="text.secondary">{spa.phone}</Typography>
+                    </Box>
+                </Stack>
+            </TableCell>
+            <TableCell>
+                <Stack direction="row" spacing={1} alignItems="flex-start">
+                    <BusinessIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+                    <Box>
+                        <Typography variant="caption" fontWeight={600} display="block">{agent?.org_name || agent?.name || '—'}</Typography>
+                        <Typography variant="caption" color="text.secondary">{agent?.email || ''}</Typography>
+                    </Box>
+                </Stack>
+            </TableCell>
+            <TableCell>
+                <Typography variant="caption" color="text.secondary">
+                    {row.created_at ? new Date(row.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                </Typography>
+            </TableCell>
+            <TableCell><StatusChip status={row.status} /></TableCell>
+            <TableCell align="right">
+                <Button size="small" variant="outlined" startIcon={<IconEye size={14} />}
+                    onClick={() => onReview(row)}
+                    sx={{ textTransform: 'none', borderRadius: '8px', fontSize: '12px', borderColor: '#3949ab', color: '#3949ab', '&:hover': { bgcolor: '#3949ab', color: '#fff' } }}>
+                    Review
+                </Button>
+            </TableCell>
+        </TableRow>
+    );
+};
+
 // ── Main Component ────────────────────────────────────────────────────────────
+
 const SchoolsTab = ({ schools = [], onAddSchool }) => {
     const theme = useTheme();
-    const isDarkMode = theme.palette.mode === 'dark';
 
     const [activeTab, setActiveTab] = useState(0);
-    const [search, setSearch] = useState('');
+    const [nameValue, setNameValue] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const [prospectList, setProspectList] = useState([]);
-    const [prospectLoading, setProspectLoading] = useState(true); // true = show spinner on first mount
+    const [prospectLoading, setProspectLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
     const [reviewOpen, setReviewOpen] = useState(false);
@@ -160,24 +268,19 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
         setTimeout(() => setFeedback(null), 3500);
     };
 
-    const fetchProspects = async () => {
+    const fetchProspects = useCallback(async () => {
         setProspectLoading(true);
         try {
             const data = await getProspectiveTenants();
-            console.log('[SchoolsTab] prospective data:', data);
             setProspectList(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error('[SchoolsTab] fetch error:', err);
-            setFeedback({ msg: err?.message || err?.error || 'Failed to fetch applications', severity: 'error' });
+            notify(err?.message || 'Failed to fetch applications', 'error');
         } finally {
             setProspectLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchProspects();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => { fetchProspects(); }, [fetchProspects]);
 
     const handleApprove = async (id) => {
         setActionLoading(true);
@@ -185,12 +288,9 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
             await approveProspectiveTenant(id);
             await fetchProspects();
             setReviewOpen(false);
-            setFeedback({ msg: 'School approved and provisioned successfully', severity: 'success' });
-        } catch (err) {
-            setFeedback({ msg: err?.message || 'Approval failed', severity: 'error' });
-        } finally {
-            setActionLoading(false);
-        }
+            notify('School approved and provisioned successfully');
+        } catch (err) { notify(err?.message || 'Approval failed', 'error'); }
+        finally { setActionLoading(false); }
     };
 
     const handleReject = async (id, reason) => {
@@ -199,79 +299,30 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
             await rejectProspectiveTenant(id, reason);
             await fetchProspects();
             setReviewOpen(false);
-            setFeedback({ msg: 'Application rejected', severity: 'success' });
-        } catch (err) {
-            setFeedback({ msg: err?.message || 'Rejection failed', severity: 'error' });
-        } finally {
-            setActionLoading(false);
-        }
+            notify('Application rejected');
+        } catch { notify('Rejection failed', 'error'); }
+        finally { setActionLoading(false); }
     };
 
     const pendingProspects = prospectList.filter((p) => p.status === 'pending');
 
-    const filteredAll = prospectList.filter((p) =>
-        !search || p.tenant_name?.toLowerCase().includes(search.toLowerCase())
-    );
-    const filteredPending = pendingProspects.filter((p) =>
-        !search || p.tenant_name?.toLowerCase().includes(search.toLowerCase())
-    );
-    const filteredApproved = schools.filter((s) =>
-        !search || s.school?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filter = (arr, key = 'tenant_name') =>
+        !nameValue ? arr : arr.filter((r) => (r[key] || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()));
 
     const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-    const thSx = { fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary };
 
-    // Shared school row renderer
-    const SchoolRow = ({ row, idx }) => (
-        <TableRow hover>
-            <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
-            <TableCell>
-                <Box display="flex" alignItems="center" gap={1.5}>
-                    <Avatar sx={{ width: 40, height: 40 }} />
-                    <Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.text.primary }}>{row.school}</Typography>
-                </Box>
-            </TableCell>
-            <TableCell>
-                <Typography variant="subtitle2" fontWeight={700} sx={{ color: theme.palette.text.primary }}>{row.contact}</Typography>
-                <Typography variant="caption" color="textSecondary">{row.email}</Typography>
-            </TableCell>
-            <TableCell>
-                <Box display="flex" alignItems="center" gap={1.5}>
-                    <Avatar sx={{ width: 32, height: 32 }} />
-                    <Box>
-                        <Typography variant="caption" fontWeight={700} display="block" sx={{ fontSize: '10px', color: theme.palette.text.primary }}>{row.agent}</Typography>
-                        <Typography variant="caption" color="textSecondary" sx={{ fontSize: '9px' }}>{row.agentEmail}</Typography>
-                        <Typography variant="caption" color="textSecondary" sx={{ fontSize: '9px' }}>{row.agentContact}</Typography>
-                    </Box>
-                </Box>
-            </TableCell>
-            <TableCell>
-                <Box display="flex" alignItems="center" gap={1}>
-                    <Typography variant="caption" fontWeight={700} sx={{ color: theme.palette.text.primary }}>{row.plan}</Typography>
-                    <Chip label={row.population} size="small"
-                        sx={{ bgcolor: isDarkMode ? 'rgba(34,197,94,0.1)' : '#EAFDF6', color: isDarkMode ? '#4ade80' : '#10B981', fontWeight: 700, borderRadius: '4px' }} />
-                </Box>
-            </TableCell>
-            <TableCell>{statusChip(row.status)}</TableCell>
-            <TableCell>
-                <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setActiveRow(row); }}>
-                    <IconDotsVertical size={18} color={theme.palette.text.secondary} />
-                </IconButton>
-            </TableCell>
-        </TableRow>
-    );
+    const thSx = { fontWeight: 700, fontSize: '11px', color: theme.palette.text.secondary, textTransform: 'uppercase', letterSpacing: '0.5px', py: 1.5 };
 
-    const SchoolTableHead = () => (
-        <TableHead>
+    const prospectTableHead = (
+        <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>
-                <TableCell sx={thSx}>S/N</TableCell>
-                <TableCell sx={thSx}>School Name</TableCell>
-                <TableCell sx={thSx}>Contact Details</TableCell>
-                <TableCell sx={thSx}>Agent</TableCell>
-                <TableCell sx={thSx}>Plan (Population)</TableCell>
+                <TableCell sx={thSx}>#</TableCell>
+                <TableCell sx={thSx}>School</TableCell>
+                <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
+                <TableCell sx={thSx}>Organisation</TableCell>
+                <TableCell sx={thSx}>Submitted</TableCell>
                 <TableCell sx={thSx}>Status</TableCell>
-                <TableCell sx={thSx}>Action</TableCell>
+                <TableCell sx={thSx} align="right">Action</TableCell>
             </TableRow>
         </TableHead>
     );
@@ -279,9 +330,7 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
     return (
         <Box>
             {feedback && (
-                <Alert severity={feedback.severity} sx={{ mb: 2 }} onClose={() => setFeedback(null)}>
-                    {feedback.msg}
-                </Alert>
+                <Alert severity={feedback.severity} sx={{ mb: 2 }} onClose={() => setFeedback(null)}>{feedback.msg}</Alert>
             )}
 
             {/* Header */}
@@ -292,219 +341,188 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
                     </Box>
                     <Typography variant="h5" fontWeight={700}>List Of School</Typography>
                 </Box>
-                {activeTab === 0 && (
-                    <Button variant="contained" startIcon={<IconPlus size={16} />}
-                        onClick={() => setOpenAddModal(true)}
-                        sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', '&:hover': { bgcolor: '#303f9f' } }}>
-                        Add New School
-                    </Button>
-                )}
             </Box>
 
             {/* Tabs */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
                 <Tabs value={activeTab}
-                    onChange={(_, v) => { setActiveTab(v); setPage(0); setSearch(''); }}
-                    sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '13px' } }}>
-                    <Tab label="Application" />
+                    onChange={(_, v) => { setActiveTab(v); setPage(0); setNameValue(''); }}
+                    sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px', minHeight: 48 } }}>
+                    <Tab label="All Applications" />
                     <Tab label={
                         <Stack direction="row" spacing={1} alignItems="center">
                             <span>Pending Approvals</span>
                             {pendingProspects.length > 0 && (
                                 <Chip size="small" label={pendingProspects.length}
-                                    sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, height: 20, fontSize: '11px' }} />
+                                    sx={{ bgcolor: '#fef3c7', color: '#d97706', fontWeight: 700, height: 18, fontSize: '11px' }} />
                             )}
                         </Stack>
                     } />
-                    <Tab label="Approved" />
+                    <Tab label="Approved Schools" />
                 </Tabs>
             </Box>
 
-            {/* Search */}
-            <Box mb={2}>
-                <TextField size="small" label="Search by name" value={search}
-                    onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                    sx={{ minWidth: 260 }} />
+            <Box sx={{ pt: 3 }}>
+                {/* Search + Add */}
+                <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between"
+                    alignItems={{ sm: 'center' }} spacing={2} mb={3}>
+                    <TextField size="small" placeholder="Search by name…" value={nameValue}
+                        onChange={(e) => { setNameValue(e.target.value); setPage(0); }}
+                        sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />
+                    {activeTab === 0 && (
+                        <Button variant="contained" startIcon={<IconUserPlus size={18} />}
+                            onClick={() => setOpenAddModal(true)}
+                            sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: 2, px: 3, '&:hover': { bgcolor: '#303f9f' } }}>
+                            Add New School
+                        </Button>
+                    )}
+                </Stack>
+
+                {/* Tab 0: All Applications */}
+                {activeTab === 0 && (
+                    prospectLoading
+                        ? <Box display="flex" justifyContent="center" py={8}><CircularProgress /></Box>
+                        : (
+                            <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+                                <Table>
+                                    {prospectTableHead}
+                                    <TableBody>
+                                        {paginate(filter(prospectList)).length > 0
+                                            ? paginate(filter(prospectList)).map((row, i) => (
+                                                <ProspectRow key={row.id} row={row} index={page * rowsPerPage + i + 1}
+                                                    onReview={(r) => { setReviewProspect(r); setReviewOpen(true); }} />
+                                            ))
+                                            : <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                                <Typography color="text.secondary">No applications found.</Typography>
+                                            </TableCell></TableRow>
+                                        }
+                                    </TableBody>
+                                    <TableFooter>
+                                        <TableRow>
+                                            <TablePagination rowsPerPageOptions={[5, 10, 25]} count={filter(prospectList).length}
+                                                rowsPerPage={rowsPerPage} page={page}
+                                                onPageChange={(_, p) => setPage(p)}
+                                                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
+                                        </TableRow>
+                                    </TableFooter>
+                                </Table>
+                            </TableContainer>
+                        )
+                )}
+
+                {/* Tab 1: Pending Approvals */}
+                {activeTab === 1 && (
+                    prospectLoading
+                        ? <Box display="flex" justifyContent="center" py={8}><CircularProgress /></Box>
+                        : (
+                            <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+                                <Table>
+                                    {prospectTableHead}
+                                    <TableBody>
+                                        {paginate(filter(pendingProspects)).length > 0
+                                            ? paginate(filter(pendingProspects)).map((row, i) => (
+                                                <ProspectRow key={row.id} row={row} index={page * rowsPerPage + i + 1}
+                                                    onReview={(r) => { setReviewProspect(r); setReviewOpen(true); }} />
+                                            ))
+                                            : <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                                <Typography color="text.secondary">No pending applications.</Typography>
+                                            </TableCell></TableRow>
+                                        }
+                                    </TableBody>
+                                    <TableFooter>
+                                        <TableRow>
+                                            <TablePagination rowsPerPageOptions={[5, 10, 25]} count={filter(pendingProspects).length}
+                                                rowsPerPage={rowsPerPage} page={page}
+                                                onPageChange={(_, p) => setPage(p)}
+                                                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
+                                        </TableRow>
+                                    </TableFooter>
+                                </Table>
+                            </TableContainer>
+                        )
+                )}
+
+                {/* Tab 2: Approved Schools */}
+                {activeTab === 2 && (
+                    <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+                        <Table>
+                            <TableHead sx={{ bgcolor: '#fafafa' }}>
+                                <TableRow>
+                                    <TableCell sx={thSx}>#</TableCell>
+                                    <TableCell sx={thSx}>School</TableCell>
+                                    <TableCell sx={thSx}>Admin Contact</TableCell>
+                                    <TableCell sx={thSx}>Organisation</TableCell>
+                                    <TableCell sx={thSx}>Status</TableCell>
+                                    <TableCell sx={thSx} align="right">Action</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {paginate(filter(schools, 'school')).length > 0
+                                    ? paginate(filter(schools, 'school')).map((row, i) => (
+                                        <TableRow key={i} hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
+                                            <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{page * rowsPerPage + i + 1}</TableCell>
+                                            <TableCell>
+                                                <Stack direction="row" spacing={1.5} alignItems="center">
+                                                    <Avatar sx={{ width: 34, height: 34, fontSize: '13px', bgcolor: '#3949ab' }}>
+                                                        {row.school?.[0]}
+                                                    </Avatar>
+                                                    <Box>
+                                                        <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>{row.school}</Typography>
+                                                        <Typography variant="caption" color="text.secondary">{row.email}</Typography>
+                                                    </Box>
+                                                </Stack>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Stack direction="row" spacing={1} alignItems="flex-start">
+                                                    <PersonOutlineIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+                                                    <Box>
+                                                        <Typography variant="caption" fontWeight={600} display="block">{row.contact}</Typography>
+                                                        <Typography variant="caption" color="text.secondary">{row.email}</Typography>
+                                                    </Box>
+                                                </Stack>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Stack direction="row" spacing={1} alignItems="flex-start">
+                                                    <BusinessIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+                                                    <Typography variant="caption" fontWeight={600}>{row.agent}</Typography>
+                                                </Stack>
+                                            </TableCell>
+                                            <TableCell><StatusChip status={row.status} /></TableCell>
+                                            <TableCell align="right">
+                                                <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setActiveRow(row); }}>
+                                                    <IconDotsVertical size={18} />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                    : <TableRow><TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                                        <Typography color="text.secondary">No approved schools yet.</Typography>
+                                    </TableCell></TableRow>
+                                }
+                            </TableBody>
+                            <TableFooter>
+                                <TableRow>
+                                    <TablePagination rowsPerPageOptions={[5, 10, 25]} count={filter(schools, 'school').length}
+                                        rowsPerPage={rowsPerPage} page={page}
+                                        onPageChange={(_, p) => setPage(p)}
+                                        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
+                                </TableRow>
+                            </TableFooter>
+                        </Table>
+                    </TableContainer>
+                )}
             </Box>
-
-            {/* Tab 0: Application */}
-            {activeTab === 0 && (
-                prospectLoading ? (
-                    <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
-                ) : (
-                    <TableContainer sx={{ bgcolor: 'transparent' }}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={thSx}>S/N</TableCell>
-                                    <TableCell sx={thSx}>School Name</TableCell>
-                                    <TableCell sx={thSx}>Admin Contact</TableCell>
-                                    <TableCell sx={thSx}>Agent</TableCell>
-                                    <TableCell sx={thSx}>Submitted</TableCell>
-                                    <TableCell sx={thSx}>Status</TableCell>
-                                    <TableCell sx={thSx} align="right">Action</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {paginate(filteredAll).map((row, idx) => (
-                                    <TableRow key={row.id} hover>
-                                        <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
-                                        <TableCell>
-                                            <Typography variant="subtitle2" fontWeight={700}>{row.tenant_name}</Typography>
-                                            <Typography variant="caption" color="textSecondary">{row.tenant_short_name}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="caption" display="block">{row.admin_email}</Typography>
-                                            <Typography variant="caption" color="textSecondary">{row.admin_phone}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">{row.agent?.org_name || row.agent?.name || '—'}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="caption">
-                                                {row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>{statusChip(row.status)}</TableCell>
-                                        <TableCell align="right">
-                                            <Button size="small" variant="outlined" startIcon={<IconEye size={14} />}
-                                                onClick={() => { setReviewProspect(row); setReviewOpen(true); }}
-                                                sx={{ textTransform: 'none', borderRadius: '6px' }}>
-                                                View / Review
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {filteredAll.length === 0 && (
-                                    <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>No applications found</TableCell></TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                        <TablePagination rowsPerPageOptions={[5, 10, 25]} component="div"
-                            count={filteredAll.length} rowsPerPage={rowsPerPage} page={page}
-                            onPageChange={(_, p) => setPage(p)}
-                            onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
-                    </TableContainer>
-                )
-            )}
-
-            {/* Tab 1: Pending Approvals */}
-            {activeTab === 1 && (
-                prospectLoading ? (
-                    <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
-                ) : (
-                    <TableContainer sx={{ bgcolor: 'transparent' }}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={thSx}>S/N</TableCell>
-                                    <TableCell sx={thSx}>School Name</TableCell>
-                                    <TableCell sx={thSx}>Admin Contact</TableCell>
-                                    <TableCell sx={thSx}>Agent</TableCell>
-                                    <TableCell sx={thSx}>Submitted</TableCell>
-                                    <TableCell sx={thSx}>Status</TableCell>
-                                    <TableCell sx={thSx} align="right">Action</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {paginate(filteredPending).map((row, idx) => (
-                                    <TableRow key={row.id} hover>
-                                        <TableCell>{page * rowsPerPage + idx + 1}</TableCell>
-                                        <TableCell>
-                                            <Typography variant="subtitle2" fontWeight={700}>{row.tenant_name}</Typography>
-                                            <Typography variant="caption" color="textSecondary">{row.tenant_short_name}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="caption" display="block">{row.admin_email}</Typography>
-                                            <Typography variant="caption" color="textSecondary">{row.admin_phone}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">{row.agent?.org_name || row.agent?.name || '—'}</Typography>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="caption">
-                                                {row.created_at ? new Date(row.created_at).toLocaleDateString() : '—'}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>{statusChip(row.status)}</TableCell>
-                                        <TableCell align="right">
-                                            <Button size="small" variant="outlined" startIcon={<IconEye size={14} />}
-                                                onClick={() => { setReviewProspect(row); setReviewOpen(true); }}
-                                                sx={{ textTransform: 'none', borderRadius: '6px' }}>
-                                                View / Review
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {filteredPending.length === 0 && (
-                                    <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>No pending applications</TableCell></TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                        <TablePagination rowsPerPageOptions={[5, 10, 25]} component="div"
-                            count={filteredPending.length} rowsPerPage={rowsPerPage} page={page}
-                            onPageChange={(_, p) => setPage(p)}
-                            onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
-                    </TableContainer>
-                )
-            )}
-
-            {/* Tab 2: Approved */}
-            {activeTab === 2 && (
-                <TableContainer sx={{ bgcolor: 'transparent' }}>
-                    <Table>
-                        <SchoolTableHead />
-                        <TableBody>
-                            {paginate(filteredApproved).map((row, idx) => <SchoolRow key={idx} row={row} idx={idx} />)}
-                            {filteredApproved.length === 0 && (
-                                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>No approved schools yet</TableCell></TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                    <TablePagination rowsPerPageOptions={[5, 10, 25]} component="div"
-                        count={filteredApproved.length} rowsPerPage={rowsPerPage} page={page}
-                        onPageChange={(_, p) => setPage(p)}
-                        onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
-                </TableContainer>
-            )}
 
             {/* Action Menu */}
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}
-                PaperProps={{
-                    elevation: 0,
-                    sx: {
-                        borderRadius: '8px', border: `1px solid ${theme.palette.divider}`,
-                        bgcolor: theme.palette.background.paper, boxShadow: theme.shadows[3], minWidth: 150,
-                        '& .MuiMenuItem-root': {
-                            fontSize: '14px', fontWeight: 600, color: theme.palette.text.secondary, py: 1, px: 2,
-                            '&:hover': { bgcolor: isDarkMode ? theme.palette.action.hover : '#F8FAFC', color: theme.palette.primary.main },
-                        },
-                    },
-                }}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-            >
-                <MenuItem onClick={() => { setAnchorEl(null); setProfileModalOpen(true); }}>
-                    <ListItemIcon><IconEye size={18} /></ListItemIcon>
-                    <ListItemText primary="View school Profile" />
-                </MenuItem>
-                <MenuItem onClick={() => setAnchorEl(null)}>
-                    <ListItemIcon><IconEdit size={18} /></ListItemIcon>
-                    <ListItemText primary="Edit Record" />
-                </MenuItem>
-                <MenuItem onClick={() => setAnchorEl(null)} sx={{ color: `${theme.palette.error.main} !important` }}>
-                    <ListItemIcon sx={{ color: theme.palette.error.main }}><IconTrash size={18} /></ListItemIcon>
-                    <ListItemText primary="Delete" />
-                </MenuItem>
+                PaperProps={{ sx: { borderRadius: 2, minWidth: 170 } }}>
+                <MenuItem onClick={() => { setAnchorEl(null); setProfileModalOpen(true); }}>View School Profile</MenuItem>
+                <MenuItem onClick={() => setAnchorEl(null)}>Edit Record</MenuItem>
+                <MenuItem onClick={() => setAnchorEl(null)} sx={{ color: 'error.main' }}>Delete</MenuItem>
             </Menu>
 
-            <SchoolProfileModal
-                open={profileModalOpen}
-                onClose={() => setProfileModalOpen(false)}
-                school={activeRow}
-            />
+            <SchoolProfileModal open={profileModalOpen} onClose={() => setProfileModalOpen(false)} school={activeRow} />
 
-            {/* Review Modal */}
             <ReviewModal open={reviewOpen} onClose={() => setReviewOpen(false)}
                 prospect={reviewProspect} onApprove={handleApprove} onReject={handleReject} loading={actionLoading} />
 

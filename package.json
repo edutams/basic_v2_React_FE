@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "deploy": "vite build && rsync -av --delete dist/ ../public_html/"
+    "deploy": "vite build && rsync -av --delete dist/ ../public_html/ --exclude='.htaccess'"
   },
   "dependencies": {
     "@casl/ability": "^6.7.3",

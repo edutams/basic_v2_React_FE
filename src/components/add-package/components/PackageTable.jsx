@@ -36,7 +36,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
 
-  const filteredPackages = packages.filter((pkg) => {
+  const filteredPackages = packages?.filter((pkg) => {
     const name = pkg.package_name || pkg.pac_name || '';
     const description = pkg.package_description || pkg.pac_description || '';
 

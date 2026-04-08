@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import {
   Box,
   Typography,
@@ -8,6 +9,7 @@ import {
   MenuItem,
   useTheme,
   TablePagination,
+  Button,
 } from '@mui/material';
 import { IconLayoutDashboard, IconChartBar, IconSchool } from '@tabler/icons-react';
 import PageContainer from '../../components/container/PageContainer';
@@ -15,6 +17,7 @@ import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import CommissionSummaryCards from './components/CommissionSummaryCards';
 import CommissionTable from './components/CommissionTable';
 import { SetCommissionModal, ChangeCommissionTypeModal } from './components/CommissionModals';
+import CommissionDetailsModal from './components/CommissionDetailsModal';
 import { mockCommissionData } from './mockData';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 
@@ -25,19 +28,27 @@ const BCrumb = [
 ];
 
 const CommissionManagement = () => {
+  const navigate = useNavigate();
   const [value, setValue] = useState('1');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
 
-  // Pagination state
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
-  // Pagination handlers
+  const handleMyCommissionClick = (type) => {
+    if (type === 'subscription') {
+      navigate('/commission/subscription');
+    } else if (type === 'transaction') {
+      navigate('/commission/transaction');
+    }
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -49,7 +60,7 @@ const CommissionManagement = () => {
 
   const handleTabChange = (event, newValue) => {
     setValue(newValue);
-    setPage(0); // Reset to first page when tab changes
+    setPage(0);
   };
 
   const handleEditCommission = (agent) => {
@@ -62,7 +73,11 @@ const CommissionManagement = () => {
     setTypeModalOpen(true);
   };
 
-  // Filter data based on tab
+  const handleViewDetails = (agent) => {
+    setSelectedAgent(agent);
+    setDetailsModalOpen(true);
+  };
+
   const getFilteredData = () => {
     if (value === '3') return mockCommissionData.filter((a) => a.commissionType === 'Subscription');
     if (value === '4') return mockCommissionData.filter((a) => a.commissionType === 'Transaction');
@@ -105,8 +120,6 @@ const CommissionManagement = () => {
           <Tabs
             value={value}
             onChange={handleTabChange}
-            //   textColor="inherit"
-            //   indicatorColor="primary"
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
@@ -116,36 +129,29 @@ const CommissionManagement = () => {
               value="1"
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <Tab
               label="Manage"
               value="2"
-              // icon={<IconChartBar size={18} />}
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <Tab
               label="Commission by Subscription"
               value="3"
-              // icon={<IconSchool size={18} />}
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <Tab
               label="Commission by Transaction"
               value="4"
-              // icon={<IconChartBar size={18} />}
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: 3 }}>
           <Box
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
           >
@@ -172,11 +178,33 @@ const CommissionManagement = () => {
 
             return (
               <>
+                {(value === '3' || value === '4') && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<IconLayoutDashboard size={18} />}
+                      onClick={() =>
+                        handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
+                      }
+                      sx={{
+                        bgcolor: '#3949ab',
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        '&:hover': { bgcolor: '#303f9f' },
+                      }}
+                    >
+                      {value === '3'
+                        ? 'My Commission by Subscription'
+                        : 'My Commission by Transaction'}
+                    </Button>
+                  </Box>
+                )}
                 <CommissionTable
                   data={paginatedData}
                   activeTab={value}
                   onEditCommission={handleEditCommission}
                   onChangeType={handleChangeType}
+                  onViewDetails={handleViewDetails}
                   rowsPerPage={rowsPerPage}
                 />
                 <TablePagination
@@ -203,6 +231,11 @@ const CommissionManagement = () => {
       <ChangeCommissionTypeModal
         open={typeModalOpen}
         onClose={() => setTypeModalOpen(false)}
+        agent={selectedAgent}
+      />
+      <CommissionDetailsModal
+        open={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
         agent={selectedAgent}
       />
     </PageContainer>

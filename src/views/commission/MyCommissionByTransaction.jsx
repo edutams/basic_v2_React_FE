@@ -49,26 +49,31 @@ const MyCommissionByTransaction = () => {
       title="My Commission by Transaction"
       description="View your transaction-based commissions"
     >
-      <Breadcrumb title="My Commission by Transaction" items={BCrumb} />
-
-      <Box mt={3}>
-        {/* Back Button */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Breadcrumb title="My Commission by Transaction" items={BCrumb} />
         <Button
           variant="text"
           startIcon={<IconArrowLeft size={18} />}
           onClick={() => navigate('/organization/commissions')}
           sx={{
-            mb: 2,
             textTransform: 'none',
-            color: theme.palette.text.secondary,
-            '&:hover': {
-              bgcolor: theme.palette.action.hover,
-            },
+            // color: theme.palette.text.secondary,
+            // '&:hover': {
+            //   bgcolor: theme.palette.action.hover,
+            // },
           }}
         >
           Back to Commission Management
         </Button>
+      </Box>
 
+      <Box mt={3}>
         {/* Four Stat Cards */}
         <MyCommissionStatCards />
 

@@ -18,17 +18,28 @@ import {
   IconExchange,
   IconSchool,
   IconCalendar,
+  IconEye,
 } from '@tabler/icons-react';
 import StandardDataTable from 'src/components/shared/StandardDataTable';
 
 const columnHelper = createColumnHelper();
 
-const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, rowsPerPage = 10 }) => {
+const CommissionTable = ({
+  data,
+  activeTab,
+  onEditCommission,
+  onChangeType,
+  onViewDetails,
+  rowsPerPage = 10,
+}) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [selectedItem, setSelectedItem] = React.useState(null);
+
+  // Provide default function if onViewDetails is not passed
+  const handleViewDetails = onViewDetails || (() => {});
 
   const handleClick = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -285,7 +296,7 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, rows
     }
 
     return baseColumns;
-  }, [activeTab, isDarkMode, theme]);
+  }, [activeTab, isDarkMode, theme, onEditCommission, onChangeType, onViewDetails]);
 
   return (
     <Box>
@@ -333,6 +344,17 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, rows
             primary="Change Commission Type"
             sx={{ color: theme.palette.text.secondary }}
           />
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleViewDetails(selectedItem);
+            handleClose();
+          }}
+        >
+          <ListItemIcon>
+            <IconEye size={18} color={theme.palette.text.secondary} />
+          </ListItemIcon>
+          <ListItemText primary="View Details" sx={{ color: theme.palette.text.secondary }} />
         </MenuItem>
       </Menu>
     </Box>

@@ -17,6 +17,7 @@ import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import CommissionSummaryCards from './components/CommissionSummaryCards';
 import CommissionTable from './components/CommissionTable';
 import { SetCommissionModal, ChangeCommissionTypeModal } from './components/CommissionModals';
+import CommissionDetailsModal from './components/CommissionDetailsModal';
 import { mockCommissionData } from './mockData';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 
@@ -31,6 +32,7 @@ const CommissionManagement = () => {
   const [value, setValue] = useState('1');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
 
   const [page, setPage] = useState(0);
@@ -69,6 +71,11 @@ const CommissionManagement = () => {
   const handleChangeType = (agent) => {
     setSelectedAgent(agent);
     setTypeModalOpen(true);
+  };
+
+  const handleViewDetails = (agent) => {
+    setSelectedAgent(agent);
+    setDetailsModalOpen(true);
   };
 
   const getFilteredData = () => {
@@ -197,6 +204,7 @@ const CommissionManagement = () => {
                   activeTab={value}
                   onEditCommission={handleEditCommission}
                   onChangeType={handleChangeType}
+                  onViewDetails={handleViewDetails}
                   rowsPerPage={rowsPerPage}
                 />
                 <TablePagination
@@ -223,6 +231,11 @@ const CommissionManagement = () => {
       <ChangeCommissionTypeModal
         open={typeModalOpen}
         onClose={() => setTypeModalOpen(false)}
+        agent={selectedAgent}
+      />
+      <CommissionDetailsModal
+        open={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
         agent={selectedAgent}
       />
     </PageContainer>

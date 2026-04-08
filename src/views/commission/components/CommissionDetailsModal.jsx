@@ -121,45 +121,50 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
 
       <DialogContent sx={{ p: 3 }}>
         {/* Filters Section */}
-        <Box sx={{ mb: 3 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={2.5}>
+        <Box sx={{ mt: 2, mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 2,
+                flex: 1,
+              }}
+            >
               <TextField
                 type="date"
                 label="From Date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                fullWidth
                 size="small"
               />
-            </Grid>
-            <Grid item xs={12} md={2.5}>
               <TextField
                 type="date"
                 label="To Date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
                 InputLabelProps={{ shrink: true }}
-                fullWidth
                 size="small"
               />
-            </Grid>
-            <Grid item xs={12} md={4}>
               <TextField
                 label="Transaction ID"
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
-                fullWidth
                 size="small"
                 placeholder="Enter transaction ID"
               />
-            </Grid>
-            <Grid item xs={12} md={1.5}>
               <Button
                 variant="contained"
                 onClick={handleFilter}
-                fullWidth
                 sx={{
                   bgcolor: '#3949ab',
                   textTransform: 'none',
@@ -169,28 +174,16 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               >
                 Filter
               </Button>
-            </Grid>
-            <Grid item xs={12} md={1.5}>
-              <Button
-                variant="outlined"
-                startIcon={<IconDownload size={18} />}
-                onClick={handleExport}
-                fullWidth
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: '8px',
-                  borderColor: '#3949ab',
-                  color: '#3949ab',
-                  '&:hover': {
-                    borderColor: '#303f9f',
-                    bgcolor: 'rgba(57, 73, 171, 0.08)',
-                  },
-                }}
-              >
-                Export
-              </Button>
-            </Grid>
-          </Grid>
+            </Box>
+
+            <Button
+              variant="contained"
+              startIcon={<IconDownload size={18} />}
+              onClick={handleExport}
+            >
+              Export
+            </Button>
+          </Box>
         </Box>
 
         {/* Table Section */}

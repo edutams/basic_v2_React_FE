@@ -9,6 +9,9 @@ const api = axios.create({
   baseURL: CENTRAL_API_BASE_URL + '/api/',
 });
 
+console.log("central API: ", CENTRAL_API_BASE_URL);
+
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {

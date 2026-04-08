@@ -5,13 +5,13 @@ import { IconArrowLeft, IconDownload } from '@tabler/icons-react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import MyCommissionStatCards from './components/MyCommissionStatCards';
-import CommissionTable from './components/CommissionTable';
+import MyCommissionTable from './components/MyCommissionTable';
 import { mockCommissionData } from './mockData';
 
 const BCrumb = [
-  { to: '/', title: 'Home' },
-  { to: '/organization/commissions', title: 'Manage Commission' },
-  { title: 'My Commission by Transaction' },
+  // { to: '/', title: 'Home' },
+  // { to: '/organization/commissions', title: 'Manage Commission' },
+  // { title: 'My Commission by Transaction' },
 ];
 
 const MyCommissionByTransaction = () => {
@@ -105,7 +105,7 @@ const MyCommissionByTransaction = () => {
             {/* Filter Section */}
             <Box sx={{ mb: 3 }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={2}>
                   <TextField
                     type="date"
                     label="From"
@@ -116,7 +116,7 @@ const MyCommissionByTransaction = () => {
                     size="small"
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={2}>
                   <TextField
                     type="date"
                     label="To"
@@ -127,7 +127,7 @@ const MyCommissionByTransaction = () => {
                     size="small"
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={5}>
                   <TextField
                     label="Transaction ID"
                     value={transactionId}
@@ -137,7 +137,7 @@ const MyCommissionByTransaction = () => {
                     placeholder="Enter transaction ID"
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={3}>
                   <Button
                     variant="contained"
                     onClick={handleFilter}
@@ -155,11 +155,8 @@ const MyCommissionByTransaction = () => {
             </Box>
 
             {/* Paginated data */}
-            <CommissionTable
+            <MyCommissionTable
               data={transactionData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
-              activeTab="4"
-              onEditCommission={() => {}}
-              onChangeType={() => {}}
               rowsPerPage={rowsPerPage}
             />
 

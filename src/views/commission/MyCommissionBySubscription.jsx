@@ -15,13 +15,13 @@ import { IconArrowLeft, IconLayoutDashboard, IconDownload } from '@tabler/icons-
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import MyCommissionStatCards from './components/MyCommissionStatCards';
-import CommissionTable from './components/CommissionTable';
+import MyCommissionTable from './components/MyCommissionTable';
 import { mockCommissionData } from './mockData';
 
 const BCrumb = [
-  { to: '/', title: 'Home' },
-  { to: '/organization/commissions', title: 'Manage Commission' },
-  { title: 'My Commission by Subscription' },
+  // { to: '/', title: 'Home' },
+  // { to: '/organization/commissions', title: 'Manage Commission' },
+  // { title: 'My Commission by Subscription' },
 ];
 
 const MyCommissionBySubscription = () => {
@@ -59,26 +59,34 @@ const MyCommissionBySubscription = () => {
       title="My Commission by Subscription"
       description="View your subscription-based commissions"
     >
-      <Breadcrumb title="My Commission by Subscription" items={BCrumb} />
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          // mb: 1,
+        }}
+      >
+        {/* Breadcrumb */}
+        <Breadcrumb title="My Commission by Subscription" items={BCrumb} />
 
-      <Box mt={3}>
         {/* Back Button */}
         <Button
           variant="text"
           startIcon={<IconArrowLeft size={18} />}
           onClick={() => navigate('/organization/commissions')}
           sx={{
-            mb: 2,
             textTransform: 'none',
-            color: theme.palette.text.secondary,
-            '&:hover': {
-              bgcolor: theme.palette.action.hover,
-            },
+            // color: theme.palette.text.secondary,
+            // '&:hover': {
+            //   bgcolor: theme.palette.action.hover,
+            // },
           }}
         >
           Back to Commission Management
         </Button>
-
+      </Box>
+      <Box mt={3}>
         {/* Four Stat Cards */}
         <MyCommissionStatCards />
 
@@ -115,7 +123,7 @@ const MyCommissionBySubscription = () => {
             {/* Filter Section */}
             <Box sx={{ mb: 3 }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={2}>
                   <TextField
                     type="date"
                     label="From"
@@ -126,7 +134,7 @@ const MyCommissionBySubscription = () => {
                     size="small"
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={2}>
                   <TextField
                     type="date"
                     label="To"
@@ -137,7 +145,7 @@ const MyCommissionBySubscription = () => {
                     size="small"
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={5}>
                   <TextField
                     label="Transaction ID"
                     value={transactionId}
@@ -147,7 +155,7 @@ const MyCommissionBySubscription = () => {
                     placeholder="Enter transaction ID"
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} md={3}>
                   <Button
                     variant="contained"
                     onClick={handleFilter}
@@ -165,11 +173,8 @@ const MyCommissionBySubscription = () => {
             </Box>
 
             {/* Paginated data */}
-            <CommissionTable
+            <MyCommissionTable
               data={subscriptionData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)}
-              activeTab="3"
-              onEditCommission={() => {}}
-              onChangeType={() => {}}
               rowsPerPage={rowsPerPage}
             />
 

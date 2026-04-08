@@ -224,16 +224,12 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
                   >
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={600} color="primary">
-                        {row.transactionId}
-                      </Typography>
+                      <Typography variant="body2">{row.transactionId}</Typography>
                     </TableCell>
                     <TableCell>{row.sessionId}</TableCell>
                     <TableCell>{row.narration}</TableCell>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={700}>
-                        {row.amount}
-                      </Typography>
+                      <Typography variant="body2">{row.amount}</Typography>
                     </TableCell>
                     <TableCell>{row.paymentType}</TableCell>
                     <TableCell>{row.transactionDate}</TableCell>

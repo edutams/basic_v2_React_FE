@@ -48,14 +48,14 @@ const eduTierApi = {
   },
   saveModule: async (data) => {
     if (data.id) {
-      const response = await api.put(`/landlord/v1/edu_tier/modules/update_modules/${data.id}`, data);
+      const response = await api.put(`/landlord/v1/edu_tier/modules/update_module/${data.id}`, data);
       return response.data;
     }
-    const response = await api.post('/landlord/v1/edu_tier/modules/store_modules', data);
+    const response = await api.post('/landlord/v1/edu_tier/modules/store_module', data);
     return response.data;
   },
   deleteModule: async (id) => {
-    const response = await api.delete(`/landlord/v1/edu_tier/modules/delete_modules/${id}`);
+    const response = await api.delete(`/landlord/v1/edu_tier/modules/delete_module/${id}`);
     return response.data;
   },
 

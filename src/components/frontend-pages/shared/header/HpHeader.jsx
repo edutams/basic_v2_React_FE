@@ -73,8 +73,7 @@ const HpHeader = (props) => {
                 variant="contained"
                 href="/agent/login"
               >
-                Log In
-              </Button>
+                View Agent Account              </Button>
             </>
           ) : null}
         </ToolbarStyled>

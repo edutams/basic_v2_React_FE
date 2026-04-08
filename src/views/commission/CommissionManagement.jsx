@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import {
   Box,
   Typography,
@@ -8,6 +9,7 @@ import {
   MenuItem,
   useTheme,
   TablePagination,
+  Button,
 } from '@mui/material';
 import { IconLayoutDashboard, IconChartBar, IconSchool } from '@tabler/icons-react';
 import PageContainer from '../../components/container/PageContainer';
@@ -25,6 +27,7 @@ const BCrumb = [
 ];
 
 const CommissionManagement = () => {
+  const navigate = useNavigate();
   const [value, setValue] = useState('1');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
@@ -35,6 +38,14 @@ const CommissionManagement = () => {
 
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+
+  const handleMyCommissionClick = (type) => {
+    if (type === 'subscription') {
+      navigate('/commission/subscription');
+    } else if (type === 'transaction') {
+      navigate('/commission/transaction');
+    }
+  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -102,8 +113,6 @@ const CommissionManagement = () => {
           <Tabs
             value={value}
             onChange={handleTabChange}
-            //   textColor="inherit"
-            //   indicatorColor="primary"
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
@@ -113,36 +122,29 @@ const CommissionManagement = () => {
               value="1"
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <Tab
               label="Manage"
               value="2"
-              // icon={<IconChartBar size={18} />}
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <Tab
               label="Commission by Subscription"
               value="3"
-              // icon={<IconSchool size={18} />}
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
             <Tab
               label="Commission by Transaction"
               value="4"
-              // icon={<IconChartBar size={18} />}
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
-              // sx={{ textTransform: 'none', fontWeight: 600 }}
             />
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: 3 }}>
           <Box
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
           >
@@ -169,6 +171,27 @@ const CommissionManagement = () => {
 
             return (
               <>
+                {(value === '3' || value === '4') && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<IconLayoutDashboard size={18} />}
+                      onClick={() =>
+                        handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
+                      }
+                      sx={{
+                        bgcolor: '#3949ab',
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        '&:hover': { bgcolor: '#303f9f' },
+                      }}
+                    >
+                      {value === '3'
+                        ? 'My Commission by Subscription'
+                        : 'My Commission by Transaction'}
+                    </Button>
+                  </Box>
+                )}
                 <CommissionTable
                   data={paginatedData}
                   activeTab={value}

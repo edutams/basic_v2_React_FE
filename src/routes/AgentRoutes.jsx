@@ -29,6 +29,12 @@ const ActivityLog = Loadable(lazy(() => import('../views/activity-log/ActivityLo
 const CommissionManagement = Loadable(
   lazy(() => import('../views/commission/CommissionManagement')),
 );
+const MyCommissionBySubscription = Loadable(
+  lazy(() => import('../views/commission/MyCommissionBySubscription')),
+);
+const MyCommissionByTransaction = Loadable(
+  lazy(() => import('../views/commission/MyCommissionByTransaction')),
+);
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 
@@ -129,6 +135,16 @@ const AgentRoutes = [
         path: '/organization/commissions',
         exact: true,
         element: <CommissionManagement />,
+      },
+      {
+        path: '/commission/subscription',
+        exact: true,
+        element: <MyCommissionBySubscription />,
+      },
+      {
+        path: '/commission/transaction',
+        exact: true,
+        element: <MyCommissionByTransaction />,
       },
       { path: '/school/sub-school/:id', exact: false, element: <ViewSchool /> },
 

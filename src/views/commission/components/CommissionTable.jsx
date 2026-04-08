@@ -151,13 +151,15 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, rows
             </Typography>
           ),
         }),
-        columnHelper.accessor('action', {
-          header: 'Action',
+        columnHelper.display({
+          id: 'actions',
+          header: 'Actions',
           cell: (info) => (
-            <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
-              {info.getValue()}
-            </Typography>
+            <IconButton size="small" onClick={(e) => handleClick(e, info.row.original)}>
+              <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+            </IconButton>
           ),
+          meta: { align: 'right' },
         }),
       );
     }
@@ -268,6 +270,16 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, rows
               {info.getValue()}
             </Typography>
           ),
+        }),
+        columnHelper.display({
+          id: 'actions',
+          header: 'Actions',
+          cell: (info) => (
+            <IconButton size="small" onClick={(e) => handleClick(e, info.row.original)}>
+              <IconDotsVertical size={18} color={theme.palette.text.secondary} />
+            </IconButton>
+          ),
+          meta: { align: 'right' },
         }),
       );
     }

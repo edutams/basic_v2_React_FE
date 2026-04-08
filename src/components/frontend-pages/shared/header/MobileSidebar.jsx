@@ -49,7 +49,7 @@ const MobileSidebar = () => {
           >
             Support
           </Button>
-          <Button color="primary" variant="contained" href="/auth/login">
+          <Button color="primary" variant="contained" href="/agent/login">
             Get Started
           </Button>
         </Stack>

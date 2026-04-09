@@ -107,7 +107,7 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
               <TextField
                 key="organizationDomain"
                 label="Organization Domain"
-                placeholder="e.g. acme"
+                placeholder="e.g. acme.com"
                 fullWidth
                 name="organizationDomain"
                 value={formik.values.organizationDomain}

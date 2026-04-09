@@ -2,25 +2,32 @@ import axios from 'axios';
 
 const getTenantBaseURL = () => {
   const hostname = window.location.hostname;
+  const appMode = import.meta.env.MODE;
 
-  const centralDomain =
-    hostname === 'localhost'
-      ? import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL
-      : import.meta.env.VITE_CENTRAL_DOMAIN_PROD;
+  const apiBaseUrl =
+    appMode === 'production'
+      ? import.meta.env.VITE_API_BASE_URL_PROD
+      : import.meta.env.VITE_API_BASE_URL_LOCAL;
 
-  const isTenantSubdomain =
-    hostname !== centralDomain && hostname !== 'localhost' && hostname !== '127.0.0.1';
+  const subdomain = hostname.split('.')[0];
+  const splitDomain = apiBaseUrl.split('//');
+  const baseDomain = splitDomain[0] + '//' + subdomain + '.' + splitDomain[1];
+  
+  
+  // const baseDomain = apiBaseUrl.hostname.split('').slice(-2).join('.');
 
-  if (!isTenantSubdomain) {
-    throw new Error('tenantApi should NOT be used on central/agent domain');
-  }
-  return `${window.location.protocol}//${hostname}/api/tenant/v1`;
+
+  // const url = new URL(apiBaseUrl);
+  // const baseDomain = url.hostname.split('.').slice(-2).join('.');
+  console.log(baseDomain);
+  
+    // console.log(`${subdomain}.${baseDomain}`)
+  return `${baseDomain}/api/tenant/v1`;
 };
-
+// getTenantBaseURL()
 const tenantApi = axios.create({ baseURL: '/' });
 
 tenantApi.interceptors.request.use((config) => {
-  // ✅ only runs when a request is actually made
   config.baseURL = getTenantBaseURL();
   const token = localStorage.getItem('tenant_access_token');
   if (token) {

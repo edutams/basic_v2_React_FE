@@ -107,10 +107,13 @@ export const TenantAuthProvider = ({ children }) => {
   };
 
   const validateTenantDomain = async () => {
+    // return console.log(12222);
     // Avoid redirect loop if already on the not-found page
     if (window.location.pathname === '/school-not-found') return;
 
     const hostname = window.location.hostname;
+    console.log(hostname, 22);
+
 
     try {
       const res = await api.post('/validate-tenant-domain', { hostname });
@@ -118,6 +121,7 @@ export const TenantAuthProvider = ({ children }) => {
         window.location.replace('/school-not-found');
       }
     } catch (err) {
+      console.log(err, 999999);
       window.location.replace('/school-not-found');
     }
   };

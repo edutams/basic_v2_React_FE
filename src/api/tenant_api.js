@@ -12,16 +12,6 @@ const getTenantBaseURL = () => {
   const subdomain = hostname.split('.')[0];
   const splitDomain = apiBaseUrl.split('//');
   const baseDomain = splitDomain[0] + '//' + subdomain + '.' + splitDomain[1];
-  
-  
-  // const baseDomain = apiBaseUrl.hostname.split('').slice(-2).join('.');
-
-
-  // const url = new URL(apiBaseUrl);
-  // const baseDomain = url.hostname.split('.').slice(-2).join('.');
-  console.log(baseDomain);
-  
-    // console.log(`${subdomain}.${baseDomain}`)
   return `${baseDomain}/api/tenant/v1`;
 };
 // getTenantBaseURL()

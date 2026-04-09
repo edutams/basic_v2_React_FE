@@ -28,9 +28,9 @@ const AgentSubscriptionIndex = () => {
       <ParentCard title="Manage Subscriptions">
         <Box sx={{ width: '100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs 
-              value={value} 
-              onChange={handleChange} 
+            <Tabs
+              value={value}
+              onChange={handleChange}
               aria-label="subscription tabs"
               variant="scrollable"
               scrollButtons="auto"

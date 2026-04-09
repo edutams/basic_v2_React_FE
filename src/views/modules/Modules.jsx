@@ -11,8 +11,8 @@ const Modules = () => {
   const fetchModules = async () => {
     setIsLoading(true);
     try {
-      const data = await eduTierApi.getModules();
-      setModules(data);
+      const response = await eduTierApi.getModules();
+      setModules(response.data);
     } catch (error) {
       notify.error('Failed to fetch modules', 'Error');
     } finally {
@@ -29,7 +29,10 @@ const Modules = () => {
     try {
       if (operation === 'create' || operation === 'update') {
         await eduTierApi.saveModule(moduleData);
-        notify.success(`Module ${operation === 'create' ? 'created' : 'updated'} successfully`, 'Success');
+        notify.success(
+          `Module ${operation === 'create' ? 'created' : 'updated'} successfully`,
+          'Success',
+        );
       } else if (operation === 'delete') {
         await eduTierApi.deleteModule(moduleData.id);
         notify.success('Module deleted successfully', 'Success');

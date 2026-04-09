@@ -48,6 +48,7 @@ import ReusableModal from '../../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../../components/add-school/component/RegisterSchool';
 import {
     getProspectiveTenants,
+    getSchools,
     approveProspectiveTenant,
     rejectProspectiveTenant,
 } from '../../../context/AgentContext/services/school.service';
@@ -346,7 +347,7 @@ const ProspectRow = ({ row, index, onReview }) => {
 };
 
 // ── Main Component ────────────────────────────────────────────────────────────
-const SchoolsTab = ({ schools = [], onAddSchool }) => {
+const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     const theme = useTheme();
 
     const [activeTab, setActiveTab] = useState(0);
@@ -355,7 +356,9 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const [prospectList, setProspectList] = useState([]);
+    const [schoolList, setSchoolList] = useState([]);
     const [prospectLoading, setProspectLoading] = useState(true);
+    const [schoolLoading, setSchoolLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
 
     const [reviewOpen, setReviewOpen] = useState(false);
@@ -376,23 +379,47 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
         setProspectLoading(true);
         try {
             const data = await getProspectiveTenants();
-            setProspectList(Array.isArray(data) ? data : []);
+            const all = Array.isArray(data) ? data : [];
+            setProspectList(
+                organizationId
+                    ? all.filter((p) => String(p.organization_id) === String(organizationId))
+                    : all
+            );
         } catch (err) {
             notify(err?.message || 'Failed to fetch applications', 'error');
         } finally {
             setProspectLoading(false);
         }
-    }, []);
+    }, [organizationId]);
+
+    const fetchSchools = useCallback(async () => {
+        setSchoolLoading(true);
+        try {
+            const data = await getSchools();
+            const all = Array.isArray(data) ? data : [];
+            setSchoolList(
+                organizationId
+                    ? all.filter((s) => String(s.organization_id) === String(organizationId))
+                    : all
+            );
+        } catch (err) {
+            notify(err?.message || 'Failed to fetch schools', 'error');
+        } finally {
+            setSchoolLoading(false);
+        }
+    }, [organizationId]);
 
     useEffect(() => {
         fetchProspects();
-    }, [fetchProspects]);
+        fetchSchools();
+    }, [fetchProspects, fetchSchools]);
 
     const handleApprove = async (id) => {
         setActionLoading(true);
         try {
             await approveProspectiveTenant(id);
             await fetchProspects();
+            await fetchSchools();
             setReviewOpen(false);
             notify('School approved and provisioned successfully');
         } catch (err) {
@@ -675,115 +702,91 @@ const SchoolsTab = ({ schools = [], onAddSchool }) => {
 
                 {/* Tab 2: Approved Schools */}
                 {activeTab === 2 && (
-                    <TableContainer
-                        component={Paper}
-                        elevation={0}
-                        variant="outlined"
-                        sx={{ borderRadius: 2 }}
-                    >
-                        <Table>
-                            <TableHead sx={{ bgcolor: '#fafafa' }}>
-                                <TableRow>
-                                    <TableCell sx={thSx}>#</TableCell>
-                                    <TableCell sx={thSx}>School</TableCell>
-                                    <TableCell sx={thSx}>Admin Contact</TableCell>
-                                    <TableCell sx={thSx}>Organisation</TableCell>
-                                    <TableCell sx={thSx}>Status</TableCell>
-                                    <TableCell sx={thSx} align="right">
-                                        Action
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {paginate(filter(schools, 'school')).length > 0 ? (
-                                    paginate(filter(schools, 'school')).map((row, i) => (
-                                        <TableRow key={i} hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
-                                            <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>
-                                                {page * rowsPerPage + i + 1}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Stack direction="row" spacing={1.5} alignItems="center">
-                                                    <Avatar
-                                                        sx={{ width: 34, height: 34, fontSize: '13px', bgcolor: '#3949ab' }}
-                                                    >
-                                                        {row.school?.[0]}
-                                                    </Avatar>
-                                                    <Box>
-                                                        <Typography
-                                                            variant="subtitle2"
-                                                            fontWeight={700}
-                                                            sx={{ lineHeight: 1.3 }}
-                                                        >
-                                                            {row.school}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {row.email}
-                                                        </Typography>
-                                                    </Box>
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Stack direction="row" spacing={1} alignItems="flex-start">
-                                                    <PersonOutlineIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
-                                                    <Box>
-                                                        <Typography variant="caption" fontWeight={600} display="block">
-                                                            {row.contact}
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {row.email}
-                                                        </Typography>
-                                                    </Box>
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Stack direction="row" spacing={1} alignItems="flex-start">
-                                                    <BusinessIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
-                                                    <Typography variant="caption" fontWeight={600}>
-                                                        {row.agent}
-                                                    </Typography>
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell>
-                                                <StatusChip status={row.status} />
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        setAnchorEl(e.currentTarget);
-                                                        setActiveRow(row);
-                                                    }}
-                                                >
-                                                    <IconDotsVertical size={18} />
-                                                </IconButton>
+                    schoolLoading ? (
+                        <Box display="flex" justifyContent="center" py={8}><CircularProgress /></Box>
+                    ) : (
+                        <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+                            <Table>
+                                <TableHead sx={{ bgcolor: '#fafafa' }}>
+                                    <TableRow>
+                                        <TableCell sx={thSx}>#</TableCell>
+                                        <TableCell sx={thSx}>School</TableCell>
+                                        <TableCell sx={thSx}>Admin Contact</TableCell>
+                                        <TableCell sx={thSx}>Organisation</TableCell>
+                                        <TableCell sx={thSx}>Status</TableCell>
+                                        <TableCell sx={thSx} align="right">Action</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {paginate(filter(schoolList, 'tenant_name')).length > 0 ? (
+                                        paginate(filter(schoolList, 'tenant_name')).map((row, i) => {
+                                            const spa = getSpaContact(row);
+                                            const org = row.organization;
+                                            return (
+                                                <TableRow key={row.id} hover>
+                                                    <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{page * rowsPerPage + i + 1}</TableCell>
+                                                    <TableCell>
+                                                        <Stack direction="row" spacing={1} alignItems="center">
+                                                            <Avatar src={row.image || row.logo} sx={{ width: 44, height: 44, bgcolor: '#E7E9EB' }}>
+                                                                {!row.image && !row.logo && <PersonOutlineIcon sx={{ color: '#000', fontSize: 28 }} />}
+                                                            </Avatar>
+                                                            <Box>
+                                                                <Typography variant="subtitle2" fontWeight={700}>{row.tenant_name}</Typography>
+                                                                <Typography variant="caption" color="text.secondary">{row.domains?.[0]?.domain || ''}</Typography>
+                                                            </Box>
+                                                        </Stack>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Stack direction="row" spacing={1} alignItems="center">
+                                                            <Avatar src={spa.image} sx={{ width: 44, height: 44, bgcolor: '#E7E9EB' }}>
+                                                                {!spa.image && <PersonOutlineIcon sx={{ color: '#000', fontSize: 28 }} />}
+                                                            </Avatar>
+                                                            <Box>
+                                                                <Typography variant="caption" fontWeight={600} display="block">{spa.name}</Typography>
+                                                                <Typography variant="caption" color="text.secondary" display="block">{spa.email}</Typography>
+                                                                <Typography variant="caption" color="text.secondary">{spa.phone}</Typography>
+                                                            </Box>
+                                                        </Stack>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Stack direction="row" spacing={1} alignItems="center">
+                                                            <Avatar src={org?.organization_logo} sx={{ width: 44, height: 44, bgcolor: '#E7E9EB' }}>
+                                                                {!org?.organization_logo && <BusinessIcon sx={{ color: '#000' }} />}
+                                                            </Avatar>
+                                                            <Box>
+                                                                <Typography variant="caption" fontWeight={600} display="block">{org?.organization_name || '—'}</Typography>
+                                                                <Typography variant="caption" color="text.secondary">{org?.organization_email || ''}</Typography>
+                                                            </Box>
+                                                        </Stack>
+                                                    </TableCell>
+                                                    <TableCell><StatusChip status={row.status} /></TableCell>
+                                                    <TableCell align="right">
+                                                        <IconButton size="small" onClick={(e) => { setAnchorEl(e.currentTarget); setActiveRow(row); }}>
+                                                            <IconDotsVertical size={18} />
+                                                        </IconButton>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                                                <Typography color="text.secondary">No approved schools yet.</Typography>
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                ) : (
+                                    )}
+                                </TableBody>
+                                <TableFooter>
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                                            <Typography color="text.secondary">No approved schools yet.</Typography>
-                                        </TableCell>
+                                        <TablePagination rowsPerPageOptions={[5, 10, 25]}
+                                            count={filter(schoolList, 'tenant_name').length} rowsPerPage={rowsPerPage} page={page}
+                                            onPageChange={(_, p) => setPage(p)}
+                                            onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }} />
                                     </TableRow>
-                                )}
-                            </TableBody>
-                            <TableFooter>
-                                <TableRow>
-                                    <TablePagination
-                                        rowsPerPageOptions={[5, 10, 25]}
-                                        count={filter(schools, 'school').length}
-                                        rowsPerPage={rowsPerPage}
-                                        page={page}
-                                        onPageChange={(_, p) => setPage(p)}
-                                        onRowsPerPageChange={(e) => {
-                                            setRowsPerPage(parseInt(e.target.value, 10));
-                                            setPage(0);
-                                        }}
-                                    />
-                                </TableRow>
-                            </TableFooter>
-                        </Table>
-                    </TableContainer>
+                                </TableFooter>
+                            </Table>
+                        </TableContainer>
+                    )
                 )}
             </Box>
 

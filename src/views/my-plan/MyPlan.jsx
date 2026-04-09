@@ -150,7 +150,7 @@ const MyPlan = () => {
   const handleViewPlan = (plan) => {
     handleActionClose();
     setSelectedPlan(plan);
-    setShowModules(false); // Reset to show/hide modules state
+    setShowModules(false);
     setOpenViewModal(true);
   };
 

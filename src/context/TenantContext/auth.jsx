@@ -63,6 +63,7 @@ export const TenantAuthProvider = ({ children }) => {
     };
 
     restoreUser();
+    validateTenantDomain()
   }, []);
 
   const login = async (credentials) => {
@@ -102,6 +103,26 @@ export const TenantAuthProvider = ({ children }) => {
       return { success: false, error: msg };
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const validateTenantDomain = async () => {
+    // return console.log(12222);
+    // Avoid redirect loop if already on the not-found page
+    if (window.location.pathname === '/school-not-found') return;
+
+    const hostname = window.location.hostname;
+    console.log(hostname, 22);
+
+
+    try {
+      const res = await api.post('/validate-tenant-domain', { hostname });
+      if (res.data.status === false) {
+        window.location.replace('/school-not-found');
+      }
+    } catch (err) {
+      console.log(err, 999999);
+      window.location.replace('/school-not-found');
     }
   };
 

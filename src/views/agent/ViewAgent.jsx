@@ -131,10 +131,10 @@ const ViewAgent = () => {
   }, [id, refreshKey]);
 
   const BCrumb = [
-    { to: '/', title: 'Home' },
+    { to: '/agent', title: 'Home' },
     ...(isDashboard || (isOwnProfile && currentUser?.organization.access_level > 1)
       ? []
-      : [{ to: '/organization', title: 'Organization' }]),
+      : [{ to: '/agent/organization', title: 'Organization' }]),
     {
       title:
         isDashboard || (isOwnProfile && currentUser?.organization.access_level > 1)

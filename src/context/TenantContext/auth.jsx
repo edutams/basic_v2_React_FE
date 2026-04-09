@@ -63,7 +63,7 @@ export const TenantAuthProvider = ({ children }) => {
     };
 
     restoreUser();
-    validateTenantDomain()
+    validateTenantDomain();
   }, []);
 
   const login = async (credentials) => {
@@ -166,6 +166,7 @@ export const TenantAuthProvider = ({ children }) => {
       // Try to stop impersonation via direct fetch if we have an agent token
       if (agentToken && impersonatorId) {
         try {
+          await api.post('/stop-impersonation');
           await fetch('http://basic_v2.test/api/v1/agent/impersonate/stop', {
             method: 'POST',
             headers: {

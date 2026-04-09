@@ -58,23 +58,23 @@ const CENTRAL_DOMAIN =
     ? import.meta.env.VITE_CENTRAL_DOMAIN_PROD
     : import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL;
 
-const WebsiteRedirect = () => {
-  useEffect(() => {
-    const currentHost = window.location.hostname;
-    const targetHost = new URL(CENTRAL_DOMAIN).hostname;
+// const WebsiteRedirect = () => {
+//   useEffect(() => {
+//     const currentHost = window.location.hostname;
+//     const targetHost = new URL(CENTRAL_DOMAIN).hostname;
 
-    if (currentHost !== targetHost) {
-      window.location.replace(CENTRAL_DOMAIN);
-    }
-  }, []);
+//     if (currentHost !== targetHost) {
+//       window.location.replace(CENTRAL_DOMAIN);
+//     }
+//   }, []);
 
-  const currentHost = window.location.hostname;
-  const targetHost = new URL(CENTRAL_DOMAIN).hostname;
+//   const currentHost = window.location.hostname;
+//   const targetHost = new URL(CENTRAL_DOMAIN).hostname;
 
-  if (currentHost !== targetHost) return null;
+//   if (currentHost !== targetHost) return null;
 
-  return <FrontendPages />;
-};
+//   return <FrontendPages />;
+// };
 
 const DashboardRouteWrapper = () => {
   const { user } = useAuth();
@@ -91,7 +91,7 @@ const AgentRoutes = [
   // Root — renders FrontendPages on same host, or redirects externally
   {
     path: '/',
-    element: <WebsiteRedirect />,
+    element: <FrontendPages />,
   },
 
   // Protected agent app routes — all under /agent/*

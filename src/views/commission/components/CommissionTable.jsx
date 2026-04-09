@@ -83,7 +83,7 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
               {showPayoutDate && <TableCell>Payout Date</TableCell>}
               {showCommission && <TableCell>Commission %</TableCell>}
               {showStatus && <TableCell>Status</TableCell>}
-              {showEarnings && <TableCell>Earnings</TableCell>}
+              {showEarnings && <TableCell align="right">Earnings</TableCell>}
               {showActions && <TableCell align="right">Actions</TableCell>}
             </TableRow>
           </TableHead>
@@ -182,7 +182,7 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
 
                 {/* EARNINGS */}
                 {showEarnings && (
-                  <TableCell>
+                  <TableCell align="right">
                     <Typography fontWeight={700}>{row.earnings}</Typography>
                   </TableCell>
                 )}

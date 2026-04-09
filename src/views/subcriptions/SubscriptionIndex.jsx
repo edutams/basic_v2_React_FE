@@ -25,12 +25,12 @@ const SubscriptionIndex = () => {
   return (
     <PageContainer title="Subscriptions" description="Manage your subscriptions and history">
       <Breadcrumb title="Subscriptions" items={BCrumb} />
-      
+
       <Box sx={{ width: '100%', mt: 3 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs 
-            value={value} 
-            onChange={handleChange} 
+          <Tabs
+            value={value}
+            onChange={handleChange}
             aria-label="subscription tabs"
             textColor="primary"
             indicatorColor="primary"
@@ -39,7 +39,7 @@ const SubscriptionIndex = () => {
             <Tab label="Subscription History" id="tab-1" aria-controls="tabpanel-1" />
           </Tabs>
         </Box>
-        
+
         <Box sx={{ mt: 3 }}>
           {value === 0 && (
             <Box role="tabpanel" id="tabpanel-0" aria-labelledby="tab-0">

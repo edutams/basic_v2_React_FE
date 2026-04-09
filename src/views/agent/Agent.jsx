@@ -465,18 +465,20 @@ const Agent = () => {
         ) : (
           <Stack direction="row" spacing={1.5} alignItems="flex-start">
             <Avatar
-              src={agent.imgsrc}
+              // src={agent.imgsrc || agent.admin_avatar}
+              src={agent.avatar || agent.admin_avatar}
               alt={agent.organizationName}
               sx={{
-                width: 36,
-                height: 36,
+                width: 50,
+                height: 50,
                 fontSize: '12px',
                 fontWeight: 700,
-                bgcolor: agent.primaryColor || '#3949ab',
+                bgcolor: '#2196f3',
                 flexShrink: 0,
               }}
             >
-              {!agent.imgsrc && initials}
+              {!(agent.avatar || agent.admin_avatar) && initials}
+              {/* {!(agent.imgsrc || agent.admin_avatar) && initials} */}
             </Avatar>
             <Box>
               <Typography
@@ -525,8 +527,8 @@ const Agent = () => {
               src={agent.avatar || agent.admin_avatar}
               alt={fullName}
               sx={{
-                width: 36,
-                height: 36,
+                width: 50,
+                height: 50,
                 fontSize: '12px',
                 fontWeight: 700,
                 bgcolor: '#2196f3', // Using a distinct color for admins

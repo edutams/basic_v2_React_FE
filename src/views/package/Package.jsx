@@ -16,8 +16,8 @@ const Package = () => {
         eduTierApi.getPackages(),
         eduTierApi.getModules(),
       ]);
-      setPackages(packagesData);
-      setModules(modulesData);
+      setPackages(packagesData.data);
+      setModules(modulesData.data);
     } catch (error) {
       notify.error('Failed to fetch packages or modules', 'Error');
     } finally {

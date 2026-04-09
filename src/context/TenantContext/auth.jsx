@@ -112,7 +112,6 @@ export const TenantAuthProvider = ({ children }) => {
     if (window.location.pathname === '/school-not-found') return;
 
     const hostname = window.location.hostname;
-    console.log(hostname, 22);
 
 
     try {
@@ -121,8 +120,8 @@ export const TenantAuthProvider = ({ children }) => {
         window.location.replace('/school-not-found');
       }
     } catch (err) {
-      console.log(err, 999999);
-      window.location.replace('/school-not-found');
+      console.log(err, 11111);
+      // window.location.replace('/school-not-found');
     }
   };
 

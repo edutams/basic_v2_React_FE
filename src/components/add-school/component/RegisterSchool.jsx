@@ -46,7 +46,6 @@ const emptyForm = () => ({
   tenant_name: '',
   tenant_email: '',
   tenant_short_name: '',
-  session_term: '',
   address: '',
   state_id: '',
   lga_id: '',
@@ -69,7 +68,6 @@ const fromSelected = (s) => {
     tenant_name: s.tenant_name || '',
     tenant_email: s.tenant_email || '',
     tenant_short_name: s.tenant_short_name || '',
-    session_term: s.session_term || '',
     address: s.address || '',
     state_id: s.state_lga?.state_id || '',
     lga_id: s.lga_id || '',
@@ -245,7 +243,6 @@ const RegisterSchoolForm = ({
     if (!formData.tenant_name.trim()) e.tenant_name = 'School name is required';
     if (!formData.tenant_short_name.trim()) e.tenant_short_name = 'Short name is required';
     if (!formData.tenant_email.trim()) e.tenant_email = 'School email is required';
-    if (!formData.session_term) e.session_term = 'Session term is required';
     if (!formData.address.trim()) e.address = 'Address is required';
     if (!formData.state_id) e.state_id = 'State is required';
     if (!formData.lga_id) e.lga_id = 'LGA is required';
@@ -328,7 +325,6 @@ const RegisterSchoolForm = ({
         tenant_name: formData.tenant_name,
         tenant_email: formData.tenant_email,
         tenant_short_name: formData.tenant_short_name,
-        session_term: formData.session_term,
         address: formData.address,
         lga_id: formData.lga_id,
         school_divisions: formData.school_divisions,
@@ -396,23 +392,11 @@ const RegisterSchoolForm = ({
             error={Boolean(errors.tenant_email)} helperText={errors.tenant_email} />
         </Grid>
 
-        {/* Short Name & Session Term */}
+        {/* Short Name */}
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField fullWidth label="Short Name" name="tenant_short_name"
             value={formData.tenant_short_name} onChange={handleChange}
             error={Boolean(errors.tenant_short_name)} helperText={errors.tenant_short_name} />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.session_term)}>
-            <InputLabel>Session Term</InputLabel>
-            <Select name="session_term" value={formData.session_term} label="Session Term" onChange={handleChange}>
-              <MenuItem value="">-- Select --</MenuItem>
-              <MenuItem value="First Term">First Term</MenuItem>
-              <MenuItem value="Second Term">Second Term</MenuItem>
-              <MenuItem value="Third Term">Third Term</MenuItem>
-            </Select>
-            {errors.session_term && <FormHelperText>{errors.session_term}</FormHelperText>}
-          </FormControl>
         </Grid>
 
         {/* School Divisions */}
@@ -460,7 +444,7 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* Address */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 12 }}>
           <TextField fullWidth label="School Address" name="address" multiline rows={3}
             value={formData.address} onChange={handleChange}
             error={Boolean(errors.address)} helperText={errors.address} />

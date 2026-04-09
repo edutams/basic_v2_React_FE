@@ -1,7 +1,27 @@
 import axios from 'axios';
 
+// const getTenantBaseURL = () => {
+//   const hostname = window.location.hostname;
+//   const appMode = import.meta.env.MODE;
+
+//   const apiBaseUrl =
+//     appMode === 'production'
+//       ? import.meta.env.VITE_API_BASE_URL_PROD
+//       : import.meta.env.VITE_API_BASE_URL_LOCAL;
+
+//   const subdomain = hostname.split('.')[0];
+//   const splitDomain = apiBaseUrl.split('//');
+//   const baseDomain = splitDomain[0] + '//' + subdomain + '.' + splitDomain[1];
+//   console.log(`${baseDomain}/api/tenant/v1`, 22222);
+
+//   return `${baseDomain}/api/tenant/v1`;
+// };
+// getTenantBaseURL()
+
 const getTenantBaseURL = () => {
-  const hostname = window.location.hostname;
+
+  // console.log(hostname, 11111);
+
   const appMode = import.meta.env.MODE;
 
   const apiBaseUrl =
@@ -9,16 +29,15 @@ const getTenantBaseURL = () => {
       ? import.meta.env.VITE_API_BASE_URL_PROD
       : import.meta.env.VITE_API_BASE_URL_LOCAL;
 
-  const subdomain = hostname.split('.')[0];
-  const splitDomain = apiBaseUrl.split('//');
-  const baseDomain = splitDomain[0] + '//' + subdomain + '.' + splitDomain[1];
-  return `${baseDomain}/api/tenant/v1`;
+  return `${apiBaseUrl}/api/tenant/v1`;
 };
 // getTenantBaseURL()
 const tenantApi = axios.create({ baseURL: '/' });
-
+const hostname = window.location.hostname;
 tenantApi.interceptors.request.use((config) => {
   config.baseURL = getTenantBaseURL();
+  config.headers['X-Tenant-ID'] = hostname;
+
   const token = localStorage.getItem('tenant_access_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -33,13 +52,6 @@ tenantApi.interceptors.response.use(
     const isAuthRequest =
       originalRequest.url.includes('/login') || originalRequest.url.includes('/refresh-token');
 
-    // console.log('Tenant Interceptor 401 check:', {
-    //   url: originalRequest.url,
-    //   status: error.response?.status,
-    //   _retry: originalRequest._retry,
-    //   isAuthRequest: isAuthRequest
-    // });
-
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
       try {
@@ -51,8 +63,6 @@ tenantApi.interceptors.response.use(
       } catch (refreshError) {
         console.error('Tenant refresh token failed:', refreshError);
         localStorage.removeItem('tenant_access_token');
-        // Redirect to tenant login or handle appropriately
-        // window.location.href = '/login';
       }
     }
 

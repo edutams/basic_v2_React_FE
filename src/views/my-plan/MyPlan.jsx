@@ -67,17 +67,13 @@ const MyPlan = () => {
       setLoading(true);
       const res = await api.get('/landlord/v1/edu_tier/get_my_plans');
 
-      // Ensure res.data is an array, otherwise default to empty array
-      const plansData = Array.isArray(res.data) ? res.data : [];
+      const plansData = Array.isArray(res.data?.data) ? res.data.data : [];
 
-      // If no plans exist, automatically sync from system plans
       if (plansData.length === 0) {
         try {
           const syncRes = await api.post('/landlord/v1/edu_tier/sync_my_plans');
-          // Ensure sync response data is an array
-          setPlans(Array.isArray(syncRes.data.data) ? syncRes.data.data : []);
+          setPlans(Array.isArray(syncRes.data?.data?.plans) ? syncRes.data.data.plans : []);
         } catch (syncError) {
-          // If sync fails, just show empty table
           setPlans([]);
         }
       } else {

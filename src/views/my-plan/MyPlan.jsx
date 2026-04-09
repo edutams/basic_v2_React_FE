@@ -125,7 +125,7 @@ const MyPlan = () => {
     if (planToDeactivate) {
       try {
         const newStatus = planToDeactivate.status === 'active' ? 'inactive' : 'active';
-        await api.patch(`/landlord/v1/edu_tier/my-plans/${planToDeactivate.id}/status`, {
+        await api.patch(`/landlord/v1/edu_tier/my_plans_status/${planToDeactivate.id}`, {
           status: newStatus,
         });
 
@@ -173,7 +173,9 @@ const MyPlan = () => {
         price: parseFloat(editPrice),
       });
 
-      setPlans((prev) => prev.map((p) => (p.id === editPlan.id ? res.data : p)));
+      // API returns { status, message, data: updatedPlan }
+      const updatedPlan = res.data?.data;
+      setPlans((prev) => prev.map((p) => (p.id === editPlan.id ? { ...p, ...updatedPlan } : p)));
       setOpenEditModal(false);
       setSnackbarMessage('Plan updated successfully');
       setSnackbarSeverity('success');

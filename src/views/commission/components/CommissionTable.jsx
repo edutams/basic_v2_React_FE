@@ -82,9 +82,9 @@ const CommissionTable = ({
                 bgcolor: isDarkMode ? theme.palette.action.hover : '#F3F4F6',
                 color: theme.palette.text.secondary,
                 fontWeight: 600,
-                width: 32,
-                height: 32,
-                fontSize: '0.8rem',
+                width: 50,
+                height: 50,
+                fontSize: '1rem',
               }}
             >
               {info

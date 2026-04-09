@@ -163,14 +163,16 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
                               ? 'rgba(34, 197, 94, 0.2)'
                               : '#DCFCE7'
                             : isDarkMode
-                            ? theme.palette.action.hover
-                            : '#F3F4F6',
+                            ? 'rgba(239, 68, 68, 0.2)'
+                            : '#FEE2E2',
                         color:
                           row.status === 'active'
                             ? isDarkMode
                               ? '#4ade80'
                               : '#166534'
-                            : theme.palette.text.secondary,
+                            : isDarkMode
+                            ? '#f87171'
+                            : '#DC2626',
                         fontWeight: 600,
                         borderRadius: '8px',
                       }}

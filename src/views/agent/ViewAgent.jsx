@@ -93,9 +93,9 @@ const ViewAgent = () => {
                 : 'Inactive',
             })),
             schools: (data.tenants || []).map((tenant) => ({
-              school: tenant.organization_name || 'Unknown School',
-              contact: tenant.organization_phone || 'N/A',
-              email: tenant.organization_email || 'N/A',
+              school: tenant.tenant_name || 'Unknown School',
+              contact: tenant.administrator_info?.school_spa?.admin_phone || tenant.admin_phone || 'N/A',
+              email: tenant.administrator_info?.school_spa?.admin_email || tenant.tenant_email || 'N/A',
               agent: data.organization_name,
               agentContact: data.organization_phone,
               agentEmail: data.organization_email,
@@ -131,10 +131,10 @@ const ViewAgent = () => {
   }, [id, refreshKey]);
 
   const BCrumb = [
-    { to: '/', title: 'Home' },
+    { to: '/agent', title: 'Home' },
     ...(isDashboard || (isOwnProfile && currentUser?.organization.access_level > 1)
       ? []
-      : [{ to: '/organization', title: 'Organization' }]),
+      : [{ to: '/agent/organization', title: 'Organization' }]),
     {
       title:
         isDashboard || (isOwnProfile && currentUser?.organization.access_level > 1)
@@ -142,7 +142,7 @@ const ViewAgent = () => {
           : 'View Profile',
     },
   ];
-  console.log(currentUser, 65666556)
+  // console.log(currentUser, 65666556)
   const isDark = theme.palette.mode === 'dark';
 
   return (
@@ -265,6 +265,7 @@ const ViewAgent = () => {
                       <SchoolsTab
                         schools={agentData.schools || []}
                         onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                        organizationId={id}
                       />
                     </TabPanel>
                     <TabPanel value="4" sx={{ p: 3 }}>

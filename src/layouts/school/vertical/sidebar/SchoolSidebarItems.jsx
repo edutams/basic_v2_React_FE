@@ -54,7 +54,7 @@ const SchoolSidebarItems = () => {
   useEffect(() => {
     const fetchModules = async () => {
       try {
-        const response = await tenantApi.get('/sidebar-modules');
+        const response = await tenantApi.get('/tenant-sidebar-modules');
         const modules = response.data?.data;
         // console.log(modules, 'modules');
 

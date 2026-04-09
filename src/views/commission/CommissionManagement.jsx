@@ -155,20 +155,51 @@ const CommissionManagement = () => {
           <Box
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
           >
-            <Typography
-              variant="h5"
-              fontWeight={700}
-              sx={{ color: theme.palette.text.primary }}
-            ></Typography>
+            {/* Dynamic Title */}
+            <Typography variant="h4" fontWeight={600} sx={{ color: theme.palette.text.primary }}>
+              {(() => {
+                switch (value) {
+                  case '1':
+                    return 'Agent Overview';
+                  case '2':
+                    return 'Manage Agent Commission';
+                  case '3':
+                    return 'Commission by Subscription';
+                  case '4':
+                    return 'Commission by Transaction';
+                  default:
+                    return '';
+                }
+              })()}
+            </Typography>
+
             {value === '1' && (
               <Select value="2026" size="small" sx={{ borderRadius: '8px', minWidth: 100 }}>
                 <MenuItem value="2026">2026</MenuItem>
                 <MenuItem value="2025">2025</MenuItem>
               </Select>
             )}
+
+            {(value === '3' || value === '4') && (
+              <Button
+                variant="contained"
+                startIcon={<IconLayoutDashboard size={18} />}
+                onClick={() =>
+                  handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
+                }
+                sx={{
+                  bgcolor: '#3949ab',
+                  textTransform: 'none',
+                  borderRadius: '8px',
+                  '&:hover': { bgcolor: '#303f9f' },
+                }}
+              >
+                {value === '3' ? 'My Commission by Subscription' : 'My Commission by Transaction'}
+              </Button>
+            )}
           </Box>
 
-          {/* Paginated data */}
+          {/* Paginated Table */}
           {(() => {
             const filteredData = getFilteredData();
             const paginatedData = filteredData.slice(
@@ -178,27 +209,6 @@ const CommissionManagement = () => {
 
             return (
               <>
-                {(value === '3' || value === '4') && (
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-                    <Button
-                      variant="contained"
-                      startIcon={<IconLayoutDashboard size={18} />}
-                      onClick={() =>
-                        handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
-                      }
-                      sx={{
-                        bgcolor: '#3949ab',
-                        textTransform: 'none',
-                        borderRadius: '8px',
-                        '&:hover': { bgcolor: '#303f9f' },
-                      }}
-                    >
-                      {value === '3'
-                        ? 'My Commission by Subscription'
-                        : 'My Commission by Transaction'}
-                    </Button>
-                  </Box>
-                )}
                 <CommissionTable
                   data={paginatedData}
                   activeTab={value}

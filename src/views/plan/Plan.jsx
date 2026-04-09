@@ -68,9 +68,9 @@ const Plan = () => {
         eduTierApi.getModules(),
         eduTierApi.getPackages(),
       ]);
-      setPlans(plansData);
-      setModules(modulesData);
-      setPackages(packagesData);
+      setPlans(plansData.data);
+      setModules(modulesData.data);
+      setPackages(packagesData.data);
     } catch (error) {
       console.error('Failed to fetch data', error);
       setSnackbarMessage('Failed to load data');

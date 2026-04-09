@@ -34,7 +34,6 @@ const CommissionSummaryCards = () => {
               transition: 'all 0.3s ease',
 
               '&:hover': {
-                transform: 'translateY(-4px)',
                 boxShadow: '0px 12px 30px rgba(0,0,0,0.08)',
               },
             }}

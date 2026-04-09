@@ -38,6 +38,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -143,7 +144,7 @@ const getHeadContact = (row) => {
 
 // ── Review Modal ──────────────────────────────────────────────────────────────
 
-const PersonCard = ({ title, name, gender, email, phone, image }) => (
+const PersonCard = ({ title, name, gender, email, phone, image, bgColor }) => (
   <Box
     sx={{
       flex: 1,
@@ -155,6 +156,7 @@ const PersonCard = ({ title, name, gender, email, phone, image }) => (
       alignItems: 'center',
       gap: 1.5,
       minWidth: 0,
+      bgcolor: bgColor || '#F7F8FA',
     }}
   >
     <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ mb: 0.5 }}>
@@ -163,9 +165,9 @@ const PersonCard = ({ title, name, gender, email, phone, image }) => (
     <Avatar
       src={image}
       alt={name}
-      sx={{ width: 52, height: 52, bgcolor: '#e0e0e0', color: '#9e9e9e', fontSize: 22 }}
+      sx={{ width: 52, height: 52, bgcolor: '#FFFFFF', color: '#9e9e9e', fontSize: 22 }}
     >
-      {!image && <PersonOutlineIcon sx={{ fontSize: 28 }} />}
+      {!image && <PersonIcon sx={{ fontSize: 35 }} />}
     </Avatar>
     <Box sx={{ width: '100%' }}>
       {[
@@ -279,7 +281,10 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 color: '#3949ab',
               }}
             >
-              {prospect.tenant_short_name?.[0] || '🏫'}
+              {/* {prospect.tenant_short_name?.[0] || '🏫'} */}
+              {!prospect.logo && !prospect.image && (
+                <PersonIcon sx={{ fontSize: 90, color: '#9e9e9e' }} />
+              )}
             </Avatar>
           </Box>
 
@@ -368,6 +373,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             email={owner.email}
             phone={owner.phone}
             image={ownerImage}
+            bgColor="#EEF2FF"
           />
           <PersonCard
             title="School Head"
@@ -376,6 +382,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             email={head.email}
             phone={head.phone}
             image={headImage}
+            bgColor="#ECFDF5"
           />
           <PersonCard
             title="School SPA/Admin"
@@ -384,6 +391,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             email={spa.email}
             phone={spa.phone}
             image={spaImage}
+            bgColor="#FFF7ED"
           />
         </Box>
 
@@ -493,7 +501,7 @@ const ProspectRow = ({ row, index, onReview }) => {
               flexShrink: 0,
             }}
           >
-            {!schoolImage && <PersonOutlineIcon sx={{ color: '#000' }} />}
+            {!schoolImage && <PersonIcon sx={{ color: '#000', fontSize: 30 }} />}
             {/* {!schoolImage && (row.tenant_short_name?.[0] || '🏫')} */}
           </Avatar>
 
@@ -522,7 +530,7 @@ const ProspectRow = ({ row, index, onReview }) => {
               flexShrink: 0,
             }}
           >
-            {!spaImage && <PersonOutlineIcon sx={{ color: '#000' }} />}
+            {!spaImage && <PersonIcon sx={{ color: '#000', fontSize: 30 }} />}
           </Avatar>
           <Box>
             <Typography variant="caption" fontWeight={600} display="block">
@@ -1257,9 +1265,19 @@ const SchoolDashboard = () => {
                             <Avatar
                               src={row.schoolImage}
                               alt={row.institutionName}
-                              sx={{ width: 34, height: 34, fontSize: '13px', bgcolor: '#3949ab' }}
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                bgcolor: '#E7E9EB',
+                                flexShrink: 0,
+                              }}
                             >
-                              {row.institutionName?.[0]}
+                              {/* {row.institutionName?.[0]} */}
+                              {!row.schoolImage && (
+                                <PersonIcon sx={{ fontSize: 30, color: '#000' }} />
+                              )}
                             </Avatar>
                             <Box>
                               <Typography
@@ -1277,7 +1295,20 @@ const SchoolDashboard = () => {
                         </TableCell>
                         <TableCell>
                           <Stack direction="row" spacing={1} alignItems="flex-start">
-                            <PersonOutlineIcon sx={{ fontSize: 16, color: '#9ca3af', mt: '2px' }} />
+                            <Avatar
+                              src={row.schoolImage}
+                              alt={row.institutionName}
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                bgcolor: '#E7E9EB',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <PersonIcon sx={{ fontSize: 30, color: '#000', mt: '2px' }} />
+                            </Avatar>
                             <Box>
                               <Typography variant="caption" display="block">
                                 {row.contactEmail}

@@ -55,31 +55,29 @@ const SchoolSidebarItems = () => {
     const fetchModules = async () => {
       try {
         const response = await tenantApi.get('/tenant-sidebar-modules');
-        const modules = response.data?.data;
-        // console.log(modules, 'modules');
+        const packages = response.data?.data; // array of packages
 
-        const formattedMenu = modules.map((mod) => ({
-          id: mod.id,
-          title: mod.module_name,
-          icon: iconMapper[mod.module_icon] || IconCircle,
-          href: mod.module_links?.link || '#',
-          permission: mod.module_links?.permission ? [mod.module_links.permission] : null,
+        // Flatten all modules from all packages into one list
+        const allModules = packages.flatMap((pkg) => pkg.modules);
+
+        const formattedMenu = allModules.map((mod) => ({
+          id: mod.title, // use title as id since API doesn't return module id
+          title: mod.title,
+          icon: iconMapper[mod.icon] || IconCircle,
+          href: mod.href || '#',
           children:
-            mod.sub_modules?.length > 0
-              ? mod.sub_modules.map((sub) => ({
-                  id: sub.id,
-                  title: sub.module_name,
-                  icon: iconMapper[sub.module_icon] || IconPoint,
-                  href: sub.module_links?.link || '#',
+            mod.subModules?.length > 0
+              ? mod.subModules.map((sub) => ({
+                  id: sub.title,
+                  title: sub.title,
+                  icon: IconPoint,
+                  href: sub.href || '#',
                 }))
               : null,
         }));
 
         setMenuItems([
-          {
-            navlabel: true,
-            subheader: 'School Dashboard',
-          },
+          { navlabel: true, subheader: 'School Dashboard' },
           {
             id: 'initial-setup',
             title: 'Initial Setup',
@@ -94,10 +92,7 @@ const SchoolSidebarItems = () => {
             href: '/complete-setup',
             permission: null,
           },
-          {
-            navlabel: true,
-            subheader: 'Modules',
-          },
+          { navlabel: true, subheader: 'Modules' },
           ...formattedMenu,
         ]);
       } catch (error) {

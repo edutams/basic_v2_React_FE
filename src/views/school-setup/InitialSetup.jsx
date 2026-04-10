@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Box,
@@ -13,9 +13,69 @@ import {
   Card,
 } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
+import tenantApi from 'src/api/tenant_api';
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
+
+  // State for school details form
+  const [schoolDetails, setSchoolDetails] = useState({
+    schoolName: '',
+    acronym: '',
+    category: '',
+    address: '',
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch school details on component mount
+  useEffect(() => {
+    const fetchSchoolDetails = async () => {
+      try {
+        setLoading(true);
+        // Fetch tenant/school details from root endpoint
+        const response = await tenantApi.get('/');
+
+        if (response.data && response.data.status) {
+          const data = response.data;
+          setSchoolDetails({
+            schoolName: data.tenant_name || data.name || '',
+            acronym: data.tenant_id || data.short_name || '',
+            category: '', // Not in root endpoint, set to empty
+            address: '', // Not in root endpoint, set to empty
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching school details:', err);
+        // Try to get from localStorage as fallback
+        const storedSchool = localStorage.getItem('school_details');
+        if (storedSchool) {
+          const parsed = JSON.parse(storedSchool);
+          setSchoolDetails({
+            schoolName: parsed.schoolName || parsed.name || parsed.school_name || '',
+            acronym: parsed.acronym || parsed.short_name || '',
+            category: parsed.category || '',
+            address: parsed.address || '',
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchoolDetails();
+  }, []);
+
+  // Handle input changes
+  const handleInputChange = (field, value) => {
+    setSchoolDetails((prev) => {
+      const updated = { ...prev, [field]: value };
+      // Update localStorage for persistence
+      localStorage.setItem('school_details', JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const handleBrowseClick = () => {
     document.getElementById('school-logo-input').click();
@@ -29,7 +89,7 @@ const SchoolInformationPage = () => {
     }
   };
   return (
-    <Box>
+    <>
       {/* PAGE HEADER */}
       <Box
         sx={{
@@ -75,82 +135,85 @@ const SchoolInformationPage = () => {
       {/* SCHOOL DETAILS */}
       <Card sx={{ p: 0, mb: 2, borderRadius: 0 }}>
         {/* HEADER */}
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#F9F9F9', borderBottom: '1px solid #e0e0e0' }}>
+        <Box
+          sx={{
+            px: 3,
+            py: 1.5,
+            bgcolor: '#F9F9F9',
+            borderBottom: '1px solid #e0e0e0',
+          }}
+        >
           <Typography fontWeight={600}>School Details</Typography>
         </Box>
 
         {/* BODY */}
         <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 3,
-              alignItems: 'flex-start',
-            }}
-          >
-            {/* LOGO */}
-            <Box sx={{ width: 140, flexShrink: 0, textAlign: 'center' }}>
-              <input
-                type="file"
-                id="school-logo-input"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
-              <Avatar
-                sx={{
-                  width: 110,
-                  height: 110,
-                  bgcolor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
-                  mx: 'auto',
-                }}
-              >
-                <IconSchool size={40} color="#9e9e9e" />
-              </Avatar>
-
-              <Button
-                variant="outlined"
-                size="small"
-                sx={{ mt: 2, textTransform: 'none' }}
-                onClick={handleBrowseClick}
-                startIcon={<span>↓</span>}
-              >
-                Browse
-              </Button>
+          {loading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                py: 4,
+              }}
+            >
+              <Typography color="text.secondary">Loading school details...</Typography>
             </Box>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 3,
+                alignItems: 'flex-start',
+              }}
+            >
+              {/* LOGO */}
+              <Box sx={{ width: 140, flexShrink: 0, textAlign: 'center' }}>
+                <input
+                  type="file"
+                  id="school-logo-input"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
 
-            {/* FORM AREA */}
-            <Box sx={{ flex: 1, display: 'flex', gap: 3 }}>
-              {/* LEFT */}
-              <Box sx={{ flex: 1 }}>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      School Name
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      placeholder="Enter School Name"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
+                <Avatar
+                  sx={{
+                    width: 110,
+                    height: 110,
+                    bgcolor: '#f5f5f5',
+                    border: '1px solid #e0e0e0',
+                    mx: 'auto',
+                  }}
+                >
+                  <IconSchool size={40} color="#9e9e9e" />
+                </Avatar>
 
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      Acronym
-                    </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{ mt: 2, textTransform: 'none' }}
+                  onClick={handleBrowseClick}
+                  startIcon={<span>↓</span>}
+                >
+                  Browse
+                </Button>
+              </Box>
 
-                    <Stack direction="row" spacing={1}>
+              {/* FORM AREA */}
+              <Box sx={{ flex: 1, display: 'flex', gap: 3 }}>
+                {/* LEFT */}
+                <Box sx={{ flex: 1 }}>
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography fontSize={14} mb={0.5}>
+                        School Name
+                      </Typography>
                       <TextField
                         fullWidth
-                        placeholder="e.g. GSS"
+                        placeholder="Enter School Name"
+                        value={schoolDetails.schoolName}
+                        onChange={(e) => handleInputChange('schoolName', e.target.value)}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             '&.Mui-focused fieldset': {
@@ -159,58 +222,82 @@ const SchoolInformationPage = () => {
                           },
                         }}
                       />
-                      <Button>Check</Button>
-                    </Stack>
-                  </Box>
-                </Stack>
-              </Box>
+                    </Box>
 
-              {/* RIGHT */}
-              <Box sx={{ flex: 1 }}>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      Category
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      select
-                      defaultValue=""
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
-                          },
-                        },
-                      }}
-                    >
-                      <MenuItem value="">Select School Category</MenuItem>
-                      <MenuItem value="primary">Primary</MenuItem>
-                      <MenuItem value="secondary">Secondary</MenuItem>
-                    </TextField>
-                  </Box>
+                    <Box>
+                      <Typography fontSize={14} mb={0.5}>
+                        Acronym
+                      </Typography>
 
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      Address
-                    </Typography>
-                    {/* <TextField fullWidth multiline rows={2} /> */}
-                    <TextField
-                      fullWidth
-                      placeholder="Enter school address"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
+                      <Stack direction="row" spacing={1}>
+                        <TextField
+                          fullWidth
+                          placeholder="e.g. GSS"
+                          value={schoolDetails.acronym}
+                          onChange={(e) => handleInputChange('acronym', e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#1976d2',
+                              },
+                            },
+                          }}
+                        />
+                        <Button>Check</Button>
+                      </Stack>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                {/* RIGHT */}
+                <Box sx={{ flex: 1 }}>
+                  <Stack spacing={2}>
+                    <Box>
+                      <Typography fontSize={14} mb={0.5}>
+                        Category
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        select
+                        value={schoolDetails.category}
+                        onChange={(e) => handleInputChange('category', e.target.value)}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#1976d2',
+                            },
                           },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Stack>
+                        }}
+                      >
+                        <MenuItem value="">Select School Category</MenuItem>
+                        <MenuItem value="primary">Primary</MenuItem>
+                        <MenuItem value="secondary">Secondary</MenuItem>
+                      </TextField>
+                    </Box>
+
+                    <Box>
+                      <Typography fontSize={14} mb={0.5}>
+                        Address
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        placeholder="Enter school address"
+                        value={schoolDetails.address}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#1976d2',
+                            },
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Stack>
+                </Box>
               </Box>
             </Box>
-          </Box>
+          )}
         </Box>
       </Card>
 
@@ -326,7 +413,7 @@ const SchoolInformationPage = () => {
           Save & Continue
         </Button>
       </Box>
-    </Box>
+    </>
   );
 };
 

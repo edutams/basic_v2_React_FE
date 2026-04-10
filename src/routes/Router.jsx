@@ -5,7 +5,6 @@ import { validateTenantDomain } from '../context/TenantContext/services/tenant.s
 
 const hostname = window.location.hostname;
 const data = await validateTenantDomain(hostname);
-// console.log(data, 9998);
 
 const Router = data?.status === false ? AgentRoutes : TenantRoutes;
 

@@ -20,6 +20,7 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Link,
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -210,13 +211,13 @@ const AssignmentManagement = () => {
                       <TableCell>
                         <Box>
                           <Typography variant="subtitle2" align="center">
-                            {user.roles_count}
+                            <Link sx={{ cursor: 'pointer' }}> {user.roles_count}</Link>
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="subtitle2" align="center">
-                          {user.users_count}
+                          <Link sx={{ cursor: 'pointer' }}> {user.users_count}</Link>
                         </Typography>
                       </TableCell>
                     </TableRow>

@@ -498,7 +498,7 @@ export default function Dashboard() {
                   </Stack>
                   <Button
                     variant="contained"
-                    onClick={() => navigate('/organization')}
+                    onClick={() => navigate('/agent/organization')}
                     sx={{
                       borderRadius: '8px',
                       textTransform: 'none',

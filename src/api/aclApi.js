@@ -85,6 +85,16 @@ const aclApi = {
     return response.data;
   },
 
+  getRoleOrganizations: async (roleId, params) => {
+    const response = await api.get(`/landlord/v1/acl/roles/${roleId}/organizations`, { params });
+    return response.data;
+  },
+
+  getRoleUsers: async (roleId, params) => {
+    const response = await api.get(`/landlord/v1/acl/roles/${roleId}/users`, { params });
+    return response.data;
+  },
+
   /*************************************************************************************************************************************************************
     
     School ALC methods (using tenant-based tables - school_acl_tables)

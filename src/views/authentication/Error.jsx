@@ -18,7 +18,13 @@ const Error = ({ message = 'This page you are looking for could not be found.' }
       <Typography align="center" variant="h4" mb={4}>
         {message}
       </Typography>
-      <Button color="primary" variant="contained" component={Link} to="/" disableElevation>
+      <Button
+        color="primary"
+        variant="contained"
+        component={Link}
+        to="/agent/login"
+        disableElevation
+      >
         Go Back to Home
       </Button>
     </Container>

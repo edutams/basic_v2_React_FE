@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import api from '../../api/tenant_api';
 import authApi from '../../api/auth';
 import { PermissionProvider } from './permissions';
+import { validateTenantDomain } from './services/tenant.service';
 
 export const TenantAuthContext = createContext(undefined);
 
@@ -63,8 +64,16 @@ export const TenantAuthProvider = ({ children }) => {
     };
 
     restoreUser();
-    validateTenantDomain();
+    checkTenantDomain();
   }, []);
+  const checkTenantDomain = async () => {
+    const hostname = window.location.hostname;
+    const data = await validateTenantDomain(hostname);
+    if (window.location.pathname === '/school-not-found') return;
+    if (data.status === false) {
+      window.location.replace('/school-not-found');
+    }
+  };
 
   const login = async (credentials) => {
     setIsLoading(true);
@@ -103,25 +112,6 @@ export const TenantAuthProvider = ({ children }) => {
       return { success: false, error: msg };
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const validateTenantDomain = async () => {
-    // return console.log(12222);
-    // Avoid redirect loop if already on the not-found page
-    if (window.location.pathname === '/school-not-found') return;
-
-    const hostname = window.location.hostname;
-
-
-    try {
-      const res = await api.post('/validate-tenant-domain', { hostname });
-      if (res.data.status === false) {
-        window.location.replace('/school-not-found');
-      }
-    } catch (err) {
-      console.log(err, 11111);
-      // window.location.replace('/school-not-found');
     }
   };
 

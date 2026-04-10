@@ -75,3 +75,12 @@ export const getTenantInfo = async () => {
   const response = await tenantApi.get('/get_current_tenant');
   return response.data;
 };
+
+export const updateSchoolLogo = async (formData) => {
+  const response = await tenantApi.post('/update_school_logo', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};

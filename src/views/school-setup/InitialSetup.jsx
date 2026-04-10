@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Box, Typography, Button, Avatar, TextField, Stack, Divider, Card } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
-import { getTenantInfo } from '../../api/tenant_api';
+import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
   const [tenantData, setTenantData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [originalLogo, setOriginalLogo] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchTenantInfo = async () => {
@@ -51,6 +54,7 @@ const SchoolInformationPage = () => {
 
         setTenantData(formattedData);
         setLogo(formattedData.logo);
+        setOriginalLogo(formattedData.logo);
       } catch (error) {
         console.error('Failed to fetch tenant info:', error);
       } finally {
@@ -69,12 +73,29 @@ const SchoolInformationPage = () => {
     const file = event.target.files[0];
     if (file) {
       setLogo(URL.createObjectURL(file));
+      setLogoFile(file);
     }
   };
 
-  if (loading) {
-    return <Typography>Loading...</Typography>;
-  }
+  const handleSaveAndContinue = async () => {
+    setSaving(true);
+    try {
+      // If there's a new logo file, upload it
+      if (logoFile) {
+        const formData = new FormData();
+        formData.append('school_logo', logoFile);
+        await updateSchoolLogo(formData);
+      }
+      navigate('/complete-setup');
+    } catch (error) {
+      console.error('Failed to save school logo:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Determine if button should be disabled - must have a NEW logo uploaded (not just existing one)
+  const isButtonDisabled = !logoFile;
 
   const adminList = [
     { title: 'School Owner Detail', data: tenantData?.admins?.owner },
@@ -219,8 +240,12 @@ const SchoolInformationPage = () => {
       </Card>
 
       <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={() => navigate('/complete-setup')}>
-          Save & Continue
+        <Button
+          variant="contained"
+          onClick={handleSaveAndContinue}
+          disabled={isButtonDisabled || saving}
+        >
+          {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
     </Box>

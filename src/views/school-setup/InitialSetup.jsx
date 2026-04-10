@@ -257,88 +257,129 @@ const SchoolInformationPage = () => {
               flexWrap: 'wrap',
             }}
           >
-            {['School Owner Detail', 'School Head Detail', 'Portal Admin'].map((title, index) => (
-              <Box
-                key={title}
-                sx={{
-                  flex: '1 1 300px',
-                  minWidth: 260,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: 'white',
-                  boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
-                  transition: 'transform 0.3s, box-shadow 0.3s',
-                  '&:hover': {
-                    transform: 'scale(1.05)',
-                    boxShadow: '0px 10px 20px rgba(0,0,0,0.15)',
-                  },
-                }}
-              >
-                <Typography fontWeight={600} mb={1}>
-                  {title}
-                </Typography>
+            {['School Owner Detail', 'School Head Detail', 'Portal Admin'].map((title, index) => {
+              // Get the appropriate admin info based on index
+              const adminInfo =
+                index === 0
+                  ? tenantData?.administrator_info?.school_owner
+                  : index === 1
+                  ? tenantData?.administrator_info?.school_head
+                  : tenantData?.administrator_info?.school_spa;
 
-                <Divider sx={{ mb: 2 }} />
+              // Map fields based on the admin type
+              const fields =
+                index === 0
+                  ? {
+                      surname: adminInfo?.school_owner_last_name || '',
+                      firstName: adminInfo?.school_owner_first_name || '',
+                      otherName: adminInfo?.school_owner_middle_name || '',
+                      phone: adminInfo?.school_owner_phone || '',
+                      email: adminInfo?.school_owner_email || '',
+                    }
+                  : index === 1
+                  ? {
+                      surname: adminInfo?.school_head_last_name || '',
+                      firstName: adminInfo?.school_head_first_name || '',
+                      otherName: adminInfo?.school_head_middle_name || '',
+                      phone: adminInfo?.school_head_phone || '',
+                      email: adminInfo?.school_head_email || '',
+                    }
+                  : {
+                      surname: adminInfo?.admin_last_name || '',
+                      firstName: adminInfo?.admin_first_name || '',
+                      otherName: adminInfo?.admin_middle_name || '',
+                      phone: adminInfo?.admin_phone || '',
+                      email: adminInfo?.admin_email || '',
+                    };
 
-                <Stack spacing={1.5}>
-                  <TextField
-                    placeholder="Surname"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
+              return (
+                <Box
+                  key={title}
+                  sx={{
+                    flex: '1 1 300px',
+                    minWidth: 260,
+                    p: 2,
+                    borderRadius: 2,
+                    bgcolor: 'white',
+                    boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
+                    transition: 'transform 0.3s, box-shadow 0.3s',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                      boxShadow: '0px 10px 20px rgba(0,0,0,0.15)',
+                    },
+                  }}
+                >
+                  <Typography fontWeight={600} mb={1}>
+                    {title}
+                  </Typography>
+
+                  <Divider sx={{ mb: 2 }} />
+
+                  <Stack spacing={1.5}>
+                    <TextField
+                      placeholder="Surname"
+                      value={fields.surname}
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
                         },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="First Name"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
+                      }}
+                    />
+                    <TextField
+                      placeholder="First Name"
+                      value={fields.firstName}
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
                         },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Other Name"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
+                      }}
+                    />
+                    <TextField
+                      placeholder="Other Name"
+                      value={fields.otherName}
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
                         },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Phone"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
+                      }}
+                    />
+                    <TextField
+                      placeholder="Phone"
+                      value={fields.phone}
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
                         },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Email"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
+                      }}
+                    />
+                    <TextField
+                      placeholder="Email"
+                      value={fields.email}
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
                         },
-                      },
-                    }}
-                  />
-                </Stack>
-              </Box>
-            ))}
+                      }}
+                    />
+                  </Stack>
+                </Box>
+              );
+            })}
           </Box>
         </Box>
       </Card>

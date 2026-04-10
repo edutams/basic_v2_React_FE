@@ -597,7 +597,7 @@ const SchoolDashboard = () => {
           contactImage: t.administrator_info?.school_spa?.admin_image || '',
           status: t.status,
           approvedAt: t.approved_at,
-          approvedBy: t?.approved_by?.full_name,
+          approvedBy: t.approved_by?.full_name,
           schoolDivisions: t.school_divisions?.map((d) => d.name) || [],
           raw: t,
         })),

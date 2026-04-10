@@ -115,27 +115,6 @@ export const TenantAuthProvider = ({ children }) => {
     }
   };
 
-<<<<<<< HEAD
-  const validateTenantDomain = async () => {
-    // return console.log(12222);
-    // Avoid redirect loop if already on the not-found page
-    if (window.location.pathname === '/school-not-found') return;
-
-    const hostname = window.location.hostname;
-
-
-    try {
-      const res = await api.post('/validate-tenant-domain', { hostname });
-      if (res.data.status === false) {
-        window.location.replace('/school-not-found');
-      }
-    } catch (err) {
-      window.location.replace('/school-not-found');
-    }
-  };
-
-=======
->>>>>>> f106af000a7e4a942b87b418d8ab4bf446eedbed
   const clearError = () => setError(null);
 
   const updateAgentProfile = async (data, isMultipart = false) => {

@@ -19,7 +19,6 @@ import axios from 'axios';
 // getTenantBaseURL()
 
 const getTenantBaseURL = () => {
-
   // console.log(hostname, 11111);
 
   const appMode = import.meta.env.MODE;
@@ -71,3 +70,8 @@ tenantApi.interceptors.response.use(
 );
 
 export default tenantApi;
+
+export const getTenantInfo = async () => {
+  const response = await tenantApi.get('/');
+  return response.data;
+};

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Box,
@@ -13,9 +13,31 @@ import {
   Card,
 } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
+import { getTenantInfo } from 'src/api/tenant_api';
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
+  const [tenantData, setTenantData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [logo, setLogo] = useState(null);
+
+  useEffect(() => {
+    const fetchTenantInfo = async () => {
+      try {
+        const data = await getTenantInfo();
+        setTenantData(data);
+        if (data.logo) {
+          setLogo(data.logo);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tenant info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenantInfo();
+  }, []);
 
   const handleBrowseClick = () => {
     document.getElementById('school-logo-input').click();
@@ -25,6 +47,7 @@ const SchoolInformationPage = () => {
     const file = event.target.files[0];
     if (file) {
       console.log('Selected file:', file.name);
+      setLogo(URL.createObjectURL(file));
       // Add your upload logic here
     }
   };
@@ -98,6 +121,7 @@ const SchoolInformationPage = () => {
                 onChange={handleFileChange}
               />
               <Avatar
+                src={logo || undefined}
                 sx={{
                   width: 110,
                   height: 110,
@@ -106,7 +130,7 @@ const SchoolInformationPage = () => {
                   mx: 'auto',
                 }}
               >
-                <IconSchool size={40} color="#9e9e9e" />
+                {!logo && <IconSchool size={40} color="#9e9e9e" />}
               </Avatar>
 
               <Button
@@ -131,6 +155,7 @@ const SchoolInformationPage = () => {
                     </Typography>
                     <TextField
                       fullWidth
+                      value={tenantData?.name || ''}
                       // placeholder="Enter School Name"
                       // sx={{
                       //   '& .MuiOutlinedInput-root': {
@@ -150,6 +175,7 @@ const SchoolInformationPage = () => {
                     <Stack direction="row" spacing={1}>
                       <TextField
                         fullWidth
+                        value={tenantData?.short_name || ''}
                         // placeholder="e.g. GSS"
                         // sx={{
                         //   '& .MuiOutlinedInput-root': {
@@ -174,6 +200,7 @@ const SchoolInformationPage = () => {
                     </Typography>
                     <TextField
                       fullWidth
+                      value={tenantData?.school_type || ''}
                       // sx={{
                       //   '& .MuiOutlinedInput-root': {
                       //     '&.Mui-focused fieldset': {
@@ -191,6 +218,7 @@ const SchoolInformationPage = () => {
                     {/* <TextField fullWidth multiline rows={2} /> */}
                     <TextField
                       fullWidth
+                      value={tenantData?.address || ''}
                       // placeholder="Enter school address"
                       // sx={{
                       //   '& .MuiOutlinedInput-root': {

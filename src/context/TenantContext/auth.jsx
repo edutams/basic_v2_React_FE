@@ -120,8 +120,7 @@ export const TenantAuthProvider = ({ children }) => {
         window.location.replace('/school-not-found');
       }
     } catch (err) {
-      console.log(err, 11111);
-      // window.location.replace('/school-not-found');
+      window.location.replace('/school-not-found');
     }
   };
 

@@ -84,7 +84,11 @@ const SchoolInformationPage = () => {
       if (logoFile) {
         const formData = new FormData();
         formData.append('school_logo', logoFile);
-        await updateSchoolLogo(formData);
+        const res = await updateSchoolLogo(formData);
+        // Update the logo state with the returned URL (with /storage prefix)
+        if (res.data?.school_logo) {
+          setLogo(res.data.school_logo);
+        }
       }
       navigate('/complete-setup');
     } catch (error) {
@@ -94,8 +98,9 @@ const SchoolInformationPage = () => {
     }
   };
 
-  // Determine if button should be disabled - must have a NEW logo uploaded (not just existing one)
-  const isButtonDisabled = !logoFile;
+  // Determine if button should be disabled
+  // Button is enabled if there's an original logo OR a new logo file has been uploaded
+  const isButtonDisabled = !originalLogo && !logoFile;
 
   const adminList = [
     { title: 'School Owner Detail', data: tenantData?.admins?.owner },

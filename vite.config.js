@@ -40,6 +40,9 @@ export default defineConfig({
   //   exportAsDefault: true
   // })],
 
+  build: {
+    target: 'esnext', // enables top-level await
+  },
   plugins: [svgr(), react()],
   server: {
     host: true,

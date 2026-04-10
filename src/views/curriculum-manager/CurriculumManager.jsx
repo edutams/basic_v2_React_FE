@@ -21,6 +21,10 @@ import {
   Select,
   MenuItem,
   Checkbox,
+  TextField,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 
@@ -40,6 +44,9 @@ const CurriculumManager = () => {
   // Checkbox state for second tab - left section (Curriculum with Checkbox)
   const [checkedCurriculum, setCheckedCurriculum] = useState([]);
   const [selectAllCurriculum, setSelectAllCurriculum] = useState(false);
+
+  const [program, setProgram] = useState('Junior Secondary');
+  const [selectedClass, setSelectedClass] = useState(3);
 
   const handleTabChange = (e, newValue) => {
     setTab(newValue);
@@ -84,6 +91,24 @@ const CurriculumManager = () => {
     { id: 3, name: 'Science', code: 'Sci2023', program: 'JSS' },
     { id: 4, name: 'English Language', code: 'Eng1023', program: 'JSS' },
     { id: 5, name: 'English Language', code: 'Eng1023', program: 'JSS' },
+  ]);
+
+  const classes = [
+    { id: 1, name: 'JSS1' },
+    { id: 2, name: 'JSS2' },
+    { id: 3, name: 'JSS3' },
+  ];
+
+  const [subjects, setSubjects] = useState([
+    { id: 1, name: 'Mathematics', passmark: 50, unit: 2, status: 'Compulsory' },
+    { id: 2, name: 'English Language', passmark: 50, unit: 2, status: 'Compulsory' },
+    { id: 3, name: 'Science', passmark: 50, unit: 2, status: 'Compulsory' },
+    { id: 4, name: 'Biology', passmark: 50, unit: 2, status: 'Optional' },
+  ]);
+
+  const [subjectGroups, setSubjectGroups] = useState([
+    { id: 1, groupName: 'Sciences', subject: 'Biology', passmark: 50, status: 'Compulsory' },
+    { id: 2, groupName: 'Languages', subject: 'English', passmark: 50, status: 'Optional' },
   ]);
 
   return (
@@ -283,27 +308,25 @@ const CurriculumManager = () => {
                 width: '100%',
               }}
             >
-              {/* ================= LEFT (CURRICULUM WITH CHECKBOX) ================= */}
               <Box sx={{ flex: { md: 5 }, width: '100%' }}>
                 <ParentCard>
                   <TableContainer>
                     <Table sx={{ tableLayout: 'fixed' }}>
                       <TableHead>
                         <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                          <TableCell width="5%">
+                          <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>
                             <Checkbox
                               checked={selectAllCurriculum}
                               onChange={handleSelectAllCurriculum}
-                              sx={{
-                                color: '#9ca3af',
-                                '&.Mui-checked': { color: '#22c55e' },
-                                '& .MuiSvgIcon-root': { borderRadius: '50%' },
-                              }}
                             />
                           </TableCell>
-                          <TableCell>Curriculum Name</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell align="center">Actions</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
+                            Curriculum Name
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', width: '20%' }}>
+                            Actions
+                          </TableCell>
                         </TableRow>
                       </TableHead>
 
@@ -316,21 +339,14 @@ const CurriculumManager = () => {
                               '&:hover': { bgcolor: '#f9fafb' },
                             }}
                           >
-                            {/* CHECKBOX */}
                             <TableCell>
                               <Checkbox
                                 size="small"
                                 checked={checkedCurriculum.includes(item.id)}
                                 onChange={() => handleCurriculumCheck(item.id)}
-                                sx={{
-                                  color: '#9ca3af',
-                                  '&.Mui-checked': { color: '#22c55e' },
-                                  '& .MuiSvgIcon-root': { borderRadius: '50%' },
-                                }}
                               />
                             </TableCell>
 
-                            {/* NAME */}
                             <TableCell>
                               <Box
                                 sx={{
@@ -345,7 +361,6 @@ const CurriculumManager = () => {
                               </Box>
                             </TableCell>
 
-                            {/* STATUS */}
                             <TableCell>
                               <Chip
                                 label={item.status}
@@ -357,7 +372,6 @@ const CurriculumManager = () => {
                               />
                             </TableCell>
 
-                            {/* ACTION */}
                             <TableCell align="center">
                               <IconButton size="small">
                                 <MoreVertIcon />
@@ -370,8 +384,7 @@ const CurriculumManager = () => {
                   </TableContainer>
                 </ParentCard>
               </Box>
-
-              {/* ================= RIGHT (SUBJECT BANK) ================= */}
+              {/* RIGHT (SUBJECT BANK)*/}
               <Box sx={{ flex: { md: 7 }, width: '100%' }}>
                 <ParentCard
                   title={
@@ -485,8 +498,203 @@ const CurriculumManager = () => {
             </Box>
           </TabPanel>
 
-          <TabPanel value={tab} index={2}>
+          {/* <TabPanel value={tab} index={2}>
             <Typography>Tab 3 content goes here...</Typography>
+          </TabPanel> */}
+          <TabPanel value={tab} index={2}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 3,
+                flexDirection: { xs: 'column', md: 'row' },
+                width: '100%',
+              }}
+            >
+              {/* LEFT: Classes */}
+              <Box sx={{ flex: { md: 4 }, width: '100%' }}>
+                <ParentCard
+                  title={
+                    <Select
+                      size="small"
+                      value={program}
+                      onChange={(e) => setProgram(e.target.value)}
+                      fullWidth
+                    >
+                      <MenuItem value="Junior Secondary">Junior Secondary</MenuItem>
+                      <MenuItem value="Senior Secondary">Senior Secondary</MenuItem>
+                    </Select>
+                  }
+                >
+                  <Box mt={2}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      Classes
+                    </Typography>
+
+                    <RadioGroup
+                      value={selectedClass}
+                      onChange={(e) => setSelectedClass(Number(e.target.value))}
+                    >
+                      {classes.map((cls) => (
+                        <Box
+                          key={cls.id}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            px: 1,
+                            py: 0.8,
+                            borderRadius: 2,
+                            bgcolor: selectedClass === cls.id ? '#eef2ff' : 'transparent',
+                          }}
+                        >
+                          <FormControlLabel
+                            value={cls.id}
+                            control={<Radio size="small" />}
+                            label={cls.name}
+                            sx={{ width: '100%' }}
+                          />
+                        </Box>
+                      ))}
+                    </RadioGroup>
+                  </Box>
+                </ParentCard>
+              </Box>
+
+              {/* RIGHT: Subjects */}
+              <Box sx={{ flex: { md: 8 }, width: '100%' }}>
+                <ParentCard
+                  title={
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Box display="flex" gap={1}>
+                        <TextField size="small" placeholder="Search" />
+                        <Select size="small" defaultValue="Curriculum">
+                          <MenuItem value="Curriculum">Curriculum</MenuItem>
+                        </Select>
+                        <Select size="small" defaultValue="Term">
+                          <MenuItem value="Term">Term</MenuItem>
+                        </Select>
+                      </Box>
+
+                      <Button variant="contained">Add Subject to Class</Button>
+                    </Box>
+                  }
+                >
+                  <Paper variant="outlined">
+                    <TableContainer>
+                      <Table sx={{ tableLayout: 'fixed' }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>S/N</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Subject</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>
+                              Passmark
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Unit</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }} align="center">
+                              Action
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                          {subjects.map((item, i) => (
+                            <TableRow key={item.id} hover>
+                              <TableCell>{i + 1}</TableCell>
+
+                              <TableCell>{item.name}</TableCell>
+
+                              <TableCell>
+                                <TextField size="small" value={item.passmark} />
+                              </TableCell>
+
+                              <TableCell>
+                                <TextField size="small" value={item.unit} />
+                              </TableCell>
+
+                              <TableCell>
+                                <Chip
+                                  label={item.status}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: item.status === 'Compulsory' ? '#dcfce7' : '#fef3c7',
+                                    color: item.status === 'Compulsory' ? '#166534' : '#92400e',
+                                  }}
+                                />
+                              </TableCell>
+
+                              <TableCell align="center">
+                                <IconButton size="small">
+                                  <MoreVertIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </ParentCard>
+
+                {/* SUBJECT GROUP */}
+                <Box mt={3}>
+                  <ParentCard
+                    title={
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <TextField size="small" placeholder="Search" />
+                        <Button variant="contained">Add Subject Group</Button>
+                      </Box>
+                    }
+                  >
+                    <Paper variant="outlined">
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Group Name</TableCell>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Passmark</TableCell>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                                Action
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+
+                          <TableBody>
+                            {subjectGroups.map((item, i) => (
+                              <TableRow key={item.id} hover>
+                                <TableCell>{i + 1}</TableCell>
+                                <TableCell>{item.groupName}</TableCell>
+                                <TableCell>{item.subject}</TableCell>
+                                <TableCell>{item.passmark}</TableCell>
+
+                                <TableCell>
+                                  <Chip
+                                    label={item.status}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: item.status === 'Compulsory' ? '#dcfce7' : '#fef3c7',
+                                      color: item.status === 'Compulsory' ? '#166534' : '#92400e',
+                                    }}
+                                  />
+                                </TableCell>
+
+                                <TableCell align="center">
+                                  <IconButton size="small">
+                                    <MoreVertIcon />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Paper>
+                  </ParentCard>
+                </Box>
+              </Box>
+            </Box>
           </TabPanel>
         </ParentCard>
       </Box>

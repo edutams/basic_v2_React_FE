@@ -1,20 +1,12 @@
 import { createBrowserRouter } from 'react-router';
 import TenantRoutes from './TenantRoutes';
 import AgentRoutes from './AgentRoutes';
+import { validateTenantDomain } from '../context/TenantContext/services/tenant.service';
 
 const hostname = window.location.hostname;
-const appMode = import.meta.env.MODE;
+const data = await validateTenantDomain(hostname);
 
-const centralDomain =
-  appMode === 'production'
-    ? import.meta.env.VITE_CENTRAL_DOMAIN_PROD
-    : import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL;
-
-const isTenantSubdomain =
-  hostname !== centralDomain && hostname !== 'localhost' && hostname !== '127.0.0.1';
-  
-
-const Router = isTenantSubdomain ? TenantRoutes : AgentRoutes;
+const Router = data?.status === false ? AgentRoutes : TenantRoutes;
 
 const router = createBrowserRouter(Router);
 

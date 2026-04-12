@@ -20,12 +20,14 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Link,
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
-import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
+import RolePermissionsModal from './RolePermissionsModal';
+import RoleOrganizationsModal from './RoleOrganizationModal';
 
 const AssignmentManagement = () => {
   const [roles, setRoles] = useState([]);
@@ -33,9 +35,15 @@ const AssignmentManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
+
+  const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
+  const [currentUserForRole, setCurrentUserForRole] = useState(null);
+
+  const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
+  const [permissionsModalOpen, setPermissionsModalOpen] = useState(false);
+  const [organizationsModalOpen, setOrganizationsModalOpen] = useState(false);
+  const [selectedRoleId, setSelectedRoleId] = useState(null);
 
   useEffect(() => {
     fetchRoles();
@@ -62,49 +70,6 @@ const AssignmentManagement = () => {
     }
   };
 
-  const handleMenuOpen = (event, row) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedRow(row);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const getRoleSx = (role) => {
-    const roleStyles = {
-      User: {
-        backgroundColor: (theme) => theme.palette.success.light,
-        color: (theme) => theme.palette.success.main,
-      },
-      Admin: {
-        backgroundColor: (theme) => theme.palette.error.light,
-        color: (theme) => theme.palette.error.main,
-      },
-      Customer: {
-        backgroundColor: (theme) => theme.palette.info.light,
-        color: (theme) => theme.palette.info.main,
-      },
-      Manager: {
-        backgroundColor: (theme) => theme.palette.warning.light,
-        color: (theme) => theme.palette.warning.main,
-      },
-      Agent: {
-        backgroundColor: (theme) => theme.palette.secondary.light,
-        color: (theme) => theme.palette.secondary.main,
-      },
-      Super_Admin: {
-        backgroundColor: (theme) => theme.palette.primary.light,
-        color: (theme) => theme.palette.primary.main,
-      },
-    };
-    return roleStyles[role] || {};
-  };
-
-  const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
-  const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
-  const [currentUserForRole, setCurrentUserForRole] = useState(null);
-
   const handleRoleSelection = (selectedRole) => {
     setUsers((prevUsers) =>
       prevUsers.map((user) => {
@@ -122,23 +87,6 @@ const AssignmentManagement = () => {
     );
 
     setRoleAttachmentModalOpen(false);
-  };
-
-  const handleAction = (action, row) => {
-    if (action === 'edit') {
-      setCurrentUserForRole(row);
-      setRoleAttachmentModalOpen(true);
-    } else if (action === 'view') {
-      setCurrentUserForRole(row);
-      setViewRoleModalOpen(true);
-    }
-    handleMenuClose();
-  };
-
-  const filteredUsers = roles;
-  const resetFilters = () => {
-    setNameFilter('');
-    setPage(0);
   };
 
   const hasFilters = nameFilter !== '';
@@ -206,13 +154,29 @@ const AssignmentManagement = () => {
                       <TableCell>
                         <Box>
                           <Typography variant="subtitle2" align="center">
-                            {row.totalPermissions}
+                            <Link
+                              sx={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setSelectedRoleId(row.id);
+                                setPermissionsModalOpen(true);
+                              }}
+                            >
+                              {row.totalPermissions}
+                            </Link>
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="subtitle2" align="center">
-                          {row.totalUsers}
+                          <Link
+                            sx={{ cursor: 'pointer' }}
+                            onClick={() => {
+                              setSelectedRoleId(row.id);
+                              setOrganizationsModalOpen(true);
+                            }}
+                          >
+                            {row.totalUsers}
+                          </Link>
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -265,6 +229,16 @@ const AssignmentManagement = () => {
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
         currentUser={currentUserForRole}
+      />
+      <RolePermissionsModal
+        open={permissionsModalOpen}
+        onClose={() => setPermissionsModalOpen(false)}
+        roleId={selectedRoleId}
+      />
+      <RoleOrganizationsModal
+        open={organizationsModalOpen}
+        onClose={() => setOrganizationsModalOpen(false)}
+        roleId={selectedRoleId}
       />
     </Box>
   );

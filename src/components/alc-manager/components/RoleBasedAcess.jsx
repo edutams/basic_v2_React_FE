@@ -24,10 +24,8 @@ import {
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
-import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
-import PermissionsModal from './RolePermissionsModal';
 import RolePermissionsModal from './RolePermissionsModal';
 import RoleOrganizationsModal from './RoleOrganizationModal';
 
@@ -37,8 +35,6 @@ const AssignmentManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
@@ -52,16 +48,6 @@ const AssignmentManagement = () => {
   useEffect(() => {
     fetchRoles();
   }, [page, nameFilter]);
-
-  const handlePermissionsClick = (roleId) => {
-    setSelectedRoleId(roleId);
-    setOpenPermissionsModal(true);
-  };
-
-  const handleOrganizationsClick = (roleId) => {
-    setSelectedRoleId(roleId);
-    setOpenOrganizationsModal(true);
-  };
 
   const fetchRoles = async () => {
     setLoading(true);
@@ -82,45 +68,6 @@ const AssignmentManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleMenuOpen = (event, row) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedRow(row);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const getRoleSx = (role) => {
-    const roleStyles = {
-      User: {
-        backgroundColor: (theme) => theme.palette.success.light,
-        color: (theme) => theme.palette.success.main,
-      },
-      Admin: {
-        backgroundColor: (theme) => theme.palette.error.light,
-        color: (theme) => theme.palette.error.main,
-      },
-      Customer: {
-        backgroundColor: (theme) => theme.palette.info.light,
-        color: (theme) => theme.palette.info.main,
-      },
-      Manager: {
-        backgroundColor: (theme) => theme.palette.warning.light,
-        color: (theme) => theme.palette.warning.main,
-      },
-      Agent: {
-        backgroundColor: (theme) => theme.palette.secondary.light,
-        color: (theme) => theme.palette.secondary.main,
-      },
-      Super_Admin: {
-        backgroundColor: (theme) => theme.palette.primary.light,
-        color: (theme) => theme.palette.primary.main,
-      },
-    };
-    return roleStyles[role] || {};
   };
 
   const handleRoleSelection = (selectedRole) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Grid,
@@ -10,6 +10,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableFooter,
+  TablePagination,
   Paper,
   Chip,
   IconButton,
@@ -27,14 +29,38 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
   const handleChange = () => {
     setHasChanges(true);
   };
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
+
+  // Pagination state for Terms table
+  const [termsPage, setTermsPage] = useState(0);
+  const [termsRowsPerPage, setTermsRowsPerPage] = useState(5);
+
+  // Pagination state for Weeks table
+  const [weeksPage, setWeeksPage] = useState(0);
+  const [weeksRowsPerPage, setWeeksRowsPerPage] = useState(5);
+
   const [terms, setTerms] = useState([
     { term: 'First Term', start: '2026-01-12', end: '2026-03-21', active: true, selected: false },
     { term: 'Second Term', start: '2026-01-12', end: '2026-03-21', active: false, selected: false },
     { term: 'Third Term', start: '2026-01-12', end: '2026-03-21', active: false, selected: false },
+    { term: 'Fourth Term', start: '2026-04-01', end: '2026-06-15', active: false, selected: false },
+    { term: 'Fifth Term', start: '2026-07-01', end: '2026-09-15', active: false, selected: false },
+    { term: 'Sixth Term', start: '2026-10-01', end: '2026-12-20', active: false, selected: false },
   ]);
+
+  const generateWeeks = [
+    { week: 'Week 1', start: '2026-01-12', end: '2026-01-18', status: 'Generated' },
+    { week: 'Week 2', start: '2026-01-19', end: '2026-01-25', status: 'Generated' },
+    { week: 'Week 3', start: '2026-01-26', end: '2026-02-01', status: 'Pending' },
+    { week: 'Week 4', start: '2026-02-02', end: '2026-02-08', status: 'Pending' },
+    { week: 'Week 5', start: '2026-02-09', end: '2026-02-15', status: 'Pending' },
+    { week: 'Week 6', start: '2026-02-16', end: '2026-02-22', status: 'Pending' },
+    { week: 'Week 7', start: '2026-02-23', end: '2026-03-01', status: 'Pending' },
+    { week: 'Week 8', start: '2026-03-02', end: '2026-03-08', status: 'Pending' },
+  ];
 
   const handleMenuOpen = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -67,13 +93,35 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     setHasChanges(true);
   };
 
-  const generateWeeks = [
-    { week: 'Week 1', start: '2026-01-12', end: '2026-01-18', status: 'Generated' },
-    { week: 'Week 2', start: '2026-01-19', end: '2026-01-25', status: 'Generated' },
-    { week: 'Week 3', start: '2026-01-26', end: '2026-02-01', status: 'Pending' },
-    { week: 'Week 4', start: '2026-02-02', end: '2026-02-08', status: 'Pending' },
-    { week: 'Week 5', start: '2026-02-09', end: '2026-02-15', status: 'Pending' },
-  ];
+  // Paginate terms data
+  const paginatedTerms = useMemo(() => {
+    const start = termsPage * termsRowsPerPage;
+    return terms.slice(start, start + termsRowsPerPage);
+  }, [terms, termsPage, termsRowsPerPage]);
+
+  // Paginate weeks data
+  const paginatedWeeks = useMemo(() => {
+    const start = weeksPage * weeksRowsPerPage;
+    return generateWeeks.slice(start, start + weeksRowsPerPage);
+  }, [generateWeeks, weeksPage, weeksRowsPerPage]);
+
+  const handleTermsPageChange = (event, newPage) => {
+    setTermsPage(newPage);
+  };
+
+  const handleTermsRowsPerPageChange = (event) => {
+    setTermsRowsPerPage(parseInt(event.target.value, 10));
+    setTermsPage(0);
+  };
+
+  const handleWeeksPageChange = (event, newPage) => {
+    setWeeksPage(newPage);
+  };
+
+  const handleWeeksRowsPerPageChange = (event) => {
+    setWeeksRowsPerPage(parseInt(event.target.value, 10));
+    setWeeksPage(0);
+  };
 
   return (
     <Box sx={{ p: 2 }}>
@@ -128,7 +176,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                   </TableHead>
 
                   <TableBody>
-                    {terms.map((item, i) => (
+                    {paginatedTerms.map((item, i) => (
                       <TableRow key={i} hover>
                         <TableCell>
                           <Box
@@ -182,6 +230,19 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                       </TableRow>
                     ))}
                   </TableBody>
+
+                  <TableFooter>
+                    <TableRow>
+                      <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        count={terms.length}
+                        rowsPerPage={termsRowsPerPage}
+                        page={termsPage}
+                        onPageChange={handleTermsPageChange}
+                        onRowsPerPageChange={handleTermsRowsPerPageChange}
+                      />
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </TableContainer>
             </Paper>
@@ -242,7 +303,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                   </TableHead>
 
                   <TableBody>
-                    {generateWeeks.map((item, i) => (
+                    {paginatedWeeks.map((item, i) => (
                       <TableRow key={i} hover>
                         <TableCell sx={{ fontWeight: 500 }}>{item.week}</TableCell>
                         <TableCell>{item.start}</TableCell>
@@ -260,6 +321,19 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                       </TableRow>
                     ))}
                   </TableBody>
+
+                  <TableFooter>
+                    <TableRow>
+                      <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        count={generateWeeks.length}
+                        rowsPerPage={weeksRowsPerPage}
+                        page={weeksPage}
+                        onPageChange={handleWeeksPageChange}
+                        onRowsPerPageChange={handleWeeksRowsPerPageChange}
+                      />
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </TableContainer>
             </Paper>

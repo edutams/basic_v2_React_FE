@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Grid, Typography, Button, Stack, Card, Paper, Tabs, Tab } from '@mui/material';
+import { Box, Grid, Typography, Button, Stack, Paper, Tabs, Tab, CardContent } from '@mui/material';
 import {
   IconSchool,
   IconVideo,
   IconArrowRight,
+  IconArrowLeft,
   IconBooks,
   IconCalendar,
   IconUserPlus,
@@ -17,11 +18,23 @@ import UploadLearnersTab from './tabs/UploadLearnersTab';
 import UploadTeachersTab from './tabs/UploadTeachersTab';
 import SetCalendarTab from './tabs/SetCalendarTab';
 
+const TOTAL_STEPS = 4;
+
 const CompleteSetup = () => {
   const [activeTab, setActiveTab] = useState(0);
 
-  const handleSaveAndContinue = () => {
-    if (activeTab < 3) {
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+  const handlePrevious = () => {
+    if (activeTab > 0) {
+      setActiveTab(activeTab - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (activeTab < TOTAL_STEPS - 1) {
       setActiveTab(activeTab + 1);
     }
   };
@@ -71,11 +84,6 @@ const CompleteSetup = () => {
       </Box>
 
       {/* CLASS DETAILS CARD */}
-      {/* <Card sx={{ p: 0, mb: 1, borderRadius: 0 }}> */}
-      {/* <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
-          <Typography fontWeight={600}>Class Details</Typography>
-        </Box> */}
-
       <Box sx={{ p: 2, pb: 1 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 2 }} mb={1}>
           <Paper
@@ -220,11 +228,10 @@ const CompleteSetup = () => {
           </Paper>
         </Stack>
       </Box>
-      {/* </Card> */}
 
       {/* TABS SECTION */}
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+        <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab
             icon={<IconBooks size={18} />}
             iconPosition="start"
@@ -254,11 +261,76 @@ const CompleteSetup = () => {
 
       {/* TAB CONTENT */}
       <ParentCard sx={{ p: 0 }}>
-        {activeTab === 0 && <SetUpClassesTab onSaveAndContinue={handleSaveAndContinue} />}
-        {activeTab === 1 && <UploadLearnersTab onSaveAndContinue={handleSaveAndContinue} />}
-        {activeTab === 2 && <UploadTeachersTab onSaveAndContinue={handleSaveAndContinue} />}
-        {activeTab === 3 && <SetCalendarTab onSaveAndContinue={handleSaveAndContinue} />}
+        {activeTab === 0 && <SetUpClassesTab onSaveAndContinue={handleNext} />}
+        {activeTab === 1 && <UploadLearnersTab onSaveAndContinue={handleNext} />}
+        {activeTab === 2 && <UploadTeachersTab onSaveAndContinue={handleNext} />}
+        {activeTab === 3 && <SetCalendarTab onSaveAndContinue={handleNext} />}
       </ParentCard>
+
+      {/* STEP NAVIGATION CONTROLS */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mt: 2,
+          p: 2,
+          bgcolor: '#f9f9f9',
+          borderRadius: 2,
+        }}
+      >
+        {/* Previous Button */}
+        <Button
+          variant="outlined"
+          startIcon={<IconArrowLeft />}
+          onClick={handlePrevious}
+          disabled={activeTab === 0}
+        >
+          Previous
+        </Button>
+
+        {/* Step Indicator */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            Step {activeTab + 1} of {TOTAL_STEPS}
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              ml: 2,
+            }}
+          >
+            {[0, 1, 2, 3].map((step) => (
+              <Box
+                key={step}
+                onClick={() => setActiveTab(step)}
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  bgcolor: activeTab === step ? '#1976d2' : '#e0e0e0',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: activeTab === step ? '#1976d2' : '#bdbdbd',
+                  },
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Next Button */}
+        <Button
+          variant="contained"
+          endIcon={<IconArrowRight />}
+          onClick={handleNext}
+          disabled={activeTab === TOTAL_STEPS - 1}
+        >
+          Next
+        </Button>
+      </Box>
     </Box>
   );
 };

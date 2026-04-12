@@ -14,9 +14,6 @@ export const validateTenantDomain = async (hostname = window.location.hostname) 
   }
 };
 
-
-
-
 export const getSetupStats = async () => {
   try {
     const res = await api.get('school_setup/stats');
@@ -25,7 +22,6 @@ export const getSetupStats = async () => {
     throw error.response?.data || error;
   }
 };
-
 
 export const getSetupStage = async () => {
   try {
@@ -36,11 +32,10 @@ export const getSetupStage = async () => {
   }
 };
 
-
 export const getClasses = async () => {
   try {
     const res = await api.get('school_setup/classes');
-    return res.data;
+    return res.data?.data;
   } catch (error) {
     throw error.response?.data || error;
   }

@@ -72,7 +72,7 @@ tenantApi.interceptors.response.use(
 export default tenantApi;
 
 export const getTenantInfo = async () => {
-  const response = await tenantApi.get('/get_current_tenant');
+  const response = await tenantApi.get('/school_setup/get_current_tenant');
   return response.data;
 };
 

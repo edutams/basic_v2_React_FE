@@ -162,7 +162,7 @@ const ClassRow = ({ classItem, onChange }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SetUpClassesTab = ({ onSaveAndContinue, onStatsRefresh }) => {
-  const [divisions, setDivisions] = useState([]); // raw data from API
+  const [classes, setClasses] = useState([]); // raw data from API
   const [classMap, setClassMap] = useState({}); // { classId: classData } — our working state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -179,17 +179,15 @@ const SetUpClassesTab = ({ onSaveAndContinue, onStatsRefresh }) => {
     setError(null);
     try {
       const data = await getClasses();
-      setDivisions(data);
+      setClasses(data);
 
       // Build classMap: { [classId]: classData }
       const map = {};
-      data.forEach((division) => {
-        division.classes.forEach((cls) => {
-          map[cls.id] = {
-            ...cls,
-            arms: cls.arms.map((a) => a.arm_name), // flatten to string[]
-          };
-        });
+      classes.forEach((cls) => {
+        map[cls.id] = {
+          ...cls,
+          arms: cls.arms.map((a) => a.arm_name), // flatten to string[]
+        };
       });
       setClassMap(map);
     } catch (err) {
@@ -289,7 +287,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onStatsRefresh }) => {
         </Alert>
       )}
 
-      {divisions.map((division) => (
+      {classes.map((division) => (
         <Box key={division.id} sx={{ mb: 1 }}>
           {/* Division header */}
           <Box
@@ -333,7 +331,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onStatsRefresh }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {division.classes.map((cls) =>
+                {classes.map((cls) =>
                   classMap[cls.id] ? (
                     <ClassRow
                       key={cls.id}
@@ -353,7 +351,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onStatsRefresh }) => {
       {/* Footer actions */}
       <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography fontSize={12} color="text.secondary">
-          {hasChanges ? '● Unsaved changes' : divisions.length > 0 ? '✓ All changes saved' : ''}
+          {hasChanges ? '● Unsaved changes' : classes.length > 0 ? '✓ All changes saved' : ''}
         </Typography>
         <Box display="flex" gap={1}>
           <Button variant="outlined" size="small" onClick={fetchClasses} disabled={saving}>

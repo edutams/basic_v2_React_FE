@@ -79,7 +79,6 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
     setLoading(true);
     setError(null);
     try {
-      // GET /api/permissions/:permissionId/organizations?page=&search=
       const res = await aclApi.getPermissionOrganizations(permissionId, {
         page: page + 1,
         search,

@@ -65,7 +65,6 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
     setLoading(true);
     setError(null);
     try {
-      // GET /api/permissions/:permissionId/roles?page=&search=
       const res = await aclApi.getPermissionRoles(permissionId, {
         page: page + 1,
         search,

@@ -3,23 +3,7 @@ import { useNavigate } from 'react-router';
 import { Box, Typography, Button, Avatar, TextField, Stack, Divider, Card } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
-
-// Helper to construct full URL for images (handles relative paths from backend)
-const getFullImageUrl = (relativePath) => {
-  if (!relativePath) return null;
-  // If already a full URL, return as-is
-  if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
-    return relativePath;
-  }
-  // Get API base URL and prepend to relative path
-  const appMode = import.meta.env.MODE;
-  const apiBaseUrl =
-    appMode === 'production'
-      ? import.meta.env.VITE_API_BASE_URL_PROD
-      : import.meta.env.VITE_API_BASE_URL_LOCAL;
-  // Remove any trailing slash and construct full URL
-  return `${apiBaseUrl.replace(/\/$/, '')}${relativePath}`;
-};
+import { getFullImageUrl } from '../../helpers/ImageHelper';
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
@@ -70,7 +54,7 @@ const SchoolInformationPage = () => {
         };
 
         setTenantData(formattedData);
-        // Convert relative logo path to full URL
+        // Convert relative logo path to full URL using ImageHelper
         const fullLogoUrl = getFullImageUrl(d.school_logo);
         setLogo(fullLogoUrl);
         setOriginalLogo(fullLogoUrl);
@@ -249,7 +233,6 @@ const SchoolInformationPage = () => {
                   '&:hover': {
                     transform: 'translateY(-6px)',
                     boxShadow: '0px 12px 28px rgba(0,0,0,0.18)',
-                    // border: '1px solid #1976d2',
                   },
                 }}
               >

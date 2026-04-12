@@ -4,6 +4,23 @@ import { Box, Typography, Button, Avatar, TextField, Stack, Divider, Card } from
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
 
+// Helper to construct full URL for images (handles relative paths from backend)
+const getFullImageUrl = (relativePath) => {
+  if (!relativePath) return null;
+  // If already a full URL, return as-is
+  if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+    return relativePath;
+  }
+  // Get API base URL and prepend to relative path
+  const appMode = import.meta.env.MODE;
+  const apiBaseUrl =
+    appMode === 'production'
+      ? import.meta.env.VITE_API_BASE_URL_PROD
+      : import.meta.env.VITE_API_BASE_URL_LOCAL;
+  // Remove any trailing slash and construct full URL
+  return `${apiBaseUrl.replace(/\/$/, '')}${relativePath}`;
+};
+
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
   const [tenantData, setTenantData] = useState(null);
@@ -53,8 +70,10 @@ const SchoolInformationPage = () => {
         };
 
         setTenantData(formattedData);
-        setLogo(formattedData.logo);
-        setOriginalLogo(formattedData.logo);
+        // Convert relative logo path to full URL
+        const fullLogoUrl = getFullImageUrl(d.school_logo);
+        setLogo(fullLogoUrl);
+        setOriginalLogo(fullLogoUrl);
       } catch (error) {
         console.error('Failed to fetch tenant info:', error);
       } finally {
@@ -85,9 +104,9 @@ const SchoolInformationPage = () => {
         const formData = new FormData();
         formData.append('school_logo', logoFile);
         const res = await updateSchoolLogo(formData);
-        // Update the logo state with the returned URL (with /storage prefix)
+        // Update the logo state with the returned path (converted to full URL)
         if (res.data?.school_logo) {
-          setLogo(res.data.school_logo);
+          setLogo(getFullImageUrl(res.data.school_logo));
         }
       }
       navigate('/complete-setup');
@@ -145,7 +164,13 @@ const SchoolInformationPage = () => {
 
         <Box sx={{ p: 3, display: 'flex', gap: 3 }}>
           <Box textAlign="center">
-            <input type="file" id="school-logo-input" hidden onChange={handleFileChange} />
+            <input
+              type="file"
+              id="school-logo-input"
+              hidden
+              onChange={handleFileChange}
+              accept="image/*"
+            />
             <Avatar
               src={logo || undefined}
               sx={{

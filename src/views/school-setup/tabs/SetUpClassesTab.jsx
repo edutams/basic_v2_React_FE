@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -12,9 +12,15 @@ import {
   TextField,
   IconButton,
   Button,
+  CircularProgress,
+  Typography,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
+import {
+  getClassesWithDivisions,
+  saveClasses,
+} from '../../../context/TenantContext/services/tenant.service';
 
 const SetUpClassesTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
@@ -23,33 +29,125 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [classes, setClasses] = useState([]);
 
-  // Sample data - in real app this would come from API
-  const allClasses = [
-    'JSS 1',
-    'JSS 2',
-    'JSS 3',
-    'SSS 1',
-    'SSS 2',
-    'SSS 3',
-    'Primary 1',
-    'Primary 2',
-    'Primary 3',
-    'Primary 4',
-    'Primary 5',
-    'Primary 6',
-  ];
+  // Default arm letters generator
+  const generateDefaultArmNames = (count) => {
+    const letters = [];
+    for (let i = 0; i < count; i++) {
+      // Generate A, B, C, ... Z, AA, AB, etc.
+      let letter = '';
+      let num = i;
+      while (num >= 0) {
+        letter = String.fromCharCode(65 + (num % 26)) + letter;
+        num = Math.floor(num / 26) - 1;
+      }
+      letters.push(letter);
+    }
+    return letters;
+  };
+
+  // Fetch classes from API
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const data = await getClassesWithDivisions();
+        // Transform API data to include local state for arms
+        const transformed = (data || []).map((cls) => ({
+          ...cls,
+          no_of_arms: cls.no_of_arms || 0,
+          arm_names: cls.arm_names || [],
+        }));
+        setClasses(transformed);
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClasses();
+  }, []);
 
   const handleChange = () => {
     setHasChanges(true);
   };
 
+  const handleNoOfArmsChange = (classId, value) => {
+    const numArms = parseInt(value) || 0;
+    setClasses((prev) =>
+      prev.map((cls) => {
+        if (cls.id === classId) {
+          return { ...cls, no_of_arms: numArms };
+        }
+        return cls;
+      }),
+    );
+    setHasChanges(true);
+  };
+
+  const handleGenerateArms = (classId) => {
+    setClasses((prev) =>
+      prev.map((cls) => {
+        if (cls.id === classId) {
+          const defaultArms = generateDefaultArmNames(cls.no_of_arms || 0);
+          return { ...cls, arm_names: defaultArms };
+        }
+        return cls;
+      }),
+    );
+    setHasChanges(true);
+  };
+
+  const handleArmNameChange = (classId, armIndex, value) => {
+    setClasses((prev) =>
+      prev.map((cls) => {
+        if (cls.id === classId) {
+          const newArmNames = [...cls.arm_names];
+          newArmNames[armIndex] = value;
+          return { ...cls, arm_names: newArmNames };
+        }
+        return cls;
+      }),
+    );
+    setHasChanges(true);
+  };
+
+  const handleSaveAndContinue = async () => {
+    setSaving(true);
+    try {
+      // Transform classes data for API
+      const classesData = classes.map((cls) => ({
+        class_id: cls.id,
+        class_name: cls.class_name,
+        is_active: true,
+        no_of_arms: cls.no_of_arms || 0,
+        arm_names: cls.arm_names || [],
+      }));
+
+      await saveClasses(classesData);
+
+      // Move to next tab
+      if (onSaveAndContinue) {
+        onSaveAndContinue();
+      }
+    } catch (error) {
+      console.error('Failed to save classes:', error);
+      alert('Failed to save classes. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Filter classes by search term
   const filteredClasses = useMemo(() => {
-    return allClasses.filter((className) =>
-      className.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [allClasses, searchTerm]);
+    return classes.filter((classItem) => {
+      const className = classItem.class_name || '';
+      return className.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }, [classes, searchTerm]);
 
   // Paginate the filtered data
   const paginatedClasses = useMemo(() => {
@@ -65,6 +163,14 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -105,12 +211,13 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
 
           {/* Body */}
           <TableBody>
-            {paginatedClasses.map((item, index) => {
+            {paginatedClasses.map((classItem, index) => {
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
+              const className = classItem.class_name || '';
 
               return (
-                <TableRow key={index}>
+                <TableRow key={classItem.id || index}>
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -138,7 +245,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       <TextField
                         size="small"
                         fullWidth
-                        defaultValue={item}
+                        defaultValue={className}
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {
@@ -180,7 +287,9 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                     >
                       <TextField
                         size="small"
-                        defaultValue={5}
+                        type="number"
+                        value={classItem.no_of_arms || 0}
+                        onChange={(e) => handleNoOfArmsChange(classItem.id, e.target.value)}
                         sx={{
                           width: 70,
                           '& .MuiOutlinedInput-root': {
@@ -203,7 +312,13 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                         }}
                       />
 
-                      <Button variant="contained">Generate</Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleGenerateArms(classItem.id)}
+                      >
+                        Generate
+                      </Button>
                     </Box>
                   </TableCell>
 
@@ -222,34 +337,41 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                         flexWrap: 'wrap',
                       }}
                     >
-                      {['Alpha', 'Beta', 'Arm 3', 'Arm 4', 'Arm 5'].map((arm, i) => (
-                        <TextField
-                          key={i}
-                          size="small"
-                          defaultValue={arm}
-                          sx={{
-                            width: 90,
+                      {classItem.arm_names && classItem.arm_names.length > 0 ? (
+                        classItem.arm_names.map((armName, i) => (
+                          <TextField
+                            key={i}
+                            size="small"
+                            value={armName}
+                            onChange={(e) => handleArmNameChange(classItem.id, i, e.target.value)}
+                            sx={{
+                              width: 90,
 
-                            '& .MuiOutlinedInput-root': {
-                              backgroundColor: '#fff',
-                              borderRadius: '8px',
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
 
-                              '& fieldset': {
-                                borderColor: '#e5e7eb',
+                                '& fieldset': {
+                                  borderColor: '#e5e7eb',
+                                },
+
+                                '&:hover fieldset': {
+                                  borderColor: '#cbd5e1',
+                                },
+
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#1976d2',
+                                  borderWidth: '2px',
+                                },
                               },
-
-                              '&:hover fieldset': {
-                                borderColor: '#cbd5e1',
-                              },
-
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#1976d2',
-                                borderWidth: '2px',
-                              },
-                            },
-                          }}
-                        />
-                      ))}
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
+                          Click Generate to create arms
+                        </Typography>
+                      )}
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -274,8 +396,12 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       </TableContainer>
 
       <Box mt={2} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
-          Save & Continue
+        <Button
+          variant="contained"
+          onClick={handleSaveAndContinue}
+          disabled={!hasChanges || saving}
+        >
+          {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
     </Box>

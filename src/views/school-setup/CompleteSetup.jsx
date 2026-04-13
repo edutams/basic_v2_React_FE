@@ -27,11 +27,13 @@ const CompleteSetup = () => {
     const fetchStats = async () => {
       try {
         const data = await getSetupStats();
+
+        const statsData = data.data || data;
         setStats({
-          classes: data.classes_count || 0,
-          arms: data.arms_count || 0,
-          learners: data.learners_count || 0,
-          teachers: data.teachers_count || 0,
+          classes: statsData.classes || 0,
+          arms: statsData.arms || 0,
+          learners: statsData.learners || 0,
+          teachers: statsData.teachers || 0,
         });
       } catch (error) {
         console.error('Failed to fetch stats:', error);

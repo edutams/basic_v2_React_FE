@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,8 +11,6 @@ import {
   TableFooter,
   TablePagination,
   Paper,
-  TextField,
-  InputAdornment,
   IconButton,
   Menu,
   MenuItem,
@@ -20,28 +18,82 @@ import {
   Chip,
   Alert,
 } from '@mui/material';
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { FilterList as FilterListIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '../../shared/ParentCard';
+import FilterSideDrawer from '../../shared/FilterSideDrawer';
 import PropTypes from 'prop-types';
+import gatewayApi from '../../../api/gatewayApi';
 
-const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoading = false }) => {
+  const [gatewaysList, setGatewaysList] = useState(gateways);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedGateway, setSelectedGateway] = useState(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const filteredGateways = useMemo(() => {
-    return gateways.filter((gateway) =>
-      gateway.gateway_name.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [gateways, searchTerm]);
+  const gatewayFilterDefs = [
+    { key: 'search', label: 'Gateway Name', type: 'text', placeholder: 'Search by gateway name…' },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
 
-  const paginatedGateways = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredGateways.slice(start, start + rowsPerPage);
-  }, [filteredGateways, page, rowsPerPage]);
+  const fetchGateways = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await gatewayApi.getAll({
+        page: page + 1,
+        per_page: rowsPerPage,
+        search: activeFilters.search || '',
+        status: activeFilters.status || '',
+      });
+
+      // Handle different response structures
+      if (response.data?.data) {
+        setGatewaysList(response.data.data);
+        setTotalCount(response.data.total || response.data.data.length);
+      } else if (Array.isArray(response.data)) {
+        setGatewaysList(response.data);
+        setTotalCount(response.data.length);
+      } else {
+        setGatewaysList([]);
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching gateways:', error);
+      setGatewaysList(gateways);
+      setTotalCount(gateways.length);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, rowsPerPage, activeFilters, gateways]);
+
+  useEffect(() => {
+    fetchGateways();
+  }, [fetchGateways]);
+
+  const handleFilterApply = (filterValues) => {
+    setActiveFilters(filterValues);
+    setPage(0);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+    setPage(0);
+  };
+
+  const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
 
   const handleMenuOpen = (event, gateway) => {
     setAnchorEl(event.currentTarget);
@@ -58,23 +110,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
     handleMenuClose();
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const resetFilters = () => {
-    setSearchTerm('');
-    setPage(0);
-  };
-
-  const hasFilters = searchTerm !== '';
+  const hasActiveFilters = Object.values(activeFilters).some((v) => v !== '');
 
   return (
     <ParentCard
@@ -95,26 +131,39 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
         </Box>
       }
     >
-      <Box sx={{ p: 0, display: 'flex', gap: 2 }}>
-        <TextField
-          placeholder="Search gateways..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
-        {hasFilters && (
-          <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 0.5 }}>
-            Clear Filters
-          </Button>
-        )}
+      <Box sx={{ p: 0, display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<FilterListIcon />}
+          onClick={() => setFilterDrawerOpen(true)}
+          sx={{ minWidth: 140 }}
+        >
+          Show Filters
+          {activeFilterCount > 0 && (
+            <Chip
+              label={activeFilterCount}
+              size="small"
+              color="primary"
+              sx={{
+                ml: 1,
+                height: 20,
+                minWidth: 20,
+                fontSize: '0.75rem',
+              }}
+            />
+          )}
+        </Button>
       </Box>
+
+      {/* Filter Side Drawer */}
+      <FilterSideDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        filters={gatewayFilterDefs}
+        title="Filter Gateways"
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
+      />
 
       <Paper variant="outlined">
         <TableContainer>
@@ -135,15 +184,15 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                     <Typography>Loading...</Typography>
                   </TableCell>
                 </TableRow>
-              ) : paginatedGateways.length > 0 ? (
-                paginatedGateways.map((gateway, index) => (
+              ) : gatewaysList.length > 0 ? (
+                gatewaysList.map((gateway, index) => (
                   <TableRow key={gateway.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>{gateway.gateway_name}</TableCell>
                     <TableCell>{gateway.code}</TableCell>
                     <TableCell>
                       <Chip
-                        label={gateway.status.toUpperCase()}
+                        label={gateway.status?.toUpperCase() || 'N/A'}
                         size="small"
                         sx={{
                           bgcolor:
@@ -209,7 +258,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
               <TableRow>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}
-                  count={filteredGateways.length}
+                  count={totalCount}
                   rowsPerPage={rowsPerPage}
                   page={page}
                   onPageChange={(_, newPage) => setPage(newPage)}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Grid, Typography, Stack, Paper, Tabs, Tab } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Grid, Typography, Stack, Paper, Tabs, Tab, CircularProgress } from '@mui/material';
 import {
   IconSchool,
   IconVideo,
@@ -10,6 +10,7 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import ParentCard from 'src/components/shared/ParentCard';
+import { getSetupStats } from '../../context/TenantContext/services/tenant.service';
 
 // Tab Components
 import SetUpClassesTab from './tabs/SetUpClassesTab';
@@ -19,6 +20,28 @@ import SetCalendarTab from './tabs/SetCalendarTab';
 
 const CompleteSetup = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [stats, setStats] = useState({ classes: 0, arms: 0, learners: 0, teachers: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getSetupStats();
+        setStats({
+          classes: data.classes_count || 0,
+          arms: data.arms_count || 0,
+          learners: data.learners_count || 0,
+          teachers: data.teachers_count || 0,
+        });
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -98,12 +121,18 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                6
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Classes
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.classes}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Classes
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
           <Paper
@@ -133,12 +162,18 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                16
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Arms
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.arms}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Arms
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
           <Paper
@@ -168,12 +203,18 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                209
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Learners
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.learners}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Learners
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
           <Paper
@@ -203,12 +244,18 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                36
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Teachers
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.teachers}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Teachers
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
         </Stack>

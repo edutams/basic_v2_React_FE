@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,8 +11,6 @@ import {
   TableFooter,
   TablePagination,
   Paper,
-  TextField,
-  InputAdornment,
   IconButton,
   Menu,
   MenuItem,
@@ -22,34 +20,84 @@ import {
   Alert,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
+  FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../shared/ParentCard';
+import FilterSideDrawer from '../../shared/FilterSideDrawer';
 import PropTypes from 'prop-types';
+import eduTierApi from '../../../api/eduTierApi';
 
-const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => {
-  const [pacSearch, setPacSearch] = useState('');
+const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoading = false }) => {
+  const [packagesList, setPackagesList] = useState(packages);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const filteredPackages = packages?.filter((pkg) => {
-    const name = pkg.package_name || pkg.pac_name || '';
-    const description = pkg.package_description || pkg.pac_description || '';
+  const packageFilterDefs = [
+    { key: 'search', label: 'Package Name', type: 'text', placeholder: 'Search by package name…' },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
 
-    return (
-      name.toLowerCase().includes(pacSearch.toLowerCase()) ||
-      description.toLowerCase().includes(pacSearch.toLowerCase())
-    );
-  });
+  const fetchPackages = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await eduTierApi.getPackages({
+        page: page + 1,
+        per_page: rowsPerPage,
+        search: activeFilters.search || '',
+        status: activeFilters.status || '',
+      });
 
-  const paginatedPackages = filteredPackages.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
+      // Handle different response structures
+      if (response?.data) {
+        setPackagesList(response.data);
+        setTotalCount(response.total || response.data.length);
+      } else if (Array.isArray(response)) {
+        setPackagesList(response);
+        setTotalCount(response.length);
+      } else {
+        setPackagesList([]);
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+      setPackagesList(packages);
+      setTotalCount(packages.length);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, rowsPerPage, activeFilters, packages]);
+
+  useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
+
+  const handleFilterApply = (filterValues) => {
+    setActiveFilters(filterValues);
+    setPage(0);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+    setPage(0);
+  };
+
+  const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
 
   const handleMenuOpen = (event, pkg) => {
     setAnchorEl(event.currentTarget);
@@ -82,23 +130,39 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
       }
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            placeholder="Search packages..."
-            value={pacSearch}
-            onChange={(e) => setPacSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ flexGrow: 1 }}
-          />
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            onClick={() => setFilterDrawerOpen(true)}
+            sx={{ minWidth: 140 }}
+          >
+            Show Filters
+            {activeFilterCount > 0 && (
+              <Chip
+                label={activeFilterCount}
+                size="small"
+                color="primary"
+                sx={{
+                  ml: 1,
+                  height: 20,
+                  minWidth: 20,
+                  fontSize: '0.75rem',
+                }}
+              />
+            )}
+          </Button>
         </Box>
+
+        {/* Filter Side Drawer */}
+        <FilterSideDrawer
+          open={filterDrawerOpen}
+          onClose={() => setFilterDrawerOpen(false)}
+          filters={packageFilterDefs}
+          title="Filter Packages"
+          onApply={handleFilterApply}
+          onReset={handleFilterReset}
+        />
 
         <Paper variant="outlined">
           <TableContainer>
@@ -121,8 +185,8 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
                       <CircularProgress size={40} />
                     </TableCell>
                   </TableRow>
-                ) : paginatedPackages.length > 0 ? (
-                  paginatedPackages.map((pkg, index) => (
+                ) : packagesList.length > 0 ? (
+                  packagesList.map((pkg, index) => (
                     <TableRow key={pkg.id || index} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
@@ -219,7 +283,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading = false }) => 
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     colSpan={5}
-                    count={filteredPackages.length}
+                    count={totalCount}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}

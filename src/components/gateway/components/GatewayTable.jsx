@@ -34,7 +34,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
 
   const filteredGateways = useMemo(() => {
     return gateways.filter((gateway) =>
-      gateway.gateway_name.toLowerCase().includes(searchTerm.toLowerCase()),
+      (gateway.gateway_name || '').toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [gateways, searchTerm]);
 
@@ -139,11 +139,11 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading = false }) => 
                 paginatedGateways.map((gateway, index) => (
                   <TableRow key={gateway.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{gateway.gateway_name}</TableCell>
-                    <TableCell>{gateway.code}</TableCell>
+                    <TableCell>{gateway.gateway_name || 'N/A'}</TableCell>
+                    <TableCell>{gateway.code || 'N/A'}</TableCell>
                     <TableCell>
                       <Chip
-                        label={gateway.status.toUpperCase()}
+                        label={gateway.status ? gateway.status.toUpperCase() : 'UNKNOWN'}
                         size="small"
                         sx={{
                           bgcolor:

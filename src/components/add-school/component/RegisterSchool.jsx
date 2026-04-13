@@ -49,8 +49,7 @@ const emptyForm = () => ({
   address: '',
   state_id: '',
   lga_id: '',
-  school_type: [],
-  secondary_level: [],
+  school_type: '',
   school_divisions: [],
   headcolor: 'bg-night-sky text-lighter',
   sidecolor: 'bg-dark text-lighter',
@@ -75,14 +74,12 @@ const fromSelected = (s) => {
     lga_id: s.lga_id || '',
     school_type: s.school_type
       ? Array.isArray(s.school_type)
-        ? s.school_type
-        : JSON.parse(s.school_type)
-      : [],
-    secondary_level: s.secondary_level
-      ? Array.isArray(s.secondary_level)
-        ? s.secondary_level
-        : JSON.parse(s.secondary_level)
-      : [],
+        ? s.school_type[0] || ''
+        : (() => {
+            const parsed = JSON.parse(s.school_type);
+            return Array.isArray(parsed) ? parsed.find((t) => typeof t === 'string') || '' : '';
+          })()
+      : '',
     school_divisions: s.school_divisions?.map((d) => d.id ?? d) || [],
     headcolor: s.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: s.color?.sidecolor || 'bg-dark text-lighter',
@@ -209,50 +206,11 @@ const RegisterSchoolForm = ({
 
   // ── change handlers ──────────────────────────────────────────────────────
 
-  // Check if secondary is selected
-  const isSecondarySelected = formData.school_type.includes('secondary');
-
   // Generic change handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-  };
-
-  // Handle school type selection (primary or secondary)
-  const handleSchoolTypeChange = (event) => {
-    const { value } = event.target;
-    // Store as array of strings - 'primary' and/or 'secondary'
-    setFormData((prev) => ({ ...prev, school_type: value }));
-    if (errors.school_type) setErrors((prev) => ({ ...prev, school_type: '' }));
-  };
-
-  // Handle secondary level selection (junior and/or senior)
-  const handleSecondaryLevelChange = (event) => {
-    const { value } = event.target;
-    setFormData((prev) => ({ ...prev, secondary_level: value }));
-  };
-
-  // Build the school_type array with nested secondary structure
-  const buildSchoolTypeWithLevels = () => {
-    const result = [];
-
-    // Add primary if selected
-    if (formData.school_type.includes('primary')) {
-      result.push('primary');
-    }
-
-    // Add secondary with nested levels if selected
-    if (formData.school_type.includes('secondary')) {
-      const levels = formData.secondary_level || [];
-      if (levels.length > 0) {
-        result.push({ secondary: levels });
-      } else {
-        result.push('secondary');
-      }
-    }
-
-    return result;
   };
 
   const handlePersonChange = (section, field, value) => {
@@ -395,7 +353,7 @@ const RegisterSchoolForm = ({
         tenant_short_name: formData.tenant_short_name,
         address: formData.address,
         lga_id: formData.lga_id,
-        school_type: JSON.stringify(buildSchoolTypeWithLevels()),
+        school_type: formData.school_type,
         school_divisions: formData.school_divisions,
         administrator_info,
       };
@@ -497,21 +455,9 @@ const RegisterSchoolForm = ({
             <InputLabel>School Type</InputLabel>
             <Select
               name="school_type"
-              multiple
               value={formData.school_type}
               label="School Type"
-              onChange={handleSchoolTypeChange}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip
-                      key={value}
-                      label={value.charAt(0).toUpperCase() + value.slice(1)}
-                      size="small"
-                    />
-                  ))}
-                </Box>
-              )}
+              onChange={handleChange}
             >
               <MenuItem value="primary">Primary</MenuItem>
               <MenuItem value="secondary">Secondary</MenuItem>
@@ -519,42 +465,6 @@ const RegisterSchoolForm = ({
             {errors.school_type && <FormHelperText>{errors.school_type}</FormHelperText>}
           </FormControl>
         </Grid>
-
-        {/* Secondary Level - Show when secondary is selected */}
-        {isSecondarySelected && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Secondary Level</InputLabel>
-              <Select
-                name="secondary_level"
-                multiple
-                value={formData.secondary_level || []}
-                label="Secondary Level"
-                onChange={handleSecondaryLevelChange}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip
-                        key={value}
-                        label={
-                          value === 'junior'
-                            ? 'Junior Secondary (JSS)'
-                            : value === 'senior'
-                            ? 'Senior Secondary (SSS)'
-                            : value
-                        }
-                        size="small"
-                      />
-                    ))}
-                  </Box>
-                )}
-              >
-                <MenuItem value="junior">Junior Secondary (JSS)</MenuItem>
-                <MenuItem value="senior">Senior Secondary (SSS)</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        )}
 
         {/* State & LGA */}
         <Grid size={{ xs: 12, md: 6 }}>

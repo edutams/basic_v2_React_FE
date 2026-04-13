@@ -5,46 +5,15 @@ import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
 import { getFullImageUrl } from '../../helpers/ImageHelper';
 
-// Helper function to format school type from nested structure
+// Helper function to format school type from simple string
 const formatSchoolType = (schoolType) => {
   if (!schoolType) return '';
 
-  try {
-    // Parse if it's a string
-    const parsed = typeof schoolType === 'string' ? JSON.parse(schoolType) : schoolType;
+  // Handle simple string values
+  if (schoolType === 'primary') return 'Primary';
+  if (schoolType === 'secondary') return 'Secondary';
 
-    if (!Array.isArray(parsed)) return '';
-
-    const parts = [];
-
-    parsed.forEach((item) => {
-      if (typeof item === 'string') {
-        // Simple type like "primary" or "secondary"
-        if (item === 'primary') parts.push('Primary');
-        else if (item === 'secondary') parts.push('Secondary');
-      } else if (typeof item === 'object') {
-        // Nested object like {"secondary": ["junior", "senior"]}
-        Object.keys(item).forEach((key) => {
-          if (key === 'secondary') {
-            const levels = item[key];
-            if (Array.isArray(levels) && levels.length > 0) {
-              const levelLabels = levels.map((l) =>
-                l === 'junior' ? 'Junior Secondary' : l === 'senior' ? 'Senior Secondary' : l,
-              );
-              parts.push(`Secondary (${levelLabels.join(', ')})`);
-            } else {
-              parts.push('Secondary');
-            }
-          }
-        });
-      }
-    });
-
-    return parts.join(', ');
-  } catch (e) {
-    console.error('Error parsing school type:', e);
-    return '';
-  }
+  return schoolType;
 };
 
 const SchoolInformationPage = () => {

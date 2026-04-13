@@ -55,7 +55,8 @@ export const fetchSessions = async () => {
 };
 
 // Fetch terms
-export const fetchTerms = async () => {
-  const response = await api.get('/curriculum/terms/list');
+export const fetchTerms = async (sessionId = null) => {
+  const params = sessionId ? { session_id: sessionId } : {};
+  const response = await api.get('/curriculum/terms/list', { params });
   return response.data;
 };

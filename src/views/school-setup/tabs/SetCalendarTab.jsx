@@ -35,6 +35,7 @@ import {
   updateDisplayName,
   subscribeSessionTerm,
   fetchTerms,
+  toggleSessionTermStatus,
 } from '../../../api/sessionTermApi';
 import {
   fetchWeeks,
@@ -77,6 +78,10 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
   const [selectedSessionId, setSelectedSessionId] = useState('');
   // Notification state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Confirmation Dialogues
+  const [confirmSubscribe, setConfirmSubscribe] = useState({ open: false, term: null });
+  const [confirmStatus, setConfirmStatus] = useState({ open: false, term: null });
 
   // Week Management states
   const [weeks, setWeeks] = useState([]);
@@ -127,9 +132,9 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       const termsRes = await fetchSessionTerms(sessionId);
       if (termsRes.status) {
         setSessionTerms(termsRes.data);
-        // Find if there's an active session term to load weeks
+        // Find if there's an active session term to load weeks automatically
         const activeST = termsRes.data.find((t) => t.status === 'active');
-        if (activeST) {
+        if (activeST && activeST.session_term_id) {
           setActiveSessionTermId(activeST.session_term_id);
           loadWeeksData(activeST.session_term_id);
         } else {
@@ -154,16 +159,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     }
   };
 
-  const generateWeeks = [
-    { week: 'Week 1', start: '2026-01-12', end: '2026-01-18', status: 'Generated' },
-    { week: 'Week 2', start: '2026-01-19', end: '2026-01-25', status: 'Generated' },
-    { week: 'Week 3', start: '2026-01-26', end: '2026-02-01', status: 'Pending' },
-    { week: 'Week 4', start: '2026-02-02', end: '2026-02-08', status: 'Pending' },
-    { week: 'Week 5', start: '2026-02-09', end: '2026-02-15', status: 'Pending' },
-    { week: 'Week 6', start: '2026-02-16', end: '2026-02-22', status: 'Pending' },
-    { week: 'Week 7', start: '2026-02-23', end: '2026-03-01', status: 'Pending' },
-    { week: 'Week 8', start: '2026-03-02', end: '2026-03-08', status: 'Pending' },
-  ];
+
 
   const handleMenuOpen = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -225,17 +221,20 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     loadSessionTerms(sessionId);
   };
 
-  // Handle subscribe
-  const handleSubscribe = async (term) => {
-    if (!selectedSessionId) {
-      showSnackbar('No active session found', 'error');
-      return;
-    }
+  // Handle subscribe click (shows confirmation)
+  const handleSubscribeClick = (term) => {
+    setConfirmSubscribe({ open: true, term });
+  };
+
+  const handleConfirmSubscribe = async () => {
+    const term = confirmSubscribe.term;
+    setConfirmSubscribe({ open: false, term: null });
+
+    if (!selectedSessionId || !term) return;
 
     try {
       setLoading(true);
-      // term here has display_term_id which is what we need
-      const response = await subscribeSessionTerm(selectedSessionId, term.display_term_id);
+      const response = await subscribeSessionTerm(selectedSessionId, term.app_term_id);
       if (response.status) {
         showSnackbar('Subscribed successfully', 'success');
         loadSessionTerms(selectedSessionId);
@@ -249,10 +248,35 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     }
   };
 
+  const handleToggleStatusClick = (term) => {
+    setConfirmStatus({ open: true, term });
+  };
+
+  const handleConfirmToggleStatus = async () => {
+    const term = confirmStatus.term;
+    setConfirmStatus({ open: false, term: null });
+
+    if (!term || !term.session_term_id) return;
+
+    try {
+      setLoading(true);
+      const response = await toggleSessionTermStatus(term.session_term_id);
+      if (response.status) {
+        showSnackbar(`Term ${term.status === 'active' ? 'deactivated' : 'activated'} successfully`, 'success');
+        loadSessionTerms(selectedSessionId);
+      }
+    } catch (error) {
+      showSnackbar('Failed to update status', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   // Week Logic
   const handleAutoGenerate = async () => {
     if (!activeSessionTermId || !autoGenerateConfig.startDate) {
-      showSnackbar('Select a term and start date first', 'error');
+      showSnackbar('Set start date first', 'error');
       return;
     }
 
@@ -265,6 +289,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       if (response.status) {
         setWeeks(response.data);
         showSnackbar('Weeks generated successfully', 'success');
+        // Refresh session terms to update the Start Date in the main table
+        loadSessionTerms(selectedSessionId);
       }
     } catch (error) {
       showSnackbar('Failed to generate weeks', 'error');
@@ -289,6 +315,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       const response = await addWeek(activeSessionTermId);
       if (response.status) {
         setWeeks(response.data);
+        // Refresh session terms to update the Start Date in the main table
+        loadSessionTerms(selectedSessionId);
       }
     } catch (error) {
       showSnackbar('Failed to add week', 'error');
@@ -300,6 +328,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       const response = await deleteWeek(activeSessionTermId, weekId);
       if (response.status) {
         setWeeks(response.data);
+        // Refresh session terms to update the Start Date if necessary
+        loadSessionTerms(selectedSessionId);
       }
     } catch (error) {
       showSnackbar('Failed to delete week', 'error');
@@ -398,44 +428,64 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                     <Table sx={{ whiteSpace: 'nowrap' }}>
                       <TableHead>
                         <TableRow>
+                          <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Original Term</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                            Status
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }} align="center">
-                            Action
-                          </TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
                         </TableRow>
                       </TableHead>
 
                       <TableBody>
                         {paginatedTerms.map((item, i) => (
                           <TableRow key={item.app_term_id} hover>
+                            <TableCell>{i + 1 + termsPage * termsRowsPerPage}</TableCell>
                             <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
                             <TableCell>{item.term_name}</TableCell>
                             <TableCell align="center">
-                            <Chip
-                                label={
-                                  item.is_subscribed === 'yes' ? (item.status === 'active' ? 'Active' : 'Subscribed') : 'Not Subscribed'
-                                }
-                                size="small"
-                                sx={{
-                                  bgcolor: item.status === 'active' ? '#dcfce7' : (item.is_subscribed === 'yes' ? '#e0f2fe' : '#fee2e2'),
-                                  color: item.status === 'active' ? '#166534' : (item.is_subscribed === 'yes' ? '#0369a1' : '#991b1b'),
-                                  fontWeight: 500,
-                                }}
-                              />
+                              {item.is_subscribed === 'yes' ? (
+                                <Chip
+                                  label={item.status === 'active' ? 'Active' : 'Inactive'}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                    color: item.status === 'active' ? '#166534' : '#92400e',
+                                    fontWeight: 500,
+                                  }}
+                                />
+                              ) : (
+                                '-'
+                              )}
                             </TableCell>
                             <TableCell align="center">
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  onClick={() => handleSubscribe(item)}
-                                  disabled={loading || item.status === 'active'}
-                                >
-                                  {item.status === 'active' ? 'Active' : 'Subscribe'}
-                                </Button>
+                              {item.start_date || (item.is_subscribed === 'yes' ? 'Not Set' : '-')}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                                {item.is_subscribed === 'no' ? (
+                                  <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={() => handleSubscribeClick(item)}
+                                    disabled={loading}
+                                  >
+                                    Subscribe
+                                  </Button>
+                                ) : (
+                                  <>
+                                    <Button
+                                      variant="outlined"
+                                      size="small"
+                                      color={item.status === 'active' ? 'warning' : 'success'}
+                                      onClick={() => handleToggleStatusClick(item)}
+                                      disabled={loading}
+                                    >
+                                      {item.status === 'active' ? 'Deactivate' : 'Activate'}
+                                    </Button>
+                                  </>
+                                )}
+                              </Box>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -465,126 +515,145 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
 
         {/* Generate Week Column */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <ParentCard
-            title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h5">Generate Week</Typography>
+          {activeSessionTermId && (
+            <ParentCard
+              id="generate-week-section"
+              title={
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h5">Generate Week</Typography>
 
-                <Box
-                  sx={{
-                    ml: 'auto',
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                  }}
-                >
-                  <Typography variant="caption">{weeks.length} Weeks • {weeks.length * 5} school days</Typography>
+                  <Box
+                    sx={{
+                      ml: 'auto',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 3,
+                      border: '1px solid',
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                    }}
+                  >
+                    <Typography variant="caption">{weeks.length} Weeks • {weeks.length * 5} school days</Typography>
+                  </Box>
                 </Box>
-              </Box>
-            }
-          >
-            <Paper variant="outlined" sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-                <TextField
-                  label="No. of Weeks"
-                  type="number"
-                  size="small"
-                  sx={{ width: 120 }}
-                  value={autoGenerateConfig.numWeeks}
-                  onChange={(e) => setAutoGenerateConfig({ ...autoGenerateConfig, numWeeks: parseInt(e.target.value) })}
-                />
-                <TextField
-                  label="Start Date"
-                  type="date"
-                  size="small"
-                  sx={{ width: 160 }}
-                  value={autoGenerateConfig.startDate}
-                  onChange={(e) => setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                />
-                <Button 
-                  variant="contained" 
-                  onClick={handleAutoGenerate}
-                  disabled={loading || !activeSessionTermId}
-                >
-                  Generate
-                </Button>
-                <IconButton color="primary" onClick={handleAddWeek} disabled={!activeSessionTermId}>
-                  <AddIcon />
-                </IconButton>
-              </Box>
+              }
+            >
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                  <TextField
+                    label="No. of Weeks"
+                    type="number"
+                    size="small"
+                    sx={{ width: 120 }}
+                    value={autoGenerateConfig.numWeeks}
+                    onChange={(e) => setAutoGenerateConfig({ ...autoGenerateConfig, numWeeks: parseInt(e.target.value) })}
+                  />
+                  <TextField
+                    label="Start Date"
+                    type="date"
+                    size="small"
+                    sx={{ width: 160 }}
+                    value={autoGenerateConfig.startDate}
+                    onChange={(e) => setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleAutoGenerate}
+                    disabled={loading || !activeSessionTermId}
+                  >
+                    Generate
+                  </Button>
+                  {/* <IconButton color="primary" onClick={handleAddWeek} disabled={!activeSessionTermId}>
+                    <AddIcon />
+                  </IconButton> */}
+                </Box>
 
-              <TableContainer>
-                <Table sx={{ whiteSpace: 'nowrap' }}>
-                  <TableHead>
-                    <TableRow>
-                       <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {paginatedWeeks.map((item, i) => (
-                      <TableRow key={i} hover>
-                         <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
-                        <TableCell>{item.start_date || 'N/A'}</TableCell>
-                        <TableCell>{item.end_date || 'N/A'}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={item.status}
-                            size="small"
-                            onClick={() => handleToggleWeekStatus(item.wk_id)}
-                            sx={{
-                              cursor: 'pointer',
-                              bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                              color: item.status === 'active' ? '#166534' : '#991b1b',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton size="small" color="error" onClick={() => handleDeleteWeek(item.week_id)}>
-                            <IconDotsVertical size={16} /> {/* Replace with Trash if available */}
-                          </IconButton>
-                        </TableCell>
+                <TableContainer>
+                  <Table sx={{ whiteSpace: 'nowrap' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
+                    </TableHead>
 
-                  <TableFooter>
-                    <TableRow>
-                         <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        count={weeks.length}
-                        rowsPerPage={weeksRowsPerPage}
-                        page={weeksPage}
-                        onPageChange={handleWeeksPageChange}
-                        onRowsPerPageChange={handleWeeksRowsPerPageChange}
-                      />
-                    </TableRow>
-                  </TableFooter>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </ParentCard>
+                    <TableBody>
+                      {weeks.length > 0 ? (
+                        paginatedWeeks.map((item, i) => (
+                          <TableRow key={i} hover>
+                            <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
+                            <TableCell>{item.start_date || 'N/A'}</TableCell>
+                            <TableCell>{item.end_date || 'N/A'}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={item.status}
+                                size="small"
+                                onClick={() => handleToggleWeekStatus(item.wk_id)}
+                                sx={{
+                                  cursor: 'pointer',
+                                  bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                  color: item.status === 'active' ? '#166534' : '#991b1b',
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeleteWeek(item.week_id)}
+                              >
+                                <IconDotsVertical size={16} />{' '}
+                                {/* Replace with Trash if available */}
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                            <Typography color="textSecondary">
+                              No weeks generated yet for this term.
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+
+                    <TableFooter>
+                      <TableRow>
+                        <TablePagination
+                          rowsPerPageOptions={[5, 10, 25]}
+                          count={weeks.length}
+                          rowsPerPage={weeksRowsPerPage}
+                          page={weeksPage}
+                          onPageChange={handleWeeksPageChange}
+                          onRowsPerPageChange={handleWeeksRowsPerPageChange}
+                        />
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </ParentCard>
+          )}
         </Grid>
       </Grid>
-      <Box mt={2} display="flex" justifyContent="flex-end">
+
+      {/* <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
           Save & Continue
         </Button>
-      </Box>
+      </Box> */}
 
       {/* Edit Term Name Modal */}
       <Dialog open={openEditModal} onClose={handleCloseEditModal} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Term Name</DialogTitle>
         <DialogContent>
-           <Box sx={{ pt: 2 }}>
+          <Box sx={{ pt: 2 }}>
             <TextField
               select
               fullWidth
@@ -618,6 +687,58 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
             disabled={loading || !displayName.trim()}
           >
             {loading ? <CircularProgress size={24} /> : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Subscription Confirmation Dialog */}
+      <Dialog
+        open={confirmSubscribe.open}
+        onClose={() => setConfirmSubscribe({ open: false, term: null })}
+      >
+        <DialogTitle>Confirm Subscription</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to subscribe to <strong>{confirmSubscribe.term?.display_name || 'this term'}</strong> for the selected session?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>No, Cancel</Button>
+          <Button onClick={handleConfirmSubscribe} variant="contained" autoFocus disabled={loading}>
+            Yes, Subscribe
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Status Toggle Confirmation Dialog */}
+      <Dialog
+        open={confirmStatus.open}
+        onClose={() => setConfirmStatus({ open: false, term: null })}
+      >
+        <DialogTitle>Confirm Status Change</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to{' '}
+            <strong>{confirmStatus.term?.status === 'active' ? 'deactivate' : 'activate'}</strong>{' '}
+            the term <strong>{confirmStatus.term?.display_name}</strong>?
+            {confirmStatus.term?.status !== 'active' && (
+              <Box mt={1}>
+                <Typography variant="body2" color="textSecondary">
+                  Activating this term will automatically deactivate any other active terms.
+                </Typography>
+              </Box>
+            )}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
+          <Button
+            onClick={handleConfirmToggleStatus}
+            variant="contained"
+            color="primary"
+            disabled={loading}
+          >
+            Confirm
           </Button>
         </DialogActions>
       </Dialog>

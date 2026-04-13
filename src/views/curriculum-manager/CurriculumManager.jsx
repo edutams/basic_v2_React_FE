@@ -149,7 +149,7 @@ const CurriculumManager = () => {
 
   const loadSessionsAndTerms = async () => {
     try {
-      const [sessionsRes, termsRes] = await Promise.all([fetchSessions(), fetchTerms()]);
+      const sessionsRes = await fetchSessions();
 
       if (sessionsRes.status) {
         setSessions(sessionsRes.data);
@@ -157,17 +157,36 @@ const CurriculumManager = () => {
           const currentSession =
             sessionsRes.data.find((s) => s.is_current === 'yes') || sessionsRes.data[0];
           setSelectedSession(currentSession.id);
-        }
-      }
 
-      if (termsRes.status) {
-        setTerms(termsRes.data);
-        if (termsRes.data.length > 0) {
-          setSelectedTerm(termsRes.data[0].id);
+          // Load terms for the initial session
+          const termsRes = await fetchTerms(currentSession.id);
+          if (termsRes.status) {
+            setTerms(termsRes.data);
+            if (termsRes.data.length > 0) {
+              setSelectedTerm(termsRes.data[0].id);
+            }
+          }
         }
       }
     } catch (error) {
       showSnackbar('Failed to load sessions and terms', 'error');
+    }
+  };
+
+  const handleSessionChange = async (sessionId) => {
+    setSelectedSession(sessionId);
+    try {
+      const termsRes = await fetchTerms(sessionId);
+      if (termsRes.status) {
+        setTerms(termsRes.data);
+        if (termsRes.data.length > 0) {
+          setSelectedTerm(termsRes.data[0].id);
+        } else {
+          setSelectedTerm('');
+        }
+      }
+    } catch (error) {
+      showSnackbar('Failed to load terms for selected session', 'error');
     }
   };
 
@@ -444,13 +463,22 @@ const CurriculumManager = () => {
                                     }}
                                   />
                                 </TableCell>
-                                <TableCell align="center">
+                                <TableCell
+                                  align="center"
+                                  sx={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    gap: 1, // spacing between icons
+                                  }}
+                                >
                                   <IconButton
                                     size="small"
                                     onClick={() => handleOpenEditModal(item)}
                                   >
                                     <IconEdit size={16} />
                                   </IconButton>
+
                                   <IconButton
                                     size="small"
                                     onClick={() => handleOpenDeleteDialog(item)}
@@ -484,7 +512,7 @@ const CurriculumManager = () => {
                         <Select
                           size="small"
                           value={selectedSession}
-                          onChange={(e) => setSelectedSession(e.target.value)}
+                          onChange={(e) => handleSessionChange(e.target.value)}
                           displayEmpty
                         >
                           <MenuItem value="" disabled>

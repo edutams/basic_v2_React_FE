@@ -30,10 +30,16 @@ export const updateDisplayName = async (appTermId, displayName) => {
 };
 
 // Subscribe to a session term
-export const subscribeSessionTerm = async (sessionId, termId) => {
+export const subscribeSessionTerm = async (sessionId, appTermId) => {
   const response = await api.post('/curriculum/subscribe-session-term', {
     session_id: sessionId,
-    term_id: termId,
+    app_term_id: appTermId,
   });
+  return response.data;
+};
+
+// Toggle session term status
+export const toggleSessionTermStatus = async (id) => {
+  const response = await api.post(`/curriculum/toggle-session-term-status/${id}`);
   return response.data;
 };

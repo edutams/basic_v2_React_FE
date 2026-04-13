@@ -33,17 +33,22 @@ import {
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../components/shared/ParentCard';
+import FilterSideDrawer from '../../components/shared/FilterSideDrawer';
 import AgentModal from '../../components/add-agent/components/AgentModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import EmptyTableState from '../../components/shared/EmptyTableState';
 import useTableEmptyState from '../../hooks/useTableEmptyState';
 import agentApi from '../../api/agent';
 
-import HowToRegIcon from '@mui/icons-material/HowToReg';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
-import { IconUsers, IconSchool, IconCurrencyNaira, IconChartBar } from '@tabler/icons-react';
+import {
+  IconUsers,
+  IconSchool,
+  IconCurrencyNaira,
+  IconChartBar,
+  IconAdjustmentsHorizontal,
+} from '@tabler/icons-react';
 
 import DashboardStatCard from '../../components/shared/cards/DashboardStatCard';
 import AgentSubAgentsCard from './components/AgentSubAgentsCard';
@@ -57,13 +62,6 @@ import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
-
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  createColumnHelper,
-} from '@tanstack/react-table';
 
 const BCrumb = [
   {
@@ -101,7 +99,134 @@ const planData = [
 ];
 
 const planColors = planData.map((p) => p.color);
-const columnHelper = createColumnHelper();
+
+// Separate component for action menu to avoid hooks in loops
+const ActionMenuCell = ({
+  agent,
+  navigate,
+  handleImpersonate,
+  handleUpdateAgent,
+  handleViewSchools,
+  handleManagePermissions,
+  handleSetCommission,
+  handleManageReferral,
+  handleManageGateway,
+  handleDeleteAgent,
+}) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <>
+      <IconButton
+        aria-label="more"
+        id={`action-menu-button-${agent.s_n}`}
+        aria-controls={open ? `action-menu-${agent.s_n}` : undefined}
+        aria-expanded={open ? 'true' : undefined}
+        aria-haspopup="true"
+        onClick={handleClick}
+      >
+        <MoreVertIcon />
+      </IconButton>
+      <Menu
+        id={`action-menu-${agent.s_n}`}
+        MenuListProps={{
+          'aria-labelledby': `action-menu-button-${agent.s_n}`,
+        }}
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        PaperProps={{
+          style: {
+            maxHeight: 48 * 4.5,
+            width: '20ch',
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            navigate(`/agent/view/${agent.id}`);
+          }}
+        >
+          View Agent Profile
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleImpersonate(agent);
+          }}
+        >
+          Login As Agent
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleUpdateAgent(agent, 'update');
+          }}
+        >
+          Update Agent Info
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleViewSchools(agent, 'view');
+          }}
+        >
+          View School
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleManagePermissions(agent);
+          }}
+        >
+          Manage Permission
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleSetCommission(agent);
+          }}
+        >
+          Update Commission
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleManageReferral(agent);
+          }}
+        >
+          Manage Referral
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleManageGateway(agent);
+          }}
+        >
+          Manage Payment Gateway
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleDeleteAgent(agent);
+          }}
+        >
+          Delete Agent
+        </MenuItem>
+      </Menu>
+    </>
+  );
+};
 
 import locationApi from '../../api/location';
 
@@ -160,6 +285,11 @@ const Agent = () => {
 
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
+
+  // Filter Drawer States
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
 
   // Pagination States
   const [page, setPage] = useState(0);
@@ -254,12 +384,62 @@ const Agent = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
 
-  const [hasFiltered, setHasFiltered] = useState(false);
+  const handleFilterApply = (filterValues) => {
+    console.log('🔍 Filter Apply:', filterValues);
 
-  const applyFilters = () => {
+    // Map filter values to component state
+    if (filterValues.search !== undefined) setSearch(filterValues.search);
+    if (filterValues.agentLevel !== undefined) setAgentLevel(filterValues.agentLevel);
+    if (filterValues.status !== undefined) setStatus(filterValues.status);
+    if (filterValues.state !== undefined) {
+      console.log('🔍 Setting State:', filterValues.state);
+      setState(filterValues.state);
+    }
+    if (filterValues.lga !== undefined) setLga(filterValues.lga);
+
+    setActiveFilters(filterValues);
     setPage(0); // Reset to first page
-    setRefreshKey((prev) => prev + 1);
-    setHasFiltered(true);
+    setRefreshKey((prev) => prev + 1); // Trigger data refresh
+  };
+
+  const handleFilterChange = (key, value) => {
+    // When state changes in the filter drawer, fetch LGAs immediately
+    if (key === 'state') {
+      console.log('🔍 Filter State Changed:', value);
+      setState(value);
+      // Clear LGA when state changes
+      setLga('');
+
+      // Fetch LGAs for the selected state
+      if (value) {
+        const selectedState = states.find((s) => (s.state_name || s.name) === value);
+        if (selectedState) {
+          locationApi
+            .getLgas(selectedState.id)
+            .then((response) => {
+              console.log('🔍 LGA Response:', response);
+              setLgas(response);
+            })
+            .catch((error) => {
+              console.error('❌ Failed to fetch LGAs', error);
+              setLgas([]);
+            });
+        }
+      } else {
+        setLgas([]);
+      }
+    }
+  };
+
+  const handleFilterReset = () => {
+    setSearch('');
+    setAgentLevel('');
+    setStatus('');
+    setState('');
+    setLga('');
+    setActiveFilters({});
+    setPage(0);
+    setRefreshKey((prev) => prev + 1); // Trigger data refresh
   };
 
   // Fetch States on Mount
@@ -277,33 +457,96 @@ const Agent = () => {
 
   // Fetch LGAs when State changes
   useEffect(() => {
+    console.log('🔍 State changed:', state);
+    console.log('🔍 Available States:', states);
+
     setLga('');
     const fetchLgas = async () => {
       if (state) {
         try {
-          // Find state object to get ID if state is stored as name, or use state directly if ID
-          // The API likely returns objects with id and name.
-          // The filters currently use state name (string).
-          // Verify what locationApi returns. Assume it returns list of objects {id, name...}.
-          // Based on previous code, state filter uses names.
           const selectedState = states.find((s) => (s.state_name || s.name) === state);
+          console.log('🔍 Selected State Object:', selectedState);
+
           if (selectedState) {
+            console.log('🔍 Fetching LGAs for state ID:', selectedState.id);
             const response = await locationApi.getLgas(selectedState.id);
+            console.log('🔍 LGA Response:', response);
             setLgas(response);
           } else {
+            console.log('⚠️ State not found in states array');
             setLgas([]);
           }
         } catch (error) {
-          console.error('Failed to fetch LGAs', error);
+          console.error('❌ Failed to fetch LGAs', error);
           setLgas([]);
         }
       } else {
+        console.log('🔍 No state selected, clearing LGAs');
         setLgas([]);
         setLga('');
       }
     };
     fetchLgas();
   }, [state, states]);
+
+  // Sync activeFilters.lga when states/lgas change
+  useEffect(() => {
+    if (activeFilters.state && !activeFilters.lga) {
+      // State changed, LGA should be reset in filter drawer
+    }
+  }, [states, lgas]);
+
+  // Update agentFilterDefs dynamically based on states and lgas
+  const agentFilterDefs = useMemo(
+    () => [
+      {
+        key: 'search',
+        label: 'Agent Name',
+        type: 'text',
+        placeholder: 'Search by agent name…',
+      },
+      {
+        key: 'agentLevel',
+        label: 'Agent Level',
+        type: 'select',
+        options: [
+          // { value: '1', label: 'Level 1' },
+          { value: '2', label: 'Level 2' },
+          { value: '3', label: 'Level 3' },
+          { value: '4', label: 'Level 4' },
+          { value: '5', label: 'Level 5' },
+        ],
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+      },
+      {
+        key: 'state',
+        label: 'State',
+        type: 'select',
+        options: states.map((s) => ({
+          value: s.state_name || s.name,
+          label: s.state_name || s.name,
+        })),
+      },
+      {
+        key: 'lga',
+        label: 'LGA',
+        type: 'select',
+        options: lgas.map((l) => ({
+          value: l.lga_name,
+          label: l.lga_name,
+        })),
+      },
+    ],
+    [states, lgas],
+  );
 
   const hasActiveFilters = useMemo(() => {
     return agentLevel || country || state || lga || search;
@@ -435,395 +678,12 @@ const Agent = () => {
   const [editRowId, setEditRowId] = useState(null);
   const [editedData, setEditedData] = useState(null);
 
-  const columns = [
-    columnHelper.display({
-      id: 's_n',
-      header: () => 'S/N',
-      cell: (info) => (
-        <Typography color="textSecondary" variant="h6" fontWeight="400">
-          {info.row.index + 1}
-        </Typography>
-      ),
-    }),
-    columnHelper.accessor('agentDetails', {
-      header: () => 'Organization Details',
-      cell: (info) => {
-        const agent = info.row.original;
-        const initials = (agent.organizationName || 'NA')
-          .split(' ')
-          .slice(0, 2)
-          .map((w) => w[0])
-          .join('')
-          .toUpperCase();
-        return editRowId === agent.s_n ? (
-          <TextField
-            variant="outlined"
-            value={editedData?.[info.column.id] || ''}
-            onChange={(e) => handleChange(e, info.column.id)}
-            fullWidth
-          />
-        ) : (
-          <Stack direction="row" spacing={1.5} alignItems="flex-start">
-            <Avatar
-              // src={agent.imgsrc || agent.admin_avatar}
-              src={agent.avatar || agent.admin_avatar}
-              alt={agent.organizationName}
-              sx={{
-                width: 50,
-                height: 50,
-                fontSize: '12px',
-                fontWeight: 700,
-                bgcolor: '#2196f3',
-                flexShrink: 0,
-              }}
-            >
-              {!(agent.avatar || agent.admin_avatar) && initials}
-              {/* {!(agent.imgsrc || agent.admin_avatar) && initials} */}
-            </Avatar>
-            <Box>
-              <Typography
-                variant="subtitle2"
-                fontWeight="700"
-                sx={{ lineHeight: 1.3, color: 'text.primary' }}
-              >
-                {agent.organizationName || 'N/A'}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: 'block', lineHeight: 1.4 }}
-              >
-                {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
-              </Typography>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: 'block', lineHeight: 1.4 }}
-              >
-                {agent.contactDetails || 'N/A'}
-              </Typography>
-            </Box>
-          </Stack>
-        );
-      },
-    }),
-    columnHelper.accessor('adminDetails', {
-      header: () => 'Admin Details',
-      cell: (info) => {
-        const agent = info.row.original;
-        const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
-        const initials = fullName
-          ? fullName
-              .split(' ')
-              .slice(0, 2)
-              .map((w) => w[0])
-              .join('')
-              .toUpperCase()
-          : 'NA';
-
-        return (
-          <Stack direction="row" spacing={1.5} alignItems="flex-start">
-            <Avatar
-              src={agent.avatar || agent.admin_avatar}
-              alt={fullName}
-              sx={{
-                width: 50,
-                height: 50,
-                fontSize: '12px',
-                fontWeight: 700,
-                bgcolor: '#2196f3', // Using a distinct color for admins
-                flexShrink: 0,
-              }}
-            >
-              {!(agent.avatar || agent.admin_avatar) && initials}
-            </Avatar>
-            <Box>
-              <Typography
-                variant="subtitle2"
-                fontWeight="700"
-                sx={{ lineHeight: 1.3, color: 'text.primary' }}
-              >
-                {fullName || 'N/A'}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: 'block', lineHeight: 1.4 }}
-              >
-                {agent.phone || 'N/A'}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                sx={{ display: 'block', lineHeight: 1.4 }}
-              >
-                {agent.email || 'N/A'}
-              </Typography>
-            </Box>
-          </Stack>
-        );
-      },
-    }),
-    columnHelper.accessor('gateway', {
-      header: () => 'Gateway',
-      cell: () => (
-        <Typography variant="subtitle2" fontWeight="500">
-          -
-        </Typography>
-      ),
-    }),
-    columnHelper.accessor('access_level', {
-      header: () => 'Access Level',
-      cell: (info) => {
-        const level = Number(info.getValue());
-        const colorMap = {
-          1: { color: '#2ca87f', bg: '#e6f4ee' },
-          2: { color: '#3949ab', bg: '#e8eaf6' },
-          3: { color: '#f57c00', bg: '#fff3e0' },
-        };
-        const config = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
-        return (
-          <Chip
-            size="small"
-            label={`${level}`}
-            sx={{
-              bgcolor: config.bg,
-              color: config.color,
-              fontWeight: 600,
-              borderRadius: '8px',
-            }}
-          />
-        );
-      },
-    }),
-    columnHelper.accessor('subAgent', {
-      header: () => 'Sub Agent',
-      cell: (info) => (
-        <Box
-          sx={{
-            bgcolor: '#ede9fe',
-            color: '#6d28d9',
-            borderRadius: '20px',
-            px: 2,
-            py: 0.4,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '13px',
-            minWidth: '36px',
-          }}
-        >
-          {info.row.original.sub_agents_count ?? 0}
-        </Box>
-      ),
-    }),
-    columnHelper.accessor('performance', {
-      header: () => 'Performance',
-      cell: (info) => (
-        <Stack
-          direction="row"
-          spacing={0}
-          sx={{ borderRadius: '6px', overflow: 'hidden', fontWeight: '800', width: 'fit-content' }}
-        >
-          <Box sx={{ px: 1.5, py: 0.5 }}>
-            <Typography variant="subtitle3" fontWeight="800" color="#333333">
-              School
-            </Typography>
-          </Box>
-          <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
-            <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
-              {info.row.original.tenants_count ?? 0}
-            </Typography>
-          </Box>
-        </Stack>
-      ),
-    }),
-    columnHelper.accessor('primaryColor', {
-      header: () => 'Primary Color',
-      cell: (info) => {
-        const color = info.getValue() || '#3949ab';
-        return (
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              bgcolor: color,
-              border: '2px solid rgba(255,255,255,0.8)',
-              boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
-            }}
-          />
-        );
-      },
-    }),
-    columnHelper.accessor('status', {
-      header: () => 'Status',
-      cell: (info) =>
-        editRowId === info.row.original.s_n ? (
-          <Select
-            value={editedData?.status || ''}
-            onChange={(e) => handleChange(e, 'status')}
-            variant="outlined"
-            fullWidth
-          >
-            {statusOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
-        ) : (
-          <Chip
-            sx={{
-              bgcolor:
-                info.getValue() === 'Active'
-                  ? '#dcfee6'
-                  : info.getValue() === 'Inactive'
-                  ? '#ffe4e6'
-                  : '#f3f4f6',
-              color:
-                info.getValue() === 'Active'
-                  ? '#16a34a'
-                  : info.getValue() === 'Inactive'
-                  ? '#e11d48'
-                  : '#4b5563',
-              borderRadius: '6px',
-              fontWeight: 600,
-              px: 2,
-            }}
-            size="small"
-            label={info.getValue()}
-          />
-        ),
-    }),
-    columnHelper.accessor('action', {
-      header: () => 'Action',
-      cell: ({ row }) => {
-        const [anchorEl, setAnchorEl] = useState(null);
-        const open = Boolean(anchorEl);
-
-        const handleClick = (event) => {
-          setAnchorEl(event.currentTarget);
-        };
-
-        const handleClose = () => {
-          setAnchorEl(null);
-        };
-
-        return (
-          <div>
-            <IconButton
-              aria-label="more"
-              id={`action-menu-button-${row.original.s_n}`}
-              aria-controls={open ? `action-menu-${row.original.s_n}` : undefined}
-              aria-expanded={open ? 'true' : undefined}
-              aria-haspopup="true"
-              onClick={handleClick}
-            >
-              <MoreVertIcon />
-            </IconButton>
-            <Menu
-              id={`action-menu-${row.original.s_n}`}
-              MenuListProps={{
-                'aria-labelledby': `action-menu-button-${row.original.s_n}`,
-              }}
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
-              PaperProps={{
-                style: {
-                  maxHeight: 48 * 4.5,
-                  width: '20ch',
-                },
-              }}
-            >
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  navigate(`/agent/view/${row.original.id}`);
-                }}
-              >
-                View Agent Profile
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleImpersonate(row.original);
-                }}
-              >
-                Login As Agent
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleUpdateAgent(row.original, 'update');
-                }}
-              >
-                Update Agent Info
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleViewSchools(row.original, 'view');
-                }}
-              >
-                View School
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleManagePermissions(row.original);
-                }}
-              >
-                Manage Permission
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleSetCommission(row.original);
-                }}
-              >
-                Update Commission
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleManageReferral(row.original);
-                }}
-              >
-                Manage Referral
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleManageGateway(row.original);
-                }}
-              >
-                Manage Payment Gateway
-              </MenuItem>
-
-              <MenuItem
-                onClick={() => {
-                  handleClose();
-                  handleDeleteAgent(row.original);
-                }}
-              >
-                Delete Agent
-              </MenuItem>
-            </Menu>
-          </div>
-        );
-      },
-    }),
-  ];
-
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    enableRowVirtualization: true,
-  });
+  const handleChange = (e, field, row) => {
+    setEditedData({
+      ...editedData,
+      [field]: e.target.value,
+    });
+  };
 
   const handleEdit = (row) => {
     setEditRowId(row.s_n);
@@ -835,15 +695,6 @@ const Agent = () => {
       setData(data.map((item) => (item.s_n === editedData.s_n ? editedData : item)));
       setEditRowId(null);
       setEditedData(null);
-    }
-  };
-
-  const handleChange = (e, field) => {
-    if (editedData) {
-      setEditedData({
-        ...editedData,
-        [field]: e.target.value,
-      });
     }
   };
 
@@ -1223,129 +1074,349 @@ const Agent = () => {
             </Stack>
           }
         >
-          <Grid container spacing={3} mb={3} alignItems="center">
-            <Grid size={{ xs: 12, md: 3, sm: 4 }}>
-              <TextField
-                fullWidth
-                label="Agent Name"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                variant="outlined"
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Agent Level</InputLabel>
-                <Select
-                  value={agentLevel}
-                  label="Agent Level"
-                  onChange={(e) => setAgentLevel(e.target.value)}
+          {/* Filter Button */}
+          <Box
+            sx={{
+              mb: 2,
+              display: 'flex',
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Button
+              variant="outlined"
+              startIcon={<IconAdjustmentsHorizontal size={18} />}
+              onClick={() => setFilterDrawerOpen(true)}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 2.5,
+                borderColor: activeFilterCount > 0 ? '#3949ab' : 'divider',
+                color: activeFilterCount > 0 ? '#3949ab' : 'text.secondary',
+                fontWeight: activeFilterCount > 0 ? 700 : 400,
+                '&:hover': { borderColor: '#3949ab', color: '#fff' },
+              }}
+            >
+              Show Filters
+              {activeFilterCount > 0 && (
+                <Box
+                  component="span"
+                  sx={{
+                    ml: 1,
+                    px: 0.8,
+                    py: 0.1,
+                    bgcolor: '#3949ab',
+                    color: 'white',
+                    borderRadius: '10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    lineHeight: 1.6,
+                  }}
                 >
-                  <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="1">Level 1</MenuItem>
-                  <MenuItem value="2">Level 2</MenuItem>
-                  <MenuItem value="3">Level 3</MenuItem>
-                  <MenuItem value="4">Level 4</MenuItem>
-                  <MenuItem value="5">Level 5</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Status</InputLabel>
-                <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
-                  <MenuItem value="">-- Select --</MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>State</InputLabel>
-                <Select value={state} label="State" onChange={(e) => setState(e.target.value)}>
-                  <MenuItem value="">-- Select --</MenuItem>
-                  {states.map((s) => (
-                    <MenuItem key={s.id} value={s.state_name || s.name}>
-                      {s.state_name || s.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 2, sm: 4 }}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>LGA</InputLabel>
-                <Select
-                  value={lga}
-                  label="LGA"
-                  onChange={(e) => setLga(e.target.value)}
-                  disabled={!state}
-                >
-                  <MenuItem value="">-- Choose LGA --</MenuItem>
-                  {lgas.map((l) => (
-                    <MenuItem key={l.id} value={l.lganame || l.name}>
-                      {l.lganame || l.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 1, sm: 4 }}>
-              <Button fullWidth variant="contained" onClick={() => applyFilters()} color="primary">
-                Search
-              </Button>
-            </Grid>
-          </Grid>
+                  {activeFilterCount}
+                </Box>
+              )}
+            </Button>
+          </Box>
 
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableCell key={header.id}>
-                        <Typography variant="h6">
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </Typography>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="h6">S/N</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Organization Details</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Admin Details</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Gateway</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Access Level</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Sub Agent</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Performance</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Primary Color</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Status</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="h6">Action</Typography>
+                  </TableCell>
+                </TableRow>
               </TableHead>
               <TableBody>
                 {tableLoading ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={table.getHeaderGroups()[0]?.headers.length || 7}
-                      align="center"
-                      sx={{ py: 6 }}
-                    >
+                    <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         Loading organizations...
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ) : !emptyState.isEmpty ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} hover>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  filteredData.map((agent) => {
+                    const initials = (agent.organizationName || 'NA')
+                      .split(' ')
+                      .slice(0, 2)
+                      .map((w) => w[0])
+                      .join('')
+                      .toUpperCase();
+                    const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
+                    const adminInitials = fullName
+                      ? fullName
+                          .split(' ')
+                          .slice(0, 2)
+                          .map((w) => w[0])
+                          .join('')
+                          .toUpperCase()
+                      : 'NA';
+                    const level = Number(agent.access_level);
+                    const colorMap = {
+                      1: { color: '#2ca87f', bg: '#e6f4ee' },
+                      2: { color: '#3949ab', bg: '#e8eaf6' },
+                      3: { color: '#f57c00', bg: '#fff3e0' },
+                    };
+                    const levelConfig = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
+
+                    return (
+                      <TableRow key={agent.id} hover>
+                        <TableCell>
+                          <Typography color="textSecondary" variant="h6" fontWeight="400">
+                            {agent.s_n}
+                          </Typography>
                         </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
+                        <TableCell>
+                          {editRowId === agent.s_n ? (
+                            <TextField
+                              variant="outlined"
+                              value={editedData?.organizationName || ''}
+                              onChange={(e) => handleChange(e, 'organizationName', agent)}
+                              fullWidth
+                            />
+                          ) : (
+                            <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                              <Avatar
+                                src={agent.avatar || agent.admin_avatar}
+                                alt={agent.organizationName}
+                                sx={{
+                                  width: 50,
+                                  height: 50,
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  bgcolor: '#2196f3',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {!(agent.avatar || agent.admin_avatar) && initials}
+                              </Avatar>
+                              <Box>
+                                <Typography
+                                  variant="subtitle2"
+                                  fontWeight="700"
+                                  sx={{ lineHeight: 1.3, color: 'text.primary' }}
+                                >
+                                  {agent.organizationName || 'N/A'}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="textSecondary"
+                                  sx={{ display: 'block', lineHeight: 1.4 }}
+                                >
+                                  {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="textSecondary"
+                                  sx={{ display: 'block', lineHeight: 1.4 }}
+                                >
+                                  {agent.contactDetails || 'N/A'}
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                            <Avatar
+                              src={agent.avatar || agent.admin_avatar}
+                              alt={fullName}
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                bgcolor: '#2196f3',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {!(agent.avatar || agent.admin_avatar) && adminInitials}
+                            </Avatar>
+                            <Box>
+                              <Typography
+                                variant="subtitle2"
+                                fontWeight="700"
+                                sx={{ lineHeight: 1.3, color: 'text.primary' }}
+                              >
+                                {fullName || 'N/A'}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="textSecondary"
+                                sx={{ display: 'block', lineHeight: 1.4 }}
+                              >
+                                {agent.phone || 'N/A'}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="textSecondary"
+                                sx={{ display: 'block', lineHeight: 1.4 }}
+                              >
+                                {agent.email || 'N/A'}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="subtitle2" fontWeight="500">
+                            -
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={`${level}`}
+                            sx={{
+                              bgcolor: levelConfig.bg,
+                              color: levelConfig.color,
+                              fontWeight: 600,
+                              borderRadius: '8px',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              bgcolor: '#ede9fe',
+                              color: '#6d28d9',
+                              borderRadius: '20px',
+                              px: 2,
+                              py: 0.4,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: 700,
+                              fontSize: '13px',
+                              minWidth: '36px',
+                            }}
+                          >
+                            {agent.sub_agents_count ?? 0}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Stack
+                            direction="row"
+                            spacing={0}
+                            sx={{
+                              borderRadius: '6px',
+                              overflow: 'hidden',
+                              fontWeight: '800',
+                              width: 'fit-content',
+                            }}
+                          >
+                            <Box sx={{ px: 1.5, py: 0.5 }}>
+                              <Typography variant="subtitle3" fontWeight="800" color="#333333">
+                                School
+                              </Typography>
+                            </Box>
+                            <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+                              <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
+                                {agent.tenants_count ?? 0}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              bgcolor: agent.primaryColor || '#3949ab',
+                              border: '2px solid rgba(255,255,255,0.8)',
+                              boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {editRowId === agent.s_n ? (
+                            <Select
+                              value={editedData?.status || ''}
+                              onChange={(e) => handleChange(e, 'status', agent)}
+                              variant="outlined"
+                              fullWidth
+                            >
+                              {statusOptions.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          ) : (
+                            <Chip
+                              sx={{
+                                bgcolor:
+                                  agent.status === 'Active'
+                                    ? '#dcfee6'
+                                    : agent.status === 'Inactive'
+                                      ? '#ffe4e6'
+                                      : '#f3f4f6',
+                                color:
+                                  agent.status === 'Active'
+                                    ? '#16a34a'
+                                    : agent.status === 'Inactive'
+                                      ? '#e11d48'
+                                      : '#4b5563',
+                                borderRadius: '6px',
+                                fontWeight: 600,
+                                px: 2,
+                              }}
+                              size="small"
+                              label={agent.status}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <ActionMenuCell
+                            agent={agent}
+                            navigate={navigate}
+                            handleImpersonate={handleImpersonate}
+                            handleUpdateAgent={handleUpdateAgent}
+                            handleViewSchools={handleViewSchools}
+                            handleManagePermissions={handleManagePermissions}
+                            handleSetCommission={handleSetCommission}
+                            handleManageReferral={handleManageReferral}
+                            handleManageGateway={handleManageGateway}
+                            handleDeleteAgent={handleDeleteAgent}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <EmptyTableState
-                    colSpan={table.getHeaderGroups()[0]?.headers.length || 7}
+                    colSpan={10}
                     message={emptyState.message}
                     description={emptyState.description}
                     type={emptyState.type}
@@ -1406,6 +1477,17 @@ const Agent = () => {
           onClose={() => setIsViewUsersListModalOpen(false)}
         />
         <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+
+        {/* Filter Side Drawer */}
+        <FilterSideDrawer
+          open={filterDrawerOpen}
+          onClose={() => setFilterDrawerOpen(false)}
+          filters={agentFilterDefs}
+          title="Filter Agents"
+          onApply={handleFilterApply}
+          onReset={handleFilterReset}
+          onFilterChange={handleFilterChange}
+        />
       </Box>
     </PageContainer>
   );

@@ -2,7 +2,7 @@ import { Box, Container, Typography, Button } from '@mui/material';
 import { Link } from 'react-router';
 import ErrorImg from 'src/assets/images/backgrounds/errorimg.svg';
 
-const Error = ({ message = "This page you are looking for could not be found." }) => (
+const Error = ({ message = 'This page you are looking for could not be found.' }) => (
   <Box
     display="flex"
     flexDirection="column"
@@ -22,7 +22,7 @@ const Error = ({ message = "This page you are looking for could not be found." }
         color="primary"
         variant="contained"
         component={Link}
-        to="/dashboards/modern"
+        to="/agent/login"
         disableElevation
       >
         Go Back to Home

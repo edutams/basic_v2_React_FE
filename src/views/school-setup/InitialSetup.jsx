@@ -1,21 +1,83 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import {
-  Box,
-  Grid,
-  Typography,
-  Button,
-  Avatar,
-  TextField,
-  Stack,
-  Divider,
-  MenuItem,
-  Card,
-} from '@mui/material';
+import { Box, Typography, Button, Avatar, TextField, Stack, Divider, Card } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
+import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
+import { getFullImageUrl } from '../../helpers/ImageHelper';
+
+// Helper function to format school type from simple string
+const formatSchoolType = (schoolType) => {
+  if (!schoolType) return '';
+
+  // Handle simple string values
+  if (schoolType === 'primary') return 'Primary';
+  if (schoolType === 'secondary') return 'Secondary';
+
+  return schoolType;
+};
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
+  const [tenantData, setTenantData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [logo, setLogo] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [originalLogo, setOriginalLogo] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchTenantInfo = async () => {
+      try {
+        const res = await getTenantInfo();
+        const d = res.data;
+
+        const formattedData = {
+          name: d.tenant_name,
+          shortName: d.tenant_short_name,
+          email: d.tenant_email,
+          logo: d.school_logo,
+          address: d.address,
+          schoolType: formatSchoolType(d.school_type),
+
+          admins: {
+            owner: {
+              firstName: d.administrator_info?.school_owner?.school_owner_first_name,
+              lastName: d.administrator_info?.school_owner?.school_owner_last_name,
+              otherName: d.administrator_info?.school_owner?.school_owner_middle_name,
+              email: d.administrator_info?.school_owner?.school_owner_email,
+              phone: d.administrator_info?.school_owner?.school_owner_phone,
+            },
+            head: {
+              firstName: d.administrator_info?.school_head?.school_head_first_name,
+              lastName: d.administrator_info?.school_head?.school_head_last_name,
+              otherName: d.administrator_info?.school_head?.school_head_middle_name,
+              email: d.administrator_info?.school_head?.school_head_email,
+              phone: d.administrator_info?.school_head?.school_head_phone,
+            },
+            spa: {
+              firstName: d.administrator_info?.school_spa?.admin_first_name,
+              lastName: d.administrator_info?.school_spa?.admin_last_name,
+              otherName: d.administrator_info?.school_spa?.admin_middle_name,
+              email: d.administrator_info?.school_spa?.admin_email,
+              phone: d.administrator_info?.school_spa?.admin_phone,
+            },
+          },
+        };
+
+        setTenantData(formattedData);
+        // Convert relative logo path to full URL using ImageHelper
+        const fullLogoUrl = getFullImageUrl(d.school_logo);
+        setLogo(fullLogoUrl);
+        setOriginalLogo(fullLogoUrl);
+      } catch (error) {
+        console.error('Failed to fetch tenant info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTenantInfo();
+  }, []);
 
   const handleBrowseClick = () => {
     document.getElementById('school-logo-input').click();
@@ -24,26 +86,49 @@ const SchoolInformationPage = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      console.log('Selected file:', file.name);
-      // Add your upload logic here
+      setLogo(URL.createObjectURL(file));
+      setLogoFile(file);
     }
   };
+
+  const handleSaveAndContinue = async () => {
+    setSaving(true);
+    try {
+      // If there's a new logo file, upload it
+      if (logoFile) {
+        const formData = new FormData();
+        formData.append('school_logo', logoFile);
+        const res = await updateSchoolLogo(formData);
+        // Update the logo state with the returned path (converted to full URL)
+        if (res.data?.school_logo) {
+          setLogo(getFullImageUrl(res.data.school_logo));
+        }
+      }
+      navigate('/complete-setup');
+    } catch (error) {
+      console.error('Failed to save school logo:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Determine if button should be disabled
+  // Button is enabled if there's an original logo OR a new logo file has been uploaded
+  const isButtonDisabled = !originalLogo && !logoFile;
+
+  const adminList = [
+    { title: 'School Owner Detail', data: tenantData?.admins?.owner },
+    { title: 'School Head Detail', data: tenantData?.admins?.head },
+    { title: 'Portal Admin', data: tenantData?.admins?.spa },
+  ];
+
   return (
     <Box>
-      {/* PAGE HEADER */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 2,
-        }}
-      >
+      <Box display="flex" justifyContent="space-between" mb={2}>
         <Box>
           <Typography fontWeight={700} fontSize={20}>
             School Information
           </Typography>
-
           <Typography fontSize={13} color="#8A8D91">
             Register your school and set up administrative accounts
           </Typography>
@@ -59,271 +144,132 @@ const SchoolInformationPage = () => {
             gap: 1,
             cursor: 'pointer',
             boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-            },
           }}
         >
           <IconVideo size={20} />
-          <Typography fontSize={13} fontWeight={500}>
-            How to setup your Profile
-          </Typography>
+          <Typography fontSize={13}>How to setup your Profile</Typography>
           <IconArrowRight size={16} />
         </Box>
       </Box>
 
-      {/* SCHOOL DETAILS */}
-      <Card sx={{ p: 0, mb: 2, borderRadius: 0 }}>
-        {/* HEADER */}
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#F9F9F9', borderBottom: '1px solid #e0e0e0' }}>
+      <Card sx={{ mb: 2 }}>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: '#F9F9F9' }}>
           <Typography fontWeight={600}>School Details</Typography>
         </Box>
 
-        {/* BODY */}
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 3,
-              alignItems: 'flex-start',
-            }}
-          >
-            {/* LOGO */}
-            <Box sx={{ width: 140, flexShrink: 0, textAlign: 'center' }}>
-              <input
-                type="file"
-                id="school-logo-input"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
-              <Avatar
-                sx={{
-                  width: 110,
-                  height: 110,
-                  bgcolor: '#f5f5f5',
-                  border: '1px solid #e0e0e0',
-                  mx: 'auto',
-                }}
-              >
-                <IconSchool size={40} color="#9e9e9e" />
-              </Avatar>
+        <Box sx={{ p: 3, display: 'flex', gap: 3 }}>
+          <Box textAlign="center">
+            <input
+              type="file"
+              id="school-logo-input"
+              hidden
+              onChange={handleFileChange}
+              accept="image/*"
+            />
+            <Avatar
+              src={logo || undefined}
+              sx={{
+                width: 110,
+                height: 110,
+                mx: 'auto',
+                bgcolor: '#f5f5f5',
+                border: '1px solid #e0e0e0',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 0.5,
+                cursor: 'pointer',
+              }}
+              onClick={handleBrowseClick}
+            >
+              {!logo && (
+                <>
+                  <IconSchool size={40} color="#9e9e9e" />
 
-              <Button
-                variant="outlined"
-                size="small"
-                sx={{ mt: 2, textTransform: 'none' }}
-                onClick={handleBrowseClick}
-                startIcon={<span>↓</span>}
-              >
-                Browse
-              </Button>
-            </Box>
+                  <Typography
+                    sx={{
+                      fontSize: 10,
+                      color: '#8A8D91',
+                      textAlign: 'center',
+                      lineHeight: 1,
+                    }}
+                  >
+                    Upload school logo
+                  </Typography>
+                </>
+              )}
+            </Avatar>
 
-            {/* FORM AREA */}
-            <Box sx={{ flex: 1, display: 'flex', gap: 3 }}>
-              {/* LEFT */}
-              <Box sx={{ flex: 1 }}>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      School Name
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      placeholder="Enter School Name"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
+            <Button onClick={handleBrowseClick} sx={{ mt: 2 }}>
+              Browse
+            </Button>
+          </Box>
 
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      Acronym
-                    </Typography>
+          <Box flex={1} display="flex" gap={3}>
+            <Stack spacing={2} flex={1}>
+              <TextField label="School Name" value={tenantData?.name || ''} />
+              <TextField label="Acronym" value={tenantData?.shortName || ''} />
+            </Stack>
 
-                    <Stack direction="row" spacing={1}>
-                      <TextField
-                        fullWidth
-                        placeholder="e.g. GSS"
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#1976d2',
-                            },
-                          },
-                        }}
-                      />
-                      <Button>Check</Button>
-                    </Stack>
-                  </Box>
-                </Stack>
-              </Box>
-
-              {/* RIGHT */}
-              <Box sx={{ flex: 1 }}>
-                <Stack spacing={2}>
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      Category
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      select
-                      defaultValue=""
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
-                          },
-                        },
-                      }}
-                    >
-                      <MenuItem value="">Select School Category</MenuItem>
-                      <MenuItem value="primary">Primary</MenuItem>
-                      <MenuItem value="secondary">Secondary</MenuItem>
-                    </TextField>
-                  </Box>
-
-                  <Box>
-                    <Typography fontSize={14} mb={0.5}>
-                      Address
-                    </Typography>
-                    {/* <TextField fullWidth multiline rows={2} /> */}
-                    <TextField
-                      fullWidth
-                      placeholder="Enter school address"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Stack>
-              </Box>
-            </Box>
+            <Stack spacing={2} flex={1}>
+              <TextField label="Category" value={tenantData?.schoolType || ''} fullWidth />
+              <TextField label="Address" value={tenantData?.address || ''} />
+            </Stack>
           </Box>
         </Box>
       </Card>
 
-      {/* ADMINISTRATIVE ACCOUNTS */}
-      <Card sx={{ p: 0, borderRadius: 0 }}>
-        <Box
-          sx={{
-            px: 3,
-            py: 1.5,
-            bgcolor: '#f5f5f5',
-            borderBottom: '1px solid #e0e0e0',
-          }}
-        >
+      <Card>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5' }}>
           <Typography fontWeight={600}>Administrative Accounts</Typography>
         </Box>
 
-        <Box sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 2,
-              flexWrap: 'wrap',
-            }}
-          >
-            {['School Owner Detail', 'School Head Detail', 'Portal Admin'].map((title, index) => (
+        <Box sx={{ p: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {adminList.map((item) => {
+            const admin = item.data || {};
+
+            return (
               <Box
-                key={title}
+                key={item.title}
                 sx={{
                   flex: '1 1 300px',
-                  minWidth: 260,
                   p: 2,
                   borderRadius: 2,
                   bgcolor: 'white',
                   boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
-                  transition: 'transform 0.3s, box-shadow 0.3s',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+
                   '&:hover': {
-                    transform: 'scale(1.05)',
-                    boxShadow: '0px 10px 20px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-6px)',
+                    boxShadow: '0px 12px 28px rgba(0,0,0,0.18)',
                   },
                 }}
               >
-                <Typography fontWeight={600} mb={1}>
-                  {title}
-                </Typography>
-
-                <Divider sx={{ mb: 2 }} />
+                <Typography fontWeight={600}>{item.title}</Typography>
+                <Divider sx={{ my: 2 }} />
 
                 <Stack spacing={1.5}>
-                  <TextField
-                    placeholder="Surname"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
-                        },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="First Name"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
-                        },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Other Name"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
-                        },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Phone"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
-                        },
-                      },
-                    }}
-                  />
-                  <TextField
-                    placeholder="Email"
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#1976d2',
-                        },
-                      },
-                    }}
-                  />
+                  <TextField label="Surname" value={admin.lastName || ''} />
+                  <TextField label="First Name" value={admin.firstName || ''} />
+                  <TextField label="Other Name" value={admin.otherName || ''} />
+                  <TextField label="Phone" value={admin.phone || ''} />
+                  <TextField label="Email" value={admin.email || ''} />
                 </Stack>
               </Box>
-            ))}
-          </Box>
+            );
+          })}
         </Box>
       </Card>
 
       <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button variant="contained" color="primary" onClick={() => navigate('/complete-setup')}>
-          Save & Continue
+        <Button
+          variant="contained"
+          onClick={handleSaveAndContinue}
+          disabled={isButtonDisabled || saving}
+        >
+          {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
     </Box>

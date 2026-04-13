@@ -31,6 +31,8 @@ import {
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
 import ParentCard from '../../components/shared/ParentCard';
+import FilterSideDrawer from '../../components/shared/FilterSideDrawer';
+import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import PermissionAttachmentModal from 'src/components/alc-manager/components/PermissionAttachmentModal';
 import ViewPermissionModal from 'src/components/alc-manager/components/ViewPermissionModal';
 import NewRoleModal from 'src/components/alc-manager/components/NewRoleModal';
@@ -57,10 +59,26 @@ const AlcManager = () => {
   const [permissionsToView, setPermissionsToView] = useState([]);
   const [allPermissions, setAllPermissions] = useState([]);
 
-  const [roleType, setRoleType] = useState('');
   const [totalRoles, setTotalRoles] = useState(0);
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
+
+  const alcFilterDefs = [
+    { key: 'name', label: 'Role Name', type: 'text', placeholder: 'Search by role name…' },
+    // {
+    //   key: 'guard_name',
+    //   label: 'Guard',
+    //   type: 'select',
+    //   options: [
+    //     { value: 'web', label: 'Web' },
+    //     { value: 'api', label: 'API' },
+    //   ],
+    // },
+  ];
 
   const [newRoleForm, setNewRoleForm] = useState({
     roleName: '',
@@ -81,6 +99,7 @@ const AlcManager = () => {
       const res = await aclApi.getRoles({
         page: page + 1,
         per_page: rowsPerPage,
+        ...activeFilters,
       });
 
       const rolesArray = res?.data?.data ?? [];
@@ -99,7 +118,7 @@ const AlcManager = () => {
   useEffect(() => {
     fetchRoles();
     fetchAllPermissions();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, activeFilters]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -197,22 +216,19 @@ const AlcManager = () => {
     }
   };
 
-  const filteredRows = useMemo(() => {
-    if (!rows || !Array.isArray(rows)) return [];
+  const filteredRows = rows;
 
-    if (!roleType) return rows;
+  const handleFilterApply = (filterValues) => {
+    setActiveFilters(filterValues);
+    setPage(0); // Reset to first page when filters change
+  };
 
-    const term = roleType.toLowerCase();
-
-    return rows.filter((row) => row?.name?.toLowerCase()?.includes(term));
-  }, [rows, roleType]);
-
-  const resetFilters = () => {
-    setRoleType('');
+  const handleFilterReset = () => {
+    setActiveFilters({});
     setPage(0);
   };
 
-  const hasFilters = roleType !== '';
+  const hasFilters = activeFilterCount > 0;
 
   return (
     <PageContainer title="ACL Manager" description="Access Control List Management Dashboard">
@@ -256,32 +272,49 @@ const AlcManager = () => {
             </Box>
           }
         >
-          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-end' }}>
-            <TextField
-              placeholder="Search by role name"
-              value={roleType}
-              onChange={(e) => {
-                setRoleType(e.target.value);
-                setPage(0);
+          <Box
+            sx={{
+              mb: 2,
+              display: 'flex',
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Button
+              variant="outlined"
+              startIcon={<IconAdjustmentsHorizontal size={18} />}
+              onClick={() => setFilterDrawerOpen(true)}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 2.5,
+                borderColor: activeFilterCount > 0 ? '#3949ab' : 'divider',
+                color: activeFilterCount > 0 ? '#3949ab' : 'text.secondary',
+                fontWeight: activeFilterCount > 0 ? 700 : 400,
+                '&:hover': { borderColor: '#3949ab', color: '#fff' },
               }}
-              // sx={{ width: 400 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            {hasFilters && (
-              <Button
-                variant="outlined"
-                onClick={resetFilters}
-                sx={{ height: 'fit-content', mb: 0.5 }}
-              >
-                Clear Filters
-              </Button>
-            )}
+            >
+              Show Filters
+              {activeFilterCount > 0 && (
+                <Box
+                  component="span"
+                  sx={{
+                    ml: 1,
+                    px: 0.8,
+                    py: 0.1,
+                    bgcolor: '#3949ab',
+                    color: 'white',
+                    borderRadius: '10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {activeFilterCount}
+                </Box>
+              )}
+            </Button>
           </Box>
 
           <Paper variant="outlined">
@@ -402,6 +435,15 @@ const AlcManager = () => {
         formData={newRoleForm}
         onFieldChange={handleNewRoleFieldChange}
         onSave={handleCreateRole}
+      />
+
+      <FilterSideDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        filters={alcFilterDefs}
+        title="Filter Roles"
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
       />
     </PageContainer>
   );

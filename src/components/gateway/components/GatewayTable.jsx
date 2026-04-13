@@ -188,8 +188,8 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
                 gatewaysList.map((gateway, index) => (
                   <TableRow key={gateway.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{gateway.gateway_name}</TableCell>
-                    <TableCell>{gateway.code}</TableCell>
+                    <TableCell>{gateway.gateway_name || 'N/A'}</TableCell>
+                    <TableCell>{gateway.code || 'N/A'}</TableCell>
                     <TableCell>
                       <Chip
                         label={gateway.status?.toUpperCase() || 'N/A'}

@@ -14,9 +14,6 @@ export const validateTenantDomain = async (hostname = window.location.hostname) 
   }
 };
 
-
-
-
 export const getSetupStats = async () => {
   try {
     const res = await api.get('school_setup/stats');
@@ -25,7 +22,6 @@ export const getSetupStats = async () => {
     throw error.response?.data || error;
   }
 };
-
 
 export const getSetupStage = async () => {
   try {
@@ -36,11 +32,40 @@ export const getSetupStage = async () => {
   }
 };
 
-
 export const getClasses = async () => {
   try {
     const res = await api.get('school_setup/classes');
-    return res.data;
+    // The API returns school divisions with their classes nested
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getClassesWithDivisions = async () => {
+  try {
+    const res = await api.get('school_setup/classes');
+    const data = res.data?.data || res.data || [];
+
+    // If data contains divisions with classes, flatten it
+    const classes = [];
+    data.forEach((division) => {
+      if (division.classes && Array.isArray(division.classes)) {
+        division.classes.forEach((cls) => {
+          // Get arms data from the relationship (array of arms)
+          const arms = cls.arms && cls.arms.length > 0 ? cls.arms[0] : null;
+          classes.push({
+            ...cls,
+            division_name: division.div_name,
+            school_division_id: division.id,
+            no_of_arms: arms?.no_of_arms || 0,
+            arm_names: arms?.arm_names || [],
+          });
+        });
+      }
+    });
+
+    return classes.length > 0 ? classes : data;
   } catch (error) {
     throw error.response?.data || error;
   }

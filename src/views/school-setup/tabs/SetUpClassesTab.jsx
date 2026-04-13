@@ -92,44 +92,26 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
     setClasses((prev) =>
       prev.map((cls) => {
         if (cls.id === classId) {
-          const updatedArms = cls.arms.map((arm) => {
-            const generated = generateDefaultArmNames(arm.no_of_arms || 0);
-            return {
-              ...arm,
-              arm_names: JSON.stringify(generated),
-            };
-          });
-
-          return { ...cls, arms: updatedArms };
+          const defaultArms = generateDefaultArmNames(cls.no_of_arms || 0);
+          return { ...cls, arm_names: defaultArms };
         }
         return cls;
       }),
     );
-
     setHasChanges(true);
   };
 
-  const handleArmNameChange = (classId, armIndex, nameIndex, value) => {
+  const handleArmNameChange = (classId, armIndex, value) => {
     setClasses((prev) =>
       prev.map((cls) => {
         if (cls.id === classId) {
-          const updatedArms = [...cls.arms];
-
-          let parsed = [];
-          try {
-            parsed = JSON.parse(updatedArms[armIndex].arm_names);
-          } catch {}
-
-          parsed[nameIndex] = value;
-
-          updatedArms[armIndex].arm_names = JSON.stringify(parsed);
-
-          return { ...cls, arms: updatedArms };
+          const newArmNames = [...cls.arm_names];
+          newArmNames[armIndex] = value;
+          return { ...cls, arm_names: newArmNames };
         }
         return cls;
       }),
     );
-
     setHasChanges(true);
   };
 
@@ -355,35 +337,39 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                         flexWrap: 'wrap',
                       }}
                     >
-                      {classItem.arms && classItem.arms.length > 0 ? (
-                        classItem.arms.map((arm, armIndex) => {
-                          let parsedArmNames = [];
+                      {classItem.arm_names && classItem.arm_names.length > 0 ? (
+                        classItem.arm_names.map((armName, i) => (
+                          <TextField
+                            key={i}
+                            size="small"
+                            value={armName}
+                            onChange={(e) => handleArmNameChange(classItem.id, i, e.target.value)}
+                            sx={{
+                              width: 90,
 
-                          try {
-                            parsedArmNames = JSON.parse(arm.arm_names);
-                          } catch {
-                            parsedArmNames = [];
-                          }
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
 
-                          return (
-                            <Box key={arm.id || armIndex} sx={{ display: 'flex', gap: 1 }}>
-                              {parsedArmNames.map((name, i) => (
-                                <TextField
-                                  key={i}
-                                  size="small"
-                                  value={name}
-                                  onChange={(e) =>
-                                    handleArmNameChange(classItem.id, armIndex, i, e.target.value)
-                                  }
-                                  sx={{ width: 90 }}
-                                />
-                              ))}
-                            </Box>
-                          );
-                        })
+                                '& fieldset': {
+                                  borderColor: '#e5e7eb',
+                                },
+
+                                '&:hover fieldset': {
+                                  borderColor: '#cbd5e1',
+                                },
+
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#1976d2',
+                                  borderWidth: '2px',
+                                },
+                              },
+                            }}
+                          />
+                        ))
                       ) : (
                         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-                          No arms available
+                          Click Generate to create arms
                         </Typography>
                       )}
                     </Box>

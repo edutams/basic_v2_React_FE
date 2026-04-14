@@ -42,15 +42,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
   const handleSaveTeacher = (data) => {
     console.log('Saving teacher:', { ...data, class_name: selectedClass });
-    // TODO: Call API to save teacher
   };
 
-  // Fetch active classes from API
+  // Fetch active classes
   useEffect(() => {
     const fetchClasses = async () => {
       try {
         const data = await getClassesWithDivisions();
-        // Filter only active classes
         const activeClasses = (data || [])
           .filter((cls) => cls.status === 'active')
           .map((cls) => cls.class_name);
@@ -68,14 +66,12 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     setHasChanges(true);
   };
 
-  // Filter classes by search term
   const filteredClasses = useMemo(() => {
     return classes.filter((className) =>
       className.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [classes, searchTerm]);
 
-  // Paginate the filtered data
   const paginatedClasses = useMemo(() => {
     const start = page * rowsPerPage;
     return filteredClasses.slice(start, start + rowsPerPage);
@@ -100,7 +96,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
   return (
     <Box>
-      {/* Search Bar */}
       <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
         <TextField
           placeholder="Search classes..."

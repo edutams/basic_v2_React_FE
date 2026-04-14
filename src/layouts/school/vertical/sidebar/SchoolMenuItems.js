@@ -39,8 +39,8 @@ const SchoolMenuItems = [
     id: uniqueId(),
     title: 'ACL Manager',
     icon: IconUsers,
-    href: '/alc-manager',
-    permission: ['landlord.acl.index'],
+    href: '/acl-manager',
+    permission: ['api.v1.censis.acl.index'],
   },
   {
     id: uniqueId(),

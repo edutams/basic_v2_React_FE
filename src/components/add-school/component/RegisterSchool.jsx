@@ -25,8 +25,6 @@ import {
   updateSchool,
   getAllStates,
   getLgasByState,
-  getSchoolCategories,
-  getSchoolDivisions,
   createProspectiveTenant,
 } from '../../../context/AgentContext/services/school.service';
 import {
@@ -173,7 +171,6 @@ const RegisterSchoolForm = ({
 }) => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
-  const [availableDivisions, setAvailableDivisions] = useState([]);
   const [currentSession, setCurrentSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const notify = useNotification();
@@ -192,12 +189,6 @@ const RegisterSchoolForm = ({
     getAllStates()
       .then((d) => setStates(d || []))
       .catch(() => notify.error('Failed to load states'));
-  }, []);
-
-  useEffect(() => {
-    Promise.all([getSchoolCategories(), getSchoolDivisions()])
-      .then(([, divs]) => setAvailableDivisions(divs || []))
-      .catch(() => notify.error('Failed to load school metadata'));
   }, []);
 
   // Fetch current session on mount
@@ -687,8 +678,8 @@ const RegisterSchoolForm = ({
           {loading
             ? 'Processing...'
             : actionType === 'update'
-            ? 'Update School'
-            : 'Register School'}
+              ? 'Update School'
+              : 'Register School'}
         </Button>
       </Box>
     </Box>

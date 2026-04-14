@@ -60,15 +60,6 @@ export const deleteSchool = async (id) => {
     }
 };
 
-export const getSchoolCategories = async () => {
-    try {
-        const res = await api.get('/landlord/v1/get_school_categories');
-        return res.data?.data;
-    } catch (error) {
-        console.error('Error fetching school categories:', error);
-        throw error;
-    }
-};
 
 export const getSchoolDivisions = async () => {
     try {

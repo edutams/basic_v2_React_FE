@@ -42,7 +42,27 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
 
   const handleSaveLearner = (data) => {
     console.log('Saving learner:', { ...data, class_name: selectedClass });
-    // TODO: Call API to save learner
+  };
+
+  // Download template function
+  const handleDownloadTemplate = () => {
+    // Template headers as per user requirement
+    const headers = ['ADMISSION_ID', 'SURNAME', 'FIRSTNAME', 'OTHER_NAMES', 'SEX', 'DOB', 'ARM'];
+
+    // Create CSV content
+    const csvContent = headers.join(',') + '\n';
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'learner_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Fetch active classes from API
@@ -266,7 +286,12 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     align="center"
                   >
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                      <Button variant="outlined" size="small" startIcon={<span>↓</span>}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<span>↓</span>}
+                        onClick={handleDownloadTemplate}
+                      >
                         Download Template
                       </Button>
                       <Button variant="contained" size="small" startIcon={<span>↑</span>}>

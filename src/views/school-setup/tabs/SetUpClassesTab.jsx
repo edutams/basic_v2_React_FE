@@ -66,6 +66,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           ...cls,
           no_of_arms: cls.no_of_arms || 0,
           arm_names: cls.arm_names || [],
+          status: cls.status || 'active',
         }));
         setClasses(transformed);
       } catch (error) {
@@ -79,6 +80,19 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
   }, []);
 
   const handleChange = () => {
+    setHasChanges(true);
+  };
+
+  const handleToggleClassStatus = (classId) => {
+    setClasses((prev) =>
+      prev.map((cls) => {
+        if (cls.id === classId) {
+          const newStatus = cls.status === 'active' ? 'inactive' : 'active';
+          return { ...cls, status: newStatus };
+        }
+        return cls;
+      }),
+    );
     setHasChanges(true);
   };
 
@@ -134,14 +148,27 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       const classesData = classes.map((cls) => ({
         class_id: cls.id,
         class_name: cls.class_name,
-        status: 'active',
+        status: cls.status,
         no_of_arms: cls.no_of_arms || 0,
         arm_names: cls.arm_names || [],
       }));
 
       await saveClasses(classesData);
 
-      setNotification({ open: true, message: 'Classes saved successfully!', severity: 'success' });
+      // Check if any class was deactivated or reactivated
+      const hasDeactivated = classes.some((cls) => cls.status === 'inactive');
+      const hadActiveClasses = classes.some((cls) => cls.status === 'active');
+
+      let message = 'Classes saved successfully!';
+      if (hasDeactivated && hadActiveClasses) {
+        message = 'Classes updated - some classes deactivated!';
+      } else if (hasDeactivated) {
+        message = 'Classes deactivated successfully!';
+      } else if (hadActiveClasses) {
+        message = 'Classes activated successfully!';
+      }
+
+      setNotification({ open: true, message, severity: 'success' });
 
       // Move to next tab
       if (onSaveAndContinue) {
@@ -226,8 +253,9 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           {/* Body */}
           <TableBody>
             {paginatedClasses.map((classItem, index) => {
+              const isInactive = classItem.status === 'inactive';
               const isHighlighted = iconHovered === index || iconClicked === index;
-              const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
+              const cellBg = isInactive ? '#e0e0e0' : isHighlighted ? '#fbe4e4' : '#f6f7f9';
               const className = classItem.class_name || '';
 
               return (
@@ -249,22 +277,23 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                     >
                       <IconButton
                         size="small"
-                        color="error"
+                        color={isInactive ? 'success' : 'error'}
                         onMouseEnter={() => setIconHovered(index)}
                         onMouseLeave={() => setIconHovered(null)}
-                        onClick={() => setIconClicked(iconClicked === index ? null : index)}
+                        onClick={() => handleToggleClassStatus(classItem.id)}
                       >
-                        ✕
+                        {isInactive ? '✓' : '✕'}
                       </IconButton>
 
                       <TextField
                         size="small"
                         fullWidth
+                        disabled={isInactive}
                         defaultValue={className}
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#fff',
+                            backgroundColor: isInactive ? '#e0e0e0' : '#fff',
                             borderRadius: '8px',
 
                             '& fieldset': {
@@ -304,6 +333,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       <TextField
                         size="small"
                         type="number"
+                        disabled={isInactive}
                         value={classItem.no_of_arms || 0}
                         onChange={(e) => handleNoOfArmsChange(classItem.id, e.target.value)}
                         sx={{
@@ -331,6 +361,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       <Button
                         variant="contained"
                         size="small"
+                        disabled={isInactive}
                         onClick={() => handleGenerateArms(classItem.id)}
                       >
                         Generate
@@ -359,6 +390,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                           <TextField
                             key={i}
                             size="small"
+                            disabled={isInactive}
                             value={armName}
                             onChange={(e) => handleArmNameChange(classItem.id, i, e.target.value)}
                             sx={{

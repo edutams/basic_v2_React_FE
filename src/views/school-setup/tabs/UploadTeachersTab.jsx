@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -12,6 +12,7 @@ import {
   TextField,
   IconButton,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -19,6 +20,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
+import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
 
 const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
@@ -27,22 +29,27 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState([]);
 
-  // Sample data - in real app this would come from API
-  const allClasses = [
-    'JSS 1',
-    'JSS 2',
-    'JSS 3',
-    'SSS 1',
-    'SSS 2',
-    'SSS 3',
-    'Primary 1',
-    'Primary 2',
-    'Primary 3',
-    'Primary 4',
-    'Primary 5',
-    'Primary 6',
-  ];
+  // Fetch active classes from API
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const data = await getClassesWithDivisions();
+        // Filter only active classes
+        const activeClasses = (data || [])
+          .filter((cls) => cls.status === 'active')
+          .map((cls) => cls.class_name);
+        setClasses(activeClasses);
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   const handleChange = () => {
     setHasChanges(true);
@@ -50,10 +57,10 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
   // Filter classes by search term
   const filteredClasses = useMemo(() => {
-    return allClasses.filter((className) =>
+    return classes.filter((className) =>
       className.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-  }, [allClasses, searchTerm]);
+  }, [classes, searchTerm]);
 
   // Paginate the filtered data
   const paginatedClasses = useMemo(() => {
@@ -69,6 +76,14 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>

@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import AddLearnerModal from './AddLearnerModal';
 
 const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
@@ -31,6 +32,18 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState('');
+
+  const handleAddNewLearner = (className) => {
+    setSelectedClass(className);
+    setModalOpen(true);
+  };
+
+  const handleSaveLearner = (data) => {
+    console.log('Saving learner:', { ...data, class_name: selectedClass });
+    // TODO: Call API to save learner
+  };
 
   // Fetch active classes from API
   useEffect(() => {
@@ -196,7 +209,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                   >
                     <TextField
                       size="small"
-                      defaultValue="45"
+                      defaultValue="0"
                       sx={{
                         width: 70,
                         '& .MuiOutlinedInput-root': {
@@ -233,6 +246,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                       variant="contained"
                       size="small"
                       startIcon={<AddIcon />}
+                      onClick={() => handleAddNewLearner(item)}
                       sx={{
                         bgcolor: '#EDF3FF',
                         color: '#000000',
@@ -286,6 +300,13 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           Save & Continue
         </Button>
       </Box>
+
+      <AddLearnerModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveLearner}
+        className={selectedClass}
+      />
     </Box>
   );
 };

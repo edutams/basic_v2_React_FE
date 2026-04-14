@@ -114,13 +114,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           {/* Header */}
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>No. Uploaded</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%' }}>No. Uploaded</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Forms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '20%' }}>Upload Using Forms</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Excel File </TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '40%' }}>Upload Using Excel File </TableCell>
             </TableRow>
           </TableHead>
 
@@ -162,7 +162,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                         defaultValue={item}
                         onChange={handleChange}
                         sx={{
-                          width: 70,
+                          // width: 70,
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: '#fff',
                             borderRadius: '8px',

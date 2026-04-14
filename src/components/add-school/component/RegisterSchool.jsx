@@ -30,8 +30,8 @@ import {
   createProspectiveTenant,
 } from '../../../context/AgentContext/services/school.service';
 import {
-  getCurrentSession,
   getSessions,
+  getCurrentSessionForSelect,
 } from '../../../context/AgentContext/services/session.service';
 import useNotification from '../../../hooks/useNotification';
 
@@ -200,21 +200,9 @@ const RegisterSchoolForm = ({
       .catch(() => notify.error('Failed to load school metadata'));
   }, []);
 
-  const [allSessions, setAllSessions] = useState([]);
-
-  // Fetch all sessions for dropdown
-  useEffect(() => {
-    getSessions()
-      .then((res) => {
-        const sessions = res.data || res || [];
-        setAllSessions(sessions);
-      })
-      .catch(() => notify.error('Failed to load sessions'));
-  }, []);
-
   // Fetch current session on mount
   useEffect(() => {
-    getCurrentSession()
+    getCurrentSessionForSelect()
       .then((res) => {
         const session = res.data || res;
         setCurrentSession(session);
@@ -557,11 +545,11 @@ const RegisterSchoolForm = ({
               onChange={handleChange}
             >
               <MenuItem value="">-- Select Session --</MenuItem>
-              {allSessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.sesname} {s.is_current === 'yes' ? '(Current)' : ''}
+              {currentSession && (
+                <MenuItem key={currentSession.id} value={currentSession.id}>
+                  {currentSession.sesname} (Current)
                 </MenuItem>
-              ))}
+              )}
             </Select>
             {errors.session_id && <FormHelperText>{errors.session_id}</FormHelperText>}
           </FormControl>

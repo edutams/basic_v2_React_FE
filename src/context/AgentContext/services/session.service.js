@@ -62,3 +62,12 @@ export const getCurrentSession = async () => {
     throw error.response?.data || error;
   }
 };
+
+export const getCurrentSessionForSelect = async () => {
+  try {
+    const res = await api.get('/landlord/v1/calendar/sessions/current/for-select');
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

@@ -201,11 +201,11 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           {/* Header */}
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>No. of Arms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>No. of Arms</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Class Arm Names</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '50%' }}>Class Arm Names</TableCell>
             </TableRow>
           </TableHead>
 
@@ -223,6 +223,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -276,6 +277,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -328,6 +330,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box

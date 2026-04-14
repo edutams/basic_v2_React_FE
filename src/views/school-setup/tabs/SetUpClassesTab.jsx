@@ -134,7 +134,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       const classesData = classes.map((cls) => ({
         class_id: cls.id,
         class_name: cls.class_name,
-        is_active: true,
+        status: 'active',
         no_of_arms: cls.no_of_arms || 0,
         arm_names: cls.arm_names || [],
       }));

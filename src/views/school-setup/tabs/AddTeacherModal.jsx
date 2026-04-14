@@ -1,4 +1,5 @@
 import React from 'react';
+import { Typography } from '@mui/material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import TeacherForm from './TeacherForm';
 import PropTypes from 'prop-types';
@@ -21,13 +22,18 @@ const AddTeacherModal = ({ open, onClose, className, onSave, isLoading = false }
     onClose();
   };
 
+  // Custom title with className in primary color
+  const renderTitle = () => (
+    <>
+      Add New Teacher -{' '}
+      <Typography component="span" color="primary" fontWeight={600}>
+        {className}
+      </Typography>
+    </>
+  );
+
   return (
-    <ReusableModal
-      open={open}
-      onClose={onClose}
-      title={`${modalConfig.title} - ${className}`}
-      size={modalConfig.size}
-    >
+    <ReusableModal open={open} onClose={onClose} title={renderTitle()} size={modalConfig.size}>
       <TeacherForm
         key={className}
         className={className}

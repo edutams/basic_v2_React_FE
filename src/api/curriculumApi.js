@@ -60,3 +60,33 @@ export const fetchTerms = async (sessionId = null) => {
   const response = await api.get('/curriculum/terms/list', { params });
   return response.data;
 };
+
+// Fetch programmes
+export const fetchProgrammes = async () => {
+  const response = await api.get('/curriculum/programmes');
+  return response.data;
+};
+
+// Fetch subjects by curriculum
+export const fetchSubjects = async (curriculumId) => {
+  const response = await api.get(`/curriculum/subjects/${curriculumId}`);
+  return response.data;
+};
+
+// Create a new subject
+export const createSubjectRecord = async (data) => {
+  const response = await api.post('/curriculum/create_subject', data);
+  return response.data;
+};
+
+// Update an existing subject
+export const updateSubjectRecord = async (id, data) => {
+  const response = await api.put(`/curriculum/update_subject/${id}`, data);
+  return response.data;
+};
+
+// Delete a subject
+export const deleteSubjectRecord = async (id) => {
+  const response = await api.delete(`/curriculum/delete_subject/${id}`);
+  return response.data;
+};

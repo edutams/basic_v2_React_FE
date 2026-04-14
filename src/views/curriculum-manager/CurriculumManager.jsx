@@ -11,6 +11,11 @@ import {
   saveClassAssignments,
   fetchSessions,
   fetchTerms,
+  fetchProgrammes,
+  fetchSubjects,
+  createSubjectRecord,
+  updateSubjectRecord,
+  deleteSubjectRecord,
 } from '../../api/curriculumApi';
 import {
   Box,
@@ -59,8 +64,7 @@ const CurriculumManager = () => {
   const [tab, setTab] = useState(0);
 
   // Checkbox state for second tab
-  const [checkedCurriculum, setCheckedCurriculum] = useState([]);
-  const [selectAllCurriculum, setSelectAllCurriculum] = useState(false);
+  const [selectedSubjectBankCurriculum, setSelectedSubjectBankCurriculum] = useState('');
 
   const [program, setProgram] = useState('Junior Secondary');
   const [selectedClass, setSelectedClass] = useState(3);
@@ -68,11 +72,20 @@ const CurriculumManager = () => {
   // Data states
   const [curriculumData, setCurriculumData] = useState([]);
   const [classData, setClassData] = useState([]);
-  const [subjectData] = useState([
-    { id: 1, name: 'Mathematics', code: 'Math3023', program: 'JSS' },
-    { id: 2, name: 'English Language', code: 'Eng1023', program: 'JSS' },
-    { id: 3, name: 'Science', code: 'Sci2023', program: 'JSS' },
-  ]);
+  
+  // Subject Bank states
+  const [subjectsList, setSubjectsList] = useState([]);
+  const [programmesList, setProgrammesList] = useState([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [openAddSubjectModal, setOpenAddSubjectModal] = useState(false);
+  const [openEditSubjectModal, setOpenEditSubjectModal] = useState(false);
+  const [openDeleteSubjectDialog, setOpenDeleteSubjectDialog] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [subjectFormData, setSubjectFormData] = useState({
+    subject_name: '',
+    subject_code: '',
+    programme_id: '',
+  });
 
   // Sessions and Terms
   const [sessions, setSessions] = useState([]);
@@ -120,6 +133,39 @@ const CurriculumManager = () => {
     loadCurriculums();
     loadSessionsAndTerms();
   }, []);
+
+  useEffect(() => {
+    if (selectedSubjectBankCurriculum) {
+      loadSubjectsList();
+    } else {
+      setSubjectsList([]);
+    }
+  }, [selectedSubjectBankCurriculum]);
+
+  const loadProgrammes = async () => {
+    try {
+      const response = await fetchProgrammes();
+      if (response.status) {
+        setProgrammesList(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load programmes');
+    }
+  };
+
+  const loadSubjectsList = async () => {
+    try {
+      setLoadingSubjects(true);
+      const response = await fetchSubjects(selectedSubjectBankCurriculum);
+      if (response.status) {
+        setSubjectsList(response.data);
+      }
+    } catch (error) {
+      showSnackbar('Failed to load subjects for curriculum', 'error');
+    } finally {
+      setLoadingSubjects(false);
+    }
+  };
 
   // Load class assignments when session or term changes
   useEffect(() => {
@@ -314,22 +360,121 @@ const CurriculumManager = () => {
     }
   };
 
-  // Handle checkbox functions
-  const handleCurriculumCheck = (id) => {
-    const newChecked = checkedCurriculum.includes(id)
-      ? checkedCurriculum.filter((itemId) => itemId !== id)
-      : [...checkedCurriculum, id];
-    setCheckedCurriculum(newChecked);
-    setSelectAllCurriculum(newChecked.length === curriculumData.length);
+  // Add Subject Modal Handlers
+  const handleOpenAddSubjectModal = () => {
+    if (!selectedSubjectBankCurriculum) {
+      showSnackbar('Please select a curriculum first', 'error');
+      return;
+    }
+    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '' });
+    setOpenAddSubjectModal(true);
+    // Fetch programs when modal opens
+    if (programmesList.length === 0) {
+      loadProgrammes();
+    }
   };
 
-  const handleSelectAllCurriculum = () => {
-    if (selectAllCurriculum) {
-      setCheckedCurriculum([]);
-    } else {
-      setCheckedCurriculum(curriculumData.map((item) => item.id));
+  const handleCloseAddSubjectModal = () => {
+    setOpenAddSubjectModal(false);
+  };
+
+  const handleCreateSubject = async () => {
+    if (!subjectFormData.subject_name.trim() || !subjectFormData.programme_id) {
+      showSnackbar('Subject name and program are required', 'error');
+      return;
     }
-    setSelectAllCurriculum(!selectAllCurriculum);
+
+    try {
+      setLoading(true);
+      const dataToSubmit = {
+        ...subjectFormData,
+        curriculum_id: selectedSubjectBankCurriculum,
+      };
+      const response = await createSubjectRecord(dataToSubmit);
+      if (response.status) {
+        showSnackbar('Subject created successfully', 'success');
+        handleCloseAddSubjectModal();
+        loadSubjectsList();
+      } else {
+        showSnackbar(response.message || 'Failed to create subject', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to create subject', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Edit Subject Handlers
+  const handleOpenEditSubjectModal = (subject) => {
+    setSelectedSubject(subject);
+    setSubjectFormData({
+      subject_name: subject.subject_name,
+      subject_code: subject.subject_code || '',
+      programme_id: subject.programme_id || '',
+    });
+    setOpenEditSubjectModal(true);
+    if (programmesList.length === 0) {
+      loadProgrammes();
+    }
+  };
+
+  const handleCloseEditSubjectModal = () => {
+    setOpenEditSubjectModal(false);
+    setSelectedSubject(null);
+    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '' });
+  };
+
+  const handleUpdateSubject = async () => {
+    if (!subjectFormData.subject_name.trim() || !subjectFormData.programme_id) {
+      showSnackbar('Subject name and program are required', 'error');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await updateSubjectRecord(selectedSubject.id, subjectFormData);
+      if (response.status) {
+        showSnackbar('Subject updated successfully', 'success');
+        handleCloseEditSubjectModal();
+        loadSubjectsList();
+      } else {
+        showSnackbar(response.message || 'Failed to update subject', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to update subject', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete Subject Handlers
+  const handleOpenDeleteSubjectDialog = (subject) => {
+    setSelectedSubject(subject);
+    setOpenDeleteSubjectDialog(true);
+  };
+
+  const handleCloseDeleteSubjectDialog = () => {
+    setOpenDeleteSubjectDialog(false);
+    setSelectedSubject(null);
+  };
+
+  const handleDeleteSubject = async () => {
+    try {
+      setLoading(true);
+      const response = await deleteSubjectRecord(selectedSubject.id);
+      if (response.status) {
+        showSnackbar('Subject deleted successfully', 'success');
+        handleCloseDeleteSubjectDialog();
+        loadSubjectsList();
+      } else {
+        showSnackbar(response.message || 'Failed to delete subject', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to delete subject', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle class curriculum assignment change
@@ -647,29 +792,21 @@ const CurriculumManager = () => {
                     <Table sx={{ tableLayout: 'fixed' }}>
                       <TableHead>
                         <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                          <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>
-                            <Checkbox
-                              checked={selectAllCurriculum}
-                              onChange={handleSelectAllCurriculum}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
+                          <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
                             Curriculum Name
                           </TableCell>
                           <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold', width: '20%' }}>
-                            Actions
-                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {curriculumData.map((item, i) => (
                           <TableRow key={item.id} hover>
                             <TableCell>
-                              <Checkbox
+                              <Radio
                                 size="small"
-                                checked={checkedCurriculum.includes(item.id)}
-                                onChange={() => handleCurriculumCheck(item.id)}
+                                checked={selectedSubjectBankCurriculum === item.id}
+                                onChange={() => setSelectedSubjectBankCurriculum(item.id)}
                               />
                             </TableCell>
                             <TableCell>
@@ -695,11 +832,6 @@ const CurriculumManager = () => {
                                 }}
                               />
                             </TableCell>
-                            <TableCell align="center">
-                              <IconButton size="small">
-                                <MoreVertIcon />
-                              </IconButton>
-                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -714,7 +846,7 @@ const CurriculumManager = () => {
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Subject Bank
                       </Typography>
-                      <Button variant="contained">Add Subject</Button>
+                      <Button variant="contained" onClick={handleOpenAddSubjectModal}>Add Subject</Button>
                     </Box>
                   }
                 >
@@ -730,67 +862,36 @@ const CurriculumManager = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {subjectData.map((item, i) => (
-                          <TableRow key={item.id} hover>
-                            <TableCell>{i + 1}</TableCell>
-                            <TableCell>
-                              <Box
-                                sx={{
-                                  px: 2,
-                                  py: 0.5,
-                                  bgcolor: '#f5f7fa',
-                                  borderRadius: 2,
-                                  display: 'inline-block',
-                                }}
-                              >
-                                {item.name}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Box
-                                sx={{
-                                  px: 2,
-                                  py: 0.5,
-                                  bgcolor: '#eef2f7',
-                                  borderRadius: 2,
-                                  fontWeight: 600,
-                                  display: 'inline-block',
-                                }}
-                              >
-                                {item.code}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Box
-                                sx={{
-                                  px: 2,
-                                  py: 0.5,
-                                  bgcolor: '#f5f7fa',
-                                  borderRadius: 2,
-                                  display: 'inline-block',
-                                }}
-                              >
-                                {item.program}
-                              </Box>
-                            </TableCell>
-                            <TableCell align="right">
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'flex-end',
-                                  gap: 1,
-                                }}
-                              >
-                                <IconButton size="small" sx={{ color: '#3b82f6' }}>
-                                  ✏️
-                                </IconButton>
-                                <IconButton size="small" sx={{ color: '#ef4444' }}>
-                                  🗑️
-                                </IconButton>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {loadingSubjects ? (
+                           <TableRow><TableCell colSpan={5} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                        ) : subjectsList.length > 0 ? (
+                           subjectsList.map((item, i) => (
+                             <TableRow key={item.id} hover>
+                               <TableCell>{i + 1}</TableCell>
+                               <TableCell>
+                                 <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.subject_name}</Box>
+                               </TableCell>
+                               <TableCell>
+                                 <Box sx={{ px: 2, py: 0.5, bgcolor: '#eef2f7', borderRadius: 2, fontWeight: 600, display: 'inline-block' }}>{item.subject_code || '-'}</Box>
+                               </TableCell>
+                               <TableCell>
+                                 <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.program_name}</Box>
+                               </TableCell>
+                               <TableCell align="right">
+                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                   <IconButton size="small" sx={{ color: '#3b82f6' }} onClick={() => handleOpenEditSubjectModal(item)}>
+                                     <IconEdit size={16} />
+                                   </IconButton>
+                                   <IconButton size="small" sx={{ color: '#ef4444' }} onClick={() => handleOpenDeleteSubjectDialog(item)}>
+                                     <IconTrash size={16} />
+                                   </IconButton>
+                                 </Box>
+                               </TableCell>
+                             </TableRow>
+                           ))
+                        ) : (
+                           <TableRow><TableCell colSpan={5} align="center"><Typography color="textSecondary">No subjects found. Please select a curriculum or add a subject.</Typography></TableCell></TableRow>
+                        )}
                       </TableBody>
                     </Table>
                   </TableContainer>
@@ -1083,6 +1184,114 @@ const CurriculumManager = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+      {/* Add Subject Modal */}
+      <Dialog open={openAddSubjectModal} onClose={handleCloseAddSubjectModal} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Subject</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Subject Name"
+              value={subjectFormData.subject_name}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
+              margin="normal"
+              required
+            />
+            
+            <TextField
+              fullWidth
+              label="Subject Code"
+              value={subjectFormData.subject_code}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })}
+              margin="normal"
+            />
+
+            <Select
+              fullWidth
+              value={subjectFormData.programme_id}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })}
+              displayEmpty
+              margin="normal"
+            >
+              <MenuItem value="" disabled>Select Program</MenuItem>
+              {programmesList.map((prog) => (
+                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddSubjectModal}>Cancel</Button>
+          <Button onClick={handleCreateSubject} variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Save Subject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Subject Modal */}
+      <Dialog open={openEditSubjectModal} onClose={handleCloseEditSubjectModal} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Subject</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <TextField
+              fullWidth
+              label="Subject Name"
+              value={subjectFormData.subject_name}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
+              margin="normal"
+              required
+            />
+            
+            <TextField
+              fullWidth
+              label="Subject Code"
+              value={subjectFormData.subject_code}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })}
+              margin="normal"
+            />
+
+            <Select
+              fullWidth
+              value={subjectFormData.programme_id}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })}
+              displayEmpty
+              margin="normal"
+            >
+              <MenuItem value="" disabled>Select Program</MenuItem>
+              {programmesList.map((prog) => (
+                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+              ))}
+            </Select>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditSubjectModal}>Cancel</Button>
+          <Button onClick={handleUpdateSubject} variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Update Subject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Subject Dialog */}
+      <Dialog open={openDeleteSubjectDialog} onClose={handleCloseDeleteSubjectDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Delete Subject</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be undone.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
+          <Button
+            onClick={handleDeleteSubject}
+            variant="contained"
+            color="error"
+            disabled={loading}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

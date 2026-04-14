@@ -29,6 +29,10 @@ import {
   getSchoolDivisions,
   createProspectiveTenant,
 } from '../../../context/AgentContext/services/school.service';
+import {
+  getCurrentSession,
+  getSessions,
+} from '../../../context/AgentContext/services/session.service';
 import useNotification from '../../../hooks/useNotification';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -51,6 +55,7 @@ const emptyForm = () => ({
   lga_id: '',
   school_type: '',
   school_divisions: [],
+  session_id: '',
   headcolor: 'bg-night-sky text-lighter',
   sidecolor: 'bg-dark text-lighter',
   bodycolor: 'null',
@@ -81,6 +86,7 @@ const fromSelected = (s) => {
           })()
       : '',
     school_divisions: s.school_divisions?.map((d) => d.id ?? d) || [],
+    session_id: s.session_id || '',
     headcolor: s.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: s.color?.sidecolor || 'bg-dark text-lighter',
     bodycolor: s.color?.bodycolor || 'null',
@@ -168,6 +174,7 @@ const RegisterSchoolForm = ({
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
   const [availableDivisions, setAvailableDivisions] = useState([]);
+  const [currentSession, setCurrentSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const notify = useNotification();
 
@@ -191,6 +198,32 @@ const RegisterSchoolForm = ({
     Promise.all([getSchoolCategories(), getSchoolDivisions()])
       .then(([, divs]) => setAvailableDivisions(divs || []))
       .catch(() => notify.error('Failed to load school metadata'));
+  }, []);
+
+  const [allSessions, setAllSessions] = useState([]);
+
+  // Fetch all sessions for dropdown
+  useEffect(() => {
+    getSessions()
+      .then((res) => {
+        const sessions = res.data || res || [];
+        setAllSessions(sessions);
+      })
+      .catch(() => notify.error('Failed to load sessions'));
+  }, []);
+
+  // Fetch current session on mount
+  useEffect(() => {
+    getCurrentSession()
+      .then((res) => {
+        const session = res.data || res;
+        setCurrentSession(session);
+        // Only prefill if user hasn't selected anything yet
+        if (!formData.session_id && session?.id) {
+          setFormData((prev) => ({ ...prev, session_id: session.id }));
+        }
+      })
+      .catch(() => notify.error('Failed to load current session'));
   }, []);
 
   useEffect(() => {
@@ -256,6 +289,7 @@ const RegisterSchoolForm = ({
     if (!formData.address.trim()) e.address = 'Address is required';
     if (!formData.state_id) e.state_id = 'State is required';
     if (!formData.lga_id) e.lga_id = 'LGA is required';
+    if (!formData.session_id) e.session_id = 'Session is required';
     if (!formData.school_type || !formData.school_type.length)
       e.school_type = 'School type is required';
     // If secondary is selected without specific levels, add a warning or treat as valid
@@ -355,6 +389,7 @@ const RegisterSchoolForm = ({
         lga_id: formData.lga_id,
         school_type: formData.school_type,
         school_divisions: formData.school_divisions,
+        session_id: formData.session_id,
         administrator_info,
       };
 
@@ -511,11 +546,32 @@ const RegisterSchoolForm = ({
           />
         </Grid>
 
+        {/* Session Selection */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.session_id)}>
+            <InputLabel>Session</InputLabel>
+            <Select
+              name="session_id"
+              value={formData.session_id}
+              label="Session"
+              onChange={handleChange}
+            >
+              <MenuItem value="">-- Select Session --</MenuItem>
+              {allSessions.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.sesname} {s.is_current === 'yes' ? '(Current)' : ''}
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.session_id && <FormHelperText>{errors.session_id}</FormHelperText>}
+          </FormControl>
+        </Grid>
+
         {/* ── School Owner ─────────────────────────────────────────────── */}
         <Grid size={{ xs: 12, md: 12 }}>
           <Box sx={{ p: 2, bgcolor: '#F1F8E9', borderRadius: 1, border: '1px solid #DCEDC8' }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#33691E' }}>
-              School Owner Details
+              School Ownerdd Details
             </Typography>
             <PersonFields
               section="owner"

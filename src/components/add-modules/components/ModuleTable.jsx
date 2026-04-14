@@ -11,38 +11,47 @@ import {
   TableFooter,
   TablePagination,
   Paper,
-  TextField,
-  InputAdornment,
   IconButton,
   Menu,
   MenuItem,
   Chip,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
   CircularProgress,
   Alert,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import ParentCard from '../../shared/ParentCard';
+import FilterSideDrawer from '../../shared/FilterSideDrawer';
 import PropTypes from 'prop-types';
 import moduleApi from '../../../api/moduleApi';
 
 const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedModule, setSelectedModule] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [moduleList, setModuleList] = useState(modules);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [totalCount, setTotalCount] = useState(0);
+
+  const moduleFilterDefs = [
+    { key: 'search', label: 'Module Name', type: 'text', placeholder: 'Search by module name…' },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
 
   const fetchModules = useCallback(async () => {
     setIsLoading(true);
@@ -50,27 +59,39 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
       const response = await moduleApi.getTenantModules({
         page: page + 1,
         limit: rowsPerPage,
-        search: searchTerm,
-        status: statusFilter === 'all' ? '' : statusFilter,
+        search: activeFilters.search || '',
+        status: activeFilters.status || '',
       });
+
+      console.log('🔍 Module API Response:', response);
 
       if (Array.isArray(response.data)) {
         setModuleList(response.data);
+        setTotalCount(response.total || response.data.length);
       } else if (response.data && Array.isArray(response.data.modules)) {
         setModuleList(response.data.modules);
+        setTotalCount(response.total || response.data.modules.length);
       } else if (response.data && Array.isArray(response.data.data)) {
         setModuleList(response.data.data);
+        setTotalCount(response.total || response.data.data.length);
+      } else if (Array.isArray(response)) {
+        // Direct array response
+        setModuleList(response);
+        setTotalCount(response.length);
       } else {
+        console.warn('⚠️ Unexpected response structure:', response);
         setModuleList([]);
+        setTotalCount(0);
       }
     } catch (error) {
-      console.error('Error fetching tenant modules:', error);
+      console.error('❌ Error fetching tenant modules:', error);
       // Fallback to prop modules if API fails
       setModuleList(modules);
+      setTotalCount(modules.length);
     } finally {
       setIsLoading(false);
     }
-  }, [page, rowsPerPage, searchTerm, statusFilter, modules]);
+  }, [page, rowsPerPage, activeFilters, modules]);
 
   useEffect(() => {
     fetchModules();
@@ -82,27 +103,6 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
     }
   }, [modules, isLoading]);
 
-  const filteredModules = useMemo(() => {
-    return moduleList.filter((module) => {
-      const name = module.module_name || module.mod_name || '';
-      const description = module.module_description || module.mod_description || '';
-      const status = module.module_status || module.mod_status || '';
-
-      const matchesSearch =
-        name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        description.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus = statusFilter === 'all' || status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [moduleList, searchTerm, statusFilter]);
-
-  const paginatedModules = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredModules.slice(start, start + rowsPerPage);
-  }, [filteredModules, page, rowsPerPage]);
-
   const handleMenuOpen = (event, module) => {
     setAnchorEl(event.currentTarget);
     setSelectedModule(module);
@@ -112,6 +112,18 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
     setAnchorEl(null);
     setSelectedModule(null);
   };
+
+  const handleFilterApply = (filterValues) => {
+    setActiveFilters(filterValues);
+    setPage(0);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+    setPage(0);
+  };
+
+  const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
 
   const handleAction = async (action, module) => {
     try {
@@ -145,20 +157,12 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
     handleMenuClose();
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setPage(0);
-  };
-
-  const hasActiveFilters = searchTerm !== '' || statusFilter !== 'all';
-
   return (
     <ParentCard
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h5">Manage Modules</Typography>
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             onClick={() => onModuleAction('create')}
@@ -168,53 +172,44 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
             }}
           >
             Add New Module
-          </Button>
+          </Button> */}
         </Box>
       }
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-          <TextField
-            placeholder="Search modules..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            // sx={{ flexGrow: 1, minWidth: 250 }}
-          />
-
-          <FormControl sx={{ minWidth: 120 }} size="small">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              displayEmpty
-              startAdornment={<FilterListIcon sx={{ mr: 1 }} />}
-              renderValue={
-                statusFilter !== ''
-                  ? undefined
-                  : () => <span style={{ color: '#aaa' }}>Select Status</span>
-              }
-            >
-              <MenuItem value="">Select Status</MenuItem>
-              <MenuItem value="all">All Status</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
-
-          {hasActiveFilters && (
-            <Button variant="outlined" onClick={clearFilters} sx={{ whiteSpace: 'nowrap' }}>
-              Clear Filters
-            </Button>
-          )}
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            onClick={() => setFilterDrawerOpen(true)}
+            sx={{ minWidth: 140 }}
+          >
+            Show Filters
+            {activeFilterCount > 0 && (
+              <Chip
+                label={activeFilterCount}
+                size="small"
+                color="primary"
+                sx={{
+                  ml: 1,
+                  height: 20,
+                  minWidth: 20,
+                  fontSize: '0.75rem',
+                }}
+              />
+            )}
+          </Button>
         </Box>
+
+        {/* Filter Side Drawer */}
+        <FilterSideDrawer
+          open={filterDrawerOpen}
+          onClose={() => setFilterDrawerOpen(false)}
+          filters={moduleFilterDefs}
+          title="Filter Modules"
+          onApply={handleFilterApply}
+          onReset={handleFilterReset}
+        />
 
         <Paper variant="outlined">
           <TableContainer>
@@ -239,8 +234,8 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                       <CircularProgress size={40} />
                     </TableCell>
                   </TableRow>
-                ) : paginatedModules.length > 0 ? (
-                  paginatedModules.map((module, index) => (
+                ) : moduleList.length > 0 ? (
+                  moduleList.map((module, index) => (
                     <TableRow hover key={module.id || index}>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
@@ -332,7 +327,9 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                         }}
                       >
                         <Typography variant="body1" color="textSecondary">
-                          {hasActiveFilters ? 'No modules match your filters' : 'No modules found'}
+                          {activeFilterCount > 0
+                            ? 'No modules match your filters'
+                            : 'No modules found'}
                         </Typography>
                       </Alert>
                     </TableCell>
@@ -344,7 +341,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25, 50]}
                     colSpan={7}
-                    count={filteredModules.length}
+                    count={totalCount}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}

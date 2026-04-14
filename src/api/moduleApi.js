@@ -52,7 +52,9 @@ const moduleApi = {
    * @param {number|string} id - Module ID
    */
   activateModule: async (id) => {
-    const response = await api.put(`/landlord/v1/edu_tier/modules/activate_module_tenants/${id}`, { module_status: 'active' });
+    const response = await api.put(`/landlord/v1/edu_tier/modules/activate_module_tenants/${id}`, {
+      module_status: 'active',
+    });
     return response.data.data;
   },
 
@@ -61,7 +63,10 @@ const moduleApi = {
    * @param {number|string} id - Module ID
    */
   deactivateModule: async (id) => {
-    const response = await api.put(`/landlord/v1/edu_tier/plan_modules/deactivate_module_tenants/${id}`, { module_status: 'inactive' });
+    const response = await api.put(
+      `/landlord/v1/edu_tier/plan_modules/deactivate_module_tenants/${id}`,
+      { module_status: 'inactive' },
+    );
     return response.data.data;
   },
 
@@ -78,7 +83,9 @@ const moduleApi = {
    * @param {number|string} packageId - Package ID
    */
   getPackageModules: async (packageId) => {
-    const response = await api.get(`/landlord/v1/edu_tier/modules/${packageId}/get_package_modules`);
+    const response = await api.get(
+      `/landlord/v1/edu_tier/modules/${packageId}/get_package_modules`,
+    );
     return response.data.data;
   },
 
@@ -122,7 +129,7 @@ const moduleApi = {
    */
   getTenantModules: async (params) => {
     const response = await api.get('/landlord/v1/edu_tier/modules/get_modules', { params });
-    return response.data.data;
+    return response.data; // Return full response to handle data structure in component
   },
 
   /**
@@ -167,7 +174,9 @@ const moduleApi = {
    * @param {number|string} id - Tenant Module ID
    */
   activateTenantModule: async (id) => {
-    const response = await api.put(`/landlord/v1/edu_tier/modules/${id}`, { module_status: 'active' });
+    const response = await api.put(`/landlord/v1/edu_tier/modules/${id}`, {
+      module_status: 'active',
+    });
     return response.data.data;
   },
 
@@ -176,7 +185,9 @@ const moduleApi = {
    * @param {number|string} id - Tenant Module ID
    */
   deactivateTenantModule: async (id) => {
-    const response = await api.put(`/landlord/v1/edu_tier/modules/${id}`, { module_status: 'inactive' });
+    const response = await api.put(`/landlord/v1/edu_tier/modules/${id}`, {
+      module_status: 'inactive',
+    });
     return response.data.data;
   },
 

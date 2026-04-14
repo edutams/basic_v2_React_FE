@@ -14,6 +14,8 @@ import {
   Button,
   CircularProgress,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
@@ -32,6 +34,11 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   // Default arm letters generator
   const generateDefaultArmNames = (count) => {
@@ -99,6 +106,11 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       }),
     );
     setHasChanges(true);
+    setNotification({
+      open: true,
+      message: 'Class arm names generated successfully!',
+      severity: 'success',
+    });
   };
 
   const handleArmNameChange = (classId, armIndex, value) => {
@@ -128,6 +140,8 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       }));
 
       await saveClasses(classesData);
+
+      setNotification({ open: true, message: 'Classes saved successfully!', severity: 'success' });
 
       // Move to next tab
       if (onSaveAndContinue) {
@@ -407,6 +421,23 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

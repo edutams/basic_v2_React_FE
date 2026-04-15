@@ -14,7 +14,7 @@ const getModalConfig = (actionType) => {
   return configs[actionType] || configs.create;
 };
 
-const AddLearnerModal = ({ open, onClose, className, onSave, isLoading = false }) => {
+const AddLearnerModal = ({ open, onClose, classId, className, onSave, isLoading = false }) => {
   const modalConfig = getModalConfig('create');
 
   const handleSubmit = async (values) => {
@@ -35,7 +35,8 @@ const AddLearnerModal = ({ open, onClose, className, onSave, isLoading = false }
   return (
     <ReusableModal open={open} onClose={onClose} title={renderTitle()} size={modalConfig.size}>
       <LearnerForm
-        key={className}
+        key={classId}
+        classId={classId}
         className={className}
         onSubmit={handleSubmit}
         onCancel={onClose}
@@ -49,6 +50,7 @@ const AddLearnerModal = ({ open, onClose, className, onSave, isLoading = false }
 AddLearnerModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  classId: PropTypes.number,
   className: PropTypes.string,
   onSave: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,

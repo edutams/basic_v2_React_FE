@@ -21,6 +21,7 @@ import {
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import api from '../../../api/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 
 const UploadLearnersTab = ({ onSaveAndContinue }) => {
@@ -33,10 +34,10 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedClass, setSelectedClass] = useState(null);
 
-  const handleAddNewLearner = (className) => {
-    setSelectedClass(className);
+  const handleAddNewLearner = (classItem) => {
+    setSelectedClass(classItem);
     setModalOpen(true);
   };
 
@@ -44,25 +45,26 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     console.log('Saving learner:', { ...data, class_name: selectedClass });
   };
 
-  // Download template function
-  const handleDownloadTemplate = () => {
-    // Template headers as per user requirement
-    const headers = ['ADMISSION_ID', 'SURNAME', 'FIRSTNAME', 'OTHER_NAMES', 'SEX', 'DOB', 'ARM'];
+  // Download template function - calls backend API
+  const handleDownloadTemplate = async (classId) => {
+    try {
+      const response = await api.get('school_setup/learner_template', {
+        params: { class_id: classId },
+        responseType: 'blob',
+      });
 
-    // Create CSV content
-    const csvContent = headers.join(',') + '\n';
-
-    // Create blob and download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'learner_template.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // Create blob and download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'learner_upload_template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download template:', error);
+    }
   };
 
   // Fetch active classes
@@ -70,9 +72,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     const fetchClasses = async () => {
       try {
         const data = await getClassesWithDivisions();
-        const activeClasses = (data || [])
-          .filter((cls) => cls.status === 'active')
-          .map((cls) => cls.class_name);
+        const activeClasses = (data || []).filter((cls) => cls.status === 'active');
         setClasses(activeClasses);
       } catch (error) {
         console.error('Failed to fetch classes:', error);
@@ -88,8 +88,8 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   };
 
   const filteredClasses = useMemo(() => {
-    return classes.filter((className) =>
-      className.toLowerCase().includes(searchTerm.toLowerCase()),
+    return classes.filter((cls) =>
+      cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [classes, searchTerm]);
 
@@ -156,6 +156,8 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           {/* Body */}
           <TableBody>
             {paginatedClasses.map((item, index) => {
+              // console.log(item);
+
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
@@ -187,10 +189,9 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
 
                       <TextField
                         size="small"
-                        defaultValue={item}
+                        defaultValue={item.class_name}
                         onChange={handleChange}
                         sx={{
-                          // width: 100,
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: '#fff',
                             borderRadius: '8px',
@@ -285,7 +286,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                         variant="outlined"
                         size="small"
                         startIcon={<span>↓</span>}
-                        onClick={handleDownloadTemplate}
+                        onClick={() => handleDownloadTemplate(item.id)}
                       >
                         Download Template
                       </Button>
@@ -325,7 +326,8 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveLearner}
-        className={selectedClass}
+        classId={selectedClass?.id}
+        className={selectedClass?.class_name}
       />
     </Box>
   );

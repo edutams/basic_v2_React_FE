@@ -5,34 +5,45 @@ import PropTypes from 'prop-types';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import {
+  getClassArms,
+  getClassesWithDivisions,
+} from '../../../context/TenantContext/services/tenant.service';
 
 const LearnerForm = ({
   initialValues = {
-    admission_id: '',
+    learner_id: '',
+    class_id: '',
+    class_arm_id: '',
     surname: '',
     first_name: '',
     other_name: '',
     gender: '',
     date_of_birth: null,
-    arm: '',
   },
+  classId,
   className,
   onSubmit,
   onCancel,
   submitText = 'Save',
   isLoading = false,
 }) => {
-  const [arms, setArms] = useState([]);
+  const [classArms, setClassArms] = useState([]);
 
   useEffect(() => {
     const fetchArms = async () => {
-      if (className) {
+      if (classId) {
         try {
-          const data = await getClassesWithDivisions();
-          const cls = (data || []).find((c) => c.class_name === className);
-          if (cls && cls.arm_names) {
-            setArms(cls.arm_names);
+          // Get class arm details from getClassesWithDivisions
+          const data = await getClassArms(classId);
+          // Convert classId to number for comparison (API might return string IDs)
+          const classIdNum = Number(classId);
+          // const cls = (data || []).find((c) => Number(c.id) === classIdNum);
+          console.log('Class ID:', classId, 'Converted:', classIdNum);
+          console.log('Class found:', cls);
+          console.log('Arms:', cls?.arms);
+          if (cls && cls.arms) {
+            setClassArms(cls.arms);
           }
         } catch (error) {
           console.error('Failed to fetch arms:', error);
@@ -40,7 +51,7 @@ const LearnerForm = ({
       }
     };
     fetchArms();
-  }, [className]);
+  }, [classId]);
 
   const formik = useFormik({
     initialValues,
@@ -49,30 +60,28 @@ const LearnerForm = ({
   });
 
   const isValid =
-    formik.values.admission_id &&
     formik.values.surname &&
     formik.values.first_name &&
     formik.values.gender &&
-    formik.values.arm;
+    formik.values.class_arm_id;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box component="form" onSubmit={formik.handleSubmit}>
         <Box sx={{ mb: 3 }}>
           <TextField
-            label="Admission ID"
-            name="admission_id"
-            value={formik.values.admission_id || ''}
+            label="Learner ID"
+            name="learner_id"
+            value={formik.values.learner_id || ''}
             onChange={formik.handleChange}
             fullWidth
-            required
           />
         </Box>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
             <TextField
-              label="Surname"
+              label="Last Name"
               name="surname"
               value={formik.values.surname || ''}
               onChange={formik.handleChange}
@@ -95,9 +104,9 @@ const LearnerForm = ({
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
           <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
             <TextField
-              label="Other Name"
-              name="other_name"
-              value={formik.values.other_name || ''}
+              label="Middle Name"
+              name="middle_name"
+              value={formik.values.middle_name || ''}
               onChange={formik.handleChange}
               fullWidth
             />
@@ -137,15 +146,15 @@ const LearnerForm = ({
             <FormControl fullWidth>
               <InputLabel>Arm</InputLabel>
               <Select
-                name="arm"
-                value={formik.values.arm || ''}
+                name="class_arm_id"
+                value={formik.values.class_arm_id || ''}
                 onChange={formik.handleChange}
                 displayEmpty
                 label="Arm"
               >
-                {arms.map((arm, index) => (
-                  <MenuItem key={index} value={arm}>
-                    {arm}
+                {classArms.map((arm) => (
+                  <MenuItem key={arm.id} value={arm.id}>
+                    {arm.arm_names || `Arm ${arm.id}`}
                   </MenuItem>
                 ))}
               </Select>
@@ -168,6 +177,7 @@ const LearnerForm = ({
 
 LearnerForm.propTypes = {
   initialValues: PropTypes.object,
+  classId: PropTypes.number,
   className: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,

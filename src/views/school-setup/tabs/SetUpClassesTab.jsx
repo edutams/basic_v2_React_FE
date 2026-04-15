@@ -56,7 +56,6 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
     return letters;
   };
 
-  // Fetch classes from API
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -64,8 +63,9 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
         // Transform API data to include local state for arms
         const transformed = (data || []).map((cls) => ({
           ...cls,
-          no_of_arms: cls.no_of_arms || 0,
-          arm_names: cls.arm_names || [],
+          no_of_arms: cls.class_arms?.length || cls.no_of_arms || 0,
+          arm_names: cls.class_arms?.map((a) => a.arm_names) || [],
+          arms: cls.arms || [],
           status: cls.status || 'active',
         }));
         setClasses(transformed);

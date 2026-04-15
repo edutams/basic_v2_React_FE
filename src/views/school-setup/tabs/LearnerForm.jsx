@@ -151,7 +151,7 @@ const LearnerForm = ({
               >
                 {classArms.map((arm) => (
                   <MenuItem key={arm.id} value={arm.id}>
-                    {arm.arm_name || arm.arm_names?.[0] || `Arm ${arm.id}`}
+                    {arm.arm_names || `Arm ${arm.id}`}
                   </MenuItem>
                 ))}
               </Select>

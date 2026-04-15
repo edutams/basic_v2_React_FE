@@ -64,7 +64,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
         const transformed = (data || []).map((cls) => ({
           ...cls,
           no_of_arms: cls.arms?.length || cls.no_of_arms || 0,
-          arm_names: cls.arms?.map((a) => a.arm_name) || cls.arm_names || [],
+          arm_names: cls.arms?.map((a) => a.arm_names) || [],
           arms: cls.arms || [],
           status: cls.status || 'active',
         }));

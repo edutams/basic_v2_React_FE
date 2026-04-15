@@ -52,10 +52,10 @@ export const getClassesWithDivisions = async () => {
     data.forEach((division) => {
       if (division.classes && Array.isArray(division.classes)) {
         division.classes.forEach((cls) => {
-          // Get arms data from the relationship (array of arms)
           const arms = cls.arms && cls.arms.length > 0 ? cls.arms[0] : null;
           classes.push({
             ...cls,
+            id: cls.id,
             division_name: division.div_name,
             school_division_id: division.id,
             no_of_arms: arms?.no_of_arms || 0,

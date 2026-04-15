@@ -16,7 +16,13 @@ import {
   createSubjectRecord,
   updateSubjectRecord,
   deleteSubjectRecord,
-} from '../../api/curriculumApi';
+  fetchClassSubjects,
+  addOrUpdateClassSubject,
+  fetchClassesByProgramme,
+  fetchAvailableCurriculumsForImport,
+  importAllCurriculums,
+  fetchAvailableSubjectsForClass,
+} from '../../api/tenantCurriculumApi';
 import {
   Box,
   Typography,
@@ -66,13 +72,43 @@ const CurriculumManager = () => {
   // Checkbox state for second tab
   const [selectedSubjectBankCurriculum, setSelectedSubjectBankCurriculum] = useState('');
 
-  const [program, setProgram] = useState('Junior Secondary');
-  const [selectedClass, setSelectedClass] = useState(3);
+  const [program, setProgram] = useState('');
+  const [selectedClass, setSelectedClass] = useState(null);
 
   // Data states
   const [curriculumData, setCurriculumData] = useState([]);
   const [classData, setClassData] = useState([]);
-  
+
+  // Class Subject tab states
+  const [classesForProgram, setClassesForProgram] = useState([]);
+  const [classSubjectsList, setClassSubjectsList] = useState([]);
+  const [loadingClassSubjects, setLoadingClassSubjects] = useState(false);
+
+  // Add Subject to Class modal
+  const [openAddSubjectToClassModal, setOpenAddSubjectToClassModal] = useState(false);
+  const [availableSubjectsForClass, setAvailableSubjectsForClass] = useState([]);
+  const [loadingAvailableSubjects, setLoadingAvailableSubjects] = useState(false);
+  const [addSubjectToClassForm, setAddSubjectToClassForm] = useState({
+    subject_id: '',
+    programme_id: '',
+    programme_subject_id: '',
+    status: 'compulsory',
+    unit: '',
+    pass_mark: '',
+  });
+
+  // Edit Class Subject modal
+  const [openEditClassSubjectModal, setOpenEditClassSubjectModal] = useState(false);
+  const [editClassSubjectForm, setEditClassSubjectForm] = useState({
+    class_subject_id: '',
+    subject_id: '',
+    subject_name: '',
+    programme_id: '',
+    status: 'compulsory',
+    unit: 1,
+    pass_mark: 50,
+  });
+
   // Subject Bank states
   const [subjectsList, setSubjectsList] = useState([]);
   const [programmesList, setProgrammesList] = useState([]);
@@ -85,6 +121,9 @@ const CurriculumManager = () => {
     subject_name: '',
     subject_code: '',
     programme_id: '',
+    unit: '',
+    pass_mark: 50,
+    status: 'compulsory',
   });
 
   // Sessions and Terms
@@ -97,6 +136,12 @@ const CurriculumManager = () => {
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openImportModal, setOpenImportModal] = useState(false);
+
+  // Import confirm dialog state
+  const [openImportConfirm, setOpenImportConfirm] = useState(false);
+  const [loadingImport, setLoadingImport] = useState(false);
+
   const [selectedCurriculum, setSelectedCurriculum] = useState(null);
 
   // Form states
@@ -147,9 +192,42 @@ const CurriculumManager = () => {
       const response = await fetchProgrammes();
       if (response.status) {
         setProgrammesList(response.data);
+        // Auto-select first programme
+        if (response.data.length > 0) {
+          setProgram(response.data[0].id);
+        }
       }
     } catch (error) {
       console.error('Failed to load programmes');
+    }
+  };
+
+  const loadClassesForProgram = async (programmeId) => {
+    try {
+      const response = await fetchClassesByProgramme(programmeId);
+      if (response.status) {
+        setClassesForProgram(response.data);
+        // Auto-select first class
+        if (response.data.length > 0) {
+          setSelectedClass(response.data[0].id);
+        }
+      }
+    } catch (error) {
+      showSnackbar('Failed to load classes for programme', 'error');
+    }
+  };
+
+  const loadClassSubjects = async (classId) => {
+    try {
+      setLoadingClassSubjects(true);
+      const response = await fetchClassSubjects(classId);
+      if (response.status) {
+        setClassSubjectsList(response.data);
+      }
+    } catch (error) {
+      showSnackbar('Failed to load class subjects', 'error');
+    } finally {
+      setLoadingClassSubjects(false);
     }
   };
 
@@ -174,11 +252,142 @@ const CurriculumManager = () => {
     }
   }, [selectedSession, selectedTerm]);
 
+  // Load programmes when Class Subject tab is accessed
+  useEffect(() => {
+    if (tab === 2 && programmesList.length === 0) {
+      loadProgrammes();
+    }
+  }, [tab]);
+
+  // Auto-select first curriculum when Subject Bank tab opens
+  useEffect(() => {
+    if (tab === 1 && curriculumData.length > 0 && !selectedSubjectBankCurriculum) {
+      setSelectedSubjectBankCurriculum(curriculumData[0].id);
+    }
+  }, [tab, curriculumData]);
+
+  // Load classes when program changes
+  useEffect(() => {
+    if (program) {
+      loadClassesForProgram(program);
+    }
+  }, [program]);
+
+  // Load class subjects when class is selected
+  useEffect(() => {
+    if (selectedClass) {
+      loadClassSubjects(selectedClass);
+    }
+  }, [selectedClass]);
+
   const handleTabChange = (e, newValue) => {
     setTab(newValue);
   };
 
-  // API Functions
+  // Add Subject to Class handlers
+  const handleOpenAddSubjectToClass = async () => {
+    if (!selectedClass) return;
+    try {
+      setLoadingAvailableSubjects(true);
+      setOpenAddSubjectToClassModal(true);
+      const response = await fetchAvailableSubjectsForClass(selectedClass);
+      if (response.status) {
+        setAvailableSubjectsForClass(response.data);
+      }
+    } catch (error) {
+      showSnackbar('Failed to load available subjects', 'error');
+    } finally {
+      setLoadingAvailableSubjects(false);
+    }
+  };
+
+  const handleCloseAddSubjectToClass = () => {
+    setOpenAddSubjectToClassModal(false);
+    setAvailableSubjectsForClass([]);
+    setAddSubjectToClassForm({ subject_id: '', programme_id: '', programme_subject_id: '', status: 'compulsory', unit: 1, pass_mark: 50 });
+  };
+
+  const handleSubjectToClassSelect = (subjectId) => {
+    const subject = availableSubjectsForClass.find((s) => s.id === subjectId);
+    if (subject) {
+      setAddSubjectToClassForm({
+        subject_id: subject.id,
+        programme_id: subject.programme_id,
+        programme_subject_id: subject.programme_subject_id,
+        status: subject.status || 'compulsory',
+        unit: subject.unit || 1,
+        pass_mark: subject.pass_mark || 50,
+      });
+    }
+  };
+
+  const handleSaveSubjectToClass = async () => {
+    if (!addSubjectToClassForm.subject_id) {
+      showSnackbar('Please select a subject', 'error');
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await addOrUpdateClassSubject({
+        class_id: selectedClass,
+        ...addSubjectToClassForm,
+      });
+      if (response.status) {
+        showSnackbar('Subject added to class successfully', 'success');
+        handleCloseAddSubjectToClass();
+        loadClassSubjects(selectedClass);
+      } else {
+        showSnackbar(response.message || 'Failed to add subject', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to add subject to class', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenEditClassSubject = (item) => {
+    setEditClassSubjectForm({
+      class_subject_id: item.class_subject_id,
+      subject_id: item.subject_id,
+      subject_name: item.subject_name,
+      programme_id: item.programme_id,
+      status: item.status,
+      unit: item.unit,
+      pass_mark: item.pass_mark,
+    });
+    setOpenEditClassSubjectModal(true);
+  };
+
+  const handleCloseEditClassSubject = () => {
+    setOpenEditClassSubjectModal(false);
+  };
+
+  const handleSaveEditClassSubject = async () => {
+    try {
+      setLoading(true);
+      const response = await addOrUpdateClassSubject({
+        class_id: selectedClass,
+        subject_id: editClassSubjectForm.subject_id,
+        programme_id: editClassSubjectForm.programme_id,
+        status: editClassSubjectForm.status,
+        unit: editClassSubjectForm.unit,
+        pass_mark: editClassSubjectForm.pass_mark,
+      });
+      if (response.status) {
+        showSnackbar('Class subject updated successfully', 'success');
+        handleCloseEditClassSubject();
+        loadClassSubjects(selectedClass);
+      } else {
+        showSnackbar(response.message || 'Failed to update', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to update class subject', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadCurriculums = async () => {
     try {
       setLoading(true);
@@ -331,6 +540,29 @@ const CurriculumManager = () => {
     }
   };
 
+  // Import Curriculum — confirm dialog
+  const handleOpenImportModal = () => setOpenImportConfirm(true);
+
+  const handleCloseImportModal = () => setOpenImportConfirm(false);
+
+  const handleImportCurriculum = async () => {
+    try {
+      setLoadingImport(true);
+      const response = await importAllCurriculums();
+      if (response.status) {
+        showSnackbar(response.message || 'Curriculums imported successfully', 'success');
+        handleCloseImportModal();
+        loadCurriculums();
+      } else {
+        showSnackbar(response.message || 'Failed to import curriculums', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to import curriculums', 'error');
+    } finally {
+      setLoadingImport(false);
+    }
+  };
+
   // Delete Curriculum
   const handleOpenDeleteDialog = (curriculum) => {
     setSelectedCurriculum(curriculum);
@@ -366,7 +598,7 @@ const CurriculumManager = () => {
       showSnackbar('Please select a curriculum first', 'error');
       return;
     }
-    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '' });
+    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '', unit: '', status: 'compulsory' });
     setOpenAddSubjectModal(true);
     // Fetch programs when modal opens
     if (programmesList.length === 0) {
@@ -412,6 +644,9 @@ const CurriculumManager = () => {
       subject_name: subject.subject_name,
       subject_code: subject.subject_code || '',
       programme_id: subject.programme_id || '',
+      unit: subject.unit ?? '',
+      pass_mark: subject.pass_mark ?? 50,
+      status: subject.prog_subject_status || 'compulsory',
     });
     setOpenEditSubjectModal(true);
     if (programmesList.length === 0) {
@@ -422,7 +657,7 @@ const CurriculumManager = () => {
   const handleCloseEditSubjectModal = () => {
     setOpenEditSubjectModal(false);
     setSelectedSubject(null);
-    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '' });
+    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '', unit: '', pass_mark: 50, status: 'compulsory' });
   };
 
   const handleUpdateSubject = async () => {
@@ -519,6 +754,36 @@ const CurriculumManager = () => {
     }
   };
 
+  // Handle class subject updates
+  const handleClassSubjectChange = async (subjectId, field, value) => {
+    try {
+      const subject = classSubjectsList.find(s => s.subject_id === subjectId);
+      if (!subject) return;
+
+      const dataToSubmit = {
+        class_id: selectedClass,
+        subject_id: subjectId,
+        programme_id: subject.programme_id,
+        status: field === 'status' ? value : subject.status,
+        unit: field === 'unit' ? value : subject.unit,
+        pass_mark: field === 'pass_mark' ? value : subject.pass_mark,
+      };
+
+      const response = await addOrUpdateClassSubject(dataToSubmit);
+      if (response.status) {
+        // Update local state
+        setClassSubjectsList(prev => prev.map(s =>
+          s.subject_id === subjectId ? { ...s, [field]: value, is_default: 0 } : s
+        ));
+        showSnackbar('Subject updated successfully', 'success');
+      } else {
+        showSnackbar(response.message || 'Failed to update subject', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to update subject', 'error');
+    }
+  };
+
   return (
     <PageContainer title="Curriculum Manager">
       <Breadcrumb title="Curriculum Manager" items={BCrumb} />
@@ -551,7 +816,9 @@ const CurriculumManager = () => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Typography variant="h5">Curriculum</Typography>
                       <Box display="flex" gap={1}>
-                        <Button variant="outlined">Import</Button>
+                        <Button variant="outlined" onClick={handleOpenImportModal}>
+                          Import
+                        </Button>
                         <Button variant="contained" onClick={handleOpenCreateModal}>
                           Create Curriculum
                         </Button>
@@ -564,12 +831,13 @@ const CurriculumManager = () => {
                       <Table sx={{ tableLayout: 'fixed' }}>
                         <TableHead>
                           <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>S/N</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
+                            <TableCell sx={{ fontWeight: 'bold', width: '8%' }}>S/N</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
                               Curriculum Name
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 'bold', width: '20%' }}>
+                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '17%' }}>Imported</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 'bold', width: '25%' }}>
                               Actions
                             </TableCell>
                           </TableRow>
@@ -577,7 +845,7 @@ const CurriculumManager = () => {
                         <TableBody>
                           {loading ? (
                             <TableRow>
-                              <TableCell colSpan={4} align="center">
+                              <TableCell colSpan={5} align="center">
                                 <CircularProgress size={24} />
                               </TableCell>
                             </TableRow>
@@ -608,6 +876,16 @@ const CurriculumManager = () => {
                                     }}
                                   />
                                 </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={item.agent_curriculum_id ? 'Yes' : 'No'}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: item.agent_curriculum_id ? '#dbeafe' : '#f3f4f6',
+                                      color: item.agent_curriculum_id ? '#1e40af' : '#6b7280',
+                                    }}
+                                  />
+                                </TableCell>
                                 <TableCell
                                   align="center"
                                   sx={{
@@ -635,7 +913,7 @@ const CurriculumManager = () => {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={4} align="center">
+                              <TableCell colSpan={5} align="center">
                                 <Typography color="textSecondary">No curriculums found</Typography>
                               </TableCell>
                             </TableRow>
@@ -854,43 +1132,47 @@ const CurriculumManager = () => {
                     <Table sx={{ tableLayout: 'fixed' }}>
                       <TableHead>
                         <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                          <TableCell width="10%">S/N</TableCell>
-                          <TableCell width="30%">Subject</TableCell>
-                          <TableCell width="25%">Subject Code</TableCell>
-                          <TableCell width="20%">Program</TableCell>
-                          <TableCell width="15%" />
+                          <TableCell width="8%">S/N</TableCell>
+                          <TableCell width="25%">Subject</TableCell>
+                          <TableCell width="18%">Subject Code</TableCell>
+                          <TableCell width="18%">Program</TableCell>
+                          <TableCell width="12%">Passmark</TableCell>
+                          <TableCell width="10%">Unit</TableCell>
+                          <TableCell width="9%" />
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {loadingSubjects ? (
-                           <TableRow><TableCell colSpan={5} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                          <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
                         ) : subjectsList.length > 0 ? (
-                           subjectsList.map((item, i) => (
-                             <TableRow key={item.id} hover>
-                               <TableCell>{i + 1}</TableCell>
-                               <TableCell>
-                                 <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.subject_name}</Box>
-                               </TableCell>
-                               <TableCell>
-                                 <Box sx={{ px: 2, py: 0.5, bgcolor: '#eef2f7', borderRadius: 2, fontWeight: 600, display: 'inline-block' }}>{item.subject_code || '-'}</Box>
-                               </TableCell>
-                               <TableCell>
-                                 <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.program_name}</Box>
-                               </TableCell>
-                               <TableCell align="right">
-                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                                   <IconButton size="small" sx={{ color: '#3b82f6' }} onClick={() => handleOpenEditSubjectModal(item)}>
-                                     <IconEdit size={16} />
-                                   </IconButton>
-                                   <IconButton size="small" sx={{ color: '#ef4444' }} onClick={() => handleOpenDeleteSubjectDialog(item)}>
-                                     <IconTrash size={16} />
-                                   </IconButton>
-                                 </Box>
-                               </TableCell>
-                             </TableRow>
-                           ))
+                          subjectsList.map((item, i) => (
+                            <TableRow key={item.id} hover>
+                              <TableCell>{i + 1}</TableCell>
+                              <TableCell>
+                                <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.subject_name}</Box>
+                              </TableCell>
+                              <TableCell>
+                                <Box sx={{ px: 2, py: 0.5, bgcolor: '#eef2f7', borderRadius: 2, fontWeight: 600, display: 'inline-block' }}>{item.subject_code || '-'}</Box>
+                              </TableCell>
+                              <TableCell>
+                                <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.program_name}</Box>
+                              </TableCell>
+                              <TableCell>{item.pass_mark ?? '-'}</TableCell>
+                              <TableCell>{item.unit ?? '-'}</TableCell>
+                              <TableCell align="right">
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                  <IconButton size="small" sx={{ color: '#3b82f6' }} onClick={() => handleOpenEditSubjectModal(item)}>
+                                    <IconEdit size={16} />
+                                  </IconButton>
+                                  <IconButton size="small" sx={{ color: '#ef4444' }} onClick={() => handleOpenDeleteSubjectDialog(item)}>
+                                    <IconTrash size={16} />
+                                  </IconButton>
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          ))
                         ) : (
-                           <TableRow><TableCell colSpan={5} align="center"><Typography color="textSecondary">No subjects found. Please select a curriculum or add a subject.</Typography></TableCell></TableRow>
+                          <TableRow><TableCell colSpan={7} align="center"><Typography color="textSecondary">No subjects found. Please select a curriculum or add a subject.</Typography></TableCell></TableRow>
                         )}
                       </TableBody>
                     </Table>
@@ -909,7 +1191,7 @@ const CurriculumManager = () => {
                 width: '100%',
               }}
             >
-              {/* LEFT: Classes */}
+              {/* LEFT: Program and Classes */}
               <Box sx={{ flex: { md: 4 }, width: '100%' }}>
                 <ParentCard
                   title={
@@ -917,10 +1199,15 @@ const CurriculumManager = () => {
                       size="small"
                       value={program}
                       onChange={(e) => setProgram(e.target.value)}
+                      displayEmpty
                       fullWidth
                     >
-                      <MenuItem value="Junior Secondary">Junior Secondary</MenuItem>
-                      <MenuItem value="Senior Secondary">Senior Secondary</MenuItem>
+                      <MenuItem value="" disabled>Select Program</MenuItem>
+                      {programmesList.map((prog) => (
+                        <MenuItem key={prog.id} value={prog.id}>
+                          {prog.programme_title || prog.programme_name}
+                        </MenuItem>
+                      ))}
                     </Select>
                   }
                 >
@@ -932,7 +1219,7 @@ const CurriculumManager = () => {
                       value={selectedClass}
                       onChange={(e) => setSelectedClass(Number(e.target.value))}
                     >
-                      {classes.map((cls) => (
+                      {classesForProgram.map((cls) => (
                         <Box
                           key={cls.id}
                           sx={{
@@ -947,7 +1234,7 @@ const CurriculumManager = () => {
                           <FormControlLabel
                             value={cls.id}
                             control={<Radio size="small" />}
-                            label={cls.name}
+                            label={cls.class_name}
                             sx={{ width: '100%' }}
                           />
                         </Box>
@@ -962,16 +1249,12 @@ const CurriculumManager = () => {
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Box display="flex" gap={1}>
-                        <TextField size="small" placeholder="Search" />
-                        <Select size="small" defaultValue="Curriculum">
-                          <MenuItem value="Curriculum">Curriculum</MenuItem>
-                        </Select>
-                        <Select size="small" defaultValue="Term">
-                          <MenuItem value="Term">Term</MenuItem>
-                        </Select>
-                      </Box>
-                      <Button variant="contained">Add Subject to Class</Button>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Class Subjects
+                      </Typography>
+                      <Button variant="contained" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
+                        Add Subject to Class
+                      </Button>
                     </Box>
                   }
                 >
@@ -981,106 +1264,59 @@ const CurriculumManager = () => {
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>S/N</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Subject</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>
-                              Passmark
-                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>Subject</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Passmark</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Unit</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }} align="center">
-                              Action
-                            </TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }} align="center">Action</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {subjects.map((item, i) => (
-                            <TableRow key={item.id} hover>
-                              <TableCell>{i + 1}</TableCell>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>
-                                <TextField size="small" value={item.passmark} />
-                              </TableCell>
-                              <TableCell>
-                                <TextField size="small" value={item.unit} />
-                              </TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={item.status}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: item.status === 'Compulsory' ? '#dcfce7' : '#fef3c7',
-                                    color: item.status === 'Compulsory' ? '#166534' : '#92400e',
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell align="center">
-                                <IconButton size="small">
-                                  <MoreVertIcon />
-                                </IconButton>
+                          {loadingClassSubjects ? (
+                            <TableRow>
+                              <TableCell colSpan={6} align="center">
+                                <CircularProgress size={24} />
                               </TableCell>
                             </TableRow>
-                          ))}
+                          ) : classSubjectsList.length > 0 ? (
+                            classSubjectsList.map((item, i) => (
+                              <TableRow key={item.subject_id} hover>
+                                <TableCell>{i + 1}</TableCell>
+                                <TableCell>{item.subject_name}</TableCell>
+                                <TableCell>{item.pass_mark}</TableCell>
+                                <TableCell>{item.unit}</TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={item.status}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: item.status === 'compulsory' ? '#dbeafe' : '#f3f4f6',
+                                      color: item.status === 'compulsory' ? '#1e40af' : '#6b7280',
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell align="center">
+                                  <IconButton size="small" onClick={() => handleOpenEditClassSubject(item)}>
+                                    <IconEdit size={16} />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={6} align="center">
+                                <Typography color="textSecondary">
+                                  {selectedClass ? 'No subjects found for this class' : 'Please select a class to view subjects'}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          )}
                         </TableBody>
                       </Table>
                     </TableContainer>
                   </Paper>
                 </ParentCard>
 
-                {/* SUBJECT GROUP */}
-                <Box mt={3}>
-                  <ParentCard
-                    title={
-                      <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <TextField size="small" placeholder="Search" />
-                        <Button variant="contained">Add Subject Group</Button>
-                      </Box>
-                    }
-                  >
-                    <Paper variant="outlined">
-                      <TableContainer>
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-                              <TableCell sx={{ fontWeight: 'bold' }}>Group Name</TableCell>
-                              <TableCell sx={{ fontWeight: 'bold' }}>Subject</TableCell>
-                              <TableCell sx={{ fontWeight: 'bold' }}>Passmark</TableCell>
-                              <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                Action
-                              </TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {subjectGroups.map((item, i) => (
-                              <TableRow key={item.id} hover>
-                                <TableCell>{i + 1}</TableCell>
-                                <TableCell>{item.groupName}</TableCell>
-                                <TableCell>{item.subject}</TableCell>
-                                <TableCell>{item.passmark}</TableCell>
-                                <TableCell>
-                                  <Chip
-                                    label={item.status}
-                                    size="small"
-                                    sx={{
-                                      bgcolor: item.status === 'Compulsory' ? '#dcfce7' : '#fef3c7',
-                                      color: item.status === 'Compulsory' ? '#166534' : '#92400e',
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell align="center">
-                                  <IconButton size="small">
-                                    <MoreVertIcon />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Paper>
-                  </ParentCard>
-                </Box>
               </Box>
             </Box>
           </TabPanel>
@@ -1197,7 +1433,7 @@ const CurriculumManager = () => {
               margin="normal"
               required
             />
-            
+
             <TextField
               fullWidth
               label="Subject Code"
@@ -1217,6 +1453,35 @@ const CurriculumManager = () => {
               {programmesList.map((prog) => (
                 <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
               ))}
+            </Select>
+
+            <TextField
+              fullWidth
+              label="Unit"
+              value={subjectFormData.unit}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, unit: e.target.value })}
+              margin="normal"
+              type="number"
+            />
+
+            <TextField
+              fullWidth
+              label="Pass Mark"
+              value={subjectFormData.pass_mark}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })}
+              margin="normal"
+              type="number"
+              inputProps={{ min: 0, max: 100 }}
+            />
+
+            <Select
+              fullWidth
+              value={subjectFormData.status}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, status: e.target.value })}
+              margin="normal"
+            >
+              <MenuItem value="compulsory">Compulsory</MenuItem>
+              <MenuItem value="optional">Optional</MenuItem>
             </Select>
           </Box>
         </DialogContent>
@@ -1241,7 +1506,7 @@ const CurriculumManager = () => {
               margin="normal"
               required
             />
-            
+
             <TextField
               fullWidth
               label="Subject Code"
@@ -1261,6 +1526,35 @@ const CurriculumManager = () => {
               {programmesList.map((prog) => (
                 <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
               ))}
+            </Select>
+
+            <TextField
+              fullWidth
+              label="Unit"
+              value={subjectFormData.unit}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, unit: e.target.value })}
+              margin="normal"
+              type="number"
+            />
+
+            <TextField
+              fullWidth
+              label="Pass Mark"
+              value={subjectFormData.pass_mark}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })}
+              margin="normal"
+              type="number"
+              inputProps={{ min: 0, max: 100 }}
+            />
+
+            <Select
+              fullWidth
+              value={subjectFormData.status}
+              onChange={(e) => setSubjectFormData({ ...subjectFormData, status: e.target.value })}
+              margin="normal"
+            >
+              <MenuItem value="compulsory">Compulsory</MenuItem>
+              <MenuItem value="optional">Optional</MenuItem>
             </Select>
           </Box>
         </DialogContent>
@@ -1289,6 +1583,135 @@ const CurriculumManager = () => {
             disabled={loading}
           >
             {loading ? <CircularProgress size={24} /> : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Subject to Class Modal */}
+      <Dialog open={openAddSubjectToClassModal} onClose={handleCloseAddSubjectToClass} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Subject to Class</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {loadingAvailableSubjects ? (
+              <Box display="flex" justifyContent="center" py={3}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <>
+                <Select
+                  fullWidth
+                  value={addSubjectToClassForm.subject_id}
+                  onChange={(e) => handleSubjectToClassSelect(e.target.value)}
+                  displayEmpty
+                  size="small"
+                >
+                  <MenuItem value="" disabled>Select Subject</MenuItem>
+                  {availableSubjectsForClass.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.subject_name}{s.subject_code ? ` (${s.subject_code})` : ''}
+                    </MenuItem>
+                  ))}
+                </Select>
+
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Pass Mark"
+                  type="number"
+                  value={addSubjectToClassForm.pass_mark}
+                  onChange={(e) => setAddSubjectToClassForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))}
+                  inputProps={{ min: 0, max: 100 }}
+                />
+
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Unit"
+                  type="number"
+                  value={addSubjectToClassForm.unit}
+                  onChange={(e) => setAddSubjectToClassForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))}
+                  inputProps={{ min: 1 }}
+                />
+
+                <Select
+                  fullWidth
+                  size="small"
+                  value={addSubjectToClassForm.status}
+                  onChange={(e) => setAddSubjectToClassForm((f) => ({ ...f, status: e.target.value }))}
+                >
+                  <MenuItem value="compulsory">Compulsory</MenuItem>
+                  <MenuItem value="optional">Optional</MenuItem>
+                </Select>
+              </>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddSubjectToClass}>Cancel</Button>
+          <Button onClick={handleSaveSubjectToClass} variant="contained" disabled={loading || loadingAvailableSubjects}>
+            {loading ? <CircularProgress size={24} /> : 'Add Subject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Class Subject Modal */}
+      <Dialog open={openEditClassSubjectModal} onClose={handleCloseEditClassSubject} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Class Subject — {editClassSubjectForm.subject_name}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Pass Mark"
+              type="number"
+              value={editClassSubjectForm.pass_mark}
+              onChange={(e) => setEditClassSubjectForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))}
+              inputProps={{ min: 0, max: 100 }}
+            />
+            <TextField
+              fullWidth
+              size="small"
+              label="Unit"
+              type="number"
+              value={editClassSubjectForm.unit}
+              onChange={(e) => setEditClassSubjectForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))}
+              inputProps={{ min: 1 }}
+            />
+            <Select
+              fullWidth
+              size="small"
+              value={editClassSubjectForm.status}
+              onChange={(e) => setEditClassSubjectForm((f) => ({ ...f, status: e.target.value }))}
+            >
+              <MenuItem value="compulsory">Compulsory</MenuItem>
+              <MenuItem value="optional">Optional</MenuItem>
+            </Select>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditClassSubject}>Cancel</Button>
+          <Button onClick={handleSaveEditClassSubject} variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Import Curriculum Confirm Dialog */}      <Dialog open={openImportConfirm} onClose={handleCloseImportModal} maxWidth="sm" fullWidth>
+        <DialogTitle>Import Curriculums</DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            This will import all available curriculums from the agent system into your school.
+            Already imported curriculums will be skipped. Are you sure you want to continue?
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseImportModal}>Cancel</Button>
+          <Button
+            onClick={handleImportCurriculum}
+            variant="contained"
+            disabled={loadingImport}
+          >
+            {loadingImport ? <CircularProgress size={24} /> : 'Yes, Import All'}
           </Button>
         </DialogActions>
       </Dialog>

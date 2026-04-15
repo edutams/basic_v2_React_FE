@@ -52,14 +52,32 @@ export const getClassesWithDivisions = async () => {
     data.forEach((division) => {
       if (division.classes && Array.isArray(division.classes)) {
         division.classes.forEach((cls) => {
-          const arms = cls.arms && cls.arms.length > 0 ? cls.arms[0] : null;
+          // Expand arms: each arm_name becomes a separate arm object
+          const expandedArms = [];
+          if (cls.arms && cls.arms.length > 0) {
+            const firstArm = cls.arms[0];
+            const armNames = firstArm.arm_names || [];
+            armNames.forEach((armName, index) => {
+              expandedArms.push({
+                id: `${cls.id}-arm-${index}`, // Create unique ID
+                class_id: cls.id,
+                no_of_arms: armNames.length,
+                arm_names: [armName], // Single arm name
+                order: index,
+                status: firstArm.status || 'active',
+                arm_name: armName, // For display convenience
+              });
+            });
+          }
+
           classes.push({
             ...cls,
             id: cls.id,
             division_name: division.div_name,
             school_division_id: division.id,
-            no_of_arms: arms?.no_of_arms || 0,
-            arm_names: arms?.arm_names || [],
+            no_of_arms: expandedArms.length || cls.no_of_arms || 0,
+            arms: expandedArms,
+            arm_names: expandedArms.map((a) => a.arm_name),
           });
         });
       }

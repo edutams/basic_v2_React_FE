@@ -34,10 +34,10 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedClass, setSelectedClass] = useState(null);
 
-  const handleAddNewLearner = (className) => {
-    setSelectedClass(className);
+  const handleAddNewLearner = (classItem) => {
+    setSelectedClass(classItem);
     setModalOpen(true);
   };
 
@@ -326,7 +326,8 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveLearner}
-        className={selectedClass}
+        classId={selectedClass?.id}
+        className={selectedClass?.class_name}
       />
     </Box>
   );

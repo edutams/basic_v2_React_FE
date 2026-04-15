@@ -9,30 +9,38 @@ import { getClassesWithDivisions } from '../../../context/TenantContext/services
 
 const LearnerForm = ({
   initialValues = {
-    admission_id: '',
+    learner_id: '',
+    class_id: '',
+    class_arm_id: '',
     surname: '',
     first_name: '',
     other_name: '',
     gender: '',
     date_of_birth: null,
-    arm: '',
   },
+  classId,
   className,
   onSubmit,
   onCancel,
   submitText = 'Save',
   isLoading = false,
 }) => {
-  const [arms, setArms] = useState([]);
+  const [classArms, setClassArms] = useState([]);
 
   useEffect(() => {
     const fetchArms = async () => {
-      if (className) {
+      if (classId) {
         try {
+          // Get class arm details from getClassesWithDivisions
           const data = await getClassesWithDivisions();
-          const cls = (data || []).find((c) => c.class_name === className);
-          if (cls && cls.arm_names) {
-            setArms(cls.arm_names);
+          // Convert classId to number for comparison (API might return string IDs)
+          const classIdNum = Number(classId);
+          const cls = (data || []).find((c) => Number(c.id) === classIdNum);
+          console.log('Class ID:', classId, 'Converted:', classIdNum);
+          console.log('Class found:', cls);
+          console.log('Arms:', cls?.arms);
+          if (cls && cls.arms) {
+            setClassArms(cls.arms);
           }
         } catch (error) {
           console.error('Failed to fetch arms:', error);
@@ -40,7 +48,7 @@ const LearnerForm = ({
       }
     };
     fetchArms();
-  }, [className]);
+  }, [classId]);
 
   const formik = useFormik({
     initialValues,
@@ -49,23 +57,21 @@ const LearnerForm = ({
   });
 
   const isValid =
-    formik.values.admission_id &&
     formik.values.surname &&
     formik.values.first_name &&
     formik.values.gender &&
-    formik.values.arm;
+    formik.values.class_arm_id;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box component="form" onSubmit={formik.handleSubmit}>
         <Box sx={{ mb: 3 }}>
           <TextField
-            label="Admission ID"
-            name="admission_id"
-            value={formik.values.admission_id || ''}
+            label="Learner ID"
+            name="learner_id"
+            value={formik.values.learner_id || ''}
             onChange={formik.handleChange}
             fullWidth
-            required
           />
         </Box>
 
@@ -137,15 +143,15 @@ const LearnerForm = ({
             <FormControl fullWidth>
               <InputLabel>Arm</InputLabel>
               <Select
-                name="arm"
-                value={formik.values.arm || ''}
+                name="class_arm_id"
+                value={formik.values.class_arm_id || ''}
                 onChange={formik.handleChange}
                 displayEmpty
                 label="Arm"
               >
-                {arms.map((arm, index) => (
-                  <MenuItem key={index} value={arm}>
-                    {arm}
+                {classArms.map((arm) => (
+                  <MenuItem key={arm.id} value={arm.id}>
+                    {arm.arm_name || arm.arm_names?.[0] || `Arm ${arm.id}`}
                   </MenuItem>
                 ))}
               </Select>
@@ -168,6 +174,7 @@ const LearnerForm = ({
 
 LearnerForm.propTypes = {
   initialValues: PropTypes.object,
+  classId: PropTypes.number,
   className: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,

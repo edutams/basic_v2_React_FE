@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -12,6 +12,7 @@ import {
   TextField,
   IconButton,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -19,6 +20,8 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
+import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import AddTeacherModal from './AddTeacherModal';
 
 const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
@@ -27,35 +30,48 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState('');
 
-  // Sample data - in real app this would come from API
-  const allClasses = [
-    'JSS 1',
-    'JSS 2',
-    'JSS 3',
-    'SSS 1',
-    'SSS 2',
-    'SSS 3',
-    'Primary 1',
-    'Primary 2',
-    'Primary 3',
-    'Primary 4',
-    'Primary 5',
-    'Primary 6',
-  ];
+  const handleAddNewTeacher = (className) => {
+    setSelectedClass(className);
+    setModalOpen(true);
+  };
+
+  const handleSaveTeacher = (data) => {
+    console.log('Saving teacher:', { ...data, class_name: selectedClass });
+  };
+
+  // Fetch active classes
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const data = await getClassesWithDivisions();
+        const activeClasses = (data || [])
+          .filter((cls) => cls.status === 'active')
+          .map((cls) => cls.class_name);
+        setClasses(activeClasses);
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   const handleChange = () => {
     setHasChanges(true);
   };
 
-  // Filter classes by search term
   const filteredClasses = useMemo(() => {
-    return allClasses.filter((className) =>
+    return classes.filter((className) =>
       className.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-  }, [allClasses, searchTerm]);
+  }, [classes, searchTerm]);
 
-  // Paginate the filtered data
   const paginatedClasses = useMemo(() => {
     const start = page * rowsPerPage;
     return filteredClasses.slice(start, start + rowsPerPage);
@@ -70,9 +86,16 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     setPage(0);
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box>
-      {/* Search Bar */}
       <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
         <TextField
           placeholder="Search classes..."
@@ -99,13 +122,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           {/* Header */}
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>No. Uploaded</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%' }}>No. Uploaded</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Forms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '20%' }}>Upload Using Forms</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Excel File </TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '40%' }}>Upload Using Excel File </TableCell>
             </TableRow>
           </TableHead>
 
@@ -147,7 +170,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                         defaultValue={item}
                         onChange={handleChange}
                         sx={{
-                          width: 70,
+                          // width: 70,
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: '#fff',
                             borderRadius: '8px',
@@ -218,6 +241,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                       variant="contained"
                       size="small"
                       startIcon={<AddIcon />}
+                      onClick={() => handleAddNewTeacher(item)}
                       sx={{
                         bgcolor: '#EDF3FF',
                         color: '#000000',
@@ -271,6 +295,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           Save & Continue
         </Button>
       </Box>
+
+      <AddTeacherModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveTeacher}
+        className={selectedClass}
+      />
     </Box>
   );
 };

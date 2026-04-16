@@ -14,6 +14,8 @@ import {
   Button,
   CircularProgress,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
@@ -32,6 +34,11 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   // Default arm letters generator
   const generateDefaultArmNames = (count) => {
@@ -49,7 +56,6 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
     return letters;
   };
 
-  // Fetch classes from API
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -57,8 +63,10 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
         // Transform API data to include local state for arms
         const transformed = (data || []).map((cls) => ({
           ...cls,
-          no_of_arms: cls.no_of_arms || 0,
-          arm_names: cls.arm_names || [],
+          no_of_arms: cls.class_arms?.length || cls.no_of_arms || 0,
+          arm_names: cls.class_arms?.map((a) => a.arm_names) || [],
+          arms: cls.arms || [],
+          status: cls.status || 'active',
         }));
         setClasses(transformed);
       } catch (error) {
@@ -72,6 +80,19 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
   }, []);
 
   const handleChange = () => {
+    setHasChanges(true);
+  };
+
+  const handleToggleClassStatus = (classId) => {
+    setClasses((prev) =>
+      prev.map((cls) => {
+        if (cls.id === classId) {
+          const newStatus = cls.status === 'active' ? 'inactive' : 'active';
+          return { ...cls, status: newStatus };
+        }
+        return cls;
+      }),
+    );
     setHasChanges(true);
   };
 
@@ -92,44 +113,31 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
     setClasses((prev) =>
       prev.map((cls) => {
         if (cls.id === classId) {
-          const updatedArms = cls.arms.map((arm) => {
-            const generated = generateDefaultArmNames(arm.no_of_arms || 0);
-            return {
-              ...arm,
-              arm_names: JSON.stringify(generated),
-            };
-          });
-
-          return { ...cls, arms: updatedArms };
+          const defaultArms = generateDefaultArmNames(cls.no_of_arms || 0);
+          return { ...cls, arm_names: defaultArms };
         }
         return cls;
       }),
     );
-
     setHasChanges(true);
+    setNotification({
+      open: true,
+      message: 'Class arm names generated successfully!',
+      severity: 'success',
+    });
   };
 
-  const handleArmNameChange = (classId, armIndex, nameIndex, value) => {
+  const handleArmNameChange = (classId, armIndex, value) => {
     setClasses((prev) =>
       prev.map((cls) => {
         if (cls.id === classId) {
-          const updatedArms = [...cls.arms];
-
-          let parsed = [];
-          try {
-            parsed = JSON.parse(updatedArms[armIndex].arm_names);
-          } catch {}
-
-          parsed[nameIndex] = value;
-
-          updatedArms[armIndex].arm_names = JSON.stringify(parsed);
-
-          return { ...cls, arms: updatedArms };
+          const newArmNames = [...cls.arm_names];
+          newArmNames[armIndex] = value;
+          return { ...cls, arm_names: newArmNames };
         }
         return cls;
       }),
     );
-
     setHasChanges(true);
   };
 
@@ -140,12 +148,27 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       const classesData = classes.map((cls) => ({
         class_id: cls.id,
         class_name: cls.class_name,
-        is_active: true,
+        status: cls.status,
         no_of_arms: cls.no_of_arms || 0,
         arm_names: cls.arm_names || [],
       }));
 
       await saveClasses(classesData);
+
+      // Check if any class was deactivated or reactivated
+      const hasDeactivated = classes.some((cls) => cls.status === 'inactive');
+      const hadActiveClasses = classes.some((cls) => cls.status === 'active');
+
+      let message = 'Classes saved successfully!';
+      if (hasDeactivated && hadActiveClasses) {
+        message = 'Classes updated - some classes deactivated!';
+      } else if (hasDeactivated) {
+        message = 'Classes deactivated successfully!';
+      } else if (hadActiveClasses) {
+        message = 'Classes activated successfully!';
+      }
+
+      setNotification({ open: true, message, severity: 'success' });
 
       // Move to next tab
       if (onSaveAndContinue) {
@@ -219,19 +242,20 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           {/* Header */}
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>No. of Arms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>No. of Arms</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Class Arm Names</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '50%' }}>Class Arm Names</TableCell>
             </TableRow>
           </TableHead>
 
           {/* Body */}
           <TableBody>
             {paginatedClasses.map((classItem, index) => {
+              const isInactive = classItem.status === 'inactive';
               const isHighlighted = iconHovered === index || iconClicked === index;
-              const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
+              const cellBg = isInactive ? '#e0e0e0' : isHighlighted ? '#fbe4e4' : '#f6f7f9';
               const className = classItem.class_name || '';
 
               return (
@@ -241,6 +265,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -252,22 +277,23 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                     >
                       <IconButton
                         size="small"
-                        color="error"
+                        color={isInactive ? 'success' : 'error'}
                         onMouseEnter={() => setIconHovered(index)}
                         onMouseLeave={() => setIconHovered(null)}
-                        onClick={() => setIconClicked(iconClicked === index ? null : index)}
+                        onClick={() => handleToggleClassStatus(classItem.id)}
                       >
-                        ✕
+                        {isInactive ? '✓' : '✕'}
                       </IconButton>
 
                       <TextField
                         size="small"
                         fullWidth
+                        disabled={isInactive}
                         defaultValue={className}
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#fff',
+                            backgroundColor: isInactive ? '#e0e0e0' : '#fff',
                             borderRadius: '8px',
 
                             '& fieldset': {
@@ -294,6 +320,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -306,6 +333,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       <TextField
                         size="small"
                         type="number"
+                        disabled={isInactive}
                         value={classItem.no_of_arms || 0}
                         onChange={(e) => handleNoOfArmsChange(classItem.id, e.target.value)}
                         sx={{
@@ -333,6 +361,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       <Button
                         variant="contained"
                         size="small"
+                        disabled={isInactive}
                         onClick={() => handleGenerateArms(classItem.id)}
                       >
                         Generate
@@ -346,6 +375,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -355,35 +385,40 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                         flexWrap: 'wrap',
                       }}
                     >
-                      {classItem.arms && classItem.arms.length > 0 ? (
-                        classItem.arms.map((arm, armIndex) => {
-                          let parsedArmNames = [];
+                      {classItem.arm_names && classItem.arm_names.length > 0 ? (
+                        classItem.arm_names.map((armName, i) => (
+                          <TextField
+                            key={i}
+                            size="small"
+                            disabled={isInactive}
+                            value={armName}
+                            onChange={(e) => handleArmNameChange(classItem.id, i, e.target.value)}
+                            sx={{
+                              width: 90,
 
-                          try {
-                            parsedArmNames = JSON.parse(arm.arm_names);
-                          } catch {
-                            parsedArmNames = [];
-                          }
+                              '& .MuiOutlinedInput-root': {
+                                backgroundColor: '#fff',
+                                borderRadius: '8px',
 
-                          return (
-                            <Box key={arm.id || armIndex} sx={{ display: 'flex', gap: 1 }}>
-                              {parsedArmNames.map((name, i) => (
-                                <TextField
-                                  key={i}
-                                  size="small"
-                                  value={name}
-                                  onChange={(e) =>
-                                    handleArmNameChange(classItem.id, armIndex, i, e.target.value)
-                                  }
-                                  sx={{ width: 90 }}
-                                />
-                              ))}
-                            </Box>
-                          );
-                        })
+                                '& fieldset': {
+                                  borderColor: '#e5e7eb',
+                                },
+
+                                '&:hover fieldset': {
+                                  borderColor: '#cbd5e1',
+                                },
+
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#1976d2',
+                                  borderWidth: '2px',
+                                },
+                              },
+                            }}
+                          />
+                        ))
                       ) : (
                         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-                          No arms available
+                          Click Generate to create arms
                         </Typography>
                       )}
                     </Box>
@@ -418,6 +453,23 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -12,6 +12,7 @@ import {
   TextField,
   IconButton,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -19,6 +20,9 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
+import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import api from '../../../api/tenant_api';
+import AddLearnerModal from './AddLearnerModal';
 
 const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
@@ -27,35 +31,68 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [classes, setClasses] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
 
-  // Sample data - in real app this would come from API
-  const allClasses = [
-    'JSS 1',
-    'JSS 2',
-    'JSS 3',
-    'SSS 1',
-    'SSS 2',
-    'SSS 3',
-    'Primary 1',
-    'Primary 2',
-    'Primary 3',
-    'Primary 4',
-    'Primary 5',
-    'Primary 6',
-  ];
+  const handleAddNewLearner = (classItem) => {
+    setSelectedClass(classItem);
+    setModalOpen(true);
+  };
+
+  const handleSaveLearner = (data) => {
+    console.log('Saving learner:', { ...data, class_name: selectedClass });
+  };
+
+  // Download template function - calls backend API
+  const handleDownloadTemplate = async (classId) => {
+    try {
+      const response = await api.get('school_setup/learner_template', {
+        params: { class_id: classId },
+        responseType: 'blob',
+      });
+
+      // Create blob and download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'learner_upload_template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download template:', error);
+    }
+  };
+
+  // Fetch active classes
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const data = await getClassesWithDivisions();
+        const activeClasses = (data || []).filter((cls) => cls.status === 'active');
+        setClasses(activeClasses);
+      } catch (error) {
+        console.error('Failed to fetch classes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClasses();
+  }, []);
 
   const handleChange = () => {
     setHasChanges(true);
   };
 
-  // Filter classes by search term
   const filteredClasses = useMemo(() => {
-    return allClasses.filter((className) =>
-      className.toLowerCase().includes(searchTerm.toLowerCase()),
+    return classes.filter((cls) =>
+      cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
-  }, [allClasses, searchTerm]);
+  }, [classes, searchTerm]);
 
-  // Paginate the filtered data
   const paginatedClasses = useMemo(() => {
     const start = page * rowsPerPage;
     return filteredClasses.slice(start, start + rowsPerPage);
@@ -70,9 +107,16 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     setPage(0);
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box>
-      {/* Search Bar */}
       <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
         <TextField
           placeholder="Search classes..."
@@ -99,25 +143,26 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           {/* Header */}
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>No. Uploaded</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%' }}>No. Uploaded</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Forms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '20%' }}>Upload Using Forms</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Excel File </TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '40%' }}>Upload Using Excel File </TableCell>
             </TableRow>
           </TableHead>
 
           {/* Body */}
           <TableBody>
             {paginatedClasses.map((item, index) => {
+              // console.log(item);
+
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
               return (
                 <TableRow key={index}>
-                  {/* Classes + cancel icon together */}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -144,10 +189,9 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
 
                       <TextField
                         size="small"
-                        defaultValue={item}
+                        defaultValue={item.class_name}
                         onChange={handleChange}
                         sx={{
-                          width: 70,
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: '#fff',
                             borderRadius: '8px',
@@ -181,7 +225,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                   >
                     <TextField
                       size="small"
-                      defaultValue="45"
+                      defaultValue="0"
                       sx={{
                         width: 70,
                         '& .MuiOutlinedInput-root': {
@@ -218,6 +262,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                       variant="contained"
                       size="small"
                       startIcon={<AddIcon />}
+                      onClick={() => handleAddNewLearner(item)}
                       sx={{
                         bgcolor: '#EDF3FF',
                         color: '#000000',
@@ -237,7 +282,12 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     align="center"
                   >
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                      <Button variant="outlined" size="small" startIcon={<span>↓</span>}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<span>↓</span>}
+                        onClick={() => handleDownloadTemplate(item.id)}
+                      >
                         Download Template
                       </Button>
                       <Button variant="contained" size="small" startIcon={<span>↑</span>}>
@@ -271,6 +321,14 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           Save & Continue
         </Button>
       </Box>
+
+      <AddLearnerModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveLearner}
+        classId={selectedClass?.id}
+        className={selectedClass?.class_name}
+      />
     </Box>
   );
 };

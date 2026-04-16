@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -16,7 +16,12 @@ import {
   Link,
   Typography,
 } from '@mui/material';
-import { Search as SearchIcon, Add as AddIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+  Add as AddIcon,
+} from '@mui/icons-material';
+import { IconDotsVertical } from '@tabler/icons-react';
 import {
   getClassesWithDivisions,
   createLearner,
@@ -39,47 +44,64 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [classesData, countsData] = await Promise.all([
-          getClassesWithDivisions(),
-          getStudentCountByClass(),
-        ]);
-        const activeClasses = (classesData || []).filter((cls) => cls.status === 'active');
-        setClasses(activeClasses);
-        const countsObj = {};
-        (countsData || []).forEach((item) => { countsObj[item.class_id] = item.count; });
-        setStudentCounts(countsObj);
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const [uploadClassId, setUploadClassId] = useState(null);
+  const fileInputRef = useRef(null);
 
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
     setModalOpen(true);
   };
 
-  const handleViewLearners = (classItem) => {
-    setSelectedClass(classItem);
-    setLearnerListModalOpen(true);
-  };
-
   const handleSaveLearner = async (data) => {
     try {
       await createLearner(data);
+      console.log('Learner saved successfully!');
+
       const countsData = await getStudentCountByClass();
       const countsObj = {};
-      (countsData || []).forEach((item) => { countsObj[item.class_id] = item.count; });
+      (countsData || []).forEach((item) => {
+        countsObj[item.class_id] = item.count;
+      });
       setStudentCounts(countsObj);
     } catch (error) {
       console.error('Failed to save learner:', error);
+    }
+  };
+
+  const handleUploadClick = (classId) => {
+    setUploadClassId(classId);
+    fileInputRef.current?.click();
+  };
+
+  const handleUploadTemplate = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('school_setup/learners', formData);
+
+      if (response.data.status) {
+        console.log('Learners uploaded successfully:', response.data.message);
+
+        // Refresh student counts
+        const countsData = await getStudentCountByClass();
+        const countsObj = {};
+        (countsData || []).forEach((item) => {
+          countsObj[item.class_id] = item.count;
+        });
+        setStudentCounts(countsObj);
+      } else {
+        console.error('Upload failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Failed to upload template:', error);
+    } finally {
+      // Reset file input
+      event.target.value = '';
+      setUploadClassId(null);
     }
   };
 
@@ -89,6 +111,8 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         params: { class_id: classId },
         responseType: 'blob',
       });
+
+      // Create blob and download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -102,53 +126,60 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     }
   };
 
-  const handleUploadTemplate = async (classId, file) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await api.post('school_setup/learners', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      if (response.data.status) {
-        alert(response.data.message);
-        const countsData = await getStudentCountByClass();
+  // Fetch active classes and student counts
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [classesData, countsData] = await Promise.all([
+          getClassesWithDivisions(),
+          getStudentCountByClass(),
+        ]);
+        const activeClasses = (classesData || []).filter((cls) => cls.status === 'active');
+        setClasses(activeClasses);
+
+        // Transform counts array - simple mapping by class_id
         const countsObj = {};
-        (countsData || []).forEach((item) => { countsObj[item.class_id] = item.count; });
+        (countsData || []).forEach((item) => {
+          countsObj[item.class_id] = item.count;
+        });
         setStudentCounts(countsObj);
-      } else {
-        alert(response.data.message || 'Upload failed');
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      alert('Failed to upload template');
-      console.error(error);
-    }
-  };
-
-  const handleUploadClick = (classId) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.xlsx,.xls';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) handleUploadTemplate(classId, file);
     };
-    input.click();
+    fetchData();
+  }, []);
+
+  const handleViewLearners = (classItem) => {
+    setSelectedClass(classItem);
+    setLearnerListModalOpen(true);
   };
 
-  const handleChange = () => setHasChanges(true);
+  const handleChange = () => {
+    setHasChanges(true);
+  };
 
-  const filteredClasses = useMemo(
-    () => classes.filter((cls) => cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase())),
-    [classes, searchTerm],
-  );
+  const filteredClasses = useMemo(() => {
+    return classes.filter((cls) =>
+      cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [classes, searchTerm]);
 
   const paginatedClasses = useMemo(() => {
     const start = page * rowsPerPage;
     return filteredClasses.slice(start, start + rowsPerPage);
   }, [filteredClasses, page, rowsPerPage]);
 
-  const handleChangePage = (_, newPage) => setPage(newPage);
-  const handleChangeRowsPerPage = (e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); };
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   if (loading) {
     return (
@@ -164,33 +195,61 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         <TextField
           placeholder="Search classes..."
           value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(0);
+          }}
           size="small"
           sx={{ width: 300 }}
-          InputProps={{ startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} /> }}
+          InputProps={{
+            startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
+          }}
         />
       </Box>
 
       <TableContainer>
-        <Table sx={{ borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
+        <Table
+          sx={{
+            borderCollapse: 'separate',
+            borderSpacing: '12px 10px',
+          }}
+        >
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
+
               <TableCell sx={{ fontWeight: 600, width: '15%' }}>No. Uploaded</TableCell>
+
               <TableCell sx={{ fontWeight: 600, width: '20%' }}>Upload Using Forms</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '40%' }}>Upload Using Excel File</TableCell>
+
+              <TableCell sx={{ fontWeight: 600, width: '40%' }}>Upload Using Excel File </TableCell>
             </TableRow>
           </TableHead>
 
+          {/* Body */}
           <TableBody>
             {paginatedClasses.map((item, index) => {
+              // console.log(item);
+
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
               return (
                 <TableRow key={index}>
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TableCell
+                    sx={{
+                      bgcolor: cellBg,
+                      borderRadius: 2,
+                      p: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
                       <IconButton
                         size="small"
                         color="error"
@@ -200,6 +259,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                       >
                         ✕
                       </IconButton>
+
                       <TextField
                         size="small"
                         defaultValue={item.class_name}
@@ -208,36 +268,73 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: '#fff',
                             borderRadius: '8px',
-                            '& fieldset': { borderColor: '#e5e7eb' },
-                            '&:hover fieldset': { borderColor: '#cbd5e1' },
-                            '&.Mui-focused fieldset': { borderColor: '#1976d2', borderWidth: '2px' },
+
+                            '& fieldset': {
+                              borderColor: '#e5e7eb',
+                            },
+
+                            '&:hover fieldset': {
+                              borderColor: '#cbd5e1',
+                            },
+
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#1976d2',
+                              borderWidth: '2px',
+                            },
                           },
                         }}
                       />
                     </Box>
                   </TableCell>
 
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
-                    <Typography variant="subtitle2" align="center">
-                      <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
-                        {studentCounts[item.id] || 0}
-                      </Link>
-                    </Typography>
+                  <TableCell
+                    sx={{
+                      bgcolor: cellBg,
+                      borderRadius: 2,
+                      p: 1,
+                    }}
+                    align="center"
+                  >
+                    <Box>
+                      <Typography variant="subtitle2" align="center">
+                        <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
+                          {studentCounts[item.id] || 0}
+                        </Link>
+                      </Typography>
+                    </Box>
                   </TableCell>
 
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
+                  <TableCell
+                    sx={{
+                      bgcolor: cellBg,
+                      borderRadius: 2,
+                      p: 1,
+                    }}
+                    align="center"
+                  >
                     <Button
                       variant="contained"
                       size="small"
                       startIcon={<AddIcon />}
                       onClick={() => handleAddNewLearner(item)}
-                      sx={{ bgcolor: '#EDF3FF', color: '#000000' }}
+                      sx={{
+                        bgcolor: '#EDF3FF',
+                        color: '#000000',
+                      }}
                     >
                       Add New Learner
                     </Button>
                   </TableCell>
 
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
+                  {/* Upload Using Excel File */}
+                  <TableCell
+                    sx={{
+                      bgcolor: cellBg,
+                      borderRadius: 2,
+                      p: 1,
+                    }}
+                    align="center"
+                  >
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                       <Button
                         variant="outlined"
@@ -276,6 +373,14 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           </TableFooter>
         </Table>
       </TableContainer>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".xlsx,.xls"
+        style={{ display: 'none' }}
+        onChange={handleUploadTemplate}
+      />
 
       <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>

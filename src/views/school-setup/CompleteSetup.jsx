@@ -267,38 +267,37 @@ const CompleteSetup = () => {
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab
+            icon={<IconCalendar size={18} />}
+            iconPosition="start"
+            label="Set Calendar"
+            onClick={() => setActiveTab(0)}
+          />
+          <Tab
             icon={<IconBooks size={18} />}
             iconPosition="start"
             label="Set-Up Classes"
-            onClick={() => setActiveTab(0)}
+            onClick={() => setActiveTab(1)}
           />
           <Tab
             icon={<IconUserPlus size={18} />}
             iconPosition="start"
             label="Upload Learners"
-            onClick={() => setActiveTab(1)}
+            onClick={() => setActiveTab(2)}
           />
           <Tab
             icon={<IconUsers size={18} />}
             iconPosition="start"
             label="Upload Teachers"
-            onClick={() => setActiveTab(2)}
-          />
-          <Tab
-            icon={<IconCalendar size={18} />}
-            iconPosition="start"
-            label="Set Calendar"
             onClick={() => setActiveTab(3)}
           />
         </Tabs>
       </Box>
 
-      {/* TAB CONTENT */}
       <ParentCard sx={{ p: 0 }}>
-        {activeTab === 0 && <SetUpClassesTab onSaveAndContinue={() => {}} />}
-        {activeTab === 1 && <UploadLearnersTab onSaveAndContinue={() => {}} />}
-        {activeTab === 2 && <UploadTeachersTab onSaveAndContinue={() => {}} />}
-        {activeTab === 3 && <SetCalendarTab onSaveAndContinue={() => {}} />}
+        {activeTab === 0 && <SetCalendarTab onSaveAndContinue={() => {}} />}
+        {activeTab === 1 && <SetUpClassesTab onSaveAndContinue={() => {}} />}
+        {activeTab === 2 && <UploadLearnersTab onSaveAndContinue={() => {}} />}
+        {activeTab === 3 && <UploadTeachersTab onSaveAndContinue={() => {}} />}
       </ParentCard>
     </Box>
   );

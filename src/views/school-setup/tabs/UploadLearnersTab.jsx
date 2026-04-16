@@ -13,6 +13,8 @@ import {
   IconButton,
   Button,
   CircularProgress,
+  Link,
+  Typography,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -27,6 +29,7 @@ import {
 } from '../../../context/TenantContext/services/tenant.service';
 import api from '../../../api/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
+import LearnerListModal from './LearnerListModal';
 
 const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
@@ -40,6 +43,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [studentCounts, setStudentCounts] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
 
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
@@ -110,6 +114,11 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     };
     fetchData();
   }, []);
+
+  const handleViewLearners = (classItem) => {
+    setSelectedClass(classItem);
+    setLearnerListModalOpen(true);
+  };
 
   const handleChange = () => {
     setHasChanges(true);
@@ -251,27 +260,13 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     }}
                     align="center"
                   >
-                    {studentCounts[item.id] || 0}
-                    {/* <TextField
-                      size="small"
-                      value={}
-                      disabled
-                      sx={{
-                        width: 70,
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#fff',
-                          borderRadius: '8px',
-
-                          '& fieldset': {
-                            borderColor: '#e5e7eb',
-                          },
-
-                          '&:hover fieldset': {
-                            borderColor: '#cbd5e1',
-                          },
-                        },
-                      }}
-                    /> */}
+                    <Box>
+                      <Typography variant="subtitle2" align="center">
+                        <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
+                          {studentCounts[item.id] || 0}
+                        </Link>
+                      </Typography>
+                    </Box>
                   </TableCell>
 
                   {/* Upload Using Forms */}
@@ -351,6 +346,13 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveLearner}
+        classId={selectedClass?.id}
+        className={selectedClass?.class_name}
+      />
+
+      <LearnerListModal
+        open={learnerListModalOpen}
+        onClose={() => setLearnerListModalOpen(false)}
         classId={selectedClass?.id}
         className={selectedClass?.class_name}
       />

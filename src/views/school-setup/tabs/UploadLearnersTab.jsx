@@ -15,8 +15,6 @@ import {
   CircularProgress,
   Link,
   Typography,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -47,11 +45,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
 
-  // Snackbar state for alerts
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
     setModalOpen(true);
@@ -60,11 +53,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const handleSaveLearner = async (data) => {
     try {
       await createLearner(data);
-
-      // Show success alert
-      setSnackbarMessage('Learner added successfully!');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
+      console.log('Learner saved successfully!');
 
       const countsData = await getStudentCountByClass();
       const countsObj = {};
@@ -74,10 +63,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
       setStudentCounts(countsObj);
     } catch (error) {
       console.error('Failed to save learner:', error);
-      // Show error alert
-      setSnackbarMessage('Failed to save learner. Please try again.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
     }
   };
 
@@ -370,23 +355,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         classId={selectedClass?.id}
         className={selectedClass?.class_name}
       />
-
-      {/* Success/Error Alert Snackbar */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

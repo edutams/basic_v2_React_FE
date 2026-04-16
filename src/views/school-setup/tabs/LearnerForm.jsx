@@ -32,22 +32,21 @@ const LearnerForm = ({
 
   useEffect(() => {
     const fetchArms = async () => {
+      console.log('Fetching arms for classId:', classId);
       if (classId) {
         try {
-          // Get class arm details from getClassesWithDivisions
-          const data = await getClassArms(classId);
-          // Convert classId to number for comparison (API might return string IDs)
-          const classIdNum = Number(classId);
-          // const cls = (data || []).find((c) => Number(c.id) === classIdNum);
-          console.log('Class ID:', classId, 'Converted:', classIdNum);
-          console.log('Class found:', cls);
-          console.log('Arms:', cls?.arms);
-          if (cls && cls.arms) {
-            setClassArms(cls.arms);
-          }
+          // Get class arm details from the API
+          const response = await getClassArms(classId);
+          console.log('API Response:', response);
+          // Handle both response structures
+          const arms = response?.data?.data || response?.data || response || [];
+          console.log('Arms to set:', arms);
+          setClassArms(arms);
         } catch (error) {
           console.error('Failed to fetch arms:', error);
         }
+      } else {
+        console.log('No classId provided');
       }
     };
     fetchArms();
@@ -154,7 +153,7 @@ const LearnerForm = ({
               >
                 {classArms.map((arm) => (
                   <MenuItem key={arm.id} value={arm.id}>
-                    {arm.arm_names || `Arm ${arm.id}`}
+                    {arm.display_name || arm.arm_names || `Arm ${arm.id}`}
                   </MenuItem>
                 ))}
               </Select>

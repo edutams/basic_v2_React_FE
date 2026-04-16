@@ -43,7 +43,7 @@ export const getClasses = async () => {
 };
 export const getClassArms = async (class_id) => {
   try {
-    const res = await api.get('school_setup/student/get_class_arms', { class_id });
+    const res = await api.get('school_setup/student/get_class_arms', { params: { class_id } });
     return res.data?.data;
   } catch (error) {
     throw error.response?.data || error;

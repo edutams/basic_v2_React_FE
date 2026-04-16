@@ -37,10 +37,9 @@ const LearnerForm = ({
         try {
           // Get class arm details from the API
           const response = await getClassArms(classId);
-          console.log('API Response:', response);
-          // Handle both response structures
+          // console.log('API Response:', response);
           const arms = response?.data?.data || response?.data || response || [];
-          console.log('Arms to set:', arms);
+          // console.log('Arms to set:', arms);
           setClassArms(arms);
         } catch (error) {
           console.error('Failed to fetch arms:', error);

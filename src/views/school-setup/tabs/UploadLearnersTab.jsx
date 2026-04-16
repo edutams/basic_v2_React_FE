@@ -20,7 +20,10 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import {
+  getClassesWithDivisions,
+  createLearner,
+} from '../../../context/TenantContext/services/tenant.service';
 import api from '../../../api/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 
@@ -41,8 +44,13 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     setModalOpen(true);
   };
 
-  const handleSaveLearner = (data) => {
-    console.log('Saving learner:', { ...data, class_name: selectedClass });
+  const handleSaveLearner = async (data) => {
+    try {
+      await createLearner(data);
+      console.log('Learner saved successfully!');
+    } catch (error) {
+      console.error('Failed to save learner:', error);
+    }
   };
 
   // Download template function - calls backend API

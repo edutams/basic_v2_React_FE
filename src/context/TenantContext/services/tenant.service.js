@@ -50,6 +50,15 @@ export const getClassArms = async (class_id) => {
   }
 };
 
+export const createLearner = async (data) => {
+  try {
+    const res = await api.post('school_setup/student/create_student', data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 export const getClassesWithDivisions = async () => {
   try {
     const res = await api.get('school_setup/classes');

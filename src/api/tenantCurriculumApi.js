@@ -74,6 +74,13 @@ export const fetchSubjects = async (curriculumId) => {
   return response.data;
 };
 
+// Fetch subjects by programme, optionally filtered by curriculum
+export const fetchSubjectsByProgramme = async (programmeId, curriculumId = null) => {
+  const params = curriculumId ? { curriculum_id: curriculumId } : {};
+  const response = await api.get(`/curriculum/subjects/by-programme/${programmeId}`, { params });
+  return response.data;
+};
+
 // Create a new subject
 export const createSubjectRecord = async (data) => {
   const response = await api.post('/curriculum/create_subject', data);
@@ -133,5 +140,26 @@ export const importCurriculum = async (agentCurriculumId) => {
 // Import all curriculums from agent/landlord at once
 export const importAllCurriculums = async () => {
   const response = await api.post('/curriculum/import-all');
+  return response.data;
+};
+
+// Subject Groups
+export const fetchSubjectGroups = async (programmeId) => {
+  const response = await api.get('/curriculum/subject-groups', { params: { programme_id: programmeId } });
+  return response.data;
+};
+
+export const createSubjectGroup = async (data) => {
+  const response = await api.post('/curriculum/subject-groups', data);
+  return response.data;
+};
+
+export const updateSubjectGroup = async (id, data) => {
+  const response = await api.put(`/curriculum/subject-groups/${id}`, data);
+  return response.data;
+};
+
+export const deleteSubjectGroup = async (id) => {
+  const response = await api.delete(`/curriculum/subject-groups/${id}`);
   return response.data;
 };

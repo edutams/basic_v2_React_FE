@@ -114,3 +114,12 @@ export const saveClasses = async (classes) => {
     throw error.response?.data || error;
   }
 };
+
+export const getStudentCountByClass = async () => {
+  try {
+    const res = await api.get('school_setup/student/get_student_count_by_class');
+    return res.data?.data || [];
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

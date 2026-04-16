@@ -22,6 +22,11 @@ import {
   fetchAvailableCurriculumsForImport,
   importAllCurriculums,
   fetchAvailableSubjectsForClass,
+  fetchSubjectsByProgramme,
+  fetchSubjectGroups,
+  createSubjectGroup,
+  updateSubjectGroup,
+  deleteSubjectGroup,
 } from '../../api/tenantCurriculumApi';
 import {
   Box,
@@ -52,6 +57,7 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Autocomplete,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -109,9 +115,25 @@ const CurriculumManager = () => {
     pass_mark: 50,
   });
 
+  // Subject Group states
+  const [subjectGroupsList, setSubjectGroupsList] = useState([]);
+  const [loadingSubjectGroups, setLoadingSubjectGroups] = useState(false);
+  const [openSubjectGroupModal, setOpenSubjectGroupModal] = useState(false);
+  const [editingSubjectGroup, setEditingSubjectGroup] = useState(null);
+  const [subjectGroupForm, setSubjectGroupForm] = useState({
+    group_name: '',
+    programme_id: '',
+    curriculum_id: '',
+    unit: '',
+    pass_mark: '',
+    status: 'active',
+    subject_ids: [],
+  });
+  const [subjectGroupModalSubjects, setSubjectGroupModalSubjects] = useState([]);
+  const [loadingModalSubjects, setLoadingModalSubjects] = useState(false);
+
   // Subject Bank states
-  const [subjectsList, setSubjectsList] = useState([]);
-  const [programmesList, setProgrammesList] = useState([]);
+  const [subjectsList, setSubjectsList] = useState([]); const [programmesList, setProgrammesList] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [openAddSubjectModal, setOpenAddSubjectModal] = useState(false);
   const [openEditSubjectModal, setOpenEditSubjectModal] = useState(false);
@@ -266,6 +288,13 @@ const CurriculumManager = () => {
     }
   }, [tab, curriculumData]);
 
+  // Load subject groups when programme is set on Class Subject tab
+  useEffect(() => {
+    if (tab === 2 && program) {
+      loadSubjectGroups(program);
+    }
+  }, [tab, program]);
+
   // Load classes when program changes
   useEffect(() => {
     if (program) {
@@ -385,6 +414,96 @@ const CurriculumManager = () => {
       showSnackbar('Failed to update class subject', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Subject Group handlers
+  const fetchModalSubjects = async (programmeId, curriculumId) => {
+    if (!programmeId || !curriculumId) { setSubjectGroupModalSubjects([]); return; }
+    try {
+      setLoadingModalSubjects(true);
+      const res = await fetchSubjectsByProgramme(programmeId, curriculumId);
+      if (res.status) setSubjectGroupModalSubjects(res.data);
+    } catch {
+      setSubjectGroupModalSubjects([]);
+    } finally {
+      setLoadingModalSubjects(false);
+    }
+  };
+
+  const loadSubjectGroups = async (programmeId) => {
+    if (!programmeId) return;
+    try {
+      setLoadingSubjectGroups(true);
+      const response = await fetchSubjectGroups(programmeId);
+      if (response.status) setSubjectGroupsList(response.data);
+    } catch (error) {
+      showSnackbar('Failed to load subject groups', 'error');
+    } finally {
+      setLoadingSubjectGroups(false);
+    }
+  };
+
+  const handleOpenSubjectGroupModal = async (group = null) => {
+    if (group) {
+      setEditingSubjectGroup(group);
+      setSubjectGroupForm({
+        group_name: group.group_name,
+        programme_id: group.programme_id,
+        curriculum_id: group.curriculum_id || '',
+        unit: group.unit,
+        pass_mark: group.pass_mark,
+        status: group.status,
+        subject_ids: group.subjects?.map((s) => s.id) || [],
+      });
+      await fetchModalSubjects(group.programme_id, group.curriculum_id);
+    } else {
+      setEditingSubjectGroup(null);
+      setSubjectGroupForm({ group_name: '', programme_id: '', curriculum_id: '', unit: '', pass_mark: '', status: 'active', subject_ids: [] });
+      setSubjectGroupModalSubjects([]);
+    }
+    setOpenSubjectGroupModal(true);
+    if (programmesList.length === 0) loadProgrammes();
+  };
+
+  const handleCloseSubjectGroupModal = () => {
+    setOpenSubjectGroupModal(false);
+    setEditingSubjectGroup(null);
+  };
+
+  const handleSaveSubjectGroup = async () => {
+    if (!subjectGroupForm.group_name.trim() || !subjectGroupForm.programme_id) {
+      showSnackbar('Group name and programme are required', 'error');
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = editingSubjectGroup
+        ? await updateSubjectGroup(editingSubjectGroup.id, subjectGroupForm)
+        : await createSubjectGroup(subjectGroupForm);
+      if (response.status) {
+        showSnackbar(editingSubjectGroup ? 'Subject group updated' : 'Subject group created', 'success');
+        handleCloseSubjectGroupModal();
+        loadSubjectGroups(subjectGroupForm.programme_id);
+      } else {
+        showSnackbar(response.message || 'Failed to save subject group', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to save subject group', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSubjectGroup = async (id, programmeId) => {
+    try {
+      const response = await deleteSubjectGroup(id);
+      if (response.status) {
+        showSnackbar('Subject group deleted', 'success');
+        loadSubjectGroups(programmeId);
+      }
+    } catch (error) {
+      showSnackbar('Failed to delete subject group', 'error');
     }
   };
 
@@ -1116,6 +1235,7 @@ const CurriculumManager = () => {
                     </Table>
                   </TableContainer>
                 </ParentCard>
+
               </Box>
               <Box sx={{ flex: { md: 7 }, width: '100%' }}>
                 <ParentCard
@@ -1316,6 +1436,79 @@ const CurriculumManager = () => {
                     </TableContainer>
                   </Paper>
                 </ParentCard>
+
+                {/* Subject Group Card */}
+                <Box sx={{ mt: 3 }}>
+                  <ParentCard
+                    title={
+                      <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Subject Group</Typography>
+                        <Button variant="contained" size="small" onClick={() => handleOpenSubjectGroupModal()}>
+                          Add Subject Group
+                        </Button>
+                      </Box>
+                    }
+                  >
+                    <TableContainer>
+                      <Table sx={{ tableLayout: 'fixed' }}>
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: '#eef2f7' }}>
+                            <TableCell width="8%">#</TableCell>
+                            <TableCell width="22%">Group Name</TableCell>
+                            <TableCell width="30%">Subjects</TableCell>
+                            <TableCell width="10%">Unit</TableCell>
+                            <TableCell width="12%">Pass Mark</TableCell>
+                            <TableCell width="10%">Status</TableCell>
+                            <TableCell width="8%" align="center">Action</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {loadingSubjectGroups ? (
+                            <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                          ) : subjectGroupsList.length > 0 ? (
+                            subjectGroupsList.map((grp, i) => (
+                              <TableRow key={grp.id} hover>
+                                <TableCell>{i + 1}</TableCell>
+                                <TableCell>{grp.group_name}</TableCell>
+                                <TableCell>
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {grp.subjects?.map((s) => (
+                                      <Chip key={s.id} label={s.subject_name} size="small" sx={{ bgcolor: '#334155', color: '#fff', fontSize: '0.7rem' }} />
+                                    ))}
+                                  </Box>
+                                </TableCell>
+                                <TableCell>{grp.unit}</TableCell>
+                                <TableCell>{grp.pass_mark}</TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={grp.status === 'active' ? 'Active' : 'Inactive'}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: grp.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                      color: grp.status === 'active' ? '#166534' : '#991b1b',
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                                    <IconButton size="small" onClick={() => handleOpenSubjectGroupModal(grp)}>
+                                      <IconEdit size={16} />
+                                    </IconButton>
+                                    <IconButton size="small" sx={{ color: '#ef4444' }} onClick={() => handleDeleteSubjectGroup(grp.id, grp.programme_id)}>
+                                      <IconTrash size={16} />
+                                    </IconButton>
+                                  </Box>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow><TableCell colSpan={7} align="center"><Typography color="textSecondary">No subject groups yet</Typography></TableCell></TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </ParentCard>
+                </Box>
 
               </Box>
             </Box>
@@ -1692,6 +1885,121 @@ const CurriculumManager = () => {
           <Button onClick={handleCloseEditClassSubject}>Cancel</Button>
           <Button onClick={handleSaveEditClassSubject} variant="contained" disabled={loading}>
             {loading ? <CircularProgress size={24} /> : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Subject Group Modal */}
+      <Dialog open={openSubjectGroupModal} onClose={handleCloseSubjectGroupModal} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingSubjectGroup ? 'Edit Subject Group' : 'Add Subject Group'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Select
+              fullWidth
+              size="small"
+              value={subjectGroupForm.programme_id}
+              onChange={async (e) => {
+                const pid = e.target.value;
+                setSubjectGroupForm((f) => ({ ...f, programme_id: pid, subject_ids: [] }));
+                await fetchModalSubjects(pid, subjectGroupForm.curriculum_id);
+              }}
+              displayEmpty
+            >
+              <MenuItem value="" disabled>Select Program</MenuItem>
+              {programmesList.map((prog) => (
+                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+              ))}
+            </Select>
+
+            <Select
+              fullWidth
+              size="small"
+              value={subjectGroupForm.curriculum_id}
+              onChange={async (e) => {
+                const cid = e.target.value;
+                setSubjectGroupForm((f) => ({ ...f, curriculum_id: cid, subject_ids: [] }));
+                await fetchModalSubjects(subjectGroupForm.programme_id, cid);
+              }}
+              displayEmpty
+            >
+              <MenuItem value="" disabled>Select Curriculum</MenuItem>
+              {curriculumData.filter((c) => c.status === 'active').map((cur) => (
+                <MenuItem key={cur.id} value={cur.id}>{cur.curriculum_name}</MenuItem>
+              ))}
+            </Select>
+
+            <TextField
+              fullWidth
+              size="small"
+              label="Group Name"
+              value={subjectGroupForm.group_name}
+              onChange={(e) => setSubjectGroupForm((f) => ({ ...f, group_name: e.target.value }))}
+            />
+
+            <TextField
+              fullWidth
+              size="small"
+              label="Unit"
+              type="number"
+              value={subjectGroupForm.unit}
+              onChange={(e) => setSubjectGroupForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))}
+              inputProps={{ min: 1 }}
+            />
+
+            <TextField
+              fullWidth
+              size="small"
+              label="Pass Mark"
+              type="number"
+              value={subjectGroupForm.pass_mark}
+              onChange={(e) => setSubjectGroupForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))}
+              inputProps={{ min: 0, max: 100 }}
+            />
+
+            {/* Subject search & selection */}
+            <Box sx={{ bgcolor: '#e0f2fe', p: 1.5, borderRadius: 1 }}>
+              <Autocomplete
+                multiple
+                loading={loadingModalSubjects}
+                options={subjectGroupModalSubjects}
+                getOptionLabel={(s) => `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}`}
+                value={subjectGroupModalSubjects.filter((s) => subjectGroupForm.subject_ids.includes(s.id))}
+                onChange={(_, selected) =>
+                  setSubjectGroupForm((f) => ({ ...f, subject_ids: selected.map((s) => s.id) }))
+                }
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                noOptionsText={
+                  !subjectGroupForm.programme_id ? 'Select a programme first' :
+                    !subjectGroupForm.curriculum_id ? 'Select a curriculum first' :
+                      'No subjects found'
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    size="small"
+                    placeholder="Search for subjects..."
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                  />
+                )}
+                renderTags={(selected, getTagProps) =>
+                  selected.map((s, index) => (
+                    <Chip
+                      key={s.id}
+                      label={s.subject_name}
+                      size="small"
+                      sx={{ bgcolor: '#334155', color: '#fff' }}
+                      {...getTagProps({ index })}
+                    />
+                  ))
+                }
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseSubjectGroupModal}>Cancel</Button>
+          <Button onClick={handleSaveSubjectGroup} variant="contained" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>

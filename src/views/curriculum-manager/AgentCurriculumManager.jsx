@@ -899,12 +899,12 @@ const AgentCurriculumManager = () => {
             </ListItemIcon>
             <ListItemText>Manage Subject</ListItemText>
           </MenuItemComponent>
-          <MenuItemComponent onClick={handleAssignToClasses}>
+          {/* <MenuItemComponent onClick={handleAssignToClasses}>
             <ListItemIcon>
               <Assignment fontSize="small" />
             </ListItemIcon>
             <ListItemText>Assign Curriculum to Class</ListItemText>
-          </MenuItemComponent>
+          </MenuItemComponent> */}
           <MenuItemComponent onClick={handleOpenDeleteDialog} sx={{ color: '#ef4444' }}>
             <ListItemIcon>
               <IconTrash size={16} style={{ color: '#ef4444' }} />

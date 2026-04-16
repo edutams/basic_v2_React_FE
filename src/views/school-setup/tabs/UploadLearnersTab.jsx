@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -44,6 +44,8 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
+  const [uploadClassId, setUploadClassId] = useState(null);
+  const fileInputRef = useRef(null);
 
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
@@ -66,7 +68,43 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     }
   };
 
-  // Download template function - calls backend API
+  const handleUploadClick = (classId) => {
+    setUploadClassId(classId);
+    fileInputRef.current?.click();
+  };
+
+  const handleUploadTemplate = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('school_setup/learners', formData);
+
+      if (response.data.status) {
+        console.log('Learners uploaded successfully:', response.data.message);
+
+        // Refresh student counts
+        const countsData = await getStudentCountByClass();
+        const countsObj = {};
+        (countsData || []).forEach((item) => {
+          countsObj[item.class_id] = item.count;
+        });
+        setStudentCounts(countsObj);
+      } else {
+        console.error('Upload failed:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Failed to upload template:', error);
+    } finally {
+      // Reset file input
+      event.target.value = '';
+      setUploadClassId(null);
+    }
+  };
+
   const handleDownloadTemplate = async (classId) => {
     try {
       const response = await api.get('school_setup/learner_template', {
@@ -176,7 +214,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
             borderSpacing: '12px 10px',
           }}
         >
-          {/* Header */}
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
@@ -250,7 +287,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     </Box>
                   </TableCell>
 
-                  {/* No. Uploaded */}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -268,7 +304,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     </Box>
                   </TableCell>
 
-                  {/* Upload Using Forms */}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -309,7 +344,12 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                       >
                         Download Template
                       </Button>
-                      <Button variant="contained" size="small" startIcon={<span>↑</span>}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<span>↑</span>}
+                        onClick={() => handleUploadClick(item.id)}
+                      >
                         Upload Template
                       </Button>
                     </Box>
@@ -319,7 +359,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
             })}
           </TableBody>
 
-          {/* Footer with Pagination */}
           <TableFooter>
             <TableRow>
               <TablePagination
@@ -334,6 +373,14 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           </TableFooter>
         </Table>
       </TableContainer>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".xlsx,.xls"
+        style={{ display: 'none' }}
+        onChange={handleUploadTemplate}
+      />
 
       <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>

@@ -24,9 +24,11 @@ import {
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
-import ParentCard from 'src/components/shared/ParentCard';
 import RoleAttachmentModal from './RoleAttachmentModal';
 import ViewRoleModal from './ViewRoleModal';
+
+import PermissionRolesModal from './PermissionRolesModal';
+import PermissionOrganizationsModal from './PermissionOrganizationsModal';
 
 const AssignmentManagement = () => {
   const [permissions, setPermissions] = useState([]);
@@ -37,6 +39,10 @@ const AssignmentManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
+
+  const [rolesModalOpen, setRolesModalOpen] = useState(false);
+  const [orgsModalOpen, setOrgsModalOpen] = useState(false);
+  const [selectedPermissionId, setSelectedPermissionId] = useState(null);
 
   useEffect(() => {
     fetchPermissions();
@@ -211,13 +217,31 @@ const AssignmentManagement = () => {
                       <TableCell>
                         <Box>
                           <Typography variant="subtitle2" align="center">
-                            <Link sx={{ cursor: 'pointer' }}> {user.roles_count}</Link>
+                            <Link
+                              sx={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setSelectedPermissionId(user.id);
+                                setRolesModalOpen(true);
+                              }}
+                            >
+                              {' '}
+                              {user.roles_count}
+                            </Link>
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Typography variant="subtitle2" align="center">
-                          <Link sx={{ cursor: 'pointer' }}> {user.users_count}</Link>
+                          <Link
+                            sx={{ cursor: 'pointer' }}
+                            onClick={() => {
+                              setSelectedPermissionId(user.id);
+                              setOrgsModalOpen(true);
+                            }}
+                          >
+                            {' '}
+                            {user.users_count}
+                          </Link>
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -270,6 +294,17 @@ const AssignmentManagement = () => {
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
         currentUser={currentUserForRole}
+      />
+
+      <PermissionRolesModal
+        open={rolesModalOpen}
+        onClose={() => setRolesModalOpen(false)}
+        permissionId={selectedPermissionId}
+      />
+      <PermissionOrganizationsModal
+        open={orgsModalOpen}
+        onClose={() => setOrgsModalOpen(false)}
+        permissionId={selectedPermissionId}
       />
     </Box>
   );

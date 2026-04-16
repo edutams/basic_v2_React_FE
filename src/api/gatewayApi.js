@@ -1,7 +1,7 @@
 import agentApi from './auth';
 
 const gatewayApi = {
-  getAll: () => agentApi.get('/landlord/v1/gateways'),
+  getAll: (params = {}) => agentApi.get('/landlord/v1/gateways', { params }),
 
   create: (data) => agentApi.post('/landlord/v1/gateways', data),
 

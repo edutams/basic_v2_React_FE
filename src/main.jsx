@@ -9,15 +9,13 @@ import { AuthProvider } from './context/AgentContext/auth';
 import ErrorBoundary from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { validateTenantDomain } from './context/TenantContext/services/tenant.service';
 
 const hostname = window.location.hostname;
-const centralDomain =
-  hostname === 'localhost'
-    ? import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL
-    : import.meta.env.VITE_CENTRAL_DOMAIN_PROD;
 
-const isTenantSubdomain =
-  hostname !== centralDomain && hostname !== 'localhost' && hostname !== '127.0.0.1';
+// Async validation to determine if this is a tenant domain
+const tenantValidation = await validateTenantDomain(hostname);
+const isTenantSubdomain = tenantValidation?.status !== false;
 
 // ✅ Lazy import — TenantAuthProvider only loads on tenant subdomains
 const TenantAuthProvider = isTenantSubdomain

@@ -20,13 +20,16 @@ const eduTierApi = {
   },
 
   // Packages
-  getPackages: async () => {
-    const response = await api.get('/landlord/v1/edu_tier/packages/get_packages');
+  getPackages: async (params = {}) => {
+    const response = await api.get('/landlord/v1/edu_tier/packages/get_packages', { params });
     return response.data;
   },
   savePackage: async (data) => {
     if (data.id) {
-      const response = await api.put(`/landlord/v1/edu_tier/packages/update_package/${data.id}`, data);
+      const response = await api.put(
+        `/landlord/v1/edu_tier/packages/update_package/${data.id}`,
+        data,
+      );
       return response.data;
     }
     const response = await api.post('/landlord/v1/edu_tier/packages/store_package', data);
@@ -43,12 +46,17 @@ const eduTierApi = {
     return response.data;
   },
   getPackageModules: async (packageId) => {
-    const response = await api.get(`/landlord/v1/edu_tier/packages/${packageId}/get_package_modules`);
+    const response = await api.get(
+      `/landlord/v1/edu_tier/packages/${packageId}/get_package_modules`,
+    );
     return response.data;
   },
   saveModule: async (data) => {
     if (data.id) {
-      const response = await api.put(`/landlord/v1/edu_tier/modules/update_module/${data.id}`, data);
+      const response = await api.put(
+        `/landlord/v1/edu_tier/modules/update_module/${data.id}`,
+        data,
+      );
       return response.data;
     }
     const response = await api.post('/landlord/v1/edu_tier/modules/store_module', data);
@@ -75,7 +83,9 @@ const eduTierApi = {
     return response.data?.data;
   },
   getAgentModules: async (agentId) => {
-    const response = await api.get(`/landlord/v1/edu_tier/plan_modules/get_agent_modules/${agentId}`);
+    const response = await api.get(
+      `/landlord/v1/edu_tier/plan_modules/get_agent_modules/${agentId}`,
+    );
     return response.data?.data;
   },
   saveAgentModules: async (agentId, moduleIds) => {
@@ -86,10 +96,13 @@ const eduTierApi = {
     return response.data?.data;
   },
   deactivateModuleForTenants: async (moduleId, status) => {
-    const response = await api.post('/landlord/v1/edu_tier/plan_modules/deactivate_module_tenants', {
-      module_id: moduleId,
-      status: status,
-    });
+    const response = await api.post(
+      '/landlord/v1/edu_tier/plan_modules/deactivate_module_tenants',
+      {
+        module_id: moduleId,
+        status: status,
+      },
+    );
     return response.data;
   },
 };

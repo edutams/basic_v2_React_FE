@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Grid, Typography, Button, Stack, Card, Paper, Tabs, Tab } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Grid, Typography, Stack, Paper, Tabs, Tab, CircularProgress } from '@mui/material';
 import {
   IconSchool,
   IconVideo,
@@ -10,6 +10,7 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import ParentCard from 'src/components/shared/ParentCard';
+import { getSetupStats } from '../../context/TenantContext/services/tenant.service';
 
 // Tab Components
 import SetUpClassesTab from './tabs/SetUpClassesTab';
@@ -19,11 +20,33 @@ import SetCalendarTab from './tabs/SetCalendarTab';
 
 const CompleteSetup = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [stats, setStats] = useState({ classes: 0, arms: 0, learners: 0, teachers: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const handleSaveAndContinue = () => {
-    if (activeTab < 3) {
-      setActiveTab(activeTab + 1);
-    }
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await getSetupStats();
+
+        const statsData = data.data || data;
+        setStats({
+          classes: statsData.classes || 0,
+          arms: statsData.arms || 0,
+          learners: statsData.learners || 0,
+          teachers: statsData.teachers || 0,
+        });
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
   };
 
   return (
@@ -71,11 +94,6 @@ const CompleteSetup = () => {
       </Box>
 
       {/* CLASS DETAILS CARD */}
-      {/* <Card sx={{ p: 0, mb: 1, borderRadius: 0 }}> */}
-      {/* <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
-          <Typography fontWeight={600}>Class Details</Typography>
-        </Box> */}
-
       <Box sx={{ p: 2, pb: 1 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 2 }} mb={1}>
           <Paper
@@ -105,12 +123,18 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                6
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Classes
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.classes}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Classes
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
           <Paper
@@ -140,12 +164,18 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                16
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Arms
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.arms}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Arms
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
           <Paper
@@ -175,12 +205,18 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                209
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Learners
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.learners}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Learners
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
           <Paper
@@ -210,21 +246,26 @@ const CompleteSetup = () => {
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography fontSize={26} fontWeight={700}>
-                36
-              </Typography>
-              <Typography fontSize={14} color="#6B7280">
-                Teachers
-              </Typography>
+              {loading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <>
+                  <Typography fontSize={26} fontWeight={700}>
+                    {stats.teachers}
+                  </Typography>
+                  <Typography fontSize={14} color="#6B7280">
+                    Teachers
+                  </Typography>
+                </>
+              )}
             </Box>
           </Paper>
         </Stack>
       </Box>
-      {/* </Card> */}
 
       {/* TABS SECTION */}
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+        <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab
             icon={<IconBooks size={18} />}
             iconPosition="start"
@@ -254,10 +295,10 @@ const CompleteSetup = () => {
 
       {/* TAB CONTENT */}
       <ParentCard sx={{ p: 0 }}>
-        {activeTab === 0 && <SetUpClassesTab onSaveAndContinue={handleSaveAndContinue} />}
-        {activeTab === 1 && <UploadLearnersTab onSaveAndContinue={handleSaveAndContinue} />}
-        {activeTab === 2 && <UploadTeachersTab onSaveAndContinue={handleSaveAndContinue} />}
-        {activeTab === 3 && <SetCalendarTab onSaveAndContinue={handleSaveAndContinue} />}
+        {activeTab === 0 && <SetUpClassesTab onSaveAndContinue={() => {}} />}
+        {activeTab === 1 && <UploadLearnersTab onSaveAndContinue={() => {}} />}
+        {activeTab === 2 && <UploadTeachersTab onSaveAndContinue={() => {}} />}
+        {activeTab === 3 && <SetCalendarTab onSaveAndContinue={() => {}} />}
       </ParentCard>
     </Box>
   );

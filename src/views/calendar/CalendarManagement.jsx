@@ -32,6 +32,7 @@ import {
   IconEdit,
   IconDotsVertical,
 } from '@tabler/icons-react';
+import { FilterList as FilterListIcon } from '@mui/icons-material';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -42,6 +43,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
+import FilterSideDrawer from 'src/components/shared/FilterSideDrawer';
 import useNotification from 'src/hooks/useNotification';
 import agentApi from 'src/api/auth';
 
@@ -108,8 +110,32 @@ function SessionsPanel({ isLevel1 }) {
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
+
+  const sessionFilterDefs = [
+    { key: 'search', label: 'Session Name', type: 'text', placeholder: 'Search by session name…' },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+    {
+      key: 'is_current',
+      label: 'Current Session',
+      type: 'select',
+      options: [
+        { value: 'yes', label: 'Yes' },
+        { value: 'no', label: 'No' },
+      ],
+    },
+  ];
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -126,6 +152,27 @@ function SessionsPanel({ isLevel1 }) {
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
+
+  const filteredSessions = sessions.filter((session) => {
+    const matchesSearch = !activeFilters.search
+      ? true
+      : session.sesname.toLowerCase().includes(activeFilters.search.toLowerCase());
+    const matchesStatus = !activeFilters.status ? true : session.status === activeFilters.status;
+    const matchesCurrent = !activeFilters.is_current
+      ? true
+      : session.is_current === activeFilters.is_current;
+    return matchesSearch && matchesStatus && matchesCurrent;
+  });
+
+  const handleFilterApply = (filterValues) => {
+    setActiveFilters(filterValues);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+  };
+
+  const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
 
   const openCreate = () => {
     setEditTarget(null);
@@ -234,9 +281,32 @@ function SessionsPanel({ isLevel1 }) {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
-          <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
-            New Session
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<FilterListIcon />}
+              onClick={() => setFilterDrawerOpen(true)}
+              sx={{ minWidth: 140 }}
+            >
+              Filters
+              {activeFilterCount > 0 && (
+                <Chip
+                  label={activeFilterCount}
+                  size="small"
+                  color="primary"
+                  sx={{
+                    ml: 1,
+                    height: 20,
+                    minWidth: 20,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              )}
+            </Button>
+            <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
+              New Session
+            </Button>
+          </Box>
         )}
       </Box>
       {!isLevel1 && (
@@ -269,7 +339,7 @@ function SessionsPanel({ isLevel1 }) {
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
-            ) : sessions.length === 0 ? (
+            ) : filteredSessions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center">
                   No sessions found
@@ -282,10 +352,10 @@ function SessionsPanel({ isLevel1 }) {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={sessions.map((s) => s.id)}
+                  items={filteredSessions.map((s) => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {sessions.map((s, idx) => (
+                  {filteredSessions.map((s, idx) => (
                     <SortableRow key={s.id} id={s.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{s.sesname}</TableCell>
@@ -441,6 +511,16 @@ function SessionsPanel({ isLevel1 }) {
       </Dialog>
 
       <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
+
+      {/* Filter Side Drawer */}
+      <FilterSideDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        filters={sessionFilterDefs}
+        title="Filter Sessions"
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
+      />
     </>
   );
 }
@@ -456,8 +536,23 @@ function TermsPanel({ isLevel1 }) {
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
+
+  const termFilterDefs = [
+    { key: 'search', label: 'Term Name', type: 'text', placeholder: 'Search by term name…' },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
 
   const fetchTerms = useCallback(async () => {
     setLoading(true);
@@ -474,6 +569,24 @@ function TermsPanel({ isLevel1 }) {
   useEffect(() => {
     fetchTerms();
   }, [fetchTerms]);
+
+  const filteredTerms = terms.filter((term) => {
+    const matchesSearch = !activeFilters.search
+      ? true
+      : term.term_name.toLowerCase().includes(activeFilters.search.toLowerCase());
+    const matchesStatus = !activeFilters.status ? true : term.status === activeFilters.status;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleFilterApply = (filterValues) => {
+    setActiveFilters(filterValues);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+  };
+
+  const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
 
   const openCreate = () => {
     setEditTarget(null);
@@ -580,9 +693,32 @@ function TermsPanel({ isLevel1 }) {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
-          <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
-            New Term
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<FilterListIcon />}
+              onClick={() => setFilterDrawerOpen(true)}
+              sx={{ minWidth: 140 }}
+            >
+              Filters
+              {activeFilterCount > 0 && (
+                <Chip
+                  label={activeFilterCount}
+                  size="small"
+                  color="primary"
+                  sx={{
+                    ml: 1,
+                    height: 20,
+                    minWidth: 20,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              )}
+            </Button>
+            <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate}>
+              New Term
+            </Button>
+          </Box>
         )}
       </Box>
       {!isLevel1 && (
@@ -614,7 +750,7 @@ function TermsPanel({ isLevel1 }) {
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
-            ) : terms.length === 0 ? (
+            ) : filteredTerms.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
                   No terms found
@@ -627,10 +763,10 @@ function TermsPanel({ isLevel1 }) {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={terms.map((t) => t.id)}
+                  items={filteredTerms.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {terms.map((t, idx) => (
+                  {filteredTerms.map((t, idx) => (
                     <SortableRow key={t.id} id={t.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{t.term_name}</TableCell>
@@ -730,6 +866,16 @@ function TermsPanel({ isLevel1 }) {
       </Dialog>
 
       <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
+
+      {/* Filter Side Drawer */}
+      <FilterSideDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        filters={termFilterDefs}
+        title="Filter Terms"
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
+      />
     </>
   );
 }

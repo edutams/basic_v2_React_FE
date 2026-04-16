@@ -14,6 +14,12 @@ const InitialSetup = Loadable(lazy(() => import('../views/school-setup/InitialSe
 const CompleteSetup = Loadable(lazy(() => import('../views/school-setup/CompleteSetup')));
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
+const CurriculumManager = Loadable(
+  lazy(() => import('../views/curriculum-manager/CurriculumManager')),
+);
+const ClassStructureManager = Loadable(
+  lazy(() => import('../components/school/components/ClassStructureManager')),
+);
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
 const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
@@ -57,41 +63,37 @@ const TenantRoutes = [
     children: [
       {
         index: true,
-        element: (
-          <SchoolDashboardMain />
-        ),
+        element: <SchoolDashboardMain />,
       },
       {
         path: 'initial-setup',
-        element: (
-          <InitialSetup />
-        ),
+        element: <InitialSetup />,
       },
       {
         path: 'complete-setup',
-        element: (
-          <CompleteSetup />
-        ),
+        element: <CompleteSetup />,
       },
       {
         path: 'session-week-manager',
-        element: (
-          <SessionWeekManager />
-        ),
+        element: <SessionWeekManager />,
       },
       { path: 'scheme-of-work', element: <SchemeOfWork /> },
       {
+        path: 'curriculum-manager',
+        element: <CurriculumManager />,
+      },
+      {
+        path: 'class-structure-manager',
+        element: <ClassStructureManager />,
+      },
+      {
         path: 'manage-subscription',
-        element: (
-          <SubscriptionIndex />
-        ),
+        element: <SubscriptionIndex />,
       },
       { path: 'subscription-history', element: <SubscriptionIndex /> },
       {
         path: 'alc-manager',
-        element: (
-          <AlcManager />
-        ),
+        element: <AlcManager />,
       },
       { path: 'activity-logs', element: <ActivityLog /> },
       { path: 'pages/account-settings', element: <AccountSetting /> },

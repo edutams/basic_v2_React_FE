@@ -435,7 +435,7 @@ const AssignmentManagement = () => {
                           }}
                         >
                           <img
-                            src={user.image || '/src/assets/images/users/default_avatar.png'}
+                            src={user.image}
                             alt={user.name}
                             style={{
                               width: 32,

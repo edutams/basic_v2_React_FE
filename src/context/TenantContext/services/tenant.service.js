@@ -35,7 +35,6 @@ export const getSetupStage = async () => {
 export const getClasses = async () => {
   try {
     const res = await api.get('school_setup/classes');
-    // The API returns school divisions with their classes nested
     return res.data?.data || res.data || [];
   } catch (error) {
     throw error.response?.data || error;
@@ -43,8 +42,17 @@ export const getClasses = async () => {
 };
 export const getClassArms = async (class_id) => {
   try {
-    const res = await api.get('school_setup/student/get_class_arms', { class_id });
+    const res = await api.get('school_setup/student/get_class_arms', { params: { class_id } });
     return res.data?.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const createLearner = async (data) => {
+  try {
+    const res = await api.post('school_setup/student/create_student', data);
+    return res.data;
   } catch (error) {
     throw error.response?.data || error;
   }
@@ -101,6 +109,26 @@ export const saveClasses = async (classes) => {
   try {
     const res = await api.post('school_setup/classes', { classes });
     return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getStudentCountByClass = async () => {
+  try {
+    const res = await api.get('school_setup/student/get_student_count_by_class');
+    return res.data?.data || [];
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getLearnersByClass = async (classId, params = {}) => {
+  try {
+    const res = await api.get('school_setup/student/get_learners_by_class', {
+      params: { class_id: classId, ...params },
+    });
+    return res.data || { data: [], total: 0, per_page: 10 };
   } catch (error) {
     throw error.response?.data || error;
   }

@@ -13,6 +13,8 @@ import {
   IconButton,
   Button,
   CircularProgress,
+  Link,
+  Typography,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -20,9 +22,14 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import {
+  getClassesWithDivisions,
+  createLearner,
+  getStudentCountByClass,
+} from '../../../context/TenantContext/services/tenant.service';
 import api from '../../../api/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
+import LearnerListModal from './LearnerListModal';
 
 const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [hasChanges, setHasChanges] = useState(false);
@@ -33,16 +40,30 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
+  const [studentCounts, setStudentCounts] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
 
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
     setModalOpen(true);
   };
 
-  const handleSaveLearner = (data) => {
-    console.log('Saving learner:', { ...data, class_name: selectedClass });
+  const handleSaveLearner = async (data) => {
+    try {
+      await createLearner(data);
+      console.log('Learner saved successfully!');
+
+      const countsData = await getStudentCountByClass();
+      const countsObj = {};
+      (countsData || []).forEach((item) => {
+        countsObj[item.class_id] = item.count;
+      });
+      setStudentCounts(countsObj);
+    } catch (error) {
+      console.error('Failed to save learner:', error);
+    }
   };
 
   // Download template function - calls backend API
@@ -67,21 +88,36 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     }
   };
 
-  // Fetch active classes
+  // Fetch active classes and student counts
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getClassesWithDivisions();
-        const activeClasses = (data || []).filter((cls) => cls.status === 'active');
+        const [classesData, countsData] = await Promise.all([
+          getClassesWithDivisions(),
+          getStudentCountByClass(),
+        ]);
+        const activeClasses = (classesData || []).filter((cls) => cls.status === 'active');
         setClasses(activeClasses);
+
+        // Transform counts array - simple mapping by class_id
+        const countsObj = {};
+        (countsData || []).forEach((item) => {
+          countsObj[item.class_id] = item.count;
+        });
+        setStudentCounts(countsObj);
       } catch (error) {
-        console.error('Failed to fetch classes:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchClasses();
+    fetchData();
   }, []);
+
+  const handleViewLearners = (classItem) => {
+    setSelectedClass(classItem);
+    setLearnerListModalOpen(true);
+  };
 
   const handleChange = () => {
     setHasChanges(true);
@@ -223,30 +259,13 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     }}
                     align="center"
                   >
-                    <TextField
-                      size="small"
-                      defaultValue="0"
-                      sx={{
-                        width: 70,
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#fff',
-                          borderRadius: '8px',
-
-                          '& fieldset': {
-                            borderColor: '#e5e7eb',
-                          },
-
-                          '&:hover fieldset': {
-                            borderColor: '#cbd5e1',
-                          },
-
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
-                            borderWidth: '2px',
-                          },
-                        },
-                      }}
-                    />
+                    <Box>
+                      <Typography variant="subtitle2" align="center">
+                        <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
+                          {studentCounts[item.id] || 0}
+                        </Link>
+                      </Typography>
+                    </Box>
                   </TableCell>
 
                   {/* Upload Using Forms */}
@@ -326,6 +345,13 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveLearner}
+        classId={selectedClass?.id}
+        className={selectedClass?.class_name}
+      />
+
+      <LearnerListModal
+        open={learnerListModalOpen}
+        onClose={() => setLearnerListModalOpen(false)}
         classId={selectedClass?.id}
         className={selectedClass?.class_name}
       />

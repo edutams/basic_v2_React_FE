@@ -30,17 +30,6 @@ import {
 import PropTypes from 'prop-types';
 import { getLearnersByClass } from '../../../context/TenantContext/services/tenant.service';
 
-/**
- * LearnerListModal
- *
- * A reusable modal component for displaying learners in a class with search and pagination.
- *
- * Props:
- *   open     {boolean}  — controls dialog visibility
- *   onClose  {function} — called when the dialog should close
- *   classId  {number|string|null} — the class ID to fetch learners for
- *   className {string} — the class name to display in the title
- */
 const LearnerListModal = ({ open, onClose, classId, className }) => {
   const [learners, setLearners] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -49,21 +38,28 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Reset state whenever the modal opens with a new classId
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
     if (open && classId) {
       setPage(0);
       setSearch('');
+      setDebouncedSearch('');
       setError(null);
     }
   }, [open, classId]);
 
-  // Fetch learners whenever open, classId, page, or search changes
   useEffect(() => {
     if (!open || !classId) return;
     fetchLearners();
-  }, [open, classId, page, search]);
+  }, [open, classId, page, debouncedSearch]);
 
   const fetchLearners = async () => {
     setLoading(true);
@@ -71,18 +67,23 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
     try {
       const params = {
         page: page + 1,
-        search,
+        search: debouncedSearch,
         per_page: rowsPerPage,
       };
 
       const res = await getLearnersByClass(classId, params);
 
-      if (res?.data) {
-        setLearners(res.data || []);
-        setTotalRows(res.total || 0);
-        setRowsPerPage(res.per_page || 10);
+      if (res && typeof res === 'object') {
+        if (Array.isArray(res.data)) {
+          setLearners(res.data);
+          setTotalRows(res.total || 0);
+          setRowsPerPage(res.per_page || 10);
+        } else if (Array.isArray(res)) {
+          // Fallback for backward compatibility - plain array
+          setLearners(res);
+          setTotalRows(res.length);
+        }
       } else if (Array.isArray(res)) {
-        // Fallback for backward compatibility
         setLearners(res);
         setTotalRows(res.length);
       }
@@ -97,6 +98,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
   const handleClose = () => {
     setLearners([]);
     setSearch('');
+    setDebouncedSearch('');
     setPage(0);
     setError(null);
     onClose();

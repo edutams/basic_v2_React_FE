@@ -1033,7 +1033,7 @@ const AgentCurriculumManager = () => {
             >
               <MenuItem value="" disabled>Select Program</MenuItem>
               {programmesList.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+                <MenuItem key={prog.id} value={prog.id}>{prog.programme_name}</MenuItem>
               ))}
             </Select>
 
@@ -1095,7 +1095,7 @@ const AgentCurriculumManager = () => {
             >
               <MenuItem value="" disabled>Select Program</MenuItem>
               {programmesList.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+                <MenuItem key={prog.id} value={prog.id}>{prog.programme_name}</MenuItem>
               ))}
             </Select>
 

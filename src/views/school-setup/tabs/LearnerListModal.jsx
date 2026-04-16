@@ -42,7 +42,6 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
 
-  // Reset when modal opens
   useEffect(() => {
     if (open && classId) {
       setPage(0);
@@ -52,7 +51,6 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
     }
   }, [open, classId]);
 
-  // Fetch learners (ONLY when needed)
   useEffect(() => {
     if (!open || !classId) return;
     fetchLearners();
@@ -140,7 +138,6 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2 }}>
-        {/* SEARCH */}
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <TextField
             placeholder="Search by name or ID"
@@ -173,14 +170,12 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
           </Button>
         </Box>
 
-        {/* ERROR */}
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
-        {/* TABLE */}
         <TableContainer sx={{ maxHeight: 420 }}>
           <Table stickyHeader size="small">
             <TableHead>

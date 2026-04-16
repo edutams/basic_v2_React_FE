@@ -55,7 +55,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
       await createLearner(data);
       console.log('Learner saved successfully!');
 
-      // Refresh student counts after adding a new learner
       const countsData = await getStudentCountByClass();
       const countsObj = {};
       (countsData || []).forEach((item) => {

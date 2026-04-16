@@ -34,71 +34,67 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
   const [learners, setLearners] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
+
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
-
+  // Reset when modal opens
   useEffect(() => {
     if (open && classId) {
       setPage(0);
       setSearch('');
-      setDebouncedSearch('');
+      setSearchInput('');
       setError(null);
     }
   }, [open, classId]);
 
+  // Fetch learners (ONLY when needed)
   useEffect(() => {
     if (!open || !classId) return;
     fetchLearners();
-  }, [open, classId, page, debouncedSearch]);
+  }, [open, classId, page, rowsPerPage, search]);
 
   const fetchLearners = async () => {
     setLoading(true);
     setError(null);
+
     try {
       const params = {
         page: page + 1,
-        search: debouncedSearch,
         per_page: rowsPerPage,
+        search: search,
       };
 
       const res = await getLearnersByClass(classId, params);
 
-      if (res && typeof res === 'object') {
-        if (Array.isArray(res.data)) {
-          setLearners(res.data);
-          setTotalRows(res.total || 0);
-          setRowsPerPage(res.per_page || 10);
-        } else if (Array.isArray(res)) {
-          // Fallback for backward compatibility - plain array
-          setLearners(res);
-          setTotalRows(res.length);
-        }
-      } else if (Array.isArray(res)) {
-        setLearners(res);
-        setTotalRows(res.length);
-      }
+      setLearners(res.data || []);
+      setTotalRows(res.total || 0);
     } catch (err) {
-      console.error('Failed to fetch learners:', err);
-      setError('Failed to load learners. Please try again.');
+      console.error(err);
+      setError('Failed to load learners.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    setPage(0);
+
+    if (!searchInput.trim()) {
+      setSearch('');
+    } else {
+      setSearch(searchInput);
     }
   };
 
   const handleClose = () => {
     setLearners([]);
     setSearch('');
-    setDebouncedSearch('');
+    setSearchInput('');
     setPage(0);
     setError(null);
     onClose();
@@ -132,61 +128,77 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
               {className}
             </Typography>
           </Typography>
+
           {totalRows > 0 && !loading && (
             <Chip label={totalRows} size="small" color="primary" variant="outlined" />
           )}
         </Box>
+
         <IconButton onClick={handleClose} size="small">
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2 }}>
-        {/* Search */}
-        <TextField
-          placeholder="Search by name or ID"
-          value={search}
-          size="small"
-          // fullWidth
-          sx={{ mb: 2 }}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+        {/* SEARCH */}
+        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+          <TextField
+            placeholder="Search by name or ID"
+            value={searchInput}
+            size="small"
+            sx={{ width: 300 }}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchInput(value);
 
-        {/* Error */}
+              if (!value.trim()) {
+                setSearch('');
+                setPage(0);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSearch();
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <Button variant="contained" onClick={handleSearch} size="small" disabled={loading}>
+            Search
+          </Button>
+        </Box>
+
+        {/* ERROR */}
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
-        {/* Table */}
+        {/* TABLE */}
         <TableContainer sx={{ maxHeight: 420 }}>
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '20%' }}>Learner ID</TableCell>
-                <TableCell sx={{ width: '20%' }}>Last Name</TableCell>
-                <TableCell sx={{ width: '20%' }}>First Name</TableCell>
-                <TableCell sx={{ width: '15%' }}>Middle Name</TableCell>
-                <TableCell sx={{ width: '10%' }}>Gender</TableCell>
-                <TableCell sx={{ width: '10%' }}>Arm</TableCell>
+                <TableCell>#</TableCell>
+                <TableCell>Learner ID</TableCell>
+                <TableCell>Last Name</TableCell>
+                <TableCell>First Name</TableCell>
+                <TableCell>Middle Name</TableCell>
+                <TableCell>Gender</TableCell>
+                <TableCell>Arm</TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={7} align="center">
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -194,41 +206,24 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
                 learners.map((learner, index) => (
                   <TableRow key={learner.id || index} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{learner.learner_id}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{learner.lastname}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{learner.firstname}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {learner.middlename || '-'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{learner.gender}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {learner.arm || '-'}
-                      </Typography>
-                    </TableCell>
+
+                    <TableCell>{learner.users?.user_id || '-'}</TableCell>
+
+                    <TableCell>{learner.users?.lname || '-'}</TableCell>
+
+                    <TableCell>{learner.users?.fname || '-'}</TableCell>
+
+                    <TableCell>{learner.users?.mname || '-'}</TableCell>
+
+                    <TableCell>{learner.users?.sex || '-'}</TableCell>
+
+                    <TableCell>{learner.class_arm?.arm_names || '-'}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                    <Alert
-                      severity="info"
-                      sx={{
-                        justifyContent: 'center',
-                        textAlign: 'center',
-                        '& .MuiAlert-icon': { mr: 1 },
-                      }}
-                    >
+                  <TableCell colSpan={7} align="center">
+                    <Alert severity="info">
                       {search
                         ? 'No learners match your search.'
                         : 'No learners found for this class.'}
@@ -237,6 +232,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
                 </TableRow>
               )}
             </TableBody>
+
             <TableFooter>
               <TableRow>
                 <TablePagination
@@ -246,7 +242,6 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
                   page={page}
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
-                  colSpan={7}
                 />
               </TableRow>
             </TableFooter>
@@ -254,7 +249,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
         </TableContainer>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
+      <DialogActions>
         <Button onClick={handleClose} variant="outlined" size="small">
           Close
         </Button>

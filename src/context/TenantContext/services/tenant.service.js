@@ -123,12 +123,12 @@ export const getStudentCountByClass = async () => {
   }
 };
 
-export const getLearnersByClass = async (classId) => {
+export const getLearnersByClass = async (classId, params = {}) => {
   try {
     const res = await api.get('school_setup/student/get_learners_by_class', {
-      params: { class_id: classId },
+      params: { class_id: classId, ...params },
     });
-    return res.data?.data || [];
+    return res.data || { data: [], total: 0, per_page: 10 };
   } catch (error) {
     throw error.response?.data || error;
   }

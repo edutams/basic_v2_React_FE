@@ -262,7 +262,8 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
 
                       <TextField
                         size="small"
-                        defaultValue={item.class_name}
+                        defaultValue={item.class_code}
+                        disabled
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {

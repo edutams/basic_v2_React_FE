@@ -49,7 +49,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         const data = await getClassesWithDivisions();
         const activeClasses = (data || [])
           .filter((cls) => cls.status === 'active')
-          .map((cls) => cls.class_name);
+          .map((cls) => cls.class_code);
         setClasses(activeClasses);
       } catch (error) {
         console.error('Failed to fetch classes:', error);
@@ -165,6 +165,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
                       <TextField
                         size="small"
+                        disabled
                         defaultValue={item}
                         onChange={handleChange}
                         sx={{

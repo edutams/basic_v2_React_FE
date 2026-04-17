@@ -258,7 +258,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
               const isInactive = classItem.status === 'inactive';
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isInactive ? '#e0e0e0' : isHighlighted ? '#fbe4e4' : '#f6f7f9';
-              const className = classItem.class_name || '';
+              const className = classItem.class_code || '';
 
               return (
                 <TableRow key={classItem.id || index}>
@@ -290,7 +290,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                       <TextField
                         size="small"
                         fullWidth
-                        disabled={isInactive}
+                        disabled
                         defaultValue={className}
                         onChange={handleChange}
                         sx={{

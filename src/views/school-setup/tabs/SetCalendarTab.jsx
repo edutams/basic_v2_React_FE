@@ -159,8 +159,6 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     }
   };
 
-
-
   const handleMenuOpen = (event, item) => {
     setAnchorEl(event.currentTarget);
     setSelectedItem(item);
@@ -262,7 +260,10 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       setLoading(true);
       const response = await toggleSessionTermStatus(term.session_term_id);
       if (response.status) {
-        showSnackbar(`Term ${term.status === 'active' ? 'deactivated' : 'activated'} successfully`, 'success');
+        showSnackbar(
+          `Term ${term.status === 'active' ? 'deactivated' : 'activated'} successfully`,
+          'success',
+        );
         loadSessionTerms(selectedSessionId);
       }
     } catch (error) {
@@ -271,7 +272,6 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       setLoading(false);
     }
   };
-
 
   // Week Logic
   const handleAutoGenerate = async () => {
@@ -388,7 +388,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => {
-                    handleOpenEditModal()
+                    handleOpenEditModal();
                   }}
                 >
                   Edit Term Name
@@ -431,9 +431,15 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                           <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                            Status
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                            Start Date
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                            Action
+                          </TableCell>
                         </TableRow>
                       </TableHead>
 
@@ -477,7 +483,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                                     <Button
                                       variant="outlined"
                                       size="small"
-                                      color={item.status === 'active' ? 'warning' : 'success'}
+                                      color={item.status === 'active' ? 'error' : 'success'}
                                       onClick={() => handleToggleStatusClick(item)}
                                       disabled={loading}
                                     >
@@ -533,7 +539,9 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                       color: 'primary.main',
                     }}
                   >
-                    <Typography variant="caption">{weeks.length} Weeks • {weeks.length * 5} school days</Typography>
+                    <Typography variant="caption">
+                      {weeks.length} Weeks • {weeks.length * 5} school days
+                    </Typography>
                   </Box>
                 </Box>
               }
@@ -546,7 +554,12 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                     size="small"
                     sx={{ width: 120 }}
                     value={autoGenerateConfig.numWeeks}
-                    onChange={(e) => setAutoGenerateConfig({ ...autoGenerateConfig, numWeeks: parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      setAutoGenerateConfig({
+                        ...autoGenerateConfig,
+                        numWeeks: parseInt(e.target.value),
+                      })
+                    }
                   />
                   <TextField
                     label="Start Date"
@@ -554,7 +567,9 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                     size="small"
                     sx={{ width: 160 }}
                     value={autoGenerateConfig.startDate}
-                    onChange={(e) => setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })}
+                    onChange={(e) =>
+                      setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
+                    }
                     InputLabelProps={{ shrink: true }}
                   />
                   <Button
@@ -603,7 +618,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                             <TableCell>
                               <IconButton
                                 size="small"
-                                color="error"
+                                color="dark"
                                 onClick={() => handleDeleteWeek(item.week_id)}
                               >
                                 <IconDotsVertical size={16} />{' '}
@@ -699,11 +714,15 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
         <DialogTitle>Confirm Subscription</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to subscribe to <strong>{confirmSubscribe.term?.display_name || 'this term'}</strong> for the selected session?
+            Are you sure you want to subscribe to{' '}
+            <strong>{confirmSubscribe.term?.display_name || 'this term'}</strong> for the selected
+            session?
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>No, Cancel</Button>
+          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>
+            No, Cancel
+          </Button>
           <Button onClick={handleConfirmSubscribe} variant="contained" autoFocus disabled={loading}>
             Yes, Subscribe
           </Button>

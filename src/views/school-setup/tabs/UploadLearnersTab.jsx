@@ -84,7 +84,7 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
       const response = await api.post('school_setup/learners', formData);
 
       if (response.data.status) {
-        console.log('Learners uploaded successfully:', response.data.message);
+        // console.log('Learners uploaded successfully:', response.data.message);
 
         // Refresh student counts
         const countsData = await getStudentCountByClass();
@@ -99,7 +99,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
     } catch (error) {
       console.error('Failed to upload template:', error);
     } finally {
-      // Reset file input
       event.target.value = '';
       setUploadClassId(null);
     }

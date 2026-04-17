@@ -12,7 +12,6 @@ import {
 import ParentCard from 'src/components/shared/ParentCard';
 import { getSetupStats } from '../../context/TenantContext/services/tenant.service';
 
-// Tab Components
 import SetUpClassesTab from './tabs/SetUpClassesTab';
 import UploadLearnersTab from './tabs/UploadLearnersTab';
 import UploadTeachersTab from './tabs/UploadTeachersTab';
@@ -51,7 +50,6 @@ const CompleteSetup = () => {
 
   return (
     <Box>
-      {/* PAGE HEADER */}
       <Box
         sx={{
           display: 'flex',

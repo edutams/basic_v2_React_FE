@@ -23,26 +23,25 @@ const CompleteSetup = () => {
   const [stats, setStats] = useState({ classes: 0, arms: 0, learners: 0, teachers: 0 });
   const [loading, setLoading] = useState(true);
 
+  const fetchStats = async () => {
+    try {
+      const data = await getSetupStats();
+      const statsData = data.data || data;
+      setStats({
+        classes: statsData.classes || 0,
+        arms: statsData.arms || 0,
+        learners: statsData.learners || 0,
+        teachers: statsData.teachers || 0,
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  // Moved fetchStats outside useEffect so it can be reused
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await getSetupStats();
-
-        const statsData = data.data || data;
-        setStats({
-          classes: statsData.classes || 0,
-          arms: statsData.arms || 0,
-          learners: statsData.learners || 0,
-          teachers: statsData.teachers || 0,
-        });
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
+    setLoading(true);
+    fetchStats().finally(() => setLoading(false));
   }, []);
 
   const handleTabChange = (event, newValue) => {
@@ -295,9 +294,15 @@ const CompleteSetup = () => {
 
       <ParentCard sx={{ p: 0 }}>
         {activeTab === 0 && <SetCalendarTab onSaveAndContinue={() => {}} />}
-        {activeTab === 1 && <SetUpClassesTab onSaveAndContinue={() => {}} />}
-        {activeTab === 2 && <UploadLearnersTab onSaveAndContinue={() => {}} />}
-        {activeTab === 3 && <UploadTeachersTab onSaveAndContinue={() => {}} />}
+        {activeTab === 1 && (
+          <SetUpClassesTab onSaveAndContinue={() => {}} onClassArmsAdded={fetchStats} />
+        )}
+        {activeTab === 2 && (
+          <UploadLearnersTab onSaveAndContinue={() => {}} onLearnerAdded={fetchStats} />
+        )}{' '}
+        {activeTab === 3 && (
+          <UploadTeachersTab onSaveAndContinue={() => {}} onTeacherAdded={fetchStats} />
+        )}
       </ParentCard>
     </Box>
   );

@@ -31,7 +31,7 @@ import api from '../../../api/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
 
-const UploadLearnersTab = ({ onSaveAndContinue }) => {
+const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
@@ -63,6 +63,9 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         countsObj[item.class_id] = item.count;
       });
       setStudentCounts(countsObj);
+
+      // Tell parent to refresh its stats — this is the Vue $emit equivalent
+      onLearnerAdded?.();
     } catch (error) {
       console.error('Failed to save learner:', error);
     }
@@ -93,6 +96,8 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           countsObj[item.class_id] = item.count;
         });
         setStudentCounts(countsObj);
+
+        onLearnerAdded?.();
       } else {
         console.error('Upload failed:', response.data.message);
       }

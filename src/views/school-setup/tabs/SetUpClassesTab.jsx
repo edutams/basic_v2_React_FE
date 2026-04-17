@@ -24,7 +24,7 @@ import {
   saveClasses,
 } from '../../../context/TenantContext/services/tenant.service';
 
-const SetUpClassesTab = ({ onSaveAndContinue }) => {
+const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
@@ -167,6 +167,8 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       } else if (hadActiveClasses) {
         message = 'Classes activated successfully!';
       }
+
+      onClassArmsAdded?.();
 
       setNotification({ open: true, message, severity: 'success' });
 

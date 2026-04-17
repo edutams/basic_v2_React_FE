@@ -55,7 +55,6 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const handleSaveLearner = async (data) => {
     try {
       await createLearner(data);
-      console.log('Learner saved successfully!');
 
       const countsData = await getStudentCountByClass();
       const countsObj = {};
@@ -87,8 +86,6 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
       const response = await api.post('school_setup/learners', formData);
 
       if (response.data.status) {
-        console.log('Learners uploaded successfully:', response.data.message);
-
         // Refresh student counts
         const countsData = await getStudentCountByClass();
         const countsObj = {};
@@ -234,8 +231,6 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
           {/* Body */}
           <TableBody>
             {paginatedClasses.map((item, index) => {
-              // console.log(item);
-
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 

@@ -136,7 +136,6 @@ const SubscriptionHistoryList = () => {
   };
 
   const handleUpdateStatus = (transaction) => {
-    // console.log('Update status for:', transaction);
     handleMenuClose();
   };
 

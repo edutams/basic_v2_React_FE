@@ -38,7 +38,6 @@ const MyCommissionByTransaction = () => {
 
   const handleFilter = () => {
     // Filter logic would go here
-    console.log('Filter:', { fromDate, toDate, transactionId });
   };
 
   // Filter data for transaction type

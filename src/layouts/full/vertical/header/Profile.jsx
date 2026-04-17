@@ -34,7 +34,6 @@ import {
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const { user, logout } = useAuth();
-  // console.log('Profile user:', user);
 
   const navigate = useNavigate();
   const notify = useNotification();
@@ -101,7 +100,6 @@ const Profile = () => {
 
   // Get user display name and email
   const displayUser = user?.user || user;
-  // console.log('displayUser', displayUser);
   const displayName = displayUser?.organization?.organization_name;
   const firstName = displayName.split(' ')[0];
   const userEmail = displayUser?.email || 'user@example.com';

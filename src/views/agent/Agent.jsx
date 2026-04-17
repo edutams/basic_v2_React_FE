@@ -385,14 +385,11 @@ const Agent = () => {
   const [agentToDelete, setAgentToDelete] = useState(null);
 
   const handleFilterApply = (filterValues) => {
-    console.log('🔍 Filter Apply:', filterValues);
-
     // Map filter values to component state
     if (filterValues.search !== undefined) setSearch(filterValues.search);
     if (filterValues.agentLevel !== undefined) setAgentLevel(filterValues.agentLevel);
     if (filterValues.status !== undefined) setStatus(filterValues.status);
     if (filterValues.state !== undefined) {
-      console.log('🔍 Setting State:', filterValues.state);
       setState(filterValues.state);
     }
     if (filterValues.lga !== undefined) setLga(filterValues.lga);
@@ -405,7 +402,6 @@ const Agent = () => {
   const handleFilterChange = (key, value) => {
     // When state changes in the filter drawer, fetch LGAs immediately
     if (key === 'state') {
-      console.log('🔍 Filter State Changed:', value);
       setState(value);
       // Clear LGA when state changes
       setLga('');
@@ -417,7 +413,6 @@ const Agent = () => {
           locationApi
             .getLgas(selectedState.id)
             .then((response) => {
-              console.log('🔍 LGA Response:', response);
               setLgas(response);
             })
             .catch((error) => {
@@ -457,23 +452,16 @@ const Agent = () => {
 
   // Fetch LGAs when State changes
   useEffect(() => {
-    console.log('🔍 State changed:', state);
-    console.log('🔍 Available States:', states);
-
     setLga('');
     const fetchLgas = async () => {
       if (state) {
         try {
           const selectedState = states.find((s) => (s.state_name || s.name) === state);
-          console.log('🔍 Selected State Object:', selectedState);
 
           if (selectedState) {
-            console.log('🔍 Fetching LGAs for state ID:', selectedState.id);
             const response = await locationApi.getLgas(selectedState.id);
-            console.log('🔍 LGA Response:', response);
             setLgas(response);
           } else {
-            console.log('⚠️ State not found in states array');
             setLgas([]);
           }
         } catch (error) {
@@ -481,7 +469,6 @@ const Agent = () => {
           setLgas([]);
         }
       } else {
-        console.log('🔍 No state selected, clearing LGAs');
         setLgas([]);
         setLga('');
       }
@@ -569,7 +556,6 @@ const Agent = () => {
 
   const handleAddAgent = (newAgent) => {
     setData((prevData) => [...prevData, newAgent]);
-    // console.log('New Agent Added:', newAgent);
 
     setHeaderColor(newAgent.headerColor);
     setSidebarColor(newAgent.sidebarColor);
@@ -592,14 +578,12 @@ const Agent = () => {
   };
 
   const handleUpdateAgent = (agentData, actionType) => {
-    // console.log('Selected Agent Data:', agentData);
     setSelectedAgent(agentData);
     setActionType(actionType);
     setIsModalOpen(true);
   };
 
   const handleViewSchools = (agentData) => {
-    // console.log('Selected Agent Data:', agentData);
     setSelectedAgent(agentData);
     setActionType('viewSchools');
     setIsModalOpen(true);

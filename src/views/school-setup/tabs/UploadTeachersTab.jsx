@@ -40,9 +40,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     setModalOpen(true);
   };
 
-  const handleSaveTeacher = (data) => {
-    console.log('Saving teacher:', { ...data, class_name: selectedClass });
-  };
+  const handleSaveTeacher = (data) => {};
 
   // Fetch active classes
   useEffect(() => {

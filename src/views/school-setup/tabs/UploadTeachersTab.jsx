@@ -103,21 +103,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     setModalOpen(true);
   };
 
-  const handleSaveTeacher = (data) => {
-    // Add new teacher to the list
-    const newTeacher = {
-      id: teachers.length + 1,
-      staff_id: data.staff_id,
-      surname: data.surname,
-      first_name: data.first_name,
-      phone: data.phone_number,
-      gender: data.gender,
-      email: data.email,
-      arm: data.is_class_teacher ? data.class_arm : data.staff_type || 'General',
-    };
-    setTeachers([...teachers, newTeacher]);
-  };
-
   const handleEditTeacher = (teacher) => {
     console.log('Edit teacher:', teacher);
     handleMenuClose();
@@ -311,7 +296,20 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSave={handleSaveTeacher}
+        onSave={(data) => {
+          const newTeacher = {
+            id: teachers.length + 1,
+            staff_id: data.staff_id,
+            surname: data.surname,
+            first_name: data.first_name,
+            phone: data.phone_number,
+            gender: data.gender,
+            email: data.email,
+            arm: data.is_class_teacher ? data.class_arm : data.staff_type || 'General',
+          };
+          setTeachers([...teachers, newTeacher]);
+          setModalOpen(false);
+        }}
         className="General"
         isLoading={isLoading}
       />

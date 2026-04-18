@@ -25,10 +25,10 @@ const AddTeacherModal = ({ open, onClose, className, onSave, isLoading = false }
   // Custom title with className in primary color
   const renderTitle = () => (
     <>
-      Add New Teacher -{' '}
-      <Typography component="span" color="primary" fontWeight={600}>
+      Add New Teacher
+      {/* <Typography component="span" color="primary" fontWeight={600}>
         {className}
-      </Typography>
+      </Typography> */}
     </>
   );
 

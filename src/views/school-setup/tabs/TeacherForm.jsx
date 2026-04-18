@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import {
+  Box,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Switch,
+  Typography,
+} from '@mui/material';
 import { useFormik } from 'formik';
 import PropTypes from 'prop-types';
 import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
@@ -12,7 +23,9 @@ const TeacherForm = ({
     phone_number: '',
     gender: '',
     email: '',
-    subject: '',
+    is_class_teacher: false,
+    class_arm: '',
+    staff_type: '',
   },
   className,
   onSubmit,
@@ -21,23 +34,36 @@ const TeacherForm = ({
   isLoading = false,
 }) => {
   const [subjects, setSubjects] = useState([]);
+  const [classArms, setClassArms] = useState([]);
 
-  // Fetch subjects from API
+  // Fetch subjects and class arms from API
   useEffect(() => {
-    const fetchSubjects = async () => {
+    const fetchData = async () => {
       try {
         const data = await getClassesWithDivisions();
+
         // Get unique subjects from all classes
         const allSubjects = [];
-        (data || []).forEach((cls) => {
-          if (cls.subjects) {
-            cls.subjects.forEach((sub) => {
-              if (!allSubjects.includes(sub.subject_name)) {
-                allSubjects.push(sub.subject_name);
+        const allArms = [];
+
+        (data || []).forEach((division) => {
+          (division.programmes || []).forEach((programme) => {
+            (programme.classes || []).forEach((cls) => {
+              if (cls.subjects) {
+                cls.subjects.forEach((sub) => {
+                  if (!allSubjects.includes(sub.subject_name)) {
+                    allSubjects.push(sub.subject_name);
+                  }
+                });
+              }
+              // Collect class arms
+              if (cls.class_name && !allArms.includes(cls.class_name)) {
+                allArms.push(cls.class_name);
               }
             });
-          }
+          });
         });
+
         setSubjects(
           allSubjects.length > 0
             ? allSubjects
@@ -52,8 +78,14 @@ const TeacherForm = ({
                 'Art',
               ],
         );
+
+        setClassArms(
+          allArms.length > 0
+            ? allArms
+            : ['Science', 'Arts', 'Commercial', 'Primary 1', 'Primary 2', 'Primary 3'],
+        );
       } catch (error) {
-        console.error('Failed to fetch subjects:', error);
+        console.error('Failed to fetch data:', error);
 
         setSubjects([
           'Mathematics',
@@ -65,9 +97,11 @@ const TeacherForm = ({
           'Music',
           'Art',
         ]);
+
+        setClassArms(['Science', 'Arts', 'Commercial', 'Primary 1', 'Primary 2', 'Primary 3']);
       }
     };
-    fetchSubjects();
+    fetchData();
   }, []);
 
   const formik = useFormik({
@@ -85,18 +119,18 @@ const TeacherForm = ({
 
   return (
     <Box component="form" onSubmit={formik.handleSubmit}>
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          label="Staff ID"
-          name="staff_id"
-          value={formik.values.staff_id || ''}
-          onChange={formik.handleChange}
-          fullWidth
-          required
-        />
-      </Box>
-
+      {/* Row 1: Staff ID, Surname */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
+          <TextField
+            label="Staff ID"
+            name="staff_id"
+            value={formik.values.staff_id || ''}
+            onChange={formik.handleChange}
+            fullWidth
+            required
+          />
+        </Box>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <TextField
             label="Surname"
@@ -107,6 +141,10 @@ const TeacherForm = ({
             required
           />
         </Box>
+      </Box>
+
+      {/* Row 2: First Name, Phone Number */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <TextField
             label="First Name"
@@ -117,9 +155,6 @@ const TeacherForm = ({
             required
           />
         </Box>
-      </Box>
-
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <TextField
             label="Phone Number"
@@ -129,6 +164,10 @@ const TeacherForm = ({
             fullWidth
           />
         </Box>
+      </Box>
+
+      {/* Row 3: Gender, Email */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <FormControl fullWidth>
             <InputLabel>Gender</InputLabel>
@@ -139,14 +178,11 @@ const TeacherForm = ({
               displayEmpty
               label="Gender"
             >
-              <MenuItem value="male">Male</MenuItem>
-              <MenuItem value="female">Female</MenuItem>
+              <MenuItem value="Male">Male</MenuItem>
+              <MenuItem value="Female">Female</MenuItem>
             </Select>
           </FormControl>
         </Box>
-      </Box>
-
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <TextField
             label="Email"
@@ -158,26 +194,95 @@ const TeacherForm = ({
             required
           />
         </Box>
-        <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
+      </Box>
+
+      {/* Is Class Teacher - Warning Background */}
+      <Box
+        sx={{
+          mb: 3,
+          p: 2,
+          bgcolor: '#fff3e0',
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
+        <Typography variant="body1" sx={{ fontWeight: 500, color: '#e65100' }}>
+          Is Class Teacher?
+        </Typography>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={formik.values.is_class_teacher || false}
+              onChange={(e) => {
+                formik.setFieldValue('is_class_teacher', e.target.checked);
+                // Reset related fields when toggling
+                if (e.target.checked) {
+                  formik.setFieldValue('staff_type', '');
+                } else {
+                  formik.setFieldValue('class_arm', '');
+                }
+              }}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': {
+                  color: '#e65100',
+                },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                  backgroundColor: '#e65100',
+                },
+              }}
+            />
+          }
+          label={formik.values.is_class_teacher ? 'Yes' : 'No'}
+          sx={{
+            color: '#e65100',
+            '& .MuiFormControlLabel-label': {
+              fontWeight: 500,
+            },
+          }}
+        />
+      </Box>
+
+      {/* Conditional: Class Arm (if Yes) or Staff Type (if No) */}
+      <Box sx={{ mb: 3 }}>
+        {formik.values.is_class_teacher ? (
           <FormControl fullWidth>
-            <InputLabel>Subject</InputLabel>
+            <InputLabel>Class Arm</InputLabel>
             <Select
-              name="subject"
-              value={formik.values.subject || ''}
+              name="class_arm"
+              value={formik.values.class_arm || ''}
               onChange={formik.handleChange}
               displayEmpty
-              label="Subject"
+              label="Class Arm"
             >
-              {subjects.map((subject, index) => (
-                <MenuItem key={index} value={subject}>
-                  {subject}
+              {classArms.map((arm, index) => (
+                <MenuItem key={index} value={arm}>
+                  {arm}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-        </Box>
+        ) : (
+          <FormControl fullWidth>
+            <InputLabel>Staff Type</InputLabel>
+            <Select
+              name="staff_type"
+              value={formik.values.staff_type || ''}
+              onChange={formik.handleChange}
+              displayEmpty
+              label="Staff Type"
+            >
+              <MenuItem value="Non-Teaching">Non-Teaching</MenuItem>
+              <MenuItem value="Teaching">Teaching</MenuItem>
+            </Select>
+          </FormControl>
+        )}
       </Box>
 
+      {/* Action Buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
         <Button color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel

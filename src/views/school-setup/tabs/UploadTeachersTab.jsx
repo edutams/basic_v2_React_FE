@@ -107,13 +107,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     // Add new teacher to the list
     const newTeacher = {
       id: teachers.length + 1,
-      staff_id: `TEA${String(teachers.length + 1).padStart(3, '0')}`,
+      staff_id: data.staff_id,
       surname: data.surname,
       first_name: data.first_name,
-      phone: data.phone,
+      phone: data.phone_number,
       gender: data.gender,
       email: data.email,
-      arm: data.arm || 'General',
+      arm: data.is_class_teacher ? data.class_arm : data.staff_type || 'General',
     };
     setTeachers([...teachers, newTeacher]);
   };

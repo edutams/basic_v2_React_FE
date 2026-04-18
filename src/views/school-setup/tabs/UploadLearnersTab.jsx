@@ -136,8 +136,24 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
           getClassesWithDivisions(),
           getStudentCountByClass(),
         ]);
-        const activeClasses = (classesData || []).filter((cls) => cls.status === 'active');
-        setClasses(activeClasses);
+        const flatClasses = [];
+        (classesData || []).forEach((division) => {
+          (division.programmes || []).forEach((programme) => {
+            (programme.classes || []).forEach((cls) => {
+              if (cls.status === 'active') {
+                flatClasses.push({
+                  ...cls,
+                  unique_key: `${programme.id}_${cls.id}`,
+                  programme_id: programme.id,
+                  programme_name: programme.programme_name,
+                  division_name: division.division_name,
+                });
+              }
+            });
+          });
+        });
+
+        setClasses(flatClasses);
 
         // Transform counts array - simple mapping by class_id
         const countsObj = {};
@@ -164,8 +180,10 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   };
 
   const filteredClasses = useMemo(() => {
-    return classes.filter((cls) =>
-      cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()),
+    return classes.filter(
+      (cls) =>
+        cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cls.programme_name?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [classes, searchTerm]);
 
@@ -235,7 +253,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
               return (
-                <TableRow key={index}>
+                <TableRow key={item.unique_key || index}>
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -262,6 +280,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
 
                       <TextField
                         size="small"
+                        // defaultValue={`${item.programme_name} - ${item.class_name}`}
                         defaultValue={item.class_code}
                         disabled
                         onChange={handleChange}

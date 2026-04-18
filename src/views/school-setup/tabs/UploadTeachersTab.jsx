@@ -47,10 +47,26 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     const fetchClasses = async () => {
       try {
         const data = await getClassesWithDivisions();
-        const activeClasses = (data || [])
-          .filter((cls) => cls.status === 'active')
-          .map((cls) => cls.class_code);
-        setClasses(activeClasses);
+
+        // Flatten nested divisions → programmes → classes
+        const flatClasses = [];
+        (data || []).forEach((division) => {
+          (division.programmes || []).forEach((programme) => {
+            (programme.classes || []).forEach((cls) => {
+              if (cls.status === 'active') {
+                flatClasses.push({
+                  ...cls,
+                  unique_key: `${programme.id}_${cls.id}`,
+                  programme_id: programme.id,
+                  programme_name: programme.programme_name,
+                  division_name: division.division_name,
+                });
+              }
+            });
+          });
+        });
+
+        setClasses(flatClasses);
       } catch (error) {
         console.error('Failed to fetch classes:', error);
       } finally {
@@ -65,8 +81,10 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   };
 
   const filteredClasses = useMemo(() => {
-    return classes.filter((className) =>
-      className.toLowerCase().includes(searchTerm.toLowerCase()),
+    return classes.filter(
+      (cls) =>
+        cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cls.programme_name?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [classes, searchTerm]);
 
@@ -137,8 +155,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
               return (
-                <TableRow key={index}>
-                  {/* Classes + cancel icon together */}
+                <TableRow key={item.unique_key || index}>
+                  {' '}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -166,7 +184,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                       <TextField
                         size="small"
                         disabled
-                        defaultValue={item}
+                        defaultValue={item.class_code}
+                        // defaultValue={`${item.programme_name} - ${item.class_name}`}
                         onChange={handleChange}
                         sx={{
                           // width: 70,
@@ -191,7 +210,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                       />
                     </Box>
                   </TableCell>
-
                   {/* No. Uploaded */}
                   <TableCell
                     sx={{
@@ -226,7 +244,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                       }}
                     />
                   </TableCell>
-
                   {/* Upload Using Forms */}
                   <TableCell
                     sx={{
@@ -249,7 +266,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                       Add Teacher
                     </Button>
                   </TableCell>
-
                   {/* Upload Using Excel File */}
                   <TableCell
                     sx={{
@@ -299,7 +315,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveTeacher}
-        className={selectedClass}
+        classId={selectedClass?.id}
+        className={selectedClass?.class_name}
       />
     </Box>
   );

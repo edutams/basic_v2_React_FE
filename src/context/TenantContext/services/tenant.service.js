@@ -9,7 +9,7 @@ export const validateTenantDomain = async (hostname = window.location.hostname) 
     const res = await api.post('/validate-tenant-domain', { hostname });
     return res.data;
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return null;
   }
 };

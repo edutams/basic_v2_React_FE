@@ -59,7 +59,6 @@ const AssignmentManagement = () => {
     try {
       setLoading(true);
       const res = await aclApi.getAgents();
-      // console.log('fetchUsers response:', res);
 
       let usersData = [];
       if (Array.isArray(res.data)) {
@@ -67,9 +66,6 @@ const AssignmentManagement = () => {
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         usersData = res.data.data;
       }
-
-      // console.log('Users data:', usersData);
-      // console.log('Sample user from API:', usersData[0]);
 
       // Map organization data to user format for the UI
       const normalized = (usersData || []).map((u) => ({
@@ -82,7 +78,6 @@ const AssignmentManagement = () => {
         status: u.status || 'active',
         assignedRoles: u.roles || [],
       }));
-      // console.log('Normalized users:', normalized);
 
       setUsers(normalized);
     } catch (err) {
@@ -185,10 +180,6 @@ const AssignmentManagement = () => {
   const handleRoleSelection = async (roleIds) => {
     if (!currentAgentForRole) return;
 
-    // console.log('Current agent for role:', currentAgentForRole);
-    // console.log('Agent ID being sent:', currentAgentForRole.id);
-    // console.log('Role IDs being attached:', roleIds);
-
     const getCurrentRoleIds = () => {
       const roles = currentAgentForRole.assignedRoles || [];
       return roles.map((r) => {
@@ -214,17 +205,14 @@ const AssignmentManagement = () => {
 
     try {
       const assignRes = await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
-      // console.log('Role assignment response:', assignRes);
 
       const res = await aclApi.getAgents();
-      // console.log('Get users response:', res);
       let usersData = [];
       if (Array.isArray(res.data)) {
         usersData = res.data;
       } else if (res.data?.data && Array.isArray(res.data.data)) {
         usersData = res.data.data;
       }
-      // console.log('Users data after assignment:', usersData);
 
       // Map organization data to user format for the UI (same as fetchUsers)
       const normalized = (usersData || []).map((u) => ({
@@ -237,9 +225,6 @@ const AssignmentManagement = () => {
         status: u.status || 'active',
         assignedRoles: u.roles || [],
       }));
-
-      // console.log('Sample user from API:', usersData[0]);
-      // console.log('Normalized users:', normalized);
 
       setUsers(normalized);
 

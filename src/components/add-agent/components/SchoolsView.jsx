@@ -60,7 +60,6 @@ const SchoolsView = ({ selectedAgent }) => {
   };
 
   const manageSubscription = () => {
-    // console.log('Manage subscription:', selectedSchool);
     handleActionClose();
   };
 

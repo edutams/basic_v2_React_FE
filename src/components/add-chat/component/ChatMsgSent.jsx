@@ -44,7 +44,6 @@ const ChatMsgSent = () => {
     if (file && selectedChat) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        // console.log('Image base64 data:', event.target.result);
         sendMessage(
           selectedChat.id,
           event.target.result, // base64 image

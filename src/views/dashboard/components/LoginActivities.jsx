@@ -258,7 +258,6 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
               fontSize: 14,
               cursor: 'pointer',
             }}
-            onClick={() => console.log('Filter applied')}
           >
             Filter
           </button>

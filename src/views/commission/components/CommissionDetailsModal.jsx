@@ -78,7 +78,6 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
 
   const handleExport = () => {
     // Export functionality would go here
-    console.log('Exporting data:', filteredData);
     alert('Export functionality would download the filtered data');
   };
 

@@ -20,7 +20,6 @@ import { IconChevronDown, IconCurrencyDollar, IconMail, IconLogout } from '@tabl
 const TenantProfile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const { user, logout } = useTenantAuth();
-  // console.log('TenantProfile user:', user);
 
   const navigate = useNavigate();
   const notify = useNotification();

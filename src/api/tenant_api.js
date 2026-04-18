@@ -19,7 +19,6 @@ import axios from 'axios';
 // getTenantBaseURL()
 
 const getTenantBaseURL = () => {
-  // console.log(hostname, 11111);
 
   const appMode = import.meta.env.MODE;
 

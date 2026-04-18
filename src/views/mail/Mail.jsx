@@ -32,18 +32,30 @@ const InnerEmail = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const mdUp = useMediaQuery((theme) => theme.breakpoints.up('md'));
 
-  const totalSent = emails.filter(email => email.sent).length;
-  const totalReceived = emails.filter(email => email.inbox).length;
-  console.log('Total Sent:', totalSent);
-  console.log('Total Received:', totalReceived);
+  const totalSent = emails.filter((email) => email.sent).length;
+  const totalReceived = emails.filter((email) => email.inbox).length;
 
   return (
     <PageContainer title="Email App" description="this is email page">
       <Breadcrumb title="Email app" items={BCrumb} />
 
       {/* Stats Cards */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-start' } }}>
-        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' }, minWidth: 0, maxWidth: { xs: '100%', sm: '300px' } }}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          mb: 3,
+          flexWrap: 'wrap',
+          justifyContent: { xs: 'center', sm: 'flex-start' },
+        }}
+      >
+        <Box
+          sx={{
+            flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' },
+            minWidth: 0,
+            maxWidth: { xs: '100%', sm: '300px' },
+          }}
+        >
           <Box
             component="div"
             sx={{
@@ -59,15 +71,32 @@ const InnerEmail = () => {
             }}
           >
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>Total</Box>
-              <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>mail sent</Box>
+              <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>
+                Total
+              </Box>
+              <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>
+                mail sent
+              </Box>
             </Box>
-            <Box sx={{ fontSize: { xs: 28, sm: 32 }, fontWeight: 700, color: 'primary.main', ml: { xs: 1, sm: 2 } }}>
+            <Box
+              sx={{
+                fontSize: { xs: 28, sm: 32 },
+                fontWeight: 700,
+                color: 'primary.main',
+                ml: { xs: 1, sm: 2 },
+              }}
+            >
               {totalSent || 0}
             </Box>
           </Box>
         </Box>
-        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' }, minWidth: 0, maxWidth: { xs: '100%', sm: '300px' } }}>
+        <Box
+          sx={{
+            flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' },
+            minWidth: 0,
+            maxWidth: { xs: '100%', sm: '300px' },
+          }}
+        >
           <Box
             component="div"
             sx={{
@@ -83,17 +112,35 @@ const InnerEmail = () => {
             }}
           >
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>Total</Box>
-              <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>mail received</Box>
+              <Box sx={{ fontWeight: 700, fontSize: { xs: 18, sm: 20 }, color: 'grey.800' }}>
+                Total
+              </Box>
+              <Box sx={{ fontWeight: 400, fontSize: { xs: 14, sm: 16 }, color: 'grey.500' }}>
+                mail received
+              </Box>
             </Box>
-            <Box sx={{ fontSize: { xs: 28, sm: 32 }, fontWeight: 700, color: 'primary.main', ml: { xs: 1, sm: 2 } }}>
+            <Box
+              sx={{
+                fontSize: { xs: 28, sm: 32 },
+                fontWeight: 700,
+                color: 'primary.main',
+                ml: { xs: 1, sm: 2 },
+              }}
+            >
               {totalReceived || 0}
             </Box>
           </Box>
         </Box>
       </Box>
 
-      <AppCard sx={{ display: 'flex', flexWrap: { xs: 'wrap', md: 'nowrap' }, flexDirection: { xs: 'column', md: 'row' }, p: 0 }}>
+      <AppCard
+        sx={{
+          display: 'flex',
+          flexWrap: { xs: 'wrap', md: 'nowrap' },
+          flexDirection: { xs: 'column', md: 'row' },
+          p: 0,
+        }}
+      >
         {/* Left part */}
         <Drawer
           open={isLeftSidebarOpen}

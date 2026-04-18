@@ -198,8 +198,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
               borderColor: '#e5e7eb',
               color: '#374151',
               '&:hover': {
-                borderColor: '#d1d5db',
-                bgcolor: '#f9fafb',
+                bgcolor: 'primary',
+                color: '#fffff',
               },
             }}
           >
@@ -212,24 +212,14 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
               borderColor: '#e5e7eb',
               color: '#374151',
               '&:hover': {
-                borderColor: '#d1d5db',
-                bgcolor: '#f9fafb',
+                bgcolor: 'primary',
+                color: '#fffff',
               },
             }}
           >
             Upload
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddNewTeacher}
-            sx={{
-              bgcolor: '#1976d2',
-              '&:hover': {
-                bgcolor: '#1565c0',
-              },
-            }}
-          >
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
             Add New Teacher
           </Button>
         </Box>
@@ -312,17 +302,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
       {/* Save & Continue Button */}
       <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button
-          variant="contained"
-          onClick={onSaveAndContinue}
-          sx={{
-            bgcolor: '#1976d2',
-            '&:hover': {
-              bgcolor: '#1565c0',
-            },
-          }}
-        >
-          Save & Continue
+        <Button variant="contained" onClick={onSaveAndContinue}>
+          Save
         </Button>
       </Box>
 

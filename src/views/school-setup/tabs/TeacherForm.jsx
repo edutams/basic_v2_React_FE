@@ -12,8 +12,10 @@ import {
   Typography,
 } from '@mui/material';
 import { useFormik } from 'formik';
+import * as yup from 'yup';
 import PropTypes from 'prop-types';
 import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import { teacherValidationSchema } from './validation/teacherValidationSchema';
 
 const TeacherForm = ({
   initialValues = {
@@ -107,15 +109,11 @@ const TeacherForm = ({
   const formik = useFormik({
     initialValues,
     enableReinitialize: true,
+    validationSchema: teacherValidationSchema,
     onSubmit: (values) => onSubmit(values),
   });
 
-  const isValid =
-    formik.values.staff_id &&
-    formik.values.surname &&
-    formik.values.first_name &&
-    formik.values.gender &&
-    formik.values.email;
+  const isValid = formik.values.staff_id && formik.values.surname && formik.values.first_name;
 
   return (
     <Box component="form" onSubmit={formik.handleSubmit}>
@@ -127,8 +125,10 @@ const TeacherForm = ({
             name="staff_id"
             value={formik.values.staff_id || ''}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             fullWidth
-            required
+            error={formik.touched.staff_id && Boolean(formik.errors.staff_id)}
+            helperText={formik.touched.staff_id && formik.errors.staff_id}
           />
         </Box>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
@@ -137,8 +137,10 @@ const TeacherForm = ({
             name="surname"
             value={formik.values.surname || ''}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             fullWidth
-            required
+            error={formik.touched.surname && Boolean(formik.errors.surname)}
+            helperText={formik.touched.surname && formik.errors.surname}
           />
         </Box>
       </Box>
@@ -151,8 +153,10 @@ const TeacherForm = ({
             name="first_name"
             value={formik.values.first_name || ''}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             fullWidth
-            required
+            error={formik.touched.first_name && Boolean(formik.errors.first_name)}
+            helperText={formik.touched.first_name && formik.errors.first_name}
           />
         </Box>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
@@ -161,7 +165,10 @@ const TeacherForm = ({
             name="phone_number"
             value={formik.values.phone_number || ''}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             fullWidth
+            error={formik.touched.phone_number && Boolean(formik.errors.phone_number)}
+            helperText={formik.touched.phone_number && formik.errors.phone_number}
           />
         </Box>
       </Box>
@@ -169,12 +176,13 @@ const TeacherForm = ({
       {/* Row 3: Gender, Email */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
-          <FormControl fullWidth>
+          <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)}>
             <InputLabel>Gender</InputLabel>
             <Select
               name="gender"
               value={formik.values.gender || ''}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               displayEmpty
               label="Gender"
             >
@@ -190,8 +198,10 @@ const TeacherForm = ({
             type="email"
             value={formik.values.email || ''}
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             fullWidth
-            required
+            error={formik.touched.email && Boolean(formik.errors.email)}
+            helperText={formik.touched.email && formik.errors.email}
           />
         </Box>
       </Box>
@@ -258,12 +268,16 @@ const TeacherForm = ({
       {/* Conditional: Class Arm (if Yes) or Staff Type (if No) */}
       <Box sx={{ mb: 3 }}>
         {formik.values.is_class_teacher ? (
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={formik.touched.class_arm && Boolean(formik.errors.class_arm)}
+          >
             <InputLabel>Class Arm</InputLabel>
             <Select
               name="class_arm"
               value={formik.values.class_arm || ''}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               displayEmpty
               label="Class Arm"
             >
@@ -275,12 +289,16 @@ const TeacherForm = ({
             </Select>
           </FormControl>
         ) : (
-          <FormControl fullWidth>
+          <FormControl
+            fullWidth
+            error={formik.touched.staff_type && Boolean(formik.errors.staff_type)}
+          >
             <InputLabel>Staff Type</InputLabel>
             <Select
               name="staff_type"
               value={formik.values.staff_type || ''}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               displayEmpty
               label="Staff Type"
             >
@@ -296,7 +314,7 @@ const TeacherForm = ({
         <Button color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button variant="contained" type="submit" disabled={isLoading || !isValid}>
+        <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
           {isLoading ? 'Saving...' : submitText}
         </Button>
       </Box>

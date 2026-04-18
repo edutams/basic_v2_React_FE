@@ -8,7 +8,7 @@ import {
   Select,
   MenuItem,
   FormControlLabel,
-  Switch,
+  Checkbox,
   Typography,
 } from '@mui/material';
 import { useFormik } from 'formik';
@@ -200,9 +200,8 @@ const TeacherForm = ({
       <Box
         sx={{
           mb: 3,
-          p: 2,
+          p: 1,
           bgcolor: '#fff3e0',
-          borderRadius: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -210,40 +209,50 @@ const TeacherForm = ({
           gap: 2,
         }}
       >
-        <Typography variant="body1" sx={{ fontWeight: 500, color: '#e65100' }}>
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>
           Is Class Teacher?
         </Typography>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={formik.values.is_class_teacher || false}
-              onChange={(e) => {
-                formik.setFieldValue('is_class_teacher', e.target.checked);
-                // Reset related fields when toggling
-                if (e.target.checked) {
-                  formik.setFieldValue('staff_type', '');
-                } else {
-                  formik.setFieldValue('class_arm', '');
-                }
-              }}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': {
-                  color: '#e65100',
-                },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  backgroundColor: '#e65100',
-                },
-              }}
-            />
-          }
-          label={formik.values.is_class_teacher ? 'Yes' : 'No'}
-          sx={{
-            color: '#e65100',
-            '& .MuiFormControlLabel-label': {
-              fontWeight: 500,
-            },
-          }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formik.values.is_class_teacher === true}
+                onChange={(e) => {
+                  formik.setFieldValue('is_class_teacher', e.target.checked ? true : false);
+                  if (e.target.checked) {
+                    formik.setFieldValue('staff_type', '');
+                  } else {
+                    formik.setFieldValue('class_arm', '');
+                  }
+                }}
+              />
+            }
+            label="Yes"
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formik.values.is_class_teacher === false}
+                onChange={(e) => {
+                  formik.setFieldValue('is_class_teacher', e.target.checked ? false : true);
+                  if (e.target.checked) {
+                    formik.setFieldValue('class_arm', '');
+                  } else {
+                    formik.setFieldValue('staff_type', '');
+                  }
+                }}
+                // sx={{
+                //   color: '#e65100',
+                //   '&.Mui-checked': {
+                //     color: '#e65100',
+                //   },
+                // }}
+              />
+            }
+            label="No"
+            // sx={{ color: '#e65100' }}
+          />
+        </Box>
       </Box>
 
       {/* Conditional: Class Arm (if Yes) or Staff Type (if No) */}

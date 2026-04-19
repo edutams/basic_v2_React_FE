@@ -7,59 +7,127 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableFooter,
   TablePagination,
   TextField,
   IconButton,
   Button,
+  Paper,
+  Menu,
+  MenuItem,
+  Typography,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
+  CloudUpload as UploadIcon,
+  Download as DownloadIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { IconDotsVertical } from '@tabler/icons-react';
+import { IconEdit, IconTrash } from '@tabler/icons-react';
+import AddTeacherModal from './AddTeacherModal';
 
 const UploadTeachersTab = ({ onSaveAndContinue }) => {
-  const [hasChanges, setHasChanges] = useState(false);
-  const [iconHovered, setIconHovered] = useState(null);
-  const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Sample data - in real app this would come from API
-  const allClasses = [
-    'JSS 1',
-    'JSS 2',
-    'JSS 3',
-    'SSS 1',
-    'SSS 2',
-    'SSS 3',
-    'Primary 1',
-    'Primary 2',
-    'Primary 3',
-    'Primary 4',
-    'Primary 5',
-    'Primary 6',
-  ];
+  // Mock teacher data - in real app this would come from API
+  const [teachers, setTeachers] = useState([
+    {
+      id: 1,
+      staff_id: 'TEA001',
+      surname: 'Okafor',
+      first_name: 'Chukwuemeka',
+      phone: '08012345678',
+      gender: 'Male',
+      email: 'c.okafor@school.com',
+      arm: 'Science',
+    },
+    {
+      id: 2,
+      staff_id: 'TEA002',
+      surname: 'Adeyemi',
+      first_name: 'Fatima',
+      phone: '08023456789',
+      gender: 'Female',
+      email: 'f.adeyemi@school.com',
+      arm: 'Arts',
+    },
+    {
+      id: 3,
+      staff_id: 'TEA003',
+      surname: 'Ibrahim',
+      first_name: 'Mohammed',
+      phone: '08034567890',
+      gender: 'Male',
+      email: 'm.ibrahim@school.com',
+      arm: 'Commercial',
+    },
+    {
+      id: 4,
+      staff_id: 'TEA004',
+      surname: 'Okonkwo',
+      first_name: 'Chioma',
+      phone: '08045678901',
+      gender: 'Female',
+      email: 'c.okonkwo@school.com',
+      arm: 'Science',
+    },
+    {
+      id: 5,
+      staff_id: 'TEA005',
+      surname: 'Williams',
+      first_name: 'John',
+      phone: '08056789012',
+      gender: 'Male',
+      email: 'j.williams@school.com',
+      arm: 'Science',
+    },
+  ]);
 
-  const handleChange = () => {
-    setHasChanges(true);
+  const handleMenuOpen = (event, teacher) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedTeacher(teacher);
   };
 
-  // Filter classes by search term
-  const filteredClasses = useMemo(() => {
-    return allClasses.filter((className) =>
-      className.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [allClasses, searchTerm]);
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedTeacher(null);
+  };
 
-  // Paginate the filtered data
-  const paginatedClasses = useMemo(() => {
+  const handleAddNewTeacher = () => {
+    setModalOpen(true);
+  };
+
+  const handleEditTeacher = (teacher) => {
+    console.log('Edit teacher:', teacher);
+    handleMenuClose();
+  };
+
+  const handleDeleteTeacher = (teacher) => {
+    // Remove teacher from the list
+    setTeachers(teachers.filter((t) => t.id !== teacher.id));
+    handleMenuClose();
+  };
+
+  const filteredTeachers = useMemo(() => {
+    return teachers.filter(
+      (teacher) =>
+        teacher.surname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.staff_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.email?.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
+  }, [teachers, searchTerm]);
+
+  const paginatedTeachers = useMemo(() => {
     const start = page * rowsPerPage;
-    return filteredClasses.slice(start, start + rowsPerPage);
-  }, [filteredClasses, page, rowsPerPage]);
+    return filteredTeachers.slice(start, start + rowsPerPage);
+  }, [filteredTeachers, page, rowsPerPage]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -70,12 +138,31 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     setPage(0);
   };
 
+  const columns = [
+    { id: 'staff_id', label: 'Staff ID' },
+    { id: 'surname', label: 'Surname' },
+    { id: 'first_name', label: 'First Name' },
+    { id: 'phone', label: 'Phone' },
+    { id: 'gender', label: 'Gender' },
+    { id: 'email', label: 'Email' },
+    { id: 'arm', label: 'Arm' },
+  ];
+
   return (
     <Box>
-      {/* Search Bar */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
+      {/* Header with Search and Action Buttons */}
+      <Box
+        sx={{
+          mb: 3,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
         <TextField
-          placeholder="Search classes..."
+          placeholder="Search teachers..."
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -87,190 +174,145 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
             startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
           }}
         />
+
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            sx={{
+              borderColor: '#e5e7eb',
+              color: '#374151',
+              '&:hover': {
+                bgcolor: 'primary',
+                color: '#fffff',
+              },
+            }}
+          >
+            Download Template
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<UploadIcon />}
+            sx={{
+              borderColor: '#e5e7eb',
+              color: '#374151',
+              '&:hover': {
+                bgcolor: 'primary',
+                color: '#fffff',
+              },
+            }}
+          >
+            Upload
+          </Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
+            Add New Teacher
+          </Button>
+        </Box>
       </Box>
 
-      <TableContainer>
-        <Table
-          sx={{
-            borderCollapse: 'separate',
-            borderSpacing: '12px 10px',
-          }}
-        >
-          {/* Header */}
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+      {/* Teachers Table */}
+      <Paper variant="outlined">
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>#</TableCell>
+                {columns.map((column) => (
+                  <TableCell key={column.id} sx={{ fontWeight: 600 }}>
+                    {column.label}
+                  </TableCell>
+                ))}
+                <TableCell align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
 
-              <TableCell sx={{ fontWeight: 600 }}>No. Uploaded</TableCell>
-
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Forms</TableCell>
-
-              <TableCell sx={{ fontWeight: 600 }}>Upload Using Excel File </TableCell>
-            </TableRow>
-          </TableHead>
-
-          {/* Body */}
-          <TableBody>
-            {paginatedClasses.map((item, index) => {
-              const isHighlighted = iconHovered === index || iconClicked === index;
-              const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
-
-              return (
-                <TableRow key={index}>
-                  {/* Classes + cancel icon together */}
-                  <TableCell
-                    sx={{
-                      bgcolor: cellBg,
-                      borderRadius: 2,
-                      p: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onMouseEnter={() => setIconHovered(index)}
-                        onMouseLeave={() => setIconHovered(null)}
-                        onClick={() => setIconClicked(iconClicked === index ? null : index)}
-                      >
-                        ✕
+            <TableBody>
+              {paginatedTeachers.length > 0 ? (
+                paginatedTeachers.map((teacher, index) => (
+                  <TableRow key={teacher.id} hover>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>{teacher.staff_id}</TableCell>
+                    <TableCell>{teacher.surname}</TableCell>
+                    <TableCell>{teacher.first_name}</TableCell>
+                    <TableCell>{teacher.phone}</TableCell>
+                    <TableCell>{teacher.gender}</TableCell>
+                    <TableCell sx={{ color: '#1976d2' }}>{teacher.email}</TableCell>
+                    <TableCell>{teacher.arm}</TableCell>
+                    <TableCell align="center">
+                      <IconButton onClick={(e) => handleMenuOpen(e, teacher)}>
+                        <MoreVertIcon />
                       </IconButton>
-
-                      <TextField
-                        size="small"
-                        defaultValue={item}
-                        onChange={handleChange}
-                        sx={{
-                          width: 70,
-                          '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#fff',
-                            borderRadius: '8px',
-
-                            '& fieldset': {
-                              borderColor: '#e5e7eb',
-                            },
-
-                            '&:hover fieldset': {
-                              borderColor: '#cbd5e1',
-                            },
-
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#1976d2',
-                              borderWidth: '2px',
-                            },
-                          },
-                        }}
-                      />
-                    </Box>
-                  </TableCell>
-
-                  {/* No. Uploaded */}
-                  <TableCell
-                    sx={{
-                      bgcolor: cellBg,
-                      borderRadius: 2,
-                      p: 1,
-                    }}
-                    align="center"
-                  >
-                    <TextField
-                      size="small"
-                      defaultValue="0"
-                      sx={{
-                        width: 70,
-                        '& .MuiOutlinedInput-root': {
-                          backgroundColor: '#fff',
-                          borderRadius: '8px',
-
-                          '& fieldset': {
-                            borderColor: '#e5e7eb',
-                          },
-
-                          '&:hover fieldset': {
-                            borderColor: '#cbd5e1',
-                          },
-
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
-                            borderWidth: '2px',
-                          },
-                        },
-                      }}
-                    />
-                  </TableCell>
-
-                  {/* Upload Using Forms */}
-                  <TableCell
-                    sx={{
-                      bgcolor: cellBg,
-                      borderRadius: 2,
-                      p: 1,
-                    }}
-                    align="center"
-                  >
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<AddIcon />}
-                      sx={{
-                        bgcolor: '#EDF3FF',
-                        color: '#000000',
-                      }}
-                    >
-                      Add Teacher
-                    </Button>
-                  </TableCell>
-
-                  {/* Upload Using Excel File */}
-                  <TableCell
-                    sx={{
-                      bgcolor: cellBg,
-                      borderRadius: 2,
-                      p: 1,
-                    }}
-                    align="center"
-                  >
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                      <Button variant="outlined" size="small" startIcon={<span>↓</span>}>
-                        Download Template
-                      </Button>
-                      <Button variant="contained" size="small" startIcon={<span>↑</span>}>
-                        Upload Template
-                      </Button>
-                    </Box>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl) && selectedTeacher?.id === teacher.id}
+                        onClose={handleMenuClose}
+                      >
+                        <MenuItem onClick={() => handleEditTeacher(teacher)}>
+                          <IconEdit size={16} style={{ marginRight: 8 }} />
+                          Edit
+                        </MenuItem>
+                        <MenuItem
+                          onClick={() => handleDeleteTeacher(teacher)}
+                          sx={{ color: 'error.main' }}
+                        >
+                          <IconTrash size={16} style={{ marginRight: 8 }} />
+                          Delete
+                        </MenuItem>
+                      </Menu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No teachers found
+                    </Typography>
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredTeachers.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </Paper>
 
-          {/* Footer with Pagination */}
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                count={filteredClasses.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </TableContainer>
-
-      <Box mt={2} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
-          Save & Continue
+      {/* Save & Continue Button */}
+      <Box mt={3} display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={onSaveAndContinue}>
+          Save
         </Button>
       </Box>
+
+      {/* Add Teacher Modal */}
+      <AddTeacherModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={(data) => {
+          const newTeacher = {
+            id: teachers.length + 1,
+            staff_id: data.staff_id,
+            surname: data.surname,
+            first_name: data.first_name,
+            phone: data.phone_number,
+            gender: data.gender,
+            email: data.email,
+            arm: data.is_class_teacher ? data.class_arm : data.staff_type || 'General',
+          };
+          setTeachers([...teachers, newTeacher]);
+          setModalOpen(false);
+        }}
+        className="General"
+        isLoading={isLoading}
+      />
     </Box>
   );
 };

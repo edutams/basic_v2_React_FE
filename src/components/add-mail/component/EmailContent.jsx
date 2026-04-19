@@ -205,7 +205,6 @@ const EmailContent = () => {
                   variant="contained"
                   color="primary"
                   onClick={() => {
-                    // console.log('Send button clicked');
                     handleSendReply();
                   }}
                 >

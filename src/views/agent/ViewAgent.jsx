@@ -94,8 +94,10 @@ const ViewAgent = () => {
             })),
             schools: (data.tenants || []).map((tenant) => ({
               school: tenant.tenant_name || 'Unknown School',
-              contact: tenant.administrator_info?.school_spa?.admin_phone || tenant.admin_phone || 'N/A',
-              email: tenant.administrator_info?.school_spa?.admin_email || tenant.tenant_email || 'N/A',
+              contact:
+                tenant.administrator_info?.school_spa?.admin_phone || tenant.admin_phone || 'N/A',
+              email:
+                tenant.administrator_info?.school_spa?.admin_email || tenant.tenant_email || 'N/A',
               agent: data.organization_name,
               agentContact: data.organization_phone,
               agentEmail: data.organization_email,
@@ -112,7 +114,7 @@ const ViewAgent = () => {
             topAgents: [],
             topRevenueSchools: [],
             raw: data,
-            leadUser: (data.users || []).find(u => u.is_lead === 'yes') || null,
+            leadUser: (data.users || []).find((u) => u.is_lead === 'yes') || null,
           };
           setAgentData(mappedData);
         }
@@ -142,19 +144,24 @@ const ViewAgent = () => {
           : 'View Profile',
     },
   ];
-  // console.log(currentUser, 65666556)
   const isDark = theme.palette.mode === 'dark';
 
   return (
     <PageContainer
       title={
-        isOwnProfile && currentUser?.organization.access_level > 1 ? 'Organization Dashboard' : 'View Organization Profile'
+        isOwnProfile && currentUser?.organization.access_level > 1
+          ? 'Organization Dashboard'
+          : 'View Organization Profile'
       }
       description="Detailed organization profile view"
     >
       <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
         <Breadcrumb
-          title={isOwnProfile && currentUser?.organization.access_level > 1 ? 'Dashboard' : 'View Profile'}
+          title={
+            isOwnProfile && currentUser?.organization.access_level > 1
+              ? 'Dashboard'
+              : 'View Profile'
+          }
           items={BCrumb}
         />
 
@@ -296,20 +303,24 @@ const ViewAgent = () => {
         <AgentModal
           open={isAddAgentModalOpen}
           onClose={() => setIsAddAgentModalOpen(false)}
-          handleRefresh={() => setRefreshKey?.(prev => prev + 1)}
+          handleRefresh={() => setRefreshKey?.((prev) => prev + 1)}
         />
         <AgentModal
           open={isUpdateModalOpen}
           onClose={() => setIsUpdateModalOpen(false)}
-          handleRefresh={() => setRefreshKey(prev => prev + 1)}
+          handleRefresh={() => setRefreshKey((prev) => prev + 1)}
           actionType="update"
-          selectedAgent={agentData ? {
-            ...agentData.raw,
-            ...agentData.leadUser,
-            id: id,
-            organization_logo: agentData.raw?.organization_logo,
-            avatar: agentData.leadUser?.avatar,
-          } : null}
+          selectedAgent={
+            agentData
+              ? {
+                  ...agentData.raw,
+                  ...agentData.leadUser,
+                  id: id,
+                  organization_logo: agentData.raw?.organization_logo,
+                  avatar: agentData.leadUser?.avatar,
+                }
+              : null
+          }
         />
         <ReusableModal
           open={isAddSchoolModalOpen}

@@ -58,12 +58,11 @@ const EmailContent = () => {
         time: new Date().toISOString(),
         emailExcerpt: editorContent.substring(0, 60),
       };
-      // console.log('Sending email:', newEmail);
       sendEmail(newEmail); // Call context function
       setShow(false); // Close editor
       setEditorContent(''); // Clear editor
     } else {
-      // console.log('Cannot send: No selected email or empty content');
+      console.error('');
     }
   };
 

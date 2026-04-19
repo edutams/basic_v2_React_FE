@@ -17,7 +17,6 @@ const defaultAuthState = {
 };
 
 export const TenantAuthProvider = ({ children }) => {
-  // console.log('TenantAuthProvider rendering');
   const [user, setUser] = useState(defaultAuthState.user);
   const [isAuthenticated, setIsAuthenticated] = useState(defaultAuthState.isAuthenticated);
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
@@ -164,9 +163,7 @@ export const TenantAuthProvider = ({ children }) => {
             },
             body: JSON.stringify({ impersonator_id: impersonatorId }),
           });
-        } catch (apiErr) {
-          console.log('API call failed, continuing anyway:', apiErr);
-        }
+        } catch (apiErr) {}
       }
     } finally {
       // Clear impersonation data
@@ -199,8 +196,6 @@ export const TenantAuthProvider = ({ children }) => {
     impersonatorId,
     stopImpersonation,
   };
-
-  // console.log('TenantAuthProvider contextValue:', contextValue);
 
   return (
     <TenantAuthContext.Provider value={contextValue}>

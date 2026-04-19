@@ -14,6 +14,8 @@ import {
   Button,
   CircularProgress,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
@@ -22,7 +24,7 @@ import {
   saveClasses,
 } from '../../../context/TenantContext/services/tenant.service';
 
-const SetUpClassesTab = ({ onSaveAndContinue }) => {
+const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
@@ -32,6 +34,11 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   // Default arm letters generator
   const generateDefaultArmNames = (count) => {
@@ -49,37 +56,89 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
     return letters;
   };
 
-  // Fetch classes from API
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const data = await getClassesWithDivisions();
-        // Transform API data to include local state for arms
-        const transformed = (data || []).map((cls) => ({
-          ...cls,
-          no_of_arms: cls.no_of_arms || 0,
-          arm_names: cls.arm_names || [],
-        }));
-        setClasses(transformed);
-      } catch (error) {
-        console.error('Failed to fetch classes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchClasses = async () => {
+    try {
+      const data = await getClassesWithDivisions();
+      const flatClasses = [];
+      (data || []).forEach((division) => {
+        (division.programmes || []).forEach((programme) => {
+          (programme.classes || []).forEach((cls) => {
+            flatClasses.push({
+              ...cls,
+              unique_key: `${programme.id}_${cls.id}`,
+              programme_id: programme.id,
+              programme_code: programme.programme_code,
+              division_name: division.division_name,
+              programme_class_id: cls.pivot?.id ?? null,
+              no_of_arms: cls.class_arms?.length || 0,
+              arm_names: cls.class_arms?.map((a) => a.arm_names) || [],
+              arms: cls.arms || [],
+              status: cls.status || 'active',
+            });
+          });
+        });
+      });
+      setClasses(flatClasses);
+    } catch (error) {
+      console.error('Failed to fetch classes:', error);
+    }
+  };
 
-    fetchClasses();
+  useEffect(() => {
+    setLoading(true);
+    fetchClasses().finally(() => setLoading(false));
   }, []);
+
+  const handleSaveAndContinue = async () => {
+    setSaving(true);
+    try {
+      const classesData = classes.map((cls) => ({
+        class_id: cls.id,
+        programme_id: cls.programme_id,
+        program_class_id: cls.programme_class_id,
+        class_name: cls.class_name,
+        status: cls.status,
+        no_of_arms: cls.no_of_arms || 0,
+        arm_names: cls.arm_names || [],
+      }));
+
+      await saveClasses(classesData);
+      await fetchClasses();
+      setHasChanges(false);
+
+      onClassArmsAdded?.();
+      setNotification({ open: true, message: 'Classes saved successfully!', severity: 'success' });
+      if (onSaveAndContinue) onSaveAndContinue();
+    } catch (error) {
+      console.error('Failed to save classes:', error);
+      alert('Failed to save classes. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleChange = () => {
     setHasChanges(true);
   };
 
-  const handleNoOfArmsChange = (classId, value) => {
+  const handleToggleClassStatus = (uniqueKey) => {
+    setClasses((prev) =>
+      prev.map((cls) => {
+        if (cls.unique_key === uniqueKey) {
+          const newStatus = cls.status === 'active' ? 'inactive' : 'active';
+          return { ...cls, status: newStatus };
+        }
+        return cls;
+      }),
+    );
+    setHasChanges(true);
+  };
+
+  const handleNoOfArmsChange = (uniqueKey, value) => {
     const numArms = parseInt(value) || 0;
     setClasses((prev) =>
       prev.map((cls) => {
-        if (cls.id === classId) {
+        if (cls.unique_key === uniqueKey) {
           return { ...cls, no_of_arms: numArms };
         }
         return cls;
@@ -88,10 +147,10 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
     setHasChanges(true);
   };
 
-  const handleGenerateArms = (classId) => {
+  const handleGenerateArms = (uniqueKey) => {
     setClasses((prev) =>
       prev.map((cls) => {
-        if (cls.id === classId) {
+        if (cls.unique_key === uniqueKey) {
           const defaultArms = generateDefaultArmNames(cls.no_of_arms || 0);
           return { ...cls, arm_names: defaultArms };
         }
@@ -99,12 +158,17 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       }),
     );
     setHasChanges(true);
+    setNotification({
+      open: true,
+      message: 'Class arm names generated successfully!',
+      severity: 'success',
+    });
   };
 
-  const handleArmNameChange = (classId, armIndex, value) => {
+  const handleArmNameChange = (uniqueKey, armIndex, value) => {
     setClasses((prev) =>
       prev.map((cls) => {
-        if (cls.id === classId) {
+        if (cls.unique_key === uniqueKey) {
           const newArmNames = [...cls.arm_names];
           newArmNames[armIndex] = value;
           return { ...cls, arm_names: newArmNames };
@@ -113,32 +177,6 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
       }),
     );
     setHasChanges(true);
-  };
-
-  const handleSaveAndContinue = async () => {
-    setSaving(true);
-    try {
-      // Transform classes data for API
-      const classesData = classes.map((cls) => ({
-        class_id: cls.id,
-        class_name: cls.class_name,
-        is_active: true,
-        no_of_arms: cls.no_of_arms || 0,
-        arm_names: cls.arm_names || [],
-      }));
-
-      await saveClasses(classesData);
-
-      // Move to next tab
-      if (onSaveAndContinue) {
-        onSaveAndContinue();
-      }
-    } catch (error) {
-      console.error('Failed to save classes:', error);
-      alert('Failed to save classes. Please try again.');
-    } finally {
-      setSaving(false);
-    }
   };
 
   // Filter classes by search term
@@ -175,7 +213,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
   return (
     <Box>
       {/* Search Bar */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
+      {/* <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
         <TextField
           placeholder="Search classes..."
           value={searchTerm}
@@ -189,7 +227,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
             startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
           }}
         />
-      </Box>
+      </Box> */}
 
       <TableContainer>
         <Table
@@ -201,28 +239,30 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           {/* Header */}
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>No. of Arms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%' }}>No. of Arms</TableCell>
 
-              <TableCell sx={{ fontWeight: 600 }}>Class Arm Names</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '50%' }}>Class Arm Names</TableCell>
             </TableRow>
           </TableHead>
 
           {/* Body */}
           <TableBody>
             {paginatedClasses.map((classItem, index) => {
+              const isInactive = classItem.status === 'inactive';
               const isHighlighted = iconHovered === index || iconClicked === index;
-              const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
-              const className = classItem.class_name || '';
+              const cellBg = isInactive ? '#e0e0e0' : isHighlighted ? '#fbe4e4' : '#f6f7f9';
+              const className = classItem.class_code || '';
 
               return (
-                <TableRow key={classItem.id || index}>
+                <TableRow key={classItem.unique_key || index}>
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -234,22 +274,24 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                     >
                       <IconButton
                         size="small"
-                        color="error"
+                        color={isInactive ? 'success' : 'error'}
                         onMouseEnter={() => setIconHovered(index)}
                         onMouseLeave={() => setIconHovered(null)}
-                        onClick={() => setIconClicked(iconClicked === index ? null : index)}
+                        onClick={() => handleToggleClassStatus(classItem.unique_key)}
                       >
-                        ✕
+                        {isInactive ? '✓' : '✕'}
                       </IconButton>
 
                       <TextField
                         size="small"
                         fullWidth
-                        defaultValue={className}
+                        disabled
+                        // defaultValue={classItem.class_code}
+                        defaultValue={`${classItem.programme_code} - ${classItem.class_code}`}
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#fff',
+                            backgroundColor: isInactive ? '#e0e0e0' : '#fff',
                             borderRadius: '8px',
 
                             '& fieldset': {
@@ -276,6 +318,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -288,8 +331,9 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       <TextField
                         size="small"
                         type="number"
+                        disabled={isInactive}
                         value={classItem.no_of_arms || 0}
-                        onChange={(e) => handleNoOfArmsChange(classItem.id, e.target.value)}
+                        onChange={(e) => handleNoOfArmsChange(classItem.unique_key, e.target.value)}
                         sx={{
                           width: 70,
                           '& .MuiOutlinedInput-root': {
@@ -315,7 +359,8 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       <Button
                         variant="contained"
                         size="small"
-                        onClick={() => handleGenerateArms(classItem.id)}
+                        disabled={isInactive}
+                        onClick={() => handleGenerateArms(classItem.unique_key)}
                       >
                         Generate
                       </Button>
@@ -328,6 +373,7 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                       bgcolor: cellBg,
                       borderRadius: 2,
                       p: 1,
+                      verticalAlign: 'top',
                     }}
                   >
                     <Box
@@ -342,8 +388,11 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
                           <TextField
                             key={i}
                             size="small"
+                            disabled={isInactive}
                             value={armName}
-                            onChange={(e) => handleArmNameChange(classItem.id, i, e.target.value)}
+                            onChange={(e) =>
+                              handleArmNameChange(classItem.unique_key, i, e.target.value)
+                            }
                             sx={{
                               width: 90,
 
@@ -404,6 +453,23 @@ const SetUpClassesTab = ({ onSaveAndContinue }) => {
           {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

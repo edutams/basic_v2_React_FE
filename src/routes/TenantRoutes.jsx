@@ -17,6 +17,9 @@ const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeO
 const CurriculumManager = Loadable(
   lazy(() => import('../views/curriculum-manager/CurriculumManager')),
 );
+const ClassStructureManager = Loadable(
+  lazy(() => import('../components/school/components/ClassStructureManager')),
+);
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
 const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
@@ -78,6 +81,10 @@ const TenantRoutes = [
       {
         path: 'curriculum-manager',
         element: <CurriculumManager />,
+      },
+      {
+        path: 'class-structure-manager',
+        element: <ClassStructureManager />,
       },
       {
         path: 'manage-subscription',

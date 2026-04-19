@@ -37,6 +37,7 @@ const MyCommissionByTransaction = Loadable(
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
+const AgentCurriculumManager = Loadable(lazy(() => import('../views/curriculum-manager/AgentCurriculumManager')));
 
 const FrontendPages = Loadable(lazy(() => import('../views/FrontendPages')));
 
@@ -125,6 +126,7 @@ const AgentRoutes = [
       { path: 'plan', element: <PackageManager /> },
       { path: 'phet/subject_topics', element: <SubjectAndTopics /> },
       { path: 'phet/stimulation_links', element: <StimulationLinks /> },
+      { path: 'curriculum-manager', element: <AgentCurriculumManager /> },
       { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],

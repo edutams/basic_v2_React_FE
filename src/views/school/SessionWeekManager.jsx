@@ -87,7 +87,6 @@ const SessionWeekManager = () => {
           notify.success('Session mapping deactivated successfully', 'Success');
         } else {
           // Handle other actions (delete, etc.)
-          // console.log(`Action ${confirmAction} on session ${selectedSession.id}`);
         }
         handleRefresh();
       } catch (error) {
@@ -118,7 +117,6 @@ const SessionWeekManager = () => {
   };
 
   const handleRefresh = () => {
-    // console.log('Refreshing data...');
     if (isTenant) {
       const fetchMappings = async () => {
         setLoading(true);
@@ -152,13 +150,11 @@ const SessionWeekManager = () => {
   };
 
   const handleAddSessionSubmit = (newSession) => {
-    // console.log('New session added:', newSession);
     setSessionsData(newSession);
     setAddSessionModalOpen(false);
   };
 
   const handleSetSessionTermSubmit = (newSessionTerm) => {
-    // console.log('New session/term set:', newSessionTerm);
     setSessionsData(newSessionTerm);
     setSetSessionTermModalOpen(false);
   };

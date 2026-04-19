@@ -69,7 +69,6 @@ const SubjectTopicView = () => {
     try {
       setTopicsLoading(true);
       const response = await phetApi.getTopicsBySubject(subjectId);
-      // console.log('Topics response:', response);
       setTopics(response || []);
     } catch (error) {
       // console.error('Error fetching topics:', error);

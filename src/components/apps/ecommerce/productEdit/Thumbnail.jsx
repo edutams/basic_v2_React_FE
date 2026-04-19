@@ -34,7 +34,6 @@ const Thumbnail = () => {
 
     // Set the image file for upload
     setImageFile(file);
-    // console.log(imageFile);
   };
 
   return (

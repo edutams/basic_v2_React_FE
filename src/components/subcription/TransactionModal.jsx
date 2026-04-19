@@ -66,13 +66,9 @@ const TransactionModal = ({ open, onClose, selectedRow }) => {
     }
   };
 
-  const handleUpdateStatus = (transaction) => {
-    console.log('Update status for:', transaction);
-  };
+  const handleUpdateStatus = (transaction) => {};
 
-  const handlePrintReceipt = (transaction) => {
-    console.log('Print receipt for:', transaction);
-  };
+  const handlePrintReceipt = (transaction) => {};
 
   return (
     <ReusableModal

@@ -12,9 +12,7 @@ const HolidayModal = ({
   mode = 'create',
   activeTerm = 'First',
 }) => {
-  useEffect(() => {
-    // console.log('HolidayModal activeTerm changed:', activeTerm);
-  }, [activeTerm]);
+  useEffect(() => {}, [activeTerm]);
 
   React.useEffect(() => {
     if (mode === 'edit' && initialValues && Object.keys(initialValues).length > 0) {

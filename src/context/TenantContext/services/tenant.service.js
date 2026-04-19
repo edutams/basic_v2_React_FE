@@ -150,3 +150,39 @@ export const updateStaff = async (id, data) => {
     throw error.response?.data || error;
   }
 };
+
+// Teacher Template Functions
+export const downloadTeacherTemplate = async () => {
+  try {
+    const res = await api.get('school_setup/teacher_template', {
+      responseType: 'blob',
+    });
+    // Create a download link for the blob
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'teacher_upload_template.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const uploadTeachers = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('school_setup/teachers/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

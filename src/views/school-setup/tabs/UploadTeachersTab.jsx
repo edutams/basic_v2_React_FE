@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -30,6 +30,8 @@ import {
   getAllStaff,
   createStaff,
   deleteStaff,
+  downloadTeacherTemplate,
+  uploadTeachers,
 } from '../../../context/TenantContext/services/tenant.service';
 
 const UploadTeachersTab = ({ onSaveAndContinue }) => {
@@ -44,6 +46,48 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [totalTeachers, setTotalTeachers] = useState(0);
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Handle download template
+  const handleDownloadTemplate = async () => {
+    try {
+      setIsLoading(true);
+      await downloadTeacherTemplate();
+    } catch (err) {
+      console.error('Error downloading template:', err);
+      setError(err.message || 'Failed to download template');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle upload button click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      const result = await uploadTeachers(file);
+      // Refresh the list after uploading
+      fetchTeachers(page, rowsPerPage, searchTerm);
+      alert(result.message || 'Teachers uploaded successfully');
+    } catch (err) {
+      console.error('Error uploading teachers:', err);
+      setError(err.message || 'Failed to upload teachers');
+    } finally {
+      setIsLoading(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   // Fetch teachers from API
   const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
@@ -192,6 +236,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           <Button
             variant="outlined"
             startIcon={<DownloadIcon />}
+            onClick={handleDownloadTemplate}
             sx={{
               borderColor: '#e5e7eb',
               color: '#374151',
@@ -206,6 +251,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           <Button
             variant="outlined"
             startIcon={<UploadIcon />}
+            onClick={handleUploadClick}
             sx={{
               borderColor: '#e5e7eb',
               color: '#374151',
@@ -217,6 +263,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           >
             Upload
           </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+          />
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
             Add New Teacher
           </Button>

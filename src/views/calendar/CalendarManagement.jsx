@@ -380,7 +380,7 @@ function SessionsPanel({ isLevel1 }) {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={s.status.toUpperCase()}
+                          label={s.status}
                           size="small"
                           sx={{
                             bgcolor:
@@ -773,7 +773,7 @@ function TermsPanel({ isLevel1 }) {
                       <TableCell>{t.sort_order}</TableCell>
                       <TableCell>
                         <Chip
-                          label={t.status.toUpperCase()}
+                          label={t.status}
                           size="small"
                           // color={getStatusColor(t.status)}
                           // sx={{ borderRadius: '8px' }}

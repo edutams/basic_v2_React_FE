@@ -19,7 +19,7 @@ import {
   fetchClassSubjects,
   addOrUpdateClassSubject,
   fetchClassesByProgramme,
-  fetchAvailableCurriculumsForImport,
+  // fetchAvailableCurriculumsForImport,
   importAllCurriculums,
   fetchAvailableSubjectsForClass,
   fetchSubjectsByProgramme,
@@ -58,6 +58,7 @@ import {
   Snackbar,
   CircularProgress,
   Autocomplete,
+  Menu,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -176,6 +177,15 @@ const CurriculumManager = () => {
   // Loading and notification states
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedMenuCurriculum, setSelectedMenuCurriculum] = useState(null);
+  const openMenuId = Boolean(anchorEl);
+
+  // Menu state for Subject Bank actions
+  const [subjectAnchorEl, setSubjectAnchorEl] = useState(null);
+  const [selectedSubjectForMenu, setSelectedSubjectForMenu] = useState(null);
+  const openSubjectMenu = Boolean(subjectAnchorEl);
 
   // Static data for other tabs
   const classes = [
@@ -733,6 +743,56 @@ const CurriculumManager = () => {
     }
   };
 
+  // Menu Handlers
+  const handleOpenMenu = (event, curriculum) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedMenuCurriculum(curriculum);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setSelectedMenuCurriculum(null);
+  };
+
+  const handleMenuEdit = () => {
+    if (selectedMenuCurriculum) {
+      handleOpenEditModal(selectedMenuCurriculum);
+    }
+    handleCloseMenu();
+  };
+
+  const handleMenuDelete = () => {
+    if (selectedMenuCurriculum) {
+      handleOpenDeleteDialog(selectedMenuCurriculum);
+    }
+    handleCloseMenu();
+  };
+
+  // Subject Bank Menu Handlers
+  const handleOpenSubjectMenu = (event, subject) => {
+    setSubjectAnchorEl(event.currentTarget);
+    setSelectedSubjectForMenu(subject);
+  };
+
+  const handleCloseSubjectMenu = () => {
+    setSubjectAnchorEl(null);
+    setSelectedSubjectForMenu(null);
+  };
+
+  const handleSubjectMenuEdit = () => {
+    if (selectedSubjectForMenu) {
+      handleOpenEditSubjectModal(selectedSubjectForMenu);
+    }
+    handleCloseSubjectMenu();
+  };
+
+  const handleSubjectMenuDelete = () => {
+    if (selectedSubjectForMenu) {
+      handleOpenDeleteSubjectDialog(selectedSubjectForMenu);
+    }
+    handleCloseSubjectMenu();
+  };
+
   // Add Subject Modal Handlers
   const handleOpenAddSubjectModal = () => {
     if (!selectedSubjectBankCurriculum) {
@@ -965,7 +1025,7 @@ const CurriculumManager = () => {
               }}
             >
               {/* LEFT - Curriculum Table */}
-              <Box sx={{ flex: { md: 5 }, width: '100%' }}>
+              <Box sx={{ flex: { md: 6 }, width: '100%' }}>
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -1043,27 +1103,17 @@ const CurriculumManager = () => {
                                     }}
                                   />
                                 </TableCell>
-                                <TableCell
-                                  align="center"
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    gap: 1, // spacing between icons
-                                  }}
-                                >
+                                <TableCell align="center">
                                   <IconButton
                                     size="small"
-                                    onClick={() => handleOpenEditModal(item)}
+                                    onClick={(e) => handleOpenMenu(e, item)}
+                                    aria-controls={
+                                      openMenuId === item.id ? 'curriculum-menu' : undefined
+                                    }
+                                    aria-haspopup="true"
+                                    aria-expanded={openMenuId === item.id ? 'true' : undefined}
                                   >
-                                    <IconEdit size={16} />
-                                  </IconButton>
-
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleOpenDeleteDialog(item)}
-                                  >
-                                    <IconTrash size={16} />
+                                    <MoreVertIcon />
                                   </IconButton>
                                 </TableCell>
                               </TableRow>
@@ -1083,7 +1133,7 @@ const CurriculumManager = () => {
               </Box>
 
               {/* RIGHT - Assign to Classes */}
-              <Box sx={{ flex: { md: 7 }, width: '100%' }}>
+              <Box sx={{ flex: { md: 6 }, width: '100%' }}>
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -1136,8 +1186,8 @@ const CurriculumManager = () => {
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>S/N</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Class</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
+                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>Class</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
                               Curriculum Name
                             </TableCell>
                           </TableRow>
@@ -1354,22 +1404,15 @@ const CurriculumManager = () => {
                               <TableCell>{item.pass_mark ?? '-'}</TableCell>
                               <TableCell>{item.unit ?? '-'}</TableCell>
                               <TableCell align="right">
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                                  <IconButton
-                                    size="small"
-                                    sx={{ color: '#3b82f6' }}
-                                    onClick={() => handleOpenEditSubjectModal(item)}
-                                  >
-                                    <IconEdit size={16} />
-                                  </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    sx={{ color: '#ef4444' }}
-                                    onClick={() => handleOpenDeleteSubjectDialog(item)}
-                                  >
-                                    <IconTrash size={16} />
-                                  </IconButton>
-                                </Box>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleOpenSubjectMenu(e, item)}
+                                  aria-controls={openSubjectMenu ? 'subject-menu' : undefined}
+                                  aria-haspopup="true"
+                                  aria-expanded={openSubjectMenu ? 'true' : undefined}
+                                >
+                                  <MoreVertIcon />
+                                </IconButton>
                               </TableCell>
                             </TableRow>
                           ))
@@ -1717,7 +1760,7 @@ const CurriculumManager = () => {
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Delete Curriculum</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             Are you sure you want to delete "{selectedCurriculum?.curriculum_name}"? This action
             cannot be undone.
           </Alert>
@@ -1932,7 +1975,7 @@ const CurriculumManager = () => {
       >
         <DialogTitle>Delete Subject</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be
             undone.
           </Alert>
@@ -2243,6 +2286,54 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      {/* Curriculum Action Menu */}
+      <Menu
+        id="curriculum-menu"
+        anchorEl={anchorEl}
+        open={openMenuId}
+        onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleMenuEdit}>
+          <IconEdit size={18} style={{ marginRight: 8 }} />
+          Edit
+        </MenuItem>
+        <MenuItem onClick={handleMenuDelete} sx={{ color: 'error.main' }}>
+          <IconTrash size={18} style={{ marginRight: 8 }} />
+          Delete
+        </MenuItem>
+      </Menu>
+      {/* Subject Bank Action Menu */}
+      <Menu
+        id="subject-menu"
+        anchorEl={subjectAnchorEl}
+        open={openSubjectMenu}
+        onClose={handleCloseSubjectMenu}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleSubjectMenuEdit}>
+          <IconEdit size={18} style={{ marginRight: 8 }} />
+          Edit
+        </MenuItem>
+        <MenuItem onClick={handleSubjectMenuDelete} sx={{ color: 'error.main' }}>
+          <IconTrash size={18} style={{ marginRight: 8 }} />
+          Delete
+        </MenuItem>
+      </Menu>
     </PageContainer>
   );
 };

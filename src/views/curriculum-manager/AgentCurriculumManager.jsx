@@ -79,6 +79,10 @@ const AgentCurriculumManager = () => {
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [selectedCurriculumForAction, setSelectedCurriculumForAction] = useState(null);
 
+  // Subject Bank Action Menu State
+  const [subjectMenuAnchor, setSubjectMenuAnchor] = useState(null);
+  const [selectedSubjectForMenu, setSelectedSubjectForMenu] = useState(null);
+
   // Data states
   const [curriculumData, setCurriculumData] = useState([]);
   const [classData, setClassData] = useState([]);
@@ -371,6 +375,31 @@ const AgentCurriculumManager = () => {
   const handleActionMenuClose = () => {
     setActionMenuAnchor(null);
     setSelectedCurriculumForAction(null);
+  };
+
+  // Subject Bank Menu Handlers
+  const handleOpenSubjectMenu = (event, subject) => {
+    setSubjectMenuAnchor(event.currentTarget);
+    setSelectedSubjectForMenu(subject);
+  };
+
+  const handleCloseSubjectMenu = () => {
+    setSubjectMenuAnchor(null);
+    setSelectedSubjectForMenu(null);
+  };
+
+  const handleSubjectMenuEdit = () => {
+    if (selectedSubjectForMenu) {
+      handleOpenEditSubjectModal(selectedSubjectForMenu);
+    }
+    handleCloseSubjectMenu();
+  };
+
+  const handleSubjectMenuDelete = () => {
+    if (selectedSubjectForMenu) {
+      handleOpenDeleteSubjectDialog(selectedSubjectForMenu);
+    }
+    handleCloseSubjectMenu();
   };
 
   const handleManageSubject = () => {
@@ -700,13 +729,13 @@ const AgentCurriculumManager = () => {
                       <Table sx={{ tableLayout: 'fixed' }}>
                         <TableHead>
                           <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                            <TableCell width="8%">S/N</TableCell>
-                            <TableCell width="25%">Subject</TableCell>
-                            <TableCell width="15%">Subject Code</TableCell>
+                            <TableCell width="5%">S/N</TableCell>
+                            <TableCell width="10%">Subject</TableCell>
+                            <TableCell width="7%">Subject Code</TableCell>
                             <TableCell width="15%">Program</TableCell>
-                            <TableCell width="10%">Unit</TableCell>
+                            <TableCell width="5%">Unit</TableCell>
                             <TableCell width="12%">Status</TableCell>
-                            <TableCell width="15%" />
+                            <TableCell width="5%">Action</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -791,22 +820,17 @@ const AgentCurriculumManager = () => {
                                   />
                                 </TableCell>
                                 <TableCell align="right">
-                                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                                    <IconButton
-                                      size="small"
-                                      sx={{ color: '#3b82f6' }}
-                                      onClick={() => handleOpenEditSubjectModal(item)}
-                                    >
-                                      <IconEdit size={16} />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      sx={{ color: '#ef4444' }}
-                                      onClick={() => handleOpenDeleteSubjectDialog(item)}
-                                    >
-                                      <IconTrash size={16} />
-                                    </IconButton>
-                                  </Box>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => handleOpenSubjectMenu(e, item)}
+                                    aria-controls={
+                                      Boolean(subjectMenuAnchor) ? 'subject-menu' : undefined
+                                    }
+                                    aria-haspopup="true"
+                                    aria-expanded={Boolean(subjectMenuAnchor) ? 'true' : undefined}
+                                  >
+                                    <MoreVertIcon />
+                                  </IconButton>
                                 </TableCell>
                               </TableRow>
                             ))
@@ -993,6 +1017,36 @@ const AgentCurriculumManager = () => {
         </MenuList>
       </Menu>
 
+      {/* Subject Bank Action Menu */}
+      <Menu
+        id="subject-menu"
+        anchorEl={subjectMenuAnchor}
+        open={Boolean(subjectMenuAnchor)}
+        onClose={handleCloseSubjectMenu}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItemComponent onClick={handleSubjectMenuEdit}>
+          <ListItemIcon>
+            <IconEdit size={18} />
+          </ListItemIcon>
+          <ListItemText>Edit</ListItemText>
+        </MenuItemComponent>
+
+        <MenuItemComponent onClick={handleSubjectMenuDelete} sx={{ color: 'error.main' }}>
+          <ListItemIcon>
+            <IconTrash size={18} style={{ color: '#ef4444' }} />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItemComponent>
+      </Menu>
+
       {/* Modals and Dialogs */}
       {/* Create Curriculum Modal */}
       <Dialog open={openCreateModal} onClose={handleCloseCreateModal} maxWidth="sm" fullWidth>
@@ -1062,7 +1116,7 @@ const AgentCurriculumManager = () => {
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Delete Curriculum</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             Are you sure you want to delete "{selectedCurriculumForAction?.curriculum_name}"? This
             action cannot be undone.
           </Alert>
@@ -1244,7 +1298,7 @@ const AgentCurriculumManager = () => {
       >
         <DialogTitle>Delete Subject</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be
             undone.
           </Alert>

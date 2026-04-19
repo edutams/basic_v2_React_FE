@@ -52,22 +52,25 @@ const TeacherForm = ({
         const allSubjects = [];
         const allClasses = [];
 
-        (data || []).forEach((item) => {
-          const itemsArray = item.classes || item;
-          (itemsArray || []).forEach((cls) => {
-            if (cls.subjects) {
-              cls.subjects.forEach((sub) => {
-                if (!allSubjects.includes(sub.subject_name)) {
-                  allSubjects.push(sub.subject_name);
-                }
-              });
-            }
-            if (cls.id && cls.class_name) {
-              allClasses.push({
-                id: cls.id,
-                name: cls.class_name,
-              });
-            }
+        // Data structure: divisions -> programmes -> classes -> class_arms
+        (data || []).forEach((division) => {
+          (division.programmes || []).forEach((programme) => {
+            (programme.classes || []).forEach((cls) => {
+              if (cls.subjects) {
+                cls.subjects.forEach((sub) => {
+                  if (!allSubjects.includes(sub.subject_name)) {
+                    allSubjects.push(sub.subject_name);
+                  }
+                });
+              }
+              if (cls.id && cls.class_name) {
+                allClasses.push({
+                  id: cls.id,
+                  name: cls.class_name,
+                  class_arms: cls.class_arms || [],
+                });
+              }
+            });
           });
         });
 
@@ -113,6 +116,14 @@ const TeacherForm = ({
         return;
       }
 
+      // First, try to get arms from the already fetched classes data
+      const classItem = classes.find((c) => c.id === selectedClassId);
+      if (classItem && classItem.class_arms) {
+        setClassArms(classItem.class_arms);
+        return;
+      }
+
+      // Fallback to API call
       try {
         const arms = await getClassArms(selectedClassId);
         setClassArms(arms || []);
@@ -122,7 +133,7 @@ const TeacherForm = ({
       }
     };
     fetchClassArms();
-  }, [selectedClassId]);
+  }, [selectedClassId, classes]);
 
   const formik = useFormik({
     initialValues,

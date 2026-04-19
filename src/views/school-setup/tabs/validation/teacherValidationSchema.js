@@ -22,7 +22,13 @@ export const teacherValidationSchema = yup.object({
 
   is_class_teacher: yup.boolean(),
 
-  class_arm: yup.string().when('is_class_teacher', {
+  class_id: yup.string().when('is_class_teacher', {
+    is: true,
+    then: (schema) => schema.required('Class is required for class teachers'),
+    otherwise: (schema) => schema,
+  }),
+
+  class_arm_id: yup.string().when('is_class_teacher', {
     is: true,
     then: (schema) => schema.required('Class arm is required for class teachers'),
     otherwise: (schema) => schema,

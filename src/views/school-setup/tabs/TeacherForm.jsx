@@ -67,6 +67,11 @@ const TeacherForm = ({
                 allClasses.push({
                   id: cls.id,
                   name: cls.class_name,
+                  class_code: cls.class_code || cls.class_name,
+                  programme_code: programme.programme_code || '',
+                  display_name: `${programme.programme_code || ''} - ${
+                    cls.class_code || cls.class_name
+                  }`,
                   class_arms: cls.class_arms || [],
                 });
               }
@@ -323,7 +328,7 @@ const TeacherForm = ({
               >
                 {classes.map((cls) => (
                   <MenuItem key={cls.id} value={cls.id}>
-                    {cls.name}
+                    {cls.display_name || cls.name}
                   </MenuItem>
                 ))}
               </Select>

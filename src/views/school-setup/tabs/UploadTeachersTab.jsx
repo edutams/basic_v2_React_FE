@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -25,6 +25,11 @@ import {
 } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import AddTeacherModal from './AddTeacherModal';
+import {
+  getAllStaff,
+  deleteStaff,
+  createStaff,
+} from '../../../context/TenantContext/services/tenant.service';
 
 const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,60 +39,41 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+  const [staffLoading, setStaffLoading] = useState(true);
 
-  // Mock teacher data - in real app this would come from API
-  const [teachers, setTeachers] = useState([
-    {
-      id: 1,
-      staff_id: 'TEA001',
-      surname: 'Okafor',
-      first_name: 'Chukwuemeka',
-      phone: '08012345678',
-      gender: 'Male',
-      email: 'c.okafor@school.com',
-      arm: 'Science',
-    },
-    {
-      id: 2,
-      staff_id: 'TEA002',
-      surname: 'Adeyemi',
-      first_name: 'Fatima',
-      phone: '08023456789',
-      gender: 'Female',
-      email: 'f.adeyemi@school.com',
-      arm: 'Arts',
-    },
-    {
-      id: 3,
-      staff_id: 'TEA003',
-      surname: 'Ibrahim',
-      first_name: 'Mohammed',
-      phone: '08034567890',
-      gender: 'Male',
-      email: 'm.ibrahim@school.com',
-      arm: 'Commercial',
-    },
-    {
-      id: 4,
-      staff_id: 'TEA004',
-      surname: 'Okonkwo',
-      first_name: 'Chioma',
-      phone: '08045678901',
-      gender: 'Female',
-      email: 'c.okonkwo@school.com',
-      arm: 'Science',
-    },
-    {
-      id: 5,
-      staff_id: 'TEA005',
-      surname: 'Williams',
-      first_name: 'John',
-      phone: '08056789012',
-      gender: 'Male',
-      email: 'j.williams@school.com',
-      arm: 'Science',
-    },
-  ]);
+  // Fetch staff from API
+  useEffect(() => {
+    const fetchStaff = async () => {
+      setStaffLoading(true);
+      try {
+        const response = await getAllStaff();
+        if (response.status && response.data) {
+          // Transform API response to match component's expected format
+          const transformedStaff = response.data.map((staff) => ({
+            id: staff.id,
+            staff_id: staff.user?.user_id || staff.staff_id,
+            surname: staff.user?.lname || '',
+            first_name: staff.user?.fname || '',
+            phone: staff.user?.phone || '',
+            gender: staff.user?.sex || '',
+            email: staff.user?.email || '',
+            class_arm_id: staff.class_arm_id,
+            class_arm: staff.classArm?.arm_name || '',
+            is_class_teacher: !!staff.class_arm_id,
+            staff_type: staff.staff_type,
+          }));
+          setTeachers(transformedStaff);
+        }
+      } catch (error) {
+        console.error('Error fetching staff:', error);
+      } finally {
+        setStaffLoading(false);
+      }
+    };
+
+    fetchStaff();
+  }, []);
 
   const handleMenuOpen = (event, teacher) => {
     setAnchorEl(event.currentTarget);
@@ -108,10 +94,62 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     handleMenuClose();
   };
 
-  const handleDeleteTeacher = (teacher) => {
-    // Remove teacher from the list
-    setTeachers(teachers.filter((t) => t.id !== teacher.id));
+  const handleDeleteTeacher = async (teacher) => {
+    try {
+      await deleteStaff(teacher.id);
+      setTeachers(teachers.filter((t) => t.id !== teacher.id));
+    } catch (error) {
+      console.error('Error deleting staff:', error);
+      alert('Failed to delete staff member');
+    }
     handleMenuClose();
+  };
+
+  const handleSaveTeacher = async (values) => {
+    setIsLoading(true);
+    try {
+      // Transform form values to match API expectations
+      const staffData = {
+        first_name: values.first_name,
+        last_name: values.surname,
+        middle_name: values.middle_name || '',
+        phone: values.phone_number,
+        userId: values.staff_id,
+        gender: values.gender === 'Male' ? 'male' : 'female',
+        email: values.email,
+        staff_type: values.is_class_teacher ? 'teaching' : values.staff_type,
+        is_class_teacher: values.is_class_teacher || false,
+        class_arm_id: values.class_arm_id || null,
+      };
+
+      await createStaff(staffData);
+
+      // Refresh the staff list
+      const response = await getAllStaff();
+      if (response.status && response.data) {
+        const transformedStaff = response.data.map((staff) => ({
+          id: staff.id,
+          staff_id: staff.user?.user_id || staff.staff_id,
+          surname: staff.user?.lname || '',
+          first_name: staff.user?.fname || '',
+          phone: staff.user?.phone || '',
+          gender: staff.user?.sex || '',
+          email: staff.user?.email || '',
+          class_arm_id: staff.class_arm_id,
+          class_arm: staff.classArm?.arm_name || '',
+          is_class_teacher: !!staff.class_arm_id,
+          staff_type: staff.staff_type,
+        }));
+        setTeachers(transformedStaff);
+      }
+
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error saving staff:', error);
+      alert('Failed to save staff member');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filteredTeachers = useMemo(() => {
@@ -296,20 +334,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSave={(data) => {
-          const newTeacher = {
-            id: teachers.length + 1,
-            staff_id: data.staff_id,
-            surname: data.surname,
-            first_name: data.first_name,
-            phone: data.phone_number,
-            gender: data.gender,
-            email: data.email,
-            arm: data.is_class_teacher ? data.class_arm : data.staff_type || 'General',
-          };
-          setTeachers([...teachers, newTeacher]);
-          setModalOpen(false);
-        }}
+        onSave={handleSaveTeacher}
         className="General"
         isLoading={isLoading}
       />

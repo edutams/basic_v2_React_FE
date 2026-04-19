@@ -22,12 +22,14 @@ const TeacherForm = ({
     staff_id: '',
     surname: '',
     first_name: '',
+    middle_name: '',
     phone_number: '',
     gender: '',
     email: '',
     is_class_teacher: false,
+    class_arm_id: '',
     class_arm: '',
-    staff_type: '',
+    staff_type: 'Teaching',
   },
   className,
   onSubmit,
@@ -37,74 +39,89 @@ const TeacherForm = ({
 }) => {
   const [subjects, setSubjects] = useState([]);
   const [classArms, setClassArms] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState('');
 
-  // Fetch subjects and class arms from API
+  // Fetch classes and class arms from API
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getClassesWithDivisions();
 
+        console.log('Classes service response:', data);
+
         // Get unique subjects from all classes
         const allSubjects = [];
-        const allArms = [];
 
-        (data || []).forEach((division) => {
-          (division.programmes || []).forEach((programme) => {
-            (programme.classes || []).forEach((cls) => {
-              if (cls.subjects) {
-                cls.subjects.forEach((sub) => {
-                  if (!allSubjects.includes(sub.subject_name)) {
-                    allSubjects.push(sub.subject_name);
-                  }
-                });
-              }
-              // Collect class arms
-              if (cls.class_name && !allArms.includes(cls.class_name)) {
-                allArms.push(cls.class_name);
+        // Get unique classes
+        const uniqueClasses = [];
+        const classMap = new Map();
+
+        // Get all unique arms
+        const allArms = [];
+        const armMap = new Map();
+
+        // Data is array of classes with arms property
+        (data || []).forEach((cls) => {
+          // Collect subjects
+          if (cls.subjects) {
+            cls.subjects.forEach((sub) => {
+              if (!allSubjects.includes(sub.subject_name)) {
+                allSubjects.push(sub.subject_name);
               }
             });
-          });
+          }
+
+          // Collect unique classes
+          if (cls.id && cls.class_name && !classMap.has(cls.id)) {
+            classMap.set(cls.id, true);
+            uniqueClasses.push({
+              id: cls.id,
+              class_name: cls.class_name,
+            });
+          }
+
+          // Collect class arms
+          if (cls.arms && Array.isArray(cls.arms)) {
+            cls.arms.forEach((arm) => {
+              if (!armMap.has(arm.id)) {
+                armMap.set(arm.id, true);
+                allArms.push({
+                  id: arm.id,
+                  class_id: cls.id,
+                  arm_name: arm.arm_name,
+                });
+              }
+            });
+          }
         });
+
+        console.log('Extracted Classes:', uniqueClasses);
+        console.log('Extracted Arms:', allArms);
 
         setSubjects(
           allSubjects.length > 0
             ? allSubjects
-            : [
-                'Mathematics',
-                'English',
-                'Science',
-                'Social Studies',
-                'Religious Studies',
-                'Physical Education',
-                'Music',
-                'Art',
-              ],
+            : ['Mathematics', 'English', 'Science', 'Social Studies', 'Religious Studies'],
         );
-
-        setClassArms(
-          allArms.length > 0
-            ? allArms
-            : ['Science', 'Arts', 'Commercial', 'Primary 1', 'Primary 2', 'Primary 3'],
-        );
+        setClasses(uniqueClasses);
+        setClassArms(allArms);
       } catch (error) {
         console.error('Failed to fetch data:', error);
-
-        setSubjects([
-          'Mathematics',
-          'English',
-          'Science',
-          'Social Studies',
-          'Religious Studies',
-          'Physical Education',
-          'Music',
-          'Art',
-        ]);
-
-        setClassArms(['Science', 'Arts', 'Commercial', 'Primary 1', 'Primary 2', 'Primary 3']);
+        setSubjects(['Mathematics', 'English', 'Science', 'Social Studies', 'Religious Studies']);
+        setClasses([]);
+        setClassArms([]);
       }
     };
     fetchData();
   }, []);
+
+  // Filter arms based on selected class
+  const filteredArms = selectedClassId
+    ? classArms.filter(
+        (arm) => arm.class_id === selectedClassId || arm.id?.startsWith(`${selectedClassId}-arm-`),
+      )
+    : classArms;
 
   const formik = useFormik({
     initialValues,
@@ -112,6 +129,34 @@ const TeacherForm = ({
     validationSchema: teacherValidationSchema,
     onSubmit: (values) => onSubmit(values),
   });
+
+  // Handle class teacher checkbox change
+  const handleClassTeacherChange = (e) => {
+    formik.setFieldValue('is_class_teacher', e.target.checked);
+    if (!e.target.checked) {
+      formik.setFieldValue('class_arm_id', '');
+      formik.setFieldValue('class_arm', '');
+      setSelectedClassId('');
+    } else {
+      formik.setFieldValue('staff_type', 'teaching');
+    }
+  };
+
+  // Handle class selection change
+  const handleClassChange = (e) => {
+    const classId = e.target.value;
+    setSelectedClassId(classId);
+    formik.setFieldValue('class_arm_id', '');
+    formik.setFieldValue('class_arm', '');
+  };
+
+  // Handle arm selection change
+  const handleArmChange = (e) => {
+    const armId = e.target.value;
+    const selectedArm = classArms.find((arm) => arm.id === armId);
+    formik.setFieldValue('class_arm_id', armId);
+    formik.setFieldValue('class_arm', selectedArm?.arm_name || '');
+  };
 
   const isValid = formik.values.staff_id && formik.values.surname && formik.values.first_name;
 
@@ -227,13 +272,9 @@ const TeacherForm = ({
             control={
               <Checkbox
                 checked={formik.values.is_class_teacher === true}
-                onChange={(e) => {
-                  formik.setFieldValue('is_class_teacher', e.target.checked ? true : false);
-                  if (e.target.checked) {
-                    formik.setFieldValue('staff_type', '');
-                  } else {
-                    formik.setFieldValue('class_arm', '');
-                  }
+                onChange={() => {
+                  formik.setFieldValue('is_class_teacher', true);
+                  formik.setFieldValue('staff_type', 'teaching');
                 }}
               />
             }
@@ -243,51 +284,72 @@ const TeacherForm = ({
             control={
               <Checkbox
                 checked={formik.values.is_class_teacher === false}
-                onChange={(e) => {
-                  formik.setFieldValue('is_class_teacher', e.target.checked ? false : true);
-                  if (e.target.checked) {
-                    formik.setFieldValue('class_arm', '');
-                  } else {
-                    formik.setFieldValue('staff_type', '');
-                  }
+                onChange={() => {
+                  formik.setFieldValue('is_class_teacher', false);
+                  formik.setFieldValue('class_arm_id', '');
+                  formik.setFieldValue('class_arm', '');
+                  setSelectedClassId('');
                 }}
-                // sx={{
-                //   color: '#e65100',
-                //   '&.Mui-checked': {
-                //     color: '#e65100',
-                //   },
-                // }}
               />
             }
             label="No"
-            // sx={{ color: '#e65100' }}
           />
         </Box>
       </Box>
 
-      {/* Conditional: Class Arm (if Yes) or Staff Type (if No) */}
+      {/* Conditional: Class Teacher Fields (if Yes) or Staff Type (if No) */}
       <Box sx={{ mb: 3 }}>
         {formik.values.is_class_teacher ? (
-          <FormControl
-            fullWidth
-            error={formik.touched.class_arm && Boolean(formik.errors.class_arm)}
-          >
-            <InputLabel>Class Arm</InputLabel>
-            <Select
-              name="class_arm"
-              value={formik.values.class_arm || ''}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              displayEmpty
-              label="Class Arm"
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            {/* Class Selection */}
+            <FormControl
+              fullWidth
+              sx={{ flex: '1 1 45%', minWidth: '45%' }}
+              error={formik.touched.class_arm_id && Boolean(formik.errors.class_arm_id)}
             >
-              {classArms.map((arm, index) => (
-                <MenuItem key={index} value={arm}>
-                  {arm}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              <InputLabel>Class</InputLabel>
+              <Select
+                name="class_id"
+                value={selectedClassId || ''}
+                onChange={handleClassChange}
+                onBlur={formik.handleBlur}
+                displayEmpty
+                label="Class"
+              >
+                <MenuItem value="">Select a class</MenuItem>
+                {classes.map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>
+                    {cls.class_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Class Arm Selection */}
+            <FormControl
+              fullWidth
+              sx={{ flex: '1 1 45%', minWidth: '45%' }}
+              error={formik.touched.class_arm_id && Boolean(formik.errors.class_arm_id)}
+            >
+              <InputLabel>Class Arm</InputLabel>
+              <Select
+                name="class_arm_id"
+                value={formik.values.class_arm_id || ''}
+                onChange={handleArmChange}
+                onBlur={formik.handleBlur}
+                displayEmpty
+                label="Class Arm"
+                disabled={!selectedClassId}
+              >
+                <MenuItem value="">Select a class arm</MenuItem>
+                {filteredArms.map((arm) => (
+                  <MenuItem key={arm.id} value={arm.id}>
+                    {arm.arm_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
         ) : (
           <FormControl
             fullWidth

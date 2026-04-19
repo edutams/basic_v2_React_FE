@@ -61,47 +61,71 @@ export const createLearner = async (data) => {
 export const getClassesWithDivisions = async () => {
   try {
     const res = await api.get('school_setup/classes');
-    const data = res.data?.data || res.data || [];
+    const responseData = res.data;
+
+    console.log('Full API Response:', responseData);
+
+    // Handle the response structure { status: true, data: [divisions], message: "..." }
+    const data = responseData?.data || responseData || [];
+
+    // If data is not an array or is empty, return empty array
+    if (!Array.isArray(data) || data.length === 0) {
+      return [];
+    }
 
     // If data contains divisions with classes, flatten it
     const classes = [];
     data.forEach((division) => {
-      if (division.classes && Array.isArray(division.classes)) {
-        division.classes.forEach((cls) => {
-          // Expand arms: each arm_name becomes a separate arm object
-          const expandedArms = [];
-          if (cls.arms && cls.arms.length > 0) {
-            const firstArm = cls.arms[0];
-            const armNames = firstArm.arm_names || [];
-            armNames.forEach((armName, index) => {
-              expandedArms.push({
-                id: `${cls.id}-arm-${index}`, // Create unique ID
-                class_id: cls.id,
-                no_of_arms: armNames.length,
-                arm_names: [armName], // Single arm name
-                order: index,
-                status: firstArm.status || 'active',
-                arm_name: armName, // For display convenience
+      // Check if it's a division (has programmes) or already a class
+      if (division.programmes && Array.isArray(division.programmes)) {
+        // It's a division structure
+        division.programmes.forEach((programme) => {
+          if (programme.classes && Array.isArray(programme.classes)) {
+            programme.classes.forEach((cls) => {
+              // Expand arms: each arm_name becomes a separate arm object
+              const expandedArms = [];
+              if (cls.class_arms && cls.class_arms.length > 0) {
+                // Use class_arms from API
+                cls.class_arms.forEach((arm, index) => {
+                  expandedArms.push({
+                    id: arm.id,
+                    class_id: cls.id,
+                    arm_name: arm.arm_name,
+                    status: arm.status || 'active',
+                  });
+                });
+              } else if (cls.arms && cls.arms.length > 0) {
+                // Already transformed
+                cls.arms.forEach((arm) => {
+                  expandedArms.push({
+                    id: arm.id,
+                    class_id: cls.id,
+                    arm_name: arm.arm_name,
+                  });
+                });
+              }
+
+              classes.push({
+                ...cls,
+                id: cls.id,
+                division_name: division.div_name,
+                school_division_id: division.id,
+                arms: expandedArms,
               });
             });
           }
-
-          classes.push({
-            ...cls,
-            id: cls.id,
-            division_name: division.div_name,
-            school_division_id: division.id,
-            no_of_arms: expandedArms.length || cls.no_of_arms || 0,
-            arms: expandedArms,
-            arm_names: expandedArms.map((a) => a.arm_name),
-          });
         });
+      } else if (division.id && division.class_name) {
+        // It's already a class object
+        classes.push(division);
       }
     });
 
-    return classes.length > 0 ? classes : data;
+    console.log('Transformed classes:', classes);
+    return classes;
   } catch (error) {
-    throw error.response?.data || error;
+    console.error('Error fetching classes:', error);
+    return [];
   }
 };
 
@@ -129,6 +153,34 @@ export const getLearnersByClass = async (classId, params = {}) => {
       params: { class_id: classId, ...params },
     });
     return res.data || { data: [], total: 0, per_page: 10 };
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// Staff API functions
+export const createStaff = async (data) => {
+  try {
+    const res = await api.post('school_setup/staff/create_staff', data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getAllStaff = async (params = {}) => {
+  try {
+    const res = await api.get('school_setup/staff/all', { params });
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteStaff = async (id) => {
+  try {
+    const res = await api.delete(`school_setup/staff/${id}`);
+    return res.data;
   } catch (error) {
     throw error.response?.data || error;
   }

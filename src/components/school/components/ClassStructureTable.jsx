@@ -97,9 +97,9 @@ const ClassStructureTable = ({ classStructures = [], onToggleStatus, isLoading =
                 <TableRow key={structure.id} hover>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
+                    {/* <Typography variant="body2" fontWeight={600}>
                       {structure.class_name}
-                    </Typography>
+                    </Typography> */}
                     {structure.class_code && (
                       <Typography variant="caption" color="text.secondary">
                         {structure.class_code}
@@ -107,7 +107,7 @@ const ClassStructureTable = ({ classStructures = [], onToggleStatus, isLoading =
                     )}
                     {structure.programme_code && (
                       <Typography variant="caption" color="text.secondary" display="block">
-                        Programme: {structure.programme_code}
+                        {structure.programme_code}
                       </Typography>
                     )}
                   </TableCell>

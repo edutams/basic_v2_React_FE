@@ -213,7 +213,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
   return (
     <Box>
       {/* Search Bar */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
+      {/* <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
         <TextField
           placeholder="Search classes..."
           value={searchTerm}
@@ -227,7 +227,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
             startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
           }}
         />
-      </Box>
+      </Box> */}
 
       <TableContainer>
         <Table
@@ -286,8 +286,8 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         size="small"
                         fullWidth
                         disabled
-                        defaultValue={classItem.class_code}
-                        // defaultValue={`${classItem.programme_code} - ${classItem.class_code}`}
+                        // defaultValue={classItem.class_code}
+                        defaultValue={`${classItem.programme_code} - ${classItem.class_code}`}
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {

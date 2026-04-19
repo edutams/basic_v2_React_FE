@@ -133,3 +133,50 @@ export const getLearnersByClass = async (classId, params = {}) => {
     throw error.response?.data || error;
   }
 };
+
+export const getAllStaff = async (params = {}) => {
+  try {
+    const res = await api.get('school_setup/staff/all', { params });
+    return res.data || { data: [], total: 0, per_page: 10 };
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getStaffByClass = async (classId, params = {}) => {
+  try {
+    const res = await api.get('school_setup/staff/by_class', {
+      params: { class_id: classId, ...params },
+    });
+    return res.data || { data: [], total: 0, per_page: 10 };
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const createStaff = async (data) => {
+  try {
+    const res = await api.post('school_setup/staff/create_staff', data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const deleteStaff = async (id) => {
+  try {
+    const res = await api.delete(`school_setup/staff/${id}`);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const updateStaff = async (id, data) => {
+  try {
+    const res = await api.put(`school_setup/staff/${id}`, data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

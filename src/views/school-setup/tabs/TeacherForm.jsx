@@ -121,19 +121,30 @@ const TeacherForm = ({
         return;
       }
 
+      console.log('[TeacherForm] Selected class ID:', selectedClassId);
+      console.log(
+        '[TeacherForm] Available classes:',
+        classes.map((c) => ({ id: c.id, name: c.name, armsCount: c.class_arms?.length })),
+      );
+
       // First, try to get arms from the already fetched classes data
       const classItem = classes.find((c) => c.id === selectedClassId);
-      if (classItem && classItem.class_arms) {
+      console.log('[TeacherForm] Found class item:', classItem);
+
+      if (classItem && classItem.class_arms && classItem.class_arms.length > 0) {
+        console.log('[TeacherForm] Using cached arms:', classItem.class_arms);
         setClassArms(classItem.class_arms);
         return;
       }
 
       // Fallback to API call
+      console.log('[TeacherForm] Fetching arms from API for classId:', selectedClassId);
       try {
         const arms = await getClassArms(selectedClassId);
+        console.log('[TeacherForm] API returned arms:', arms);
         setClassArms(arms || []);
       } catch (error) {
-        console.error('Failed to fetch class arms:', error);
+        console.error('[TeacherForm] Failed to fetch class arms:', error);
         setClassArms([]);
       }
     };
@@ -326,8 +337,8 @@ const TeacherForm = ({
                 displayEmpty
                 label="Select Class"
               >
-                {classes.map((cls) => (
-                  <MenuItem key={cls.id} value={cls.id}>
+                {classes.map((cls, index) => (
+                  <MenuItem key={cls.id || `cls-${index}`} value={cls.id || index}>
                     {cls.display_name || cls.name}
                   </MenuItem>
                 ))}
@@ -350,11 +361,19 @@ const TeacherForm = ({
                 label="Class Arm"
                 disabled={!formik.values.class_id}
               >
-                {classArms.map((arm) => (
-                  <MenuItem key={arm.id} value={arm.id}>
-                    {arm.arm_name}
-                  </MenuItem>
-                ))}
+                {classArms.map((arm, index) => {
+                  // The database column is 'arm_names' (stored as JSON array string or regular string)
+                  const armLabel = arm.arm_names
+                    ? typeof arm.arm_names === 'string'
+                      ? arm.arm_names
+                      : arm.arm_names[0]
+                    : arm.arm_name || arm.name || `Arm ${index + 1}`;
+                  return (
+                    <MenuItem key={arm?.id || `arm-${index}`} value={arm?.id || index}>
+                      {armLabel}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
           </Box>

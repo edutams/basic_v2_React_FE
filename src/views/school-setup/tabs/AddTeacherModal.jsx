@@ -30,8 +30,7 @@ const AddTeacherModal = ({
   const modalConfig = getModalConfig(mode);
 
   const handleSubmit = async (values) => {
-    onSave(values);
-    onClose();
+    await onSave(values);
   };
 
   const renderTitle = () => (
@@ -46,7 +45,7 @@ const AddTeacherModal = ({
   return (
     <ReusableModal open={open} onClose={onClose} title={renderTitle()} size={modalConfig.size}>
       <TeacherForm
-        key={`${mode}-${initialValues?.staff_id || 'new'}`}
+        key={`${mode}-${initialValues?.id || initialValues?.staff_id || 'new'}`}
         className={className}
         initialValues={initialValues}
         onSubmit={handleSubmit}

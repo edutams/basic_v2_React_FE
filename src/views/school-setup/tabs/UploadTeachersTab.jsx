@@ -139,23 +139,32 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
   const handleAddNewTeacher = () => {
     setModalMode('create');
+    setSelectedTeacher(null);
     setModalOpen(true);
   };
 
   const handleEditTeacher = (teacher) => {
     handleMenuClose();
     const initialValues = {
+      id: teacher.id,
       staff_id: teacher.staff_id || '',
       surname: teacher.surname || '',
       first_name: teacher.first_name || '',
       phone_number: teacher.phone || '',
-      gender: teacher.gender || '',
+      gender: teacher.gender
+        ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1)
+        : '',
       email: teacher.email || '',
       is_class_teacher: !!teacher.class_arm_id,
       class_id: teacher.class_id || '',
       class_arm_id: teacher.class_arm_id || '',
-      staff_type: teacher.staff_type === 'non-teaching' ? 'Non-Teaching' : 'Teaching',
-      middle_name: '',
+      staff_type:
+        teacher.staff_type === 'non-teaching'
+          ? 'Non-Teaching'
+          : teacher.staff_type === 'teaching'
+          ? 'Teaching'
+          : teacher.staff_type,
+      middle_name: teacher.user?.mname || '',
     };
     setSelectedTeacher({ ...teacher, initialValues });
     setModalMode('edit');
@@ -380,6 +389,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        mode={modalMode}
+        initialValues={selectedTeacher?.initialValues}
         onSave={async (data) => {
           try {
             setIsLoading(true);
@@ -388,13 +399,11 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
               await updateStaff(selectedTeacher.id, {
                 first_name: data.first_name,
                 last_name: data.surname,
-                middle_name: data.middle_name || '',
                 email: data.email,
                 phone: data.phone_number,
                 gender: data.gender,
                 staff_type: data.staff_type || 'teaching',
-                is_class_teacher: data.is_class_teacher || false,
-                class_arm_id: data.class_arm_id || null,
+                class_arm_id: data.is_class_teacher ? data.class_arm_id : null,
                 userId: data.staff_id,
               });
             } else {

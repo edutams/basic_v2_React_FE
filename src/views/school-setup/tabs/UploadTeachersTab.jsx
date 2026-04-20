@@ -16,6 +16,10 @@ import {
   MenuItem,
   Typography,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -26,6 +30,7 @@ import {
 } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import AddTeacherModal from './AddTeacherModal';
+import useNotification from 'src/hooks/useNotification';
 import {
   getAllStaff,
   createStaff,
@@ -49,6 +54,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
+  const notify = useNotification();
 
   const handleDownloadTemplate = async () => {
     try {
@@ -171,19 +178,33 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     setModalOpen(true);
   };
 
-  const handleDeleteTeacher = async (teacher) => {
+  const handleDeleteTeacher = async () => {
+    const teacher = confirmDialog.teacher;
+    setConfirmDialog({ open: false, teacher: null });
     handleMenuClose();
     try {
       setIsLoading(true);
       await deleteStaff(teacher.id);
+      notify.success('Teacher deleted successfully');
       // Refresh the list after deletion
       fetchTeachers(page, rowsPerPage, searchTerm);
     } catch (err) {
       console.error('Error deleting teacher:', err);
-      setError(err.message || 'Failed to delete teacher');
+      notify.error(err.response?.data?.message || 'Failed to delete teacher');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteClick = (teacher) => {
+    setConfirmDialog({
+      open: true,
+      teacher,
+    });
+  };
+
+  const handleConfirmClose = () => {
+    setConfirmDialog({ open: false, teacher: null });
   };
 
   const filteredTeachers = useMemo(() => {
@@ -228,7 +249,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     { id: 'phone', label: 'Phone' },
     { id: 'gender', label: 'Gender' },
     { id: 'email', label: 'Email' },
-    { id: 'arm', label: 'Arm' },
+    { id: 'staff_type', label: 'Staff Type' },
   ];
 
   return (
@@ -345,7 +366,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                           Edit
                         </MenuItem>
                         <MenuItem
-                          onClick={() => handleDeleteTeacher(teacher)}
+                          onClick={() => handleDeleteClick(teacher)}
                           sx={{ color: 'error.main' }}
                         >
                           <IconTrash size={16} style={{ marginRight: 8 }} />
@@ -378,19 +399,17 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         />
       </Paper>
 
-      {/* Save & Continue Button */}
       <Box mt={3} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue}>
           Save
         </Button>
       </Box>
 
-      {/* Add/Edit Teacher Modal */}
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         mode={modalMode}
-        initialValues={selectedTeacher?.initialValues}
+        initialValues={modalMode === 'edit' ? selectedTeacher?.initialValues : undefined}
         onSave={async (data) => {
           try {
             setIsLoading(true);
@@ -434,9 +453,23 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         }}
         className="General"
         isLoading={isLoading}
-        mode={modalMode}
-        initialValues={modalMode === 'edit' ? selectedTeacher?.initialValues : undefined}
       />
+
+      <Dialog open={confirmDialog.open} onClose={handleConfirmClose} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete Teacher</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete "{confirmDialog.teacher?.surname}{' '}
+            {confirmDialog.teacher?.first_name}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfirmClose}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteTeacher}>
+            Yes, Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

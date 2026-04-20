@@ -52,7 +52,6 @@ const TeacherForm = ({
         const allSubjects = [];
         const allClasses = [];
 
-        // Data structure: divisions -> programmes -> classes -> class_arms
         (data || []).forEach((division) => {
           (division.programmes || []).forEach((programme) => {
             (programme.classes || []).forEach((cls) => {
@@ -64,8 +63,11 @@ const TeacherForm = ({
                 });
               }
               if (cls.id && cls.class_name) {
+                const uniqueId = `${programme.id || 'prog'}-${cls.id}`;
                 allClasses.push({
-                  id: cls.id,
+                  id: uniqueId,
+                  original_class_id: cls.id,
+                  programme_id: programme.id,
                   name: cls.class_name,
                   class_code: cls.class_code || cls.class_name,
                   programme_code: programme.programme_code || '',
@@ -113,7 +115,6 @@ const TeacherForm = ({
     fetchData();
   }, []);
 
-  // Fetch class arms when class is selected
   useEffect(() => {
     const fetchClassArms = async () => {
       if (!selectedClassId) {
@@ -127,7 +128,6 @@ const TeacherForm = ({
         classes.map((c) => ({ id: c.id, name: c.name, armsCount: c.class_arms?.length })),
       );
 
-      // First, try to get arms from the already fetched classes data
       const classItem = classes.find((c) => c.id === selectedClassId);
       console.log('[TeacherForm] Found class item:', classItem);
 
@@ -137,10 +137,10 @@ const TeacherForm = ({
         return;
       }
 
-      // Fallback to API call
-      console.log('[TeacherForm] Fetching arms from API for classId:', selectedClassId);
+      const classIdForApi = classItem?.original_class_id || selectedClassId;
+      console.log('[TeacherForm] Fetching arms from API for classId:', classIdForApi);
       try {
-        const arms = await getClassArms(selectedClassId);
+        const arms = await getClassArms(classIdForApi);
         console.log('[TeacherForm] API returned arms:', arms);
         setClassArms(arms || []);
       } catch (error) {
@@ -158,19 +158,25 @@ const TeacherForm = ({
     onSubmit: (values) => onSubmit(values),
   });
 
-  // Sync selectedClassId when initialValues.class_id changes (e.g., when editing)
   useEffect(() => {
-    if (formik.values.class_id) {
-      setSelectedClassId(formik.values.class_id);
+    if (formik.values.class_id && classes.length > 0) {
+      const classItem = classes.find((c) => c.original_class_id === formik.values.class_id);
+      if (classItem) {
+        setSelectedClassId(classItem.id);
+      } else {
+        setSelectedClassId(formik.values.class_id);
+      }
     }
-  }, [formik.values.class_id]);
+  }, [formik.values.class_id, classes]);
 
   const isValid = formik.values.surname && formik.values.first_name;
 
-  // Handle class selection
   const handleClassChange = (e) => {
     const classId = e.target.value;
-    formik.setFieldValue('class_id', classId);
+    const classItem = classes.find((c) => c.id === classId);
+    const originalClassId = classItem?.original_class_id || classId;
+
+    formik.setFieldValue('class_id', originalClassId);
     formik.setFieldValue('class_arm_id', '');
     setSelectedClassId(classId);
   };
@@ -338,7 +344,7 @@ const TeacherForm = ({
               <InputLabel>Select Class</InputLabel>
               <Select
                 name="class_id"
-                value={formik.values.class_id || ''}
+                value={selectedClassId || ''}
                 onChange={handleClassChange}
                 onBlur={formik.handleBlur}
                 displayEmpty
@@ -352,7 +358,6 @@ const TeacherForm = ({
               </Select>
             </FormControl>
 
-            {/* Class Arm Dropdown */}
             <FormControl
               fullWidth
               error={formik.touched.class_arm_id && Boolean(formik.errors.class_arm_id)}
@@ -369,7 +374,6 @@ const TeacherForm = ({
                 disabled={!formik.values.class_id}
               >
                 {classArms.map((arm, index) => {
-                  // The database column is 'arm_names' (stored as JSON array string or regular string)
                   const armLabel = arm.arm_names
                     ? typeof arm.arm_names === 'string'
                       ? arm.arm_names

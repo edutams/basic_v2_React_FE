@@ -259,20 +259,34 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     try {
       setLoading(true);
       const response = await toggleSessionTermStatus(term.session_term_id);
-      if (response.status) {
+
+      const isSuccess =
+        response.status === true && (!response.data || response.data.status !== false);
+
+      if (isSuccess) {
         showSnackbar(
           `Term ${term.status === 'active' ? 'deactivated' : 'activated'} successfully`,
           'success',
         );
         loadSessionTerms(selectedSessionId);
+      } else {
+        const errorMessage =
+          response.data?.original?.message ||
+          response.data?.message ||
+          response.message ||
+          'Failed to update status';
+
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to update status', 'error');
+      showSnackbar(
+        error.response?.data?.message || error.message || 'Failed to update status',
+        'error',
+      );
     } finally {
       setLoading(false);
     }
   };
-
   // Week Logic
   const handleAutoGenerate = async () => {
     if (!activeSessionTermId || !autoGenerateConfig.startDate) {

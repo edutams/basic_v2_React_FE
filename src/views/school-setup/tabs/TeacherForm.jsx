@@ -25,7 +25,6 @@ const TeacherForm = ({
     staff_id: '',
     surname: '',
     first_name: '',
-    middle_name: '',
     phone_number: '',
     gender: '',
     email: '',
@@ -77,34 +76,8 @@ const TeacherForm = ({
                 });
               }
             });
-          }
-
-          // Collect unique classes
-          if (cls.id && cls.class_name && !classMap.has(cls.id)) {
-            classMap.set(cls.id, true);
-            uniqueClasses.push({
-              id: cls.id,
-              class_name: cls.class_name,
-            });
-          }
-
-          // Collect class arms
-          if (cls.arms && Array.isArray(cls.arms)) {
-            cls.arms.forEach((arm) => {
-              if (!armMap.has(arm.id)) {
-                armMap.set(arm.id, true);
-                allArms.push({
-                  id: arm.id,
-                  class_id: cls.id,
-                  arm_name: arm.arm_name,
-                });
-              }
-            });
-          }
+          });
         });
-
-        console.log('Extracted Classes:', uniqueClasses);
-        console.log('Extracted Arms:', allArms);
 
         setSubjects(
           allSubjects.length > 0
@@ -184,34 +157,6 @@ const TeacherForm = ({
     validationSchema: teacherValidationSchema,
     onSubmit: (values) => onSubmit(values),
   });
-
-  // Handle class teacher checkbox change
-  const handleClassTeacherChange = (e) => {
-    formik.setFieldValue('is_class_teacher', e.target.checked);
-    if (!e.target.checked) {
-      formik.setFieldValue('class_arm_id', '');
-      formik.setFieldValue('class_arm', '');
-      setSelectedClassId('');
-    } else {
-      formik.setFieldValue('staff_type', 'teaching');
-    }
-  };
-
-  // Handle class selection change
-  const handleClassChange = (e) => {
-    const classId = e.target.value;
-    setSelectedClassId(classId);
-    formik.setFieldValue('class_arm_id', '');
-    formik.setFieldValue('class_arm', '');
-  };
-
-  // Handle arm selection change
-  const handleArmChange = (e) => {
-    const armId = e.target.value;
-    const selectedArm = classArms.find((arm) => arm.id === armId);
-    formik.setFieldValue('class_arm_id', armId);
-    formik.setFieldValue('class_arm', selectedArm?.arm_name || '');
-  };
 
   const isValid = formik.values.staff_id && formik.values.surname && formik.values.first_name;
 
@@ -360,9 +305,16 @@ const TeacherForm = ({
                     formik.setFieldValue('staff_type', '');
                   }
                 }}
+                // sx={{
+                //   color: '#e65100',
+                //   '&.Mui-checked': {
+                //     color: '#e65100',
+                //   },
+                // }}
               />
             }
             label="No"
+            // sx={{ color: '#e65100' }}
           />
         </Box>
       </Box>

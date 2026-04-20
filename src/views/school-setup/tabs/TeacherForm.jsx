@@ -165,7 +165,7 @@ const TeacherForm = ({
     }
   }, [formik.values.class_id]);
 
-  const isValid = formik.values.staff_id && formik.values.surname && formik.values.first_name;
+  const isValid = formik.values.surname && formik.values.first_name;
 
   // Handle class selection
   const handleClassChange = (e) => {

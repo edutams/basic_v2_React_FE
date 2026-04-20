@@ -1,7 +1,7 @@
 import * as yup from 'yup';
 
 export const teacherValidationSchema = yup.object({
-  staff_id: yup.string().required('Staff ID is required'),
+  staff_id: yup.string().notRequired(),
 
   surname: yup.string().required('Surname is required'),
 

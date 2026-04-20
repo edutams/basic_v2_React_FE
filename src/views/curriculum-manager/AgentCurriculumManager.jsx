@@ -300,8 +300,8 @@ const AgentCurriculumManager = () => {
   const handleOpenEditModal = (curriculum) => {
     setSelectedCurriculumForAction(curriculum);
     setFormData({
-      curriculum_name: curriculum.curriculum_name,
-      status: curriculum.status,
+      curriculum_name: curriculum?.curriculum_name,
+      status: curriculum?.status,
     });
     setOpenEditModal(true);
     setActionMenuAnchor(null);
@@ -716,7 +716,11 @@ const AgentCurriculumManager = () => {
                     title={
                       <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          Subject Bank
+                          Subject Bank for{' '}
+                          <strong>
+                            {curriculumData.find((c) => c.id === selectedCurriculum)
+                              ?.curriculum_name || 'Selected Curriculum'}
+                          </strong>
                         </Typography>
                         <Button variant="contained" onClick={handleOpenAddSubjectModal}>
                           Add Subject
@@ -920,7 +924,7 @@ const AgentCurriculumManager = () => {
                             </TableRow>
                           ) : classData.length > 0 ? (
                             classData.map((item, i) => (
-                              <TableRow key={item.id} hover>
+                              <TableRow key={`class-${item.id}`} hover>
                                 <TableCell>{i + 1}</TableCell>
                                 <TableCell>
                                   <Box
@@ -990,7 +994,7 @@ const AgentCurriculumManager = () => {
         onClose={handleActionMenuClose}
       >
         <MenuList>
-          <MenuItemComponent onClick={handleOpenEditModal}>
+          <MenuItemComponent onClick={() => handleOpenEditModal(selectedCurriculumForAction)}>
             <ListItemIcon>
               <IconEdit size={16} />
             </ListItemIcon>

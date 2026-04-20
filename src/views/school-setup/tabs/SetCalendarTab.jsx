@@ -452,7 +452,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                             <TableCell align="center">
                               {item.is_subscribed === 'yes' ? (
                                 <Chip
-                                  label={item.status === 'active' ? 'Active' : 'Inactive'}
+                                  label={item.status === 'active' ? 'active' : 'inactive'}
                                   size="small"
                                   sx={{
                                     bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',

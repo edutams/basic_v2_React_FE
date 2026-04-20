@@ -3,6 +3,7 @@ import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
+import { tenantSchemeApi } from '../api/schemeOfWorkApi';
 
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
@@ -14,6 +15,7 @@ const InitialSetup = Loadable(lazy(() => import('../views/school-setup/InitialSe
 const CompleteSetup = Loadable(lazy(() => import('../views/school-setup/CompleteSetup')));
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
+const ViewSchemeDetails = Loadable(lazy(() => import('../views/scheme-of-work/ViewSchemeDetails')));
 const CurriculumManager = Loadable(
   lazy(() => import('../views/curriculum-manager/CurriculumManager')),
 );
@@ -78,6 +80,7 @@ const TenantRoutes = [
         element: <SessionWeekManager />,
       },
       { path: 'scheme-of-work', element: <SchemeOfWork /> },
+      { path: 'scheme-of-work/view/:id', element: <ViewSchemeDetails api={tenantSchemeApi} /> },
       {
         path: 'curriculum-manager',
         element: <CurriculumManager />,

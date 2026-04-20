@@ -12,6 +12,9 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TableFooter,
+  TablePagination,
+  Paper,
   IconButton,
   Menu,
   MenuItem,
@@ -35,38 +38,44 @@ import {
   IconDownload,
   IconUpload,
   IconFilter,
+  IconBook2,
   IconArrowRightSquare,
   IconPlus,
   IconCheck,
   IconX,
 } from '@tabler/icons-react';
-import { tenantSchemeApi } from '../../api/schemeOfWorkApi';
-import { fetchProgrammes, fetchClassesByProgramme, fetchSubjectsByProgramme } from '../../api/tenantCurriculumApi';
+import { landlordSchemeApi } from '../../api/schemeOfWorkApi';
+import {
+  fetchProgrammes,
+  fetchClassesByProgramme,
+  fetchSubjectsByProgramme,
+} from '../../api/curriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
 const BCrumb = [
   {
-    to: '/',
-    title: 'School Dashboard',
+    to: '/agent',
+    title: 'Agent Dashboard',
   },
   { title: 'Scheme Of Work' },
 ];
 
-const SchemeOfWork = () => {
+const AgentSchemeOfWork = () => {
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
-  const [rows, setRows] = useState({});
+  const [rows, setRows] = useState([]);
   const [analytics, setAnalytics] = useState({ total_topics: 0, total_subtopics: 0 });
 
   // Filter options
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+
 
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedSubtopic, setSelectedSubtopic] = useState(null);
@@ -78,7 +87,7 @@ const SchemeOfWork = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [menuType, setMenuType] = useState(null); // 'topic' | 'subtopic' | 'row' | 'objective'
+  const [menuType, setMenuType] = useState(null); // 'topic' | 'subtopic' | 'row'
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [objectiveModalOpen, setObjectiveModalOpen] = useState(false);
@@ -100,7 +109,7 @@ const SchemeOfWork = () => {
   const initData = async () => {
     try {
       const [termsRes, progsRes] = await Promise.all([
-        tenantSchemeApi.getTerms(),
+        landlordSchemeApi.getTerms(),
         fetchProgrammes(),
       ]);
       setTerms(termsRes);
@@ -139,7 +148,7 @@ const SchemeOfWork = () => {
     if (!filters.subject || !filters.classLevel || !termId) return;
     setLoading(true);
     try {
-      const data = await tenantSchemeApi.fetchScheme({
+      const data = await landlordSchemeApi.fetchScheme({
         filters: {
           subject_id: filters.subject,
           class_id: filters.classLevel,
@@ -155,15 +164,93 @@ const SchemeOfWork = () => {
     }
   };
 
+  const handleSaveTopic = async (topicData) => {
+    try {
+      if (selectedTopic) {
+        await landlordSchemeApi.updateTopic(selectedTopic.id, topicData);
+        notify.success('Topic updated successfully');
+      } else {
+        await landlordSchemeApi.addTopic({ ...topicData, scheme_of_work_id: selectedRow.scheme_of_work_id });
+        notify.success('Topic added successfully');
+      }
+      setTopicModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Operation failed');
+    }
+  };
+
+  const handleSaveSubtopic = async (subtopicData) => {
+    try {
+      if (selectedSubtopic) {
+        await landlordSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
+        notify.success('Subtopic updated successfully');
+      } else {
+        await landlordSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.id });
+        notify.success('Subtopic added successfully');
+      }
+      setSubtopicModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Operation failed');
+    }
+  };
+
+  const handleSaveObjective = async (objectiveData) => {
+    try {
+      if (selectedObjective) {
+        await landlordSchemeApi.updateObjective(selectedObjective.id, objectiveData);
+        notify.success('Learning objective updated successfully');
+      } else {
+        await landlordSchemeApi.addObjective({ 
+          ...objectiveData, 
+          sub_topic_id: selectedRow.sub_topic_id 
+        });
+        notify.success('Learning objective added successfully');
+      }
+      setObjectiveModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Operation failed');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (deleteType === 'topic') {
+        await landlordSchemeApi.deleteTopic(selectedRow.id);
+      } else if (deleteType === 'subtopic') {
+        await landlordSchemeApi.deleteSubtopic(selectedRow.id);
+      } else if (deleteType === 'objective') {
+        await landlordSchemeApi.deleteObjective(selectedRow.id);
+      }
+      notify.success(`${deleteType} deleted successfully`);
+      setDeleteModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Deletion failed');
+    }
+  };
+
   const paginatedRows = useMemo(() => {
-    let flattened = [];
+    let filtered = [];
     Object.keys(rows).forEach(weekName => {
       rows[weekName].forEach(row => {
-        flattened.push({ ...row, week: weekName });
+        filtered.push({ ...row, week: weekName });
       });
     });
-    return flattened;
-  }, [rows]);
+
+    if (activeFilters.search) {
+      filtered = filtered.filter(
+        (r) =>
+          r.topic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()) ||
+          r.subtopic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()),
+      );
+    }
+
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [rows, page, rowsPerPage, activeFilters]);
 
   const handleMenuOpen = (event, row, type) => {
     setAnchorEl(event.currentTarget);
@@ -178,67 +265,33 @@ const SchemeOfWork = () => {
 
   const handleViewDetails = (id) => {
     handleMenuClose();
-    navigate(`/scheme-of-work/view/${id}`);
+    navigate(`/agent/scheme-of-work/view/${id}`);
   };
 
-  const fetchAnalytics = async (filters, termId) => {
-    try {
-      const data = await tenantSchemeApi.getAnalytics({
-        subject_id: filters.subject,
-        class_id: filters.classLevel,
-        term_id: termId,
-      });
-      setAnalytics(data);
-    } catch (error) {
-      console.error('Failed to fetch analytics', error);
-    }
-  };
-
-  const handleImportFromLandlord = async () => {
-    if (!subject || !classLevel || !activeTerm) {
-      notify.error('Please select Subject, Class, and Term filters first.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await tenantSchemeApi.importFromLandlord({
-        filters: {
-          subject_id: subject,
-          class_id: classLevel,
-        },
-        term_id: activeTerm,
-      });
-      notify.success(res.message);
-      fetchScheme({ subject, classLevel }, activeTerm);
-    } catch (error) {
-      notify.error(error.response?.data?.message || 'Import failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddTopic = (weekId) => {
-    setSelectedRow({ scheme_of_work_id: weekId });
+  const handleAddTopic = (schemeOfWorkId) => {
     setSelectedTopic(null);
+    setSelectedRow({ scheme_of_work_id: schemeOfWorkId });
     setTopicModalOpen(true);
   };
 
   const handleEditTopic = (topic) => {
     setSelectedTopic(topic);
-    setTopicModalOpen(true);
     handleMenuClose();
+    setTopicModalOpen(true);
   };
 
   const handleAddSubtopic = (topicId) => {
     setSelectedTopic({ id: topicId });
     setSelectedSubtopic(null);
+    handleMenuClose();
     setSubtopicModalOpen(true);
   };
 
-  const handleEditSubtopic = (subtopic) => {
-    setSelectedSubtopic(subtopic);
-    setSubtopicModalOpen(true);
+  const handleEditSubtopic = (row) => {
+    setSelectedSubtopic(row);
+    setSelectedTopic({ id: row.topic_id });
     handleMenuClose();
+    setSubtopicModalOpen(true);
   };
 
   const handleAddObjective = (row) => {
@@ -257,83 +310,38 @@ const SchemeOfWork = () => {
   const handleDeleteClick = (type, id) => {
     setDeleteType(type);
     setSelectedRow({ id });
-    setDeleteModalOpen(true);
     handleMenuClose();
+    setDeleteModalOpen(true);
   };
 
-  const handleSaveTopic = async (topicData) => {
+  const fetchAnalytics = async (filters, termId) => {
     try {
-      if (selectedTopic) {
-        await tenantSchemeApi.updateTopic(selectedTopic.id, topicData);
-        notify.success('Topic updated successfully');
-      } else {
-        await tenantSchemeApi.addTopic({ ...topicData, scheme_of_work_id: selectedRow.scheme_of_work_id });
-        notify.success('Topic added successfully');
-      }
-      setTopicModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
+      const data = await landlordSchemeApi.getAnalytics({
+        subject_id: filters.subject,
+        class_id: filters.classLevel,
+        term_id: termId,
+      });
+      setAnalytics(data);
     } catch (error) {
-      notify.error('Operation failed');
-    }
-  };
-
-  const handleSaveSubtopic = async (subtopicData) => {
-    try {
-      if (selectedSubtopic) {
-        await tenantSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
-        notify.success('Subtopic updated successfully');
-      } else {
-        await tenantSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.id });
-        notify.success('Subtopic added successfully');
-      }
-      setSubtopicModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
-    } catch (error) {
-      notify.error('Operation failed');
-    }
-  };
-
-  const handleSaveObjective = async (objectiveData) => {
-    try {
-      if (selectedObjective) {
-        await tenantSchemeApi.updateObjective(selectedObjective.id, objectiveData);
-        notify.success('Learning objective updated successfully');
-      } else {
-        await tenantSchemeApi.addObjective({ 
-          ...objectiveData, 
-          sub_topic_id: selectedRow.sub_topic_id 
-        });
-        notify.success('Learning objective added successfully');
-      }
-      setObjectiveModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
-    } catch (error) {
-      notify.error('Operation failed');
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      if (deleteType === 'topic') {
-        await tenantSchemeApi.deleteTopic(selectedRow.id);
-      } else if (deleteType === 'subtopic') {
-        await tenantSchemeApi.deleteSubtopic(selectedRow.id);
-      } else if (deleteType === 'objective') {
-        await tenantSchemeApi.deleteObjective(selectedRow.id);
-      }
-      notify.success(`${deleteType} deleted successfully`);
-      setDeleteModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
-    } catch (error) {
-      notify.error('Deletion failed');
+      console.error('Failed to fetch analytics', error);
     }
   };
 
   const statCards = [
     { title: 'Topics', value: analytics.total_topics, icon: <IconFolder color="#39b65a" />, bgColor: '#eaf7ee' },
     { title: 'Sub Topics', value: analytics.total_subtopics, icon: <IconFolder color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'Lesson Content', value: '0', icon: <IconFileDescription color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'Video Content', value: '0', icon: <IconVideo color="#39b65a" />, bgColor: '#eaf7ee' },
+    {
+      title: 'Lesson Content',
+      value: '0',
+      icon: <IconFileDescription color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
+    {
+      title: 'Video Content',
+      value: '0',
+      icon: <IconVideo color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
   ];
 
   const drawerFilters = [
@@ -347,7 +355,7 @@ const SchemeOfWork = () => {
       {/* Stat Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((stat, i) => (
-          <Grid item xs={12} sm={6} md={3} key={i}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <Card
               elevation={0}
               sx={{
@@ -358,13 +366,15 @@ const SchemeOfWork = () => {
                 boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
+              >
                 <Box
                   sx={{
                     width: 44,
                     height: 44,
                     borderRadius: '50%',
-                    bgcolor: stat.bgColor,
+                    bgColor: stat.bgColor,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -387,17 +397,10 @@ const SchemeOfWork = () => {
       </Grid>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}
+      >
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleImportFromLandlord}
-            startIcon={<IconArrowRightSquare size={18} />}
-            sx={{ textTransform: 'none', px: 3, borderRadius: 1.5 }}
-          >
-            Import scheme of Work
-          </Button>
           <Button
             variant="contained"
             color="success"
@@ -429,11 +432,34 @@ const SchemeOfWork = () => {
           >
             Upload Scheme Template
           </Button>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<IconDownload size={18} />}
+            sx={{
+              textTransform: 'none',
+              px: 3,
+              borderRadius: 1.5,
+              bgcolor: '#7cb342',
+              '&:hover': { bgcolor: '#689f38' },
+            }}
+          >
+            Download Scheme Template
+          </Button>
         </Box>
       </Box>
 
       {/* Toggles & Filter Action */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', flex: 1 }}>
           <Tabs
             value={activeTerm}
@@ -441,6 +467,7 @@ const SchemeOfWork = () => {
               setActiveTerm(newValue);
               fetchScheme(activeFilters, newValue);
             }}
+            aria-label="term tabs"
             sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
           >
             {terms.map((term) => (
@@ -448,18 +475,30 @@ const SchemeOfWork = () => {
             ))}
           </Tabs>
         </Box>
-        <Button
+        {/* <Button
           variant="outlined"
           startIcon={<IconFilter size={18} />}
           onClick={() => setFilterDrawerOpen(true)}
-          sx={{ textTransform: 'none', px: 3, borderRadius: 1.5, borderColor: '#e0e0e0', color: '#333', fontWeight: 600 }}
+          sx={{
+            textTransform: 'none',
+            px: 3,
+            borderRadius: 1.5,
+            borderColor: '#e0e0e0',
+            color: '#333',
+            fontWeight: 600,
+          }}
         >
           Filters
-        </Button>
+        </Button> */}
       </Box>
 
       {/* Main Content Area */}
       <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden' }}>
+        <Box sx={{ p: 2, px: 3, bgcolor: '#fafafa', borderBottom: '1px solid #eee' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}>
+            MANAGE {(terms.find(t => t.id === activeTerm)?.term_name || activeTerm || '').toString().toUpperCase()} SCHEME OF WORK
+          </Typography>
+        </Box>
         <Box
           sx={{
             p: 3,
@@ -468,7 +507,7 @@ const SchemeOfWork = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -487,7 +526,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -503,7 +542,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -519,7 +558,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Button
                 variant="contained"
                 fullWidth
@@ -532,11 +571,7 @@ const SchemeOfWork = () => {
           </Grid>
         </Box>
 
-        <Box sx={{ p: 2, px: 3, bgcolor: '#fafafa', borderBottom: '1px solid #eee' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}>
-            MANAGE SCHEME OF WORK
-          </Typography>
-        </Box>
+
 
         <TableContainer>
           <Table stickyHeader sx={{ whiteSpace: 'nowrap', borderCollapse: 'collapse' }}>
@@ -564,9 +599,9 @@ const SchemeOfWork = () => {
                         {isFirstInWeek && (
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.week}</Typography>
-                            <IconButton 
-                              size="small" 
-                              color="primary" 
+                            <IconButton
+                              size="small"
+                              color="primary"
                               onClick={() => handleAddTopic(row.scheme_of_work_id)}
                               sx={{ bgcolor: 'primary.light', '&:hover': { bgcolor: 'primary.main', color: '#fff' }, p: 0.5, borderRadius: 1 }}
                             >
@@ -662,6 +697,24 @@ const SchemeOfWork = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Box
+          sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, borderTop: '1px solid #eee' }}
+        >
+          <TablePagination
+            component="div"
+            count={Object.values(rows).flat().length}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 20, 50]}
+            sx={{ border: 'none' }}
+          />
+        </Box>
       </Card>
 
       {/* Filter Drawer */}
@@ -676,7 +729,11 @@ const SchemeOfWork = () => {
       />
 
       {/* Topic Modal */}
-      <ReusableModal open={topicModalOpen} onClose={() => setTopicModalOpen(false)} title={selectedTopic ? 'Edit Topic' : 'Add Topic'}>
+      <ReusableModal
+        open={topicModalOpen}
+        onClose={() => setTopicModalOpen(false)}
+        title={selectedTopic ? 'Edit Topic' : 'Add Topic'}
+      >
         <Box component="form" onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
@@ -685,14 +742,35 @@ const SchemeOfWork = () => {
             topic_description: formData.get('topic_description'),
           });
         }} sx={{ mt: 2 }}>
-          <TextField name="topic_name" label="Topic Name" fullWidth defaultValue={selectedTopic?.topic_name || ''} required sx={{ mb: 2 }} />
-          <TextField name="topic_description" label="Topic Description" fullWidth multiline rows={2} defaultValue={selectedTopic?.topic_description || ''} sx={{ mb: 2 }} />
-          <Button type="submit" variant="contained" fullWidth>Save Topic</Button>
+          <TextField
+            name="topic_name"
+            label="Topic Name"
+            fullWidth
+            defaultValue={selectedTopic?.topic_name || ''}
+            required
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="topic_description"
+            label="Topic Description"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedTopic?.topic_description || ''}
+            sx={{ mb: 2 }}
+          />
+          <Button type="submit" variant="contained" fullWidth>
+            Save Topic
+          </Button>
         </Box>
       </ReusableModal>
 
       {/* Subtopic Modal */}
-      <ReusableModal open={subtopicModalOpen} onClose={() => setSubtopicModalOpen(false)} title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}>
+      <ReusableModal
+        open={subtopicModalOpen}
+        onClose={() => setSubtopicModalOpen(false)}
+        title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}
+      >
         <Box component="form" onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
@@ -701,9 +779,26 @@ const SchemeOfWork = () => {
             subtopic_description: formData.get('subtopic_description'),
           });
         }} sx={{ mt: 2 }}>
-          <TextField name="subtopic_name" label="Subtopic Name" fullWidth defaultValue={selectedSubtopic?.subtopic_name || ''} required sx={{ mb: 2 }} />
-          <TextField name="subtopic_description" label="Subtopic Description" fullWidth multiline rows={2} defaultValue={selectedSubtopic?.subtopic_description || ''} sx={{ mb: 2 }} />
-          <Button type="submit" variant="contained" fullWidth>Save Subtopic</Button>
+          <TextField
+            name="subtopic_name"
+            label="Subtopic Name"
+            fullWidth
+            defaultValue={selectedSubtopic?.subtopic_name || ''}
+            required
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="subtopic_description"
+            label="Subtopic Description"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedSubtopic?.subtopic_description || ''}
+            sx={{ mb: 2 }}
+          />
+          <Button type="submit" variant="contained" fullWidth>
+            Save Subtopic
+          </Button>
         </Box>
       </ReusableModal>
 
@@ -771,8 +866,9 @@ const SchemeOfWork = () => {
           <MenuItem key="view" onClick={() => handleViewDetails(selectedRow.scheme_of_work_id)}>View Details</MenuItem>,
         ]}
       </Menu>
+
     </PageContainer>
   );
 };
 
-export default SchemeOfWork;
+export default AgentSchemeOfWork;

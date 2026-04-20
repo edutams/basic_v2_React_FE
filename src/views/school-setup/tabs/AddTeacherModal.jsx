@@ -22,7 +22,6 @@ const AddTeacherModal = ({ open, onClose, className, onSave, isLoading = false }
     onClose();
   };
 
-  // Custom title with className in primary color
   const renderTitle = () => (
     <>
       Add New Teacher

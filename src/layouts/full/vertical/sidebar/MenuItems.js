@@ -165,7 +165,13 @@ const Menuitems = [
     href: '/agent/subscriptions',
     permission: ['landlord.subscription.index'],
   },
-
+  {
+    id: uniqueId(),
+    title: 'Scheme Of Work',
+    icon: IconNotes,
+    href: '/agent/scheme-of-work',
+    // permission: ['landlord.scheme_of_work.index'],
+  },
 ];
 
 export default Menuitems;

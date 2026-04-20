@@ -24,7 +24,7 @@ const ClassStructureManager = () => {
             class_name: cls.class_name || cls.class_display_name,
             class_code: cls.class_code,
             division: division.division_name,
-            programme_name: programme.programme_name,
+            programme_code: programme.programme_code,
             arms: cls.class_arms || [],
             status: pivot?.status || cls.status || 'active', // ← Use pivot status first!
           });

@@ -14,7 +14,10 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import PropTypes from 'prop-types';
-import { getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import {
+  getClassesWithDivisions,
+  getClassArms,
+} from '../../../context/TenantContext/services/tenant.service';
 import { teacherValidationSchema } from './validation/teacherValidationSchema';
 
 const TeacherForm = ({
@@ -27,9 +30,9 @@ const TeacherForm = ({
     gender: '',
     email: '',
     is_class_teacher: false,
+    class_id: '',
     class_arm_id: '',
-    class_arm: '',
-    staff_type: 'Teaching',
+    staff_type: '',
   },
   className,
   onSubmit,
@@ -38,36 +41,40 @@ const TeacherForm = ({
   isLoading = false,
 }) => {
   const [subjects, setSubjects] = useState([]);
-  const [classArms, setClassArms] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [classArms, setClassArms] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('');
 
-  // Fetch classes and class arms from API
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getClassesWithDivisions();
 
-        console.log('Classes service response:', data);
-
-        // Get unique subjects from all classes
         const allSubjects = [];
+        const allClasses = [];
 
-        // Get unique classes
-        const uniqueClasses = [];
-        const classMap = new Map();
-
-        // Get all unique arms
-        const allArms = [];
-        const armMap = new Map();
-
-        // Data is array of classes with arms property
-        (data || []).forEach((cls) => {
-          // Collect subjects
-          if (cls.subjects) {
-            cls.subjects.forEach((sub) => {
-              if (!allSubjects.includes(sub.subject_name)) {
-                allSubjects.push(sub.subject_name);
+        // Data structure: divisions -> programmes -> classes -> class_arms
+        (data || []).forEach((division) => {
+          (division.programmes || []).forEach((programme) => {
+            (programme.classes || []).forEach((cls) => {
+              if (cls.subjects) {
+                cls.subjects.forEach((sub) => {
+                  if (!allSubjects.includes(sub.subject_name)) {
+                    allSubjects.push(sub.subject_name);
+                  }
+                });
+              }
+              if (cls.id && cls.class_name) {
+                allClasses.push({
+                  id: cls.id,
+                  name: cls.class_name,
+                  class_code: cls.class_code || cls.class_name,
+                  programme_code: programme.programme_code || '',
+                  display_name: `${programme.programme_code || ''} - ${
+                    cls.class_code || cls.class_name
+                  }`,
+                  class_arms: cls.class_arms || [],
+                });
               }
             });
           }
@@ -102,26 +109,74 @@ const TeacherForm = ({
         setSubjects(
           allSubjects.length > 0
             ? allSubjects
-            : ['Mathematics', 'English', 'Science', 'Social Studies', 'Religious Studies'],
+            : [
+                'Mathematics',
+                'English',
+                'Science',
+                'Social Studies',
+                'Religious Studies',
+                'Physical Education',
+                'Music',
+                'Art',
+              ],
         );
-        setClasses(uniqueClasses);
-        setClassArms(allArms);
+
+        setClasses(allClasses);
       } catch (error) {
         console.error('Failed to fetch data:', error);
-        setSubjects(['Mathematics', 'English', 'Science', 'Social Studies', 'Religious Studies']);
-        setClasses([]);
-        setClassArms([]);
+
+        setSubjects([
+          'Mathematics',
+          'English',
+          'Science',
+          'Social Studies',
+          'Religious Studies',
+          'Physical Education',
+          'Music',
+          'Art',
+        ]);
       }
     };
     fetchData();
   }, []);
 
-  // Filter arms based on selected class
-  const filteredArms = selectedClassId
-    ? classArms.filter(
-        (arm) => arm.class_id === selectedClassId || arm.id?.startsWith(`${selectedClassId}-arm-`),
-      )
-    : classArms;
+  // Fetch class arms when class is selected
+  useEffect(() => {
+    const fetchClassArms = async () => {
+      if (!selectedClassId) {
+        setClassArms([]);
+        return;
+      }
+
+      console.log('[TeacherForm] Selected class ID:', selectedClassId);
+      console.log(
+        '[TeacherForm] Available classes:',
+        classes.map((c) => ({ id: c.id, name: c.name, armsCount: c.class_arms?.length })),
+      );
+
+      // First, try to get arms from the already fetched classes data
+      const classItem = classes.find((c) => c.id === selectedClassId);
+      console.log('[TeacherForm] Found class item:', classItem);
+
+      if (classItem && classItem.class_arms && classItem.class_arms.length > 0) {
+        console.log('[TeacherForm] Using cached arms:', classItem.class_arms);
+        setClassArms(classItem.class_arms);
+        return;
+      }
+
+      // Fallback to API call
+      console.log('[TeacherForm] Fetching arms from API for classId:', selectedClassId);
+      try {
+        const arms = await getClassArms(selectedClassId);
+        console.log('[TeacherForm] API returned arms:', arms);
+        setClassArms(arms || []);
+      } catch (error) {
+        console.error('[TeacherForm] Failed to fetch class arms:', error);
+        setClassArms([]);
+      }
+    };
+    fetchClassArms();
+  }, [selectedClassId, classes]);
 
   const formik = useFormik({
     initialValues,
@@ -160,9 +215,16 @@ const TeacherForm = ({
 
   const isValid = formik.values.staff_id && formik.values.surname && formik.values.first_name;
 
+  // Handle class selection
+  const handleClassChange = (e) => {
+    const classId = e.target.value;
+    formik.setFieldValue('class_id', classId);
+    formik.setFieldValue('class_arm_id', '');
+    setSelectedClassId(classId);
+  };
+
   return (
     <Box component="form" onSubmit={formik.handleSubmit}>
-      {/* Row 1: Staff ID, Surname */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <TextField
@@ -190,7 +252,6 @@ const TeacherForm = ({
         </Box>
       </Box>
 
-      {/* Row 2: First Name, Phone Number */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <TextField
@@ -251,7 +312,6 @@ const TeacherForm = ({
         </Box>
       </Box>
 
-      {/* Is Class Teacher - Warning Background */}
       <Box
         sx={{
           mb: 3,
@@ -272,9 +332,15 @@ const TeacherForm = ({
             control={
               <Checkbox
                 checked={formik.values.is_class_teacher === true}
-                onChange={() => {
-                  formik.setFieldValue('is_class_teacher', true);
-                  formik.setFieldValue('staff_type', 'teaching');
+                onChange={(e) => {
+                  formik.setFieldValue('is_class_teacher', e.target.checked ? true : false);
+                  if (e.target.checked) {
+                    formik.setFieldValue('staff_type', '');
+                  } else {
+                    formik.setFieldValue('class_id', '');
+                    formik.setFieldValue('class_arm_id', '');
+                    setSelectedClassId('');
+                  }
                 }}
               />
             }
@@ -284,11 +350,15 @@ const TeacherForm = ({
             control={
               <Checkbox
                 checked={formik.values.is_class_teacher === false}
-                onChange={() => {
-                  formik.setFieldValue('is_class_teacher', false);
-                  formik.setFieldValue('class_arm_id', '');
-                  formik.setFieldValue('class_arm', '');
-                  setSelectedClassId('');
+                onChange={(e) => {
+                  formik.setFieldValue('is_class_teacher', e.target.checked ? false : true);
+                  if (e.target.checked) {
+                    formik.setFieldValue('class_id', '');
+                    formik.setFieldValue('class_arm_id', '');
+                    setSelectedClassId('');
+                  } else {
+                    formik.setFieldValue('staff_type', '');
+                  }
                 }}
               />
             }
@@ -297,56 +367,61 @@ const TeacherForm = ({
         </Box>
       </Box>
 
-      {/* Conditional: Class Teacher Fields (if Yes) or Staff Type (if No) */}
+      {/* Conditional: Class & Class Arm (if Yes) or Staff Type (if No) */}
       <Box sx={{ mb: 3 }}>
         {formik.values.is_class_teacher ? (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            {/* Class Selection */}
             <FormControl
               fullWidth
+              error={formik.touched.class_id && Boolean(formik.errors.class_id)}
               sx={{ flex: '1 1 45%', minWidth: '45%' }}
-              error={formik.touched.class_arm_id && Boolean(formik.errors.class_arm_id)}
             >
-              <InputLabel>Class</InputLabel>
+              <InputLabel>Select Class</InputLabel>
               <Select
                 name="class_id"
-                value={selectedClassId || ''}
+                value={formik.values.class_id || ''}
                 onChange={handleClassChange}
                 onBlur={formik.handleBlur}
                 displayEmpty
-                label="Class"
+                label="Select Class"
               >
-                <MenuItem value="">Select a class</MenuItem>
-                {classes.map((cls) => (
-                  <MenuItem key={cls.id} value={cls.id}>
-                    {cls.class_name}
+                {classes.map((cls, index) => (
+                  <MenuItem key={cls.id || `cls-${index}`} value={cls.id || index}>
+                    {cls.display_name || cls.name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
-            {/* Class Arm Selection */}
+            {/* Class Arm Dropdown */}
             <FormControl
               fullWidth
-              sx={{ flex: '1 1 45%', minWidth: '45%' }}
               error={formik.touched.class_arm_id && Boolean(formik.errors.class_arm_id)}
+              sx={{ flex: '1 1 45%', minWidth: '45%' }}
             >
               <InputLabel>Class Arm</InputLabel>
               <Select
                 name="class_arm_id"
                 value={formik.values.class_arm_id || ''}
-                onChange={handleArmChange}
+                onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 displayEmpty
                 label="Class Arm"
-                disabled={!selectedClassId}
+                disabled={!formik.values.class_id}
               >
-                <MenuItem value="">Select a class arm</MenuItem>
-                {filteredArms.map((arm) => (
-                  <MenuItem key={arm.id} value={arm.id}>
-                    {arm.arm_name}
-                  </MenuItem>
-                ))}
+                {classArms.map((arm, index) => {
+                  // The database column is 'arm_names' (stored as JSON array string or regular string)
+                  const armLabel = arm.arm_names
+                    ? typeof arm.arm_names === 'string'
+                      ? arm.arm_names
+                      : arm.arm_names[0]
+                    : arm.arm_name || arm.name || `Arm ${index + 1}`;
+                  return (
+                    <MenuItem key={arm?.id || `arm-${index}`} value={arm?.id || index}>
+                      {armLabel}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
           </Box>
@@ -371,7 +446,6 @@ const TeacherForm = ({
         )}
       </Box>
 
-      {/* Action Buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
         <Button color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel

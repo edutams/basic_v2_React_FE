@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -15,6 +16,7 @@ import {
   Menu,
   MenuItem,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -27,52 +29,106 @@ import { IconEdit, IconTrash } from '@tabler/icons-react';
 import AddTeacherModal from './AddTeacherModal';
 import {
   getAllStaff,
-  deleteStaff,
   createStaff,
+  deleteStaff,
+  downloadTeacherTemplate,
+  uploadTeachers,
 } from '../../../context/TenantContext/services/tenant.service';
 
 const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
-  const [staffLoading, setStaffLoading] = useState(true);
+  const [totalTeachers, setTotalTeachers] = useState(0);
+  const [teachersLoading, setTeachersLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
-  // Fetch staff from API
-  useEffect(() => {
-    const fetchStaff = async () => {
-      setStaffLoading(true);
-      try {
-        const response = await getAllStaff();
-        if (response.status && response.data) {
-          // Transform API response to match component's expected format
-          const transformedStaff = response.data.map((staff) => ({
-            id: staff.id,
-            staff_id: staff.user?.user_id || staff.staff_id,
-            surname: staff.user?.lname || '',
-            first_name: staff.user?.fname || '',
-            phone: staff.user?.phone || '',
-            gender: staff.user?.sex || '',
-            email: staff.user?.email || '',
-            class_arm_id: staff.class_arm_id,
-            class_arm: staff.classArm?.arm_name || '',
-            is_class_teacher: !!staff.class_arm_id,
-            staff_type: staff.staff_type,
-          }));
-          setTeachers(transformedStaff);
-        }
-      } catch (error) {
-        console.error('Error fetching staff:', error);
-      } finally {
-        setStaffLoading(false);
+  // Handle download template
+  const handleDownloadTemplate = async () => {
+    try {
+      setIsLoading(true);
+      await downloadTeacherTemplate();
+    } catch (err) {
+      console.error('Error downloading template:', err);
+      setError(err.message || 'Failed to download template');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle upload button click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      const result = await uploadTeachers(file);
+      // Refresh the list after uploading
+      fetchTeachers(page, rowsPerPage, searchTerm);
+      alert(result.message || 'Teachers uploaded successfully');
+    } catch (err) {
+      console.error('Error uploading teachers:', err);
+      setError(err.message || 'Failed to upload teachers');
+    } finally {
+      setIsLoading(false);
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    };
+    }
+  };
 
-    fetchStaff();
+  // Fetch teachers from API
+  const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
+    setTeachersLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page: pageNum + 1,
+        per_page: perPage,
+        search: search,
+      };
+      const response = await getAllStaff(params);
+
+      // Transform API response to match component structure
+      const transformedTeachers = (response.data || []).map((teacher) => ({
+        id: teacher.id,
+        staff_id: teacher.staff_id || teacher.user?.user_id,
+        surname: teacher.user?.lname || '',
+        first_name: teacher.user?.fname || '',
+        phone: teacher.user?.phone || '',
+        gender: teacher.user?.sex || '',
+        email: teacher.user?.email || '',
+        arm: teacher.classArm?.arm_name || teacher.staff_type || 'General',
+        user_id: teacher.user_id,
+        class_arm_id: teacher.class_arm_id,
+      }));
+
+      setTeachers(transformedTeachers);
+      setTotalTeachers(response.total || 0);
+    } catch (err) {
+      console.error('Error fetching teachers:', err);
+      setError(err.message || 'Failed to fetch teachers');
+    } finally {
+      setTeachersLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchTeachers(page, rowsPerPage, searchTerm);
   }, []);
 
   const handleMenuOpen = (event, teacher) => {
@@ -95,58 +151,15 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   };
 
   const handleDeleteTeacher = async (teacher) => {
-    try {
-      await deleteStaff(teacher.id);
-      setTeachers(teachers.filter((t) => t.id !== teacher.id));
-    } catch (error) {
-      console.error('Error deleting staff:', error);
-      alert('Failed to delete staff member');
-    }
     handleMenuClose();
-  };
-
-  const handleSaveTeacher = async (values) => {
-    setIsLoading(true);
     try {
-      // Transform form values to match API expectations
-      const staffData = {
-        first_name: values.first_name,
-        last_name: values.surname,
-        middle_name: values.middle_name || '',
-        phone: values.phone_number,
-        userId: values.staff_id,
-        gender: values.gender === 'Male' ? 'male' : 'female',
-        email: values.email,
-        staff_type: values.is_class_teacher ? 'teaching' : values.staff_type,
-        is_class_teacher: values.is_class_teacher || false,
-        class_arm_id: values.class_arm_id || null,
-      };
-
-      await createStaff(staffData);
-
-      // Refresh the staff list
-      const response = await getAllStaff();
-      if (response.status && response.data) {
-        const transformedStaff = response.data.map((staff) => ({
-          id: staff.id,
-          staff_id: staff.user?.user_id || staff.staff_id,
-          surname: staff.user?.lname || '',
-          first_name: staff.user?.fname || '',
-          phone: staff.user?.phone || '',
-          gender: staff.user?.sex || '',
-          email: staff.user?.email || '',
-          class_arm_id: staff.class_arm_id,
-          class_arm: staff.classArm?.arm_name || '',
-          is_class_teacher: !!staff.class_arm_id,
-          staff_type: staff.staff_type,
-        }));
-        setTeachers(transformedStaff);
-      }
-
-      setModalOpen(false);
-    } catch (error) {
-      console.error('Error saving staff:', error);
-      alert('Failed to save staff member');
+      setIsLoading(true);
+      await deleteStaff(teacher.id);
+      // Refresh the list after deletion
+      fetchTeachers(page, rowsPerPage, searchTerm);
+    } catch (err) {
+      console.error('Error deleting teacher:', err);
+      setError(err.message || 'Failed to delete teacher');
     } finally {
       setIsLoading(false);
     }
@@ -169,11 +182,22 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
+    fetchTeachers(newPage, rowsPerPage, searchTerm);
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const newRowsPerPage = parseInt(event.target.value, 10);
+    setRowsPerPage(newRowsPerPage);
     setPage(0);
+    fetchTeachers(0, newRowsPerPage, searchTerm);
+  };
+
+  // Handle search
+  const handleSearch = (event) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    setPage(0);
+    fetchTeachers(0, rowsPerPage, value);
   };
 
   const columns = [
@@ -188,7 +212,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
 
   return (
     <Box>
-      {/* Header with Search and Action Buttons */}
       <Box
         sx={{
           mb: 3,
@@ -202,10 +225,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         <TextField
           placeholder="Search teachers..."
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(0);
-          }}
+          onChange={handleSearch}
           size="small"
           sx={{ width: 300 }}
           InputProps={{
@@ -217,6 +237,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           <Button
             variant="outlined"
             startIcon={<DownloadIcon />}
+            onClick={handleDownloadTemplate}
             sx={{
               borderColor: '#e5e7eb',
               color: '#374151',
@@ -231,6 +252,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           <Button
             variant="outlined"
             startIcon={<UploadIcon />}
+            onClick={handleUploadClick}
             sx={{
               borderColor: '#e5e7eb',
               color: '#374151',
@@ -242,6 +264,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
           >
             Upload
           </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+          />
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
             Add New Teacher
           </Button>
@@ -265,7 +294,13 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
             </TableHead>
 
             <TableBody>
-              {paginatedTeachers.length > 0 ? (
+              {teachersLoading ? (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                    <CircularProgress size={24} />
+                  </TableCell>
+                </TableRow>
+              ) : paginatedTeachers.length > 0 ? (
                 paginatedTeachers.map((teacher, index) => (
                   <TableRow key={teacher.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
@@ -304,7 +339,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                     <Typography variant="body2" color="text.secondary">
-                      No teachers found
+                      {error || 'No teachers found'}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -315,7 +350,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={filteredTeachers.length}
+          count={totalTeachers}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -334,7 +369,32 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSave={handleSaveTeacher}
+        onSave={async (data) => {
+          try {
+            setIsLoading(true);
+            await createStaff({
+              first_name: data.first_name,
+              last_name: data.surname,
+              middle_name: data.middle_name || '',
+              email: data.email,
+              phone: data.phone_number,
+              gender: data.gender,
+              staff_type: data.staff_type || 'teaching',
+              is_class_teacher: data.is_class_teacher || false,
+              class_arm_id: data.class_arm_id || null,
+              userId: data.staff_id,
+            });
+            // Refresh the list after creating
+            fetchTeachers(page, rowsPerPage, searchTerm);
+            setModalOpen(false);
+          } catch (err) {
+            console.error('Error creating teacher:', err);
+            setError(err.message || 'Failed to create teacher');
+            throw err;
+          } finally {
+            setIsLoading(false);
+          }
+        }}
         className="General"
         isLoading={isLoading}
       />

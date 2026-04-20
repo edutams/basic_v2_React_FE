@@ -40,9 +40,26 @@ export const getClasses = async () => {
     throw error.response?.data || error;
   }
 };
-export const getClassArms = async (class_id) => {
+export const getClassesWithDivisions = async () => {
   try {
-    const res = await api.get('school_setup/student/get_class_arms', { params: { class_id } });
+    const res = await api.get('school_setup/classes');
+    const data = res.data?.data || res.data || [];
+
+    // NOTE: The API returns nested structure:
+    // data -> divisions -> programmes -> classes -> class_arms
+    // We return this original structure for components like SetUpClassesTab
+    // that expect this format.
+    return data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getClassArms = async (classId) => {
+  try {
+    const res = await api.get('school_setup/student/get_class_arms', {
+      params: { class_id: classId },
+    });
     return res.data?.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -55,77 +72,6 @@ export const createLearner = async (data) => {
     return res.data;
   } catch (error) {
     throw error.response?.data || error;
-  }
-};
-
-export const getClassesWithDivisions = async () => {
-  try {
-    const res = await api.get('school_setup/classes');
-    const responseData = res.data;
-
-    console.log('Full API Response:', responseData);
-
-    // Handle the response structure { status: true, data: [divisions], message: "..." }
-    const data = responseData?.data || responseData || [];
-
-    // If data is not an array or is empty, return empty array
-    if (!Array.isArray(data) || data.length === 0) {
-      return [];
-    }
-
-    // If data contains divisions with classes, flatten it
-    const classes = [];
-    data.forEach((division) => {
-      // Check if it's a division (has programmes) or already a class
-      if (division.programmes && Array.isArray(division.programmes)) {
-        // It's a division structure
-        division.programmes.forEach((programme) => {
-          if (programme.classes && Array.isArray(programme.classes)) {
-            programme.classes.forEach((cls) => {
-              // Expand arms: each arm_name becomes a separate arm object
-              const expandedArms = [];
-              if (cls.class_arms && cls.class_arms.length > 0) {
-                // Use class_arms from API
-                cls.class_arms.forEach((arm, index) => {
-                  expandedArms.push({
-                    id: arm.id,
-                    class_id: cls.id,
-                    arm_name: arm.arm_name,
-                    status: arm.status || 'active',
-                  });
-                });
-              } else if (cls.arms && cls.arms.length > 0) {
-                // Already transformed
-                cls.arms.forEach((arm) => {
-                  expandedArms.push({
-                    id: arm.id,
-                    class_id: cls.id,
-                    arm_name: arm.arm_name,
-                  });
-                });
-              }
-
-              classes.push({
-                ...cls,
-                id: cls.id,
-                division_name: division.div_name,
-                school_division_id: division.id,
-                arms: expandedArms,
-              });
-            });
-          }
-        });
-      } else if (division.id && division.class_name) {
-        // It's already a class object
-        classes.push(division);
-      }
-    });
-
-    console.log('Transformed classes:', classes);
-    return classes;
-  } catch (error) {
-    console.error('Error fetching classes:', error);
-    return [];
   }
 };
 
@@ -158,7 +104,26 @@ export const getLearnersByClass = async (classId, params = {}) => {
   }
 };
 
-// Staff API functions
+export const getAllStaff = async (params = {}) => {
+  try {
+    const res = await api.get('school_setup/staff/all', { params });
+    return res.data || { data: [], total: 0, per_page: 10 };
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getStaffByClass = async (classId, params = {}) => {
+  try {
+    const res = await api.get('school_setup/staff/by_class', {
+      params: { class_id: classId, ...params },
+    });
+    return res.data || { data: [], total: 0, per_page: 10 };
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 export const createStaff = async (data) => {
   try {
     const res = await api.post('school_setup/staff/create_staff', data);
@@ -168,18 +133,54 @@ export const createStaff = async (data) => {
   }
 };
 
-export const getAllStaff = async (params = {}) => {
+export const deleteStaff = async (id) => {
   try {
-    const res = await api.get('school_setup/staff/all', { params });
+    const res = await api.delete(`school_setup/staff/${id}`);
     return res.data;
   } catch (error) {
     throw error.response?.data || error;
   }
 };
 
-export const deleteStaff = async (id) => {
+export const updateStaff = async (id, data) => {
   try {
-    const res = await api.delete(`school_setup/staff/${id}`);
+    const res = await api.put(`school_setup/staff/${id}`, data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// Teacher Template Functions
+export const downloadTeacherTemplate = async () => {
+  try {
+    const res = await api.get('school_setup/teacher_template', {
+      responseType: 'blob',
+    });
+    // Create a download link for the blob
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'teacher_upload_template.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const uploadTeachers = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('school_setup/teachers/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return res.data;
   } catch (error) {
     throw error.response?.data || error;

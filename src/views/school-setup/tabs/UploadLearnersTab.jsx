@@ -106,10 +106,10 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
     }
   };
 
-  const handleDownloadTemplate = async (classId) => {
+  const handleDownloadTemplate = async (programmeClassId) => {
     try {
       const response = await api.get('school_setup/learner_template', {
-        params: { class_id: classId },
+        params: { programme_class_id: programmeClassId },
         responseType: 'blob',
       });
 
@@ -117,7 +117,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'learner_upload_template.xlsx');
+      link.setAttribute('download', `learner_upload_template_${programmeClassId}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -139,13 +139,14 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
         (classesData || []).forEach((division) => {
           (division.programmes || []).forEach((programme) => {
             (programme.classes || []).forEach((cls) => {
-              if (cls.status === 'active') {
+              if (cls.status === 'active' && cls.pivot?.status === 'active') {
                 flatClasses.push({
                   ...cls,
                   unique_key: `${programme.id}_${cls.id}`,
                   programme_id: programme.id,
-                  programme_name: programme.programme_name,
+                  programme_code: programme.programme_code,
                   division_name: division.division_name,
+                  programme_class_id: cls.pivot?.id,
                 });
               }
             });
@@ -279,8 +280,8 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
 
                       <TextField
                         size="small"
-                        // defaultValue={`${item.programme_name} - ${item.class_name}`}
-                        defaultValue={item.class_code}
+                        defaultValue={`${item.programme_code} - ${item.class_code}`}
+                        // defaultValue={item.class_code}
                         disabled
                         onChange={handleChange}
                         sx={{
@@ -359,7 +360,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                         variant="outlined"
                         size="small"
                         startIcon={<span>↓</span>}
-                        onClick={() => handleDownloadTemplate(item.id)}
+                        onClick={() => handleDownloadTemplate(item.programme_class_id)}
                       >
                         Download Template
                       </Button>

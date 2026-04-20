@@ -40,7 +40,7 @@ import {
   uploadTeachers,
 } from '../../../context/TenantContext/services/tenant.service';
 
-const UploadTeachersTab = ({ onSaveAndContinue }) => {
+const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -82,6 +82,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       const result = await uploadTeachers(file);
       // Refresh the list after uploading
       fetchTeachers(page, rowsPerPage, searchTerm);
+
+      onTeacherAdded?.();
       alert(result.message || 'Teachers uploaded successfully');
     } catch (err) {
       console.error('Error uploading teachers:', err);
@@ -188,6 +190,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       notify.success('Teacher deleted successfully');
       // Refresh the list after deletion
       fetchTeachers(page, rowsPerPage, searchTerm);
+      // Call the callback function to notify parent component
+      onTeacherAdded?.();
     } catch (err) {
       console.error('Error deleting teacher:', err);
       notify.error(err.response?.data?.message || 'Failed to delete teacher');

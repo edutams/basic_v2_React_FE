@@ -3,6 +3,7 @@ import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { useAuth } from '../hooks/useAuth';
+import { landlordSchemeApi } from '../api/schemeOfWorkApi';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
@@ -38,6 +39,8 @@ const MyCommissionByTransaction = Loadable(
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 const AgentCurriculumManager = Loadable(lazy(() => import('../views/curriculum-manager/AgentCurriculumManager')));
+const AgentSchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/AgentSchemeOfWork')));
+const ViewSchemeDetails = Loadable(lazy(() => import('../views/scheme-of-work/ViewSchemeDetails')));
 
 const FrontendPages = Loadable(lazy(() => import('../views/FrontendPages')));
 
@@ -127,6 +130,8 @@ const AgentRoutes = [
       { path: 'phet/subject_topics', element: <SubjectAndTopics /> },
       { path: 'phet/stimulation_links', element: <StimulationLinks /> },
       { path: 'curriculum-manager', element: <AgentCurriculumManager /> },
+      { path: 'scheme-of-work', element: <AgentSchemeOfWork /> },
+      { path: 'scheme-of-work/view/:id', element: <ViewSchemeDetails api={landlordSchemeApi} /> },
       { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],

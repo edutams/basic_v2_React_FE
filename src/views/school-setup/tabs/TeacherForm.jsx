@@ -158,6 +158,13 @@ const TeacherForm = ({
     onSubmit: (values) => onSubmit(values),
   });
 
+  // Sync selectedClassId when initialValues.class_id changes (e.g., when editing)
+  useEffect(() => {
+    if (formik.values.class_id) {
+      setSelectedClassId(formik.values.class_id);
+    }
+  }, [formik.values.class_id]);
+
   const isValid = formik.values.staff_id && formik.values.surname && formik.values.first_name;
 
   // Handle class selection

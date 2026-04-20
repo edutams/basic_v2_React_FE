@@ -10,12 +10,24 @@ const getModalConfig = (actionType) => {
       title: 'Add New Teacher',
       size: 'medium',
     },
+    edit: {
+      title: 'Edit Teacher',
+      size: 'medium',
+    },
   };
   return configs[actionType] || configs.create;
 };
 
-const AddTeacherModal = ({ open, onClose, className, onSave, isLoading = false }) => {
-  const modalConfig = getModalConfig('create');
+const AddTeacherModal = ({
+  open,
+  onClose,
+  className,
+  onSave,
+  isLoading = false,
+  mode = 'create',
+  initialValues,
+}) => {
+  const modalConfig = getModalConfig(mode);
 
   const handleSubmit = async (values) => {
     onSave(values);
@@ -24,7 +36,7 @@ const AddTeacherModal = ({ open, onClose, className, onSave, isLoading = false }
 
   const renderTitle = () => (
     <>
-      Add New Teacher
+      {mode === 'edit' ? 'Edit Teacher' : 'Add New Teacher'}
       {/* <Typography component="span" color="primary" fontWeight={600}>
         {className}
       </Typography> */}
@@ -34,8 +46,9 @@ const AddTeacherModal = ({ open, onClose, className, onSave, isLoading = false }
   return (
     <ReusableModal open={open} onClose={onClose} title={renderTitle()} size={modalConfig.size}>
       <TeacherForm
-        key={className}
+        key={`${mode}-${initialValues?.staff_id || 'new'}`}
         className={className}
+        initialValues={initialValues}
         onSubmit={handleSubmit}
         onCancel={onClose}
         submitText="Save"
@@ -51,6 +64,8 @@ AddTeacherModal.propTypes = {
   className: PropTypes.string,
   onSave: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  mode: PropTypes.oneOf(['create', 'edit']),
+  initialValues: PropTypes.object,
 };
 
 export default AddTeacherModal;

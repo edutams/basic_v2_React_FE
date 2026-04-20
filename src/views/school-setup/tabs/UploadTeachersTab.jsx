@@ -29,6 +29,7 @@ import AddTeacherModal from './AddTeacherModal';
 import {
   getAllStaff,
   createStaff,
+  updateStaff,
   deleteStaff,
   downloadTeacherTemplate,
   uploadTeachers,
@@ -41,6 +42,7 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [totalTeachers, setTotalTeachers] = useState(0);
@@ -48,7 +50,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Handle download template
   const handleDownloadTemplate = async () => {
     try {
       setIsLoading(true);
@@ -61,12 +62,10 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     }
   };
 
-  // Handle upload button click
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle file selection
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -82,14 +81,12 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       setError(err.message || 'Failed to upload teachers');
     } finally {
       setIsLoading(false);
-      // Clear the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  // Fetch teachers from API
   const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
     setTeachersLoading(true);
     setError(null);
@@ -101,7 +98,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
       };
       const response = await getAllStaff(params);
 
-      // Transform API response to match component structure
       const transformedTeachers = (response.data || []).map((teacher) => ({
         id: teacher.id,
         staff_id: teacher.staff_id || teacher.user?.user_id,
@@ -113,6 +109,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         arm: teacher.classArm?.arm_name || teacher.staff_type || 'General',
         user_id: teacher.user_id,
         class_arm_id: teacher.class_arm_id,
+        class_id: teacher.class_id || '',
+        staff_type: teacher.staff_type || 'teaching',
       }));
 
       setTeachers(transformedTeachers);
@@ -125,7 +123,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchTeachers(page, rowsPerPage, searchTerm);
   }, []);
@@ -141,12 +138,28 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
   };
 
   const handleAddNewTeacher = () => {
+    setModalMode('create');
     setModalOpen(true);
   };
 
   const handleEditTeacher = (teacher) => {
-    console.log('Edit teacher:', teacher);
     handleMenuClose();
+    const initialValues = {
+      staff_id: teacher.staff_id || '',
+      surname: teacher.surname || '',
+      first_name: teacher.first_name || '',
+      phone_number: teacher.phone || '',
+      gender: teacher.gender || '',
+      email: teacher.email || '',
+      is_class_teacher: !!teacher.class_arm_id,
+      class_id: teacher.class_id || '',
+      class_arm_id: teacher.class_arm_id || '',
+      staff_type: teacher.staff_type === 'non-teaching' ? 'Non-Teaching' : 'Teaching',
+      middle_name: '',
+    };
+    setSelectedTeacher({ ...teacher, initialValues });
+    setModalMode('edit');
+    setModalOpen(true);
   };
 
   const handleDeleteTeacher = async (teacher) => {
@@ -276,7 +289,6 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         </Box>
       </Box>
 
-      {/* Teachers Table */}
       <Paper variant="outlined">
         <TableContainer>
           <Table>
@@ -364,31 +376,48 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         </Button>
       </Box>
 
-      {/* Add Teacher Modal */}
+      {/* Add/Edit Teacher Modal */}
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={async (data) => {
           try {
             setIsLoading(true);
-            await createStaff({
-              first_name: data.first_name,
-              last_name: data.surname,
-              middle_name: data.middle_name || '',
-              email: data.email,
-              phone: data.phone_number,
-              gender: data.gender,
-              staff_type: data.staff_type || 'teaching',
-              is_class_teacher: data.is_class_teacher || false,
-              class_arm_id: data.class_arm_id || null,
-              userId: data.staff_id,
-            });
-            // Refresh the list after creating
+            if (modalMode === 'edit' && selectedTeacher) {
+              // Update existing teacher
+              await updateStaff(selectedTeacher.id, {
+                first_name: data.first_name,
+                last_name: data.surname,
+                middle_name: data.middle_name || '',
+                email: data.email,
+                phone: data.phone_number,
+                gender: data.gender,
+                staff_type: data.staff_type || 'teaching',
+                is_class_teacher: data.is_class_teacher || false,
+                class_arm_id: data.class_arm_id || null,
+                userId: data.staff_id,
+              });
+            } else {
+              // Create new teacher
+              await createStaff({
+                first_name: data.first_name,
+                last_name: data.surname,
+                middle_name: data.middle_name || '',
+                email: data.email,
+                phone: data.phone_number,
+                gender: data.gender,
+                staff_type: data.staff_type || 'teaching',
+                is_class_teacher: data.is_class_teacher || false,
+                class_arm_id: data.class_arm_id || null,
+                userId: data.staff_id,
+              });
+            }
+            // Refresh the list after save
             fetchTeachers(page, rowsPerPage, searchTerm);
             setModalOpen(false);
           } catch (err) {
-            console.error('Error creating teacher:', err);
-            setError(err.message || 'Failed to create teacher');
+            console.error('Error saving teacher:', err);
+            setError(err.message || 'Failed to save teacher');
             throw err;
           } finally {
             setIsLoading(false);
@@ -396,6 +425,8 @@ const UploadTeachersTab = ({ onSaveAndContinue }) => {
         }}
         className="General"
         isLoading={isLoading}
+        mode={modalMode}
+        initialValues={modalMode === 'edit' ? selectedTeacher?.initialValues : undefined}
       />
     </Box>
   );

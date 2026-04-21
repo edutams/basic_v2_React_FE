@@ -25,6 +25,12 @@ import {
   List,
   ListItem,
   ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
 import { useNavigate } from 'react-router';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -92,6 +98,30 @@ const SchemeOfWork = () => {
   // Drawer states
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
+
+  // Excel modal states
+  const [dlTemplateOpen, setDlTemplateOpen] = useState(false);
+  const [dlTemplateFilters, setDlTemplateFilters] = useState({ programme: '', classLevel: '', subject: '', term: '' });
+  const [dlTemplateClasses, setDlTemplateClasses] = useState([]);
+  const [dlTemplateSubjects, setDlTemplateSubjects] = useState([]);
+
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadFilters, setUploadFilters] = useState({ programme: '', classLevel: '', subject: '', term: '' });
+  const [uploadClasses, setUploadClasses] = useState([]);
+  const [uploadSubjects, setUploadSubjects] = useState([]);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const [dlSchemeOpen, setDlSchemeOpen] = useState(false);
+  const [dlSchemeFilters, setDlSchemeFilters] = useState({ programme: '', classLevel: '', subject: '', term: '' });
+  const [dlSchemeClasses, setDlSchemeClasses] = useState([]);
+  const [dlSchemeSubjects, setDlSchemeSubjects] = useState([]);
+  const [downloading, setDownloading] = useState(false);
+
+  // Details modal state
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsData, setDetailsData] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     initData();
@@ -176,9 +206,20 @@ const SchemeOfWork = () => {
     setMenuType(null);
   };
 
-  const handleViewDetails = (id) => {
+  const handleViewDetails = async (id) => {
     handleMenuClose();
-    navigate(`/scheme-of-work/view/${id}`);
+    setDetailsOpen(true);
+    setDetailsData(null);
+    setDetailsLoading(true);
+    try {
+      const res = await tenantSchemeApi.getDetails(id);
+      setDetailsData(res);
+    } catch (e) {
+      notify.error('Failed to load scheme details.');
+      setDetailsOpen(false);
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
   const fetchAnalytics = async (filters, termId) => {
@@ -191,6 +232,107 @@ const SchemeOfWork = () => {
       setAnalytics(data);
     } catch (error) {
       console.error('Failed to fetch analytics', error);
+    }
+  };
+
+  // ─── Helper: trigger file blob download ───
+  const triggerBlobDownload = (response, filename) => {
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // ─── Helper: load classes + subjects for a modal ───
+  const handleModalProgrammeChange = async (prog, setClasses, setSubjects) => {
+    if (!prog) return;
+    try {
+      const [clsRes, subRes] = await Promise.all([
+        fetchClassesByProgramme(prog),
+        fetchSubjectsByProgramme(prog),
+      ]);
+      setClasses(clsRes.data.map(c => ({ value: c.id, label: c.class_name })));
+      setSubjects(subRes.data.map(s => ({ value: s.id, label: s.subject_name })));
+    } catch (e) {
+      notify.error('Failed to load filter options');
+    }
+  };
+
+  // ─── Download Template ───
+  const handleDownloadTemplate = async () => {
+    const { classLevel, subject, term } = dlTemplateFilters;
+    const termId = term || activeTerm;
+    if (!classLevel || !subject || !termId) {
+      notify.error('Please select Programme, Class, and Subject.');
+      return;
+    }
+    try {
+      const res = await tenantSchemeApi.downloadTemplate({
+        subject_id: subject,
+        class_id: classLevel,
+        term_id: termId,
+      });
+      triggerBlobDownload(res, 'scheme_of_work_template.xlsx');
+      setDlTemplateOpen(false);
+      notify.success('Template downloaded successfully.');
+    } catch (e) {
+      notify.error('Failed to download template.');
+    }
+  };
+
+  // ─── Upload Template ───
+  const handleUploadTemplate = async () => {
+    const { classLevel, subject, term } = uploadFilters;
+    const termId = term || activeTerm;
+    if (!classLevel || !subject || !termId || !uploadFile) {
+      notify.error('Please select all filters and choose a file.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', uploadFile);
+      fd.append('subject_id', subject);
+      fd.append('class_id', classLevel);
+      fd.append('term_id', termId);
+      const res = await tenantSchemeApi.uploadTemplate(fd);
+      notify.success(res.message);
+      setUploadOpen(false);
+      setUploadFile(null);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (e) {
+      notify.error(e.response?.data?.message || 'Upload failed. Check that the file matches the selected filters.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // ─── Download Scheme of Work ───
+  const handleDownloadScheme = async () => {
+    const { classLevel, subject, term } = dlSchemeFilters;
+    const termId = term || activeTerm;
+    if (!classLevel || !subject || !termId) {
+      notify.error('Please select Programme, Class, and Subject.');
+      return;
+    }
+    setDownloading(true);
+    try {
+      const res = await tenantSchemeApi.downloadSchemeOfWork({
+        subject_id: subject,
+        class_id: classLevel,
+        term_id: termId,
+      });
+      triggerBlobDownload(res, 'scheme_of_work.xlsx');
+      setDlSchemeOpen(false);
+      notify.success('Scheme of Work downloaded successfully.');
+    } catch (e) {
+      notify.error('Failed to download Scheme of Work.');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -299,9 +441,9 @@ const SchemeOfWork = () => {
         await tenantSchemeApi.updateObjective(selectedObjective.id, objectiveData);
         notify.success('Learning objective updated successfully');
       } else {
-        await tenantSchemeApi.addObjective({ 
-          ...objectiveData, 
-          sub_topic_id: selectedRow.sub_topic_id 
+        await tenantSchemeApi.addObjective({
+          ...objectiveData,
+          sub_topic_id: selectedRow.sub_topic_id
         });
         notify.success('Learning objective added successfully');
       }
@@ -347,7 +489,7 @@ const SchemeOfWork = () => {
       {/* Stat Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {statCards.map((stat, i) => (
-          <Grid item xs={12} sm={6} md={3} key={i}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <Card
               elevation={0}
               sx={{
@@ -402,6 +544,7 @@ const SchemeOfWork = () => {
             variant="contained"
             color="success"
             startIcon={<IconDownload size={18} />}
+            onClick={() => setDlSchemeOpen(true)}
             sx={{
               textTransform: 'none',
               px: 3,
@@ -417,6 +560,7 @@ const SchemeOfWork = () => {
           <Button
             variant="contained"
             startIcon={<IconUpload size={18} />}
+            onClick={() => setUploadOpen(true)}
             sx={{
               textTransform: 'none',
               px: 3,
@@ -428,6 +572,21 @@ const SchemeOfWork = () => {
             }}
           >
             Upload Scheme Template
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<IconDownload size={18} />}
+            onClick={() => setDlTemplateOpen(true)}
+            sx={{
+              textTransform: 'none',
+              px: 3,
+              borderRadius: 1.5,
+              bgcolor: '#7cb342',
+              '&:hover': { bgcolor: '#689f38' },
+            }}
+          >
+            Download Scheme Template
           </Button>
         </Box>
       </Box>
@@ -444,7 +603,7 @@ const SchemeOfWork = () => {
             sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
           >
             {terms.map((term) => (
-              <Tab key={term.id} label={term.term_name} value={term.id} />
+              <Tab key={term.id} label={term.display_name} value={term.id} />
             ))}
           </Tabs>
         </Box>
@@ -468,7 +627,7 @@ const SchemeOfWork = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -487,7 +646,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -503,7 +662,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 select
                 fullWidth
@@ -519,7 +678,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid item xs={12} md={3}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Button
                 variant="contained"
                 fullWidth
@@ -564,9 +723,9 @@ const SchemeOfWork = () => {
                         {isFirstInWeek && (
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.week}</Typography>
-                            <IconButton 
-                              size="small" 
-                              color="primary" 
+                            <IconButton
+                              size="small"
+                              color="primary"
                               onClick={() => handleAddTopic(row.scheme_of_work_id)}
                               sx={{ bgcolor: 'primary.light', '&:hover': { bgcolor: 'primary.main', color: '#fff' }, p: 0.5, borderRadius: 1 }}
                             >
@@ -608,9 +767,9 @@ const SchemeOfWork = () => {
                               key={lo.id}
                               sx={{ p: 0, px: 1, py: 0.5, borderBottom: lidx !== row.learningObjectives.length - 1 ? '1px dashed #eee' : 'none' }}
                             >
-                              <ListItemText 
-                                primary={lo.learning_objective_details} 
-                                primaryTypographyProps={{ variant: 'body2', color: 'textSecondary' }} 
+                              <ListItemText
+                                primary={lo.learning_objective_details}
+                                primaryTypographyProps={{ variant: 'body2', color: 'textSecondary' }}
                               />
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, { ...row, ...lo, id: lo.id }, 'objective')}>
                                 <MoreVertIcon sx={{ fontSize: 14 }} />
@@ -641,7 +800,7 @@ const SchemeOfWork = () => {
                         )}
                       </TableCell>
 
-                       {/* Action Column */}
+                      {/* Action Column */}
                       <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
                         <IconButton size="small" onClick={(e) => handleMenuOpen(e, row, 'row')}>
                           <MoreVertIcon fontSize="small" />
@@ -721,14 +880,14 @@ const SchemeOfWork = () => {
           });
         }} sx={{ mt: 2 }}>
           <TextField
-              name="learning_objective_details"
-              label="Learning Objective Details"
-              fullWidth
-              multiline
-              rows={3}
-              defaultValue={selectedObjective?.learning_objective_details || ''}
-              required
-              sx={{ mb: 2 }}
+            name="learning_objective_details"
+            label="Learning Objective Details"
+            fullWidth
+            multiline
+            rows={3}
+            defaultValue={selectedObjective?.learning_objective_details || ''}
+            required
+            sx={{ mb: 2 }}
           />
           <Button type="submit" variant="contained" fullWidth>
             Save Objective
@@ -771,6 +930,299 @@ const SchemeOfWork = () => {
           <MenuItem key="view" onClick={() => handleViewDetails(selectedRow.scheme_of_work_id)}>View Details</MenuItem>,
         ]}
       </Menu>
+
+      {/* ── Download Template Modal ── */}
+      <Dialog open={dlTemplateOpen} onClose={() => setDlTemplateOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 700 }}>Download Scheme Template</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Select the Programme, Class, and Subject to generate a blank upload template.
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              <TextField select fullWidth label="Programme" size="small"
+                value={dlTemplateFilters.programme}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  setDlTemplateFilters(f => ({ ...f, programme: val, classLevel: '', subject: '' }));
+                  await handleModalProgrammeChange(val, setDlTemplateClasses, setDlTemplateSubjects);
+                }}
+              >
+                {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField select fullWidth label="Class" size="small"
+                value={dlTemplateFilters.classLevel}
+                onChange={e => setDlTemplateFilters(f => ({ ...f, classLevel: e.target.value }))}
+              >
+                {dlTemplateClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField select fullWidth label="Subject" size="small"
+                value={dlTemplateFilters.subject}
+                onChange={e => setDlTemplateFilters(f => ({ ...f, subject: e.target.value }))}
+              >
+                {dlTemplateSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField select fullWidth label="Term" size="small"
+                value={dlTemplateFilters.term || activeTerm}
+                onChange={e => setDlTemplateFilters(f => ({ ...f, term: e.target.value }))}
+              >
+                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.display_name}</MenuItem>)}
+              </TextField>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button variant="contained" onClick={handleDownloadTemplate}
+            startIcon={<IconDownload size={16} />}
+            sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
+          >
+            Download Template
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Upload Template Modal ── */}
+      <Dialog open={uploadOpen} onClose={() => !uploading && setUploadOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 700 }}>Upload Scheme Template</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Select the Programme, Class, and Subject this file was generated for, then choose your completed template.
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField select fullWidth label="Programme" size="small"
+                value={uploadFilters.programme}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  setUploadFilters(f => ({ ...f, programme: val, classLevel: '', subject: '' }));
+                  await handleModalProgrammeChange(val, setUploadClasses, setUploadSubjects);
+                }}
+              >
+                {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField select fullWidth label="Class" size="small"
+                value={uploadFilters.classLevel}
+                onChange={e => setUploadFilters(f => ({ ...f, classLevel: e.target.value }))}
+              >
+                {uploadClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField select fullWidth label="Subject" size="small"
+                value={uploadFilters.subject}
+                onChange={e => setUploadFilters(f => ({ ...f, subject: e.target.value }))}
+              >
+                {uploadSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField select fullWidth label="Term" size="small"
+                value={uploadFilters.term || activeTerm}
+                onChange={e => setUploadFilters(f => ({ ...f, term: e.target.value }))}
+              >
+                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.display_name}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 12, lg: 12 }}>
+              <Box
+                sx={{
+                  border: '2px dashed #e0e0e0', borderRadius: 2, p: 2, textAlign: 'center',
+                  bgcolor: uploadFile ? '#f1f8e9' : '#fafafa', cursor: 'pointer',
+                  '&:hover': { borderColor: '#7cb342' },
+                }}
+                onClick={() => document.getElementById('sow-tenant-upload-input').click()}
+              >
+                <input
+                  id="sow-tenant-upload-input" type="file" accept=".xlsx,.xls" hidden
+                  onChange={e => setUploadFile(e.target.files[0] || null)}
+                />
+                {uploadFile ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                    <Chip label={uploadFile.name} color="success" onDelete={() => setUploadFile(null)} />
+                  </Box>
+                ) : (
+                  <>
+                    <IconUpload size={28} color="#bdbdbd" />
+                    <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                      Click to select your completed template (.xlsx)
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setUploadOpen(false)} disabled={uploading} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button variant="contained" onClick={handleUploadTemplate} disabled={uploading}
+            startIcon={uploading ? <CircularProgress size={16} color="inherit" /> : <IconUpload size={16} />}
+            sx={{ textTransform: 'none' }}
+          >
+            {uploading ? 'Uploading…' : 'Upload'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Download Scheme of Work Modal ── */}
+      <Dialog open={dlSchemeOpen} onClose={() => !downloading && setDlSchemeOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 700 }}>Download Scheme of Work</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            Select the Programme, Class, Subject, and Term whose uploaded Scheme of Work you want to download.
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              <TextField select fullWidth label="Programme" size="small"
+                value={dlSchemeFilters.programme}
+                onChange={async (e) => {
+                  const val = e.target.value;
+                  setDlSchemeFilters(f => ({ ...f, programme: val, classLevel: '', subject: '' }));
+                  await handleModalProgrammeChange(val, setDlSchemeClasses, setDlSchemeSubjects);
+                }}
+              >
+                {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField select fullWidth label="Class" size="small"
+                value={dlSchemeFilters.classLevel}
+                onChange={e => setDlSchemeFilters(f => ({ ...f, classLevel: e.target.value }))}
+              >
+                {dlSchemeClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField select fullWidth label="Subject" size="small"
+                value={dlSchemeFilters.subject}
+                onChange={e => setDlSchemeFilters(f => ({ ...f, subject: e.target.value }))}
+              >
+                {dlSchemeSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField select fullWidth label="Term" size="small"
+                value={dlSchemeFilters.term || activeTerm}
+                onChange={e => setDlSchemeFilters(f => ({ ...f, term: e.target.value }))}
+              >
+                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
+              </TextField>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDlSchemeOpen(false)} disabled={downloading} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button variant="contained" onClick={handleDownloadScheme} disabled={downloading}
+            startIcon={downloading ? <CircularProgress size={16} color="inherit" /> : <IconDownload size={16} />}
+            sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
+          >
+            {downloading ? 'Downloading…' : 'Download'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── View Details Modal ── */}
+      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Scheme of Work Details
+          <IconButton onClick={() => setDetailsOpen(false)} size="small">
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          {detailsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : detailsData ? (
+            <Table>
+              <TableBody>
+                {[
+                  { label: 'Week', value: detailsData.week?.week_name },
+                  { label: 'Topic(s)', value: detailsData.topics?.map(t => t.topic_name).join(', ') },
+                  { label: 'Sub Topic', value: detailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).join(', ') },
+                  {
+                    label: 'Learning Objectives',
+                    isList: true,
+                    value: detailsData.topics?.flatMap(t =>
+                      t.subtopics?.flatMap(s =>
+                        s.learning_objectives?.map(lo => lo.learning_objective_details)
+                      )
+                    ).filter(Boolean)
+                  },
+                  { label: 'Lesson Content', value: detailsData.learning_material },
+                  { label: 'Video Content', value: detailsData.resource_links, isLink: true },
+                  { label: 'Teacher Activity', value: detailsData.teacher_activity },
+                  { label: 'Learner Activity', value: detailsData.learner_activity },
+                  { label: 'Starter', value: detailsData.starter },
+                  { label: 'Practical Approach', value: detailsData.practical_approach },
+                  { label: 'Evaluation', value: detailsData.evaluation },
+                  { label: 'Instructional Resources', value: detailsData.instructional_resources },
+                  { label: 'Teaching Note', value: detailsData.teaching_note },
+                ].map((row, i) => (
+                  <TableRow key={i}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '30%', borderBottom: '1px solid #eee' }}>
+                      {row.label}
+                    </TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee' }}>
+                      {row.isList ? (
+                        <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                          {row.value?.length > 0 ? (
+                            row.value.map((item, idx) => (
+                              <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>
+                                {item}
+                              </Typography>
+                            ))
+                          ) : (
+                            <Typography variant="body2" color="textSecondary">Not available</Typography>
+                          )}
+                        </Box>
+                      ) : row.isLink ? (
+                        row.value ? (
+                          <Typography
+                            component="a"
+                            href={row.value}
+                            target="_blank"
+                            variant="body2"
+                            color="primary"
+                            sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                          >
+                            {row.value}
+                          </Typography>
+                        ) : (
+                          <Typography variant="body2" color="textSecondary">Not available</Typography>
+                        )
+                      ) : (
+                        <Typography variant="body2">
+                          {row.value || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}
+                        </Typography>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Typography variant="body1">Failed to load details.</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button variant="contained" onClick={() => setDetailsOpen(false)} sx={{ textTransform: 'none', bgcolor: '#d8b4fe', color: '#581c87', '&:hover': { bgcolor: '#c084fc' } }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </PageContainer>
   );
 };

@@ -15,6 +15,8 @@ import {
   CircularProgress,
   Link,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -46,15 +48,44 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
   const [uploadClassId, setUploadClassId] = useState(null);
   const fileInputRef = useRef(null);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
     setModalOpen(true);
   };
 
-  const handleSaveLearner = async (data) => {
-    try {
-      await createLearner(data);
+  // const handleSaveLearner = async (data) => {
+  //   try {
+  //     await createLearner(data);
+
+  //     const countsData = await getStudentCountByClass();
+  //     const countsObj = {};
+  //     (countsData || []).forEach((item) => {
+  //       countsObj[item.class_id] = item.count;
+  //     });
+  //     setStudentCounts(countsObj);
+
+  //     // Tell parent to refresh its stats — this is the Vue $emit equivalent
+  //     onLearnerAdded?.();
+  //   } catch (error) {
+  //     console.error('Failed to save learner:', error);
+  //   }
+  // };
+const handleSaveLearner = async (data) => {
+  try {
+    const response = await createLearner(data);
+
+    if (response?.status) {
+      setNotification({
+        open: true,
+        message: response.message,
+        severity: 'success',
+      });
 
       const countsData = await getStudentCountByClass();
       const countsObj = {};
@@ -63,13 +94,25 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
       });
       setStudentCounts(countsObj);
 
-      // Tell parent to refresh its stats — this is the Vue $emit equivalent
       onLearnerAdded?.();
-    } catch (error) {
-      console.error('Failed to save learner:', error);
+    } else {
+      setNotification({
+        open: true,
+        message: response?.message || 'Something went wrong',
+        severity: 'error',
+      });
     }
-  };
+  } catch (error) {
+    setNotification({
+      open: true,
+      message: error?.message || 'Failed to save learner',
+      severity: 'error',
+    });
 
+    console.error(error);
+  }
+};
+  
   const handleUploadClick = (classId) => {
     setUploadClassId(classId);
     fileInputRef.current?.click();
@@ -86,6 +129,11 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
       const response = await api.post('school_setup/learners', formData);
 
       if (response.data.status) {
+         setNotification({
+        open: true,
+        message: response.data.message,
+        severity: 'success',
+      });
         // Refresh student counts
         const countsData = await getStudentCountByClass();
         const countsObj = {};
@@ -96,10 +144,19 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
 
         onLearnerAdded?.();
       } else {
-        console.error('Upload failed:', response.data.message);
+          setNotification({
+        open: true,
+        message: response.data.message || 'Upload failed',
+        severity: 'error',
+      });
       }
     } catch (error) {
-      console.error('Failed to upload template:', error);
+      setNotification({
+      open: true,
+      message:
+        error?.response?.data?.message || 'Failed to upload learners',
+      severity: 'error',
+    });
     } finally {
       event.target.value = '';
       setUploadClassId(null);
@@ -122,8 +179,19 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+
+       setNotification({
+      open: true,
+      message: 'Template downloaded successfully',
+      severity: 'success',
+    });
+
     } catch (error) {
-      console.error('Failed to download template:', error);
+        setNotification({
+      open: true,
+      message: 'Failed to download template',
+      severity: 'error',
+    });
     }
   };
 
@@ -422,6 +490,22 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
         classId={selectedClass?.id}
         className={selectedClass?.class_name}
       />
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

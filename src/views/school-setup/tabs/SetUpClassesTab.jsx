@@ -40,7 +40,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     severity: 'success',
   });
 
-  // Default arm letters generator
   const generateDefaultArmNames = (count) => {
     const letters = [];
     for (let i = 0; i < count; i++) {
@@ -179,7 +178,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     setHasChanges(true);
   };
 
-  // Filter classes by search term
   const filteredClasses = useMemo(() => {
     return classes.filter((classItem) => {
       const className = classItem.class_name || '';
@@ -187,7 +185,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     });
   }, [classes, searchTerm]);
 
-  // Paginate the filtered data
   const paginatedClasses = useMemo(() => {
     const start = page * rowsPerPage;
     return filteredClasses.slice(start, start + rowsPerPage);
@@ -236,7 +233,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
             borderSpacing: '12px 10px',
           }}
         >
-          {/* Header */}
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
@@ -247,7 +243,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
             </TableRow>
           </TableHead>
 
-          {/* Body */}
           <TableBody>
             {paginatedClasses.map((classItem, index) => {
               const isInactive = classItem.status === 'inactive';
@@ -312,7 +307,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                     </Box>
                   </TableCell>
 
-                  {/* Arms column */}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -367,7 +361,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                     </Box>
                   </TableCell>
 
-                  {/* Arm names */}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -428,7 +421,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
             })}
           </TableBody>
 
-          {/* Footer with Pagination */}
           <TableFooter>
             <TableRow>
               <TablePagination
@@ -454,7 +446,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
         </Button>
       </Box>
 
-      {/* Notification Snackbar */}
       <Snackbar
         open={notification.open}
         autoHideDuration={3000}

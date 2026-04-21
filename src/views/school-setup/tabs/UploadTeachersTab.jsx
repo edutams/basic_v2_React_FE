@@ -16,6 +16,12 @@ import {
   MenuItem,
   Typography,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -26,9 +32,11 @@ import {
 } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import AddTeacherModal from './AddTeacherModal';
+import useNotification from 'src/hooks/useNotification';
 import {
   getAllStaff,
   createStaff,
+  updateStaff,
   deleteStaff,
   downloadTeacherTemplate,
   uploadTeachers,
@@ -41,57 +49,87 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [totalTeachers, setTotalTeachers] = useState(0);
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
-  // Handle download template
   const handleDownloadTemplate = async () => {
     try {
       setIsLoading(true);
       await downloadTeacherTemplate();
+
+      setNotification({
+        open: true,
+        message: 'Learner upload template downloaded. Fill and upload to continue.',
+        severity: 'success',
+      });
     } catch (err) {
-      console.error('Error downloading template:', err);
-      setError(err.message || 'Failed to download template');
+      setNotification({
+        open: true,
+        message: err.response?.data?.message || 'Failed to download template',
+        severity: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle upload button click
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle file selection
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       setIsLoading(true);
+
       const result = await uploadTeachers(file);
-      // Refresh the list after uploading
+
       fetchTeachers(page, rowsPerPage, searchTerm);
 
-      onTeacherAdded?.();
-      alert(result.message || 'Teachers uploaded successfully');
+      const { inserted, skipped, logs } = result.data || {};
+
+      let message = result.message;
+
+      const failedCount = logs?.filter((l) => l.status === 'failed').length || 0;
+
+      if (failedCount > 0) {
+        message += ` (${failedCount} failed)`;
+      }
+
+      setNotification({
+        open: true,
+        message,
+        severity: failedCount > 0 ? 'warning' : 'success',
+      });
     } catch (err) {
       console.error('Error uploading teachers:', err);
-      setError(err.message || 'Failed to upload teachers');
+
+      setNotification({
+        open: true,
+        message: err.response?.data?.message || 'Failed to upload teachers',
+        severity: 'error',
+      });
     } finally {
       setIsLoading(false);
-      // Clear the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  // Fetch teachers from API
   const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
     setTeachersLoading(true);
     setError(null);
@@ -103,7 +141,6 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       };
       const response = await getAllStaff(params);
 
-      // Transform API response to match component structure
       const transformedTeachers = (response.data || []).map((teacher) => ({
         id: teacher.id,
         staff_id: teacher.staff_id || teacher.user?.user_id,
@@ -115,9 +152,12 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         arm: teacher.classArm?.arm_name || teacher.staff_type || 'General',
         user_id: teacher.user_id,
         class_arm_id: teacher.class_arm_id,
+        class_id: teacher.class_id || '',
+        staff_type: teacher.staff_type || 'teaching',
       }));
 
       setTeachers(transformedTeachers);
+      onTeacherAdded?.();
       setTotalTeachers(response.total || 0);
     } catch (err) {
       console.error('Error fetching teachers:', err);
@@ -127,7 +167,6 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchTeachers(page, rowsPerPage, searchTerm);
   }, []);
@@ -143,29 +182,115 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   };
 
   const handleAddNewTeacher = () => {
+    setModalMode('create');
+    setSelectedTeacher(null);
     setModalOpen(true);
   };
 
   const handleEditTeacher = (teacher) => {
-    console.log('Edit teacher:', teacher);
     handleMenuClose();
+    const initialValues = {
+      id: teacher.id,
+      staff_id: teacher.staff_id || '',
+      surname: teacher.surname || '',
+      first_name: teacher.first_name || '',
+      phone_number: teacher.phone || '',
+      gender: teacher.gender
+        ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1)
+        : '',
+      email: teacher.email || '',
+      is_class_teacher: !!teacher.class_arm_id,
+      class_id: teacher.class_id || '',
+      class_arm_id: teacher.class_arm_id || '',
+      staff_type:
+        teacher.staff_type === 'non-teaching'
+          ? 'Non-Teaching'
+          : teacher.staff_type === 'teaching'
+            ? 'Teaching'
+            : teacher.staff_type,
+      middle_name: teacher.user?.mname || '',
+    };
+    setSelectedTeacher({ ...teacher, initialValues });
+
+    setModalMode('edit');
+    setModalOpen(true);
   };
 
-  const handleDeleteTeacher = async (teacher) => {
+  const handleUpdateTeacher = async (values) => {
+    try {
+      setIsLoading(true);
+
+      await updateStaff(values.id, {
+        first_name: values.first_name,
+        last_name: values.surname,
+        middle_name: values.middle_name,
+        email: values.email,
+        phone: values.phone_number,
+        gender: values.gender,
+        staff_type: values.staff_type,
+        class_arm_id: values.class_arm_id,
+        userId: values.staff_id,
+      });
+
+      setNotification({
+        open: true,
+        message: 'Staff updated successfully',
+        severity: 'success',
+      });
+
+      setModalOpen(false);
+
+      fetchTeachers(page, rowsPerPage, searchTerm);
+      onTeacherAdded?.();
+    } catch (err) {
+      setNotification({
+        open: true,
+        message: err.response?.data?.message || 'Failed to update staff',
+        severity: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteTeacher = async () => {
+    const teacher = confirmDialog.teacher;
+    setConfirmDialog({ open: false, teacher: null });
     handleMenuClose();
     try {
       setIsLoading(true);
       await deleteStaff(teacher.id);
+
+      setNotification({
+        open: true,
+        message: 'Staff deleted successfully',
+        severity: 'success',
+      });
+
       // Refresh the list after deletion
       fetchTeachers(page, rowsPerPage, searchTerm);
       // Call the callback function to notify parent component
       onTeacherAdded?.();
     } catch (err) {
-      console.error('Error deleting teacher:', err);
-      setError(err.message || 'Failed to delete teacher');
+      setNotification({
+        open: true,
+        message: err.response?.data?.message || 'Failed to delete teacher',
+        severity: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteClick = (teacher) => {
+    setConfirmDialog({
+      open: true,
+      teacher,
+    });
+  };
+
+  const handleConfirmClose = () => {
+    setConfirmDialog({ open: false, teacher: null });
   };
 
   const filteredTeachers = useMemo(() => {
@@ -210,7 +335,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
     { id: 'phone', label: 'Phone' },
     { id: 'gender', label: 'Gender' },
     { id: 'email', label: 'Email' },
-    { id: 'arm', label: 'Arm' },
+    { id: 'staff_type', label: 'Staff Type' },
   ];
 
   return (
@@ -280,7 +405,6 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         </Box>
       </Box>
 
-      {/* Teachers Table */}
       <Paper variant="outlined">
         <TableContainer>
           <Table>
@@ -328,7 +452,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
                           Edit
                         </MenuItem>
                         <MenuItem
-                          onClick={() => handleDeleteTeacher(teacher)}
+                          onClick={() => handleDeleteClick(teacher)}
                           sx={{ color: 'error.main' }}
                         >
                           <IconTrash size={16} style={{ marginRight: 8 }} />
@@ -361,38 +485,69 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         />
       </Paper>
 
-      {/* Save & Continue Button */}
       <Box mt={3} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue}>
           Save
         </Button>
       </Box>
 
-      {/* Add Teacher Modal */}
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        mode={modalMode}
+        initialValues={modalMode === 'edit' ? selectedTeacher?.initialValues : undefined}
         onSave={async (data) => {
           try {
             setIsLoading(true);
-            await createStaff({
-              first_name: data.first_name,
-              last_name: data.surname,
-              middle_name: data.middle_name || '',
-              email: data.email,
-              phone: data.phone_number,
-              gender: data.gender,
-              staff_type: data.staff_type || 'teaching',
-              is_class_teacher: data.is_class_teacher || false,
-              class_arm_id: data.class_arm_id || null,
-              userId: data.staff_id,
-            });
-            // Refresh the list after creating
+            if (modalMode === 'edit' && selectedTeacher) {
+              // Update existing teacher
+              await updateStaff(selectedTeacher.id, {
+                first_name: data.first_name,
+                last_name: data.surname,
+                email: data.email,
+                phone: data.phone_number,
+                gender: data.gender,
+                staff_type: data.staff_type || 'teaching',
+                class_arm_id: data.is_class_teacher ? data.class_arm_id : null,
+                userId: data.staff_id,
+              });
+
+              setNotification({
+                open: true,
+                message: 'Staff updated successfully',
+                severity: 'success',
+              });
+            } else {
+              // Create new teacher
+              await createStaff({
+                first_name: data.first_name,
+                last_name: data.surname,
+                middle_name: data.middle_name || '',
+                email: data.email,
+                phone: data.phone_number,
+                gender: data.gender,
+                staff_type: data.staff_type || 'teaching',
+                is_class_teacher: data.is_class_teacher || false,
+                class_arm_id: data.class_arm_id || null,
+                userId: data.staff_id,
+              });
+              setNotification({
+                open: true,
+                message: 'Staff created successfully',
+                severity: 'success',
+              });
+            }
+            // Refresh the list after save
             fetchTeachers(page, rowsPerPage, searchTerm);
             setModalOpen(false);
           } catch (err) {
-            console.error('Error creating teacher:', err);
-            setError(err.message || 'Failed to create teacher');
+            // console.error('Error saving teacher:', err);
+            setNotification({
+              open: true,
+              message: err.response?.data?.message || 'Failed to save teacher',
+              severity: 'error',
+            });
+            setError(err.message || 'Failed to save teacher');
             throw err;
           } finally {
             setIsLoading(false);
@@ -401,6 +556,38 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         className="General"
         isLoading={isLoading}
       />
+
+      <Dialog open={confirmDialog.open} onClose={handleConfirmClose} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete Teacher</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete "{confirmDialog.teacher?.surname}{' '}
+            {confirmDialog.teacher?.first_name}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfirmClose}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDeleteTeacher}>
+            Yes, Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

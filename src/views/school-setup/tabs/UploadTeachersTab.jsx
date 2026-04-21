@@ -213,9 +213,48 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       middle_name: teacher.user?.mname || '',
     };
     setSelectedTeacher({ ...teacher, initialValues });
+
     setModalMode('edit');
     setModalOpen(true);
   };
+
+  const handleUpdateTeacher = async (values) => {
+  try {
+    setIsLoading(true);
+
+    await updateStaff(values.id, {
+      first_name: values.first_name,
+      last_name: values.surname,
+      middle_name: values.middle_name,
+      email: values.email,
+      phone: values.phone_number,
+      gender: values.gender,
+      staff_type: values.staff_type,
+      class_arm_id: values.class_arm_id,
+      userId: values.staff_id,
+    });
+
+    setNotification({
+      open: true,
+      message: 'Staff updated successfully',
+      severity: 'success',
+    });
+
+    setModalOpen(false);
+
+    fetchTeachers(page, rowsPerPage, searchTerm);
+    onTeacherAdded?.();
+
+  } catch (err) {
+    setNotification({
+      open: true,
+      message: err.response?.data?.message || 'Failed to update staff',
+      severity: 'error',
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleDeleteTeacher = async () => {
     const teacher = confirmDialog.teacher;
@@ -224,14 +263,23 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
     try {
       setIsLoading(true);
       await deleteStaff(teacher.id);
-      notify.success('Teacher deleted successfully');
+
+       setNotification({
+      open: true,
+      message: 'Staff deleted successfully',
+      severity: 'success',
+    });
+
       // Refresh the list after deletion
       fetchTeachers(page, rowsPerPage, searchTerm);
       // Call the callback function to notify parent component
       onTeacherAdded?.();
     } catch (err) {
-      console.error('Error deleting teacher:', err);
-      notify.error(err.response?.data?.message || 'Failed to delete teacher');
+      setNotification({
+      open: true,
+      message: err.response?.data?.message || 'Failed to delete teacher',
+      severity: 'error',
+    });
     } finally {
       setIsLoading(false);
     }
@@ -451,47 +499,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         onClose={() => setModalOpen(false)}
         mode={modalMode}
         initialValues={modalMode === 'edit' ? selectedTeacher?.initialValues : undefined}
-        onSave={async (data) => {
-          try {
-            setIsLoading(true);
-            if (modalMode === 'edit' && selectedTeacher) {
-              // Update existing teacher
-              await updateStaff(selectedTeacher.id, {
-                first_name: data.first_name,
-                last_name: data.surname,
-                email: data.email,
-                phone: data.phone_number,
-                gender: data.gender,
-                staff_type: data.staff_type || 'teaching',
-                class_arm_id: data.is_class_teacher ? data.class_arm_id : null,
-                userId: data.staff_id,
-              });
-            } else {
-              // Create new teacher
-              await createStaff({
-                first_name: data.first_name,
-                last_name: data.surname,
-                middle_name: data.middle_name || '',
-                email: data.email,
-                phone: data.phone_number,
-                gender: data.gender,
-                staff_type: data.staff_type || 'teaching',
-                is_class_teacher: data.is_class_teacher || false,
-                class_arm_id: data.class_arm_id || null,
-                userId: data.staff_id,
-              });
-            }
-            // Refresh the list after save
-            fetchTeachers(page, rowsPerPage, searchTerm);
-            setModalOpen(false);
-          } catch (err) {
-            console.error('Error saving teacher:', err);
-            setError(err.message || 'Failed to save teacher');
-            throw err;
-          } finally {
-            setIsLoading(false);
-          }
-        }}
+         onSave={handleUpdateTeacher}
         className="General"
         isLoading={isLoading}
       />

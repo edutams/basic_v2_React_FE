@@ -83,7 +83,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       // Refresh the list after uploading
       fetchTeachers(page, rowsPerPage, searchTerm);
 
-      onTeacherAdded?.();
+      // onTeacherAdded?.();
       alert(result.message || 'Teachers uploaded successfully');
     } catch (err) {
       console.error('Error uploading teachers:', err);
@@ -123,6 +123,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       }));
 
       setTeachers(transformedTeachers);
+      onTeacherAdded?.();
       setTotalTeachers(response.total || 0);
     } catch (err) {
       console.error('Error fetching teachers:', err);

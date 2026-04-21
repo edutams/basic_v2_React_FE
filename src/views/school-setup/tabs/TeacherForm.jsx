@@ -39,7 +39,6 @@ const TeacherForm = ({
   submitText = 'Save',
   isLoading = false,
 }) => {
-  const [subjects, setSubjects] = useState([]);
   const [classes, setClasses] = useState([]);
   const [classArms, setClassArms] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState('');
@@ -81,35 +80,10 @@ const TeacherForm = ({
           });
         });
 
-        setSubjects(
-          allSubjects.length > 0
-            ? allSubjects
-            : [
-                'Mathematics',
-                'English',
-                'Science',
-                'Social Studies',
-                'Religious Studies',
-                'Physical Education',
-                'Music',
-                'Art',
-              ],
-        );
-
         setClasses(allClasses);
       } catch (error) {
         console.error('Failed to fetch data:', error);
 
-        setSubjects([
-          'Mathematics',
-          'English',
-          'Science',
-          'Social Studies',
-          'Religious Studies',
-          'Physical Education',
-          'Music',
-          'Art',
-        ]);
       }
     };
     fetchData();
@@ -122,14 +96,14 @@ const TeacherForm = ({
         return;
       }
 
-      console.log('[TeacherForm] Selected class ID:', selectedClassId);
-      console.log(
-        '[TeacherForm] Available classes:',
-        classes.map((c) => ({ id: c.id, name: c.name, armsCount: c.class_arms?.length })),
-      );
+      // console.log('[TeacherForm] Selected class ID:', selectedClassId);
+      // console.log(
+      //   '[TeacherForm] Available classes:',
+      //   classes.map((c) => ({ id: c.id, name: c.name, armsCount: c.class_arms?.length })),
+      // );
 
       const classItem = classes.find((c) => c.id === selectedClassId);
-      console.log('[TeacherForm] Found class item:', classItem);
+      // console.log('[TeacherForm] Found class item:', classItem);
 
       if (classItem && classItem.class_arms && classItem.class_arms.length > 0) {
         console.log('[TeacherForm] Using cached arms:', classItem.class_arms);
@@ -138,13 +112,10 @@ const TeacherForm = ({
       }
 
       const classIdForApi = classItem?.original_class_id || selectedClassId;
-      console.log('[TeacherForm] Fetching arms from API for classId:', classIdForApi);
       try {
         const arms = await getClassArms(classIdForApi);
-        console.log('[TeacherForm] API returned arms:', arms);
         setClassArms(arms || []);
       } catch (error) {
-        console.error('[TeacherForm] Failed to fetch class arms:', error);
         setClassArms([]);
       }
     };
@@ -237,7 +208,6 @@ const TeacherForm = ({
         </Box>
       </Box>
 
-      {/* Row 3: Gender, Email */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
           <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)}>
@@ -318,16 +288,10 @@ const TeacherForm = ({
                     formik.setFieldValue('staff_type', '');
                   }
                 }}
-                // sx={{
-                //   color: '#e65100',
-                //   '&.Mui-checked': {
-                //     color: '#e65100',
-                //   },
-                // }}
+               
               />
             }
             label="No"
-            // sx={{ color: '#e65100' }}
           />
         </Box>
       </Box>

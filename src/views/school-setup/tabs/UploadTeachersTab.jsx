@@ -21,7 +21,7 @@ import {
   DialogContent,
   DialogActions,
   Snackbar,
-  Alert
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -58,10 +58,10 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const fileInputRef = useRef(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
   const [notification, setNotification] = useState({
-  open: false,
-  message: '',
-  severity: 'success',
-});
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   const handleDownloadTemplate = async () => {
     try {
@@ -69,17 +69,16 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       await downloadTeacherTemplate();
 
       setNotification({
-      open: true,
-      message: 'Learner upload template downloaded. Fill and upload to continue.',
-      severity: 'success',
-    });
-    
+        open: true,
+        message: 'Learner upload template downloaded. Fill and upload to continue.',
+        severity: 'success',
+      });
     } catch (err) {
-       setNotification({
-      open: true,
-      message: err.response?.data?.message || 'Failed to download template',
-      severity: 'error',
-    });
+      setNotification({
+        open: true,
+        message: err.response?.data?.message || 'Failed to download template',
+        severity: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -90,47 +89,46 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   };
 
   const handleFileChange = async (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const result = await uploadTeachers(file);
+      const result = await uploadTeachers(file);
 
-    fetchTeachers(page, rowsPerPage, searchTerm);
+      fetchTeachers(page, rowsPerPage, searchTerm);
 
-    const { inserted, skipped, logs } = result.data || {};
+      const { inserted, skipped, logs } = result.data || {};
 
-    let message = result.message;
+      let message = result.message;
 
-    const failedCount = logs?.filter((l) => l.status === 'failed').length || 0;
+      const failedCount = logs?.filter((l) => l.status === 'failed').length || 0;
 
-    if (failedCount > 0) {
-      message += ` (${failedCount} failed)`;
+      if (failedCount > 0) {
+        message += ` (${failedCount} failed)`;
+      }
+
+      setNotification({
+        open: true,
+        message,
+        severity: failedCount > 0 ? 'warning' : 'success',
+      });
+    } catch (err) {
+      console.error('Error uploading teachers:', err);
+
+      setNotification({
+        open: true,
+        message: err.response?.data?.message || 'Failed to upload teachers',
+        severity: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
-
-    setNotification({
-      open: true,
-      message,
-      severity: failedCount > 0 ? 'warning' : 'success',
-    });
-
-  } catch (err) {
-    console.error('Error uploading teachers:', err);
-
-    setNotification({
-      open: true,
-      message: err.response?.data?.message || 'Failed to upload teachers',
-      severity: 'error',
-    });
-  } finally {
-    setIsLoading(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }
-};
+  };
 
   const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
     setTeachersLoading(true);
@@ -208,8 +206,8 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         teacher.staff_type === 'non-teaching'
           ? 'Non-Teaching'
           : teacher.staff_type === 'teaching'
-          ? 'Teaching'
-          : teacher.staff_type,
+            ? 'Teaching'
+            : teacher.staff_type,
       middle_name: teacher.user?.mname || '',
     };
     setSelectedTeacher({ ...teacher, initialValues });
@@ -219,42 +217,41 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   };
 
   const handleUpdateTeacher = async (values) => {
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    await updateStaff(values.id, {
-      first_name: values.first_name,
-      last_name: values.surname,
-      middle_name: values.middle_name,
-      email: values.email,
-      phone: values.phone_number,
-      gender: values.gender,
-      staff_type: values.staff_type,
-      class_arm_id: values.class_arm_id,
-      userId: values.staff_id,
-    });
+      await updateStaff(values.id, {
+        first_name: values.first_name,
+        last_name: values.surname,
+        middle_name: values.middle_name,
+        email: values.email,
+        phone: values.phone_number,
+        gender: values.gender,
+        staff_type: values.staff_type,
+        class_arm_id: values.class_arm_id,
+        userId: values.staff_id,
+      });
 
-    setNotification({
-      open: true,
-      message: 'Staff updated successfully',
-      severity: 'success',
-    });
+      setNotification({
+        open: true,
+        message: 'Staff updated successfully',
+        severity: 'success',
+      });
 
-    setModalOpen(false);
+      setModalOpen(false);
 
-    fetchTeachers(page, rowsPerPage, searchTerm);
-    onTeacherAdded?.();
-
-  } catch (err) {
-    setNotification({
-      open: true,
-      message: err.response?.data?.message || 'Failed to update staff',
-      severity: 'error',
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+      fetchTeachers(page, rowsPerPage, searchTerm);
+      onTeacherAdded?.();
+    } catch (err) {
+      setNotification({
+        open: true,
+        message: err.response?.data?.message || 'Failed to update staff',
+        severity: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteTeacher = async () => {
     const teacher = confirmDialog.teacher;
@@ -264,11 +261,11 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       setIsLoading(true);
       await deleteStaff(teacher.id);
 
-       setNotification({
-      open: true,
-      message: 'Staff deleted successfully',
-      severity: 'success',
-    });
+      setNotification({
+        open: true,
+        message: 'Staff deleted successfully',
+        severity: 'success',
+      });
 
       // Refresh the list after deletion
       fetchTeachers(page, rowsPerPage, searchTerm);
@@ -276,10 +273,10 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       onTeacherAdded?.();
     } catch (err) {
       setNotification({
-      open: true,
-      message: err.response?.data?.message || 'Failed to delete teacher',
-      severity: 'error',
-    });
+        open: true,
+        message: err.response?.data?.message || 'Failed to delete teacher',
+        severity: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -499,7 +496,63 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         onClose={() => setModalOpen(false)}
         mode={modalMode}
         initialValues={modalMode === 'edit' ? selectedTeacher?.initialValues : undefined}
-         onSave={handleUpdateTeacher}
+        onSave={async (data) => {
+          try {
+            setIsLoading(true);
+            if (modalMode === 'edit' && selectedTeacher) {
+              // Update existing teacher
+              await updateStaff(selectedTeacher.id, {
+                first_name: data.first_name,
+                last_name: data.surname,
+                email: data.email,
+                phone: data.phone_number,
+                gender: data.gender,
+                staff_type: data.staff_type || 'teaching',
+                class_arm_id: data.is_class_teacher ? data.class_arm_id : null,
+                userId: data.staff_id,
+              });
+
+              setNotification({
+                open: true,
+                message: 'Staff updated successfully',
+                severity: 'success',
+              });
+            } else {
+              // Create new teacher
+              await createStaff({
+                first_name: data.first_name,
+                last_name: data.surname,
+                middle_name: data.middle_name || '',
+                email: data.email,
+                phone: data.phone_number,
+                gender: data.gender,
+                staff_type: data.staff_type || 'teaching',
+                is_class_teacher: data.is_class_teacher || false,
+                class_arm_id: data.class_arm_id || null,
+                userId: data.staff_id,
+              });
+              setNotification({
+                open: true,
+                message: 'Staff created successfully',
+                severity: 'success',
+              });
+            }
+            // Refresh the list after save
+            fetchTeachers(page, rowsPerPage, searchTerm);
+            setModalOpen(false);
+          } catch (err) {
+            // console.error('Error saving teacher:', err);
+            setNotification({
+              open: true,
+              message: err.response?.data?.message || 'Failed to save teacher',
+              severity: 'error',
+            });
+            setError(err.message || 'Failed to save teacher');
+            throw err;
+          } finally {
+            setIsLoading(false);
+          }
+        }}
         className="General"
         isLoading={isLoading}
       />
@@ -521,20 +574,20 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       </Dialog>
 
       <Snackbar
-  open={notification.open}
-  autoHideDuration={4000}
-  onClose={() => setNotification({ ...notification, open: false })}
-  anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
->
-  <Alert
-    onClose={() => setNotification({ ...notification, open: false })}
-    severity={notification.severity}
-    variant="filled"
-    sx={{ width: '100%' }}
-  >
-    {notification.message}
-  </Alert>
-</Snackbar>
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

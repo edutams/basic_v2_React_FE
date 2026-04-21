@@ -454,7 +454,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
         </Button>
       </Box>
 
-      {/* Notification Snackbar */}
       <Snackbar
         open={notification.open}
         autoHideDuration={3000}

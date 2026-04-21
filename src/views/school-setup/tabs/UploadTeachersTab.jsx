@@ -20,6 +20,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -55,15 +57,29 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
-  const notify = useNotification();
+  const [notification, setNotification] = useState({
+  open: false,
+  message: '',
+  severity: 'success',
+});
 
   const handleDownloadTemplate = async () => {
     try {
       setIsLoading(true);
       await downloadTeacherTemplate();
+
+      setNotification({
+      open: true,
+      message: 'Learner upload template downloaded. Fill and upload to continue.',
+      severity: 'success',
+    });
+    
     } catch (err) {
-      console.error('Error downloading template:', err);
-      setError(err.message || 'Failed to download template');
+       setNotification({
+      open: true,
+      message: err.response?.data?.message || 'Failed to download template',
+      severity: 'error',
+    });
     } finally {
       setIsLoading(false);
     }
@@ -74,27 +90,47 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   };
 
   const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    try {
-      setIsLoading(true);
-      const result = await uploadTeachers(file);
-      // Refresh the list after uploading
-      fetchTeachers(page, rowsPerPage, searchTerm);
+  try {
+    setIsLoading(true);
 
-      // onTeacherAdded?.();
-      alert(result.message || 'Teachers uploaded successfully');
-    } catch (err) {
-      console.error('Error uploading teachers:', err);
-      setError(err.message || 'Failed to upload teachers');
-    } finally {
-      setIsLoading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    const result = await uploadTeachers(file);
+
+    fetchTeachers(page, rowsPerPage, searchTerm);
+
+    const { inserted, skipped, logs } = result.data || {};
+
+    let message = result.message;
+
+    const failedCount = logs?.filter((l) => l.status === 'failed').length || 0;
+
+    if (failedCount > 0) {
+      message += ` (${failedCount} failed)`;
     }
-  };
+
+    setNotification({
+      open: true,
+      message,
+      severity: failedCount > 0 ? 'warning' : 'success',
+    });
+
+  } catch (err) {
+    console.error('Error uploading teachers:', err);
+
+    setNotification({
+      open: true,
+      message: err.response?.data?.message || 'Failed to upload teachers',
+      severity: 'error',
+    });
+  } finally {
+    setIsLoading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+};
 
   const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
     setTeachersLoading(true);
@@ -475,6 +511,22 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+  open={notification.open}
+  autoHideDuration={4000}
+  onClose={() => setNotification({ ...notification, open: false })}
+  anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+>
+  <Alert
+    onClose={() => setNotification({ ...notification, open: false })}
+    severity={notification.severity}
+    variant="filled"
+    sx={{ width: '100%' }}
+  >
+    {notification.message}
+  </Alert>
+</Snackbar>
     </Box>
   );
 };

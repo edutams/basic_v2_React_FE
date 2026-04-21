@@ -53,7 +53,27 @@ export const landlordSchemeApi = {
   getDetails: async (id) => {
     const response = await landlordApi.get(`/landlord/v1/scheme-of-work/view/${id}`);
     return response.data;
-  }
+  },
+  downloadTemplate: async (params) => {
+    const response = await landlordApi.get('/landlord/v1/scheme-of-work/template/download', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+  uploadTemplate: async (formData) => {
+    const response = await landlordApi.post('/landlord/v1/scheme-of-work/template/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+  downloadSchemeOfWork: async (params) => {
+    const response = await landlordApi.get('/landlord/v1/scheme-of-work/download', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
 };
 
 export const tenantSchemeApi = {
@@ -112,5 +132,25 @@ export const tenantSchemeApi = {
   getDetails: async (id) => {
     const response = await tenantApi.get(`/scheme-of-work/view/${id}`);
     return response.data;
-  }
+  },
+  downloadTemplate: async (params) => {
+    const response = await tenantApi.get('/scheme-of-work/template/download', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+  uploadTemplate: async (formData) => {
+    const response = await tenantApi.post('/scheme-of-work/template/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+  downloadSchemeOfWork: async (params) => {
+    const response = await tenantApi.get('/scheme-of-work/download', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
 };

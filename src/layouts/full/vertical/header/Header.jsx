@@ -48,19 +48,30 @@ const Header = () => {
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     boxShadow: 'none',
-    // background: "#ffffff",
-
+    backgroundColor: theme.palette.background.paper,
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
+    zIndex: 1200,
+    // Account for sidebar width on large screens
     [theme.breakpoints.up('lg')]: {
       minHeight: TopbarHeight,
+      marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+    },
+    // On smaller screens, full width
+    [theme.breakpoints.down('lg')]: {
+      minHeight: TopbarHeight,
+      marginLeft: 0,
     },
   }));
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
     color: `${theme.palette.text.primary} !important`,
-    paddingLeft: '18px !important',
+    paddingLeft: '288px !important', // 270px sidebar + 18px spacing
     paddingRight: '16px !important',
+    // On smaller screens, reduce padding
+    [theme.breakpoints.down('lg')]: {
+      paddingLeft: '18px !important',
+    },
   }));
 
   const CollpaseMenubar = styled(Box)(({ theme }) => ({
@@ -79,8 +90,22 @@ const Header = () => {
   const { isImpersonating, stopImpersonation } = useContext(AuthContext);
 
   return (
-    <AppBarStyled position="fixed" color="default">
-      <ToolbarStyled>
+    <AppBarStyled 
+      position="fixed" 
+      color="default"
+      sx={{
+        ...(lgUp && {
+          marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+        }),
+      }}
+    >
+      <ToolbarStyled
+        sx={{
+          paddingLeft: lgUp 
+            ? `${(isCollapse === 'mini-sidebar' ? config.miniSidebarWidth : config.sidebarWidth) + 18}px !important`
+            : '18px !important',
+        }}
+      >
         {/* ------------------------------------------- */}
         {/* Toggle Button Sidebar */}
         {/* ------------------------------------------- */}

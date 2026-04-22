@@ -36,6 +36,9 @@ const SchoolHeader = () => {
 
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
   const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || null;
+  const academicSession = tenantInfo?.academic_session ?? 'No Active Session';
+  const academicTerm = tenantInfo?.academic_term ?? 'No active term';
+  const academicWeek = tenantInfo?.academic_week ?? 'No active week';
 
   const TopbarHeight = config.topbarHeight;
   const theme = useTheme();
@@ -78,30 +81,34 @@ const SchoolHeader = () => {
         {lgUp ? (
           <Stack direction="row" spacing={2} alignItems="center">
             <Search />
-            {(schoolLogo || schoolName) && (
-              <Stack direction="row" spacing={1} alignItems="center">
-                {schoolLogo && (
-                  <Avatar
-                    src={schoolLogo}
-                    alt={schoolName || 'School Logo'}
-                    variant="rounded"
-                    sx={{ width: 36, height: 36 }}
-                  />
-                )}
-                {schoolName && (
-                  <Typography
-                    variant="h6"
-                    fontWeight={600}
-                    sx={{
-                      color: 'text.primary',
-                      display: { xs: 'none', sm: 'block' },
-                      whiteSpace: 'normal',
-                      wordBreak: 'break-word',
-                      maxWidth: 200,
-                    }}
-                  >
-                    {schoolName}
-                  </Typography>
+            {(schoolLogo || schoolName || academicSession) && (
+              <Stack direction="column" spacing={0.5} alignItems="flex-start">
+                {(schoolLogo || schoolName) && (
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    {schoolLogo && (
+                      <Avatar
+                        src={schoolLogo}
+                        alt={schoolName || 'School Logo'}
+                        variant="rounded"
+                        sx={{ width: 36, height: 36 }}
+                      />
+                    )}
+                    {schoolName && (
+                      <Typography
+                        variant="h6"
+                        fontWeight={600}
+                        sx={{
+                          color: 'text.primary',
+                          display: { xs: 'none', sm: 'block' },
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
+                          maxWidth: 200,
+                        }}
+                      >
+                        {schoolName}
+                      </Typography>
+                    )}
+                  </Stack>
                 )}
               </Stack>
             )}
@@ -138,6 +145,28 @@ const SchoolHeader = () => {
         )}
 
         <Box flexGrow={1} />
+
+        {(academicSession || academicTerm || academicWeek) && (
+          <Box sx={{ mr: 2, display: { xs: 'none', md: 'block' } }}>
+            <Stack spacing={0} sx={{ lineHeight: 1.2 }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                Active Term
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  color: 'text.primary',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {academicSession} | {academicTerm} | {academicWeek}
+              </Typography>
+            </Stack>
+          </Box>
+        )}
 
         <Stack direction="row" gap={1} alignItems="center">
           <IconButton color="inherit">

@@ -48,19 +48,30 @@ const Header = () => {
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     boxShadow: 'none',
-    // background: "#ffffff",
-
+    backgroundColor: theme.palette.background.paper,
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
+    zIndex: 1200,
+    // Account for sidebar width on large screens
     [theme.breakpoints.up('lg')]: {
       minHeight: TopbarHeight,
+      marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+    },
+    // On smaller screens, full width
+    [theme.breakpoints.down('lg')]: {
+      minHeight: TopbarHeight,
+      marginLeft: 0,
     },
   }));
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
     color: `${theme.palette.text.primary} !important`,
-    paddingLeft: '16px !important',
+    paddingLeft: '288px !important', 
     paddingRight: '16px !important',
+    // On smaller screens, reduce padding
+    [theme.breakpoints.down('lg')]: {
+      paddingLeft: '18px !important',
+    },
   }));
 
   const CollpaseMenubar = styled(Box)(({ theme }) => ({
@@ -79,8 +90,22 @@ const Header = () => {
   const { isImpersonating, stopImpersonation } = useContext(AuthContext);
 
   return (
-    <AppBarStyled position="sticky" color="default">
-      <ToolbarStyled>
+    <AppBarStyled 
+      position="fixed" 
+      color="default"
+      sx={{
+        ...(lgUp && {
+          marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+        }),
+      }}
+    >
+      <ToolbarStyled
+        sx={{
+          paddingLeft: lgUp 
+            ? `${(isCollapse === 'mini-sidebar' ? config.miniSidebarWidth : config.sidebarWidth) + 18}px !important`
+            : '18px !important',
+        }}
+      >
         {/* ------------------------------------------- */}
         {/* Toggle Button Sidebar */}
         {/* ------------------------------------------- */}
@@ -88,14 +113,11 @@ const Header = () => {
           color="inherit"
           aria-label="menu"
           onClick={() => {
-            // Toggle sidebar on both mobile and desktop based on screen size
             if (lgUp) {
-              // For large screens, toggle between full-sidebar and mini-sidebar
               isCollapse === 'full-sidebar'
                 ? setIsCollapse('mini-sidebar')
                 : setIsCollapse('full-sidebar');
             } else {
-              // For smaller screens, toggle mobile sidebar
               setIsMobileSidebar(!isMobileSidebar);
             }
           }}

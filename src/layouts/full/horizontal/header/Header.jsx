@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import * as React from 'react';
 import { useState, useContext } from "react";
 import {
@@ -15,8 +13,7 @@ import {
 
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import Navigation from 'src/layouts/full/vertical/header/Navigation';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
+
 import { IconCategory2, IconMenu2, IconMoon, IconSun, IconX } from '@tabler/icons-react';
 import Notifications from 'src/layouts/full/vertical/header/Notification';
 
@@ -67,7 +64,7 @@ const Header = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <AppBarStyled position="sticky" color="default" elevation={8}>
+    <AppBarStyled position="fixed" color="default" elevation={8}>
       <ToolbarStyled
         sx={{
           maxWidth: isLayout === "boxed" ? "1300px" : "100%!important",

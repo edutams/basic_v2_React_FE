@@ -53,6 +53,7 @@ const FullLayout = () => {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
+            ...(activeLayout === 'vertical' && { paddingTop: '70px' }),
             ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),

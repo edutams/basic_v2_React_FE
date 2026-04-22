@@ -59,7 +59,7 @@ const Header = () => {
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
     color: `${theme.palette.text.primary} !important`,
-    paddingLeft: '16px !important',
+    paddingLeft: '18px !important',
     paddingRight: '16px !important',
   }));
 
@@ -79,7 +79,7 @@ const Header = () => {
   const { isImpersonating, stopImpersonation } = useContext(AuthContext);
 
   return (
-    <AppBarStyled position="sticky" color="default">
+    <AppBarStyled position="fixed" color="default">
       <ToolbarStyled>
         {/* ------------------------------------------- */}
         {/* Toggle Button Sidebar */}

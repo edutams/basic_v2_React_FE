@@ -31,6 +31,7 @@ const AlcManager = Loadable(
   lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
 );
 const ActivityLog = Loadable(lazy(() => import('../views/tenants-views/activity-log/ActivityLog')));
+const CalendarPage = Loadable(lazy(() => import('../views/school-setup/CalendarPage')));
 const AccountSetting = Loadable(
   lazy(() => import('../views/pages/account-setting/AccountSetting')),
 );
@@ -99,6 +100,7 @@ const TenantRoutes = [
         element: <AlcManager />,
       },
       { path: 'activity-logs', element: <ActivityLog /> },
+      { path: 'calendar', element: <CalendarPage /> },
       { path: 'pages/account-settings', element: <AccountSetting /> },
     ],
   },

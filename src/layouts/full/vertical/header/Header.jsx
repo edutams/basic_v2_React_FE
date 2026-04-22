@@ -66,7 +66,7 @@ const Header = () => {
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
     color: `${theme.palette.text.primary} !important`,
-    paddingLeft: '288px !important', // 270px sidebar + 18px spacing
+    paddingLeft: '288px !important', 
     paddingRight: '16px !important',
     // On smaller screens, reduce padding
     [theme.breakpoints.down('lg')]: {
@@ -113,14 +113,11 @@ const Header = () => {
           color="inherit"
           aria-label="menu"
           onClick={() => {
-            // Toggle sidebar on both mobile and desktop based on screen size
             if (lgUp) {
-              // For large screens, toggle between full-sidebar and mini-sidebar
               isCollapse === 'full-sidebar'
                 ? setIsCollapse('mini-sidebar')
                 : setIsCollapse('full-sidebar');
             } else {
-              // For smaller screens, toggle mobile sidebar
               setIsMobileSidebar(!isMobileSidebar);
             }
           }}

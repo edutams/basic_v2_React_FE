@@ -8,6 +8,8 @@ import {
   styled,
   Stack,
   Button,
+  Typography,
+  Avatar,
 } from '@mui/material';
 import { IconMenu2, IconMoon, IconSun, IconArrowLeft } from '@tabler/icons-react';
 import config from 'src/context/config';
@@ -30,7 +32,10 @@ const SchoolHeader = () => {
     setIsMobileSidebar,
     isLayout,
   } = useContext(CustomizerContext);
-  const { isImpersonated, stopImpersonation } = useContext(TenantAuthContext);
+  const { isImpersonated, stopImpersonation, tenantInfo } = useContext(TenantAuthContext);
+
+  const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
+  const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || null;
 
   const TopbarHeight = config.topbarHeight;
   const theme = useTheme();
@@ -70,7 +75,38 @@ const SchoolHeader = () => {
           <IconMenu2 size="21" />
         </IconButton>
 
-        {lgUp ? <Search /> : null}
+        {lgUp ? (
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Search />
+            {(schoolLogo || schoolName) && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                {schoolLogo && (
+                  <Avatar
+                    src={schoolLogo}
+                    alt={schoolName || 'School Logo'}
+                    variant="rounded"
+                    sx={{ width: 36, height: 36 }}
+                  />
+                )}
+                {schoolName && (
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    sx={{
+                      color: 'text.primary',
+                      display: { xs: 'none', sm: 'block' },
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                      maxWidth: 200,
+                    }}
+                  >
+                    {schoolName}
+                  </Typography>
+                )}
+              </Stack>
+            )}
+          </Stack>
+        ) : null}
 
         {isImpersonated && (
           <Box
@@ -112,7 +148,7 @@ const SchoolHeader = () => {
             )}
           </IconButton>
 
-          <Language />
+          {/* <Language /> */}
           <Notifications />
           <Profile />
         </Stack>

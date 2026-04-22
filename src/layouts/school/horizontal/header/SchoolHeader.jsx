@@ -9,6 +9,8 @@ import {
   Stack,
   Container,
   Button,
+  Typography,
+  Avatar,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -36,8 +38,11 @@ const SchoolHeader = () => {
 
   const { activeMode, setActiveMode, isLayout, isMobileSidebar, setIsMobileSidebar } =
     useContext(CustomizerContext);
-  const { isImpersonated, stopImpersonation } = useContext(TenantAuthContext);
+  const { isImpersonated, stopImpersonation, tenantInfo } = useContext(TenantAuthContext);
   const TopbarHeight = config.topbarHeight;
+
+  const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
+  const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || null;
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     background: theme.palette.background.paper,
@@ -100,7 +105,32 @@ const SchoolHeader = () => {
           ''
         )}
 
-        {lgUp ? <Search /> : null}
+        {lgUp ? (
+          <Stack direction="row" spacing={2} alignItems="center">
+            {(schoolLogo || schoolName) && (
+              <Stack direction="row" spacing={1} alignItems="center">
+                {schoolLogo && (
+                  <Avatar
+                    src={schoolLogo}
+                    alt={schoolName || 'School Logo'}
+                    variant="rounded"
+                    sx={{ width: 36, height: 36 }}
+                  />
+                )}
+                {schoolName && (
+                  <Typography
+                    variant="h6"
+                    fontWeight={600}
+                    sx={{ color: 'text.primary', display: { xs: 'none', sm: 'block' } }}
+                  >
+                    {schoolName}
+                  </Typography>
+                )}
+              </Stack>
+            )}
+            <Search />
+          </Stack>
+        ) : null}
         {lgUp ? <SchoolNavigation /> : null}
 
         {isImpersonated && (

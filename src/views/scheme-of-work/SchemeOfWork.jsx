@@ -372,13 +372,14 @@ const SchemeOfWork = () => {
   };
 
   const handleAddSubtopic = (topicId) => {
-    setSelectedTopic({ id: topicId });
+    setSelectedTopic({ topic_id: topicId });
     setSelectedSubtopic(null);
     setSubtopicModalOpen(true);
   };
 
   const handleEditSubtopic = (subtopic) => {
     setSelectedSubtopic(subtopic);
+    setSelectedTopic({ topic_id: subtopic.topic_id });
     setSubtopicModalOpen(true);
     handleMenuClose();
   };
@@ -405,8 +406,8 @@ const SchemeOfWork = () => {
 
   const handleSaveTopic = async (topicData) => {
     try {
-      if (selectedTopic) {
-        await tenantSchemeApi.updateTopic(selectedTopic.id, topicData);
+      if (selectedTopic && selectedTopic.topic_id) {
+        await tenantSchemeApi.updateTopic(selectedTopic.topic_id, topicData);
         notify.success('Topic updated successfully');
       } else {
         await tenantSchemeApi.addTopic({ ...topicData, scheme_of_work_id: selectedRow.scheme_of_work_id });
@@ -421,11 +422,11 @@ const SchemeOfWork = () => {
 
   const handleSaveSubtopic = async (subtopicData) => {
     try {
-      if (selectedSubtopic) {
+      if (selectedSubtopic && selectedSubtopic.sub_topic_id) {
         await tenantSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
         notify.success('Subtopic updated successfully');
       } else {
-        await tenantSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.id });
+        await tenantSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.topic_id });
         notify.success('Subtopic added successfully');
       }
       setSubtopicModalOpen(false);

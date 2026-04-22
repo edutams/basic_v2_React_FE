@@ -196,8 +196,8 @@ const AgentSchemeOfWork = () => {
 
   const handleSaveTopic = async (topicData) => {
     try {
-      if (selectedTopic) {
-        await landlordSchemeApi.updateTopic(selectedTopic.id, topicData);
+      if (selectedTopic && selectedTopic.topic_id) {
+        await landlordSchemeApi.updateTopic(selectedTopic.topic_id, topicData);
         notify.success('Topic updated successfully');
       } else {
         await landlordSchemeApi.addTopic({ ...topicData, scheme_of_work_id: selectedRow.scheme_of_work_id });
@@ -212,11 +212,11 @@ const AgentSchemeOfWork = () => {
 
   const handleSaveSubtopic = async (subtopicData) => {
     try {
-      if (selectedSubtopic) {
+      if (selectedSubtopic && selectedSubtopic.sub_topic_id) {
         await landlordSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
         notify.success('Subtopic updated successfully');
       } else {
-        await landlordSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.id });
+        await landlordSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.topic_id });
         notify.success('Subtopic added successfully');
       }
       setSubtopicModalOpen(false);
@@ -322,7 +322,7 @@ const AgentSchemeOfWork = () => {
   };
 
   const handleAddSubtopic = (topicId) => {
-    setSelectedTopic({ id: topicId });
+    setSelectedTopic({ topic_id: topicId });
     setSelectedSubtopic(null);
     handleMenuClose();
     setSubtopicModalOpen(true);
@@ -330,7 +330,7 @@ const AgentSchemeOfWork = () => {
 
   const handleEditSubtopic = (row) => {
     setSelectedSubtopic(row);
-    setSelectedTopic({ id: row.topic_id });
+    setSelectedTopic({ topic_id: row.topic_id });
     handleMenuClose();
     setSubtopicModalOpen(true);
   };
@@ -1171,7 +1171,7 @@ const AgentSchemeOfWork = () => {
             Select the Programme, Class, Subject, and Term whose uploaded Scheme of Work you want to download.
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
                 select fullWidth label="Programme" size="small"
                 value={dlSchemeFilters.programme}
@@ -1184,7 +1184,7 @@ const AgentSchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
                 select fullWidth label="Class" size="small"
                 value={dlSchemeFilters.classLevel}
@@ -1193,7 +1193,7 @@ const AgentSchemeOfWork = () => {
                 {dlSchemeClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
                 select fullWidth label="Subject" size="small"
                 value={dlSchemeFilters.subject}
@@ -1202,7 +1202,7 @@ const AgentSchemeOfWork = () => {
                 {dlSchemeSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
                 select fullWidth label="Term" size="small"
                 value={dlSchemeFilters.term || activeTerm}

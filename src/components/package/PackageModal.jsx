@@ -46,24 +46,16 @@ const PackageModal = ({ open, onClose, handleRefresh, selectedPackage, actionTyp
     },
     onSubmit: async (values) => {
       try {
-        // console.log('Package data:', values);
-        // console.log('Action type:', actionType);
-
         switch (actionType) {
           case 'create':
-            // console.log('Creating new package:', values);
             break;
           case 'update':
-            // console.log('Updating package:', selectedPackage?.id, values);
             break;
           case 'activate':
-            // console.log('Activating package:', selectedPackage?.id);
             break;
           case 'deactivate':
-            // console.log('Deactivating package:', selectedPackage?.id);
             break;
           default:
-          // console.log('Unknown action:', actionType);/
         }
 
         handleRefresh();

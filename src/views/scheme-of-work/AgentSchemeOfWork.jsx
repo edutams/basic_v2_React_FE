@@ -12,6 +12,9 @@ import {
   TableRow,
   TableCell,
   TableBody,
+  TableFooter,
+  TablePagination,
+  Paper,
   IconButton,
   Menu,
   MenuItem,
@@ -41,38 +44,44 @@ import {
   IconDownload,
   IconUpload,
   IconFilter,
+  IconBook2,
   IconArrowRightSquare,
   IconPlus,
   IconCheck,
   IconX,
 } from '@tabler/icons-react';
-import { tenantSchemeApi } from '../../api/schemeOfWorkApi';
-import { fetchProgrammes, fetchClassesByProgramme, fetchSubjectsByProgramme } from '../../api/tenantCurriculumApi';
+import { landlordSchemeApi } from '../../api/schemeOfWorkApi';
+import {
+  fetchProgrammes,
+  fetchClassesByProgramme,
+  fetchSubjectsByProgramme,
+} from '../../api/curriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 
 const BCrumb = [
   {
-    to: '/',
-    title: 'School Dashboard',
+    to: '/agent',
+    title: 'Agent Dashboard',
   },
   { title: 'Scheme Of Work' },
 ];
 
-const SchemeOfWork = () => {
+const AgentSchemeOfWork = () => {
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
-  const [rows, setRows] = useState({});
+  const [rows, setRows] = useState([]);
   const [analytics, setAnalytics] = useState({ total_topics: 0, total_subtopics: 0 });
 
   // Filter options
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
+
 
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedSubtopic, setSelectedSubtopic] = useState(null);
@@ -84,7 +93,7 @@ const SchemeOfWork = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [menuType, setMenuType] = useState(null); // 'topic' | 'subtopic' | 'row' | 'objective'
+  const [menuType, setMenuType] = useState(null); // 'topic' | 'subtopic' | 'row'
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [objectiveModalOpen, setObjectiveModalOpen] = useState(false);
@@ -130,7 +139,7 @@ const SchemeOfWork = () => {
   const initData = async () => {
     try {
       const [termsRes, progsRes] = await Promise.all([
-        tenantSchemeApi.getTerms(),
+        landlordSchemeApi.getTerms(),
         fetchProgrammes(),
       ]);
       setTerms(termsRes);
@@ -169,7 +178,7 @@ const SchemeOfWork = () => {
     if (!filters.subject || !filters.classLevel || !termId) return;
     setLoading(true);
     try {
-      const data = await tenantSchemeApi.fetchScheme({
+      const data = await landlordSchemeApi.fetchScheme({
         filters: {
           subject_id: filters.subject,
           class_id: filters.classLevel,
@@ -185,15 +194,93 @@ const SchemeOfWork = () => {
     }
   };
 
+  const handleSaveTopic = async (topicData) => {
+    try {
+      if (selectedTopic) {
+        await landlordSchemeApi.updateTopic(selectedTopic.id, topicData);
+        notify.success('Topic updated successfully');
+      } else {
+        await landlordSchemeApi.addTopic({ ...topicData, scheme_of_work_id: selectedRow.scheme_of_work_id });
+        notify.success('Topic added successfully');
+      }
+      setTopicModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Operation failed');
+    }
+  };
+
+  const handleSaveSubtopic = async (subtopicData) => {
+    try {
+      if (selectedSubtopic) {
+        await landlordSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
+        notify.success('Subtopic updated successfully');
+      } else {
+        await landlordSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.id });
+        notify.success('Subtopic added successfully');
+      }
+      setSubtopicModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Operation failed');
+    }
+  };
+
+  const handleSaveObjective = async (objectiveData) => {
+    try {
+      if (selectedObjective) {
+        await landlordSchemeApi.updateObjective(selectedObjective.id, objectiveData);
+        notify.success('Learning objective updated successfully');
+      } else {
+        await landlordSchemeApi.addObjective({
+          ...objectiveData,
+          sub_topic_id: selectedRow.sub_topic_id
+        });
+        notify.success('Learning objective added successfully');
+      }
+      setObjectiveModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Operation failed');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (deleteType === 'topic') {
+        await landlordSchemeApi.deleteTopic(selectedRow.id);
+      } else if (deleteType === 'subtopic') {
+        await landlordSchemeApi.deleteSubtopic(selectedRow.id);
+      } else if (deleteType === 'objective') {
+        await landlordSchemeApi.deleteObjective(selectedRow.id);
+      }
+      notify.success(`${deleteType} deleted successfully`);
+      setDeleteModalOpen(false);
+      fetchScheme(activeFilters, activeTerm);
+    } catch (error) {
+      notify.error('Deletion failed');
+    }
+  };
+
   const paginatedRows = useMemo(() => {
-    let flattened = [];
+    let filtered = [];
     Object.keys(rows).forEach(weekName => {
       rows[weekName].forEach(row => {
-        flattened.push({ ...row, week: weekName });
+        filtered.push({ ...row, week: weekName });
       });
     });
-    return flattened;
-  }, [rows]);
+
+    if (activeFilters.search) {
+      filtered = filtered.filter(
+        (r) =>
+          r.topic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()) ||
+          r.subtopic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()),
+      );
+    }
+
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [rows, page, rowsPerPage, activeFilters]);
 
   const handleMenuOpen = (event, row, type) => {
     setAnchorEl(event.currentTarget);
@@ -212,7 +299,7 @@ const SchemeOfWork = () => {
     setDetailsData(null);
     setDetailsLoading(true);
     try {
-      const res = await tenantSchemeApi.getDetails(id);
+      const res = await landlordSchemeApi.getDetails(id);
       setDetailsData(res);
     } catch (e) {
       notify.error('Failed to load scheme details.');
@@ -222,9 +309,55 @@ const SchemeOfWork = () => {
     }
   };
 
+  const handleAddTopic = (schemeOfWorkId) => {
+    setSelectedTopic(null);
+    setSelectedRow({ scheme_of_work_id: schemeOfWorkId });
+    setTopicModalOpen(true);
+  };
+
+  const handleEditTopic = (topic) => {
+    setSelectedTopic(topic);
+    handleMenuClose();
+    setTopicModalOpen(true);
+  };
+
+  const handleAddSubtopic = (topicId) => {
+    setSelectedTopic({ id: topicId });
+    setSelectedSubtopic(null);
+    handleMenuClose();
+    setSubtopicModalOpen(true);
+  };
+
+  const handleEditSubtopic = (row) => {
+    setSelectedSubtopic(row);
+    setSelectedTopic({ id: row.topic_id });
+    handleMenuClose();
+    setSubtopicModalOpen(true);
+  };
+
+  const handleAddObjective = (row) => {
+    setSelectedRow(row);
+    setSelectedObjective(null);
+    handleMenuClose();
+    setObjectiveModalOpen(true);
+  };
+
+  const handleEditObjective = (lo) => {
+    setSelectedObjective(lo);
+    handleMenuClose();
+    setObjectiveModalOpen(true);
+  };
+
+  const handleDeleteClick = (type, id) => {
+    setDeleteType(type);
+    setSelectedRow({ id });
+    handleMenuClose();
+    setDeleteModalOpen(true);
+  };
+
   const fetchAnalytics = async (filters, termId) => {
     try {
-      const data = await tenantSchemeApi.getAnalytics({
+      const data = await landlordSchemeApi.getAnalytics({
         subject_id: filters.subject,
         class_id: filters.classLevel,
         term_id: termId,
@@ -247,7 +380,7 @@ const SchemeOfWork = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  // ─── Helper: load classes + subjects for a modal ───
+  // ─── Helper: load classes + subjects for a modal's programme selection ───
   const handleModalProgrammeChange = async (prog, setClasses, setSubjects) => {
     if (!prog) return;
     try {
@@ -271,7 +404,7 @@ const SchemeOfWork = () => {
       return;
     }
     try {
-      const res = await tenantSchemeApi.downloadTemplate({
+      const res = await landlordSchemeApi.downloadTemplate({
         subject_id: subject,
         class_id: classLevel,
         term_id: termId,
@@ -299,7 +432,7 @@ const SchemeOfWork = () => {
       fd.append('subject_id', subject);
       fd.append('class_id', classLevel);
       fd.append('term_id', termId);
-      const res = await tenantSchemeApi.uploadTemplate(fd);
+      const res = await landlordSchemeApi.uploadTemplate(fd);
       notify.success(res.message);
       setUploadOpen(false);
       setUploadFile(null);
@@ -321,7 +454,7 @@ const SchemeOfWork = () => {
     }
     setDownloading(true);
     try {
-      const res = await tenantSchemeApi.downloadSchemeOfWork({
+      const res = await landlordSchemeApi.downloadSchemeOfWork({
         subject_id: subject,
         class_id: classLevel,
         term_id: termId,
@@ -336,146 +469,21 @@ const SchemeOfWork = () => {
     }
   };
 
-  const handleImportFromLandlord = async () => {
-    if (!subject || !classLevel || !activeTerm) {
-      notify.error('Please select Subject, Class, and Term filters first.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await tenantSchemeApi.importFromLandlord({
-        filters: {
-          subject_id: subject,
-          class_id: classLevel,
-        },
-        term_id: activeTerm,
-      });
-      notify.success(res.message);
-      fetchScheme({ subject, classLevel }, activeTerm);
-    } catch (error) {
-      notify.error(error.response?.data?.message || 'Import failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddTopic = (weekId) => {
-    setSelectedRow({ scheme_of_work_id: weekId });
-    setSelectedTopic(null);
-    setTopicModalOpen(true);
-  };
-
-  const handleEditTopic = (topic) => {
-    setSelectedTopic(topic);
-    setTopicModalOpen(true);
-    handleMenuClose();
-  };
-
-  const handleAddSubtopic = (topicId) => {
-    setSelectedTopic({ id: topicId });
-    setSelectedSubtopic(null);
-    setSubtopicModalOpen(true);
-  };
-
-  const handleEditSubtopic = (subtopic) => {
-    setSelectedSubtopic(subtopic);
-    setSubtopicModalOpen(true);
-    handleMenuClose();
-  };
-
-  const handleAddObjective = (row) => {
-    setSelectedRow(row);
-    setSelectedObjective(null);
-    handleMenuClose();
-    setObjectiveModalOpen(true);
-  };
-
-  const handleEditObjective = (lo) => {
-    setSelectedObjective(lo);
-    handleMenuClose();
-    setObjectiveModalOpen(true);
-  };
-
-  const handleDeleteClick = (type, id) => {
-    setDeleteType(type);
-    setSelectedRow({ id });
-    setDeleteModalOpen(true);
-    handleMenuClose();
-  };
-
-  const handleSaveTopic = async (topicData) => {
-    try {
-      if (selectedTopic) {
-        await tenantSchemeApi.updateTopic(selectedTopic.id, topicData);
-        notify.success('Topic updated successfully');
-      } else {
-        await tenantSchemeApi.addTopic({ ...topicData, scheme_of_work_id: selectedRow.scheme_of_work_id });
-        notify.success('Topic added successfully');
-      }
-      setTopicModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
-    } catch (error) {
-      notify.error('Operation failed');
-    }
-  };
-
-  const handleSaveSubtopic = async (subtopicData) => {
-    try {
-      if (selectedSubtopic) {
-        await tenantSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
-        notify.success('Subtopic updated successfully');
-      } else {
-        await tenantSchemeApi.addSubtopic({ ...subtopicData, topic_id: selectedTopic.id });
-        notify.success('Subtopic added successfully');
-      }
-      setSubtopicModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
-    } catch (error) {
-      notify.error('Operation failed');
-    }
-  };
-
-  const handleSaveObjective = async (objectiveData) => {
-    try {
-      if (selectedObjective) {
-        await tenantSchemeApi.updateObjective(selectedObjective.id, objectiveData);
-        notify.success('Learning objective updated successfully');
-      } else {
-        await tenantSchemeApi.addObjective({
-          ...objectiveData,
-          sub_topic_id: selectedRow.sub_topic_id
-        });
-        notify.success('Learning objective added successfully');
-      }
-      setObjectiveModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
-    } catch (error) {
-      notify.error('Operation failed');
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      if (deleteType === 'topic') {
-        await tenantSchemeApi.deleteTopic(selectedRow.id);
-      } else if (deleteType === 'subtopic') {
-        await tenantSchemeApi.deleteSubtopic(selectedRow.id);
-      } else if (deleteType === 'objective') {
-        await tenantSchemeApi.deleteObjective(selectedRow.id);
-      }
-      notify.success(`${deleteType} deleted successfully`);
-      setDeleteModalOpen(false);
-      fetchScheme(activeFilters, activeTerm);
-    } catch (error) {
-      notify.error('Deletion failed');
-    }
-  };
-
   const statCards = [
     { title: 'Topics', value: analytics.total_topics, icon: <IconFolder color="#39b65a" />, bgColor: '#eaf7ee' },
     { title: 'Sub Topics', value: analytics.total_subtopics, icon: <IconFolder color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'Lesson Content', value: '0', icon: <IconFileDescription color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'Video Content', value: '0', icon: <IconVideo color="#39b65a" />, bgColor: '#eaf7ee' },
+    {
+      title: 'Lesson Content',
+      value: '0',
+      icon: <IconFileDescription color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
+    {
+      title: 'Video Content',
+      value: '0',
+      icon: <IconVideo color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
   ];
 
   const drawerFilters = [
@@ -500,13 +508,15 @@ const SchemeOfWork = () => {
                 boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
+              >
                 <Box
                   sx={{
                     width: 44,
                     height: 44,
                     borderRadius: '50%',
-                    bgcolor: stat.bgColor,
+                    bgColor: stat.bgColor,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -529,17 +539,10 @@ const SchemeOfWork = () => {
       </Grid>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}
+      >
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleImportFromLandlord}
-            startIcon={<IconArrowRightSquare size={18} />}
-            sx={{ textTransform: 'none', px: 3, borderRadius: 1.5 }}
-          >
-            Import scheme of Work
-          </Button>
           <Button
             variant="contained"
             color="success"
@@ -592,7 +595,16 @@ const SchemeOfWork = () => {
       </Box>
 
       {/* Toggles & Filter Action */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', flex: 1 }}>
           <Tabs
             value={activeTerm}
@@ -600,25 +612,38 @@ const SchemeOfWork = () => {
               setActiveTerm(newValue);
               fetchScheme(activeFilters, newValue);
             }}
+            aria-label="term tabs"
             sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
           >
             {terms.map((term) => (
-              <Tab key={term.id} label={term.display_name} value={term.id} />
+              <Tab key={term.id} label={term.term_name} value={term.id} />
             ))}
           </Tabs>
         </Box>
-        <Button
+        {/* <Button
           variant="outlined"
           startIcon={<IconFilter size={18} />}
           onClick={() => setFilterDrawerOpen(true)}
-          sx={{ textTransform: 'none', px: 3, borderRadius: 1.5, borderColor: '#e0e0e0', color: '#333', fontWeight: 600 }}
+          sx={{
+            textTransform: 'none',
+            px: 3,
+            borderRadius: 1.5,
+            borderColor: '#e0e0e0',
+            color: '#333',
+            fontWeight: 600,
+          }}
         >
           Filters
-        </Button>
+        </Button> */}
       </Box>
 
       {/* Main Content Area */}
       <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden' }}>
+        <Box sx={{ p: 2, px: 3, bgcolor: '#fafafa', borderBottom: '1px solid #eee' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}>
+            MANAGE {(terms.find(t => t.id === activeTerm)?.term_name || activeTerm || '').toString().toUpperCase()} SCHEME OF WORK
+          </Typography>
+        </Box>
         <Box
           sx={{
             p: 3,
@@ -691,11 +716,7 @@ const SchemeOfWork = () => {
           </Grid>
         </Box>
 
-        <Box sx={{ p: 2, px: 3, bgcolor: '#fafafa', borderBottom: '1px solid #eee' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}>
-            MANAGE SCHEME OF WORK
-          </Typography>
-        </Box>
+
 
         <TableContainer>
           <Table stickyHeader sx={{ whiteSpace: 'nowrap', borderCollapse: 'collapse' }}>
@@ -821,6 +842,24 @@ const SchemeOfWork = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Box
+          sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, borderTop: '1px solid #eee' }}
+        >
+          <TablePagination
+            component="div"
+            count={Object.values(rows).flat().length}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 20, 50]}
+            sx={{ border: 'none' }}
+          />
+        </Box>
       </Card>
 
       {/* Filter Drawer */}
@@ -835,7 +874,11 @@ const SchemeOfWork = () => {
       />
 
       {/* Topic Modal */}
-      <ReusableModal open={topicModalOpen} onClose={() => setTopicModalOpen(false)} title={selectedTopic ? 'Edit Topic' : 'Add Topic'}>
+      <ReusableModal
+        open={topicModalOpen}
+        onClose={() => setTopicModalOpen(false)}
+        title={selectedTopic ? 'Edit Topic' : 'Add Topic'}
+      >
         <Box component="form" onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
@@ -844,14 +887,35 @@ const SchemeOfWork = () => {
             topic_description: formData.get('topic_description'),
           });
         }} sx={{ mt: 2 }}>
-          <TextField name="topic_name" label="Topic Name" fullWidth defaultValue={selectedTopic?.topic_name || ''} required sx={{ mb: 2 }} />
-          <TextField name="topic_description" label="Topic Description" fullWidth multiline rows={2} defaultValue={selectedTopic?.topic_description || ''} sx={{ mb: 2 }} />
-          <Button type="submit" variant="contained" fullWidth>Save Topic</Button>
+          <TextField
+            name="topic_name"
+            label="Topic Name"
+            fullWidth
+            defaultValue={selectedTopic?.topic_name || ''}
+            required
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="topic_description"
+            label="Topic Description"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedTopic?.topic_description || ''}
+            sx={{ mb: 2 }}
+          />
+          <Button type="submit" variant="contained" fullWidth>
+            Save Topic
+          </Button>
         </Box>
       </ReusableModal>
 
       {/* Subtopic Modal */}
-      <ReusableModal open={subtopicModalOpen} onClose={() => setSubtopicModalOpen(false)} title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}>
+      <ReusableModal
+        open={subtopicModalOpen}
+        onClose={() => setSubtopicModalOpen(false)}
+        title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}
+      >
         <Box component="form" onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
@@ -860,9 +924,26 @@ const SchemeOfWork = () => {
             subtopic_description: formData.get('subtopic_description'),
           });
         }} sx={{ mt: 2 }}>
-          <TextField name="subtopic_name" label="Subtopic Name" fullWidth defaultValue={selectedSubtopic?.subtopic_name || ''} required sx={{ mb: 2 }} />
-          <TextField name="subtopic_description" label="Subtopic Description" fullWidth multiline rows={2} defaultValue={selectedSubtopic?.subtopic_description || ''} sx={{ mb: 2 }} />
-          <Button type="submit" variant="contained" fullWidth>Save Subtopic</Button>
+          <TextField
+            name="subtopic_name"
+            label="Subtopic Name"
+            fullWidth
+            defaultValue={selectedSubtopic?.subtopic_name || ''}
+            required
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="subtopic_description"
+            label="Subtopic Description"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedSubtopic?.subtopic_description || ''}
+            sx={{ mb: 2 }}
+          />
+          <Button type="submit" variant="contained" fullWidth>
+            Save Subtopic
+          </Button>
         </Box>
       </ReusableModal>
 
@@ -936,11 +1017,12 @@ const SchemeOfWork = () => {
         <DialogTitle sx={{ fontWeight: 700 }}>Download Scheme Template</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Select the Programme, Class, and Subject to generate a blank upload template.
+            Select the Programme, Class, and Subject you want to generate a blank upload template for.
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <TextField select fullWidth label="Programme" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Programme" size="small"
                 value={dlTemplateFilters.programme}
                 onChange={async (e) => {
                   const val = e.target.value;
@@ -951,35 +1033,39 @@ const SchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField select fullWidth label="Class" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Class" size="small"
                 value={dlTemplateFilters.classLevel}
                 onChange={e => setDlTemplateFilters(f => ({ ...f, classLevel: e.target.value }))}
               >
                 {dlTemplateClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField select fullWidth label="Subject" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Subject" size="small"
                 value={dlTemplateFilters.subject}
                 onChange={e => setDlTemplateFilters(f => ({ ...f, subject: e.target.value }))}
               >
                 {dlTemplateSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField select fullWidth label="Term" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Term" size="small"
                 value={dlTemplateFilters.term || activeTerm}
                 onChange={e => setDlTemplateFilters(f => ({ ...f, term: e.target.value }))}
               >
-                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.display_name}</MenuItem>)}
+                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
               </TextField>
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleDownloadTemplate}
+          <Button
+            variant="contained" onClick={handleDownloadTemplate}
             startIcon={<IconDownload size={16} />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
@@ -993,11 +1079,12 @@ const SchemeOfWork = () => {
         <DialogTitle sx={{ fontWeight: 700 }}>Upload Scheme Template</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Select the Programme, Class, and Subject this file was generated for, then choose your completed template.
+            Select the Programme, Class, and Subject this file was generated for, then choose your completed template file.
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField select fullWidth label="Programme" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Programme" size="small"
                 value={uploadFilters.programme}
                 onChange={async (e) => {
                   const val = e.target.value;
@@ -1008,28 +1095,31 @@ const SchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField select fullWidth label="Class" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Class" size="small"
                 value={uploadFilters.classLevel}
                 onChange={e => setUploadFilters(f => ({ ...f, classLevel: e.target.value }))}
               >
                 {uploadClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField select fullWidth label="Subject" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Subject" size="small"
                 value={uploadFilters.subject}
                 onChange={e => setUploadFilters(f => ({ ...f, subject: e.target.value }))}
               >
                 {uploadSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField select fullWidth label="Term" size="small"
+            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+              <TextField
+                select fullWidth label="Term" size="small"
                 value={uploadFilters.term || activeTerm}
                 onChange={e => setUploadFilters(f => ({ ...f, term: e.target.value }))}
               >
-                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.display_name}</MenuItem>)}
+                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 12, lg: 12 }}>
@@ -1039,10 +1129,10 @@ const SchemeOfWork = () => {
                   bgcolor: uploadFile ? '#f1f8e9' : '#fafafa', cursor: 'pointer',
                   '&:hover': { borderColor: '#7cb342' },
                 }}
-                onClick={() => document.getElementById('sow-tenant-upload-input').click()}
+                onClick={() => document.getElementById('sow-upload-input').click()}
               >
                 <input
-                  id="sow-tenant-upload-input" type="file" accept=".xlsx,.xls" hidden
+                  id="sow-upload-input" type="file" accept=".xlsx,.xls" hidden
                   onChange={e => setUploadFile(e.target.files[0] || null)}
                 />
                 {uploadFile ? (
@@ -1063,7 +1153,8 @@ const SchemeOfWork = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setUploadOpen(false)} disabled={uploading} sx={{ textTransform: 'none' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleUploadTemplate} disabled={uploading}
+          <Button
+            variant="contained" onClick={handleUploadTemplate} disabled={uploading}
             startIcon={uploading ? <CircularProgress size={16} color="inherit" /> : <IconUpload size={16} />}
             sx={{ textTransform: 'none' }}
           >
@@ -1080,8 +1171,9 @@ const SchemeOfWork = () => {
             Select the Programme, Class, Subject, and Term whose uploaded Scheme of Work you want to download.
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <TextField select fullWidth label="Programme" size="small"
+            <Grid item xs={12}>
+              <TextField
+                select fullWidth label="Programme" size="small"
                 value={dlSchemeFilters.programme}
                 onChange={async (e) => {
                   const val = e.target.value;
@@ -1092,24 +1184,27 @@ const SchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField select fullWidth label="Class" size="small"
+            <Grid item xs={12}>
+              <TextField
+                select fullWidth label="Class" size="small"
                 value={dlSchemeFilters.classLevel}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, classLevel: e.target.value }))}
               >
                 {dlSchemeClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField select fullWidth label="Subject" size="small"
+            <Grid item xs={12}>
+              <TextField
+                select fullWidth label="Subject" size="small"
                 value={dlSchemeFilters.subject}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, subject: e.target.value }))}
               >
                 {dlSchemeSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField select fullWidth label="Term" size="small"
+            <Grid item xs={12}>
+              <TextField
+                select fullWidth label="Term" size="small"
                 value={dlSchemeFilters.term || activeTerm}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, term: e.target.value }))}
               >
@@ -1120,7 +1215,8 @@ const SchemeOfWork = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDlSchemeOpen(false)} disabled={downloading} sx={{ textTransform: 'none' }}>Cancel</Button>
-          <Button variant="contained" onClick={handleDownloadScheme} disabled={downloading}
+          <Button
+            variant="contained" onClick={handleDownloadScheme} disabled={downloading}
             startIcon={downloading ? <CircularProgress size={16} color="inherit" /> : <IconDownload size={16} />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
@@ -1227,4 +1323,4 @@ const SchemeOfWork = () => {
   );
 };
 
-export default SchemeOfWork;
+export default AgentSchemeOfWork;

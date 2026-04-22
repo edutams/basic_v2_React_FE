@@ -319,38 +319,38 @@ function SessionsPanel({ isLevel1 }) {
           Drag the grip handle on the left to reorder sessions.
         </Alert>
       )}
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: 32 }} />
-              <TableCell>S/N</TableCell>
-              <TableCell>Session Name</TableCell>
-              <TableCell>Order</TableCell>
-              <TableCell>Current</TableCell>
-              <TableCell>Status</TableCell>
-              {isLevel1 && <TableCell align="center">Actions</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <CircularProgress size={24} />
-                </TableCell>
+                <TableCell sx={{ width: 32 }} />
+                <TableCell>S/N</TableCell>
+                <TableCell>Session Name</TableCell>
+                <TableCell>Order</TableCell>
+                <TableCell>Current</TableCell>
+                <TableCell>Status</TableCell>
+                {isLevel1 && <TableCell align="center">Actions</TableCell>}
               </TableRow>
-            ) : filteredSessions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  No sessions found
-                </TableCell>
-              </TableRow>
-            ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    <CircularProgress size={24} />
+                  </TableCell>
+                </TableRow>
+              ) : filteredSessions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    No sessions found
+                  </TableCell>
+                </TableRow>
+              ) : (
                 <SortableContext
                   items={filteredSessions.map((s) => s.id)}
                   strategy={verticalListSortingStrategy}
@@ -380,7 +380,7 @@ function SessionsPanel({ isLevel1 }) {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={s.status.toUpperCase()}
+                          label={s.status}
                           size="small"
                           sx={{
                             bgcolor:
@@ -423,11 +423,11 @@ function SessionsPanel({ isLevel1 }) {
                     </SortableRow>
                   ))}
                 </SortableContext>
-              </DndContext>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DndContext>
 
       {/* Create / Edit Dialog */}
       <Dialog open={createOpen} onClose={closeDialog} maxWidth="sm" fullWidth>
@@ -731,37 +731,37 @@ function TermsPanel({ isLevel1 }) {
           Drag the grip handle on the left to reorder terms.
         </Alert>
       )}
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: 32 }} />
-              <TableCell>S/N</TableCell>
-              <TableCell>Term Name</TableCell>
-              <TableCell>Order</TableCell>
-              <TableCell>Status</TableCell>
-              {isLevel1 && <TableCell align="center">Actions</TableCell>}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={6} align="center">
-                  <CircularProgress size={24} />
-                </TableCell>
+                <TableCell sx={{ width: 32 }} />
+                <TableCell>S/N</TableCell>
+                <TableCell>Term Name</TableCell>
+                <TableCell>Order</TableCell>
+                <TableCell>Status</TableCell>
+                {isLevel1 && <TableCell align="center">Actions</TableCell>}
               </TableRow>
-            ) : filteredTerms.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center">
-                  No terms found
-                </TableCell>
-              </TableRow>
-            ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    <CircularProgress size={24} />
+                  </TableCell>
+                </TableRow>
+              ) : filteredTerms.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    No terms found
+                  </TableCell>
+                </TableRow>
+              ) : (
                 <SortableContext
                   items={filteredTerms.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
@@ -773,10 +773,8 @@ function TermsPanel({ isLevel1 }) {
                       <TableCell>{t.sort_order}</TableCell>
                       <TableCell>
                         <Chip
-                          label={t.status.toUpperCase()}
+                          label={t.status}
                           size="small"
-                          // color={getStatusColor(t.status)}
-                          // sx={{ borderRadius: '8px' }}
                           sx={{
                             bgcolor:
                               t.status?.toLowerCase() === 'active'
@@ -818,11 +816,11 @@ function TermsPanel({ isLevel1 }) {
                     </SortableRow>
                   ))}
                 </SortableContext>
-              </DndContext>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DndContext>
 
       {/* Create / Edit Dialog */}
       <Dialog open={createOpen} onClose={closeDialog} maxWidth="sm" fullWidth>
@@ -1029,38 +1027,38 @@ function MappingsPanel() {
         Tenants only see the session-term pairs you've mapped here.
         {mappings.length > 1 && <> Drag the grip handle to reorder.</>}
       </Alert>
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: 32 }} />
-              <TableCell>S/N</TableCell>
-              <TableCell>Session</TableCell>
-              <TableCell>Term</TableCell>
-              <TableCell>Order</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <CircularProgress size={24} />
-                </TableCell>
+                <TableCell sx={{ width: 32 }} />
+                <TableCell>S/N</TableCell>
+                <TableCell>Session</TableCell>
+                <TableCell>Term</TableCell>
+                <TableCell>Order</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
-            ) : mappings.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center">
-                  No mappings yet. Add a session-term pair.
-                </TableCell>
-              </TableRow>
-            ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    <CircularProgress size={24} />
+                  </TableCell>
+                </TableRow>
+              ) : mappings.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    No mappings yet. Add a session-term pair.
+                  </TableCell>
+                </TableRow>
+              ) : (
                 <SortableContext
                   items={mappings.map((m) => m.id)}
                   strategy={verticalListSortingStrategy}
@@ -1123,11 +1121,11 @@ function MappingsPanel() {
                     </SortableRow>
                   ))}
                 </SortableContext>
-              </DndContext>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DndContext>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add Session–Term Mapping</DialogTitle>

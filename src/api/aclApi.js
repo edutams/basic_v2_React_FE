@@ -114,7 +114,6 @@ const aclApi = {
   **************************************************************************************************************************************************************/
 
   getSchoolRoles: async (params) => {
-    // console.log('Fetching school roles with params:', tenantApi.defaults.baseURL, params);
     const response = await tenantApi.get('/landlord/v1/censis/acl/roles/get_paginated_roles', {
       params,
     });

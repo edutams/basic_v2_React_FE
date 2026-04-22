@@ -16,10 +16,7 @@ import { IconCheck, IconMenu2 } from '@tabler/icons-react';
 import AddNotes from './AddNotes';
 import { NotesContext } from 'src/context/NotesContext';
 
-
-
 const NoteContent = ({ toggleNoteSidebar }) => {
-
   const theme = useTheme();
 
   const { notes, updateNote, selectedNoteId } = useContext(NotesContext);
@@ -28,7 +25,6 @@ const NoteContent = ({ toggleNoteSidebar }) => {
   const [initialTitle, setInitialTitle] = useState('');
   const [updatedTitle, setUpdatedTitle] = useState('');
   const [isEditing, setIsEditing] = useState(false); // State to track whether editing is in progress
-
 
   // Effect to update initialTitle when noteDetails changes
   useEffect(() => {
@@ -48,7 +44,6 @@ const NoteContent = ({ toggleNoteSidebar }) => {
   const handleColorChange = (color) => {
     const titleToUse = isEditing ? updatedTitle : initialTitle;
     updateNote(selectedNoteId, titleToUse, color);
-    console.log(color);
   };
 
   // Function to save changes on blur event
@@ -57,7 +52,6 @@ const NoteContent = ({ toggleNoteSidebar }) => {
     // Call updateNote to save changes with the current color
     updateNote(selectedNoteId, updatedTitle, noteDetails.color);
   };
-
 
   const colorvariation = [
     {
@@ -105,7 +99,7 @@ const NoteContent = ({ toggleNoteSidebar }) => {
       {noteDetails ? (
         <Box p={3}>
           <FormLabel htmlFor="outlined-multiline-static">
-            <Typography variant="h5" mb={2}  color="text.primary">
+            <Typography variant="h5" mb={2} color="text.primary">
               Edit Note
             </Typography>
           </FormLabel>
@@ -133,7 +127,6 @@ const NoteContent = ({ toggleNoteSidebar }) => {
                 boxShadow: 'none',
                 transition: '0.1s ease-in',
                 scale: noteDetails.color === color1.disp ? '0.9' : '0.7',
-
               }}
               size="small"
               key={color1.id}
@@ -150,6 +143,5 @@ const NoteContent = ({ toggleNoteSidebar }) => {
     </Box>
   );
 };
-
 
 export default NoteContent;

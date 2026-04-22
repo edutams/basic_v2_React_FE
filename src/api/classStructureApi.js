@@ -7,7 +7,7 @@ export const fetchClassStructures = async () => {
 };
 
 // Toggle class active/inactive status
-export const toggleClassStructureStatus = async (id) => {
-  const response = await api.patch(`/class-structure/${id}/toggle-status`);
+export const toggleClassStructureStatus = async (pivot_id) => {
+  const response = await api.patch(`/class-structure/${pivot_id}/toggle-status`);
   return response.data;
 };

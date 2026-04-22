@@ -357,7 +357,6 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
 
                     <Select
                       value={'agent1'}
-                      onChange={(e) => console.log('Selected agent:', e.target.value)}
                       size="small"
                       variant="standard"
                       disableUnderline
@@ -441,7 +440,6 @@ const SchoolsOverviewModal = ({ open, onClose }) => {
                         fontSize: 14,
                         cursor: 'pointer',
                       }}
-                      onClick={() => console.log('Filter applied')}
                     >
                       Filter
                     </button>

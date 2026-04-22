@@ -30,7 +30,6 @@ import {
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import {
-  getSchoolCategories,
   storeSchoolCategory,
   updateSchoolCategory,
   deleteSchoolCategory,
@@ -53,22 +52,6 @@ const CategoryList = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const notify = useNotification();
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      const data = await getSchoolCategories();
-      setCategories(data || []);
-    } catch (err) {
-      notify.error('Failed to fetch categories');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   const handleOpenModal = (category = null) => {
     if (category) {
@@ -96,7 +79,6 @@ const CategoryList = () => {
         await storeSchoolCategory(formData);
         notify.success('Category created successfully');
       }
-      fetchCategories();
       handleCloseModal();
     } catch (err) {
       notify.error(err.message || 'Action failed');
@@ -107,7 +89,6 @@ const CategoryList = () => {
     try {
       await deleteSchoolCategory(categoryToDelete.id);
       notify.success('Category deleted successfully');
-      fetchCategories();
       setOpenDeleteDialog(false);
       handleMenuClose();
     } catch (err) {

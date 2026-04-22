@@ -19,7 +19,7 @@ import {
   fetchClassSubjects,
   addOrUpdateClassSubject,
   fetchClassesByProgramme,
-  fetchAvailableCurriculumsForImport,
+  // fetchAvailableCurriculumsForImport,
   importAllCurriculums,
   fetchAvailableSubjectsForClass,
   fetchSubjectsByProgramme,
@@ -58,6 +58,7 @@ import {
   Snackbar,
   CircularProgress,
   Autocomplete,
+  Menu,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -133,7 +134,8 @@ const CurriculumManager = () => {
   const [loadingModalSubjects, setLoadingModalSubjects] = useState(false);
 
   // Subject Bank states
-  const [subjectsList, setSubjectsList] = useState([]); const [programmesList, setProgrammesList] = useState([]);
+  const [subjectsList, setSubjectsList] = useState([]);
+  const [programmesList, setProgrammesList] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [openAddSubjectModal, setOpenAddSubjectModal] = useState(false);
   const [openEditSubjectModal, setOpenEditSubjectModal] = useState(false);
@@ -175,6 +177,15 @@ const CurriculumManager = () => {
   // Loading and notification states
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedMenuCurriculum, setSelectedMenuCurriculum] = useState(null);
+  const openMenuId = Boolean(anchorEl);
+
+  // Menu state for Subject Bank actions
+  const [subjectAnchorEl, setSubjectAnchorEl] = useState(null);
+  const [selectedSubjectForMenu, setSelectedSubjectForMenu] = useState(null);
+  const openSubjectMenu = Boolean(subjectAnchorEl);
 
   // Static data for other tabs
   const classes = [
@@ -333,7 +344,14 @@ const CurriculumManager = () => {
   const handleCloseAddSubjectToClass = () => {
     setOpenAddSubjectToClassModal(false);
     setAvailableSubjectsForClass([]);
-    setAddSubjectToClassForm({ subject_id: '', programme_id: '', programme_subject_id: '', status: 'compulsory', unit: 1, pass_mark: 50 });
+    setAddSubjectToClassForm({
+      subject_id: '',
+      programme_id: '',
+      programme_subject_id: '',
+      status: 'compulsory',
+      unit: 1,
+      pass_mark: 50,
+    });
   };
 
   const handleSubjectToClassSelect = (subjectId) => {
@@ -419,7 +437,10 @@ const CurriculumManager = () => {
 
   // Subject Group handlers
   const fetchModalSubjects = async (programmeId, curriculumId) => {
-    if (!programmeId || !curriculumId) { setSubjectGroupModalSubjects([]); return; }
+    if (!programmeId || !curriculumId) {
+      setSubjectGroupModalSubjects([]);
+      return;
+    }
     try {
       setLoadingModalSubjects(true);
       const res = await fetchSubjectsByProgramme(programmeId, curriculumId);
@@ -459,7 +480,15 @@ const CurriculumManager = () => {
       await fetchModalSubjects(group.programme_id, group.curriculum_id);
     } else {
       setEditingSubjectGroup(null);
-      setSubjectGroupForm({ group_name: '', programme_id: '', curriculum_id: '', unit: '', pass_mark: '', status: 'active', subject_ids: [] });
+      setSubjectGroupForm({
+        group_name: '',
+        programme_id: '',
+        curriculum_id: '',
+        unit: '',
+        pass_mark: '',
+        status: 'active',
+        subject_ids: [],
+      });
       setSubjectGroupModalSubjects([]);
     }
     setOpenSubjectGroupModal(true);
@@ -482,7 +511,10 @@ const CurriculumManager = () => {
         ? await updateSubjectGroup(editingSubjectGroup.id, subjectGroupForm)
         : await createSubjectGroup(subjectGroupForm);
       if (response.status) {
-        showSnackbar(editingSubjectGroup ? 'Subject group updated' : 'Subject group created', 'success');
+        showSnackbar(
+          editingSubjectGroup ? 'Subject group updated' : 'Subject group created',
+          'success',
+        );
         handleCloseSubjectGroupModal();
         loadSubjectGroups(subjectGroupForm.programme_id);
       } else {
@@ -711,13 +743,69 @@ const CurriculumManager = () => {
     }
   };
 
+  // Menu Handlers
+  const handleOpenMenu = (event, curriculum) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedMenuCurriculum(curriculum);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+    setSelectedMenuCurriculum(null);
+  };
+
+  const handleMenuEdit = () => {
+    if (selectedMenuCurriculum) {
+      handleOpenEditModal(selectedMenuCurriculum);
+    }
+    handleCloseMenu();
+  };
+
+  const handleMenuDelete = () => {
+    if (selectedMenuCurriculum) {
+      handleOpenDeleteDialog(selectedMenuCurriculum);
+    }
+    handleCloseMenu();
+  };
+
+  // Subject Bank Menu Handlers
+  const handleOpenSubjectMenu = (event, subject) => {
+    setSubjectAnchorEl(event.currentTarget);
+    setSelectedSubjectForMenu(subject);
+  };
+
+  const handleCloseSubjectMenu = () => {
+    setSubjectAnchorEl(null);
+    setSelectedSubjectForMenu(null);
+  };
+
+  const handleSubjectMenuEdit = () => {
+    if (selectedSubjectForMenu) {
+      handleOpenEditSubjectModal(selectedSubjectForMenu);
+    }
+    handleCloseSubjectMenu();
+  };
+
+  const handleSubjectMenuDelete = () => {
+    if (selectedSubjectForMenu) {
+      handleOpenDeleteSubjectDialog(selectedSubjectForMenu);
+    }
+    handleCloseSubjectMenu();
+  };
+
   // Add Subject Modal Handlers
   const handleOpenAddSubjectModal = () => {
     if (!selectedSubjectBankCurriculum) {
       showSnackbar('Please select a curriculum first', 'error');
       return;
     }
-    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '', unit: '', status: 'compulsory' });
+    setSubjectFormData({
+      subject_name: '',
+      subject_code: '',
+      programme_id: '',
+      unit: '',
+      status: 'compulsory',
+    });
     setOpenAddSubjectModal(true);
     // Fetch programs when modal opens
     if (programmesList.length === 0) {
@@ -776,7 +864,14 @@ const CurriculumManager = () => {
   const handleCloseEditSubjectModal = () => {
     setOpenEditSubjectModal(false);
     setSelectedSubject(null);
-    setSubjectFormData({ subject_name: '', subject_code: '', programme_id: '', unit: '', pass_mark: 50, status: 'compulsory' });
+    setSubjectFormData({
+      subject_name: '',
+      subject_code: '',
+      programme_id: '',
+      unit: '',
+      pass_mark: 50,
+      status: 'compulsory',
+    });
   };
 
   const handleUpdateSubject = async () => {
@@ -876,7 +971,7 @@ const CurriculumManager = () => {
   // Handle class subject updates
   const handleClassSubjectChange = async (subjectId, field, value) => {
     try {
-      const subject = classSubjectsList.find(s => s.subject_id === subjectId);
+      const subject = classSubjectsList.find((s) => s.subject_id === subjectId);
       if (!subject) return;
 
       const dataToSubmit = {
@@ -891,9 +986,11 @@ const CurriculumManager = () => {
       const response = await addOrUpdateClassSubject(dataToSubmit);
       if (response.status) {
         // Update local state
-        setClassSubjectsList(prev => prev.map(s =>
-          s.subject_id === subjectId ? { ...s, [field]: value, is_default: 0 } : s
-        ));
+        setClassSubjectsList((prev) =>
+          prev.map((s) =>
+            s.subject_id === subjectId ? { ...s, [field]: value, is_default: 0 } : s,
+          ),
+        );
         showSnackbar('Subject updated successfully', 'success');
       } else {
         showSnackbar(response.message || 'Failed to update subject', 'error');
@@ -906,7 +1003,6 @@ const CurriculumManager = () => {
   return (
     <PageContainer title="Curriculum Manager">
       <Breadcrumb title="Curriculum Manager" items={BCrumb} />
-
       <Box>
         {/* TABS */}
         <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
@@ -929,7 +1025,7 @@ const CurriculumManager = () => {
               }}
             >
               {/* LEFT - Curriculum Table */}
-              <Box sx={{ flex: { md: 5 }, width: '100%' }}>
+              <Box sx={{ flex: { md: 6 }, width: '100%' }}>
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -955,7 +1051,9 @@ const CurriculumManager = () => {
                               Curriculum Name
                             </TableCell>
                             <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '17%' }}>Imported</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '17%' }}>
+                              Imported
+                            </TableCell>
                             <TableCell align="center" sx={{ fontWeight: 'bold', width: '25%' }}>
                               Actions
                             </TableCell>
@@ -1005,27 +1103,17 @@ const CurriculumManager = () => {
                                     }}
                                   />
                                 </TableCell>
-                                <TableCell
-                                  align="center"
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    gap: 1, // spacing between icons
-                                  }}
-                                >
+                                <TableCell align="center">
                                   <IconButton
                                     size="small"
-                                    onClick={() => handleOpenEditModal(item)}
+                                    onClick={(e) => handleOpenMenu(e, item)}
+                                    aria-controls={
+                                      openMenuId === item.id ? 'curriculum-menu' : undefined
+                                    }
+                                    aria-haspopup="true"
+                                    aria-expanded={openMenuId === item.id ? 'true' : undefined}
                                   >
-                                    <IconEdit size={16} />
-                                  </IconButton>
-
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleOpenDeleteDialog(item)}
-                                  >
-                                    <IconTrash size={16} />
+                                    <MoreVertIcon />
                                   </IconButton>
                                 </TableCell>
                               </TableRow>
@@ -1045,7 +1133,7 @@ const CurriculumManager = () => {
               </Box>
 
               {/* RIGHT - Assign to Classes */}
-              <Box sx={{ flex: { md: 7 }, width: '100%' }}>
+              <Box sx={{ flex: { md: 6 }, width: '100%' }}>
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -1098,8 +1186,8 @@ const CurriculumManager = () => {
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>S/N</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Class</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
+                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>Class</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
                               Curriculum Name
                             </TableCell>
                           </TableRow>
@@ -1235,7 +1323,6 @@ const CurriculumManager = () => {
                     </Table>
                   </TableContainer>
                 </ParentCard>
-
               </Box>
               <Box sx={{ flex: { md: 7 }, width: '100%' }}>
                 <ParentCard
@@ -1244,7 +1331,9 @@ const CurriculumManager = () => {
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Subject Bank
                       </Typography>
-                      <Button variant="contained" onClick={handleOpenAddSubjectModal}>Add Subject</Button>
+                      <Button variant="contained" onClick={handleOpenAddSubjectModal}>
+                        Add Subject
+                      </Button>
                     </Box>
                   }
                 >
@@ -1263,36 +1352,78 @@ const CurriculumManager = () => {
                       </TableHead>
                       <TableBody>
                         {loadingSubjects ? (
-                          <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                          <TableRow>
+                            <TableCell colSpan={7} align="center">
+                              <CircularProgress size={24} />
+                            </TableCell>
+                          </TableRow>
                         ) : subjectsList.length > 0 ? (
                           subjectsList.map((item, i) => (
                             <TableRow key={item.id} hover>
                               <TableCell>{i + 1}</TableCell>
                               <TableCell>
-                                <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.subject_name}</Box>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#f5f7fa',
+                                    borderRadius: 2,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.subject_name}
+                                </Box>
                               </TableCell>
                               <TableCell>
-                                <Box sx={{ px: 2, py: 0.5, bgcolor: '#eef2f7', borderRadius: 2, fontWeight: 600, display: 'inline-block' }}>{item.subject_code || '-'}</Box>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#eef2f7',
+                                    borderRadius: 2,
+                                    fontWeight: 600,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.subject_code || '-'}
+                                </Box>
                               </TableCell>
                               <TableCell>
-                                <Box sx={{ px: 2, py: 0.5, bgcolor: '#f5f7fa', borderRadius: 2, display: 'inline-block' }}>{item.program_name}</Box>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#f5f7fa',
+                                    borderRadius: 2,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.program_name}
+                                </Box>
                               </TableCell>
                               <TableCell>{item.pass_mark ?? '-'}</TableCell>
                               <TableCell>{item.unit ?? '-'}</TableCell>
                               <TableCell align="right">
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                                  <IconButton size="small" sx={{ color: '#3b82f6' }} onClick={() => handleOpenEditSubjectModal(item)}>
-                                    <IconEdit size={16} />
-                                  </IconButton>
-                                  <IconButton size="small" sx={{ color: '#ef4444' }} onClick={() => handleOpenDeleteSubjectDialog(item)}>
-                                    <IconTrash size={16} />
-                                  </IconButton>
-                                </Box>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleOpenSubjectMenu(e, item)}
+                                  aria-controls={openSubjectMenu ? 'subject-menu' : undefined}
+                                  aria-haspopup="true"
+                                  aria-expanded={openSubjectMenu ? 'true' : undefined}
+                                >
+                                  <MoreVertIcon />
+                                </IconButton>
                               </TableCell>
                             </TableRow>
                           ))
                         ) : (
-                          <TableRow><TableCell colSpan={7} align="center"><Typography color="textSecondary">No subjects found. Please select a curriculum or add a subject.</Typography></TableCell></TableRow>
+                          <TableRow>
+                            <TableCell colSpan={7} align="center">
+                              <Typography color="textSecondary">
+                                No subjects found. Please select a curriculum or add a subject.
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
                         )}
                       </TableBody>
                     </Table>
@@ -1322,10 +1453,12 @@ const CurriculumManager = () => {
                       displayEmpty
                       fullWidth
                     >
-                      <MenuItem value="" disabled>Select Program</MenuItem>
+                      <MenuItem value="" disabled>
+                        Select Program
+                      </MenuItem>
                       {programmesList.map((prog) => (
                         <MenuItem key={prog.id} value={prog.id}>
-                          {prog.programme_title || prog.programme_name}
+                          {prog.programme_name}
                         </MenuItem>
                       ))}
                     </Select>
@@ -1372,7 +1505,11 @@ const CurriculumManager = () => {
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Class Subjects
                       </Typography>
-                      <Button variant="contained" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
+                      <Button
+                        variant="contained"
+                        disabled={!selectedClass}
+                        onClick={handleOpenAddSubjectToClass}
+                      >
                         Add Subject to Class
                       </Button>
                     </Box>
@@ -1385,10 +1522,14 @@ const CurriculumManager = () => {
                           <TableRow>
                             <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>S/N</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>Subject</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Passmark</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>
+                              Passmark
+                            </TableCell>
                             <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Unit</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }} align="center">Action</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }} align="center">
+                              Action
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -1416,7 +1557,10 @@ const CurriculumManager = () => {
                                   />
                                 </TableCell>
                                 <TableCell align="center">
-                                  <IconButton size="small" onClick={() => handleOpenEditClassSubject(item)}>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleOpenEditClassSubject(item)}
+                                  >
                                     <IconEdit size={16} />
                                   </IconButton>
                                 </TableCell>
@@ -1426,7 +1570,9 @@ const CurriculumManager = () => {
                             <TableRow>
                               <TableCell colSpan={6} align="center">
                                 <Typography color="textSecondary">
-                                  {selectedClass ? 'No subjects found for this class' : 'Please select a class to view subjects'}
+                                  {selectedClass
+                                    ? 'No subjects found for this class'
+                                    : 'Please select a class to view subjects'}
                                 </Typography>
                               </TableCell>
                             </TableRow>
@@ -1442,8 +1588,14 @@ const CurriculumManager = () => {
                   <ParentCard
                     title={
                       <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Subject Group</Typography>
-                        <Button variant="contained" size="small" onClick={() => handleOpenSubjectGroupModal()}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          Subject Group
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => handleOpenSubjectGroupModal()}
+                        >
                           Add Subject Group
                         </Button>
                       </Box>
@@ -1459,12 +1611,18 @@ const CurriculumManager = () => {
                             <TableCell width="10%">Unit</TableCell>
                             <TableCell width="12%">Pass Mark</TableCell>
                             <TableCell width="10%">Status</TableCell>
-                            <TableCell width="8%" align="center">Action</TableCell>
+                            <TableCell width="8%" align="center">
+                              Action
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {loadingSubjectGroups ? (
-                            <TableRow><TableCell colSpan={7} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                            <TableRow>
+                              <TableCell colSpan={7} align="center">
+                                <CircularProgress size={24} />
+                              </TableCell>
+                            </TableRow>
                           ) : subjectGroupsList.length > 0 ? (
                             subjectGroupsList.map((grp, i) => (
                               <TableRow key={grp.id} hover>
@@ -1473,7 +1631,16 @@ const CurriculumManager = () => {
                                 <TableCell>
                                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {grp.subjects?.map((s) => (
-                                      <Chip key={s.id} label={s.subject_name} size="small" sx={{ bgcolor: '#334155', color: '#fff', fontSize: '0.7rem' }} />
+                                      <Chip
+                                        key={s.id}
+                                        label={s.subject_name}
+                                        size="small"
+                                        sx={{
+                                          bgcolor: '#334155',
+                                          color: '#fff',
+                                          fontSize: '0.7rem',
+                                        }}
+                                      />
                                     ))}
                                   </Box>
                                 </TableCell>
@@ -1491,10 +1658,19 @@ const CurriculumManager = () => {
                                 </TableCell>
                                 <TableCell align="center">
                                   <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                                    <IconButton size="small" onClick={() => handleOpenSubjectGroupModal(grp)}>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleOpenSubjectGroupModal(grp)}
+                                    >
                                       <IconEdit size={16} />
                                     </IconButton>
-                                    <IconButton size="small" sx={{ color: '#ef4444' }} onClick={() => handleDeleteSubjectGroup(grp.id, grp.programme_id)}>
+                                    <IconButton
+                                      size="small"
+                                      sx={{ color: '#ef4444' }}
+                                      onClick={() =>
+                                        handleDeleteSubjectGroup(grp.id, grp.programme_id)
+                                      }
+                                    >
                                       <IconTrash size={16} />
                                     </IconButton>
                                   </Box>
@@ -1502,20 +1678,22 @@ const CurriculumManager = () => {
                               </TableRow>
                             ))
                           ) : (
-                            <TableRow><TableCell colSpan={7} align="center"><Typography color="textSecondary">No subject groups yet</Typography></TableCell></TableRow>
+                            <TableRow>
+                              <TableCell colSpan={7} align="center">
+                                <Typography color="textSecondary">No subject groups yet</Typography>
+                              </TableCell>
+                            </TableRow>
                           )}
                         </TableBody>
                       </Table>
                     </TableContainer>
                   </ParentCard>
                 </Box>
-
               </Box>
             </Box>
           </TabPanel>
         </ParentCard>
       </Box>
-
       {/* Create Curriculum Modal */}
       <Dialog open={openCreateModal} onClose={handleCloseCreateModal} maxWidth="sm" fullWidth>
         <DialogTitle>Create New Curriculum</DialogTitle>
@@ -1547,7 +1725,6 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Edit Curriculum Modal */}
       <Dialog open={openEditModal} onClose={handleCloseEditModal} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Curriculum</DialogTitle>
@@ -1579,12 +1756,11 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Delete Confirmation Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Delete Curriculum</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             Are you sure you want to delete "{selectedCurriculum?.curriculum_name}"? This action
             cannot be undone.
           </Alert>
@@ -1601,7 +1777,6 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
@@ -1614,7 +1789,12 @@ const CurriculumManager = () => {
         </Alert>
       </Snackbar>
       {/* Add Subject Modal */}
-      <Dialog open={openAddSubjectModal} onClose={handleCloseAddSubjectModal} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openAddSubjectModal}
+        onClose={handleCloseAddSubjectModal}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Add Subject</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
@@ -1622,7 +1802,9 @@ const CurriculumManager = () => {
               fullWidth
               label="Subject Name"
               value={subjectFormData.subject_name}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })
+              }
               margin="normal"
               required
             />
@@ -1631,20 +1813,28 @@ const CurriculumManager = () => {
               fullWidth
               label="Subject Code"
               value={subjectFormData.subject_code}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })
+              }
               margin="normal"
             />
 
             <Select
               fullWidth
               value={subjectFormData.programme_id}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })
+              }
               displayEmpty
               margin="normal"
             >
-              <MenuItem value="" disabled>Select Program</MenuItem>
+              <MenuItem value="" disabled>
+                Select Program
+              </MenuItem>
               {programmesList.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+                <MenuItem key={prog.id} value={prog.id}>
+                  {prog.programme_name}
+                </MenuItem>
               ))}
             </Select>
 
@@ -1661,7 +1851,9 @@ const CurriculumManager = () => {
               fullWidth
               label="Pass Mark"
               value={subjectFormData.pass_mark}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })
+              }
               margin="normal"
               type="number"
               inputProps={{ min: 0, max: 100 }}
@@ -1685,9 +1877,13 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Edit Subject Modal */}
-      <Dialog open={openEditSubjectModal} onClose={handleCloseEditSubjectModal} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openEditSubjectModal}
+        onClose={handleCloseEditSubjectModal}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit Subject</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
@@ -1695,7 +1891,9 @@ const CurriculumManager = () => {
               fullWidth
               label="Subject Name"
               value={subjectFormData.subject_name}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })
+              }
               margin="normal"
               required
             />
@@ -1704,20 +1902,28 @@ const CurriculumManager = () => {
               fullWidth
               label="Subject Code"
               value={subjectFormData.subject_code}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })
+              }
               margin="normal"
             />
 
             <Select
               fullWidth
               value={subjectFormData.programme_id}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })
+              }
               displayEmpty
               margin="normal"
             >
-              <MenuItem value="" disabled>Select Program</MenuItem>
+              <MenuItem value="" disabled>
+                Select Program
+              </MenuItem>
               {programmesList.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+                <MenuItem key={prog.id} value={prog.id}>
+                  {prog.programme_name}
+                </MenuItem>
               ))}
             </Select>
 
@@ -1734,7 +1940,9 @@ const CurriculumManager = () => {
               fullWidth
               label="Pass Mark"
               value={subjectFormData.pass_mark}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })}
+              onChange={(e) =>
+                setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })
+              }
               margin="normal"
               type="number"
               inputProps={{ min: 0, max: 100 }}
@@ -1758,13 +1966,18 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Delete Subject Dialog */}
-      <Dialog open={openDeleteSubjectDialog} onClose={handleCloseDeleteSubjectDialog} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openDeleteSubjectDialog}
+        onClose={handleCloseDeleteSubjectDialog}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Delete Subject</DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be undone.
+          <Alert severity="error" sx={{ mt: 2 }}>
+            Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be
+            undone.
           </Alert>
         </DialogContent>
         <DialogActions>
@@ -1779,9 +1992,13 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Add Subject to Class Modal */}
-      <Dialog open={openAddSubjectToClassModal} onClose={handleCloseAddSubjectToClass} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openAddSubjectToClassModal}
+        onClose={handleCloseAddSubjectToClass}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Add Subject to Class</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1798,10 +2015,13 @@ const CurriculumManager = () => {
                   displayEmpty
                   size="small"
                 >
-                  <MenuItem value="" disabled>Select Subject</MenuItem>
+                  <MenuItem value="" disabled>
+                    Select Subject
+                  </MenuItem>
                   {availableSubjectsForClass.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      {s.subject_name}{s.subject_code ? ` (${s.subject_code})` : ''}
+                      {s.subject_name}
+                      {s.subject_code ? ` (${s.subject_code})` : ''}
                     </MenuItem>
                   ))}
                 </Select>
@@ -1812,7 +2032,12 @@ const CurriculumManager = () => {
                   label="Pass Mark"
                   type="number"
                   value={addSubjectToClassForm.pass_mark}
-                  onChange={(e) => setAddSubjectToClassForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setAddSubjectToClassForm((f) => ({
+                      ...f,
+                      pass_mark: parseInt(e.target.value) || 0,
+                    }))
+                  }
                   inputProps={{ min: 0, max: 100 }}
                 />
 
@@ -1822,7 +2047,9 @@ const CurriculumManager = () => {
                   label="Unit"
                   type="number"
                   value={addSubjectToClassForm.unit}
-                  onChange={(e) => setAddSubjectToClassForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))}
+                  onChange={(e) =>
+                    setAddSubjectToClassForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))
+                  }
                   inputProps={{ min: 1 }}
                 />
 
@@ -1830,7 +2057,9 @@ const CurriculumManager = () => {
                   fullWidth
                   size="small"
                   value={addSubjectToClassForm.status}
-                  onChange={(e) => setAddSubjectToClassForm((f) => ({ ...f, status: e.target.value }))}
+                  onChange={(e) =>
+                    setAddSubjectToClassForm((f) => ({ ...f, status: e.target.value }))
+                  }
                 >
                   <MenuItem value="compulsory">Compulsory</MenuItem>
                   <MenuItem value="optional">Optional</MenuItem>
@@ -1841,14 +2070,22 @@ const CurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAddSubjectToClass}>Cancel</Button>
-          <Button onClick={handleSaveSubjectToClass} variant="contained" disabled={loading || loadingAvailableSubjects}>
+          <Button
+            onClick={handleSaveSubjectToClass}
+            variant="contained"
+            disabled={loading || loadingAvailableSubjects}
+          >
             {loading ? <CircularProgress size={24} /> : 'Add Subject'}
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Edit Class Subject Modal */}
-      <Dialog open={openEditClassSubjectModal} onClose={handleCloseEditClassSubject} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openEditClassSubjectModal}
+        onClose={handleCloseEditClassSubject}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit Class Subject — {editClassSubjectForm.subject_name}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1858,7 +2095,9 @@ const CurriculumManager = () => {
               label="Pass Mark"
               type="number"
               value={editClassSubjectForm.pass_mark}
-              onChange={(e) => setEditClassSubjectForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setEditClassSubjectForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))
+              }
               inputProps={{ min: 0, max: 100 }}
             />
             <TextField
@@ -1867,7 +2106,9 @@ const CurriculumManager = () => {
               label="Unit"
               type="number"
               value={editClassSubjectForm.unit}
-              onChange={(e) => setEditClassSubjectForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))}
+              onChange={(e) =>
+                setEditClassSubjectForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))
+              }
               inputProps={{ min: 1 }}
             />
             <Select
@@ -1888,10 +2129,16 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
       {/* Subject Group Modal */}
-      <Dialog open={openSubjectGroupModal} onClose={handleCloseSubjectGroupModal} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingSubjectGroup ? 'Edit Subject Group' : 'Add Subject Group'}</DialogTitle>
+      <Dialog
+        open={openSubjectGroupModal}
+        onClose={handleCloseSubjectGroupModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {editingSubjectGroup ? 'Edit Subject Group' : 'Add Subject Group'}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Select
@@ -1905,9 +2152,13 @@ const CurriculumManager = () => {
               }}
               displayEmpty
             >
-              <MenuItem value="" disabled>Select Program</MenuItem>
+              <MenuItem value="" disabled>
+                Select Program
+              </MenuItem>
               {programmesList.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>{prog.programme_title || prog.programme_name}</MenuItem>
+                <MenuItem key={prog.id} value={prog.id}>
+                  {prog.programme_name}
+                </MenuItem>
               ))}
             </Select>
 
@@ -1922,10 +2173,16 @@ const CurriculumManager = () => {
               }}
               displayEmpty
             >
-              <MenuItem value="" disabled>Select Curriculum</MenuItem>
-              {curriculumData.filter((c) => c.status === 'active').map((cur) => (
-                <MenuItem key={cur.id} value={cur.id}>{cur.curriculum_name}</MenuItem>
-              ))}
+              <MenuItem value="" disabled>
+                Select Curriculum
+              </MenuItem>
+              {curriculumData
+                .filter((c) => c.status === 'active')
+                .map((cur) => (
+                  <MenuItem key={cur.id} value={cur.id}>
+                    {cur.curriculum_name}
+                  </MenuItem>
+                ))}
             </Select>
 
             <TextField
@@ -1942,7 +2199,9 @@ const CurriculumManager = () => {
               label="Unit"
               type="number"
               value={subjectGroupForm.unit}
-              onChange={(e) => setSubjectGroupForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))}
+              onChange={(e) =>
+                setSubjectGroupForm((f) => ({ ...f, unit: parseInt(e.target.value) || 1 }))
+              }
               inputProps={{ min: 1 }}
             />
 
@@ -1952,7 +2211,9 @@ const CurriculumManager = () => {
               label="Pass Mark"
               type="number"
               value={subjectGroupForm.pass_mark}
-              onChange={(e) => setSubjectGroupForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setSubjectGroupForm((f) => ({ ...f, pass_mark: parseInt(e.target.value) || 0 }))
+              }
               inputProps={{ min: 0, max: 100 }}
             />
 
@@ -1962,16 +2223,22 @@ const CurriculumManager = () => {
                 multiple
                 loading={loadingModalSubjects}
                 options={subjectGroupModalSubjects}
-                getOptionLabel={(s) => `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}`}
-                value={subjectGroupModalSubjects.filter((s) => subjectGroupForm.subject_ids.includes(s.id))}
+                getOptionLabel={(s) =>
+                  `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}`
+                }
+                value={subjectGroupModalSubjects.filter((s) =>
+                  subjectGroupForm.subject_ids.includes(s.id),
+                )}
                 onChange={(_, selected) =>
                   setSubjectGroupForm((f) => ({ ...f, subject_ids: selected.map((s) => s.id) }))
                 }
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 noOptionsText={
-                  !subjectGroupForm.programme_id ? 'Select a programme first' :
-                    !subjectGroupForm.curriculum_id ? 'Select a curriculum first' :
-                      'No subjects found'
+                  !subjectGroupForm.programme_id
+                    ? 'Select a programme first'
+                    : !subjectGroupForm.curriculum_id
+                      ? 'Select a curriculum first'
+                      : 'No subjects found'
                 }
                 renderInput={(params) => (
                   <TextField
@@ -2003,8 +2270,8 @@ const CurriculumManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Import Curriculum Confirm Dialog */}      <Dialog open={openImportConfirm} onClose={handleCloseImportModal} maxWidth="sm" fullWidth>
+      {/* Import Curriculum Confirm Dialog */}{' '}
+      <Dialog open={openImportConfirm} onClose={handleCloseImportModal} maxWidth="sm" fullWidth>
         <DialogTitle>Import Curriculums</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mt: 2 }}>
@@ -2014,15 +2281,59 @@ const CurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseImportModal}>Cancel</Button>
-          <Button
-            onClick={handleImportCurriculum}
-            variant="contained"
-            disabled={loadingImport}
-          >
+          <Button onClick={handleImportCurriculum} variant="contained" disabled={loadingImport}>
             {loadingImport ? <CircularProgress size={24} /> : 'Yes, Import All'}
           </Button>
         </DialogActions>
       </Dialog>
+      {/* Curriculum Action Menu */}
+      <Menu
+        id="curriculum-menu"
+        anchorEl={anchorEl}
+        open={openMenuId}
+        onClose={handleCloseMenu}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleMenuEdit}>
+          <IconEdit size={18} style={{ marginRight: 8 }} />
+          Edit
+        </MenuItem>
+        <MenuItem onClick={handleMenuDelete} sx={{ color: 'error.main' }}>
+          <IconTrash size={18} style={{ marginRight: 8 }} />
+          Delete
+        </MenuItem>
+      </Menu>
+      {/* Subject Bank Action Menu */}
+      <Menu
+        id="subject-menu"
+        anchorEl={subjectAnchorEl}
+        open={openSubjectMenu}
+        onClose={handleCloseSubjectMenu}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem onClick={handleSubjectMenuEdit}>
+          <IconEdit size={18} style={{ marginRight: 8 }} />
+          Edit
+        </MenuItem>
+        <MenuItem onClick={handleSubjectMenuDelete} sx={{ color: 'error.main' }}>
+          <IconTrash size={18} style={{ marginRight: 8 }} />
+          Delete
+        </MenuItem>
+      </Menu>
     </PageContainer>
   );
 };

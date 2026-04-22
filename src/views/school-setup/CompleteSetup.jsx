@@ -12,7 +12,6 @@ import {
 import ParentCard from 'src/components/shared/ParentCard';
 import { getSetupStats } from '../../context/TenantContext/services/tenant.service';
 
-// Tab Components
 import SetUpClassesTab from './tabs/SetUpClassesTab';
 import UploadLearnersTab from './tabs/UploadLearnersTab';
 import UploadTeachersTab from './tabs/UploadTeachersTab';
@@ -23,26 +22,25 @@ const CompleteSetup = () => {
   const [stats, setStats] = useState({ classes: 0, arms: 0, learners: 0, teachers: 0 });
   const [loading, setLoading] = useState(true);
 
+  const fetchStats = async () => {
+    try {
+      const data = await getSetupStats();
+      const statsData = data.data || data;
+      setStats({
+        classes: statsData.classes || 0,
+        arms: statsData.arms || 0,
+        learners: statsData.learners || 0,
+        teachers: statsData.teachers || 0,
+      });
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  // Moved fetchStats outside useEffect so it can be reused
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await getSetupStats();
-
-        const statsData = data.data || data;
-        setStats({
-          classes: statsData.classes || 0,
-          arms: statsData.arms || 0,
-          learners: statsData.learners || 0,
-          teachers: statsData.teachers || 0,
-        });
-      } catch (error) {
-        console.error('Failed to fetch stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
+    setLoading(true);
+    fetchStats().finally(() => setLoading(false));
   }, []);
 
   const handleTabChange = (event, newValue) => {
@@ -51,7 +49,6 @@ const CompleteSetup = () => {
 
   return (
     <Box>
-      {/* PAGE HEADER */}
       <Box
         sx={{
           display: 'flex',
@@ -267,38 +264,43 @@ const CompleteSetup = () => {
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab
+            icon={<IconCalendar size={18} />}
+            iconPosition="start"
+            label="Set Calendar"
+            onClick={() => setActiveTab(0)}
+          />
+          <Tab
             icon={<IconBooks size={18} />}
             iconPosition="start"
             label="Set-Up Classes"
-            onClick={() => setActiveTab(0)}
+            onClick={() => setActiveTab(1)}
           />
           <Tab
             icon={<IconUserPlus size={18} />}
             iconPosition="start"
             label="Upload Learners"
-            onClick={() => setActiveTab(1)}
+            onClick={() => setActiveTab(2)}
           />
           <Tab
             icon={<IconUsers size={18} />}
             iconPosition="start"
             label="Upload Teachers"
-            onClick={() => setActiveTab(2)}
-          />
-          <Tab
-            icon={<IconCalendar size={18} />}
-            iconPosition="start"
-            label="Set Calendar"
             onClick={() => setActiveTab(3)}
           />
         </Tabs>
       </Box>
 
-      {/* TAB CONTENT */}
       <ParentCard sx={{ p: 0 }}>
-        {activeTab === 0 && <SetUpClassesTab onSaveAndContinue={() => {}} />}
-        {activeTab === 1 && <UploadLearnersTab onSaveAndContinue={() => {}} />}
-        {activeTab === 2 && <UploadTeachersTab onSaveAndContinue={() => {}} />}
-        {activeTab === 3 && <SetCalendarTab onSaveAndContinue={() => {}} />}
+        {activeTab === 0 && <SetCalendarTab onSaveAndContinue={() => {}} />}
+        {activeTab === 1 && (
+          <SetUpClassesTab onSaveAndContinue={() => {}} onClassArmsAdded={fetchStats} />
+        )}
+        {activeTab === 2 && (
+          <UploadLearnersTab onSaveAndContinue={() => {}} onLearnerAdded={fetchStats} />
+        )}{' '}
+        {activeTab === 3 && (
+          <UploadTeachersTab onSaveAndContinue={() => {}} onTeacherAdded={fetchStats} />
+        )}
       </ParentCard>
     </Box>
   );

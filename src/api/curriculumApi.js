@@ -74,6 +74,18 @@ export const fetchSubjects = async (curriculumId) => {
   return response.data;
 };
 
+// Fetch classes by programme
+export const fetchClassesByProgramme = async (programmeId) => {
+  const response = await api.get(`/landlord/v1/curriculum/classes-by-programme/${programmeId}`);
+  return response.data;
+};
+
+// Fetch subjects by programme
+export const fetchSubjectsByProgramme = async (programmeId) => {
+  const response = await api.get(`/landlord/v1/curriculum/subjects/by-programme/${programmeId}`);
+  return response.data;
+};
+
 // Create a new subject
 export const createSubjectRecord = async (data) => {
   const response = await api.post('/landlord/v1/curriculum/create_subject', data);
@@ -105,7 +117,7 @@ export const addOrUpdateClassSubject = async (data) => {
 };
 
 // Fetch classes by programme
-export const fetchClassesByProgramme = async (programmeId) => {
+export const fetchClassesByProgrammeOld = async (programmeId) => {
   const response = await api.get(`/curriculum/classes-by-programme/${programmeId}`);
   return response.data;
 };

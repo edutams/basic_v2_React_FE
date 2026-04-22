@@ -63,8 +63,6 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
         status: activeFilters.status || '',
       });
 
-      console.log('🔍 Module API Response:', response);
-
       if (Array.isArray(response.data)) {
         setModuleList(response.data);
         setTotalCount(response.total || response.data.length);

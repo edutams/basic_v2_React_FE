@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -15,6 +15,8 @@ import {
   CircularProgress,
   Link,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -31,7 +33,7 @@ import api from '../../../api/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
 
-const UploadLearnersTab = ({ onSaveAndContinue }) => {
+const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
@@ -44,16 +46,46 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
+  const [uploadClassId, setUploadClassId] = useState(null);
+  const fileInputRef = useRef(null);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
     setModalOpen(true);
   };
 
-  const handleSaveLearner = async (data) => {
-    try {
-      await createLearner(data);
-      console.log('Learner saved successfully!');
+  // const handleSaveLearner = async (data) => {
+  //   try {
+  //     await createLearner(data);
+
+  //     const countsData = await getStudentCountByClass();
+  //     const countsObj = {};
+  //     (countsData || []).forEach((item) => {
+  //       countsObj[item.class_id] = item.count;
+  //     });
+  //     setStudentCounts(countsObj);
+
+  //     // Tell parent to refresh its stats — this is the Vue $emit equivalent
+  //     onLearnerAdded?.();
+  //   } catch (error) {
+  //     console.error('Failed to save learner:', error);
+  //   }
+  // };
+const handleSaveLearner = async (data) => {
+  try {
+    const response = await createLearner(data);
+
+    if (response?.status) {
+      setNotification({
+        open: true,
+        message: response.message,
+        severity: 'success',
+      });
 
       const countsData = await getStudentCountByClass();
       const countsObj = {};
@@ -61,16 +93,80 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         countsObj[item.class_id] = item.count;
       });
       setStudentCounts(countsObj);
+
+      onLearnerAdded?.();
+    } else {
+      setNotification({
+        open: true,
+        message: response?.message || 'Something went wrong',
+        severity: 'error',
+      });
+    }
+  } catch (error) {
+    setNotification({
+      open: true,
+      message: error?.message || 'Failed to save learner',
+      severity: 'error',
+    });
+
+    console.error(error);
+  }
+};
+  
+  const handleUploadClick = (classId) => {
+    setUploadClassId(classId);
+    fileInputRef.current?.click();
+  };
+
+  const handleUploadTemplate = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('school_setup/learners', formData);
+
+      if (response.data.status) {
+         setNotification({
+        open: true,
+        message: response.data.message,
+        severity: 'success',
+      });
+        // Refresh student counts
+        const countsData = await getStudentCountByClass();
+        const countsObj = {};
+        (countsData || []).forEach((item) => {
+          countsObj[item.class_id] = item.count;
+        });
+        setStudentCounts(countsObj);
+
+        onLearnerAdded?.();
+      } else {
+          setNotification({
+        open: true,
+        message: response.data.message || 'Upload failed',
+        severity: 'error',
+      });
+      }
     } catch (error) {
-      console.error('Failed to save learner:', error);
+      setNotification({
+      open: true,
+      message:
+        error?.response?.data?.message || 'Failed to upload learners',
+      severity: 'error',
+    });
+    } finally {
+      event.target.value = '';
+      setUploadClassId(null);
     }
   };
 
-  // Download template function - calls backend API
-  const handleDownloadTemplate = async (classId) => {
+  const handleDownloadTemplate = async (programmeClassId) => {
     try {
       const response = await api.get('school_setup/learner_template', {
-        params: { class_id: classId },
+        params: { programme_class_id: programmeClassId },
         responseType: 'blob',
       });
 
@@ -78,13 +174,24 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'learner_upload_template.xlsx');
+      link.setAttribute('download', `learner_upload_template_${programmeClassId}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+
+       setNotification({
+      open: true,
+      message: 'Template downloaded successfully',
+      severity: 'success',
+    });
+
     } catch (error) {
-      console.error('Failed to download template:', error);
+        setNotification({
+      open: true,
+      message: 'Failed to download template',
+      severity: 'error',
+    });
     }
   };
 
@@ -96,8 +203,25 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           getClassesWithDivisions(),
           getStudentCountByClass(),
         ]);
-        const activeClasses = (classesData || []).filter((cls) => cls.status === 'active');
-        setClasses(activeClasses);
+        const flatClasses = [];
+        (classesData || []).forEach((division) => {
+          (division.programmes || []).forEach((programme) => {
+            (programme.classes || []).forEach((cls) => {
+              if (cls.status === 'active' && cls.pivot?.status === 'active') {
+                flatClasses.push({
+                  ...cls,
+                  unique_key: `${programme.id}_${cls.id}`,
+                  programme_id: programme.id,
+                  programme_code: programme.programme_code,
+                  division_name: division.division_name,
+                  programme_class_id: cls.pivot?.id,
+                });
+              }
+            });
+          });
+        });
+
+        setClasses(flatClasses);
 
         // Transform counts array - simple mapping by class_id
         const countsObj = {};
@@ -124,8 +248,10 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
   };
 
   const filteredClasses = useMemo(() => {
-    return classes.filter((cls) =>
-      cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()),
+    return classes.filter(
+      (cls) =>
+        cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cls.programme_name?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [classes, searchTerm]);
 
@@ -176,7 +302,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
             borderSpacing: '12px 10px',
           }}
         >
-          {/* Header */}
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
@@ -192,13 +317,11 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           {/* Body */}
           <TableBody>
             {paginatedClasses.map((item, index) => {
-              // console.log(item);
-
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
 
               return (
-                <TableRow key={index}>
+                <TableRow key={item.unique_key || index}>
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -225,7 +348,9 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
 
                       <TextField
                         size="small"
-                        defaultValue={item.class_name}
+                        defaultValue={`${item.programme_code} - ${item.class_code}`}
+                        // defaultValue={item.class_code}
+                        disabled
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {
@@ -250,7 +375,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     </Box>
                   </TableCell>
 
-                  {/* No. Uploaded */}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -268,7 +392,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                     </Box>
                   </TableCell>
 
-                  {/* Upload Using Forms */}
                   <TableCell
                     sx={{
                       bgcolor: cellBg,
@@ -305,11 +428,16 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
                         variant="outlined"
                         size="small"
                         startIcon={<span>↓</span>}
-                        onClick={() => handleDownloadTemplate(item.id)}
+                        onClick={() => handleDownloadTemplate(item.programme_class_id)}
                       >
                         Download Template
                       </Button>
-                      <Button variant="contained" size="small" startIcon={<span>↑</span>}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<span>↑</span>}
+                        onClick={() => handleUploadClick(item.id)}
+                      >
                         Upload Template
                       </Button>
                     </Box>
@@ -319,7 +447,6 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
             })}
           </TableBody>
 
-          {/* Footer with Pagination */}
           <TableFooter>
             <TableRow>
               <TablePagination
@@ -334,6 +461,14 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
           </TableFooter>
         </Table>
       </TableContainer>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".xlsx,.xls"
+        style={{ display: 'none' }}
+        onChange={handleUploadTemplate}
+      />
 
       <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
@@ -355,6 +490,22 @@ const UploadLearnersTab = ({ onSaveAndContinue }) => {
         classId={selectedClass?.id}
         className={selectedClass?.class_name}
       />
+
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={4000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

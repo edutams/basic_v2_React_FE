@@ -44,18 +44,12 @@ const ModuleModal = ({
     },
     onSubmit: async (values) => {
       try {
-        // console.log('Module data:', values);
-        // console.log('Action type:', actionType);
-
         switch (actionType) {
           case 'activate':
-            // console.log('Activating module:', selectedModule?.id);
             break;
           case 'deactivate':
-            // console.log('Deactivating module:', selectedModule?.id);
             break;
           default:
-          // console.log('Unknown action:', actionType);
         }
 
         handleRefresh();
@@ -72,7 +66,6 @@ const ModuleModal = ({
   };
 
   const handleUpdate = (moduleData) => {
-    // console.log('Module updated:', moduleData);
     if (updateModule) {
       updateModule(moduleData);
     }

@@ -19,11 +19,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const ClassStructureTable = ({
-  classStructures = [],
-  onToggleStatus,
-  isLoading = false,
-}) => {
+const ClassStructureTable = ({ classStructures = [], onToggleStatus, isLoading = false }) => {
   const [confirm, setConfirm] = useState({ open: false, structure: null });
 
   const handleToggleClick = (structure) => {
@@ -45,29 +41,18 @@ const ClassStructureTable = ({
     if (!arms || arms.length === 0) {
       return (
         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-          No arms
+          No arms created yet
         </Typography>
       );
     }
 
-    const armLabels = arms.flatMap((arm) => {
-      const names = arm.arm_names;
-      if (Array.isArray(names)) return names;
-      if (typeof names === 'string') return [names];
-      return [];
-    });
-
-    if (armLabels.length === 0) {
-      return <Typography variant="body2" color="text.secondary">No arms</Typography>;
-    }
-
     return (
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        {armLabels.map((name, i) => (
+        {arms.map((arm, i) => (
           <TextField
             key={i}
             size="small"
-            value={name}
+            value={arm.arm_names}
             disabled
             sx={{
               width: 90,
@@ -112,29 +97,37 @@ const ClassStructureTable = ({
                 <TableRow key={structure.id} hover>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
+                    {/* <Typography variant="body2" fontWeight={600}>
                       {structure.class_name}
-                    </Typography>
-                    {structure.division && (
+                    </Typography> */}
+                    {structure.class_code && (
                       <Typography variant="caption" color="text.secondary">
-                        {structure.division}
+                        {structure.class_code}
+                      </Typography>
+                    )}
+                    {structure.programme_code && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {structure.programme_code}
                       </Typography>
                     )}
                   </TableCell>
                   <TableCell>{renderArms(structure.arms)}</TableCell>
                   <TableCell>
                     <Chip
-                      label={structure.status === 'active' ? 'Active' : 'Inactive'}
+                      label={structure.status === 'active' ? 'active' : 'inactive'}
                       color={structure.status === 'active' ? 'success' : 'error'}
                       size="small"
-                      variant="outlined"
+                      sx={{
+                        bgcolor: structure.status === 'active' ? '#dcfce7' : '#fef3c7',
+                        color: structure.status === 'active' ? '#166534' : '#92400e',
+                      }}
                     />
                   </TableCell>
                   <TableCell align="center">
                     <Button
                       size="small"
                       variant="outlined"
-                      color={structure.status === 'active' ? 'warning' : 'success'}
+                      color={structure.status === 'active' ? 'error' : 'success'}
                       onClick={() => handleToggleClick(structure)}
                     >
                       {structure.status === 'active' ? 'Deactivate' : 'Activate'}
@@ -160,9 +153,8 @@ const ClassStructureTable = ({
         <DialogTitle>Confirm Status Change</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to{' '}
-            <strong>{isActive ? 'deactivate' : 'activate'}</strong> the class{' '}
-            <strong>{confirm.structure?.class_name}</strong>?
+            Are you sure you want to <strong>{isActive ? 'deactivate' : 'activate'}</strong> the
+            class <strong>{confirm.structure?.class_name}</strong>?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -170,7 +162,7 @@ const ClassStructureTable = ({
           <Button
             onClick={handleConfirm}
             variant="contained"
-            color={isActive ? 'warning' : 'success'}
+            color={isActive ? 'error' : 'success'}
             autoFocus
           >
             {isActive ? 'Deactivate' : 'Activate'}

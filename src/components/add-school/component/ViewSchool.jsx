@@ -4,10 +4,8 @@ import { useParams } from 'react-router-dom';
 
 const ViewSchool = () => {
   const params = useParams();
-  // console.log('params:', params);
 
   const { id } = params;
-  // console.log(id);
 
   const [school, setSchool] = useState(null);
 

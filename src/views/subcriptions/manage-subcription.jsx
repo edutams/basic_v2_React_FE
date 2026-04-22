@@ -182,7 +182,6 @@ const ManageSubscriptionList = () => {
 
   const handleRevertPlanClick = (row) => {
     // Handle revert plan action
-    // console.log('Revert plan for:', row);
     handleMenuClose();
   };
 

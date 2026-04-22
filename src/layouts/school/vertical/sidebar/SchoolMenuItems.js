@@ -10,6 +10,7 @@ import {
   IconHistory,
   IconTimeline,
   IconListCheck,
+  IconCalendar,
 } from '@tabler/icons-react';
 
 const SchoolMenuItems = [
@@ -52,6 +53,12 @@ const SchoolMenuItems = [
         title: 'Session/Term Mapping',
         icon: IconTimeline,
         href: '/session-week-manager',
+      },
+      {
+        id: uniqueId(),
+        title: 'Calendar',
+        icon: IconCalendar,
+        href: '/calendar',
       },
       {
         id: uniqueId(),

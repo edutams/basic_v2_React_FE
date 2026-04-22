@@ -337,18 +337,18 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
     }
   };
 
-  const handleDeleteWeek = async (weekId) => {
-    try {
-      const response = await deleteWeek(activeSessionTermId, weekId);
-      if (response.status) {
-        setWeeks(response.data);
-        // Refresh session terms to update the Start Date if necessary
-        loadSessionTerms(selectedSessionId);
-      }
-    } catch (error) {
-      showSnackbar('Failed to delete week', 'error');
-    }
-  };
+  // const handleDeleteWeek = async (weekId) => {
+  //   try {
+  //     const response = await deleteWeek(activeSessionTermId, weekId);
+  //     if (response.status) {
+  //       setWeeks(response.data);
+  //       // Refresh session terms to update the Start Date if necessary
+  //       loadSessionTerms(selectedSessionId);
+  //     }
+  //   } catch (error) {
+  //     showSnackbar('Failed to delete week', 'error');
+  //   }
+  // };
 
   const handleSelectAll = () => {
     const newSelectAll = !selectAll;
@@ -606,7 +606,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                         <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                        {/* <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell> */}
                       </TableRow>
                     </TableHead>
 
@@ -629,16 +629,15 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                                 }}
                               />
                             </TableCell>
-                            <TableCell>
+                            {/* <TableCell>
                               <IconButton
                                 size="small"
                                 color="dark"
                                 onClick={() => handleDeleteWeek(item.week_id)}
                               >
                                 <IconDotsVertical size={16} />{' '}
-                                {/* Replace with Trash if available */}
                               </IconButton>
-                            </TableCell>
+                            </TableCell> */}
                           </TableRow>
                         ))
                       ) : (

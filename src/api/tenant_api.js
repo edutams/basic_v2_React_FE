@@ -76,7 +76,7 @@ export const getTenantInfo = async () => {
 };
 
 export const updateSchoolLogo = async (formData) => {
-  const response = await tenantApi.post('/update_school_logo', formData, {
+  const response = await tenantApi.post('/school_setup/update_school_logo', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },

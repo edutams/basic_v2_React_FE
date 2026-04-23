@@ -30,6 +30,7 @@ import {
   Divider,
   Avatar,
   Tooltip,
+  Link,
 } from '@mui/material';
 import {
   IconGridDots,
@@ -420,10 +421,10 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 const ProspectRow = ({ row, index, onReview }) => {
   const spa = getSpaContact(row);
   const agent = row.agent;
-  // prospective domain URL
-  const prospectiveDomain = agent?.organization_domain
+  const domainHost = agent?.organization_domain
     ? `${row.tenant_short_name}.${agent.organization_domain}`
-    : row.tenant_short_name;
+    : row.tenant_short_name || '';
+  const prospectiveUrl = domainHost ? `https://${domainHost}` : null;
   return (
     <TableRow hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
       <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{index}</TableCell>
@@ -436,9 +437,20 @@ const ProspectRow = ({ row, index, onReview }) => {
             <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>
               {row.tenant_name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              domain: {prospectiveDomain}
-            </Typography>
+            {prospectiveUrl ? (
+              <Link
+                href={prospectiveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="caption"
+                color="text.secondary"
+                underline="hover"
+              >
+                {domainHost}
+              </Link>
+            ) : (
+              <Typography variant="caption" color="text.secondary">—</Typography>
+            )}
           </Box>
         </Stack>
       </TableCell>
@@ -592,11 +604,6 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   }, [organizationId]);
   const handleFilterApply = (filterValues) => {
     setActiveFilters(filterValues);
-    setPage(0);
-  };
-
-  const handleFilterReset = () => {
-    setActiveFilters({});
     setPage(0);
   };
 
@@ -1018,9 +1025,20 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                                 <Typography variant="subtitle2" fontWeight={700}>
                                   {row.tenant_name}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {row.domains?.[0]?.domain || ''}
-                                </Typography>
+                                {row.domains?.[0]?.domain ? (
+                                  <Link
+                                    href={`https://${row.domains[0].domain}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant="caption"
+                                    color="text.secondary"
+                                    underline="hover"
+                                  >
+                                    {row.domains[0].domain}
+                                  </Link>
+                                ) : (
+                                  <Typography variant="caption" color="text.secondary">—</Typography>
+                                )}
                               </Box>
                             </Stack>
                           </TableCell>

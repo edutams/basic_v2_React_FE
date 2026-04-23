@@ -188,6 +188,12 @@ const RegisterSchoolForm = ({
   const [formData, setFormData] = useState(() => fromSelected(selectedSchool));
   const [errors, setErrors] = useState({});
 
+  // Reset form when selectedSchool changes (for edit mode)
+  useEffect(() => {
+    setFormData(fromSelected(selectedSchool));
+    setErrors({});
+  }, [selectedSchool]);
+
   // 'none' | 'owner'
   const [spaSource, setSpaSource] = useState('none');
   // 'none' | 'owner' | 'spa'

@@ -15,6 +15,7 @@ import {
   IconButton,
   TextField,
   MenuItem,
+  Menu,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -23,7 +24,7 @@ import {
   Snackbar,
   CircularProgress,
 } from '@mui/material';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import ParentCard from 'src/components/shared/ParentCard';
 import { fetchCurrentSession, fetchSessionTerms } from '../../../api/sessionTermApi';
 import { fetchHolidays, createHolidays, deleteHoliday } from '../../../api/holidayApi';
@@ -50,6 +51,20 @@ const HolidaySection = () => {
 
   // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
+
+  // Row action menu
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [menuHolidayId, setMenuHolidayId] = useState(null);
+
+  const handleMenuOpen = (e, id) => {
+    setMenuAnchor(e.currentTarget);
+    setMenuHolidayId(id);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+    setMenuHolidayId(null);
+  };
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -333,11 +348,26 @@ const HolidaySection = () => {
                         <TableCell align="center">
                           <IconButton
                             size="small"
-                            color="error"
-                            onClick={() => handleDeleteClick(h.id)}
+                            onClick={(e) => handleMenuOpen(e, h.id)}
                           >
-                            <IconTrash size={16} />
+                            <IconDotsVertical size={16} />
                           </IconButton>
+                          <Menu
+                            anchorEl={menuAnchor}
+                            open={Boolean(menuAnchor) && menuHolidayId === h.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem
+                              onClick={() => {
+                                handleMenuClose();
+                                handleDeleteClick(h.id);
+                              }}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <IconTrash size={16} style={{ marginRight: 8 }} />
+                              Delete
+                            </MenuItem>
+                          </Menu>
                         </TableCell>
                       </TableRow>
                     ))

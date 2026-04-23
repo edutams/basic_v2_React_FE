@@ -33,7 +33,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
   const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
@@ -402,7 +402,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
           <TableFooter>
             <TableRow>
               <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
+                rowsPerPageOptions={[10, 20, 50]}
                 count={filteredClasses.length}
                 rowsPerPage={rowsPerPage}
                 page={page}

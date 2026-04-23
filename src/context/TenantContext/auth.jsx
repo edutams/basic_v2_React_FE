@@ -68,9 +68,11 @@ export const TenantAuthProvider = ({ children }) => {
     checkTenantDomain();
   }, []);
   const checkTenantDomain = async () => {
+    if (window.location.pathname === '/school-not-found') return;
+
     const hostname = window.location.hostname;
     const data = await validateTenantDomain(hostname);
-    if (window.location.pathname === '/school-not-found') return;
+
     if (data.status === false) {
       window.location.replace('/school-not-found');
     } else {

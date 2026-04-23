@@ -15,7 +15,8 @@ const hostname = window.location.hostname;
 
 // Async validation to determine if this is a tenant domain
 const tenantValidation = await validateTenantDomain(hostname);
-const isTenantSubdomain = tenantValidation?.status !== false;
+// const isTenantSubdomain = tenantValidation?.status !== false;
+const isTenantSubdomain = tenantValidation?.status === true;
 
 // ✅ Lazy import — TenantAuthProvider only loads on tenant subdomains
 const TenantAuthProvider = isTenantSubdomain

@@ -940,7 +940,7 @@ const SchemeOfWork = () => {
             Select the Programme, Class, and Subject to generate a blank upload template.
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12,md:6 }}>
               <TextField select fullWidth label="Programme" size="small"
                 value={dlTemplateFilters.programme}
                 onChange={async (e) => {
@@ -952,7 +952,7 @@ const SchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12,md:6 }}>
               <TextField select fullWidth label="Class" size="small"
                 value={dlTemplateFilters.classLevel}
                 onChange={e => setDlTemplateFilters(f => ({ ...f, classLevel: e.target.value }))}
@@ -1081,7 +1081,7 @@ const SchemeOfWork = () => {
             Select the Programme, Class, Subject, and Term whose uploaded Scheme of Work you want to download.
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 6,md:6 }}>
               <TextField select fullWidth label="Programme" size="small"
                 value={dlSchemeFilters.programme}
                 onChange={async (e) => {
@@ -1093,7 +1093,7 @@ const SchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 6,md:6 }}>
               <TextField select fullWidth label="Class" size="small"
                 value={dlSchemeFilters.classLevel}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, classLevel: e.target.value }))}
@@ -1101,7 +1101,7 @@ const SchemeOfWork = () => {
                 {dlSchemeClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 6,md:6 }}>
               <TextField select fullWidth label="Subject" size="small"
                 value={dlSchemeFilters.subject}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, subject: e.target.value }))}
@@ -1109,12 +1109,12 @@ const SchemeOfWork = () => {
                 {dlSchemeSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 6,md:6 }}>
               <TextField select fullWidth label="Term" size="small"
                 value={dlSchemeFilters.term || activeTerm}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, term: e.target.value }))}
               >
-                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
+                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.display_name}</MenuItem>)}
               </TextField>
             </Grid>
           </Grid>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import {
   Box,
   Grid,
@@ -29,6 +29,7 @@ import {
 import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { Add as AddIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
+import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import {
   fetchCurrentSession,
   fetchSessionTerms,
@@ -47,6 +48,7 @@ import {
 } from '../../../api/weekApi';
 
 const SetCalendarTab = ({ onSaveAndContinue }) => {
+  const { refreshTenantInfo } = useContext(TenantAuthContext);
   const [hasChanges, setHasChanges] = useState(false);
 
   const handleChange = () => {
@@ -236,6 +238,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       if (response.status) {
         showSnackbar('Subscribed successfully', 'success');
         loadSessionTerms(selectedSessionId);
+        refreshTenantInfo();
       } else {
         showSnackbar(response.message || 'Failed to subscribe', 'error');
       }
@@ -269,6 +272,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
           'success',
         );
         loadSessionTerms(selectedSessionId);
+        refreshTenantInfo();
       } else {
         const errorMessage =
           response.data?.original?.message ||
@@ -305,6 +309,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
         showSnackbar('Weeks generated successfully', 'success');
         // Refresh session terms to update the Start Date in the main table
         loadSessionTerms(selectedSessionId);
+        // Refresh header to show updated week count immediately
+        refreshTenantInfo();
       }
     } catch (error) {
       showSnackbar('Failed to generate weeks', 'error');
@@ -331,6 +337,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
         setWeeks(response.data);
         // Refresh session terms to update the Start Date in the main table
         loadSessionTerms(selectedSessionId);
+        // Refresh header to show updated week count immediately
+        refreshTenantInfo();
       }
     } catch (error) {
       showSnackbar('Failed to add week', 'error');

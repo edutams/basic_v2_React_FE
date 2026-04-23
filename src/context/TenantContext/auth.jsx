@@ -80,6 +80,14 @@ export const TenantAuthProvider = ({ children }) => {
     }
   };
 
+  const refreshTenantInfo = async () => {
+    const hostname = window.location.hostname;
+    const data = await validateTenantDomain(hostname);
+    if (data && data.status !== false) {
+      setTenantInfo(data);
+    }
+  };
+
   const login = async (credentials) => {
     setIsLoading(true);
     setError(null);
@@ -202,6 +210,7 @@ export const TenantAuthProvider = ({ children }) => {
     impersonatorId,
     stopImpersonation,
     tenantInfo,
+    refreshTenantInfo,
   };
 
   return (

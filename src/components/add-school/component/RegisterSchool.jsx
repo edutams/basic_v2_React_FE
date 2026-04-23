@@ -18,7 +18,7 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material';
-import ColorSchemeSelector from './ColorSchemeSelector';
+// import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
 import {
   createSchool,
@@ -78,12 +78,22 @@ const fromSelected = (s) => {
     school_type: s.school_type
       ? Array.isArray(s.school_type)
         ? s.school_type[0] || ''
-        : (() => {
-            const parsed = JSON.parse(s.school_type);
-            return Array.isArray(parsed) ? parsed.find((t) => typeof t === 'string') || '' : '';
+        : typeof s.school_type === 'string'
+        ? (() => {
+            try {
+              const parsed = JSON.parse(s.school_type);
+              return Array.isArray(parsed) ? (parsed.find((t) => typeof t === 'string') || '') : '';
+            } catch {
+              return s.school_type;
+            }
           })()
+        : s.school_type
       : '',
-    school_divisions: s.school_divisions?.map((d) => d.id ?? d) || [],
+    school_divisions: Array.isArray(s.school_divisions)
+      ? s.school_divisions.map((d) => d.id ?? d)
+      : typeof s.school_divisions === 'object' && s.school_divisions !== null
+      ? Object.values(s.school_divisions)
+      : [],
     session_id: s.session_id || '',
     headcolor: s.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: s.color?.sidecolor || 'bg-dark text-lighter',
@@ -177,6 +187,12 @@ const RegisterSchoolForm = ({
 
   const [formData, setFormData] = useState(() => fromSelected(selectedSchool));
   const [errors, setErrors] = useState({});
+
+  // Reset form when selectedSchool changes (for edit mode)
+  useEffect(() => {
+    setFormData(fromSelected(selectedSchool));
+    setErrors({});
+  }, [selectedSchool]);
 
   // 'none' | 'owner'
   const [spaSource, setSpaSource] = useState('none');
@@ -426,8 +442,46 @@ const RegisterSchoolForm = ({
       )}
 
       <Grid container spacing={2}>
+         {/* Session Selection */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.session_id)}>
+            <InputLabel>Session</InputLabel>
+            <Select
+              name="session_id"
+              value={formData.session_id}
+              label="Session"
+              onChange={handleChange}
+            >
+              <MenuItem value="">-- Select Session --</MenuItem>
+              {currentSession && (
+                <MenuItem key={currentSession.id} value={currentSession.id}>
+                  {currentSession.sesname} (Current)
+                </MenuItem>
+              )}
+            </Select>
+            {errors.session_id && <FormHelperText>{errors.session_id}</FormHelperText>}
+          </FormControl>
+        </Grid>
+
+          {/* School Type */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <FormControl fullWidth error={Boolean(errors.school_type)}>
+            <InputLabel>School Type</InputLabel>
+            <Select
+              name="school_type"
+              value={formData.school_type}
+              label="School Type"
+              onChange={handleChange}
+            >
+              <MenuItem value="primary">Primary</MenuItem>
+              <MenuItem value="secondary">Secondary</MenuItem>
+            </Select>
+            {errors.school_type && <FormHelperText>{errors.school_type}</FormHelperText>}
+          </FormControl>
+        </Grid>
+        
         {/* School Name & Email */}
-        <Grid item size={{ xs: 12, md: 6 }}>
+        <Grid item size={{ xs: 12 }}>
           <TextField
             fullWidth
             label="School Name"
@@ -461,23 +515,6 @@ const RegisterSchoolForm = ({
             error={Boolean(errors.tenant_short_name)}
             helperText={errors.tenant_short_name}
           />
-        </Grid>
-
-        {/* School Type */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.school_type)}>
-            <InputLabel>School Type</InputLabel>
-            <Select
-              name="school_type"
-              value={formData.school_type}
-              label="School Type"
-              onChange={handleChange}
-            >
-              <MenuItem value="primary">Primary</MenuItem>
-              <MenuItem value="secondary">Secondary</MenuItem>
-            </Select>
-            {errors.school_type && <FormHelperText>{errors.school_type}</FormHelperText>}
-          </FormControl>
         </Grid>
 
         {/* State & LGA */}
@@ -525,32 +562,11 @@ const RegisterSchoolForm = ({
           />
         </Grid>
 
-        {/* Session Selection */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <FormControl fullWidth error={Boolean(errors.session_id)}>
-            <InputLabel>Session</InputLabel>
-            <Select
-              name="session_id"
-              value={formData.session_id}
-              label="Session"
-              onChange={handleChange}
-            >
-              <MenuItem value="">-- Select Session --</MenuItem>
-              {currentSession && (
-                <MenuItem key={currentSession.id} value={currentSession.id}>
-                  {currentSession.sesname} (Current)
-                </MenuItem>
-              )}
-            </Select>
-            {errors.session_id && <FormHelperText>{errors.session_id}</FormHelperText>}
-          </FormControl>
-        </Grid>
-
         {/* ── School Owner ─────────────────────────────────────────────── */}
         <Grid size={{ xs: 12, md: 12 }}>
           <Box sx={{ p: 2, bgcolor: '#F1F8E9', borderRadius: 1, border: '1px solid #DCEDC8' }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 2, color: '#33691E' }}>
-              School Ownerdd Details
+              School Owner Details
             </Typography>
             <PersonFields
               section="owner"
@@ -657,11 +673,11 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* Color Scheme (update only) */}
-        {actionType === 'update' && (
+        {/* {actionType === 'update' && (
           <Grid item xs={12}>
             <ColorSchemeSelector formData={formData} onColorChange={handleColorChange} />
           </Grid>
-        )}
+        )} */}
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

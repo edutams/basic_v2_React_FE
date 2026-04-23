@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router';
 import { Box, Typography, Button, Avatar, TextField, Stack, Divider, Card } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
 import { getFullImageUrl } from '../../helpers/ImageHelper';
+import { TenantAuthContext } from '../../context/TenantContext/auth';
 
 // Helper function to format school type from simple string
 const formatSchoolType = (schoolType) => {
   if (!schoolType) return '';
 
-  // Handle simple string values
   if (schoolType === 'primary') return 'Primary';
   if (schoolType === 'secondary') return 'Secondary';
 
@@ -18,6 +18,7 @@ const formatSchoolType = (schoolType) => {
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
+  const { refreshTenantInfo } = useContext(TenantAuthContext);
   const [tenantData, setTenantData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState(null);
@@ -65,7 +66,6 @@ const SchoolInformationPage = () => {
         };
 
         setTenantData(formattedData);
-        // Convert relative logo path to full URL using ImageHelper
         const fullLogoUrl = getFullImageUrl(d.school_logo);
         setLogo(fullLogoUrl);
         setOriginalLogo(fullLogoUrl);
@@ -94,14 +94,13 @@ const SchoolInformationPage = () => {
   const handleSaveAndContinue = async () => {
     setSaving(true);
     try {
-      // If there's a new logo file, upload it
       if (logoFile) {
         const formData = new FormData();
         formData.append('school_logo', logoFile);
         const res = await updateSchoolLogo(formData);
-        // Update the logo state with the returned path (converted to full URL)
         if (res.data?.school_logo) {
           setLogo(getFullImageUrl(res.data.school_logo));
+          refreshTenantInfo();
         }
       }
       navigate('/complete-setup');
@@ -112,7 +111,6 @@ const SchoolInformationPage = () => {
     }
   };
 
-  // Determine if button should be disabled
   // Button is enabled if there's an original logo OR a new logo file has been uploaded
   const isButtonDisabled = !originalLogo && !logoFile;
 
@@ -129,7 +127,7 @@ const SchoolInformationPage = () => {
           <Typography fontWeight={700} fontSize={20}>
             School Information
           </Typography>
-          <Typography fontSize={13} color="#8A8D91">
+          <Typography fontSize={13} color="text.secondary">
             Register your school and set up administrative accounts
           </Typography>
         </Box>
@@ -138,12 +136,13 @@ const SchoolInformationPage = () => {
           sx={{
             px: 2,
             py: 1,
-            bgcolor: 'white',
+            bgcolor: 'background.paper',
             display: 'flex',
             alignItems: 'center',
             gap: 1,
             cursor: 'pointer',
             boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
+            borderRadius: 1,
           }}
         >
           <IconVideo size={20} />
@@ -153,7 +152,7 @@ const SchoolInformationPage = () => {
       </Box>
 
       <Card sx={{ mb: 2 }}>
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#F9F9F9' }}>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: 'action.hover' }}>
           <Typography fontWeight={600}>School Details</Typography>
         </Box>
 
@@ -172,8 +171,9 @@ const SchoolInformationPage = () => {
                 width: 110,
                 height: 110,
                 mx: 'auto',
-                bgcolor: '#f5f5f5',
-                border: '1px solid #e0e0e0',
+                bgcolor: 'action.hover',
+                border: '1px solid',
+                borderColor: 'divider',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
@@ -186,11 +186,10 @@ const SchoolInformationPage = () => {
               {!logo && (
                 <>
                   <IconSchool size={40} color="#9e9e9e" />
-
                   <Typography
                     sx={{
                       fontSize: 10,
-                      color: '#8A8D91',
+                      color: 'text.secondary',
                       textAlign: 'center',
                       lineHeight: 1,
                     }}
@@ -221,7 +220,7 @@ const SchoolInformationPage = () => {
       </Card>
 
       <Card>
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5' }}>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: 'action.hover' }}>
           <Typography fontWeight={600}>Administrative Accounts</Typography>
         </Box>
 
@@ -236,11 +235,10 @@ const SchoolInformationPage = () => {
                   flex: '1 1 300px',
                   p: 2,
                   borderRadius: 2,
-                  bgcolor: 'white',
+                  bgcolor: 'background.paper',
                   boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
-
                   '&:hover': {
                     transform: 'translateY(-6px)',
                     boxShadow: '0px 12px 28px rgba(0,0,0,0.18)',

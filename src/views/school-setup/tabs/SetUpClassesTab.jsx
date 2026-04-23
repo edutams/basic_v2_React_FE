@@ -16,6 +16,7 @@ import {
   Typography,
   Snackbar,
   Alert,
+  useTheme,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
@@ -25,12 +26,14 @@ import {
 } from '../../../context/TenantContext/services/tenant.service';
 
 const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
@@ -247,7 +250,11 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
             {paginatedClasses.map((classItem, index) => {
               const isInactive = classItem.status === 'inactive';
               const isHighlighted = iconHovered === index || iconClicked === index;
-              const cellBg = isInactive ? '#e0e0e0' : isHighlighted ? '#fbe4e4' : '#f6f7f9';
+              const cellBg = isInactive
+                ? isDark ? 'action.disabledBackground' : '#e0e0e0'
+                : isHighlighted
+                ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
+                : isDark ? 'action.hover' : '#f6f7f9';
               const className = classItem.class_code || '';
 
               return (
@@ -286,21 +293,13 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: isInactive ? '#e0e0e0' : '#fff',
+                            backgroundColor: isInactive
+                              ? isDark ? 'action.disabledBackground' : '#e0e0e0'
+                              : 'background.paper',
                             borderRadius: '8px',
-
-                            '& fieldset': {
-                              borderColor: '#e5e7eb',
-                            },
-
-                            '&:hover fieldset': {
-                              borderColor: '#cbd5e1',
-                            },
-
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#1976d2',
-                              borderWidth: '2px',
-                            },
+                            '& fieldset': { borderColor: 'divider' },
+                            '&:hover fieldset': { borderColor: 'text.disabled' },
+                            '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '2px' },
                           },
                         }}
                       />
@@ -331,21 +330,11 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         sx={{
                           width: 70,
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#fff',
+                            backgroundColor: 'background.paper',
                             borderRadius: '8px',
-
-                            '& fieldset': {
-                              borderColor: '#e5e7eb',
-                            },
-
-                            '&:hover fieldset': {
-                              borderColor: '#cbd5e1',
-                            },
-
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#1976d2',
-                              borderWidth: '2px',
-                            },
+                            '& fieldset': { borderColor: 'divider' },
+                            '&:hover fieldset': { borderColor: 'text.disabled' },
+                            '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '2px' },
                           },
                         }}
                       />
@@ -388,23 +377,12 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                             }
                             sx={{
                               width: 90,
-
                               '& .MuiOutlinedInput-root': {
-                                backgroundColor: '#fff',
+                                backgroundColor: 'background.paper',
                                 borderRadius: '8px',
-
-                                '& fieldset': {
-                                  borderColor: '#e5e7eb',
-                                },
-
-                                '&:hover fieldset': {
-                                  borderColor: '#cbd5e1',
-                                },
-
-                                '&.Mui-focused fieldset': {
-                                  borderColor: '#1976d2',
-                                  borderWidth: '2px',
-                                },
+                                '& fieldset': { borderColor: 'divider' },
+                                '&:hover fieldset': { borderColor: 'text.disabled' },
+                                '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '2px' },
                               },
                             }}
                           />
@@ -424,7 +402,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
           <TableFooter>
             <TableRow>
               <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
+                rowsPerPageOptions={[10, 20, 50]}
                 count={filteredClasses.length}
                 rowsPerPage={rowsPerPage}
                 page={page}

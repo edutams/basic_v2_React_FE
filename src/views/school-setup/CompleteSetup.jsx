@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Typography, Stack, Paper, Tabs, Tab, CircularProgress } from '@mui/material';
+import { Box, Typography, Stack, Paper, Tabs, Tab, CircularProgress } from '@mui/material';
 import {
   IconSchool,
   IconVideo,
@@ -16,6 +16,50 @@ import SetUpClassesTab from './tabs/SetUpClassesTab';
 import UploadLearnersTab from './tabs/UploadLearnersTab';
 import UploadTeachersTab from './tabs/UploadTeachersTab';
 import SetCalendarTab from './tabs/SetCalendarTab';
+
+const StatCard = ({ count, label, loading }) => (
+  <Paper
+    sx={{
+      borderRadius: 2,
+      px: 3,
+      py: 2,
+      width: { xs: '100%', sm: 320 },
+      bgcolor: 'background.paper',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    }}
+  >
+    <Box
+      sx={{
+        width: 48,
+        height: 48,
+        borderRadius: '50%',
+        bgcolor: 'primary.light',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <IconSchool size={22} color="#3B5BDB" />
+    </Box>
+
+    <Box sx={{ textAlign: 'center' }}>
+      {loading ? (
+        <CircularProgress size={24} />
+      ) : (
+        <>
+          <Typography fontSize={26} fontWeight={700}>
+            {count}
+          </Typography>
+          <Typography fontSize={14} color="text.secondary">
+            {label}
+          </Typography>
+        </>
+      )}
+    </Box>
+  </Paper>
+);
 
 const CompleteSetup = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -37,15 +81,10 @@ const CompleteSetup = () => {
     }
   };
 
-  // Moved fetchStats outside useEffect so it can be reused
   useEffect(() => {
     setLoading(true);
     fetchStats().finally(() => setLoading(false));
   }, []);
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
 
   return (
     <Box>
@@ -61,8 +100,7 @@ const CompleteSetup = () => {
           <Typography fontWeight={700} fontSize={20}>
             School Administration
           </Typography>
-
-          <Typography fontSize={13} color="#8A8D91">
+          <Typography fontSize={13} color="text.secondary">
             Manage classes, learners, teachers and calendar
           </Typography>
         </Box>
@@ -71,12 +109,13 @@ const CompleteSetup = () => {
           sx={{
             px: 2,
             py: 1,
-            bgcolor: 'white',
+            bgcolor: 'background.paper',
             display: 'flex',
             alignItems: 'center',
             gap: 1,
             cursor: 'pointer',
             boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
+            borderRadius: 1,
             '&:hover': {
               transform: 'translateY(-2px)',
             },
@@ -90,203 +129,23 @@ const CompleteSetup = () => {
         </Box>
       </Box>
 
-      {/* CLASS DETAILS CARD */}
+      {/* STAT CARDS */}
       <Box sx={{ p: 2, pb: 1 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 2 }} mb={1}>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 2,
-              width: { xs: '100%', sm: 320 },
-              background: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: '#E3E8F8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconSchool size={22} color="#3B5BDB" />
-            </Box>
-
-            <Box sx={{ textAlign: 'center' }}>
-              {loading ? (
-                <CircularProgress size={24} />
-              ) : (
-                <>
-                  <Typography fontSize={26} fontWeight={700}>
-                    {stats.classes}
-                  </Typography>
-                  <Typography fontSize={14} color="#6B7280">
-                    Classes
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 2,
-              width: { xs: '100%', sm: 320 },
-              background: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: '#E3E8F8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconSchool size={22} color="#3B5BDB" />
-            </Box>
-
-            <Box sx={{ textAlign: 'center' }}>
-              {loading ? (
-                <CircularProgress size={24} />
-              ) : (
-                <>
-                  <Typography fontSize={26} fontWeight={700}>
-                    {stats.arms}
-                  </Typography>
-                  <Typography fontSize={14} color="#6B7280">
-                    Arms
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 2,
-              width: { xs: '100%', sm: 320 },
-              background: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: '#E3E8F8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconSchool size={22} color="#3B5BDB" />
-            </Box>
-
-            <Box sx={{ textAlign: 'center' }}>
-              {loading ? (
-                <CircularProgress size={24} />
-              ) : (
-                <>
-                  <Typography fontSize={26} fontWeight={700}>
-                    {stats.learners}
-                  </Typography>
-                  <Typography fontSize={14} color="#6B7280">
-                    Learners
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Paper>
-          <Paper
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              py: 2,
-              width: { xs: '100%', sm: 320 },
-              background: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: '#E3E8F8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <IconSchool size={22} color="#3B5BDB" />
-            </Box>
-
-            <Box sx={{ textAlign: 'center' }}>
-              {loading ? (
-                <CircularProgress size={24} />
-              ) : (
-                <>
-                  <Typography fontSize={26} fontWeight={700}>
-                    {stats.teachers}
-                  </Typography>
-                  <Typography fontSize={14} color="#6B7280">
-                    Teachers
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Paper>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={1}>
+          <StatCard count={stats.classes} label="Classes" loading={loading} />
+          <StatCard count={stats.arms} label="Arms" loading={loading} />
+          <StatCard count={stats.learners} label="Learners" loading={loading} />
+          <StatCard count={stats.teachers} label="Teachers" loading={loading} />
         </Stack>
       </Box>
 
-      {/* TABS SECTION */}
+      {/* TABS */}
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab
-            icon={<IconCalendar size={18} />}
-            iconPosition="start"
-            label="Set Calendar"
-            onClick={() => setActiveTab(0)}
-          />
-          <Tab
-            icon={<IconBooks size={18} />}
-            iconPosition="start"
-            label="Set-Up Classes"
-            onClick={() => setActiveTab(1)}
-          />
-          <Tab
-            icon={<IconUserPlus size={18} />}
-            iconPosition="start"
-            label="Upload Learners"
-            onClick={() => setActiveTab(2)}
-          />
-          <Tab
-            icon={<IconUsers size={18} />}
-            iconPosition="start"
-            label="Upload Teachers"
-            onClick={() => setActiveTab(3)}
-          />
+        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+          <Tab icon={<IconCalendar size={18} />} iconPosition="start" label="Set Calendar" />
+          <Tab icon={<IconBooks size={18} />} iconPosition="start" label="Set-Up Classes" />
+          <Tab icon={<IconUserPlus size={18} />} iconPosition="start" label="Upload Learners" />
+          <Tab icon={<IconUsers size={18} />} iconPosition="start" label="Upload Teachers" />
         </Tabs>
       </Box>
 
@@ -297,7 +156,7 @@ const CompleteSetup = () => {
         )}
         {activeTab === 2 && (
           <UploadLearnersTab onSaveAndContinue={() => {}} onLearnerAdded={fetchStats} />
-        )}{' '}
+        )}
         {activeTab === 3 && (
           <UploadTeachersTab onSaveAndContinue={() => {}} onTeacherAdded={fetchStats} />
         )}

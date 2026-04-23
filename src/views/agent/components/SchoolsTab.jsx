@@ -51,6 +51,7 @@ import {
   getSchools,
   approveProspectiveTenant,
   rejectProspectiveTenant,
+  updateSchool,
 } from '../../../context/AgentContext/services/school.service';
 import SchoolProfileModal from '../../../components/shared/SchoolProfileModal';
 import FilterSideDrawer from '../../../components/shared/FilterSideDrawer';
@@ -521,11 +522,13 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
 
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewProspect, setReviewProspect] = useState(null);
-  const [openAddModal, setOpenAddModal] = useState(false);
+   const [openAddModal, setOpenAddModal] = useState(false);
+   const [openEditModal, setOpenEditModal] = useState(false);
+   const [selectedSchool, setSelectedSchool] = useState(null);
 
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [activeRow, setActiveRow] = useState(null);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
+   const [anchorEl, setAnchorEl] = useState(null);
+   const [activeRow, setActiveRow] = useState(null);
+   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
@@ -600,6 +603,12 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const handleFilterReset = () => {
     setActiveFilters({});
     setPage(0);
+  };
+
+  const handleEdit = (school) => {
+    setSelectedSchool(school);
+    setOpenEditModal(true);
+    setAnchorEl(null);
   };
 
   useEffect(() => {
@@ -1120,7 +1129,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
         >
           View School Profile
         </MenuItem>
-        <MenuItem onClick={() => setAnchorEl(null)}>Edit Record</MenuItem>
+        <MenuItem onClick={() => handleEdit(activeRow)}>Edit Record</MenuItem>
         <MenuItem onClick={() => setAnchorEl(null)} sx={{ color: 'error.main' }}>
           Delete
         </MenuItem>
@@ -1157,6 +1166,27 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
           useProspective
         />
       </ReusableModal>
+
+      {/* Edit School Modal */}
+      <ReusableModal
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        title="Edit School"
+        size="large"
+      >
+        <RegisterSchoolForm
+          actionType="update"
+          selectedSchool={selectedSchool}
+          onSubmit={() => {
+            setOpenEditModal(false);
+            fetchProspects();
+            fetchSchools();
+          }}
+          onCancel={() => setOpenEditModal(false)}
+          useProspective={false}
+        />
+      </ReusableModal>
+
       <FilterSideDrawer
         open={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}

@@ -17,6 +17,7 @@ import {
   Typography,
   Snackbar,
   Alert,
+  useTheme,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -34,6 +35,8 @@ import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
 
 const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
@@ -290,7 +293,7 @@ const handleSaveLearner = async (data) => {
           size="small"
           sx={{ width: 300 }}
           InputProps={{
-            startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
+            startAdornment: <SearchIcon style={{ marginRight: 8, color: theme.palette.text.disabled }} />,
           }}
         />
       </Box>
@@ -318,7 +321,9 @@ const handleSaveLearner = async (data) => {
           <TableBody>
             {paginatedClasses.map((item, index) => {
               const isHighlighted = iconHovered === index || iconClicked === index;
-              const cellBg = isHighlighted ? '#fbe4e4' : '#f6f7f9';
+              const cellBg = isHighlighted
+                ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
+                : isDark ? 'action.hover' : '#f6f7f9';
 
               return (
                 <TableRow key={item.unique_key || index}>
@@ -354,21 +359,11 @@ const handleSaveLearner = async (data) => {
                         onChange={handleChange}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            backgroundColor: '#fff',
+                            backgroundColor: 'background.paper',
                             borderRadius: '8px',
-
-                            '& fieldset': {
-                              borderColor: '#e5e7eb',
-                            },
-
-                            '&:hover fieldset': {
-                              borderColor: '#cbd5e1',
-                            },
-
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#1976d2',
-                              borderWidth: '2px',
-                            },
+                            '& fieldset': { borderColor: 'divider' },
+                            '&:hover fieldset': { borderColor: 'text.disabled' },
+                            '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '2px' },
                           },
                         }}
                       />
@@ -406,8 +401,8 @@ const handleSaveLearner = async (data) => {
                       startIcon={<AddIcon />}
                       onClick={() => handleAddNewLearner(item)}
                       sx={{
-                        bgcolor: '#EDF3FF',
-                        color: '#000000',
+                        bgcolor: 'primary.light',
+                        color: 'primary.contrastText',
                       }}
                     >
                       Add New Learner

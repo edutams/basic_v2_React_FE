@@ -18,7 +18,7 @@ import {
   FormControlLabel,
   Radio,
 } from '@mui/material';
-import ColorSchemeSelector from './ColorSchemeSelector';
+// import ColorSchemeSelector from './ColorSchemeSelector';
 import PropTypes from 'prop-types';
 import {
   createSchool,
@@ -673,11 +673,11 @@ const RegisterSchoolForm = ({
         </Grid>
 
         {/* Color Scheme (update only) */}
-        {actionType === 'update' && (
+        {/* {actionType === 'update' && (
           <Grid item xs={12}>
             <ColorSchemeSelector formData={formData} onColorChange={handleColorChange} />
           </Grid>
-        )}
+        )} */}
       </Grid>
 
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

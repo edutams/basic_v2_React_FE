@@ -16,7 +16,7 @@ const MainWrapper = styled('div')(() => ({
   display: 'flex',
   minHeight: '100vh',
   width: '100%',
-  overflowX: 'auto', // Added for potential horizontal scrolling
+  overflowX: 'auto', 
 }));
 
 const PageWrapper = styled('div')(() => ({
@@ -26,7 +26,7 @@ const PageWrapper = styled('div')(() => ({
   flexDirection: 'column',
   zIndex: 1,
   backgroundColor: 'transparent',
-  overflowX: 'auto', // Added for potential horizontal scrolling
+  overflowX: 'auto', 
 }));
 
 const FullLayout = () => {
@@ -53,6 +53,7 @@ const FullLayout = () => {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
+            ...(activeLayout === 'vertical' && { paddingTop: '70px' }),
             ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),

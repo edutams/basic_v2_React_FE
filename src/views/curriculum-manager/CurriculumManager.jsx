@@ -187,6 +187,16 @@ const CurriculumManager = () => {
   const [selectedSubjectForMenu, setSelectedSubjectForMenu] = useState(null);
   const openSubjectMenu = Boolean(subjectAnchorEl);
 
+  // Menu state for Class Subject actions
+  const [classSubjectAnchorEl, setClassSubjectAnchorEl] = useState(null);
+  const [selectedClassSubjectForMenu, setSelectedClassSubjectForMenu] = useState(null);
+  const openClassSubjectMenu = Boolean(classSubjectAnchorEl);
+
+  // Menu state for Subject Group actions
+  const [subjectGroupAnchorEl, setSubjectGroupAnchorEl] = useState(null);
+  const [selectedSubjectGroupForMenu, setSelectedSubjectGroupForMenu] = useState(null);
+  const openSubjectGroupMenu = Boolean(subjectGroupAnchorEl);
+
   // Static data for other tabs
   const classes = [
     { id: 1, name: 'JSS1' },
@@ -704,6 +714,7 @@ const CurriculumManager = () => {
         showSnackbar(response.message || 'Curriculums imported successfully', 'success');
         handleCloseImportModal();
         loadCurriculums();
+        loadClassAssignments();
       } else {
         showSnackbar(response.message || 'Failed to import curriculums', 'error');
       }
@@ -791,6 +802,49 @@ const CurriculumManager = () => {
       handleOpenDeleteSubjectDialog(selectedSubjectForMenu);
     }
     handleCloseSubjectMenu();
+  };
+
+  // Class Subject Menu Handlers
+  const handleOpenClassSubjectMenu = (event, subject) => {
+    setClassSubjectAnchorEl(event.currentTarget);
+    setSelectedClassSubjectForMenu(subject);
+  };
+
+  const handleCloseClassSubjectMenu = () => {
+    setClassSubjectAnchorEl(null);
+    setSelectedClassSubjectForMenu(null);
+  };
+
+  const handleClassSubjectMenuEdit = () => {
+    if (selectedClassSubjectForMenu) {
+      handleOpenEditClassSubject(selectedClassSubjectForMenu);
+    }
+    handleCloseClassSubjectMenu();
+  };
+
+  // Subject Group Menu Handlers
+  const handleOpenSubjectGroupMenu = (event, group) => {
+    setSubjectGroupAnchorEl(event.currentTarget);
+    setSelectedSubjectGroupForMenu(group);
+  };
+
+  const handleCloseSubjectGroupMenu = () => {
+    setSubjectGroupAnchorEl(null);
+    setSelectedSubjectGroupForMenu(null);
+  };
+
+  const handleSubjectGroupMenuEdit = () => {
+    if (selectedSubjectGroupForMenu) {
+      handleOpenSubjectGroupModal(selectedSubjectGroupForMenu);
+    }
+    handleCloseSubjectGroupMenu();
+  };
+
+  const handleSubjectGroupMenuDelete = () => {
+    if (selectedSubjectGroupForMenu) {
+      handleDeleteSubjectGroup(selectedSubjectGroupForMenu.id, selectedSubjectGroupForMenu.programme_id);
+    }
+    handleCloseSubjectGroupMenu();
   };
 
   // Add Subject Modal Handlers
@@ -1050,7 +1104,7 @@ const CurriculumManager = () => {
                             <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
                               Curriculum Name
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '25%' }}>Status</TableCell>
                             <TableCell sx={{ fontWeight: 'bold', width: '17%' }}>
                               Imported
                             </TableCell>
@@ -1559,9 +1613,9 @@ const CurriculumManager = () => {
                                 <TableCell align="center">
                                   <IconButton
                                     size="small"
-                                    onClick={() => handleOpenEditClassSubject(item)}
+                                    onClick={(e) => handleOpenClassSubjectMenu(e, item)}
                                   >
-                                    <IconEdit size={16} />
+                                    <MoreVertIcon size={18} />
                                   </IconButton>
                                 </TableCell>
                               </TableRow>
@@ -1610,7 +1664,7 @@ const CurriculumManager = () => {
                             <TableCell width="30%">Subjects</TableCell>
                             <TableCell width="10%">Unit</TableCell>
                             <TableCell width="12%">Pass Mark</TableCell>
-                            <TableCell width="10%">Status</TableCell>
+                            <TableCell width="20%">Status</TableCell>
                             <TableCell width="8%" align="center">
                               Action
                             </TableCell>
@@ -1648,7 +1702,7 @@ const CurriculumManager = () => {
                                 <TableCell>{grp.pass_mark}</TableCell>
                                 <TableCell>
                                   <Chip
-                                    label={grp.status === 'active' ? 'Active' : 'Inactive'}
+                                    label={grp.status === 'active' ? 'active' : 'inactive'}
                                     size="small"
                                     sx={{
                                       bgcolor: grp.status === 'active' ? '#dcfce7' : '#fee2e2',
@@ -1657,24 +1711,15 @@ const CurriculumManager = () => {
                                   />
                                 </TableCell>
                                 <TableCell align="center">
-                                  <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleOpenSubjectGroupModal(grp)}
-                                    >
-                                      <IconEdit size={16} />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      sx={{ color: '#ef4444' }}
-                                      onClick={() =>
-                                        handleDeleteSubjectGroup(grp.id, grp.programme_id)
-                                      }
-                                    >
-                                      <IconTrash size={16} />
-                                    </IconButton>
-                                  </Box>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => handleOpenSubjectGroupMenu(e, grp)}
+                                  >
+                                    <MoreVertIcon size={18} />
+                                  </IconButton>
                                 </TableCell>
+
+
                               </TableRow>
                             ))
                           ) : (
@@ -2330,6 +2375,38 @@ const CurriculumManager = () => {
           Edit
         </MenuItem>
         <MenuItem onClick={handleSubjectMenuDelete} sx={{ color: 'error.main' }}>
+          <IconTrash size={18} style={{ marginRight: 8 }} />
+          Delete
+        </MenuItem>
+      </Menu>
+      {/* Class Subject Action Menu */}
+      <Menu
+        id="class-subject-menu"
+        anchorEl={classSubjectAnchorEl}
+        open={openClassSubjectMenu}
+        onClose={handleCloseClassSubjectMenu}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleClassSubjectMenuEdit}>
+          <IconEdit size={18} style={{ marginRight: 8 }} />
+          Edit
+        </MenuItem>
+      </Menu>
+      {/* Subject Group Action Menu */}
+      <Menu
+        id="subject-group-menu"
+        anchorEl={subjectGroupAnchorEl}
+        open={openSubjectGroupMenu}
+        onClose={handleCloseSubjectGroupMenu}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleSubjectGroupMenuEdit}>
+          <IconEdit size={18} style={{ marginRight: 8 }} />
+          Edit
+        </MenuItem>
+        <MenuItem onClick={handleSubjectGroupMenuDelete} sx={{ color: 'error.main' }}>
           <IconTrash size={18} style={{ marginRight: 8 }} />
           Delete
         </MenuItem>

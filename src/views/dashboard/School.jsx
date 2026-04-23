@@ -311,9 +311,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 </Typography>
               </Stack>
             )}
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-              Submitted: {formatDate(prospect.created_at)}
-            </Typography>
+           
           </Box>
         </Box>
 
@@ -347,6 +345,50 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             bgColor="#FFF7ED"
           />
         </Box>
+
+       <Box
+  sx={{
+    px: 3,
+    py: 1.5,
+    m: 3,
+    borderTop: '1px solid #f0f0f0',
+    bgcolor: '#EEF4FF',
+    borderLeft: '4px solid #3B82F6',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    borderRadius: 1,
+    gap: 1,
+  }}
+>
+  {/* LEFT */}
+  <Typography variant="body2">
+    <Box component="span" sx={{ fontWeight: 700 }}>
+      Submitted:
+    </Box>{' '}
+    <Box component="span" sx={{ color: '#6b7280' }}>
+      {formatDate(prospect.created_at)}
+    </Box>
+  </Typography>
+
+  {/* RIGHT */}
+  {prospect.approved_by && prospect.approved_at && (
+    <Typography variant="body2" sx={{ textAlign: 'right' }}>
+      <Box component="span" sx={{ fontWeight: 700 }}>
+        Approved by & Reviewed by:
+      </Box>{' '}
+      <Box component="span" sx={{ fontWeight: 600 }}>
+        {prospect.approved_by?.full_name ||
+          `${prospect.approved_by?.fname || ''} ${prospect.approved_by?.lname || ''}`.trim() ||
+          '—'}
+      </Box>{' '}
+      <Box component="span" sx={{ color: '#6b7280' }}>
+        at {formatDate(prospect.approved_at)}
+      </Box>
+    </Typography>
+  )}
+</Box>
 
         {prospect.rejection_reason && (
           <Box sx={{ px: 3, pb: 2 }}>
@@ -505,7 +547,7 @@ const ProspectRow = ({ row, index, onReview }) => {
       </TableCell>
       <TableCell>
         <Typography variant="caption" color="text.secondary">
-          {row?.approved_by?.full_name} at {formatDate(row.approved_at)}
+          {row?.approved_by?.full_name} Pending Approval {formatDate(row.approved_at)}
         </Typography>
       </TableCell>
       <TableCell>
@@ -580,30 +622,51 @@ const SchoolDashboard = () => {
   const fetchSchools = useCallback(async () => {
     setLoading(true);
     try {
+      console.log('📡 Fetching schools from API...');
       const data = await getSchools();
+      console.log('✅ Schools fetched successfully:', data);
       setSchoolList(
-        (data || []).map((t) => ({
-          id: t.id,
-          institutionName: t.tenant_name,
-          schoolUrl: t.domains?.[0]?.domain || '',
-          agent: t.organization?.organization_name || '',
-          agentEmail: t.organization?.organization_email || '',
-          agentImage: t.organization?.organization_logo || '',
-          schoolImage: t.image || t.logo || '',
-          contactName:
-            `${t.administrator_info?.school_spa?.admin_first_name || ''} ${t.administrator_info?.school_spa?.admin_last_name || ''}`.trim(),
-          contactEmail: t.administrator_info?.school_spa?.admin_email || t.tenant_email || '',
-          contactPhone: t.administrator_info?.school_spa?.admin_phone || '',
-          contactImage: t.administrator_info?.school_spa?.admin_image || '',
-          status: t.status,
-          approvedAt: t.approved_at,
-          approvedBy: t.approved_by?.full_name,
-          schoolDivisions: t.school_divisions?.map((d) => d.name) || [],
-          raw: t,
-        })),
+        (data || []).map((t) => {
+          // Parse school_divisions if it's a JSON string
+          let schoolDivisions = [];
+          if (t.school_divisions) {
+            if (typeof t.school_divisions === 'string') {
+              try {
+                schoolDivisions = JSON.parse(t.school_divisions);
+              } catch (e) {
+                schoolDivisions = [];
+              }
+            } else if (Array.isArray(t.school_divisions)) {
+              schoolDivisions = t.school_divisions;
+            }
+          }
+
+          return {
+            id: t.id,
+            institutionName: t.tenant_name,
+            schoolUrl: t.domains?.[0]?.domain || '',
+            agent: t.organization?.organization_name || '',
+            agentEmail: t.organization?.organization_email || '',
+            agentImage: t.organization?.organization_logo || '',
+            schoolImage: t.image || t.logo || '',
+            contactName:
+              `${t.administrator_info?.school_spa?.admin_first_name || ''} ${t.administrator_info?.school_spa?.admin_last_name || ''}`.trim(),
+            contactEmail: t.administrator_info?.school_spa?.admin_email || t.tenant_email || '',
+            contactPhone: t.administrator_info?.school_spa?.admin_phone || '',
+            contactImage: t.administrator_info?.school_spa?.admin_image || '',
+            status: t.status,
+            approvedAt: t.approved_at,
+            approvedBy: t.approved_by?.full_name,
+            schoolDivisions: Array.isArray(schoolDivisions) ? schoolDivisions.map((d) => (typeof d === 'object' ? d.name : d)) : [],
+            raw: t,
+          };
+        }),
       );
-    } catch {
-      notify('Failed to fetch schools', 'error');
+    } catch (error) {
+      console.error('❌ Error fetching schools:', error);
+      console.error('Error response:', error?.response?.data);
+      console.error('Error message:', error?.message);
+      notify('Failed to fetch schools: ' + (error?.response?.data?.message || error?.message), 'error');
     } finally {
       setLoading(false);
     }
@@ -1191,8 +1254,8 @@ const SchoolDashboard = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginate(filterByName(schoolList, 'institutionName')).length > 0 ? (
-                      paginate(filterByName(schoolList, 'institutionName')).map((row, i) => (
+                    {paginate(filterByName(schoolList.filter(s => s.status === 'approved' || s.status === 'active'), 'institutionName')).length > 0 ? (
+                      paginate(filterByName(schoolList.filter(s => s.status === 'approved' || s.status === 'active'), 'institutionName')).map((row, i) => (
                         <TableRow key={row.id} hover>
                           <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>
                             {page * rowsPerPage + i + 1}
@@ -1315,7 +1378,7 @@ const SchoolDashboard = () => {
                     <TableRow>
                       <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
-                        count={filterByName(schoolList, 'institutionName').length}
+                        count={filterByName(schoolList.filter(s => s.status === 'approved' || s.status === 'active'), 'institutionName').length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={(_, p) => setPage(p)}

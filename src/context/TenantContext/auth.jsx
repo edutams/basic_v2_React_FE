@@ -14,6 +14,7 @@ const defaultAuthState = {
   permissions: [],
   isImpersonated: false,
   impersonatorId: null,
+  tenantInfo: null,
 };
 
 export const TenantAuthProvider = ({ children }) => {
@@ -24,6 +25,7 @@ export const TenantAuthProvider = ({ children }) => {
   const [permissions, setPermissions] = useState(defaultAuthState.permissions);
   const [isImpersonated, setIsImpersonated] = useState(false);
   const [impersonatorId, setImpersonatorId] = useState(null);
+  const [tenantInfo, setTenantInfo] = useState(null);
 
   useEffect(() => {
     const restoreUser = async () => {
@@ -71,6 +73,8 @@ export const TenantAuthProvider = ({ children }) => {
     if (window.location.pathname === '/school-not-found') return;
     if (data.status === false) {
       window.location.replace('/school-not-found');
+    } else {
+      setTenantInfo(data);
     }
   };
 
@@ -195,6 +199,7 @@ export const TenantAuthProvider = ({ children }) => {
     isImpersonated,
     impersonatorId,
     stopImpersonation,
+    tenantInfo,
   };
 
   return (

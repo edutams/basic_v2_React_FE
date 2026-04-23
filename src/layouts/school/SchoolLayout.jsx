@@ -6,12 +6,10 @@ import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
 import Customizer from '../full/shared/customizer/Customizer';
 import DashboardFooter from '../../components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-import Navigation from './horizontal/navbar/Navigation';
-import HorizontalHeader from './horizontal/header/Header';
+// import Navigation from './horizontal/navbar/Navigation';
+// import HorizontalHeader from './horizontal/header/Header';
 import ScrollToTop from '../../components/shared/ScrollToTop';
 import LoadingBar from '../../LoadingBar';
-import DashboardFooter from '../../components/shared/DashboardFooter';
-import { CustomizerContext } from 'src/context/CustomizerContext';
 import config from 'src/context/config';
 
 const MainWrapper = styled('div')(() => ({

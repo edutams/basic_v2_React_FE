@@ -32,6 +32,7 @@ import {
   Avatar,
   Tooltip,
 } from '@mui/material';
+import Link from '@mui/material/Link';
 import { IconUserPlus, IconChartBar, IconEye } from '@tabler/icons-react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -311,7 +312,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 </Typography>
               </Stack>
             )}
-           
           </Box>
         </Box>
 
@@ -346,49 +346,49 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
           />
         </Box>
 
-       <Box
-  sx={{
-    px: 3,
-    py: 1.5,
-    m: 3,
-    borderTop: '1px solid #f0f0f0',
-    bgcolor: '#EEF4FF',
-    borderLeft: '4px solid #3B82F6',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    borderRadius: 1,
-    gap: 1,
-  }}
->
-  {/* LEFT */}
-  <Typography variant="body2">
-    <Box component="span" sx={{ fontWeight: 700 }}>
-      Submitted:
-    </Box>{' '}
-    <Box component="span" sx={{ color: '#6b7280' }}>
-      {formatDate(prospect.created_at)}
-    </Box>
-  </Typography>
+        <Box
+          sx={{
+            px: 3,
+            py: 1.5,
+            m: 3,
+            borderTop: '1px solid #f0f0f0',
+            bgcolor: '#EEF4FF',
+            borderLeft: '4px solid #3B82F6',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            borderRadius: 1,
+            gap: 1,
+          }}
+        >
+          {/* LEFT */}
+          <Typography variant="body2">
+            <Box component="span" sx={{ fontWeight: 700 }}>
+              Submitted:
+            </Box>{' '}
+            <Box component="span" sx={{ color: '#6b7280' }}>
+              {formatDate(prospect.created_at)}
+            </Box>
+          </Typography>
 
-  {/* RIGHT */}
-  {prospect.approved_by && prospect.approved_at && (
-    <Typography variant="body2" sx={{ textAlign: 'right' }}>
-      <Box component="span" sx={{ fontWeight: 700 }}>
-        Approved by & Reviewed by:
-      </Box>{' '}
-      <Box component="span" sx={{ fontWeight: 600 }}>
-        {prospect.approved_by?.full_name ||
-          `${prospect.approved_by?.fname || ''} ${prospect.approved_by?.lname || ''}`.trim() ||
-          '—'}
-      </Box>{' '}
-      <Box component="span" sx={{ color: '#6b7280' }}>
-        at {formatDate(prospect.approved_at)}
-      </Box>
-    </Typography>
-  )}
-</Box>
+          {/* RIGHT */}
+          {prospect.approved_by && prospect.approved_at && (
+            <Typography variant="body2" sx={{ textAlign: 'right' }}>
+              <Box component="span" sx={{ fontWeight: 700 }}>
+                Approved by & Reviewed by:
+              </Box>{' '}
+              <Box component="span" sx={{ fontWeight: 600 }}>
+                {prospect.approved_by?.full_name ||
+                  `${prospect.approved_by?.fname || ''} ${prospect.approved_by?.lname || ''}`.trim() ||
+                  '—'}
+              </Box>{' '}
+              <Box component="span" sx={{ color: '#6b7280' }}>
+                at {formatDate(prospect.approved_at)}
+              </Box>
+            </Typography>
+          )}
+        </Box>
 
         {prospect.rejection_reason && (
           <Box sx={{ px: 3, pb: 2 }}>
@@ -622,9 +622,9 @@ const SchoolDashboard = () => {
   const fetchSchools = useCallback(async () => {
     setLoading(true);
     try {
-      console.log('📡 Fetching schools from API...');
+      // console.log('Fetching schools from API...');
       const data = await getSchools();
-      console.log('✅ Schools fetched successfully:', data);
+      // console.log('Schools fetched successfully:', data);
       setSchoolList(
         (data || []).map((t) => {
           // Parse school_divisions if it's a JSON string
@@ -657,7 +657,9 @@ const SchoolDashboard = () => {
             status: t.status,
             approvedAt: t.approved_at,
             approvedBy: t.approved_by?.full_name,
-            schoolDivisions: Array.isArray(schoolDivisions) ? schoolDivisions.map((d) => (typeof d === 'object' ? d.name : d)) : [],
+            schoolDivisions: Array.isArray(schoolDivisions)
+              ? schoolDivisions.map((d) => (typeof d === 'object' ? d.name : d))
+              : [],
             raw: t,
           };
         }),
@@ -666,7 +668,10 @@ const SchoolDashboard = () => {
       console.error('❌ Error fetching schools:', error);
       console.error('Error response:', error?.response?.data);
       console.error('Error message:', error?.message);
-      notify('Failed to fetch schools: ' + (error?.response?.data?.message || error?.message), 'error');
+      notify(
+        'Failed to fetch schools: ' + (error?.response?.data?.message || error?.message),
+        'error',
+      );
     } finally {
       setLoading(false);
     }
@@ -1254,8 +1259,20 @@ const SchoolDashboard = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginate(filterByName(schoolList.filter(s => s.status === 'approved' || s.status === 'active'), 'institutionName')).length > 0 ? (
-                      paginate(filterByName(schoolList.filter(s => s.status === 'approved' || s.status === 'active'), 'institutionName')).map((row, i) => (
+                    {paginate(
+                      filterByName(
+                        schoolList.filter((s) => s.status === 'approved' || s.status === 'active'),
+                        'institutionName',
+                      ),
+                    ).length > 0 ? (
+                      paginate(
+                        filterByName(
+                          schoolList.filter(
+                            (s) => s.status === 'approved' || s.status === 'active',
+                          ),
+                          'institutionName',
+                        ),
+                      ).map((row, i) => (
                         <TableRow key={row.id} hover>
                           <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>
                             {page * rowsPerPage + i + 1}
@@ -1274,9 +1291,16 @@ const SchoolDashboard = () => {
                                 <Typography variant="subtitle2" fontWeight={700}>
                                   {row.institutionName}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  {row.schoolUrl}
-                                </Typography>
+                                <Link
+                                  href={row.schoolUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  underline="hover"
+                                >
+                                  <Typography variant="caption" color="text.secondary">
+                                    {row.schoolUrl}
+                                  </Typography>
+                                </Link>
                               </Box>
                             </Stack>
                           </TableCell>
@@ -1378,7 +1402,14 @@ const SchoolDashboard = () => {
                     <TableRow>
                       <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
-                        count={filterByName(schoolList.filter(s => s.status === 'approved' || s.status === 'active'), 'institutionName').length}
+                        count={
+                          filterByName(
+                            schoolList.filter(
+                              (s) => s.status === 'approved' || s.status === 'active',
+                            ),
+                            'institutionName',
+                          ).length
+                        }
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={(_, p) => setPage(p)}

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   IconButton,
   Box,
@@ -44,24 +44,65 @@ const SchoolHeader = () => {
   const theme = useTheme();
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
-    boxShadow: 'none',
-    background: theme.palette.background.paper,
+     boxShadow: 'none',
+    backgroundColor: theme.palette.background.paper,
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
+    zIndex: 1200,
+    // Account for sidebar width on large screens
     [theme.breakpoints.up('lg')]: {
       minHeight: TopbarHeight,
+      marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+    },
+    // On smaller screens, full width
+    [theme.breakpoints.down('lg')]: {
+      minHeight: TopbarHeight,
+      marginLeft: 0,
     },
   }));
 
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
-    width: '100%',
-    color: theme.palette.text.secondary,
-    maxWidth: isLayout === 'boxed' ? '1300px' : '100%!important',
+     width: '100%',
+    color: `${theme.palette.text.primary} !important`,
+    paddingLeft: '288px !important', 
+    paddingRight: '16px !important',
+    // On smaller screens, reduce padding
+    [theme.breakpoints.down('lg')]: {
+      paddingLeft: '18px !important',
+    },
   }));
 
+  const CollpaseMenubar = styled(Box)(({ theme }) => ({
+    position: 'absolute',
+    left: '4px',
+    top: '4px',
+    right: '4px',
+    padding: '7px 15px',
+    background: theme.palette.background.paper,
+    border: `1px solid ${borderColor}`,
+    zIndex: 1,
+    borderRadius: '7px',
+  }));
+
+  const [isVisible, setIsVisible] = useState(false);
+
   return (
-    <AppBarStyled position="sticky" color="default">
-      <ToolbarStyled>
+    <AppBarStyled
+     position="fixed" 
+     color="default"
+      sx={{
+        ...(lgUp && {
+          marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+        }),
+      }}
+     >
+      <ToolbarStyled
+      sx={{
+          paddingLeft: lgUp 
+            ? `${(isCollapse === 'mini-sidebar' ? config.miniSidebarWidth : config.sidebarWidth) + 18}px !important`
+            : '18px !important',
+        }}
+      >
         <IconButton
           color="inherit"
           aria-label="menu"
@@ -180,6 +221,21 @@ const SchoolHeader = () => {
           {/* <Language /> */}
           <Notifications />
           <Profile />
+
+          {isVisible && (
+            <CollpaseMenubar>
+              <Stack direction="row" justifyContent="space-between" spacing={1}>
+                <Box display="flex" gap={1}>
+                  <Notifications />
+                  <Language />
+                  <Search />
+                </Box>
+                <IconButton color="inherit" onClick={() => setIsVisible(!isVisible)}>
+                  <IconX size="21" />
+                </IconButton>
+              </Stack>
+            </CollpaseMenubar>
+          )}
         </Stack>
       </ToolbarStyled>
     </AppBarStyled>

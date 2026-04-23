@@ -36,9 +36,9 @@ const SchoolHeader = () => {
 
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
   const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || null;
-  const academicSession = tenantInfo?.academic_session ?? 'No Active Session';
-  const academicTerm = tenantInfo?.academic_term ?? 'No active term';
-  const academicWeek = tenantInfo?.academic_week ?? 'No active week';
+  const academicSession = tenantInfo?.academic_session ?? null;
+  const academicTerm = tenantInfo?.academic_term ?? null;
+  const academicWeek = tenantInfo?.academic_week ?? null;
 
   const TopbarHeight = config.topbarHeight;
   const theme = useTheme();
@@ -187,7 +187,7 @@ const SchoolHeader = () => {
 
         <Box flexGrow={1} />
 
-        {(academicSession || academicTerm || academicWeek) && (
+        {tenantInfo && (
           <Box sx={{ mr: 2, display: { xs: 'none', md: 'block' } }}>
             <Stack spacing={0} sx={{ lineHeight: 1.2 }}>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
@@ -203,7 +203,7 @@ const SchoolHeader = () => {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {academicSession} | {academicTerm} | {academicWeek}
+                {academicSession || 'No Active Session'} | {academicTerm || 'No active term'} | {academicWeek || 'No active week'}
               </Typography>
             </Stack>
           </Box>

@@ -485,11 +485,24 @@ const thSx = {
 
 const ProspectRow = ({ row, index, onReview }) => {
   const spa = getSpaContact(row);
-  const agent = row.agent; // ProspectiveTenant relation is named 'agent'
+  const agent = row.agent; 
   // prospective domain URL
-  const prospectiveDomain = agent?.organization_domain
-    ? `${row.tenant_short_name}.${agent.organization_domain}`
-    : row.tenant_short_name;
+  // const prospectiveDomain = agent?.organization_domain
+  //   ? `${row.tenant_short_name}.${agent.organization_domain}`
+  //   : row.tenant_short_name;
+const sanitize = (str) =>
+  str
+    ?.toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')        
+    .replace(/[^a-z0-9.-]/g, ''); 
+
+const domainHost = agent?.organization_domain
+  ? `${sanitize(row.tenant_short_name)}.${sanitize(agent.organization_domain)}`
+  : sanitize(row.tenant_short_name) || '';
+
+const prospectiveUrl = domainHost ? `https://${domainHost}` : null;
+    
   return (
     <TableRow hover>
       <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{index}</TableCell>
@@ -502,12 +515,9 @@ const ProspectRow = ({ row, index, onReview }) => {
             <Typography variant="subtitle2" fontWeight={700}>
               {row.tenant_name}
             </Typography>
-            {/* <Typography variant="caption" color="text.secondary">
-              domain: 
-            </Typography> */}
-            <Link href={prospectiveDomain} target="_blank" rel="noopener noreferrer" underline="hover">
+            <Link href={prospectiveUrl} target="_blank" rel="noopener noreferrer" underline="hover">
               <Typography variant="caption" color="text.secondary">
-                {prospectiveDomain}
+                {prospectiveUrl || 'No domain available'}
               </Typography>
             </Link>
           </Box>
@@ -653,7 +663,9 @@ const SchoolDashboard = () => {
           return {
             id: t.id,
             institutionName: t.tenant_name,
-            schoolUrl: t.domains?.[0]?.domain || '',
+            schoolUrl: t.domains?.[0]?.domain
+              ? `https://${t.domains[0].domain}`
+              : '',
             agent: t.organization?.organization_name || '',
             agentEmail: t.organization?.organization_email || '',
             agentImage: t.organization?.organization_logo || '',

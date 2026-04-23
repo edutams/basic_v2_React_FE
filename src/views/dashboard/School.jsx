@@ -485,7 +485,11 @@ const thSx = {
 
 const ProspectRow = ({ row, index, onReview }) => {
   const spa = getSpaContact(row);
-  const org = row.agent; // ProspectiveTenant relation is named 'agent'
+  const agent = row.agent; // ProspectiveTenant relation is named 'agent'
+  // prospective domain URL
+  const prospectiveDomain = agent?.organization_domain
+    ? `${row.tenant_short_name}.${agent.organization_domain}`
+    : row.tenant_short_name;
   return (
     <TableRow hover>
       <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{index}</TableCell>
@@ -498,9 +502,14 @@ const ProspectRow = ({ row, index, onReview }) => {
             <Typography variant="subtitle2" fontWeight={700}>
               {row.tenant_name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {row.tenant_short_name}
-            </Typography>
+            {/* <Typography variant="caption" color="text.secondary">
+              domain: 
+            </Typography> */}
+            <Link href={prospectiveDomain} target="_blank" rel="noopener noreferrer" underline="hover">
+              <Typography variant="caption" color="text.secondary">
+                {prospectiveDomain}
+              </Typography>
+            </Link>
           </Box>
         </Stack>
       </TableCell>
@@ -525,17 +534,17 @@ const ProspectRow = ({ row, index, onReview }) => {
       <TableCell>
         <Stack direction="row" spacing={1} alignItems="center">
           <Avatar
-            src={org?.organization_logo || org?.logo}
+            src={agent?.organization_logo || agent?.logo}
             sx={{ width: 44, height: 44, bgcolor: '#E7E9EB' }}
           >
-            {!org?.organization_logo && !org?.logo && <BusinessIcon sx={{ color: '#000' }} />}
+            {!agent?.organization_logo && !agent?.logo && <BusinessIcon sx={{ color: '#000' }} />}
           </Avatar>
           <Box>
             <Typography variant="caption" fontWeight={600} display="block">
-              {org?.organization_name || org?.org_name || '—'}
+              {agent?.organization_name || agent?.org_name || '—'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {org?.organization_email || org?.email || ''}
+              {agent?.organization_email || agent?.email || ''}
             </Typography>
           </Box>
         </Stack>

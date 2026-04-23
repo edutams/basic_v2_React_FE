@@ -419,6 +419,10 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 const ProspectRow = ({ row, index, onReview }) => {
   const spa = getSpaContact(row);
   const agent = row.agent;
+  // prospective domain URL
+  const prospectiveDomain = agent?.organization_domain
+    ? `${row.tenant_short_name}.${agent.organization_domain}`
+    : row.tenant_short_name;
   return (
     <TableRow hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
       <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{index}</TableCell>
@@ -432,7 +436,7 @@ const ProspectRow = ({ row, index, onReview }) => {
               {row.tenant_name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {row.tenant_short_name}
+              domain: {prospectiveDomain}
             </Typography>
           </Box>
         </Stack>
@@ -586,6 +590,11 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const handleFilterApply = (filterValues) => {
     setActiveFilters(filterValues);
     setPage(0); // Reset to first page when filters change
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+    setPage(0);
   };
 
   useEffect(() => {

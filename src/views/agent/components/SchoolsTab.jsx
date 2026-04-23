@@ -592,7 +592,12 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   }, [organizationId]);
   const handleFilterApply = (filterValues) => {
     setActiveFilters(filterValues);
-    setPage(0); // Reset to first page when filters change
+    setPage(0);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+    setPage(0);
   };
 
   const handleFilterReset = () => {

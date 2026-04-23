@@ -11,6 +11,9 @@ import {
   IconTimeline,
   IconListCheck,
   IconCalendar,
+  IconBooks,
+  IconBuildingSchool,
+  IconNotebook,
 } from '@tabler/icons-react';
 
 const SchoolMenuItems = [
@@ -64,6 +67,38 @@ const SchoolMenuItems = [
         id: uniqueId(),
         title: 'Scheme Of Work',
         icon: IconUsers,
+        href: '/scheme-of-work',
+      },
+    ],
+  },
+
+  {
+    id: uniqueId(),
+    title: 'Curriculum Manager',
+    icon: IconBooks,
+    children: [
+      {
+        id: uniqueId(),
+        title: 'Calendar',
+        icon: IconCalendar,
+        href: '/calendar',
+      },
+      {
+        id: uniqueId(),
+        title: 'Curriculum Manager',
+        icon: IconBooks,
+        href: '/curriculum-manager',
+      },
+      {
+        id: uniqueId(),
+        title: 'Class Structure',
+        icon: IconBuildingSchool,
+        href: '/class-structure-manager',
+      },
+      {
+        id: uniqueId(),
+        title: 'Scheme Of Work',
+        icon: IconNotebook,
         href: '/scheme-of-work',
       },
     ],

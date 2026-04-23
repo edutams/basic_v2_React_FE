@@ -127,7 +127,7 @@ const SchoolInformationPage = () => {
           <Typography fontWeight={700} fontSize={20}>
             School Information
           </Typography>
-          <Typography fontSize={13} color="#8A8D91">
+          <Typography fontSize={13} color="text.secondary">
             Register your school and set up administrative accounts
           </Typography>
         </Box>
@@ -136,12 +136,13 @@ const SchoolInformationPage = () => {
           sx={{
             px: 2,
             py: 1,
-            bgcolor: 'white',
+            bgcolor: 'background.paper',
             display: 'flex',
             alignItems: 'center',
             gap: 1,
             cursor: 'pointer',
             boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
+            borderRadius: 1,
           }}
         >
           <IconVideo size={20} />
@@ -151,7 +152,7 @@ const SchoolInformationPage = () => {
       </Box>
 
       <Card sx={{ mb: 2 }}>
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#F9F9F9' }}>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: 'action.hover' }}>
           <Typography fontWeight={600}>School Details</Typography>
         </Box>
 
@@ -170,8 +171,9 @@ const SchoolInformationPage = () => {
                 width: 110,
                 height: 110,
                 mx: 'auto',
-                bgcolor: '#f5f5f5',
-                border: '1px solid #e0e0e0',
+                bgcolor: 'action.hover',
+                border: '1px solid',
+                borderColor: 'divider',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
@@ -184,11 +186,10 @@ const SchoolInformationPage = () => {
               {!logo && (
                 <>
                   <IconSchool size={40} color="#9e9e9e" />
-
                   <Typography
                     sx={{
                       fontSize: 10,
-                      color: '#8A8D91',
+                      color: 'text.secondary',
                       textAlign: 'center',
                       lineHeight: 1,
                     }}
@@ -219,7 +220,7 @@ const SchoolInformationPage = () => {
       </Card>
 
       <Card>
-        <Box sx={{ px: 3, py: 1.5, bgcolor: '#f5f5f5' }}>
+        <Box sx={{ px: 3, py: 1.5, bgcolor: 'action.hover' }}>
           <Typography fontWeight={600}>Administrative Accounts</Typography>
         </Box>
 
@@ -234,11 +235,10 @@ const SchoolInformationPage = () => {
                   flex: '1 1 300px',
                   p: 2,
                   borderRadius: 2,
-                  bgcolor: 'white',
+                  bgcolor: 'background.paper',
                   boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
-
                   '&:hover': {
                     transform: 'translateY(-6px)',
                     boxShadow: '0px 12px 28px rgba(0,0,0,0.18)',

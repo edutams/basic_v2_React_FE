@@ -112,6 +112,7 @@ function SessionsPanel({ isLevel1 }) {
   const [selectedSession, setSelectedSession] = useState(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
+  const [submitting, setSubmitting] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -223,6 +224,7 @@ function SessionsPanel({ isLevel1 }) {
   const handleSubmit = async () => {
     if (!validate()) return;
     try {
+      setSubmitting(true);
       if (editTarget) {
         await agentApi.put(`/landlord/v1/calendar/sessions/${editTarget.id}`, form);
         notify.success('Session updated');
@@ -236,6 +238,8 @@ function SessionsPanel({ isLevel1 }) {
       const serverErrors = err.response?.data?.errors || {};
       if (Object.keys(serverErrors).length) setErrors(serverErrors);
       else notify.error(err.response?.data?.message || 'Failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -504,8 +508,8 @@ function SessionsPanel({ isLevel1 }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            {editTarget ? 'Save Changes' : 'Create Session'}
+          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} /> : editTarget ? 'Save Changes' : 'Create Session'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -538,6 +542,7 @@ function TermsPanel({ isLevel1 }) {
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
+  const [submitting, setSubmitting] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -635,6 +640,7 @@ function TermsPanel({ isLevel1 }) {
   const handleSubmit = async () => {
     if (!validate()) return;
     try {
+      setSubmitting(true);
       if (editTarget) {
         await agentApi.put(`/landlord/v1/calendar/terms/${editTarget.id}`, form);
         notify.success('Term updated');
@@ -648,6 +654,8 @@ function TermsPanel({ isLevel1 }) {
       const serverErrors = err.response?.data?.errors || {};
       if (Object.keys(serverErrors).length) setErrors(serverErrors);
       else notify.error(err.response?.data?.message || 'Failed');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -857,8 +865,8 @@ function TermsPanel({ isLevel1 }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            {editTarget ? 'Save Changes' : 'Create Term'}
+          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} /> : editTarget ? 'Save Changes' : 'Create Term'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -890,6 +898,7 @@ function MappingsPanel() {
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMapping, setSelectedMapping] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -956,6 +965,7 @@ function MappingsPanel() {
   const handleSubmit = async () => {
     if (!validate()) return;
     try {
+      setSubmitting(true);
       await agentApi.post('/landlord/v1/calendar/mappings', form);
       notify.success('Mapping saved');
       setDialogOpen(false);
@@ -964,6 +974,8 @@ function MappingsPanel() {
       fetchAll();
     } catch (err) {
       notify.error(err.response?.data?.message || 'Failed to save mapping');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1189,8 +1201,8 @@ function MappingsPanel() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit}>
-            Save Mapping
+          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} /> : 'Save Mapping'}
           </Button>
         </DialogActions>
       </Dialog>

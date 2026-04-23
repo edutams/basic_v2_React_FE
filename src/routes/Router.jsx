@@ -6,7 +6,8 @@ import { validateTenantDomain } from '../context/TenantContext/services/tenant.s
 const hostname = window.location.hostname;
 const data = await validateTenantDomain(hostname);
 
-const Router = data?.status === false ? AgentRoutes : TenantRoutes;
+const isTenant = data?.status === true;
+const Router = isTenant ? TenantRoutes : AgentRoutes;
 
 const router = createBrowserRouter(Router);
 

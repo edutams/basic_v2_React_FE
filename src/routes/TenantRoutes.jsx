@@ -101,7 +101,7 @@ const TenantRoutes = [
       },
       { path: 'activity-logs', element: <ActivityLog /> },
       { path: 'calendar', element: <CalendarPage /> },
-      { path: 'pages/account-settings', element: <AccountSetting /> },
+      { path: 'profile', element: <AccountSetting /> },
     ],
   },
   { path: '*', element: <Navigate to="/login" replace /> }, // ← Catch-all at top level

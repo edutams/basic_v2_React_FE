@@ -739,53 +739,25 @@ const Agent = () => {
               borderRadius: 1,
               px: 3,
               py: 1,
-              // width: '50%',
-              // maxWidth: 250,
               display: 'inline-flex',
               alignItems: 'center',
               mb: 4,
             }}
           >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#2CA87F',
-              }}
-            >
-              {schoolSummary.total}
+            <Typography sx={{ fontSize: 20, fontWeight: 700, color: '#2CA87F' }}>
+              {analytics.totalSchools ?? 0}
             </Typography>
           </Box>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Active School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{schoolSummary.active}</Typography>
+              <Typography variant="h6" color="text.primary">Active School</Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{analytics.activeSchools ?? 0}</Typography>
             </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: '#E5E7EB',
-              }}
-            />
-
+            <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
             <Box>
-              <Typography variant="h6" color="text.primary">
-                Inactive School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                {schoolSummary.inactive}
-              </Typography>
+              <Typography variant="h6" color="text.primary">Pending School</Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{analytics.pendingSchools ?? 0}</Typography>
             </Box>
           </Box>
         </Paper>
@@ -922,19 +894,12 @@ const Agent = () => {
             </Box>
           </Box>
 
-          <Box
-            sx={{
-              px: 3,
-              // py: 1,
-              mt: 1,
-            }}
-          >
-            {[
-              { label: 'Teacher:', value: 0 },
-              { label: 'SPA', value: 0 },
-              { label: 'Student', value: 0 },
-              { label: 'Parent', value: 0 },
-            ].map((item, index) => (
+          <Box sx={{ px: 3, mt: 1 }}>
+            {(analytics.loginActivities ?? [
+              { label: 'Teachers', value: 0 },
+              { label: 'Agents',   value: 0 },
+              { label: 'Total',    value: 0 },
+            ]).map((item, index) => (
               <Box
                 key={index}
                 sx={{
@@ -944,16 +909,8 @@ const Agent = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant="h5" color="text.primary">
-                  {item.label}
-                </Typography>
-
-                <Typography
-                  variant="h5"
-                  sx={{
-                    color: theme.palette.error.main,
-                  }}
-                >
+                <Typography variant="h5" color="text.primary">{item.label}</Typography>
+                <Typography variant="h5" sx={{ color: theme.palette.error.main }}>
                   {item.value}
                 </Typography>
               </Box>

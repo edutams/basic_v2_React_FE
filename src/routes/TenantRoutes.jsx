@@ -64,47 +64,33 @@ const TenantRoutes = [
       </TenantProtectedRoute>
     ),
     children: [
-      {
-        index: true,
-        element: <SchoolDashboardMain />,
-      },
-      {
-        path: 'initial-setup',
-        element: <InitialSetup />,
-      },
-      {
-        path: 'complete-setup',
-        element: <CompleteSetup />,
-      },
-      {
-        path: 'session-week-manager',
-        element: <SessionWeekManager />,
-      },
+      { index: true, element: <SchoolDashboardMain /> },
+
+      { path: 'initial-setup', element: <InitialSetup /> },
+      { path: 'complete-setup', element: <CompleteSetup /> },
+
+      { path: 'acl-manager', element: <AlcManager /> },
+
+      { path: 'curriculum-setup', element: <CurriculumManager /> },
+
       { path: 'scheme-of-work', element: <SchemeOfWork /> },
       { path: 'scheme-of-work/view/:id', element: <ViewSchemeDetails api={tenantSchemeApi} /> },
-      {
-        path: 'curriculum-manager',
-        element: <CurriculumManager />,
-      },
-      {
-        path: 'class-structure-manager',
-        element: <ClassStructureManager />,
-      },
-      {
-        path: 'manage-subscription',
-        element: <SubscriptionIndex />,
-      },
+
+      { path: 'class-structure-manager', element: <ClassStructureManager /> },
+
+      { path: 'manage-subscription', element: <SubscriptionIndex /> },
       { path: 'subscription-history', element: <SubscriptionIndex /> },
-      {
-        path: 'alc-manager',
-        element: <AlcManager />,
-      },
+
+      { path: 'session-week-manager', element: <SessionWeekManager /> },
+
+      { path: 'school-calendar', element: <CalendarPage /> },
+
       { path: 'activity-logs', element: <ActivityLog /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'profile', element: <AccountSetting /> },
     ],
   },
-  { path: '*', element: <Navigate to="/login" replace /> }, // ← Catch-all at top level
+  { path: '*', element: <Navigate to="/login" replace /> },
 ];
 
 export default TenantRoutes;

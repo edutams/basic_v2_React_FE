@@ -76,25 +76,7 @@ const SchoolSidebarItems = () => {
               : null,
         }));
 
-        setMenuItems([
-          { navlabel: true, subheader: 'School Dashboard' },
-          {
-            id: 'initial-setup',
-            title: 'Initial Setup',
-            icon: IconListCheck,
-            href: '/initial-setup',
-            permission: null,
-          },
-          {
-            id: 'complete-setup',
-            title: 'Complete Setup',
-            icon: IconListCheck,
-            href: '/complete-setup',
-            permission: null,
-          },
-          { navlabel: true, subheader: 'Modules' },
-          ...formattedMenu,
-        ]);
+        setMenuItems([{ navlabel: true, subheader: 'Modules' }, ...formattedMenu]);
       } catch (error) {
         console.error('Error fetching school sidebar modules:', error);
       }

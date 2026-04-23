@@ -99,6 +99,24 @@ export default function Dashboard() {
   const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
   const [selectedSchoolForUsers] = useState('');
 
+  // Analytics state
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await agentApi.getAnalytics();
+        if (res.status) setAnalytics(res.data);
+      } catch (e) {
+        console.error('Failed to fetch analytics', e);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, []);
+
   // Table filter states
   const [searchName, setSearchName] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
@@ -314,12 +332,12 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total School"
-              value="459"
+              value={analyticsLoading ? '...' : String(analytics?.totalSchools ?? 0)}
               valueColor="#4a3aff"
               valueBg={isDark ? '#1e2a4a' : '#EEF2FF'}
               subStats={[
-                { label: 'Primary School', value: '300' },
-                { label: 'Senior Secondary', value: '30' },
+                { label: 'Active', value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0) },
+                { label: 'Pending', value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0) },
               ]}
               onIconClick={() => setIsSchoolModalOpen(true)}
               onClick={() => setIsSchoolModalOpen(true)}
@@ -344,14 +362,14 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total Sub Agents"
-              value="32"
+              value={analyticsLoading ? '...' : String(analytics?.totalSubAgents ?? 0)}
               valueColor="#f59e0b"
               valueBg={isDark ? '#2e1e00' : '#FEF3C7'}
               subStats={[
-                { label: 'Lv2', value: '35' },
-                { label: 'Lv3', value: '32' },
-                { label: 'Lv4', value: '21' },
-                { label: 'Lv5', value: '43' },
+                { label: 'Lv2', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv2 ?? 0) },
+                { label: 'Lv3', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv3 ?? 0) },
+                { label: 'Lv4', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv4 ?? 0) },
+                { label: 'Lv5', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv5 ?? 0) },
               ]}
               onIconClick={() => setIsSubAgentModalOpen(true)}
               onClick={() => setIsSubAgentModalOpen(true)}
@@ -409,8 +427,11 @@ export default function Dashboard() {
 
           <Grid size={{ xs: 12, lg: 3 }}>
             <LoginActivitiesCard
-              title="Login Activities"
-              activities={loginActivities}
+              title="Login Activities (30 days)"
+              activities={analyticsLoading
+                ? [{ label: 'Loading...', value: '...' }]
+                : (analytics?.loginActivities ?? loginActivities)
+              }
               onIconClick={() => setIsLoggedInUsersModalOpen(true)}
             />
           </Grid>

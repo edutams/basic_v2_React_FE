@@ -244,12 +244,13 @@ const TeacherForm = ({
         sx={{
           mb: 3,
           p: 1,
-          bgcolor: '#fff3e0',
+          bgcolor: 'action.hover',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 2,
+          borderRadius: 1,
         }}
       >
         <Typography variant="body1" sx={{ fontWeight: 500 }}>

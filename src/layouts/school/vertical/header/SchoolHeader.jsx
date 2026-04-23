@@ -11,7 +11,7 @@ import {
   Typography,
   Avatar,
 } from '@mui/material';
-import { IconMenu2, IconMoon, IconSun, IconArrowLeft } from '@tabler/icons-react';
+import { IconMenu2, IconMoon, IconSun, IconArrowLeft, IconSchool } from '@tabler/icons-react';
 import config from 'src/context/config';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
@@ -36,9 +36,9 @@ const SchoolHeader = () => {
 
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
   const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || null;
-  const academicSession = tenantInfo?.academic_session ?? 'No Active Session';
-  const academicTerm = tenantInfo?.academic_term ?? 'No active term';
-  const academicWeek = tenantInfo?.academic_week ?? 'No active week';
+  const academicSession = tenantInfo?.academic_session ?? null;
+  const academicTerm = tenantInfo?.academic_term ?? null;
+  const academicWeek = tenantInfo?.academic_week ?? null;
 
   const TopbarHeight = config.topbarHeight;
   const theme = useTheme();
@@ -122,35 +122,37 @@ const SchoolHeader = () => {
         {lgUp ? (
           <Stack direction="row" spacing={2} alignItems="center">
             <Search />
-            {(schoolLogo || schoolName || academicSession) && (
+            {tenantInfo && (
               <Stack direction="column" spacing={0.5} alignItems="flex-start">
-                {(schoolLogo || schoolName) && (
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    {schoolLogo && (
-                      <Avatar
-                        src={schoolLogo}
-                        alt={schoolName || 'School Logo'}
-                        variant="rounded"
-                        sx={{ width: 36, height: 36 }}
-                      />
-                    )}
-                    {schoolName && (
-                      <Typography
-                        variant="h6"
-                        fontWeight={600}
-                        sx={{
-                          color: 'text.primary',
-                          display: { xs: 'none', sm: 'block' },
-                          whiteSpace: 'normal',
-                          wordBreak: 'break-word',
-                          maxWidth: 200,
-                        }}
-                      >
-                        {schoolName}
-                      </Typography>
-                    )}
-                  </Stack>
-                )}
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Avatar
+                    src={schoolLogo || undefined}
+                    alt={schoolName || 'School Logo'}
+                    variant="rounded"
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      bgcolor: schoolLogo ? 'transparent' : 'grey.200',
+                    }}
+                  >
+                    {!schoolLogo && <IconSchool size={22} color="#9e9e9e" />}
+                  </Avatar>
+                  {schoolName && (
+                    <Typography
+                      variant="h6"
+                      fontWeight={600}
+                      sx={{
+                        color: 'text.primary',
+                        display: { xs: 'none', sm: 'block' },
+                        whiteSpace: 'normal',
+                        wordBreak: 'break-word',
+                        maxWidth: 200,
+                      }}
+                    >
+                      {schoolName}
+                    </Typography>
+                  )}
+                </Stack>
               </Stack>
             )}
           </Stack>
@@ -187,7 +189,7 @@ const SchoolHeader = () => {
 
         <Box flexGrow={1} />
 
-        {(academicSession || academicTerm || academicWeek) && (
+        {tenantInfo && (
           <Box sx={{ mr: 2, display: { xs: 'none', md: 'block' } }}>
             <Stack spacing={0} sx={{ lineHeight: 1.2 }}>
               <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
@@ -203,7 +205,7 @@ const SchoolHeader = () => {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {academicSession} | {academicTerm} | {academicWeek}
+                {academicSession || 'No Active Session'} | {academicTerm || 'No active term'} | {academicWeek || 'No active week'}
               </Typography>
             </Stack>
           </Box>

@@ -22,6 +22,7 @@ import {
   DialogActions,
   Snackbar,
   Alert,
+  useTheme,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -43,6 +44,7 @@ import {
 } from '../../../context/TenantContext/services/tenant.service';
 
 const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
+  const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -357,7 +359,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
           size="small"
           sx={{ width: 300 }}
           InputProps={{
-            startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
+            startAdornment: <SearchIcon style={{ marginRight: 8, color: theme.palette.text.disabled }} />,
           }}
         />
 
@@ -366,14 +368,6 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadTemplate}
-            sx={{
-              borderColor: '#e5e7eb',
-              color: '#374151',
-              '&:hover': {
-                bgcolor: 'primary',
-                color: '#fffff',
-              },
-            }}
           >
             Download Template
           </Button>
@@ -381,14 +375,6 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
             variant="outlined"
             startIcon={<UploadIcon />}
             onClick={handleUploadClick}
-            sx={{
-              borderColor: '#e5e7eb',
-              color: '#374151',
-              '&:hover': {
-                bgcolor: 'primary',
-                color: '#fffff',
-              },
-            }}
           >
             Upload
           </Button>
@@ -436,7 +422,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
                     <TableCell>{teacher.first_name}</TableCell>
                     <TableCell>{teacher.phone}</TableCell>
                     <TableCell>{teacher.gender}</TableCell>
-                    <TableCell sx={{ color: '#1976d2' }}>{teacher.email}</TableCell>
+                    <TableCell sx={{ color: 'primary.main' }}>{teacher.email}</TableCell>
                     <TableCell>{teacher.arm}</TableCell>
                     <TableCell align="center">
                       <IconButton onClick={(e) => handleMenuOpen(e, teacher)}>

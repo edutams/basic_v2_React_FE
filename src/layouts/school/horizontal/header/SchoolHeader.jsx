@@ -28,7 +28,7 @@ import Search from '../../../full/vertical/header/Search';
 import Language from '../../../full/vertical/header/Language';
 import Notifications from '../../../full/vertical/header/Notification';
 import Profile from '../../../full/vertical/header/Profile';
-import SchoolNavigation from './SchoolNavigation';
+// import SchoolNavigation from './SchoolNavigation';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 
 const SchoolHeader = () => {

@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router';
 import { Box, Typography, Button, Avatar, TextField, Stack, Divider, Card } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
 import { getFullImageUrl } from '../../helpers/ImageHelper';
+import { TenantAuthContext } from '../../context/TenantContext/auth';
 
 // Helper function to format school type from simple string
 const formatSchoolType = (schoolType) => {
   if (!schoolType) return '';
 
-  // Handle simple string values
   if (schoolType === 'primary') return 'Primary';
   if (schoolType === 'secondary') return 'Secondary';
 
@@ -18,6 +18,7 @@ const formatSchoolType = (schoolType) => {
 
 const SchoolInformationPage = () => {
   const navigate = useNavigate();
+  const { refreshTenantInfo } = useContext(TenantAuthContext);
   const [tenantData, setTenantData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState(null);
@@ -65,7 +66,6 @@ const SchoolInformationPage = () => {
         };
 
         setTenantData(formattedData);
-        // Convert relative logo path to full URL using ImageHelper
         const fullLogoUrl = getFullImageUrl(d.school_logo);
         setLogo(fullLogoUrl);
         setOriginalLogo(fullLogoUrl);
@@ -94,14 +94,13 @@ const SchoolInformationPage = () => {
   const handleSaveAndContinue = async () => {
     setSaving(true);
     try {
-      // If there's a new logo file, upload it
       if (logoFile) {
         const formData = new FormData();
         formData.append('school_logo', logoFile);
         const res = await updateSchoolLogo(formData);
-        // Update the logo state with the returned path (converted to full URL)
         if (res.data?.school_logo) {
           setLogo(getFullImageUrl(res.data.school_logo));
+          refreshTenantInfo();
         }
       }
       navigate('/complete-setup');
@@ -112,7 +111,6 @@ const SchoolInformationPage = () => {
     }
   };
 
-  // Determine if button should be disabled
   // Button is enabled if there's an original logo OR a new logo file has been uploaded
   const isButtonDisabled = !originalLogo && !logoFile;
 

@@ -6,7 +6,12 @@ import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
 import Customizer from '../full/shared/customizer/Customizer';
 import DashboardFooter from '../../components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-// import LoadingBar from '../../LoadingBar';
+import Navigation from './horizontal/navbar/Navigation';
+import HorizontalHeader from './horizontal/header/Header';
+import ScrollToTop from '../../components/shared/ScrollToTop';
+import LoadingBar from '../../LoadingBar';
+import DashboardFooter from '../../components/shared/DashboardFooter';
+import { CustomizerContext } from 'src/context/CustomizerContext';
 import config from 'src/context/config';
 
 const MainWrapper = styled('div')(() => ({
@@ -26,28 +31,33 @@ const PageWrapper = styled('div')(() => ({
 }));
 
 const SchoolLayout = () => {
-  const { isCollapse } = useContext(CustomizerContext);
+  // const { isCollapse } = useContext(CustomizerContext);
+  const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);
   const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
 
   return (
     <>
-      {/* <LoadingBar /> */}
+      <LoadingBar />
 
       <MainWrapper>
-        <SchoolSidebar />
+        {activeLayout === 'horizontal' ? '' : <SchoolSidebar />}
         <PageWrapper
           className="page-wrapper"
           sx={{
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
+             ...(activeLayout === 'vertical' && { paddingTop: '70px' }),
             ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),
           }}
         >
-          <SchoolHeader />
+          {activeLayout === 'horizontal' ? <HorizontalHeader /> : <SchoolHeader />}
+
+          {activeLayout === 'horizontal' ? <Navigation /> : ''}
+          
           <Container
             sx={{
               maxWidth: '100%!important',
@@ -58,7 +68,9 @@ const SchoolLayout = () => {
             }}
           >
             <Box mt={4} sx={{ flex: 1, overflowX: 'auto' }}>
-              <Outlet />
+              <ScrollToTop>
+                <Outlet />
+              </ScrollToTop>
             </Box>
           </Container>
           <DashboardFooter />

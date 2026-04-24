@@ -676,6 +676,20 @@ const SchoolDashboard = () => {
             contactPhone: t.administrator_info?.school_spa?.admin_phone || '',
             contactImage: t.administrator_info?.school_spa?.admin_image || '',
             status: t.status,
+            // school_type 
+            schoolType: (() => {
+              try {
+                const raw = t.school_type;
+                if (!raw) return [];
+                if (Array.isArray(raw)) return raw.map((v) => String(v).toLowerCase());
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.map((v) => String(v).toLowerCase()) : [String(parsed).toLowerCase()];
+              } catch {
+                return t.school_type ? [String(t.school_type).toLowerCase()] : [];
+              }
+            })(),
+            // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription 
+            subscribed: !!(t.domains?.[0]?.domain),
             approvedAt: t.approved_at,
             approvedBy: t.approved_by?.full_name,
             schoolDivisions: Array.isArray(schoolDivisions)
@@ -809,18 +823,18 @@ const SchoolDashboard = () => {
 
   const pendingProspects = prospectList.filter((p) => p.status === 'pending');
 
-  const primaryLevels = ['Creche', 'Nursery', 'Primary'];
-  const secondaryLevels = ['Junior Secondary', 'Senior Secondary', 'Vocational', 'Tertiary'];
+  const subscribedSchools = schoolList.filter((s) => s.subscribed);
 
   const schoolSummary = {
     total: schoolList.length,
     active: schoolList.filter((s) => s.status === 'active').length,
     inactive: schoolList.filter((s) => s.status === 'inactive').length,
     pending: pendingProspects.length,
-    primary: schoolList.filter((s) => s.schoolDivisions?.some((d) => primaryLevels.includes(d)))
-      .length,
-    secondary: schoolList.filter((s) => s.schoolDivisions?.some((d) => secondaryLevels.includes(d)))
-      .length,
+    // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription 
+    subscriptions: subscribedSchools.length,
+    // Primary/Secondary based on school_type field, only for subscribed schools
+    primary: subscribedSchools.filter((s) => s.schoolType?.includes('primary')).length,
+    secondary: subscribedSchools.filter((s) => s.schoolType?.includes('secondary')).length,
   };
 
   const filterByName = (arr, key = 'tenant_name') =>
@@ -940,7 +954,7 @@ const SchoolDashboard = () => {
             }}
           >
             <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#4A3AFF' }}>
-              {schoolSummary.total}
+              {schoolSummary.subscriptions}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1406,6 +1420,26 @@ const SchoolDashboard = () => {
                                 }}
                               >
                                 Edit School
+                              </MenuItem>
+                              <MenuItem
+                                onClick={() => {
+                                  setSchoolToDeactivate(row);
+                                  setOpenDeactivateDialog(true);
+                                  handleActionClose();
+                                }}
+                                // sx={{ color: row.status === 'active' ? 'warning.main' : 'success.main' }}
+                              >
+                                {row.status === 'active' ? 'Deactivate' : 'Activate'}
+                              </MenuItem>
+                              <MenuItem
+                                onClick={() => {
+                                  setSchoolToDelete(row);
+                                  setOpenDeleteDialog(true);
+                                  handleActionClose();
+                                }}
+                                sx={{ color: 'error.main' }}
+                              >
+                                Delete
                               </MenuItem>
                             </Menu>
                           </TableCell>

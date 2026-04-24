@@ -173,3 +173,12 @@ export const rejectProspectiveTenant = async (id, reason = '') => {
         throw error.response?.data || error;
     }
 };
+
+export const deleteProspectiveTenant = async (id) => {
+    try {
+        const res = await api.delete(`/landlord/v1/prospective-tenants/${id}/delete-prospective-tenant`);
+        return res.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};

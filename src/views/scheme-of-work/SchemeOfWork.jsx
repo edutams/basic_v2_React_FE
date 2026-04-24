@@ -118,6 +118,9 @@ const SchemeOfWork = () => {
   const [dlSchemeSubjects, setDlSchemeSubjects] = useState([]);
   const [downloading, setDownloading] = useState(false);
 
+  // Import confirmation state
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false);
+
   // Details modal state
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsData, setDetailsData] = useState(null);
@@ -341,13 +344,11 @@ const SchemeOfWork = () => {
       notify.error('Please select Subject, Class, and Term filters first.');
       return;
     }
+    setImportConfirmOpen(false);
     setLoading(true);
     try {
       const res = await tenantSchemeApi.importFromLandlord({
-        filters: {
-          subject_id: subject,
-          class_id: classLevel,
-        },
+        filters: { subject_id: subject, class_id: classLevel },
         term_id: activeTerm,
       });
       notify.success(res.message);
@@ -535,7 +536,7 @@ const SchemeOfWork = () => {
           <Button
             variant="contained"
             color="error"
-            onClick={handleImportFromLandlord}
+            onClick={() => setImportConfirmOpen(true)}
             startIcon={<IconArrowRightSquare size={18} />}
             sx={{ textTransform: 'none', px: 3, borderRadius: 1.5 }}
           >
@@ -1223,6 +1224,18 @@ const SchemeOfWork = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Import Confirmation */}
+      <ConfirmationDialog
+        open={importConfirmOpen}
+        onClose={() => setImportConfirmOpen(false)}
+        onConfirm={handleImportFromLandlord}
+        title="Import Scheme of Work"
+        message="Are you sure you want to import the Scheme of Work from the master curriculum?"
+        confirmText="Yes, Import"
+        cancelText="No, Cancel"
+        severity="warning"
+      />
 
     </PageContainer>
   );

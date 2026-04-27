@@ -86,7 +86,7 @@ const TenantRoutes = [
       { path: 'activity-logs', element: <ActivityLog /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'profile', element: <AccountSetting /> },
-      { path: 'staff-manager', element: <StaffManager /> },
+      { path: 'staff-setup', element: <StaffManager /> },
     ],
   },
   { path: '*', element: <Navigate to="/login" replace /> },

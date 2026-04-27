@@ -27,6 +27,20 @@ export const TenantAuthProvider = ({ children }) => {
   const [impersonatorId, setImpersonatorId] = useState(null);
   const [tenantInfo, setTenantInfo] = useState(null);
 
+  const checkTenantDomain = async () => {
+    console.log(2222);
+    if (window.location.pathname === '/school-not-found') return;
+
+    const hostname = window.location.hostname;
+    const data = await validateTenantDomain(hostname);
+
+    if (!data || data.status === false) {
+      window.location.replace('/school-not-found');
+    } else {
+      setTenantInfo(data);
+    }
+  };
+
   useEffect(() => {
     const restoreUser = async () => {
       const token = localStorage.getItem('tenant_access_token');
@@ -67,18 +81,6 @@ export const TenantAuthProvider = ({ children }) => {
     restoreUser();
     checkTenantDomain();
   }, []);
-  const checkTenantDomain = async () => {
-    if (window.location.pathname === '/school-not-found') return;
-
-    const hostname = window.location.hostname;
-    const data = await validateTenantDomain(hostname);
-
-    if (data.status === false) {
-      window.location.replace('/school-not-found');
-    } else {
-      setTenantInfo(data);
-    }
-  };
 
   const refreshTenantInfo = async () => {
     const hostname = window.location.hostname;

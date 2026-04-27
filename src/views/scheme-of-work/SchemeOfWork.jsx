@@ -531,34 +531,19 @@ const SchemeOfWork = () => {
       </Grid>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 4 }}>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+        
           <Button
-            variant="contained"
-            color="error"
-            onClick={() => setImportConfirmOpen(true)}
-            startIcon={<IconArrowRightSquare size={18} />}
+            variant="outlined"
+            onClick={() => setDlSchemeOpen(true)}
+            startIcon={<IconDownload size={18} />}
             sx={{ textTransform: 'none', px: 3, borderRadius: 1.5 }}
           >
-            Import scheme of Work
+            Download
           </Button>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<IconDownload size={18} />}
-            onClick={() => setDlSchemeOpen(true)}
-            sx={{
-              textTransform: 'none',
-              px: 3,
-              borderRadius: 1.5,
-              bgcolor: '#7cb342',
-              '&:hover': { bgcolor: '#689f38' },
-            }}
-          >
-            Download Scheme of Work
-          </Button>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        
+      </Box>
+        {/* <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="contained"
             startIcon={<IconUpload size={18} />}
@@ -590,8 +575,7 @@ const SchemeOfWork = () => {
           >
             Download Scheme Template
           </Button>
-        </Box>
-      </Box>
+        </Box> */}
 
       {/* Toggles & Filter Action */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
@@ -609,14 +593,7 @@ const SchemeOfWork = () => {
             ))}
           </Tabs>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<IconFilter size={18} />}
-          onClick={() => setFilterDrawerOpen(true)}
-          sx={{ textTransform: 'none', px: 3, borderRadius: 1.5, borderColor: '#e0e0e0', color: '#333', fontWeight: 600 }}
-        >
-          Filters
-        </Button>
+
       </Box>
 
       {/* Main Content Area */}
@@ -681,14 +658,26 @@ const SchemeOfWork = () => {
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleFetch}
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              >
-                Fetch Scheme of Work
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleFetch}
+                  sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
+                >
+                  Fetch
+                </Button>
+                {subject && classLevel && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => setImportConfirmOpen(true)}
+                  startIcon={<IconArrowRightSquare size={18} />}
+                  sx={{ textTransform: 'none', px: 2, borderRadius: 1.5 }}
+                >
+                  Import
+                </Button>
+                )}
+              </Box>
             </Grid>
           </Grid>
         </Box>
@@ -941,7 +930,7 @@ const SchemeOfWork = () => {
             Select the Programme, Class, and Subject to generate a blank upload template.
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12,md:6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField select fullWidth label="Programme" size="small"
                 value={dlTemplateFilters.programme}
                 onChange={async (e) => {
@@ -953,7 +942,7 @@ const SchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12,md:6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField select fullWidth label="Class" size="small"
                 value={dlTemplateFilters.classLevel}
                 onChange={e => setDlTemplateFilters(f => ({ ...f, classLevel: e.target.value }))}
@@ -1082,7 +1071,7 @@ const SchemeOfWork = () => {
             Select the Programme, Class, Subject, and Term whose uploaded Scheme of Work you want to download.
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 6,md:6 }}>
+            <Grid size={{ xs: 6, md: 6 }}>
               <TextField select fullWidth label="Programme" size="small"
                 value={dlSchemeFilters.programme}
                 onChange={async (e) => {
@@ -1094,7 +1083,7 @@ const SchemeOfWork = () => {
                 {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 6,md:6 }}>
+            <Grid size={{ xs: 6, md: 6 }}>
               <TextField select fullWidth label="Class" size="small"
                 value={dlSchemeFilters.classLevel}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, classLevel: e.target.value }))}
@@ -1102,7 +1091,7 @@ const SchemeOfWork = () => {
                 {dlSchemeClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 6,md:6 }}>
+            <Grid size={{ xs: 6, md: 6 }}>
               <TextField select fullWidth label="Subject" size="small"
                 value={dlSchemeFilters.subject}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, subject: e.target.value }))}
@@ -1110,7 +1099,7 @@ const SchemeOfWork = () => {
                 {dlSchemeSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 6,md:6 }}>
+            <Grid size={{ xs: 6, md: 6 }}>
               <TextField select fullWidth label="Term" size="small"
                 value={dlSchemeFilters.term || activeTerm}
                 onChange={e => setDlSchemeFilters(f => ({ ...f, term: e.target.value }))}

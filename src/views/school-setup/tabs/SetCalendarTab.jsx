@@ -298,6 +298,11 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       return;
     }
 
+    if (autoGenerateConfig.numWeeks > 15 || autoGenerateConfig.numWeeks < 1) {
+      showSnackbar('Number of weeks must be between 1 and 15', 'error');
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await autoGenerateWeeks(activeSessionTermId, {

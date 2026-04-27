@@ -113,6 +113,7 @@ const AgentCurriculumManager = () => {
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [curriculumToDelete, setCurriculumToDelete] = useState(null);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -120,8 +121,12 @@ const AgentCurriculumManager = () => {
     status: 'active',
   });
 
-  // Loading and notification states
-  const [loading, setLoading] = useState(false);
+  // Per-card loading states
+  const [loadingCurriculums, setLoadingCurriculums] = useState(false);
+  const [loadingAssignments, setLoadingAssignments] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
+  const [loadingMutation, setLoadingMutation] = useState(false);
+
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Fetch data on component mount
@@ -156,11 +161,10 @@ const AgentCurriculumManager = () => {
   // API Functions
   const loadCurriculums = async () => {
     try {
-      setLoading(true);
+      setLoadingCurriculums(true);
       const response = await fetchCurriculums();
       if (response.status) {
         setCurriculumData(response.data);
-        // Auto-select first curriculum
         if (response.data.length > 0 && !selectedCurriculum) {
           setSelectedCurriculum(response.data[0].id);
         }
@@ -168,7 +172,7 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to load curriculums', 'error');
     } finally {
-      setLoading(false);
+      setLoadingCurriculums(false);
     }
   };
 
@@ -217,7 +221,7 @@ const AgentCurriculumManager = () => {
 
   const loadClassAssignments = async () => {
     try {
-      setLoading(true);
+      setLoadingAssignments(true);
       const response = await fetchClassAssignments(selectedSession, selectedTerm);
       if (response.status) {
         setClassData(response.data);
@@ -225,7 +229,7 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to load class assignments', 'error');
     } finally {
-      setLoading(false);
+      setLoadingAssignments(false);
     }
   };
 
@@ -278,9 +282,8 @@ const AgentCurriculumManager = () => {
       showSnackbar('Curriculum name is required', 'error');
       return;
     }
-
     try {
-      setLoading(true);
+      setLoadingMutation(true);
       const response = await createCurriculum(formData);
       if (response.status) {
         showSnackbar('Curriculum created successfully', 'success');
@@ -292,7 +295,7 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to create curriculum', 'error');
     } finally {
-      setLoading(false);
+      setLoadingMutation(false);
     }
   };
 
@@ -318,9 +321,8 @@ const AgentCurriculumManager = () => {
       showSnackbar('Curriculum name is required', 'error');
       return;
     }
-
     try {
-      setLoading(true);
+      setLoadingMutation(true);
       const response = await updateCurriculum(selectedCurriculumForAction.id, formData);
       if (response.status) {
         showSnackbar('Curriculum updated successfully', 'success');
@@ -332,26 +334,26 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to update curriculum', 'error');
     } finally {
-      setLoading(false);
+      setLoadingMutation(false);
     }
   };
 
   // Delete Curriculum
   const handleOpenDeleteDialog = (curriculum) => {
-    setSelectedCurriculumForAction(curriculum);
+    setCurriculumToDelete(curriculum);
     setOpenDeleteDialog(true);
     setActionMenuAnchor(null);
   };
 
   const handleCloseDeleteDialog = () => {
     setOpenDeleteDialog(false);
-    setSelectedCurriculumForAction(null);
+    setCurriculumToDelete(null);
   };
 
   const handleDeleteCurriculum = async () => {
     try {
-      setLoading(true);
-      const response = await deleteCurriculum(selectedCurriculumForAction.id);
+      setLoadingMutation(true);
+      const response = await deleteCurriculum(curriculumToDelete.id);
       if (response.status) {
         showSnackbar('Curriculum deleted successfully', 'success');
         handleCloseDeleteDialog();
@@ -360,9 +362,10 @@ const AgentCurriculumManager = () => {
         showSnackbar(response.message || 'Failed to delete curriculum', 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to delete curriculum', 'error');
+      const msg = error?.response?.data?.message || 'Failed to delete curriculum';
+      showSnackbar(msg, 'error');
     } finally {
-      setLoading(false);
+      setLoadingMutation(false);
     }
   };
 
@@ -442,13 +445,9 @@ const AgentCurriculumManager = () => {
       showSnackbar('Subject name and program are required', 'error');
       return;
     }
-
     try {
-      setLoading(true);
-      const dataToSubmit = {
-        ...subjectFormData,
-        curriculum_id: selectedCurriculum,
-      };
+      setLoadingMutation(true);
+      const dataToSubmit = { ...subjectFormData, curriculum_id: selectedCurriculum };
       const response = await createSubjectRecord(dataToSubmit);
       if (response.status) {
         showSnackbar('Subject created successfully', 'success');
@@ -460,7 +459,7 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to create subject', 'error');
     } finally {
-      setLoading(false);
+      setLoadingMutation(false);
     }
   };
 
@@ -496,9 +495,8 @@ const AgentCurriculumManager = () => {
       showSnackbar('Subject name and program are required', 'error');
       return;
     }
-
     try {
-      setLoading(true);
+      setLoadingMutation(true);
       const response = await updateSubjectRecord(selectedSubject.id, subjectFormData);
       if (response.status) {
         showSnackbar('Subject updated successfully', 'success');
@@ -510,7 +508,7 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to update subject', 'error');
     } finally {
-      setLoading(false);
+      setLoadingMutation(false);
     }
   };
 
@@ -526,7 +524,7 @@ const AgentCurriculumManager = () => {
 
   const handleDeleteSubject = async () => {
     try {
-      setLoading(true);
+      setLoadingMutation(true);
       const response = await deleteSubjectRecord(selectedSubject.id);
       if (response.status) {
         showSnackbar('Subject deleted successfully', 'success');
@@ -538,7 +536,7 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to delete subject', 'error');
     } finally {
-      setLoading(false);
+      setLoadingMutation(false);
     }
   };
 
@@ -556,21 +554,15 @@ const AgentCurriculumManager = () => {
       showSnackbar('Please select session and term', 'error');
       return;
     }
-
     const assignments = classData
       .filter((cls) => cls.assigned_curriculum_id)
-      .map((cls) => ({
-        class_id: cls.id,
-        curriculum_id: cls.assigned_curriculum_id,
-      }));
-
+      .map((cls) => ({ class_id: cls.id, curriculum_id: cls.assigned_curriculum_id }));
     if (assignments.length === 0) {
       showSnackbar('Please assign at least one curriculum to a class', 'error');
       return;
     }
-
     try {
-      setLoading(true);
+      setLoadingSave(true);
       const response = await saveClassAssignments(selectedSession, selectedTerm, assignments);
       if (response.status) {
         showSnackbar('Assignments saved successfully', 'success');
@@ -580,7 +572,7 @@ const AgentCurriculumManager = () => {
     } catch (error) {
       showSnackbar('Failed to save assignments', 'error');
     } finally {
-      setLoading(false);
+      setLoadingSave(false);
     }
   };
 
@@ -637,7 +629,7 @@ const AgentCurriculumManager = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {loading ? (
+                          {loadingCurriculums ? (
                             <TableRow>
                               <TableCell colSpan={4} align="center">
                                 <CircularProgress size={24} />
@@ -895,9 +887,9 @@ const AgentCurriculumManager = () => {
                         <Button
                           variant="contained"
                           onClick={handleSaveAssignments}
-                          disabled={loading}
+                          disabled={loadingSave}
                         >
-                          {loading ? <CircularProgress size={24} /> : 'Update'}
+                          {loadingSave ? <CircularProgress size={24} /> : 'Update'}
                         </Button>
                       </Box>
                     </Box>
@@ -916,7 +908,7 @@ const AgentCurriculumManager = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {loading ? (
+                          {loadingAssignments ? (
                             <TableRow>
                               <TableCell colSpan={3} align="center">
                                 <CircularProgress size={24} />
@@ -1012,7 +1004,7 @@ const AgentCurriculumManager = () => {
             </ListItemIcon>
             <ListItemText>Assign Curriculum to Class</ListItemText>
           </MenuItemComponent> */}
-          <MenuItemComponent onClick={handleOpenDeleteDialog} sx={{ color: '#ef4444' }}>
+          <MenuItemComponent onClick={() => handleOpenDeleteDialog(selectedCurriculumForAction)} sx={{ color: '#ef4444' }}>
             <ListItemIcon>
               <IconTrash size={16} style={{ color: '#ef4444' }} />
             </ListItemIcon>
@@ -1078,8 +1070,8 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseCreateModal}>Cancel</Button>
-          <Button onClick={handleCreateCurriculum} variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : 'Create'}
+          <Button onClick={handleCreateCurriculum} variant="contained" disabled={loadingMutation}>
+            {loadingMutation ? <CircularProgress size={24} /> : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1110,8 +1102,8 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditModal}>Cancel</Button>
-          <Button onClick={handleUpdateCurriculum} variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : 'Update'}
+          <Button onClick={handleUpdateCurriculum} variant="contained" disabled={loadingMutation}>
+            {loadingMutation ? <CircularProgress size={24} /> : 'Update'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1121,7 +1113,7 @@ const AgentCurriculumManager = () => {
         <DialogTitle>Delete Curriculum</DialogTitle>
         <DialogContent>
           <Alert severity="error" sx={{ mt: 2 }}>
-            Are you sure you want to delete "{selectedCurriculumForAction?.curriculum_name}"? This
+            Are you sure you want to delete "{curriculumToDelete?.curriculum_name}"? This
             action cannot be undone.
           </Alert>
         </DialogContent>
@@ -1131,9 +1123,9 @@ const AgentCurriculumManager = () => {
             onClick={handleDeleteCurriculum}
             variant="contained"
             color="error"
-            disabled={loading}
+            disabled={loadingMutation}
           >
-            {loading ? <CircularProgress size={24} /> : 'Delete'}
+            {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1210,8 +1202,8 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAddSubjectModal}>Cancel</Button>
-          <Button onClick={handleCreateSubject} variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : 'Save Subject'}
+          <Button onClick={handleCreateSubject} variant="contained" disabled={loadingMutation}>
+            {loadingMutation ? <CircularProgress size={24} /> : 'Save Subject'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1287,8 +1279,8 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditSubjectModal}>Cancel</Button>
-          <Button onClick={handleUpdateSubject} variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : 'Update Subject'}
+          <Button onClick={handleUpdateSubject} variant="contained" disabled={loadingMutation}>
+            {loadingMutation ? <CircularProgress size={24} /> : 'Update Subject'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1313,9 +1305,9 @@ const AgentCurriculumManager = () => {
             onClick={handleDeleteSubject}
             variant="contained"
             color="error"
-            disabled={loading}
+            disabled={loadingMutation}
           >
-            {loading ? <CircularProgress size={24} /> : 'Delete'}
+            {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

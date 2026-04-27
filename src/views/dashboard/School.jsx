@@ -61,6 +61,8 @@ import {
   getProspectiveTenants,
   approveProspectiveTenant,
   rejectProspectiveTenant,
+    deleteProspectiveTenant,
+  
 } from '../../context/AgentContext/services/school.service';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
@@ -483,26 +485,19 @@ const thSx = {
 
 // ── ProspectRow (used in All Applications + Pending tabs) ─────────────────────
 
-const ProspectRow = ({ row, index, onReview }) => {
+const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => {
   const spa = getSpaContact(row);
-  const agent = row.agent; 
-  // prospective domain URL
-  // const prospectiveDomain = agent?.organization_domain
-  //   ? `${row.tenant_short_name}.${agent.organization_domain}`
-  //   : row.tenant_short_name;
-const sanitize = (str) =>
-  str
-    ?.toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')        
-    .replace(/[^a-z0-9.-]/g, ''); 
+  const agent = row.agent;
 
-const domainHost = agent?.organization_domain
-  ? `${sanitize(row.tenant_short_name)}.${sanitize(agent.organization_domain)}`
-  : sanitize(row.tenant_short_name) || '';
+  const sanitize = (str) =>
+    str?.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9.-]/g, '');
 
-const prospectiveUrl = domainHost ? `https://${domainHost}` : null;
-    
+  const domainHost = agent?.organization_domain
+    ? `${sanitize(row.tenant_short_name)}.${sanitize(agent.organization_domain)}`
+    : sanitize(row.tenant_short_name) || '';
+
+  const prospectiveUrl = domainHost ? `https://${domainHost}` : null;
+
   return (
     <TableRow hover>
       <TableCell sx={{ color: '#6b7280', fontSize: '13px' }}>{index}</TableCell>
@@ -566,29 +561,44 @@ const prospectiveUrl = domainHost ? `https://${domainHost}` : null;
       </TableCell>
       <TableCell>
         <Typography variant="caption" color="text.secondary">
-          {row?.approved_by?.full_name} Pending Approval {formatDate(row.approved_at)}
+          {row?.approved_by?.full_name
+            ? `${row.approved_by.full_name} · ${formatDate(row.approved_at)}`
+            : '—'}
         </Typography>
       </TableCell>
       <TableCell>
         <StatusChip status={row.status} />
       </TableCell>
       <TableCell align="right">
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<IconEye size={14} />}
-          onClick={() => onReview(row)}
-          sx={{
-            textTransform: 'none',
-            borderRadius: '8px',
-            fontSize: '12px',
-            borderColor: '#3949ab',
-            color: '#3949ab',
-            '&:hover': { bgcolor: '#3949ab', color: '#fff' },
-          }}
-        >
-          Review
-        </Button>
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<IconEye size={14} />}
+            onClick={() => onReview(row)}
+            sx={{
+              textTransform: 'none',
+              borderRadius: '8px',
+              fontSize: '12px',
+              borderColor: '#3949ab',
+              color: '#3949ab',
+              '&:hover': { bgcolor: '#3949ab', color: '#fff' },
+            }}
+          >
+            {row.status?.toLowerCase() === 'approved' ? 'View' : 'Review'}
+          </Button>
+          {showDelete && (
+            <Button
+              size="small"
+              variant="outlined"
+              color="error"
+              onClick={() => onDelete(row)}
+              sx={{ textTransform: 'none', borderRadius: '8px', fontSize: '12px' }}
+            >
+              Delete
+            </Button>
+          )}
+        </Stack>
       </TableCell>
     </TableRow>
   );
@@ -676,6 +686,20 @@ const SchoolDashboard = () => {
             contactPhone: t.administrator_info?.school_spa?.admin_phone || '',
             contactImage: t.administrator_info?.school_spa?.admin_image || '',
             status: t.status,
+            // school_type 
+            schoolType: (() => {
+              try {
+                const raw = t.school_type;
+                if (!raw) return [];
+                if (Array.isArray(raw)) return raw.map((v) => String(v).toLowerCase());
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.map((v) => String(v).toLowerCase()) : [String(parsed).toLowerCase()];
+              } catch {
+                return t.school_type ? [String(t.school_type).toLowerCase()] : [];
+              }
+            })(),
+            // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription 
+            subscribed: !!(t.domains?.[0]?.domain),
             approvedAt: t.approved_at,
             approvedBy: t.approved_by?.full_name,
             schoolDivisions: Array.isArray(schoolDivisions)
@@ -805,22 +829,39 @@ const SchoolDashboard = () => {
     }
   };
 
+  const handleDeleteProspect = async (row) => {
+    setSchoolToDelete(row);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDeleteProspect = async () => {
+    try {
+      await deleteProspectiveTenant(schoolToDelete.id);
+      await fetchProspects();
+      setOpenDeleteDialog(false);
+      setSchoolToDelete(null);
+      notify('Application deleted successfully');
+    } catch (err) {
+      notify(err?.message || 'Failed to delete application', 'error');
+    }
+  };
+
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const pendingProspects = prospectList.filter((p) => p.status === 'pending');
 
-  const primaryLevels = ['Creche', 'Nursery', 'Primary'];
-  const secondaryLevels = ['Junior Secondary', 'Senior Secondary', 'Vocational', 'Tertiary'];
+  const subscribedSchools = schoolList.filter((s) => s.subscribed);
 
   const schoolSummary = {
     total: schoolList.length,
     active: schoolList.filter((s) => s.status === 'active').length,
     inactive: schoolList.filter((s) => s.status === 'inactive').length,
     pending: pendingProspects.length,
-    primary: schoolList.filter((s) => s.schoolDivisions?.some((d) => primaryLevels.includes(d)))
-      .length,
-    secondary: schoolList.filter((s) => s.schoolDivisions?.some((d) => secondaryLevels.includes(d)))
-      .length,
+    // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription 
+    subscriptions: subscribedSchools.length,
+    // Primary/Secondary based on school_type field, only for subscribed schools
+    primary: subscribedSchools.filter((s) => s.schoolType?.includes('primary')).length,
+    secondary: subscribedSchools.filter((s) => s.schoolType?.includes('secondary')).length,
   };
 
   const filterByName = (arr, key = 'tenant_name') =>
@@ -940,7 +981,7 @@ const SchoolDashboard = () => {
             }}
           >
             <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#4A3AFF' }}>
-              {schoolSummary.total}
+              {schoolSummary.subscriptions}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -1206,6 +1247,7 @@ const SchoolDashboard = () => {
                     <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
                     <TableCell sx={thSx}>Organisation</TableCell>
                     <TableCell sx={thSx}>Submitted</TableCell>
+                    <TableCell sx={thSx}>Approved By</TableCell>
                     <TableCell sx={thSx}>Status</TableCell>
                     <TableCell sx={thSx} align="right">
                       Action
@@ -1223,6 +1265,8 @@ const SchoolDashboard = () => {
                           setReviewProspect(r);
                           setReviewOpen(true);
                         }}
+                        onDelete={handleDeleteProspect}
+                        showDelete
                       />
                     ))
                   ) : (
@@ -1407,6 +1451,26 @@ const SchoolDashboard = () => {
                               >
                                 Edit School
                               </MenuItem>
+                              <MenuItem
+                                onClick={() => {
+                                  setSchoolToDeactivate(row);
+                                  setOpenDeactivateDialog(true);
+                                  handleActionClose();
+                                }}
+                                // sx={{ color: row.status === 'active' ? 'warning.main' : 'success.main' }}
+                              >
+                                {row.status === 'active' ? 'Deactivate' : 'Activate'}
+                              </MenuItem>
+                              {/* <MenuItem
+                                onClick={() => {
+                                  setSchoolToDelete(row);
+                                  setOpenDeleteDialog(true);
+                                  handleActionClose();
+                                }}
+                                sx={{ color: 'error.main' }}
+                              >
+                                Delete
+                              </MenuItem> */}
                             </Menu>
                           </TableCell>
                         </TableRow>
@@ -1488,10 +1552,10 @@ const SchoolDashboard = () => {
 
       <ConfirmationDialog
         open={openDeleteDialog}
-        onClose={() => setOpenDeleteDialog(false)}
-        onConfirm={() => handleDelete(schoolToDelete)}
-        title="Delete School"
-        message={`Are you sure you want to delete ${schoolToDelete?.institutionName}? This is irreversible.`}
+        onClose={() => { setOpenDeleteDialog(false); setSchoolToDelete(null); }}
+        onConfirm={handleConfirmDeleteProspect}
+        title="Delete Application"
+        message={`Are you sure you want to delete the application for "${schoolToDelete?.tenant_name || schoolToDelete?.institutionName}"? This is irreversible.`}
         confirmText="Delete"
         severity="error"
       />

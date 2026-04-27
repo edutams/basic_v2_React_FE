@@ -400,10 +400,10 @@ const handleSaveLearner = async (data) => {
                       size="small"
                       startIcon={<AddIcon />}
                       onClick={() => handleAddNewLearner(item)}
-                      sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.contrastText',
-                      }}
+                      // sx={{
+                      //   bgcolor: 'primary.light',
+                      //   color: 'primary.contrastText',
+                      // }}
                     >
                       Add New Learner
                     </Button>

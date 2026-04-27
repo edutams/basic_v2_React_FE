@@ -19,7 +19,7 @@ import Search from '../../../full/vertical/header/Search';
 import Language from '../../../full/vertical/header/Language';
 import Notifications from '../../../full/vertical/header/Notification';
 import Profile from './TenantProfile';
-import { TenantAuthContext } from 'src/context/TenantContext/auth';
+import { TenantAuthContext } from '../../../../context/TenantContext/auth';
 
 const SchoolHeader = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
@@ -44,7 +44,7 @@ const SchoolHeader = () => {
   const theme = useTheme();
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
-     boxShadow: 'none',
+    boxShadow: 'none',
     backgroundColor: theme.palette.background.paper,
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
@@ -52,7 +52,8 @@ const SchoolHeader = () => {
     // Account for sidebar width on large screens
     [theme.breakpoints.up('lg')]: {
       minHeight: TopbarHeight,
-      marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+      marginLeft:
+        isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
     },
     // On smaller screens, full width
     [theme.breakpoints.down('lg')]: {
@@ -62,9 +63,9 @@ const SchoolHeader = () => {
   }));
 
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
-     width: '100%',
+    width: '100%',
     color: `${theme.palette.text.primary} !important`,
-    paddingLeft: '288px !important', 
+    paddingLeft: '288px !important',
     paddingRight: '16px !important',
     // On smaller screens, reduce padding
     [theme.breakpoints.down('lg')]: {
@@ -88,17 +89,20 @@ const SchoolHeader = () => {
 
   return (
     <AppBarStyled
-     position="fixed" 
-     color="default"
+      position="fixed"
+      color="default"
       sx={{
         ...(lgUp && {
-          marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+          marginLeft:
+            isCollapse === 'mini-sidebar'
+              ? `${config.miniSidebarWidth}px`
+              : `${config.sidebarWidth}px`,
         }),
       }}
-     >
+    >
       <ToolbarStyled
-      sx={{
-          paddingLeft: lgUp 
+        sx={{
+          paddingLeft: lgUp
             ? `${(isCollapse === 'mini-sidebar' ? config.miniSidebarWidth : config.sidebarWidth) + 18}px !important`
             : '18px !important',
         }}
@@ -205,7 +209,8 @@ const SchoolHeader = () => {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {academicSession || 'No Active Session'} | {academicTerm || 'No active term'} | {academicWeek || 'No active week'}
+                {academicSession || 'No Active Session'} | {academicTerm || 'No active term'} |{' '}
+                {academicWeek || 'No active week'}
               </Typography>
             </Stack>
           </Box>

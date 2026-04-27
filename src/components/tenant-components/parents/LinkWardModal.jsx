@@ -25,25 +25,28 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
+import { useNotification } from 'src/hooks/useNotification';
 import guardianApi from 'src/api/parentApi';
 
+// height that shows exactly 3 rows (each row ~56px) + a little padding
+const LIST_HEIGHT = 185;
+
 const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
+  const notify = useNotification();
+
   const parentName = parent?.user
     ? `${parent.user.fname} ${parent.user.lname}`
-    : 'Parent';
+    : 'Guardian';
 
-  // ── search state ──────────────────────────────────────────────────────────
   const [search, setSearch]       = useState('');
   const [classId, setClassId]     = useState('');
   const [classes, setClasses]     = useState([]);
   const [results, setResults]     = useState([]);
   const [searching, setSearching] = useState(false);
-
-  // ── linked wards ──────────────────────────────────────────────────────────
   const [linkedWards, setLinkedWards] = useState([]);
   const [saving, setSaving]           = useState(false);
 
-  // ── load classes once ─────────────────────────────────────────────────────
+  // ── load classes 
   useEffect(() => {
     if (!open) return;
     const load = async () => {
@@ -58,20 +61,22 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
           )
         );
         setClasses(flat);
-      } catch 
-      { notify('Failed to load classes. Class filter will be unavailable.', 'error'); }
+      } catch {
+        notify.error('Failed to load classes for filtering');}
     };
     load();
   }, [open]);
 
-  // ── load existing wards when modal opens ──────────────────────────────────
+  // ── load existing wards 
   useEffect(() => {
     if (!open || !parent?.id) return;
     const load = async () => {
       try {
         const res = await guardianApi.getWards(parent.id);
         setLinkedWards(res?.data?.data ?? []);
-      } catch { notify('Failed to load linked wards.', 'error'); }
+      } catch {
+        notify.error('Failed to load linked wards');
+      }
     };
     load();
     setSearch('');
@@ -79,6 +84,7 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
     setResults([]);
   }, [open, parent?.id]);
 
+  // ── search ────────────────────────────────────────────────────────────────
   const handleSearch = useCallback(async () => {
     if (!search.trim() && !classId) return;
     try {
@@ -87,8 +93,11 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
         search: search.trim(),
         class_id: classId || undefined,
       });
-      setResults(res?.data?.data ?? []);
+      const data = res?.data?.data ?? [];
+      if (data.length === 0) notify.info('No learners found for that search');
+      setResults(data);
     } catch {
+      notify.error('Search failed');
       setResults([]);
     } finally {
       setSearching(false);
@@ -96,7 +105,7 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
   }, [search, classId]);
 
   const handleAdd = (learner) => {
-    if (linkedWards.some((w) => w.id === learner.id)) return; 
+    if (linkedWards.some((w) => w.id === learner.id)) return;
     setLinkedWards((prev) => [...prev, learner]);
   };
 
@@ -107,14 +116,12 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await guardianApi.syncWards(
-        parent.id,
-        linkedWards.map((w) => w.id)
-      );
+      await guardianApi.syncWards(parent.id, linkedWards.map((w) => w.id));
+      notify.success('Wards linked successfully');
       onSaved?.();
       onClose();
     } catch {
-      notify('Failed to save linked wards. Please try again.', 'error');
+      notify.error('Failed to save linked wards');
     } finally {
       setSaving(false);
     }
@@ -125,49 +132,75 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
     onClose();
   };
 
+  // ── reusable ward row 
+  const WardRow = ({ ward, onClick, showRemove }) => (
+    <Box
+      onClick={onClick}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        px: 2,
+        py: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 2,
+        bgcolor: 'background.paper',
+        cursor: onClick ? 'pointer' : 'default',
+        flexShrink: 0,
+        '&:hover': onClick ? { bgcolor: 'primary.lighter', borderColor: 'primary.main' } : {},
+      }}
+    >
+      <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light' }}>
+        <PersonIcon fontSize="small" />
+      </Avatar>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={500} noWrap>
+          {ward.name || '—'}
+        </Typography>
+        {ward.user_id_code && (
+          <Typography variant="caption" color="text.secondary" noWrap>
+            ID: {ward.user_id_code}
+          </Typography>
+        )}
+      </Box>
+
+      <Chip label={ward.class_arm || '—'} size="small" variant="outlined" />
+
+      {showRemove && (
+        <IconButton
+          size="small"
+          color="error"
+          onClick={(e) => { e.stopPropagation(); handleRemove(ward.id); }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      )}
+    </Box>
+  );
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      {/* ── title ── */}
       <DialogTitle sx={{ pb: 1 }}>
-        <Typography component="span" fontWeight={700}>
-          {parentName}
-        </Typography>
-        <Typography component="span" color="text.secondary" fontWeight={400}>
-          {' '}link to ward below
-        </Typography>
-        <IconButton
-          onClick={handleClose}
-          size="small"
-          sx={{ position: 'absolute', right: 12, top: 12 }}
-        >
+        <Typography component="span" fontWeight={700}>{parentName}</Typography>
+        <Typography component="span" color="text.secondary"> — link to ward below</Typography>
+        <IconButton onClick={handleClose} size="small" sx={{ position: 'absolute', right: 12, top: 12 }}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2 }}>
+
         {/* ── search bar ── */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1,
-            mb: 2,
-            p: 1.5,
-            bgcolor: 'grey.50',
-            borderRadius: 2,
-            alignItems: 'center',
-          }}
-        >
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 2, alignItems: 'center' }}>
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Filter by Class</InputLabel>
-            <Select
-              value={classId}
-              label="Filter by Class"
-              onChange={(e) => setClassId(e.target.value)}
-            >
+            <Select value={classId} label="Filter by Class" onChange={(e) => setClassId(e.target.value)}>
               <MenuItem value="">All Classes</MenuItem>
               {classes.map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>
-                  {cls.label}
-                </MenuItem>
+                <MenuItem key={cls.id} value={cls.id}>{cls.label}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -192,7 +225,6 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
 
           <Button
             variant="contained"
-            color="success"
             onClick={handleSearch}
             disabled={searching}
             sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
@@ -201,103 +233,79 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
           </Button>
         </Box>
 
-        {/* ── search results ── */}
+        {/* ── search results (scrollable, max 5 visible) ── */}
         {results.length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-              Search results — click to link
+              {results.length} result{results.length !== 1 ? 's' : ''} — click a learner to link
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0.5,
+                maxHeight: LIST_HEIGHT,
+                overflowY: 'auto',
+                pr: 0.5,
+              }}
+            >
               {results.map((learner) => {
                 const alreadyLinked = linkedWards.some((w) => w.id === learner.id);
                 return (
-                  <Box
-                    key={learner.id}
-                    onClick={() => !alreadyLinked && handleAdd(learner)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      px: 2,
-                      py: 1,
-                      border: '1px solid',
-                      borderColor: alreadyLinked ? 'success.light' : 'divider',
-                      borderRadius: 2,
-                      cursor: alreadyLinked ? 'default' : 'pointer',
-                      bgcolor: alreadyLinked ? 'success.lighter' : 'background.paper',
-                      '&:hover': !alreadyLinked ? { bgcolor: 'primary.lighter', borderColor: 'primary.main' } : {},
-                    }}
-                  >
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light' }}>
-                      <PersonIcon fontSize="small" />
-                    </Avatar>
-                    <Typography variant="body2" sx={{ flex: 1 }}>
-                      {learner.name}
-                    </Typography>
-                    <Chip label={learner.class_arm || '—'} size="small" variant="outlined" />
+                  <Box key={learner.id} sx={{ position: 'relative' }}>
+                    <WardRow
+                      ward={learner}
+                      onClick={!alreadyLinked ? () => handleAdd(learner) : undefined}
+                      showRemove={false}
+                    />
                     {alreadyLinked && (
-                      <Typography variant="caption" color="success.main">linked</Typography>
+                      <Chip
+                        label="linked"
+                        color="success"
+                        size="small"
+                        sx={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}
+                      />
                     )}
                   </Box>
                 );
               })}
             </Box>
+
             <Divider sx={{ mt: 2, mb: 1 }} />
           </Box>
         )}
 
-        {/* ── linked wards list ── */}
+        {/* ── linked wards (scrollable, max 5 visible) ── */}
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          Linked Wards {linkedWards.length > 0 && `(${linkedWards.length})`}
+        </Typography>
+
         {linkedWards.length === 0 ? (
           <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 3 }}>
             No wards linked yet. Search and click a learner to link them.
           </Typography>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              maxHeight: LIST_HEIGHT,
+              overflowY: 'auto',
+              pr: 0.5,
+            }}
+          >
             {linkedWards.map((ward) => (
-              <Box
-                key={ward.id}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  px: 2,
-                  py: 1,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  bgcolor: 'background.paper',
-                }}
-              >
-                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light' }}>
-                  <PersonIcon fontSize="small" />
-                </Avatar>
-                <Typography variant="body2" sx={{ flex: 1 }}>
-                  {ward.name}
-                </Typography>
-                <Chip label={ward.class_arm || '—'} size="small" variant="outlined" />
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => handleRemove(ward.id)}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </Box>
+              <WardRow key={ward.id} ward={ward} showRemove />
             ))}
           </Box>
         )}
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose} disabled={saving} color="inherit">
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          onClick={handleSave}
-          disabled={saving}
-        >
+        <Button onClick={handleClose} disabled={saving} color="inherit">Cancel</Button>
+        <Button variant="contained" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>

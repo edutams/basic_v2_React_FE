@@ -29,6 +29,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Link,
 } from '@mui/material';
 
 import {
@@ -43,6 +44,7 @@ import ParentFormModal from 'src/components/tenant-components/parents/ParentForm
 import DeleteParentModal from 'src/components/tenant-components/parents/DeleteParentModal';
 import UploadParentModal from 'src/components/tenant-components/parents/UploadParentModal';
 import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
+import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsModal';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Parent Management' }];
 
@@ -134,6 +136,10 @@ const ParentManagement = () => {
 
   const [linkWardModalOpen, setLinkWardModalOpen] = useState(false);
   const [wardParent, setWardParent] = useState(null);
+
+  // view wards modal (read-only)
+  const [viewWardsModalOpen, setViewWardsModalOpen] = useState(false);
+  const [viewWardsGuardian, setViewWardsGuardian] = useState(null);
 
   const fetchParents = useCallback(async () => {
     try {
@@ -435,10 +441,17 @@ const ParentManagement = () => {
                         </Typography>
                       </TableCell>
 
-                      <TableCell>
-                        {/* placeholder — will show linked ward/student name when available */}
-                        <Typography variant="body2" color="text.secondary">
-                          —
+                      <TableCell >
+                        <Typography variant="subtitle2" align="center">
+                          <Link
+                            sx={{ cursor: 'pointer' }}
+                            onClick={() => {
+                              setViewWardsGuardian(row);
+                              setViewWardsModalOpen(true);
+                            }}
+                          >
+                            {row.ward_count ?? 0}
+                          </Link>
                         </Typography>
                       </TableCell>
 
@@ -456,6 +469,11 @@ const ParentManagement = () => {
                           label={row.status ?? 'active'}
                           color={statusColor(row.status)}
                           size="small"
+                          sx={{
+                                    bgcolor: row.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                    color: row.status === 'active' ? '#166534' : '#92400e',
+                                    fontWeight: 500,
+                                  }}
                         />
                       </TableCell>
 
@@ -550,6 +568,12 @@ const ParentManagement = () => {
         onClose={() => setLinkWardModalOpen(false)}
         parent={wardParent}
         onSaved={fetchParents}
+      />
+
+      <ViewWardsModal
+        open={viewWardsModalOpen}
+        onClose={() => setViewWardsModalOpen(false)}
+        guardian={viewWardsGuardian}
       />
     </PageContainer>
   );

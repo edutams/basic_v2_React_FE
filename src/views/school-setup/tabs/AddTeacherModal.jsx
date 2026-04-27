@@ -26,6 +26,7 @@ const AddTeacherModal = ({
   isLoading = false,
   mode = 'create',
   initialValues,
+  hideStaffType = false,
 }) => {
   const modalConfig = getModalConfig(mode);
 
@@ -52,6 +53,7 @@ const AddTeacherModal = ({
         onCancel={onClose}
         submitText="Save"
         isLoading={isLoading}
+        hideStaffType={hideStaffType}
       />
     </ReusableModal>
   );
@@ -65,6 +67,7 @@ AddTeacherModal.propTypes = {
   isLoading: PropTypes.bool,
   mode: PropTypes.oneOf(['create', 'edit']),
   initialValues: PropTypes.object,
+  hideStaffType: PropTypes.bool,
 };
 
 export default AddTeacherModal;

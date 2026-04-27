@@ -3,7 +3,6 @@ import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
-import { tenantSchemeApi } from '../api/schemeOfWorkApi';
 
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
@@ -15,7 +14,6 @@ const InitialSetup = Loadable(lazy(() => import('../views/school-setup/InitialSe
 const CompleteSetup = Loadable(lazy(() => import('../views/school-setup/CompleteSetup')));
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
-const ViewSchemeDetails = Loadable(lazy(() => import('../views/scheme-of-work/ViewSchemeDetails')));
 const CurriculumManager = Loadable(
   lazy(() => import('../views/curriculum-manager/CurriculumManager')),
 );
@@ -35,6 +33,7 @@ const CalendarPage = Loadable(lazy(() => import('../views/school-setup/CalendarP
 const AccountSetting = Loadable(
   lazy(() => import('../views/pages/account-setting/AccountSetting')),
 );
+const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
 
 const TenantRoutes = [
   {
@@ -74,7 +73,6 @@ const TenantRoutes = [
       { path: 'curriculum-setup', element: <CurriculumManager /> },
 
       { path: 'scheme-of-work', element: <SchemeOfWork /> },
-      { path: 'scheme-of-work/view/:id', element: <ViewSchemeDetails api={tenantSchemeApi} /> },
 
       { path: 'class-structure-manager', element: <ClassStructureManager /> },
 
@@ -88,6 +86,7 @@ const TenantRoutes = [
       { path: 'activity-logs', element: <ActivityLog /> },
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'profile', element: <AccountSetting /> },
+      { path: 'staff-manager', element: <StaffManager /> },
     ],
   },
   { path: '*', element: <Navigate to="/login" replace /> },

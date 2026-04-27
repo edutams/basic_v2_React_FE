@@ -27,7 +27,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import {
@@ -495,30 +495,12 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                               {item.start_date || (item.is_subscribed === 'yes' ? 'Not Set' : '-')}
                             </TableCell>
                             <TableCell align="center">
-                              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                {item.is_subscribed === 'no' ? (
-                                  <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={() => handleSubscribeClick(item)}
-                                    disabled={loading}
-                                  >
-                                    Subscribe
-                                  </Button>
-                                ) : (
-                                  <>
-                                    <Button
-                                      variant="outlined"
-                                      size="small"
-                                      color={item.status === 'active' ? 'error' : 'success'}
-                                      onClick={() => handleToggleStatusClick(item)}
-                                      disabled={loading}
-                                    >
-                                      {item.status === 'active' ? 'Deactivate' : 'Activate'}
-                                    </Button>
-                                  </>
-                                )}
-                              </Box>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleMenuOpen(e, item)}
+                              >
+                                <MoreVertIcon size={18} />
+                              </IconButton>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -762,18 +744,20 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       >
         <DialogTitle>Confirm Status Change</DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to{' '}
-            <strong>{confirmStatus.term?.status === 'active' ? 'deactivate' : 'activate'}</strong>{' '}
-            the term <strong>{confirmStatus.term?.display_name}</strong>?
+          <Box sx={{ mt: 1 }}>
+            <Typography>
+              Are you sure you want to{' '}
+              <strong>{confirmStatus.term?.status === 'active' ? 'deactivate' : 'activate'}</strong>{' '}
+              the term <strong>{confirmStatus.term?.display_name}</strong>?
+            </Typography>
             {confirmStatus.term?.status !== 'active' && (
-              <Box mt={1}>
+              <Box mt={2}>
                 <Typography variant="body2" color="textSecondary">
                   Activating this term will automatically deactivate any other active terms.
                 </Typography>
               </Box>
             )}
-          </Typography>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
@@ -799,6 +783,42 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        {selectedItem?.is_subscribed === 'no' ? (
+          <MenuItem
+            onClick={() => {
+              handleSubscribeClick(selectedItem);
+              handleMenuClose();
+            }}
+          >
+            Subscribe
+          </MenuItem>
+        ) : (
+          <MenuItem
+            onClick={() => {
+              handleToggleStatusClick(selectedItem);
+              handleMenuClose();
+            }}
+            sx={{ color: selectedItem?.status === 'active' ? 'error.main' : 'success.main' }}
+          >
+            {selectedItem?.status === 'active' ? 'Deactivate' : 'Activate'}
+          </MenuItem>
+        )}
+      </Menu>
     </Box>
   );
 };

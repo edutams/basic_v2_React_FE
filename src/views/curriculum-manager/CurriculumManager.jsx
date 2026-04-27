@@ -185,7 +185,7 @@ const CurriculumManager = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMenuCurriculum, setSelectedMenuCurriculum] = useState(null);
-  const openMenuId = Boolean(anchorEl);
+  const isMenuOpen = Boolean(anchorEl);
 
   // Menu state for Subject Bank actions
   const [subjectAnchorEl, setSubjectAnchorEl] = useState(null);
@@ -1168,10 +1168,10 @@ const CurriculumManager = () => {
                                     size="small"
                                     onClick={(e) => handleOpenMenu(e, item)}
                                     aria-controls={
-                                      openMenuId === item.id ? 'curriculum-menu' : undefined
+                                      selectedMenuCurriculum?.id === item.id ? 'curriculum-menu' : undefined
                                     }
                                     aria-haspopup="true"
-                                    aria-expanded={openMenuId === item.id ? 'true' : undefined}
+                                    aria-expanded={selectedMenuCurriculum?.id === item.id ? 'true' : undefined}
                                   >
                                     <MoreVertIcon />
                                   </IconButton>
@@ -2341,7 +2341,7 @@ const CurriculumManager = () => {
       <Menu
         id="curriculum-menu"
         anchorEl={anchorEl}
-        open={openMenuId}
+        open={isMenuOpen}
         onClose={handleCloseMenu}
         anchorOrigin={{
           vertical: 'top',

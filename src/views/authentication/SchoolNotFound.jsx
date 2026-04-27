@@ -2,6 +2,12 @@ import { Box, Container, Typography, Button } from '@mui/material';
 import ErrorImg from 'src/assets/images/backgrounds/errorimg.svg';
 import { Link } from 'react-router';
 
+const appMode = import.meta.env.MODE;
+const CENTRAL_DOMAIN =
+    appMode === 'production'
+        ? import.meta.env.VITE_CENTRAL_DOMAIN_PROD
+        : import.meta.env.VITE_CENTRAL_DOMAIN_LOCAL;
+
 const SchoolNotFound = () => {
     return (
         <Box
@@ -22,8 +28,7 @@ const SchoolNotFound = () => {
                 <Button
                     color="primary"
                     variant="contained"
-                    component={Link}
-                    to="/dashboards/modern"
+                    href={CENTRAL_DOMAIN}
                     disableElevation
                 >
                     Go Back to Home

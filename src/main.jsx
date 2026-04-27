@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import Spinner from './views/spinner/Spinner';
@@ -9,14 +9,13 @@ import { AuthProvider } from './context/AgentContext/auth';
 import ErrorBoundary from './ErrorBoundary';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { validateTenantDomain } from './context/TenantContext/services/tenant.service';
+import { tenantValidation } from './routes/Router';
 
-const hostname = window.location.hostname;
-
-// Async validation to determine if this is a tenant domain
-const tenantValidation = await validateTenantDomain(hostname);
-// const isTenantSubdomain = tenantValidation?.status !== false;
 const isTenantSubdomain = tenantValidation?.status === true;
+
+if (tenantValidation?.status === false && window.location.pathname !== '/school-not-found') {
+  window.location.replace('/school-not-found');
+}
 
 // ✅ Lazy import — TenantAuthProvider only loads on tenant subdomains
 const TenantAuthProvider = isTenantSubdomain

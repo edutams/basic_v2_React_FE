@@ -6,14 +6,28 @@ import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
 import { getFullImageUrl } from '../../helpers/ImageHelper';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
 
-// Helper function to format school type from simple string
+// Helper function to format school type from simple string or JSON array
 const formatSchoolType = (schoolType) => {
   if (!schoolType) return '';
 
-  if (schoolType === 'primary') return 'Primary';
-  if (schoolType === 'secondary') return 'Secondary';
+  let value = schoolType;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) value = parsed[0] || '';
+      else value = String(parsed);
+    } catch {
+      // not JSON, use as-is
+    }
+  } else if (Array.isArray(value)) {
+    value = value[0] || '';
+  }
 
-  return schoolType;
+  const normalized = String(value).toLowerCase().trim();
+  if (normalized === 'primary') return 'Primary';
+  if (normalized === 'secondary') return 'Secondary';
+
+  return value;
 };
 
 const SchoolInformationPage = () => {

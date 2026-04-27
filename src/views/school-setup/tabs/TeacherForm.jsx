@@ -38,6 +38,7 @@ const TeacherForm = ({
   onCancel,
   submitText = 'Save',
   isLoading = false,
+  hideStaffType = false,
 }) => {
   const [classes, setClasses] = useState([]);
   const [classArms, setClassArms] = useState([]);
@@ -354,23 +355,25 @@ const TeacherForm = ({
             </FormControl>
           </Box>
         ) : (
-          <FormControl
-            fullWidth
-            error={formik.touched.staff_type && Boolean(formik.errors.staff_type)}
-          >
-            <InputLabel>Staff Type</InputLabel>
-            <Select
-              name="staff_type"
-              value={formik.values.staff_type || ''}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              displayEmpty
-              label="Staff Type"
+          !hideStaffType && (
+            <FormControl
+              fullWidth
+              error={formik.touched.staff_type && Boolean(formik.errors.staff_type)}
             >
-              <MenuItem value="Non-Teaching">Non-Teaching</MenuItem>
-              <MenuItem value="Teaching">Teaching</MenuItem>
-            </Select>
-          </FormControl>
+              <InputLabel>Staff Type</InputLabel>
+              <Select
+                name="staff_type"
+                value={formik.values.staff_type || ''}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                displayEmpty
+                label="Staff Type"
+              >
+                <MenuItem value="Non-Teaching">Non-Teaching</MenuItem>
+                <MenuItem value="Teaching">Teaching</MenuItem>
+              </Select>
+            </FormControl>
+          )
         )}
       </Box>
 
@@ -378,7 +381,8 @@ const TeacherForm = ({
         <Button color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
+        {/* disabled={isLoading || !formik.isValid} */}
+        <Button variant="contained" type="submit" >
           {isLoading ? 'Saving...' : submitText}
         </Button>
       </Box>
@@ -393,6 +397,7 @@ TeacherForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
   submitText: PropTypes.string,
   isLoading: PropTypes.bool,
+  hideStaffType: PropTypes.bool,
 };
 
 export default TeacherForm;

@@ -37,7 +37,7 @@ import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
 
 import guardianApi from 'src/api/parentApi';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
-import ParentFormModal from 'src/components/tenant-components/parents/ParentFormModal';
+import ParentForm from 'src/components/tenant-components/parents/ParentForm';
 import DeleteParentModal from 'src/components/tenant-components/parents/DeleteParentModal';
 import UploadParentModal from 'src/components/tenant-components/parents/UploadParentModal';
 import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
@@ -559,7 +559,7 @@ const ParentManagement = () => {
         </Paper>
       </ParentCard>
 
-      <ParentFormModal
+      <ParentForm
         open={formModalOpen}
         onClose={() => setFormModalOpen(false)}
         initialValues={editInitialValues}

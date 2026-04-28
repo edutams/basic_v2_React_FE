@@ -29,7 +29,7 @@ const EMPTY_FORM = {
   address: '',
 };
 
-const ParentFormModal = ({
+const ParentForm = ({
   open,
   onClose,
   initialValues = EMPTY_FORM,
@@ -219,7 +219,7 @@ const ParentFormModal = ({
   );
 };
 
-ParentFormModal.propTypes = {
+ParentForm.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   initialValues: PropTypes.object,
@@ -228,4 +228,4 @@ ParentFormModal.propTypes = {
   isLoading: PropTypes.bool,
 };
 
-export default ParentFormModal;
+export default ParentForm;

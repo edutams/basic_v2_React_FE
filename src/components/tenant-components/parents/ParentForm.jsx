@@ -163,14 +163,14 @@ const ParentForm = ({
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="First Name" name="first_name" value={formik.values.first_name}
-            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth required
+            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth 
             error={formik.touched.first_name && Boolean(formik.errors.first_name)}
             helperText={formik.touched.first_name && formik.errors.first_name} />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="Last Name" name="last_name" value={formik.values.last_name}
-            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth required
+            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth 
             error={formik.touched.last_name && Boolean(formik.errors.last_name)}
             helperText={formik.touched.last_name && formik.errors.last_name} />
         </Grid>
@@ -183,7 +183,7 @@ const ParentForm = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth required error={formik.touched.gender && Boolean(formik.errors.gender)}>
+          <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)}>
             <InputLabel>Gender</InputLabel>
             <Select name="gender" value={formik.values.gender} onChange={formik.handleChange} onBlur={formik.handleBlur} label="Gender">
               <MenuItem value="male">Male</MenuItem>
@@ -201,13 +201,13 @@ const ParentForm = ({
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="Phone" name="phone" value={formik.values.phone}
-            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth required
+            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth 
             error={formik.touched.phone && Boolean(formik.errors.phone)}
             helperText={formik.touched.phone && formik.errors.phone} />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth required error={formik.touched.relationship && Boolean(formik.errors.relationship)}>
+          <FormControl fullWidth error={formik.touched.relationship && Boolean(formik.errors.relationship)}>
             <InputLabel>Relationship</InputLabel>
             <Select name="relationship" value={formik.values.relationship} onChange={formik.handleChange} onBlur={formik.handleBlur} label="Relationship">
               <MenuItem value="father">Father</MenuItem>
@@ -236,9 +236,8 @@ const ParentForm = ({
       {!isEdit && (
         <>
         <Box sx={{ bgcolor: '#F0F9FF', p: 2, borderRadius: 2, mt: 3, mb: 2 }}>
-          <Divider sx={{ my: 2.5 }} />
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-            Link Wards{' '}
+            Link Wards to Parent{' '}
             <Typography component="span" variant="caption" color="text.secondary">(optional)</Typography>
           </Typography>
 

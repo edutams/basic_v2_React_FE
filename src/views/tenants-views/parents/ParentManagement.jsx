@@ -30,6 +30,10 @@ import {
   InputLabel,
   Select,
   Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -114,6 +118,9 @@ const ParentManagement = () => {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [parentToDelete, setParentToDelete] = useState(null);
+
+  const [toggleStatusModalOpen, setToggleStatusModalOpen] = useState(false);
+  const [parentToToggle, setParentToToggle] = useState(null);
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
@@ -216,13 +223,20 @@ const ParentManagement = () => {
     handleMenuClose();
   };
 
-  const handleToggleStatus = async (row) => {
+  const handleToggleStatus = (row) => {
     handleMenuClose();
+    setParentToToggle(row);
+    setToggleStatusModalOpen(true);
+  };
+
+  const handleConfirmToggle = async () => {
     try {
-      await guardianApi.toggleStatus(row.user_id);
+      await guardianApi.toggleStatus(parentToToggle.user_id);
       notify.success(
-        `Parent ${row.status === 'active' ? 'deactivated' : 'activated'} successfully`,
+        `Parent ${parentToToggle.status === 'active' ? 'deactivated' : 'activated'} successfully`,
       );
+      setToggleStatusModalOpen(false);
+      setParentToToggle(null);
       fetchParents();
       fetchStats();
     } catch {
@@ -321,7 +335,7 @@ const ParentManagement = () => {
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h5">Parents &amp; Guardians</Typography>
+            <Typography variant="h5">Parents & Guardians</Typography>
             <Box display="flex" gap={1}>
               <Button variant="outlined" onClick={handleDownloadTemplate}>
                 Download Template
@@ -356,7 +370,7 @@ const ParentManagement = () => {
             }}
           />
 
-          <FormControl sx={{ minWidth: 220 }}>
+          {/* <FormControl sx={{ minWidth: 220 }}>
             <InputLabel>Filter by Class</InputLabel>
             <Select
               value={classId}
@@ -373,7 +387,7 @@ const ParentManagement = () => {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
+          </FormControl> */}
 
           {hasFilters && (
             <Button
@@ -447,11 +461,19 @@ const ParentManagement = () => {
                           label={row.status ?? 'active'}
                           color={statusColor(row.status)}
                           size="small"
-                          sx={{
-                            bgcolor: row.status === 'active' ? '#dcfce7' : '#fef3c7',
-                            color: row.status === 'active' ? '#166534' : '#92400e',
-                            fontWeight: 500,
+                           sx={{
+                            bgcolor:
+                              row.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              row.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
                           }}
+                          
                         />
                       </TableCell>
 
@@ -535,6 +557,33 @@ const ParentManagement = () => {
         parent={parentToDelete}
         onConfirm={handleConfirmDelete}
       />
+
+      {/* Confirm Status Change*/}
+      <Dialog open={toggleStatusModalOpen} onClose={() => setToggleStatusModalOpen(false)}>
+        <DialogTitle>Confirm Status Change</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to{' '}
+            <strong>{parentToToggle?.status === 'active' ? 'deactivate' : 'activate'}</strong>{' '}
+            <strong>
+              {parentToToggle?.user
+                ? `${parentToToggle.user.fname} ${parentToToggle.user.lname}`
+                : 'this parent'}
+            </strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            // color={parentToToggle?.status === 'active' ? 'warning' : 'success'}
+            onClick={handleConfirmToggle}
+            autoFocus
+          >
+            {parentToToggle?.status === 'active' ? 'Deactivate' : 'Activate'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <UploadParentModal
         open={uploadModalOpen}

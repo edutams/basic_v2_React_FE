@@ -211,8 +211,6 @@ const NonTeachingStaffForm = ({
         <Button 
           variant="contained" 
           type="submit" 
-          disabled={isLoading || !formik.isValid}
-          sx={{ bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
         >
           {isLoading ? 'Saving...' : submitText}
         </Button>

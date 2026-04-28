@@ -125,19 +125,19 @@ const StaffManager = () => {
         const allStaff = response.data || [];
 
         // Filter by tab and status
-        let filtered = allStaff.filter(s => s.staff_type === activeTab);
-        
+        let filtered = allStaff.filter((s) => s.staff_type === activeTab);
+
         // Apply status filter
         if (statusFilter !== 'all') {
-          filtered = filtered.filter(s => (s.status || 'active').toLowerCase() === statusFilter);
+          filtered = filtered.filter((s) => (s.status || 'active').toLowerCase() === statusFilter);
         }
-        
+
         setStaff(filtered);
 
         // Calculate stats
-        const teaching = allStaff.filter(s => s.staff_type === 'teaching').length;
-        const nonTeaching = allStaff.filter(s => s.staff_type === 'non-teaching').length;
-        const onLeave = allStaff.filter(s => s.status === 'leave').length;
+        const teaching = allStaff.filter((s) => s.staff_type === 'teaching').length;
+        const nonTeaching = allStaff.filter((s) => s.staff_type === 'non-teaching').length;
+        const onLeave = allStaff.filter((s) => s.status === 'leave').length;
 
         setStats({
           total: allStaff.length,
@@ -211,7 +211,7 @@ const StaffManager = () => {
         email: selectedStaff.user?.email || '',
         date_of_appointment: selectedStaff.date_of_appointment || null,
         status: selectedStaff.status || 'active',
-        role: activeTab === 'non-teaching' ? (selectedStaff.role || '') : undefined,
+        role: activeTab === 'non-teaching' ? selectedStaff.role || '' : undefined,
       });
       setEditModalOpen(true);
     }
@@ -241,7 +241,9 @@ const StaffManager = () => {
         userId: values.staff_id,
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: activeTab === 'teaching' ? 'teaching' : 'non-teaching',
-        date_of_appointment: values.date_of_appointment ? values.date_of_appointment.format('YYYY-MM-DD') : null,
+        date_of_appointment: values.date_of_appointment
+          ? values.date_of_appointment.format('YYYY-MM-DD')
+          : null,
         status: values.status,
       };
 
@@ -276,7 +278,9 @@ const StaffManager = () => {
         userId: values.staff_id,
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: selectedStaff.staff_type,
-        date_of_appointment: values.date_of_appointment ? values.date_of_appointment.format('YYYY-MM-DD') : null,
+        date_of_appointment: values.date_of_appointment
+          ? values.date_of_appointment.format('YYYY-MM-DD')
+          : null,
         status: values.status,
       };
 
@@ -334,10 +338,30 @@ const StaffManager = () => {
   };
 
   const statCards = [
-    { title: 'Total Staff', value: stats.total, icon: <IconUsers size={24} color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'Teaching Staff', value: stats.teaching, icon: <IconUserCheck size={24} color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'Non-Teaching Staff', value: stats.nonTeaching, icon: <IconUserX size={24} color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'On Leave', value: stats.onLeave, icon: <IconCalendarOff size={24} color="#39b65a" />, bgColor: '#eaf7ee' },
+    {
+      title: 'Total Staff',
+      value: stats.total,
+      icon: <IconUsers size={24} color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
+    {
+      title: 'Teaching Staff',
+      value: stats.teaching,
+      icon: <IconUserCheck size={24} color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
+    {
+      title: 'Non-Teaching Staff',
+      value: stats.nonTeaching,
+      icon: <IconUserX size={24} color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
+    {
+      title: 'On Leave',
+      value: stats.onLeave,
+      icon: <IconCalendarOff size={24} color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
   ];
 
   return (
@@ -358,7 +382,9 @@ const StaffManager = () => {
                 boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.03)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
+              >
                 <Box
                   sx={{
                     width: 44,
@@ -405,7 +431,10 @@ const StaffManager = () => {
       </Box>
 
       {/* Main Content Card */}
-      <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden', p: 2 }}>
+      <Card
+        elevation={0}
+        sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden', p: 2 }}
+      >
         {/* Sub-tabs for Teaching Staff */}
         {activeTab === 'teaching' && (
           <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
@@ -415,7 +444,9 @@ const StaffManager = () => {
                 setActiveSubTab(newValue);
                 setPage(0);
               }}
-              sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' } }}
+              sx={{
+                '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' },
+              }}
             >
               <Tab label="Profiling" value="profiling" />
               <Tab label="Allocation" value="allocation" />
@@ -429,7 +460,17 @@ const StaffManager = () => {
           {activeTab === 'teaching' && activeSubTab === 'profiling' && (
             <>
               {/* Toolbar */}
-              <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                }}
+              >
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                   <TextField
                     size="small"
@@ -445,7 +486,7 @@ const StaffManager = () => {
                     }}
                     sx={{ minWidth: 300 }}
                   />
-                  
+
                   <TextField
                     select
                     size="small"
@@ -470,17 +511,10 @@ const StaffManager = () => {
                     Add Single Staff
                   </Button>
                   <ButtonGroup variant="outlined">
-                    <Button
-                      startIcon={<IconPlus size={18} />}
-                      sx={{ textTransform: 'none' }}
-                    >
+                    <Button startIcon={<IconPlus size={18} />} sx={{ textTransform: 'none' }}>
                       Excel
                     </Button>
-                    <Button
-                      size="small"
-                      onClick={handleBulkMenuOpen}
-                      sx={{ px: 1 }}
-                    >
+                    <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
                       <IconChevronDown size={16} />
                     </Button>
                   </ButtonGroup>
@@ -498,7 +532,9 @@ const StaffManager = () => {
                       <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Appointment</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>
+                        Action
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -544,32 +580,40 @@ const StaffManager = () => {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">{staffMember.user?.email || 'N/A'}</Typography>
+                            <Typography variant="body2">
+                              {staffMember.user?.email || 'N/A'}
+                            </Typography>
                             <Typography variant="caption" color="textSecondary">
                               {staffMember.user?.phone || 'N/A'}
                             </Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">
-                              {staffMember.date_of_appointment 
-                                ? new Date(staffMember.date_of_appointment).toLocaleDateString('en-US', { 
-                                    year: 'numeric', 
-                                    month: 'short', 
-                                    day: 'numeric' 
-                                  })
+                              {staffMember.date_of_appointment
+                                ? new Date(staffMember.date_of_appointment).toLocaleDateString(
+                                    'en-US',
+                                    {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                    },
+                                  )
                                 : 'N/A'}
                             </Typography>
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={staffMember.status || 'Active'}
+                              label={staffMember.status || 'active'}
                               color={getStatusColor(staffMember.status)}
                               size="small"
-                              sx={{ textTransform: 'capitalize' }}
+                              sx={{ textTransform: 'lowercase' }}
                             />
                           </TableCell>
                           <TableCell align="center">
-                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleMenuOpen(e, staffMember)}
+                            >
                               <IconDotsVertical size={18} />
                             </IconButton>
                           </TableCell>
@@ -600,7 +644,9 @@ const StaffManager = () => {
                 <Tabs
                   value={allocationSubTab}
                   onChange={(e, newValue) => setAllocationSubTab(newValue)}
-                  sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' } }}
+                  sx={{
+                    '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' },
+                  }}
                 >
                   <Tab label="Class Teacher Allocation" value="class-teacher" />
                   <Tab label="Subject Teacher" value="subject-teacher" />
@@ -617,7 +663,17 @@ const StaffManager = () => {
           {activeTab === 'non-teaching' && (
             <>
               {/* Toolbar */}
-              <Box sx={{ p: 2, borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                }}
+              >
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                   <TextField
                     size="small"
@@ -633,7 +689,7 @@ const StaffManager = () => {
                     }}
                     sx={{ minWidth: 300 }}
                   />
-                  
+
                   <TextField
                     select
                     size="small"
@@ -658,17 +714,10 @@ const StaffManager = () => {
                     Add Single Staff
                   </Button>
                   <ButtonGroup variant="outlined">
-                    <Button
-                      startIcon={<IconPlus size={18} />}
-                      sx={{ textTransform: 'none' }}
-                    >
+                    <Button startIcon={<IconPlus size={18} />} sx={{ textTransform: 'none' }}>
                       Add Multiple Staff
                     </Button>
-                    <Button
-                      size="small"
-                      onClick={handleBulkMenuOpen}
-                      sx={{ px: 1 }}
-                    >
+                    <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
                       <IconChevronDown size={16} />
                     </Button>
                   </ButtonGroup>
@@ -686,7 +735,9 @@ const StaffManager = () => {
                       <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Role</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>
+                        Action
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -732,7 +783,9 @@ const StaffManager = () => {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">{staffMember.user?.email || 'N/A'}</Typography>
+                            <Typography variant="body2">
+                              {staffMember.user?.email || 'N/A'}
+                            </Typography>
                             <Typography variant="caption" color="textSecondary">
                               {staffMember.user?.phone || 'N/A'}
                             </Typography>
@@ -741,10 +794,10 @@ const StaffManager = () => {
                             <Chip
                               label={staffMember.role || 'N/A'}
                               size="small"
-                              sx={{ 
-                                bgcolor: '#f5f5f5', 
+                              sx={{
+                                bgcolor: '#f5f5f5',
                                 color: '#666',
-                                textTransform: 'capitalize'
+                                textTransform: 'capitalize',
                               }}
                             />
                           </TableCell>
@@ -757,7 +810,10 @@ const StaffManager = () => {
                             />
                           </TableCell>
                           <TableCell align="center">
-                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleMenuOpen(e, staffMember)}
+                            >
                               <IconDotsVertical size={18} />
                             </IconButton>
                           </TableCell>
@@ -878,11 +934,17 @@ const StaffManager = () => {
             <Box sx={{ py: 2 }}>
               <Grid container spacing={2}>
                 <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Staff ID</Typography>
-                  <Typography variant="body1" fontWeight={600}>{selectedStaff.staff_id || 'N/A'}</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Staff ID
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {selectedStaff.staff_id || 'N/A'}
+                  </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Status</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Status
+                  </Typography>
                   <Box sx={{ mt: 0.5 }}>
                     <Chip
                       label={selectedStaff.status || 'Active'}
@@ -892,34 +954,47 @@ const StaffManager = () => {
                   </Box>
                 </Grid>
                 <Grid item xs={12}>
-                  <Typography variant="caption" color="textSecondary">Full Name</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Full Name
+                  </Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    {selectedStaff.user?.fname} {selectedStaff.user?.mname} {selectedStaff.user?.lname}
+                    {selectedStaff.user?.fname} {selectedStaff.user?.mname}{' '}
+                    {selectedStaff.user?.lname}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Email</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Email
+                  </Typography>
                   <Typography variant="body1">{selectedStaff.user?.email || 'N/A'}</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Phone</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Phone
+                  </Typography>
                   <Typography variant="body1">{selectedStaff.user?.phone || 'N/A'}</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Gender</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Gender
+                  </Typography>
                   <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
                     {selectedStaff.user?.sex || 'N/A'}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="caption" color="textSecondary">Staff Type</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Staff Type
+                  </Typography>
                   <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
                     {selectedStaff.staff_type || 'N/A'}
                   </Typography>
                 </Grid>
                 {activeTab === 'non-teaching' && (
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">Role</Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Role
+                    </Typography>
                     <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
                       {selectedStaff.role || 'N/A'}
                     </Typography>
@@ -930,7 +1005,11 @@ const StaffManager = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" onClick={() => setViewModalOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button
+            variant="contained"
+            onClick={() => setViewModalOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
             Close
           </Button>
         </DialogActions>

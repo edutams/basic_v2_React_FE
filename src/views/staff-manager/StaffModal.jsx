@@ -23,14 +23,10 @@ const StaffModal = ({ open, onClose, onSave, isLoading, mode, initialValues }) =
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ fontWeight: 700 }}>
-        {mode === 'edit' ? 'Edit Teacher' : 'Add New Teacher'}
+        {mode === 'edit' ? 'Edit Teaching Staff' : 'Add New Teaching Staff'}
       </DialogTitle>
       <DialogContent dividers>
-        <StaffForm
-          initialValues={initialValues}
-          onSubmit={handleSave}
-          isLoading={isLoading}
-        />
+        <StaffForm initialValues={initialValues} onSubmit={handleSave} isLoading={isLoading} />
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button

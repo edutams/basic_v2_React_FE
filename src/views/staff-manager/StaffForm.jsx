@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  TextField,
-  Grid,
-  MenuItem,
-} from '@mui/material';
+import { Box, TextField, Grid, MenuItem } from '@mui/material';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -13,7 +8,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 
 const validationSchema = Yup.object({
-  staff_id: Yup.string().required('Staff ID is required'),
+  // staff_id: Yup.string().required('Staff ID is required'),
   surname: Yup.string().required('Surname is required'),
   first_name: Yup.string().required('First Name is required'),
   phone_number: Yup.string().required('Phone is required'),
@@ -34,7 +29,9 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
           phone_number: initialValues?.phone_number || '',
           gender: initialValues?.gender || '',
           email: initialValues?.email || '',
-          date_of_appointment: initialValues?.date_of_appointment ? dayjs(initialValues.date_of_appointment) : null,
+          date_of_appointment: initialValues?.date_of_appointment
+            ? dayjs(initialValues.date_of_appointment)
+            : null,
           status: initialValues?.status || 'active',
         }}
         validationSchema={validationSchema}
@@ -50,7 +47,7 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
                     fullWidth
                     label="Staff ID"
                     name="staff_id"
-                    placeholder="Admission ID"
+                    placeholder="If left blank, it will be auto-generated"
                     value={values.staff_id}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -95,7 +92,7 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
                     fullWidth
                     label="Phone"
                     name="phone_number"
-                    placeholder="Other Name"
+                    placeholder="Phone Number"
                     value={values.phone_number}
                     onChange={handleChange}
                     onBlur={handleBlur}
@@ -179,11 +176,15 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
             </Box>
 
             {/* Hidden submit button - will be triggered by parent */}
-            <button type="submit" style={{ display: 'none' }} ref={(ref) => {
-              if (ref) {
-                window.staffFormSubmit = submitForm;
-              }
-            }} />
+            <button
+              type="submit"
+              style={{ display: 'none' }}
+              ref={(ref) => {
+                if (ref) {
+                  window.staffFormSubmit = submitForm;
+                }
+              }}
+            />
           </Form>
         )}
       </Formik>

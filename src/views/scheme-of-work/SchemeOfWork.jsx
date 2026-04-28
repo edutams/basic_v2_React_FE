@@ -48,7 +48,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { tenantSchemeApi } from '../../api/schemeOfWorkApi';
-import { fetchProgrammes, fetchClassesByProgramme, fetchSubjectsByProgramme } from '../../api/tenantCurriculumApi';
+import { fetchProgrammes, fetchClassesByProgramme, fetchSubjectsByClass } from '../../api/tenantCurriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
@@ -157,10 +157,16 @@ const SchemeOfWork = () => {
       try {
         const classesRes = await fetchClassesByProgramme(val);
         setClasses(classesRes.data.map(c => ({ value: c.id, label: c.class_name })));
-        const subjectsRes = await fetchSubjectsByProgramme(val);
+        setSubjects([]); // Clear subjects until a class is selected
+      } catch (error) {
+        console.error('Failed to fetch classes', error);
+      }
+    } else if (key === 'classLevel') {
+      try {
+        const subjectsRes = await fetchSubjectsByClass(val);
         setSubjects(subjectsRes.data.map(s => ({ value: s.id, label: s.subject_name })));
       } catch (error) {
-        console.error('Failed to fetch dependent filters', error);
+        console.error('Failed to fetch subjects', error);
       }
     }
   }, []);
@@ -261,14 +267,21 @@ const SchemeOfWork = () => {
   const handleModalProgrammeChange = async (prog, setClasses, setSubjects) => {
     if (!prog) return;
     try {
-      const [clsRes, subRes] = await Promise.all([
-        fetchClassesByProgramme(prog),
-        fetchSubjectsByProgramme(prog),
-      ]);
+      const clsRes = await fetchClassesByProgramme(prog);
       setClasses(clsRes.data.map(c => ({ value: c.id, label: c.class_name })));
-      setSubjects(subRes.data.map(s => ({ value: s.id, label: s.subject_name })));
+      setSubjects([]); // Clear subjects until a class is selected
     } catch (e) {
       notify.error('Failed to load filter options');
+    }
+  };
+
+  const handleModalClassChange = async (classId, setSubjects) => {
+    if (!classId) return;
+    try {
+      const subRes = await fetchSubjectsByClass(classId);
+      setSubjects(subRes.data.map(s => ({ value: s.id, label: s.subject_name })));
+    } catch (e) {
+      notify.error('Failed to load subjects');
     }
   };
 
@@ -361,7 +374,7 @@ const SchemeOfWork = () => {
       notify.success(res.message);
       fetchScheme({ subject, classLevel }, activeTerm);
     } catch (error) {
-      notify.error(error.response?.data?.message || 'Import failed');
+      notify.error(error.response?.data?.error || error.response?.data?.message || 'Import failed');
     } finally {
       setLoading(false);
     }
@@ -658,7 +671,10 @@ const SchemeOfWork = () => {
                 label="Class"
                 size="small"
                 value={classes.some(c => c.value === classLevel) ? classLevel : ''}
-                onChange={(e) => setClassLevel(e.target.value)}
+                onChange={(e) => {
+                  setClassLevel(e.target.value);
+                  handleFilterChange('classLevel', e.target.value);
+                }}
               >
                 {classes.map((c) => (
                   <MenuItem key={c.value} value={c.value}>
@@ -1042,7 +1058,10 @@ const SchemeOfWork = () => {
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField select fullWidth label="Class" size="small"
                 value={dlTemplateFilters.classLevel}
-                onChange={e => setDlTemplateFilters(f => ({ ...f, classLevel: e.target.value }))}
+                onChange={async (e) => {
+                  setDlTemplateFilters(f => ({ ...f, classLevel: e.target.value }));
+                  await handleModalClassChange(e.target.value, setDlTemplateSubjects);
+                }}
               >
                 {dlTemplateClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
@@ -1099,7 +1118,10 @@ const SchemeOfWork = () => {
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField select fullWidth label="Class" size="small"
                 value={uploadFilters.classLevel}
-                onChange={e => setUploadFilters(f => ({ ...f, classLevel: e.target.value }))}
+                onChange={async (e) => {
+                  setUploadFilters(f => ({ ...f, classLevel: e.target.value }));
+                  await handleModalClassChange(e.target.value, setUploadSubjects);
+                }}
               >
                 {uploadClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>
@@ -1183,7 +1205,10 @@ const SchemeOfWork = () => {
             <Grid size={{ xs: 6, md: 6 }}>
               <TextField select fullWidth label="Class" size="small"
                 value={dlSchemeFilters.classLevel}
-                onChange={e => setDlSchemeFilters(f => ({ ...f, classLevel: e.target.value }))}
+                onChange={async (e) => {
+                  setDlSchemeFilters(f => ({ ...f, classLevel: e.target.value }));
+                  await handleModalClassChange(e.target.value, setDlSchemeSubjects);
+                }}
               >
                 {dlSchemeClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
               </TextField>

@@ -12,7 +12,6 @@ import ProfileHeader from './components/ProfileHeader';
 import StatCards from './components/StatCards';
 import OverviewTab from './components/OverviewTab';
 import TeamTab from './components/TeamTab';
-import SchoolsTab from './components/SchoolsTab';
 import ManageTeamTab from './components/ManageTeamTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
@@ -22,7 +21,7 @@ import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
 
 import agentApi from '../../api/agent';
-import { mockAgentData } from './mockData';
+import SchoolsTab from './components/SchoolsTab/SchoolsTab';
 
 const ViewAgent = () => {
   const { user: currentUser } = useAuth();

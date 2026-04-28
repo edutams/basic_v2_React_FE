@@ -720,6 +720,7 @@ const CurriculumManager = () => {
         handleCloseImportModal();
         loadCurriculums();
         loadClassAssignments();
+        handleSaveAssignments();
       } else {
         showSnackbar(response.message || 'Failed to import curriculums', 'error');
       }

@@ -8,13 +8,14 @@ const guardianApi = {
   getAll: (params = {}) => tenantApi.get('/guardians', { params }),
   create: (data) => tenantApi.post('/guardians', data),
   update: (id, data) => tenantApi.put(`/guardians/${id}`, data),
+  toggleStatus: (id) => tenantApi.patch(`/guardians/${id}/toggle-status`),
   remove: (id) => tenantApi.delete(`/guardians/${id}`),
   downloadTemplate: () =>
-    tenantApi.get('/guardians/download-template', { responseType: 'blob' }),
+    tenantApi.get('/guardians/download-guardian-template', { responseType: 'blob' }),
   uploadTemplate: (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return tenantApi.post('/guardians/upload-template', formData);
+    return tenantApi.post('/guardians/upload-guardian-template', formData);
   },
 };
 

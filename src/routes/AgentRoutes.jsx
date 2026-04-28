@@ -10,7 +10,9 @@ const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')))
 
 /* ****Pages***** */
 const AnalyticalDashboard = Loadable(lazy(() => import('../views/dashboard/Analytical')));
-const SchoolDashboard = Loadable(lazy(() => import('../views/dashboard/School')));
+const SchoolDashboard = Loadable(
+  lazy(() => import('../views/agent/components/SchoolsTab/SchoolsTab')),
+);
 const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
 const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
 const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
@@ -37,7 +39,9 @@ const MyCommissionByTransaction = Loadable(
 
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
-const AgentCurriculumManager = Loadable(lazy(() => import('../views/curriculum-manager/AgentCurriculumManager')));
+const AgentCurriculumManager = Loadable(
+  lazy(() => import('../views/curriculum-manager/AgentCurriculumManager')),
+);
 const AgentSchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/AgentSchemeOfWork')));
 
 const FrontendPages = Loadable(lazy(() => import('../views/FrontendPages')));
@@ -107,7 +111,7 @@ const AgentRoutes = [
     children: [
       { index: true, element: <DashboardRouteWrapper /> },
       { path: 'dashboard', element: <DashboardRouteWrapper /> },
-      { path: 'dashboard/school', element: <SchoolDashboard /> },
+      // { path: 'dashboard/school', element: <SchoolDashboard /> },
       { path: 'acl_manager', element: <AlcManager /> },
       { path: 'organization', element: <Agent /> },
       { path: 'view/:id', element: <ViewAgent /> },

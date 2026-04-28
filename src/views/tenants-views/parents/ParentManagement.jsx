@@ -45,7 +45,6 @@ import LinkIcon from '@mui/icons-material/Link';
 import guardianApi from 'src/api/parentApi';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
 import ParentModal from 'src/components/tenant-components/parents/ParentModal';
-import DeleteParentModal from 'src/components/tenant-components/parents/DeleteParentModal';
 import UploadParentModal from 'src/components/tenant-components/parents/UploadParentModal';
 import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
 import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsModal';
@@ -566,12 +565,26 @@ const ParentManagement = () => {
         onParentUpdate={handleParentUpdate}
       />
 
-      <DeleteParentModal
-        open={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        parent={parentToDelete}
-        onConfirm={handleConfirmDelete}
-      />
+      {/* Confirm Delete */}
+      <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete Parent</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete{' '}
+            <strong>
+              {parentToDelete?.user
+                ? `${parentToDelete.user.fname} ${parentToDelete.user.lname}`
+                : 'this parent'}
+            </strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleConfirmDelete} autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Confirm Status Change*/}
       <Dialog open={toggleStatusModalOpen} onClose={() => setToggleStatusModalOpen(false)}>

@@ -201,13 +201,13 @@ const ParentForm = ({
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="Phone" name="phone" value={formik.values.phone}
-            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth
+            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth required
             error={formik.touched.phone && Boolean(formik.errors.phone)}
             helperText={formik.touched.phone && formik.errors.phone} />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth error={formik.touched.relationship && Boolean(formik.errors.relationship)}>
+          <FormControl fullWidth required error={formik.touched.relationship && Boolean(formik.errors.relationship)}>
             <InputLabel>Relationship</InputLabel>
             <Select name="relationship" value={formik.values.relationship} onChange={formik.handleChange} onBlur={formik.handleBlur} label="Relationship">
               <MenuItem value="father">Father</MenuItem>
@@ -226,16 +226,16 @@ const ParentForm = ({
 
         <Grid size={{ xs: 12 }}>
           <TextField label="Address" name="address" value={formik.values.address}
-            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth multiline rows={2}
+            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth multiline rows={2} required
             error={formik.touched.address && Boolean(formik.errors.address)}
             helperText={formik.touched.address && formik.errors.address} />
         </Grid>
 
       </Grid>
 
-      {/* ── Link Wards (add mode only) ── */}
       {!isEdit && (
         <>
+        <Box sx={{ bgcolor: '#F0F9FF', p: 2, borderRadius: 2, mt: 3, mb: 2 }}>
           <Divider sx={{ my: 2.5 }} />
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
             Link Wards{' '}
@@ -262,6 +262,7 @@ const ParentForm = ({
             <Button variant="contained" onClick={handleWardSearch} disabled={wardSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
               {wardSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
             </Button>
+          </Box>
           </Box>
 
           {wardResults.length > 0 && (

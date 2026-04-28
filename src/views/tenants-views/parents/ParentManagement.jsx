@@ -238,6 +238,18 @@ const ParentManagement = () => {
     handleMenuClose();
   };
 
+  const handleToggleStatus = async (row) => {
+    handleMenuClose();
+    try {
+      await guardianApi.toggleStatus(row.user_id);
+      notify.success(`Parent ${row.status === 'active' ? 'deactivated' : 'activated'} successfully`);
+      fetchParents();
+      fetchStats();
+    } catch {
+      notify.error('Failed to update parent status');
+    }
+  };
+
   const handleConfirmDelete = async () => {
     try {
       await guardianApi.remove(parentToDelete.user_id);
@@ -413,7 +425,7 @@ const ParentManagement = () => {
                 <TableRow>
                   <TableCell>S/N</TableCell>
                   <TableCell>Name</TableCell>
-                  <TableCell>Ward</TableCell>
+                  <TableCell>Wards</TableCell>
                   <TableCell>Contact</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="center">Action</TableCell>
@@ -429,7 +441,7 @@ const ParentManagement = () => {
                   </TableRow>
                 ) : rows.length > 0 ? (
                   rows.map((row, index) => (
-                    <TableRow key={row.id}>
+                    <TableRow key={row.user_id}>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
 
                       <TableCell>
@@ -441,8 +453,8 @@ const ParentManagement = () => {
                         </Typography>
                       </TableCell>
 
-                      <TableCell >
-                        <Typography variant="subtitle2" align="center">
+                      <TableCell align="center">
+                        <Typography variant="subtitle2" >
                           <Link
                             sx={{ cursor: 'pointer' }}
                             onClick={() => {
@@ -484,12 +496,15 @@ const ParentManagement = () => {
 
                         <Menu
                           anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                          open={Boolean(anchorEl) && selectedRow?.user_id === row.user_id}
                           onClose={handleMenuClose}
                         >
                           <MenuItem onClick={() => handleOpenEdit(row)}>Edit</MenuItem>
                           <MenuItem onClick={() => handleOpenLinkWard(row)}>
                             Link Ward
+                          </MenuItem>
+                          <MenuItem onClick={() => handleToggleStatus(row)}>
+                            {row.status === 'active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
                           <MenuItem
                             onClick={() => handleOpenDelete(row)}

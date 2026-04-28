@@ -57,7 +57,6 @@ const EMPTY_FORM = {
   address: '',
 };
 
-// Stat Card
 const StatCard = ({ count, label, icon: Icon, color = '#3B5BDB', loading }) => (
   <Paper
     sx={{
@@ -171,7 +170,6 @@ const ParentManagement = () => {
   const fetchClasses = useCallback(async () => {
     try {
       const data = await getClassesWithDivisions();
-      // flatten all classes from all divisions/programmes
       const flat = [];
       (data || []).forEach((division) => {
         (division.programmes || []).forEach((programme) => {
@@ -269,13 +267,20 @@ const ParentManagement = () => {
     }
   };
 
-  const handleSave = async (values) => {
+  const handleSave = async (values, wardIds = []) => {
     try {
       if (isEdit) {
         await guardianApi.update(selectedRow.user_id, values);
         notify.success('Parent updated successfully');
       } else {
-        await guardianApi.create(values);
+        const res = await guardianApi.create(values);
+        // sync wards if any were linked during creation
+        if (wardIds.length > 0) {
+          const newParentUserId = res?.data?.data?.user_id;
+          if (newParentUserId) {
+            await guardianApi.syncWards(newParentUserId, wardIds);
+          }
+        }
         notify.success('Parent added successfully');
       }
       setFormModalOpen(false);

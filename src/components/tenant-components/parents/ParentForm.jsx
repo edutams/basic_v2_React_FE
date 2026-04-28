@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,10 +12,25 @@ import {
   Select,
   MenuItem,
   Box,
+  Typography,
+  Divider,
+  InputAdornment,
+  CircularProgress,
+  Avatar,
+  Chip,
+  IconButton,
 } from '@mui/material';
+import {
+  Search as SearchIcon,
+  Person as PersonIcon,
+  Close as CloseIcon,
+} from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { parentValidationSchema } from './validation/parentValidationSchema';
 import PropTypes from 'prop-types';
+import guardianApi from 'src/api/parentApi';
+import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
+import { useNotification } from 'src/hooks/useNotification';
 
 const EMPTY_FORM = {
   first_name: '',
@@ -29,6 +44,29 @@ const EMPTY_FORM = {
   address: '',
 };
 
+const LIST_HEIGHT = 160;
+
+// handles both raw (getWards) and mapped (searchLearners) shapes
+const getWardDisplay = (ward) => {
+  if (ward.name !== undefined) {
+    return {
+      name: ward.name || '—',
+      userIdCode: ward.user_id_code,
+      classArm: ward.class_arm || '—',
+    };
+  }
+  const reg = ward.student_registrations?.[0];
+  const arm = reg?.class_arm;
+  const armNames = arm?.arm_names;
+  const armLabel = Array.isArray(armNames) ? armNames.filter(Boolean).join(', ') : armNames || '';
+  const className = arm?.programme_class?.class?.class_name || '';
+  return {
+    name: `${ward.fname || ''} ${ward.lname || ''}`.trim() || '—',
+    userIdCode: ward.user_id,
+    classArm: [className, armLabel].filter(Boolean).join(' ') || '—',
+  };
+};
+
 const ParentForm = ({
   open,
   onClose,
@@ -37,31 +75,144 @@ const ParentForm = ({
   isEdit = false,
   isLoading = false,
 }) => {
+  const notify = useNotification();
+
+  //  ward linking state (add mode only)
+  const [wardSearch, setWardSearch] = useState('');
+  const [wardClassId, setWardClassId] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [wardResults, setWardResults] = useState([]);
+  const [wardSearching, setWardSearching] = useState(false);
+  const [linkedWards, setLinkedWards] = useState([]);
+
   const formik = useFormik({
-    initialValues: {
-      ...EMPTY_FORM,
-      ...initialValues,
-    },
+    initialValues: { ...EMPTY_FORM, ...initialValues },
     validationSchema: parentValidationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {
-      onSave(values);
+      onSave(
+        values,
+        linkedWards.map((w) => w.id),
+      );
     },
   });
+
+  useEffect(() => {
+    if (!open || isEdit) return;
+    getClassesWithDivisions()
+      .then((data) => {
+        const flat = [];
+        (data || []).forEach((div) =>
+          (div.programmes || []).forEach((prog) =>
+            (prog.classes || []).forEach((cls) =>
+              flat.push({ id: cls.id, label: `${prog.programme_code} - ${cls.class_code}` }),
+            ),
+          ),
+        );
+        setClasses(flat);
+      })
+      .catch(() => notify.error('Failed to load classes'));
+  }, [open, isEdit]);
+
+  useEffect(() => {
+    if (!open) {
+      setWardSearch('');
+      setWardClassId('');
+      setWardResults([]);
+      setLinkedWards([]);
+    }
+  }, [open]);
+
+  const handleWardSearch = useCallback(async () => {
+    if (!wardSearch.trim() && !wardClassId) return;
+    try {
+      setWardSearching(true);
+      const res = await guardianApi.searchLearners({
+        search: wardSearch.trim(),
+        class_id: wardClassId || undefined,
+      });
+      const data = res?.data?.data ?? [];
+      if (data.length === 0) notify.info('No learners found');
+      setWardResults(data);
+    } catch {
+      notify.error('Search failed');
+      setWardResults([]);
+    } finally {
+      setWardSearching(false);
+    }
+  }, [wardSearch, wardClassId]);
+
+  const handleAddWard = (learner) => {
+    if (linkedWards.some((w) => w.id === learner.id)) return;
+    setLinkedWards((prev) => [...prev, learner]);
+  };
+
+  const handleRemoveWard = (id) => {
+    setLinkedWards((prev) => prev.filter((w) => w.id !== id));
+  };
 
   const handleClose = () => {
     formik.resetForm();
     onClose();
   };
 
+  const WardRow = ({ ward, onClick, showRemove }) => {
+    const { name, userIdCode, classArm } = getWardDisplay(ward);
+    return (
+      <Box
+        onClick={onClick}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          px: 1.5,
+          py: 0.75,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          cursor: onClick ? 'pointer' : 'default',
+          flexShrink: 0,
+          '&:hover': onClick ? { bgcolor: 'primary.lighter', borderColor: 'primary.main' } : {},
+        }}
+      >
+        <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.light' }}>
+          <PersonIcon sx={{ fontSize: 16 }} />
+        </Avatar>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="body2" fontWeight={500} noWrap>
+            {name}
+          </Typography>
+          {userIdCode && (
+            <Typography variant="caption" color="text.secondary" noWrap>
+              ID: {userIdCode}
+            </Typography>
+          )}
+        </Box>
+        <Chip label={classArm} size="small" variant="outlined" />
+        {showRemove && (
+          <IconButton
+            size="small"
+            color="error"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveWard(ward.id);
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+    );
+  };
+
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>{isEdit ? 'Edit Parent / Guardian' : 'Add Parent / Guardian'}</DialogTitle>
 
       <DialogContent dividers>
         <Box component="form" onSubmit={formik.handleSubmit} sx={{ mt: 0.5 }}>
           <Grid container spacing={2}>
-
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="First Name"
@@ -197,9 +348,154 @@ const ParentForm = ({
                 helperText={formik.touched.address && formik.errors.address}
               />
             </Grid>
-
           </Grid>
         </Box>
+
+        {!isEdit && (
+          <>
+            <Box sx={{ bgcolor: '#F0F9FF', p: 2, borderRadius: 2, mt: 3, mb: 2 }}>
+              {/* <Divider sx={{ my: 2.5 }} /> */}
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+                Link Wards to Parent{' '}
+                <Typography component="span" variant="caption" color="text.secondary">
+                  (optional)
+                </Typography>
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  mb: 1.5,
+                  p: 1.5,
+                  bgcolor: 'grey.50',
+                  borderRadius: 2,
+                  alignItems: 'center',
+                }}
+              >
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel>Filter by Class</InputLabel>
+                  <Select
+                    value={wardClassId}
+                    label="Filter by Class"
+                    onChange={(e) => setWardClassId(e.target.value)}
+                  >
+                    <MenuItem value="">All Classes</MenuItem>
+                    {classes.map((cls) => (
+                      <MenuItem key={cls.id} value={cls.id}>
+                        {cls.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  size="small"
+                  placeholder="Search Learner ID | Name"
+                  value={wardSearch}
+                  onChange={(e) => setWardSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleWardSearch()}
+                  sx={{ flex: 1 }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+
+                <Button
+                  variant="contained"
+                  onClick={handleWardSearch}
+                  disabled={wardSearching}
+                  sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
+                >
+                  {wardSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
+                </Button>
+              </Box>
+            </Box>
+            {/* search results */}
+            {wardResults.length > 0 && (
+              <Box sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  {wardResults.length} result{wardResults.length !== 1 ? 's' : ''} — click to link
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.5,
+                    maxHeight: LIST_HEIGHT,
+                    overflowY: 'auto',
+                    pr: 0.5,
+                  }}
+                >
+                  {wardResults.map((learner) => {
+                    const alreadyLinked = linkedWards.some((w) => w.id === learner.id);
+                    return (
+                      <Box key={learner.id} sx={{ position: 'relative' }}>
+                        <WardRow
+                          ward={learner}
+                          onClick={!alreadyLinked ? () => handleAddWard(learner) : undefined}
+                          showRemove={false}
+                        />
+                        {alreadyLinked && (
+                          <Chip
+                            label="linked"
+                            color="success"
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              right: 12,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                            }}
+                          />
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Box>
+                <Divider sx={{ mt: 1.5, mb: 1 }} />
+              </Box>
+            )}
+
+            <Typography variant="subtitle2" sx={{ mb: 0.75 }}>
+              Linked Wards {linkedWards.length > 0 && `(${linkedWards.length})`}
+            </Typography>
+            {linkedWards.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ py: 1.5, textAlign: 'center' }}
+              >
+                No wards linked yet. Search and click a learner to link them.
+              </Typography>
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0.75,
+                  maxHeight: LIST_HEIGHT,
+                  overflowY: 'auto',
+                  pr: 0.5,
+                }}
+              >
+                {linkedWards.map((ward) => (
+                  <WardRow key={ward.id} ward={ward} showRemove />
+                ))}
+              </Box>
+            )}
+          </>
+        )}
       </DialogContent>
 
       <DialogActions>

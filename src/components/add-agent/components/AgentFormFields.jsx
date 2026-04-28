@@ -17,7 +17,7 @@ import { HexColorPicker } from 'react-colorful';
 import ImageUpload from '../../shared/ImageUpload';
 import locationApi from '../../../api/location';
 
-const AgentFormFields = ({ formik, canSelectColor = true }) => {
+const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }) => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -90,7 +90,7 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
         <Grid size={{ xs: 12, md: 9 }}>
           <Grid container spacing={2}>
             {/* Row 1: Name & Domain */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: canEditDomain ? 6 : 12 }}>
               <TextField
                 key="organizationName"
                 label="Organization Name"
@@ -103,20 +103,22 @@ const AgentFormFields = ({ formik, canSelectColor = true }) => {
                 helperText={formik.touched.organizationName && formik.errors.organizationName}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                key="organizationDomain"
-                label="Organization Domain"
-                placeholder="e.g. acme.com"
-                fullWidth
-                name="organizationDomain"
-                value={formik.values.organizationDomain}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.organizationDomain && Boolean(formik.errors.organizationDomain)}
-                helperText={formik.touched.organizationDomain && formik.errors.organizationDomain}
-              />
-            </Grid>
+            {canEditDomain && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  key="organizationDomain"
+                  label="Organization Domain"
+                  placeholder="e.g. acme.com"
+                  fullWidth
+                  name="organizationDomain"
+                  value={formik.values.organizationDomain}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.organizationDomain && Boolean(formik.errors.organizationDomain)}
+                  helperText={formik.touched.organizationDomain && formik.errors.organizationDomain}
+                />
+              </Grid>
+            )}
 
             {/* Row 2: Mail & Phone */}
             <Grid size={{ xs: 12, md: 6 }}>

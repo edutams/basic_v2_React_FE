@@ -611,7 +611,7 @@ const ParentManagement = () => {
         open={linkWardModalOpen}
         onClose={() => setLinkWardModalOpen(false)}
         parent={wardParent}
-        onSaved={fetchParents}
+        onSaved={() => { fetchParents(); fetchStats(); }}
       />
 
       <ViewWardsModal

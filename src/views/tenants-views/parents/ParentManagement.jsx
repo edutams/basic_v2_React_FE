@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -37,25 +37,13 @@ import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
 
 import guardianApi from 'src/api/parentApi';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
-import ParentForm from 'src/components/tenant-components/parents/ParentForm';
+import ParentModal from 'src/components/tenant-components/parents/ParentModal';
 import DeleteParentModal from 'src/components/tenant-components/parents/DeleteParentModal';
 import UploadParentModal from 'src/components/tenant-components/parents/UploadParentModal';
 import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
 import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsModal';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Parent Management' }];
-
-const EMPTY_FORM = {
-  first_name: '',
-  last_name: '',
-  middle_name: '',
-  email: '',
-  phone: '',
-  gender: '',
-  occupation: '',
-  relationship: '',
-  address: '',
-};
 
 const StatCard = ({ count, label, icon: Icon, color = '#3B5BDB', loading }) => (
   <Paper
@@ -121,9 +109,8 @@ const ParentManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const [formModalOpen, setFormModalOpen] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [editInitialValues, setEditInitialValues] = useState(EMPTY_FORM);
+  const [parentModalOpen, setParentModalOpen] = useState(false);
+  const [parentModalAction, setParentModalAction] = useState('create');
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [parentToDelete, setParentToDelete] = useState(null);
@@ -205,26 +192,15 @@ const ParentManagement = () => {
   const handleMenuClose = () => setAnchorEl(null);
 
   const handleOpenAdd = () => {
-    setEditInitialValues(EMPTY_FORM);
-    setIsEdit(false);
-    setFormModalOpen(true);
+    setSelectedRow(null);
+    setParentModalAction('create');
+    setParentModalOpen(true);
   };
 
   const handleOpenEdit = (row) => {
-    setEditInitialValues({
-      first_name: row.user?.fname ?? '',
-      last_name: row.user?.lname ?? '',
-      middle_name: row.user?.mname ?? '',
-      email: row.user?.email ?? '',
-      phone: row.user?.phone ?? '',
-      gender: row.user?.sex ?? '',
-      occupation: row.occupation ?? '',
-      relationship: row.relationship ?? '',
-      address: row.address ?? '',
-    });
     setSelectedRow(row);
-    setIsEdit(true);
-    setFormModalOpen(true);
+    setParentModalAction('update');
+    setParentModalOpen(true);
     handleMenuClose();
   };
 
@@ -267,28 +243,9 @@ const ParentManagement = () => {
     }
   };
 
-  const handleSave = async (values, wardIds = []) => {
-    try {
-      if (isEdit) {
-        await guardianApi.update(selectedRow.user_id, values);
-        notify.success('Parent updated successfully');
-      } else {
-        const res = await guardianApi.create(values);
-        // sync wards if any were linked during creation
-        if (wardIds.length > 0) {
-          const newParentUserId = res?.data?.data?.user_id;
-          if (newParentUserId) {
-            await guardianApi.syncWards(newParentUserId, wardIds);
-          }
-        }
-        notify.success('Parent added successfully');
-      }
-      setFormModalOpen(false);
-      fetchParents();
-      fetchStats();
-    } catch (err) {
-      notify.error(err?.response?.data?.message || 'Operation failed');
-    }
+  const handleParentUpdate = () => {
+    fetchParents();
+    fetchStats();
   };
 
   const handleDownloadTemplate = async () => {
@@ -564,12 +521,12 @@ const ParentManagement = () => {
         </Paper>
       </ParentCard>
 
-      <ParentForm
-        open={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        initialValues={editInitialValues}
-        onSave={handleSave}
-        isEdit={isEdit}
+      <ParentModal
+        open={parentModalOpen}
+        onClose={() => setParentModalOpen(false)}
+        actionType={parentModalAction}
+        selectedParent={selectedRow}
+        onParentUpdate={handleParentUpdate}
       />
 
       <DeleteParentModal

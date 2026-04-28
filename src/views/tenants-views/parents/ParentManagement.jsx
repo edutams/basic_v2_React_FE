@@ -38,6 +38,9 @@ import {
 
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import PeopleIcon from '@mui/icons-material/People';
+import LinkIcon from '@mui/icons-material/Link';
 
 import guardianApi from 'src/api/parentApi';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
@@ -49,7 +52,7 @@ import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsMo
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Parent Management' }];
 
-const StatCard = ({ count, label, icon: Icon, color = '#3B5BDB', loading }) => (
+const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
   <Paper
     sx={{
       borderRadius: 2,
@@ -312,21 +315,22 @@ const ParentManagement = () => {
           <StatCard
             count={stats.total}
             label="Total Parents"
-            icon={IconUsers}
+            icon={FamilyRestroomIcon}
+             color="primary"
             loading={statsLoading}
           />
           <StatCard
             count={stats.active}
             label="Active Parents"
-            icon={IconUserCheck}
-            color="#2E7D32"
+            icon={PeopleIcon}
+            color="primary"
             loading={statsLoading}
           />
           <StatCard
             count={stats.linked}
             label="Guardians Linked"
-            icon={IconUserHeart}
-            color="#7B1FA2"
+            icon={LinkIcon}
+             color="primary"
             loading={statsLoading}
           />
         </Stack>

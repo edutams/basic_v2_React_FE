@@ -1145,7 +1145,7 @@ const SchoolDashboard = () => {
               }}
               sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
-            {activeTab === 0 && (
+            {/* {activeTab === 0 && (
               <Button
                 variant="contained"
                 startIcon={<IconUserPlus size={18} />}
@@ -1160,7 +1160,7 @@ const SchoolDashboard = () => {
               >
                 Add New School
               </Button>
-            )}
+            )} */}
           </Stack>
 
           {/* ── Tab 0: All Applications ── */}
@@ -1439,10 +1439,10 @@ const SchoolDashboard = () => {
                               >
                                 View School Profile
                               </MenuItem>
-                              <MenuItem onClick={() => handleLoginAsAdmin(row)}>
+                              {/* <MenuItem onClick={() => handleLoginAsAdmin(row)}>
                                 Login As Admin
-                              </MenuItem>
-                              <MenuItem
+                              </MenuItem> */}
+                              {/* <MenuItem
                                 onClick={() => {
                                   setEditSchoolData(row.raw);
                                   setOpenEditModal(true);
@@ -1450,8 +1450,8 @@ const SchoolDashboard = () => {
                                 }}
                               >
                                 Edit School
-                              </MenuItem>
-                              <MenuItem
+                              </MenuItem> */}
+                              {/* <MenuItem
                                 onClick={() => {
                                   setSchoolToDeactivate(row);
                                   setOpenDeactivateDialog(true);
@@ -1460,7 +1460,7 @@ const SchoolDashboard = () => {
                                 // sx={{ color: row.status === 'active' ? 'warning.main' : 'success.main' }}
                               >
                                 {row.status === 'active' ? 'Deactivate' : 'Activate'}
-                              </MenuItem>
+                              </MenuItem> */}
                               {/* <MenuItem
                                 onClick={() => {
                                   setSchoolToDelete(row);

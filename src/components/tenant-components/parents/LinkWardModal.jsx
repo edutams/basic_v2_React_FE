@@ -69,10 +69,10 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
 
   // ── load existing wards 
   useEffect(() => {
-    if (!open || !parent?.id) return;
+    if (!open || !parent?.user_id) return;
     const load = async () => {
       try {
-        const res = await guardianApi.getWards(parent.id);
+        const res = await guardianApi.getWards(parent.user_id);
         setLinkedWards(res?.data?.data ?? []);
       } catch {
         notify.error('Failed to load linked wards');
@@ -82,7 +82,7 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
     setSearch('');
     setClassId('');
     setResults([]);
-  }, [open, parent?.id]);
+  }, [open, parent?.user_id]);
 
   // ── search ────────────────────────────────────────────────────────────────
   const handleSearch = useCallback(async () => {
@@ -116,7 +116,7 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await guardianApi.syncWards(parent.id, linkedWards.map((w) => w.id));
+      await guardianApi.syncWards(parent.user_id, linkedWards.map((w) => w.id));
       notify.success('Wards linked successfully');
       onSaved?.();
       onClose();

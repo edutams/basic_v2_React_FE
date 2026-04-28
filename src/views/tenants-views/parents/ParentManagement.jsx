@@ -119,7 +119,7 @@ const ParentManagement = () => {
 
   const [classes, setClasses] = useState([]);
 
-  const [stats, setStats] = useState({ total: 0, active: 0, guardian: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, linked: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -163,7 +163,7 @@ const ParentManagement = () => {
     try {
       setStatsLoading(true);
       const res = await guardianApi.getStats();
-      setStats(res?.data?.data ?? { total: 0, active: 0, guardian: 0 });
+      setStats(res?.data?.data ?? { total: 0, active: 0, linked: 0 });
     } catch {
       notify.error('Failed to fetch stats');
     } finally {
@@ -240,7 +240,7 @@ const ParentManagement = () => {
 
   const handleConfirmDelete = async () => {
     try {
-      await guardianApi.remove(parentToDelete.id);
+      await guardianApi.remove(parentToDelete.user_id);
       notify.success('Parent deleted successfully');
       setDeleteModalOpen(false);
       setParentToDelete(null);
@@ -254,7 +254,7 @@ const ParentManagement = () => {
   const handleSave = async (values) => {
     try {
       if (isEdit) {
-        await guardianApi.update(selectedRow.id, values);
+        await guardianApi.update(selectedRow.user_id, values);
         notify.success('Parent updated successfully');
       } else {
         await guardianApi.create(values);
@@ -329,7 +329,7 @@ const ParentManagement = () => {
             loading={statsLoading}
           />
           <StatCard
-            count={stats.guardian}
+            count={stats.linked}
             label="Guardians Linked"
             icon={IconUserHeart}
             color="#7B1FA2"
@@ -450,7 +450,7 @@ const ParentManagement = () => {
                               setViewWardsModalOpen(true);
                             }}
                           >
-                            {row.ward_count ?? 0}
+                            {row.wards_count ?? 0}
                           </Link>
                         </Typography>
                       </TableCell>

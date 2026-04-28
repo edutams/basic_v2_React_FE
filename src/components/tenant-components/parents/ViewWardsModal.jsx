@@ -49,17 +49,17 @@ const ViewWardsModal = ({ open, onClose, guardian }) => {
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   useEffect(() => {
-    if (!open || !guardian?.id) return;
+    if (!open || !guardian?.user_id) return;
     setPage(0);
     setSearchInput('');
     setError(null);
     fetchWards();
-  }, [open, guardian?.id]);
+  }, [open, guardian?.user_id]);
 
   const fetchWards = async () => {
     try {
       setLoading(true);
-      const res = await guardianApi.getWards(guardian.id);
+      const res = await guardianApi.getWards(guardian.user_id);
       setWards(res?.data?.data ?? []);
     } catch {
       setError('Failed to load wards.');

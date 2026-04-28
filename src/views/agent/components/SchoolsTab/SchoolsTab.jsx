@@ -33,6 +33,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { useAuth } from '../../../../hooks/useAuth';
 
 import ReusableModal from '../../../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../../../components/add-school/component/RegisterSchool';
@@ -395,6 +396,8 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
 const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const theme = useTheme();
+  const { user } = useAuth();
+  const isLevel1 = user?.organization?.access_level === 1;
 
   const [activeTab, setActiveTab] = useState(0);
   const [nameValue, setNameValue] = useState('');
@@ -901,7 +904,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
               sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
             <Stack direction="row" spacing={1.5} alignItems="center">
-              {activeTab === 0 && (
+              {activeTab === 0 && !isLevel1 && (
                 <Button
                   variant="contained"
                   startIcon={<IconUserPlus size={18} />}

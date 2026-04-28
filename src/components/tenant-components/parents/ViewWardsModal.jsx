@@ -40,11 +40,14 @@ const ViewWardsModal = ({ open, onClose, guardian }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // filtered client-side (wards list is small)
-  const filtered = wards.filter((w) =>
-    !searchInput.trim() ||
-    w.name?.toLowerCase().includes(searchInput.toLowerCase()) ||
-    w.user_id_code?.toLowerCase().includes(searchInput.toLowerCase())
-  );
+  const filtered = wards.filter((w) => {
+    const name = `${w.fname || ''} ${w.lname || ''}`.trim();
+    return (
+      !searchInput.trim() ||
+      name.toLowerCase().includes(searchInput.toLowerCase()) ||
+      w.user_id?.toLowerCase().includes(searchInput.toLowerCase())
+    );
+  });
 
   const paginated = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -143,14 +146,24 @@ const ViewWardsModal = ({ open, onClose, guardian }) => {
                   </TableCell>
                 </TableRow>
               ) : paginated.length > 0 ? (
-                paginated.map((ward, index) => (
+                paginated.map((ward, index) => {
+                  const reg = ward.student_registrations?.[0];
+                  const arm = reg?.class_arm;
+                  const armNames = arm?.arm_names;
+                  const armLabel = Array.isArray(armNames) ? armNames.filter(Boolean).join(', ') : (armNames || '');
+                  const className = arm?.programme_class?.class?.class_name || '';
+                  const classArm = [className, armLabel].filter(Boolean).join(' ') || '—';
+                  const fullName = `${ward.fname || ''} ${ward.lname || ''}`.trim() || '—';
+
+                  return (
                   <TableRow key={ward.id || index} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{ward.user_id_code || '—'}</TableCell>
-                    <TableCell>{ward.name || '—'}</TableCell>
-                    <TableCell>{ward.class_arm || '—'}</TableCell>
+                    <TableCell>{ward.user_id || '—'}</TableCell>
+                    <TableCell>{fullName}</TableCell>
+                    <TableCell>{classArm}</TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} align="center">

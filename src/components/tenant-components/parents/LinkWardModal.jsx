@@ -133,7 +133,32 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
   };
 
   // ── reusable ward row 
-  const WardRow = ({ ward, onClick, showRemove }) => (
+  // handles both raw ward objects (from getWards) and mapped objects (from searchLearners)
+  const getWardDisplay = (ward) => {
+    // searchLearners already returns mapped fields
+    if (ward.name !== undefined) {
+      return {
+        name: ward.name || '—',
+        userIdCode: ward.user_id_code,
+        classArm: ward.class_arm || '—',
+      };
+    }
+    // getWards returns raw nested data
+    const reg = ward.student_registrations?.[0];
+    const arm = reg?.class_arm;
+    const armNames = arm?.arm_names;
+    const armLabel = Array.isArray(armNames) ? armNames.filter(Boolean).join(', ') : (armNames || '');
+    const className = arm?.programme_class?.class?.class_name || '';
+    return {
+      name: `${ward.fname || ''} ${ward.lname || ''}`.trim() || '—',
+      userIdCode: ward.user_id,
+      classArm: [className, armLabel].filter(Boolean).join(' ') || '—',
+    };
+  };
+
+  const WardRow = ({ ward, onClick, showRemove }) => {
+    const { name, userIdCode, classArm } = getWardDisplay(ward);
+    return (
     <Box
       onClick={onClick}
       sx={{
@@ -157,16 +182,16 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="body2" fontWeight={500} noWrap>
-          {ward.name || '—'}
+          {name}
         </Typography>
-        {ward.user_id_code && (
+        {userIdCode && (
           <Typography variant="caption" color="text.secondary" noWrap>
-            ID: {ward.user_id_code}
+            ID: {userIdCode}
           </Typography>
         )}
       </Box>
 
-      <Chip label={ward.class_arm || '—'} size="small" variant="outlined" />
+      <Chip label={classArm} size="small" variant="outlined" />
 
       {showRemove && (
         <IconButton
@@ -178,7 +203,8 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
         </IconButton>
       )}
     </Box>
-  );
+    );
+  };
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>

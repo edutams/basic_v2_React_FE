@@ -32,10 +32,7 @@ import {
   Link,
 } from '@mui/material';
 
-import {
-  Search as SearchIcon,
-  MoreVert as MoreVertIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
 
 import guardianApi from 'src/api/parentApi';
@@ -60,7 +57,7 @@ const EMPTY_FORM = {
   address: '',
 };
 
-// Stat Card 
+// Stat Card
 const StatCard = ({ count, label, icon: Icon, color = '#3B5BDB', loading }) => (
   <Paper
     sx={{
@@ -188,12 +185,19 @@ const ParentManagement = () => {
       });
       setClasses(flat);
     } catch {
-      notify.error('Failed to fetch classes');}
+      notify.error('Failed to fetch classes');
+    }
   }, []);
 
-  useEffect(() => { fetchParents(); }, [fetchParents]);
-  useEffect(() => { fetchStats();   }, [fetchStats]);
-  useEffect(() => { fetchClasses(); }, [fetchClasses]);
+  useEffect(() => {
+    fetchParents();
+  }, [fetchParents]);
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -210,15 +214,15 @@ const ParentManagement = () => {
 
   const handleOpenEdit = (row) => {
     setEditInitialValues({
-      first_name:   row.user?.fname ?? '',
-      last_name:    row.user?.lname ?? '',
-      middle_name:  row.user?.mname ?? '',
-      email:        row.user?.email ?? '',
-      phone:        row.user?.phone ?? '',
-      gender:       row.user?.sex ?? '',
-      occupation:   row.occupation ?? '',
+      first_name: row.user?.fname ?? '',
+      last_name: row.user?.lname ?? '',
+      middle_name: row.user?.mname ?? '',
+      email: row.user?.email ?? '',
+      phone: row.user?.phone ?? '',
+      gender: row.user?.sex ?? '',
+      occupation: row.occupation ?? '',
       relationship: row.relationship ?? '',
-      address:      row.address ?? '',
+      address: row.address ?? '',
     });
     setSelectedRow(row);
     setIsEdit(true);
@@ -242,7 +246,9 @@ const ParentManagement = () => {
     handleMenuClose();
     try {
       await guardianApi.toggleStatus(row.user_id);
-      notify.success(`Parent ${row.status === 'active' ? 'deactivated' : 'activated'} successfully`);
+      notify.success(
+        `Parent ${row.status === 'active' ? 'deactivated' : 'activated'} successfully`,
+      );
       fetchParents();
       fetchStats();
     } catch {
@@ -454,7 +460,7 @@ const ParentManagement = () => {
                       </TableCell>
 
                       <TableCell align="center">
-                        <Typography variant="subtitle2" >
+                        <Typography variant="subtitle2">
                           <Link
                             sx={{ cursor: 'pointer' }}
                             onClick={() => {
@@ -468,9 +474,7 @@ const ParentManagement = () => {
                       </TableCell>
 
                       <TableCell>
-                        <Typography variant="body2">
-                          {row.user?.phone || '—'}
-                        </Typography>
+                        <Typography variant="body2">{row.user?.phone || '—'}</Typography>
                         <Typography variant="caption" color="text.secondary">
                           {row.user?.email || '—'}
                         </Typography>
@@ -482,10 +486,10 @@ const ParentManagement = () => {
                           color={statusColor(row.status)}
                           size="small"
                           sx={{
-                                    bgcolor: row.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                    color: row.status === 'active' ? '#166534' : '#92400e',
-                                    fontWeight: 500,
-                                  }}
+                            bgcolor: row.status === 'active' ? '#dcfce7' : '#fef3c7',
+                            color: row.status === 'active' ? '#166534' : '#92400e',
+                            fontWeight: 500,
+                          }}
                         />
                       </TableCell>
 
@@ -500,9 +504,7 @@ const ParentManagement = () => {
                           onClose={handleMenuClose}
                         >
                           <MenuItem onClick={() => handleOpenEdit(row)}>Edit</MenuItem>
-                          <MenuItem onClick={() => handleOpenLinkWard(row)}>
-                            Link Ward
-                          </MenuItem>
+                          <MenuItem onClick={() => handleOpenLinkWard(row)}>Link Ward</MenuItem>
                           <MenuItem onClick={() => handleToggleStatus(row)}>
                             {row.status === 'active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>

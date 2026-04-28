@@ -11,11 +11,11 @@ const guardianApi = {
   toggleStatus: (id) => tenantApi.patch(`/guardians/${id}/toggle-status`),
   remove: (id) => tenantApi.delete(`/guardians/${id}`),
   downloadTemplate: () =>
-    tenantApi.get('/guardians/download-template', { responseType: 'blob' }),
+    tenantApi.get('/guardians/download-parent-template', { responseType: 'blob' }),
   uploadTemplate: (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    return tenantApi.post('/guardians/upload-template', formData);
+    return tenantApi.post('/guardians/upload-parent-template', formData);
   },
 };
 

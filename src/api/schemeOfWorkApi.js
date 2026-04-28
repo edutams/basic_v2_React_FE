@@ -50,6 +50,10 @@ export const landlordSchemeApi = {
     const response = await landlordApi.delete(`/landlord/v1/scheme-of-work/learning-objective/${id}`);
     return response.data;
   },
+  updateSchemeEntry: async (id, data) => {
+    const response = await landlordApi.put(`/landlord/v1/scheme-of-work/entry/${id}`, data);
+    return response.data;
+  },
   getDetails: async (id) => {
     const response = await landlordApi.get(`/landlord/v1/scheme-of-work/view/${id}`);
     return response.data;
@@ -127,6 +131,10 @@ export const tenantSchemeApi = {
   },
   deleteObjective: async (id) => {
     const response = await tenantApi.delete(`/scheme-of-work/learning-objective/${id}`);
+    return response.data;
+  },
+  updateSchemeEntry: async (id, data) => {
+    const response = await tenantApi.put(`/scheme-of-work/entry/${id}`, data);
     return response.data;
   },
   getDetails: async (id) => {

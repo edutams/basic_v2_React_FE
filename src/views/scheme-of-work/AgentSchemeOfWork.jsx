@@ -1,7 +1,8 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import FilterSideDrawer from '../../components/shared/FilterSideDrawer';
+import { useReactToPrint } from 'react-to-print';
 
 import {
   Box,
@@ -99,6 +100,18 @@ const AgentSchemeOfWork = () => {
   const [objectiveModalOpen, setObjectiveModalOpen] = useState(false);
   const [selectedObjective, setSelectedObjective] = useState(null);
 
+  // View Details Modal
+  const [viewDetailsModalOpen, setViewDetailsModalOpen] = useState(false);
+  const [viewDetailsData, setViewDetailsData] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const printRef = useRef(null);
+
+  // Print handler
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Scheme_of_Work_${viewDetailsData?.week?.week_name || 'Details'}`,
+  });
+
   // Inline Filters
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
@@ -126,11 +139,6 @@ const AgentSchemeOfWork = () => {
   const [dlSchemeClasses, setDlSchemeClasses] = useState([]);
   const [dlSchemeSubjects, setDlSchemeSubjects] = useState([]);
   const [downloading, setDownloading] = useState(false);
-
-  // Details modal state
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailsData, setDetailsData] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
     initData();
@@ -229,15 +237,34 @@ const AgentSchemeOfWork = () => {
   const handleSaveObjective = async (objectiveData) => {
     try {
       if (selectedObjective) {
-        await landlordSchemeApi.updateObjective(selectedObjective.id, objectiveData);
+        await landlordSchemeApi.updateObjective(selectedObjective.id, {
+          learning_objective_details: objectiveData.learning_objective_details,
+        });
         notify.success('Learning objective updated successfully');
       } else {
         await landlordSchemeApi.addObjective({
-          ...objectiveData,
+          learning_objective_details: objectiveData.learning_objective_details,
           sub_topic_id: selectedRow.sub_topic_id
         });
         notify.success('Learning objective added successfully');
       }
+      
+      // Update scheme entry with all additional fields
+      if (objectiveData.previous_knowledge || objectiveData.practical_approach || 
+          objectiveData.evaluation || objectiveData.instructional_resources || 
+          objectiveData.teaching_note || objectiveData.teacher_activity || 
+          objectiveData.learner_activity) {
+        await landlordSchemeApi.updateSchemeEntry(selectedRow.scheme_of_work_id, {
+          previous_knowledge: objectiveData.previous_knowledge,
+          practical_approach: objectiveData.practical_approach,
+          evaluation: objectiveData.evaluation,
+          instructional_resources: objectiveData.instructional_resources,
+          teaching_note: objectiveData.teaching_note,
+          teacher_activity: objectiveData.teacher_activity,
+          learner_activity: objectiveData.learner_activity,
+        });
+      }
+      
       setObjectiveModalOpen(false);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
@@ -295,17 +322,16 @@ const AgentSchemeOfWork = () => {
 
   const handleViewDetails = async (id) => {
     handleMenuClose();
-    setDetailsOpen(true);
-    setDetailsData(null);
-    setDetailsLoading(true);
+    setLoadingDetails(true);
+    setViewDetailsModalOpen(true);
     try {
-      const res = await landlordSchemeApi.getDetails(id);
-      setDetailsData(res);
-    } catch (e) {
-      notify.error('Failed to load scheme details.');
-      setDetailsOpen(false);
+      const data = await landlordSchemeApi.getDetails(id);
+      setViewDetailsData(data);
+    } catch (error) {
+      notify.error('Failed to fetch details');
+      setViewDetailsModalOpen(false);
     } finally {
-      setDetailsLoading(false);
+      setLoadingDetails(false);
     }
   };
 
@@ -952,12 +978,20 @@ const AgentSchemeOfWork = () => {
         open={objectiveModalOpen}
         onClose={() => setObjectiveModalOpen(false)}
         title={selectedObjective ? 'Edit Learning Objective' : 'Add Learning Objective'}
+        size="large"
       >
         <Box component="form" onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
           handleSaveObjective({
             learning_objective_details: formData.get('learning_objective_details'),
+            previous_knowledge: formData.get('previous_knowledge'),
+            practical_approach: formData.get('practical_approach'),
+            evaluation: formData.get('evaluation'),
+            instructional_resources: formData.get('instructional_resources'),
+            teaching_note: formData.get('teaching_note'),
+            teacher_activity: formData.get('teacher_activity'),
+            learner_activity: formData.get('learner_activity'),
           });
         }} sx={{ mt: 2 }}>
           <TextField
@@ -968,6 +1002,69 @@ const AgentSchemeOfWork = () => {
             rows={3}
             defaultValue={selectedObjective?.learning_objective_details || ''}
             required
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="previous_knowledge"
+            label="Previous Knowledge"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedRow?.previous_knowledge || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="practical_approach"
+            label="Practical Approach"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedRow?.practical_approach || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="teacher_activity"
+            label="Teacher Activity"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedRow?.teacher_activity || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="learner_activity"
+            label="Learner Activity"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedRow?.learner_activity || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="evaluation"
+            label="Evaluation"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedRow?.evaluation || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="instructional_resources"
+            label="Instructional Resources"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedRow?.instructional_resources || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="teaching_note"
+            label="Teaching Note"
+            fullWidth
+            multiline
+            rows={2}
+            defaultValue={selectedRow?.teaching_note || ''}
             sx={{ mb: 2 }}
           />
           <Button type="submit" variant="contained" fullWidth>
@@ -1225,95 +1322,151 @@ const AgentSchemeOfWork = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ── View Details Modal ── */}
-      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} fullWidth maxWidth="md">
+      {/* View Details Modal */}
+      <Dialog open={viewDetailsModalOpen} onClose={() => setViewDetailsModalOpen(false)} fullWidth maxWidth="lg">
         <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          Scheme of Work Details
-          <IconButton onClick={() => setDetailsOpen(false)} size="small">
-            <IconX size={20} />
-          </IconButton>
+          <Box sx={{ fontWeight: 700 }}>
+            Scheme of Work Details
+          </Box>
+          <Button 
+            variant="outlined" 
+            onClick={handlePrint}
+            startIcon={<IconDownload size={18} />}
+            sx={{ textTransform: 'none' }}
+          >
+            Print
+          </Button>
         </DialogTitle>
-        <DialogContent dividers sx={{ p: 0 }}>
-          {detailsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <DialogContent dividers>
+          {loadingDetails ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
               <CircularProgress />
             </Box>
-          ) : detailsData ? (
-            <Table>
-              <TableBody>
-                {[
-                  { label: 'Week', value: detailsData.week?.week_name },
-                  { label: 'Topic(s)', value: detailsData.topics?.map(t => t.topic_name).join(', ') },
-                  { label: 'Sub Topic', value: detailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).join(', ') },
-                  {
-                    label: 'Learning Objectives',
-                    isList: true,
-                    value: detailsData.topics?.flatMap(t =>
-                      t.subtopics?.flatMap(s =>
-                        s.learning_objectives?.map(lo => lo.learning_objective_details)
-                      )
-                    ).filter(Boolean)
-                  },
-                  { label: 'Lesson Content', value: detailsData.learning_material },
-                  { label: 'Video Content', value: detailsData.resource_links, isLink: true },
-                  { label: 'Teacher Activity', value: detailsData.teacher_activity },
-                  { label: 'Learner Activity', value: detailsData.learner_activity },
-                  { label: 'Starter', value: detailsData.starter },
-                  { label: 'Practical Approach', value: detailsData.practical_approach },
-                  { label: 'Evaluation', value: detailsData.evaluation },
-                  { label: 'Instructional Resources', value: detailsData.instructional_resources },
-                  { label: 'Teaching Note', value: detailsData.teaching_note },
-                ].map((row, i) => (
-                  <TableRow key={i}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '30%', borderBottom: '1px solid #eee' }}>
-                      {row.label}
-                    </TableCell>
-                    <TableCell sx={{ borderBottom: '1px solid #eee' }}>
-                      {row.isList ? (
-                        <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                          {row.value?.length > 0 ? (
-                            row.value.map((item, idx) => (
-                              <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>
-                                {item}
-                              </Typography>
-                            ))
-                          ) : (
-                            <Typography variant="body2" color="textSecondary">Not available</Typography>
-                          )}
-                        </Box>
-                      ) : row.isLink ? (
-                        row.value ? (
-                          <Typography
-                            component="a"
-                            href={row.value}
-                            target="_blank"
-                            variant="body2"
-                            color="primary"
-                            sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
-                          >
-                            {row.value}
-                          </Typography>
-                        ) : (
-                          <Typography variant="body2" color="textSecondary">Not available</Typography>
-                        )
+          ) : viewDetailsData ? (
+            <Box ref={printRef} sx={{ p: 2 }}>
+              <Box sx={{ mb: 3, textAlign: 'center' }}>
+                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                  Scheme of Work
+                </Typography>
+                <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                  {viewDetailsData.week?.week_name} - {viewDetailsData.subject?.subject_name}
+                </Typography>
+              </Box>
+              <Table>
+                <TableBody>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Week</TableCell>
+                  {/* <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.week?.week_name || 'Not available'}</Typography>
+                  </TableCell> */}
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Topic(s)</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.topics?.map(t => t.topic_name).join(', ') || 'Not available'}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Sub Topic(s)</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                      {viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).length > 0 ? (
+                        viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).map((item, idx) => (
+                          <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
+                        ))
                       ) : (
-                        <Typography variant="body2">
-                          {row.value || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}
-                        </Typography>
+                        <Typography variant="body2" color="textSecondary">Not available</Typography>
                       )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learning Objectives</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                      {viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).length > 0 ? (
+                        viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).map((item, idx) => (
+                          <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
+                        ))
+                      ) : (
+                        <Typography variant="body2" color="textSecondary">Not available</Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Lesson Content</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.learning_material || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Video Content</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    {viewDetailsData.resource_links ? (
+                      <Typography component="a" href={viewDetailsData.resource_links} target="_blank" variant="body2" color="primary" sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                        {viewDetailsData.resource_links}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">Not available</Typography>
+                    )}
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Practical Approach</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.practical_approach || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Starter</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.starter || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teacher Activity</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.teacher_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learner Activity</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.learner_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Previous Knowledge</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.previous_knowledge || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Evaluation</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.evaluation || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Instructional Resources</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.instructional_resources || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teaching Note</TableCell>
+                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                    <Typography variant="body2">{viewDetailsData.teaching_note || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
-          ) : (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1">Failed to load details.</Typography>
             </Box>
-          )}
+          ) : null}
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" onClick={() => setDetailsOpen(false)} sx={{ textTransform: 'none', bgcolor: '#d8b4fe', color: '#581c87', '&:hover': { bgcolor: '#c084fc' } }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setViewDetailsModalOpen(false)} variant="contained" sx={{ textTransform: 'none', bgcolor: '#d8b4fe', color: '#581c87', '&:hover': { bgcolor: '#c084fc' } }}>
             Close
           </Button>
         </DialogActions>

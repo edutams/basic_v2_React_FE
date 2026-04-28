@@ -51,7 +51,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
+  const [modalMode, setModalMode] = useState('create'); 
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [totalTeachers, setTotalTeachers] = useState(0);

@@ -379,7 +379,7 @@ export default function Dashboard() {
 
         {/* Row 2: Charts and Login Activities */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, lg: 6 }}>
+          <Grid size={{ xs: 12, lg: 5 }}>
             <Card
               sx={{
                 p: 0,
@@ -436,7 +436,7 @@ export default function Dashboard() {
             />
           </Grid>
 
-          <Grid size={{ xs: 12, lg: 3 }}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <Card
               sx={{
                 p: '24px !important',

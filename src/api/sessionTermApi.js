@@ -12,11 +12,12 @@ export const fetchTerms = async () => {
   return response.data;
 };
 
-// Fetch session terms with display names
-export const fetchSessionTerms = async (sessionId) => {
-  const response = await api.get('/curriculum/session-terms', {
-    params: { session_id: sessionId },
-  });
+// Fetch session terms with display names (pass sessionId to filter, or nothing for all subscribed)
+export const fetchSessionTerms = async (sessionId = null) => {
+  const params = {};
+  if (sessionId) params.session_id = sessionId;
+  
+  const response = await api.get('/curriculum/session-terms', { params });
   return response.data;
 };
 

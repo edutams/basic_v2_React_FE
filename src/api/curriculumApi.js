@@ -86,6 +86,12 @@ export const fetchSubjectsByProgramme = async (programmeId) => {
   return response.data;
 };
 
+// Fetch subjects by class
+export const fetchSubjectsByClass = async (classId) => {
+  const response = await api.get(`/landlord/v1/curriculum/subjects/by-class/${classId}`);
+  return response.data;
+};
+
 // Create a new subject
 export const createSubjectRecord = async (data) => {
   const response = await api.post('/landlord/v1/curriculum/create_subject', data);

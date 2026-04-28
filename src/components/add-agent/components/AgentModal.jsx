@@ -58,6 +58,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
 
   const { user } = useAuth();
   const canSelectColor = user.organization.access_level < 2;
+  const canEditDomain = user.organization.access_level === 1;
 
   const shouldPrefillForm = actionType === 'update' || actionType === 'changeColorScheme';
   const modalConfig = getModalConfig(actionType);
@@ -288,6 +289,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
             actionType={actionType}
             loading={loading}
             canSelectColor={canSelectColor}
+            canEditDomain={canEditDomain}
           />
         );
     }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -30,38 +30,28 @@ import {
   InputLabel,
   Select,
   Link,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 
-import {
-  Search as SearchIcon,
-  MoreVert as MoreVertIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import PeopleIcon from '@mui/icons-material/People';
+import LinkIcon from '@mui/icons-material/Link';
 
 import guardianApi from 'src/api/parentApi';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
-import ParentFormModal from 'src/components/tenant-components/parents/ParentFormModal';
-import DeleteParentModal from 'src/components/tenant-components/parents/DeleteParentModal';
+import ParentModal from 'src/components/tenant-components/parents/ParentModal';
 import UploadParentModal from 'src/components/tenant-components/parents/UploadParentModal';
 import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
 import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsModal';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Parent Management' }];
 
-const EMPTY_FORM = {
-  first_name: '',
-  last_name: '',
-  middle_name: '',
-  email: '',
-  phone: '',
-  gender: '',
-  occupation: '',
-  relationship: '',
-  address: '',
-};
-
-// Stat Card 
-const StatCard = ({ count, label, icon: Icon, color = '#3B5BDB', loading }) => (
+const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
   <Paper
     sx={{
       borderRadius: 2,
@@ -119,18 +109,20 @@ const ParentManagement = () => {
 
   const [classes, setClasses] = useState([]);
 
-  const [stats, setStats] = useState({ total: 0, active: 0, guardian: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, linked: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const [formModalOpen, setFormModalOpen] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [editInitialValues, setEditInitialValues] = useState(EMPTY_FORM);
+  const [parentModalOpen, setParentModalOpen] = useState(false);
+  const [parentModalAction, setParentModalAction] = useState('create');
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [parentToDelete, setParentToDelete] = useState(null);
+
+  const [toggleStatusModalOpen, setToggleStatusModalOpen] = useState(false);
+  const [parentToToggle, setParentToToggle] = useState(null);
 
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
@@ -163,7 +155,7 @@ const ParentManagement = () => {
     try {
       setStatsLoading(true);
       const res = await guardianApi.getStats();
-      setStats(res?.data?.data ?? { total: 0, active: 0, guardian: 0 });
+      setStats(res?.data?.data ?? { total: 0, active: 0, linked: 0 });
     } catch {
       notify.error('Failed to fetch stats');
     } finally {
@@ -174,7 +166,6 @@ const ParentManagement = () => {
   const fetchClasses = useCallback(async () => {
     try {
       const data = await getClassesWithDivisions();
-      // flatten all classes from all divisions/programmes
       const flat = [];
       (data || []).forEach((division) => {
         (division.programmes || []).forEach((programme) => {
@@ -188,12 +179,19 @@ const ParentManagement = () => {
       });
       setClasses(flat);
     } catch {
-      notify.error('Failed to fetch classes');}
+      notify.error('Failed to fetch classes');
+    }
   }, []);
 
-  useEffect(() => { fetchParents(); }, [fetchParents]);
-  useEffect(() => { fetchStats();   }, [fetchStats]);
-  useEffect(() => { fetchClasses(); }, [fetchClasses]);
+  useEffect(() => {
+    fetchParents();
+  }, [fetchParents]);
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+  useEffect(() => {
+    fetchClasses();
+  }, [fetchClasses]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -203,26 +201,15 @@ const ParentManagement = () => {
   const handleMenuClose = () => setAnchorEl(null);
 
   const handleOpenAdd = () => {
-    setEditInitialValues(EMPTY_FORM);
-    setIsEdit(false);
-    setFormModalOpen(true);
+    setSelectedRow(null);
+    setParentModalAction('create');
+    setParentModalOpen(true);
   };
 
   const handleOpenEdit = (row) => {
-    setEditInitialValues({
-      first_name:   row.user?.fname ?? '',
-      last_name:    row.user?.lname ?? '',
-      middle_name:  row.user?.mname ?? '',
-      email:        row.user?.email ?? '',
-      phone:        row.user?.phone ?? '',
-      gender:       row.user?.sex ?? '',
-      occupation:   row.occupation ?? '',
-      relationship: row.relationship ?? '',
-      address:      row.address ?? '',
-    });
     setSelectedRow(row);
-    setIsEdit(true);
-    setFormModalOpen(true);
+    setParentModalAction('update');
+    setParentModalOpen(true);
     handleMenuClose();
   };
 
@@ -238,9 +225,30 @@ const ParentManagement = () => {
     handleMenuClose();
   };
 
+  const handleToggleStatus = (row) => {
+    handleMenuClose();
+    setParentToToggle(row);
+    setToggleStatusModalOpen(true);
+  };
+
+  const handleConfirmToggle = async () => {
+    try {
+      await guardianApi.toggleStatus(parentToToggle.user_id);
+      notify.success(
+        `Parent ${parentToToggle.status === 'active' ? 'deactivated' : 'activated'} successfully`,
+      );
+      setToggleStatusModalOpen(false);
+      setParentToToggle(null);
+      fetchParents();
+      fetchStats();
+    } catch {
+      notify.error('Failed to update parent status');
+    }
+  };
+
   const handleConfirmDelete = async () => {
     try {
-      await guardianApi.remove(parentToDelete.id);
+      await guardianApi.remove(parentToDelete.user_id);
       notify.success('Parent deleted successfully');
       setDeleteModalOpen(false);
       setParentToDelete(null);
@@ -251,21 +259,9 @@ const ParentManagement = () => {
     }
   };
 
-  const handleSave = async (values) => {
-    try {
-      if (isEdit) {
-        await guardianApi.update(selectedRow.id, values);
-        notify.success('Parent updated successfully');
-      } else {
-        await guardianApi.create(values);
-        notify.success('Parent added successfully');
-      }
-      setFormModalOpen(false);
-      fetchParents();
-      fetchStats();
-    } catch (err) {
-      notify.error(err?.response?.data?.message || 'Operation failed');
-    }
+  const handleParentUpdate = () => {
+    fetchParents();
+    fetchStats();
   };
 
   const handleDownloadTemplate = async () => {
@@ -318,21 +314,22 @@ const ParentManagement = () => {
           <StatCard
             count={stats.total}
             label="Total Parents"
-            icon={IconUsers}
+            icon={FamilyRestroomIcon}
+             color="primary"
             loading={statsLoading}
           />
           <StatCard
             count={stats.active}
             label="Active Parents"
-            icon={IconUserCheck}
-            color="#2E7D32"
+            icon={PeopleIcon}
+            color="primary"
             loading={statsLoading}
           />
           <StatCard
-            count={stats.guardian}
+            count={stats.linked}
             label="Guardians Linked"
-            icon={IconUserHeart}
-            color="#7B1FA2"
+            icon={LinkIcon}
+             color="primary"
             loading={statsLoading}
           />
         </Stack>
@@ -341,7 +338,7 @@ const ParentManagement = () => {
       <ParentCard
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h5">Parents &amp; Guardians</Typography>
+            <Typography variant="h5">Parents & Guardians</Typography>
             <Box display="flex" gap={1}>
               <Button variant="outlined" onClick={handleDownloadTemplate}>
                 Download Template
@@ -376,7 +373,7 @@ const ParentManagement = () => {
             }}
           />
 
-          <FormControl sx={{ minWidth: 220 }}>
+          {/* <FormControl sx={{ minWidth: 220 }}>
             <InputLabel>Filter by Class</InputLabel>
             <Select
               value={classId}
@@ -393,7 +390,7 @@ const ParentManagement = () => {
                 </MenuItem>
               ))}
             </Select>
-          </FormControl>
+          </FormControl> */}
 
           {hasFilters && (
             <Button
@@ -413,7 +410,7 @@ const ParentManagement = () => {
                 <TableRow>
                   <TableCell>S/N</TableCell>
                   <TableCell>Name</TableCell>
-                  <TableCell>Ward</TableCell>
+                  <TableCell align="center">Wards</TableCell>
                   <TableCell>Contact</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="center">Action</TableCell>
@@ -429,7 +426,7 @@ const ParentManagement = () => {
                   </TableRow>
                 ) : rows.length > 0 ? (
                   rows.map((row, index) => (
-                    <TableRow key={row.id}>
+                    <TableRow key={row.user_id}>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
 
                       <TableCell>
@@ -441,24 +438,34 @@ const ParentManagement = () => {
                         </Typography>
                       </TableCell>
 
-                      <TableCell >
-                        <Typography variant="subtitle2" align="center">
-                          <Link
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => {
-                              setViewWardsGuardian(row);
-                              setViewWardsModalOpen(true);
-                            }}
-                          >
-                            {row.ward_count ?? 0}
-                          </Link>
-                        </Typography>
+                      <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
+                        <Box
+                          sx={{
+                            bgcolor: '#F0F9FF',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography variant="subtitle2">
+                            <Link
+                              sx={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setViewWardsGuardian(row);
+                                setViewWardsModalOpen(true);
+                              }}
+                            >
+                              {row.wards_count ?? 0}
+                            </Link>
+                          </Typography>
+                        </Box>
                       </TableCell>
 
                       <TableCell>
-                        <Typography variant="body2">
-                          {row.user?.phone || '—'}
-                        </Typography>
+                        <Typography variant="body2">{row.user?.phone || '—'}</Typography>
                         <Typography variant="caption" color="text.secondary">
                           {row.user?.email || '—'}
                         </Typography>
@@ -470,10 +477,17 @@ const ParentManagement = () => {
                           color={statusColor(row.status)}
                           size="small"
                           sx={{
-                                    bgcolor: row.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                    color: row.status === 'active' ? '#166534' : '#92400e',
-                                    fontWeight: 500,
-                                  }}
+                            bgcolor:
+                              row.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              row.status?.toLowerCase() === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
                         />
                       </TableCell>
 
@@ -484,12 +498,13 @@ const ParentManagement = () => {
 
                         <Menu
                           anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                          open={Boolean(anchorEl) && selectedRow?.user_id === row.user_id}
                           onClose={handleMenuClose}
                         >
                           <MenuItem onClick={() => handleOpenEdit(row)}>Edit</MenuItem>
-                          <MenuItem onClick={() => handleOpenLinkWard(row)}>
-                            Link Ward
+                          <MenuItem onClick={() => handleOpenLinkWard(row)}>Link Ward</MenuItem>
+                          <MenuItem onClick={() => handleToggleStatus(row)}>
+                            {row.status === 'active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
                           <MenuItem
                             onClick={() => handleOpenDelete(row)}
@@ -542,20 +557,62 @@ const ParentManagement = () => {
         </Paper>
       </ParentCard>
 
-      <ParentFormModal
-        open={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        initialValues={editInitialValues}
-        onSave={handleSave}
-        isEdit={isEdit}
+      <ParentModal
+        open={parentModalOpen}
+        onClose={() => setParentModalOpen(false)}
+        actionType={parentModalAction}
+        selectedParent={selectedRow}
+        onParentUpdate={handleParentUpdate}
       />
 
-      <DeleteParentModal
-        open={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        parent={parentToDelete}
-        onConfirm={handleConfirmDelete}
-      />
+      {/* Confirm Delete */}
+      <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete Parent</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete{' '}
+            <strong>
+              {parentToDelete?.user
+                ? `${parentToDelete.user.fname} ${parentToDelete.user.lname}`
+                : 'this parent'}
+            </strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleConfirmDelete} autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirm Status Change*/}
+      <Dialog open={toggleStatusModalOpen} onClose={() => setToggleStatusModalOpen(false)}>
+        <DialogTitle>Confirm Status Change</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to{' '}
+            <strong>{parentToToggle?.status === 'active' ? 'deactivate' : 'activate'}</strong>{' '}
+            <strong>
+              {parentToToggle?.user
+                ? `${parentToToggle.user.fname} ${parentToToggle.user.lname}`
+                : 'this parent'}
+            </strong>
+            ?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            // color={parentToToggle?.status === 'active' ? 'warning' : 'success'}
+            onClick={handleConfirmToggle}
+            autoFocus
+          >
+            {parentToToggle?.status === 'active' ? 'Deactivate' : 'Activate'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <UploadParentModal
         open={uploadModalOpen}
@@ -567,7 +624,7 @@ const ParentManagement = () => {
         open={linkWardModalOpen}
         onClose={() => setLinkWardModalOpen(false)}
         parent={wardParent}
-        onSaved={fetchParents}
+        onSaved={() => { fetchParents(); fetchStats(); }}
       />
 
       <ViewWardsModal

@@ -407,7 +407,7 @@ const ParentManagement = () => {
                 <TableRow>
                   <TableCell>S/N</TableCell>
                   <TableCell>Name</TableCell>
-                  <TableCell>Wards</TableCell>
+                  <TableCell align="center">Wards</TableCell>
                   <TableCell>Contact</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell align="center">Action</TableCell>
@@ -435,18 +435,30 @@ const ParentManagement = () => {
                         </Typography>
                       </TableCell>
 
-                      <TableCell align="center">
-                        <Typography variant="subtitle2">
-                          <Link
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => {
-                              setViewWardsGuardian(row);
-                              setViewWardsModalOpen(true);
-                            }}
-                          >
-                            {row.wards_count ?? 0}
-                          </Link>
-                        </Typography>
+                      <TableCell align="center" sx={{ verticalAlign: 'middle' }}>
+                        <Box
+                          sx={{
+                            bgcolor: '#F0F9FF',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography variant="subtitle2">
+                            <Link
+                              sx={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setViewWardsGuardian(row);
+                                setViewWardsModalOpen(true);
+                              }}
+                            >
+                              {row.wards_count ?? 0}
+                            </Link>
+                          </Typography>
+                        </Box>
                       </TableCell>
 
                       <TableCell>
@@ -461,7 +473,7 @@ const ParentManagement = () => {
                           label={row.status ?? 'active'}
                           color={statusColor(row.status)}
                           size="small"
-                           sx={{
+                          sx={{
                             bgcolor:
                               row.status?.toLowerCase() === 'active'
                                 ? (theme) => theme.palette.success.light
@@ -473,7 +485,6 @@ const ParentManagement = () => {
                             borderRadius: '8px',
                             fontWeight: 600,
                           }}
-                          
                         />
                       </TableCell>
 
@@ -569,7 +580,8 @@ const ParentManagement = () => {
               {parentToToggle?.user
                 ? `${parentToToggle.user.fname} ${parentToToggle.user.lname}`
                 : 'this parent'}
-            </strong>?
+            </strong>
+            ?
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -25,7 +25,7 @@ import icon5 from 'src/assets/images/frontend-pages/icons/logos_swr.svg';
 import icon6 from 'src/assets/images/frontend-pages/icons/icon-tabler.svg';
 
 import BannerTopLeft from 'src/assets/images/frontend-pages/homepage/banner-top-left.svg';
-import BannerBottomPart from 'src/assets/images/frontend-pages/homepage/bottom-part.svg';
+// import BannerBottomPart from 'src/assets/images/frontend-pages/homepage/bottom-part.svg';
 import BannerTopRight from 'src/assets/images/frontend-pages/homepage/banner-top-right.svg';
 
 import user1 from 'src/assets/images/profile/user-1.jpg';
@@ -268,7 +268,7 @@ const Banner = () => {
           ) : null}
         </Grid>
 
-        {lgUp ? (
+        {/* {lgUp ? (
           <img
             src={BannerBottomPart}
             alt="banner"
@@ -279,7 +279,7 @@ const Banner = () => {
               marginBottom: '-11px',
             }}
           />
-        ) : null}
+        ) : null} */}
       </Container>
     </Box>
   );

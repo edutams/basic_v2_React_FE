@@ -15,6 +15,7 @@ import {
   CircularProgress,
   Chip,
   Grid,
+  Alert,
 } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
@@ -211,9 +212,9 @@ const ClassTeacherAllocation = () => {
   return (
     <Box>
       {/* Description */}
-      <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+      <Alert severity="info" sx={{ mb: 3, color: '#000000', backgroundColor: '#FFFAE6' }}>
         Select from classes below and allocate teacher to the class
-      </Typography>
+      </Alert>
 
       {/* Filters Row */}
       <Grid container spacing={2} sx={{ mb: 3 }}>

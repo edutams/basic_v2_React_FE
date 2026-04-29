@@ -16,6 +16,8 @@ import {
   Button,
   ButtonGroup,
   TablePagination,
+  Avatar,
+
 } from '@mui/material';
 import {
   IconSearch,
@@ -146,7 +148,7 @@ const NonTeachingStaffTab = ({
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
+                      {/* <Box
                         sx={{
                           width: 32,
                           height: 32,
@@ -158,7 +160,21 @@ const NonTeachingStaffTab = ({
                         }}
                       >
                         <IconUsers size={18} color="#1976d2" />
-                      </Box>
+                      </Box> */}
+                      <Avatar
+                        src={staffMember.user.avatar}
+                        alt={staffMember.user.lname[0]}
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          bgcolor: '#2196f3',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {/* {!(staffMember.user.avatar || agent.admin_avatar) && initials} */}
+                      </Avatar>
                       <Typography variant="body2">
                         {staffMember.user?.fname} {staffMember.user?.lname}
                       </Typography>
@@ -185,10 +201,9 @@ const NonTeachingStaffTab = ({
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={staffMember.status || 'Active'}
+                      label={staffMember.status}
                       color={getStatusColor(staffMember.status)}
                       size="small"
-                      sx={{ textTransform: 'capitalize' }}
                     />
                   </TableCell>
                   <TableCell align="center">

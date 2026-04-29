@@ -18,6 +18,8 @@ import {
   Button,
   ButtonGroup,
   TablePagination,
+  Avatar,
+
 } from '@mui/material';
 import {
   IconSearch,
@@ -171,7 +173,7 @@ const TeachingStaffTab = ({
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box
+                          {/* <Box
                             sx={{
                               width: 32,
                               height: 32,
@@ -183,7 +185,21 @@ const TeachingStaffTab = ({
                             }}
                           >
                             <IconUsers size={18} color="#1976d2" />
-                          </Box>
+                          </Box> */}
+                          <Avatar
+                            src={staffMember.user.avatar}
+                            alt={staffMember.user.lname[0]}
+                            sx={{
+                              width: 30,
+                              height: 30,
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              bgcolor: '#2196f3',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {/* {!(staffMember.user.avatar || agent.admin_avatar) && initials} */}
+                          </Avatar>
                           <Typography variant="body2">
                             {staffMember.user?.fname} {staffMember.user?.lname}
                           </Typography>
@@ -201,13 +217,13 @@ const TeachingStaffTab = ({
                         <Typography variant="body2">
                           {staffMember.date_of_appointment
                             ? new Date(staffMember.date_of_appointment).toLocaleDateString(
-                                'en-US',
-                                {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                },
-                              )
+                              'en-US',
+                              {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              },
+                            )
                             : 'N/A'}
                         </Typography>
                       </TableCell>

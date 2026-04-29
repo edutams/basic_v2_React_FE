@@ -622,202 +622,223 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
         {/* ── Analytics Cards ── */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          {/* Total Schools */}
-          <Paper
+        {isLevel1 && (
+          <Box
             sx={{
-              p: 3,
-              borderRadius: 2,
-              border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+              gap: 2,
+              mb: 3,
             }}
           >
-            <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            {/* Total Schools */}
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+              }}
             >
-              <Typography variant="subtitle1" fontWeight={700}>
-                Total Schools
-              </Typography>
-              <Tooltip title="View breakdown">
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Total Schools
+                </Typography>
+                <Tooltip title="View breakdown">
+                  <IconButton
+                    size="small"
+                    onClick={() => setOpenTotalSchoolModal(true)}
+                    sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+                  >
+                    <IconChartBar size={18} color="#fff" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Box
+                sx={{
+                  bgcolor: '#E6F7F1',
+                  borderRadius: 1,
+                  px: 2,
+                  py: 0.75,
+                  display: 'inline-flex',
+                  mb: 3,
+                }}
+              >
+                <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#2CA87F' }}>
+                  {schoolSummary.total}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Active
+                  </Typography>
+                  <Typography fontWeight={600}>{schoolSummary.active}</Typography>
+                </Box>
+                <Divider orientation="vertical" flexItem />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Inactive
+                  </Typography>
+                  <Typography fontWeight={600}>{schoolSummary.inactive}</Typography>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* Subscriptions */}
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Subscriptions
+                </Typography>
                 <IconButton
                   size="small"
-                  onClick={() => setOpenTotalSchoolModal(true)}
                   sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
                 >
                   <IconChartBar size={18} color="#fff" />
                 </IconButton>
-              </Tooltip>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: '#E6F7F1',
-                borderRadius: 1,
-                px: 2,
-                py: 0.75,
-                display: 'inline-flex',
-                mb: 3,
-              }}
-            >
-              <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#2CA87F' }}>
-                {schoolSummary.total}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Active
-                </Typography>
-                <Typography fontWeight={600}>{schoolSummary.active}</Typography>
               </Box>
-              <Divider orientation="vertical" flexItem />
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Inactive
-                </Typography>
-                <Typography fontWeight={600}>{schoolSummary.inactive}</Typography>
-              </Box>
-            </Box>
-          </Paper>
-
-          {/* Subscriptions */}
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
-            }}
-          >
-            <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
-            >
-              <Typography variant="subtitle1" fontWeight={700}>
-                Subscriptions
-              </Typography>
-              <IconButton
-                size="small"
-                sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+              <Box
+                sx={{
+                  bgcolor: '#EEF2FF',
+                  borderRadius: 1,
+                  px: 2,
+                  py: 0.75,
+                  display: 'inline-flex',
+                  mb: 3,
+                }}
               >
-                <IconChartBar size={18} color="#fff" />
-              </IconButton>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: '#EEF2FF',
-                borderRadius: 1,
-                px: 2,
-                py: 0.75,
-                display: 'inline-flex',
-                mb: 3,
-              }}
-            >
-              <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#4A3AFF' }}>
-                {schoolSummary.subscriptions}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Primary
+                <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#4A3AFF' }}>
+                  {schoolSummary.subscriptions}
                 </Typography>
-                <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
               </Box>
-              <Divider orientation="vertical" flexItem />
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Secondary
-                </Typography>
-                <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
-              </Box>
-            </Box>
-          </Paper>
-
-          {/* Login Activities */}
-          <Paper
-            sx={{
-              borderRadius: 2,
-              border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
-            }}
-          >
-            <Box
-              sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <Typography variant="subtitle1" fontWeight={700}>
-                Login Activities
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => setOpenLoginModal(true)}
-                sx={{ bgcolor: '#3d3d3d', borderRadius: 1, '&:hover': { bgcolor: '#111' } }}
-              >
-                <IconChartBar size={18} color="#fff" />
-              </IconButton>
-            </Box>
-            <Box sx={{ px: 2, pb: 2 }}>
-              {[
-                ['Teacher', 0],
-                ['SPA', 0],
-                ['Student', 0],
-                ['Parent', 0],
-              ].map(([label, val]) => (
-                <Box
-                  key={label}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    py: 0.5,
-                    borderBottom: '1px solid #f3f4f6',
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    {label}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Primary
                   </Typography>
-                  <Typography variant="body2" fontWeight={600} color="error.main">
-                    {val}
-                  </Typography>
+                  <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
                 </Box>
-              ))}
-            </Box>
-          </Paper>
+                <Divider orientation="vertical" flexItem />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Secondary
+                  </Typography>
+                  <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
+                </Box>
+              </Box>
+            </Paper>
 
-          {/* Plan Distribution */}
-          <Paper
-            sx={{
-              borderRadius: 2,
-              border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
-            }}
-          >
-            <Box
-              sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            {/* Login Activities */}
+            <Paper
+              sx={{
+                borderRadius: 2,
+                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+              }}
             >
-              <Typography variant="subtitle1" fontWeight={700}>
-                Plan Distribution
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => setOpenPlanModal(true)}
-                sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+              <Box
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
               >
-                <IconChartBar size={18} color="#fff" />
-              </IconButton>
-            </Box>
-            <Box sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-              <ReusablePieChart
-                series={planSeries}
-                colors={planColors}
-                labels={planLabels}
-                height={170}
-                hideCard
-              />
-            </Box>
-          </Paper>
-        </Box>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Login Activities
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => setOpenLoginModal(true)}
+                  sx={{ bgcolor: '#3d3d3d', borderRadius: 1, '&:hover': { bgcolor: '#111' } }}
+                >
+                  <IconChartBar size={18} color="#fff" />
+                </IconButton>
+              </Box>
+              <Box sx={{ px: 2, pb: 2 }}>
+                {[
+                  ['Teacher', 0],
+                  ['SPA', 0],
+                  ['Student', 0],
+                  ['Parent', 0],
+                ].map(([label, val]) => (
+                  <Box
+                    key={label}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      py: 0.5,
+                      borderBottom: '1px solid #f3f4f6',
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      {label}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} color="error.main">
+                      {val}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
 
+            {/* Plan Distribution */}
+            <Paper
+              sx={{
+                borderRadius: 2,
+                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Plan Distribution
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => setOpenPlanModal(true)}
+                  sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+                >
+                  <IconChartBar size={18} color="#fff" />
+                </IconButton>
+              </Box>
+              <Box sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+                <ReusablePieChart
+                  series={planSeries}
+                  colors={planColors}
+                  labels={planLabels}
+                  height={170}
+                  hideCard
+                />
+              </Box>
+            </Paper>
+          </Box>
+        )}
         {/* ── List header ── */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box display="flex" alignItems="center" gap={1}>

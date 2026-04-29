@@ -311,7 +311,7 @@ const LearnerManagement = () => {
                             alt={row.users?.fname}
                             sx={{ width: 36, height: 36 }}
                           >
-                            {row.users?.fname?.[0]?.toUpperCase()}
+                            {row.users?.fname?.[0]?.toUpperCase() ?? '?'}
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>

@@ -34,7 +34,7 @@ import {
 } from '@mui/material';
 
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
-import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
@@ -47,8 +47,7 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
   <Paper
     sx={{
       borderRadius: 2,
-      px: 3,
-      py: 2,
+      p: 3,
       flex: 1,
       minWidth: { xs: '100%', sm: 200 },
       bgcolor: 'background.paper',
@@ -68,7 +67,7 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
         justifyContent: 'center',
       }}
     >
-      <Icon sx={{ fontSize: 22, color }} />
+      <Icon sx={{ fontSize: 22 }} color={color} />
     </Box>
 
     <Box sx={{ textAlign: 'center' }}>
@@ -200,7 +199,7 @@ const LearnerManagement = () => {
           <StatCard
             count={stats.total}
             label="Total Learners"
-            icon={FamilyRestroomIcon}
+            icon={GroupsIcon}
             color="primary"
             loading={statsLoading}
           />
@@ -287,7 +286,7 @@ const LearnerManagement = () => {
                   <TableCell>Learner ID</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Class / Arm</TableCell>
-                  <TableCell>Parent</TableCell>
+                  <TableCell align="center">Parent</TableCell>
                   <TableCell align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
@@ -325,11 +324,25 @@ const LearnerManagement = () => {
                       </TableCell>
                       <TableCell>{getClassArmLabel(row)}</TableCell>
                       <TableCell align="center">
-                        <Typography variant="subtitle2">
-                          <Link sx={{ cursor: 'pointer' }}>
-                            {row.users?.guardians_count ?? 0}
-                          </Link>
-                        </Typography>
+                        <Box
+                          sx={{
+                            bgcolor: '#F0F9FF',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography variant="subtitle2">
+                            <Link
+                              sx={{ cursor: 'pointer' }}
+                            >
+                              {row.users?.guardians_count ?? 0}
+                            </Link>
+                          </Typography>
+                        </Box>
                       </TableCell>
                       <TableCell align="center">
                         <IconButton onClick={(e) => handleMenuOpen(e, row)}>

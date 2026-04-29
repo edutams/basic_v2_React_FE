@@ -268,7 +268,7 @@ const Banner = () => {
           ) : null}
         </Grid>
 
-        {lgUp ? (
+        {/* {lgUp ? (
           <img
             // src={BannerBottomPart}
             alt="banner"
@@ -279,7 +279,7 @@ const Banner = () => {
               marginBottom: '-11px',
             }}
           />
-        ) : null}
+        ) : null} */}
       </Container>
     </Box>
   );

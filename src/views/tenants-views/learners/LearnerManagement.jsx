@@ -41,6 +41,8 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import learnerApi from 'src/api/learnerApi';
 import { getClassesWithDivisions, createLearner } from 'src/context/TenantContext/services/tenant.service';
 import AddLearnerModal from 'src/views/school-setup/tabs/AddLearnerModal';
+import LinkParentModal from 'src/components/tenant-components/learners/LinkParentModal';
+import ViewParentsModal from 'src/components/tenant-components/learners/ViewParentsModal';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
@@ -109,6 +111,12 @@ const LearnerManagement = () => {
 
   const [addLearnerOpen, setAddLearnerOpen]       = useState(false);
   const [addLearnerLoading, setAddLearnerLoading] = useState(false);
+
+  const [linkParentOpen, setLinkParentOpen] = useState(false);
+  const [linkParentLearner, setLinkParentLearner] = useState(null);
+
+  const [viewParentsOpen, setViewParentsOpen] = useState(false);
+  const [viewParentsLearner, setViewParentsLearner] = useState(null);
 
   const fetchLearners = useCallback(async () => {
     try {
@@ -364,6 +372,10 @@ const LearnerManagement = () => {
                           <Typography variant="subtitle2">
                             <Link
                               sx={{ cursor: 'pointer' }}
+                              onClick={() => {
+                                setViewParentsLearner(row);
+                                setViewParentsOpen(true);
+                              }}
                             >
                               {row.users?.guardians_count ?? 0}
                             </Link>
@@ -379,7 +391,9 @@ const LearnerManagement = () => {
                           open={Boolean(anchorEl) && selectedRow?.id === row.id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={handleMenuClose}>View Details</MenuItem>
+                          <MenuItem onClick={() => { setLinkParentLearner(selectedRow); setLinkParentOpen(true); handleMenuClose(); }}>
+                            Link Parent
+                          </MenuItem>
                           <MenuItem onClick={handleMenuClose}>Edit</MenuItem>
                           <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
                             Delete
@@ -434,6 +448,19 @@ const LearnerManagement = () => {
         onClose={() => setAddLearnerOpen(false)}
         onSave={handleSaveLearner}
         isLoading={addLearnerLoading}
+      />
+
+      <LinkParentModal
+        open={linkParentOpen}
+        onClose={() => setLinkParentOpen(false)}
+        learner={linkParentLearner}
+        onSaved={() => { fetchLearners(); fetchStats(); }}
+      />
+
+      <ViewParentsModal
+        open={viewParentsOpen}
+        onClose={() => setViewParentsOpen(false)}
+        learner={viewParentsLearner}
       />
     </PageContainer>
   );

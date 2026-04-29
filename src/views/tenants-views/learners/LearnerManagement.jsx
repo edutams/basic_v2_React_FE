@@ -33,13 +33,14 @@ import {
   Avatar,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon,  Add as AddIcon, } from '@mui/icons-material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import learnerApi from 'src/api/learnerApi';
-import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions, createLearner } from 'src/context/TenantContext/services/tenant.service';
+import AddLearnerModal from 'src/views/school-setup/tabs/AddLearnerModal';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
@@ -105,6 +106,9 @@ const LearnerManagement = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+
+  const [addLearnerOpen, setAddLearnerOpen]       = useState(false);
+  const [addLearnerLoading, setAddLearnerLoading] = useState(false);
 
   const fetchLearners = useCallback(async () => {
     try {
@@ -173,6 +177,21 @@ const LearnerManagement = () => {
 
   const handleMenuClose = () => setAnchorEl(null);
 
+  const handleSaveLearner = async (values) => {
+    try {
+      setAddLearnerLoading(true);
+      await createLearner(values);
+      notify.success('Learner added successfully');
+      setAddLearnerOpen(false);
+      fetchLearners();
+      fetchStats();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to add learner');
+    } finally {
+      setAddLearnerLoading(false);
+    }
+  };
+
   const hasFilters = search !== '' || classId !== '';
 
   const resetFilters = () => {
@@ -224,6 +243,13 @@ const LearnerManagement = () => {
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Learners</Typography>
+            <Button 
+              variant="contained"   
+              size="small"
+              startIcon={<AddIcon />}  
+              onClick={() => setAddLearnerOpen(true)}>
+              Add Learner
+            </Button>
           </Box>
         }
       >
@@ -402,6 +428,13 @@ const LearnerManagement = () => {
           </TableContainer>
         </Paper>
       </ParentCard>
+
+      <AddLearnerModal
+        open={addLearnerOpen}
+        onClose={() => setAddLearnerOpen(false)}
+        onSave={handleSaveLearner}
+        isLoading={addLearnerLoading}
+      />
     </PageContainer>
   );
 };

@@ -21,8 +21,8 @@ const StatCard = ({ count, label, loading }) => (
   <Paper
     sx={{
       borderRadius: 2,
-      px: 3,
-      py: 2,
+      p: 3,
+      // py: 2,
       width: { xs: '100%', sm: 320 },
       bgcolor: 'background.paper',
       display: 'flex',

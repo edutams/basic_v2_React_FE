@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box, Button, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem,
   Typography, IconButton, CircularProgress, Avatar, Chip, Divider,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon, Close as CloseIcon, Person as PersonIcon } from '@mui/icons-material';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
@@ -121,7 +122,6 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
 
   return (
     <Box>
-      {/* search bar */}
       <Box sx={{ display: 'flex', gap: 1, mb: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 2, alignItems: 'center' }}>
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Filter by Class</InputLabel>
@@ -168,21 +168,19 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
         </Box>
       )}
 
-      {/* linked wards */}
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Linked Wards {linkedWards.length > 0 && `(${linkedWards.length})`}
       </Typography>
       {linkedWards.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 3 }}>
+        <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center', '& .MuiAlert-icon': { mr: 1.5 } }}>
           No wards linked yet. Search and click a learner to link them.
-        </Typography>
+        </Alert>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, maxHeight: LIST_HEIGHT, overflowY: 'auto', pr: 0.5 }}>
           {linkedWards.map((ward) => <WardRow key={ward.id} ward={ward} showRemove />)}
         </Box>
       )}
 
-      {/* actions */}
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
         <Button color="inherit" onClick={onCancel} disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={handleSave} disabled={saving}>

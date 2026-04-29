@@ -1,4 +1,5 @@
 import React from 'react';
+import { Typography } from '@mui/material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import LinkWardForm from './LinkWardForm';
 import PropTypes from 'prop-types';
@@ -19,8 +20,16 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
     onClose();
   };
 
+  const title = (
+    <>
+      <Typography component="span" color="primary" fontWeight={600}>{parentName}</Typography>
+      {' — Link Wards'}
+    </>
+  );
+
   return (
-    <ReusableModal open={open} onClose={onClose} title={`${parentName} — Link Wards`} size="medium">
+    <ReusableModal open={open} onClose={onClose} title={title} size="medium">
+      
       <LinkWardForm
         key={parent?.user_id}
         parent={parent}

@@ -15,12 +15,13 @@ import {
   CircularProgress,
   Chip,
   Grid,
+  Alert,
 } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import staffApi from '../../api/staffApi';
 import allocationApi from '../../api/allocationApi';
-import { fetchProgrammes, fetchSubjectsByProgramme, fetchClassesByProgramme } from '../../api/tenantCurriculumApi';
+import { fetchProgrammes, fetchSubjectsByProgramme, fetchClassArmsByProgramme } from '../../api/tenantCurriculumApi';
 import { fetchCurrentSession, fetchSessionTerms } from '../../api/sessionTermApi';
 import useNotification from '../../hooks/useNotification';
 
@@ -34,7 +35,7 @@ const SubjectTeacherAllocation = () => {
   const [availableClasses, setAvailableClasses] = useState([]);
   const [sessionTerms, setSessionTerms] = useState([]);
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
-  
+
   // Filters
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedProgramme, setSelectedProgramme] = useState('');
@@ -56,7 +57,7 @@ const SubjectTeacherAllocation = () => {
       if (termsRes.status) {
         const terms = termsRes.data || [];
         setSessionTerms(terms);
-        
+
         // Find active term
         const activeTerm = terms.find(t => t.status?.toUpperCase() === 'ACTIVE');
         if (activeTerm) {
@@ -67,14 +68,14 @@ const SubjectTeacherAllocation = () => {
           setSelectedTerm(terms[0].id);
         }
       }
-      
+
       const progsRes = await fetchProgrammes();
       const progs = progsRes.data || [];
       setProgrammes(progs);
       if (progs.length > 0) {
         handleProgrammeChange(progs[0].id);
       }
-      
+
       // Fetch teaching staff
       const staffRes = await staffApi.getAll({ staff_type: 'teaching' });
       if (staffRes.status) {
@@ -99,12 +100,16 @@ const SubjectTeacherAllocation = () => {
       try {
         const subjectsRes = await fetchSubjectsByProgramme(progId);
         setSubjects(subjectsRes.data || []);
-        
-        // Fetch classes for this programme
-        const classesRes = await fetchClassesByProgramme(progId);
-        setAvailableClasses(classesRes.data || []);
-        
-        fetchAllocations(progId, selectedClassArm, selectedTerm);
+
+        // Fetch class arms for this programme
+        const classArmsRes = await fetchClassArmsByProgramme(progId);
+        const arms = classArmsRes.data || [];
+        setAvailableClasses(arms);
+
+        // Auto-select the first class arm
+        const firstArmId = arms.length > 0 ? arms[0].id : '';
+        setSelectedClassArm(firstArmId);
+        fetchAllocations(progId, firstArmId, selectedTerm);
       } catch (error) {
         notify.error('Failed to fetch subjects');
       }
@@ -112,6 +117,7 @@ const SubjectTeacherAllocation = () => {
       setSubjects([]);
       setAllocations([]);
       setAvailableClasses([]);
+      setSelectedClassArm('');
     }
   };
 
@@ -131,13 +137,13 @@ const SubjectTeacherAllocation = () => {
         programme_id: progId,
         session_term_id: termId || selectedTerm || activeSessionTermId,
       };
-      
+
       if (classArmId) {
         params.class_arm_id = classArmId;
       }
-      
+
       const response = await allocationApi.getSubjectTeacherAllocations(params);
-      
+
       if (response.status) {
         setAllocations(response.data || []);
       }
@@ -179,10 +185,9 @@ const SubjectTeacherAllocation = () => {
           }
         }
       } else {
-        // Just clear locally if not yet saved to backend
-        const updatedAllocations = allocations.map(a => 
-          a.id === allocationToDelete.id 
-            ? { ...a, teacher_id: null, teacher_name: '' } 
+        const updatedAllocations = allocations.map(a =>
+          a.id === allocationToDelete.id
+            ? { ...a, teacher_id: null, teacher_name: '' }
             : a
         );
         setAllocations(updatedAllocations);
@@ -239,9 +244,9 @@ const SubjectTeacherAllocation = () => {
   return (
     <Box>
       {/* Description */}
-      <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+      <Alert severity="info" sx={{ mb: 3, color: '#000000', backgroundColor: '#FFFAE6' }}>
         Select from the list of subjects below and allocate a teacher to the subject
-      </Typography>
+      </Alert>
 
       {/* Filters Row */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -280,19 +285,7 @@ const SubjectTeacherAllocation = () => {
           </TextField>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <TextField
-            select
-            size="small"
-            label="Select Program"
-            value={selectedProgram}
-            onChange={(e) => setSelectedProgram(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="">Select Program</MenuItem>
-            <MenuItem value="all">All Programs</MenuItem>
-          </TextField>
-        </Grid>
+
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <TextField
@@ -306,7 +299,7 @@ const SubjectTeacherAllocation = () => {
             <MenuItem value="">Select Class</MenuItem>
             {availableClasses.map((cls) => (
               <MenuItem key={cls.id} value={cls.id}>
-                {cls.class_name}
+                {cls.programme_class?.class?.class_name} {cls.arm_names}
               </MenuItem>
             ))}
           </TextField>
@@ -375,8 +368,8 @@ const SubjectTeacherAllocation = () => {
                         onClick={() => handleRemoveAllocation(index)}
                         onDelete={() => handleRemoveAllocation(index)}
                         deleteIcon={<IconTrash size={14} />}
-                        sx={{ 
-                          bgcolor: '#ffebee', 
+                        sx={{
+                          bgcolor: '#ffebee',
                           color: '#c62828',
                           cursor: 'pointer',
                           '& .MuiChip-deleteIcon': { color: '#c62828' }
@@ -397,12 +390,7 @@ const SubjectTeacherAllocation = () => {
           <Button
             variant="contained"
             onClick={handleSaveAll}
-            sx={{ 
-              textTransform: 'none', 
-              bgcolor: '#7cb342', 
-              '&:hover': { bgcolor: '#689f38' },
-              px: 4,
-            }}
+
           >
             Save All
           </Button>

@@ -55,8 +55,8 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
   <Paper
     sx={{
       borderRadius: 2,
-      px: 3,
-      py: 2,
+      p: 3,
+      // py: 3,
       flex: 1,
       minWidth: { xs: '100%', sm: 200 },
       bgcolor: 'background.paper',
@@ -329,7 +329,7 @@ const ParentManagement = () => {
             count={stats.linked}
             label="Guardians Linked"
             icon={LinkIcon}
-             color="primary"
+            color="primary"
             loading={statsLoading}
           />
         </Stack>
@@ -565,7 +565,14 @@ const ParentManagement = () => {
         onParentUpdate={handleParentUpdate}
       />
 
-      {/* Confirm Delete */}
+      {/* <DeleteParentModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        parent={parentToDelete}
+        onConfirm={handleConfirmDelete}
+      /> */}
+
+      {/* Confirm Delete — inline like ClassStructureTable */}
       <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Delete Parent</DialogTitle>
         <DialogContent>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -31,6 +31,10 @@ import {
   Select,
   Link,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 
 import { Search as SearchIcon, MoreVert as MoreVertIcon,  Add as AddIcon, } from '@mui/icons-material';
@@ -40,6 +44,7 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import learnerApi from 'src/api/learnerApi';
 import { getClassesWithDivisions, createLearner } from 'src/context/TenantContext/services/tenant.service';
+import api from 'src/api/tenant_api';
 import AddLearnerModal from 'src/views/school-setup/tabs/AddLearnerModal';
 import LinkParentModal from 'src/components/tenant-components/learners/LinkParentModal';
 import ViewParentsModal from 'src/components/tenant-components/learners/ViewParentsModal';
@@ -118,6 +123,12 @@ const LearnerManagement = () => {
   const [viewParentsOpen, setViewParentsOpen] = useState(false);
   const [viewParentsLearner, setViewParentsLearner] = useState(null);
 
+  // template download/upload
+  const fileInputRef = useRef(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateAction, setTemplateAction]         = useState('download'); // 'download' | 'upload'
+  const [templateClassId, setTemplateClassId]       = useState('');
+
   const fetchLearners = useCallback(async () => {
     try {
       setLoading(true);
@@ -158,6 +169,7 @@ const LearnerManagement = () => {
             flat.push({
               id: cls.id,
               label: `${programme.programme_code} - ${cls.class_code}`,
+              programme_class_id: cls.pivot?.id,
             });
           });
         });
@@ -201,6 +213,68 @@ const LearnerManagement = () => {
       notify.error(err?.response?.data?.message || err?.message || 'Failed to add learner');
     } finally {
       setAddLearnerLoading(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    const selected = classes.find((c) => c.id === templateClassId);
+    if (!selected?.programme_class_id) return;
+    try {
+      const res = await api.get('school_setup/learner_template', {
+        params: { programme_class_id: selected.programme_class_id },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `learner_template_${selected.label}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Template downloaded');
+      setTemplateDialogOpen(false);
+      setTemplateClassId('');
+    } catch {
+      notify.error('Failed to download template');
+    }
+  };
+
+  const handleUploadFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('school_setup/learners', formData);
+      if (res.data.status) {
+        notify.success(res.data.message || 'Upload complete');
+        fetchLearners();
+        fetchStats();
+      } else {
+        notify.error(res.data.message || 'Upload failed');
+      }
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Upload failed');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const openTemplateDialog = (action) => {
+    setTemplateAction(action);
+    setTemplateClassId('');
+    setTemplateDialogOpen(true);
+  };
+
+  const handleTemplateDialogConfirm = () => {
+    if (!templateClassId) return;
+    if (templateAction === 'download') {
+      handleDownloadTemplate();
+    } else {
+      setTemplateDialogOpen(false);
+      setTemplateClassId('');
+      fileInputRef.current?.click();
     }
   };
 
@@ -255,12 +329,17 @@ const LearnerManagement = () => {
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Learners</Typography>
-            <Button 
-              variant="contained"   
-              startIcon={<AddIcon />}  
-              onClick={() => setAddLearnerOpen(true)}>
-              Add Learner
-            </Button>
+            <Box display="flex" gap={1}>
+              <Button variant="outlined" onClick={() => openTemplateDialog('download')}>
+                Download Template
+              </Button>
+              <Button variant="outlined" onClick={() => openTemplateDialog('upload')}>
+                Upload Template
+              </Button>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddLearnerOpen(true)}>
+                Add Learner
+              </Button>
+            </Box>
           </Box>
         }
       >
@@ -453,6 +532,36 @@ const LearnerManagement = () => {
         isLoading={addLearnerLoading}
         showLinkParents
       />
+
+      {/* Class picker for template download/upload */}
+      <Dialog open={templateDialogOpen} onClose={() => setTemplateDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>
+          {templateAction === 'download' ? 'Download Learner Template' : 'Upload Learner Template'}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select the class to {templateAction === 'download' ? 'generate a template for' : 'upload learners into'}.
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel>Class</InputLabel>
+            <Select value={templateClassId} label="Class" onChange={(e) => setTemplateClassId(e.target.value)}>
+              <MenuItem value="">Select Class</MenuItem>
+              {classes.filter((c) => c.programme_class_id).map((cls) => (
+                <MenuItem key={cls.id} value={cls.id}>{cls.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleTemplateDialogConfirm} disabled={!templateClassId}>
+            {templateAction === 'download' ? 'Download' : 'Select File'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Hidden file input for upload */}
+      <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleUploadFile} />
 
       <LinkParentModal
         open={linkParentOpen}

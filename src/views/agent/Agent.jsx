@@ -1008,7 +1008,7 @@ const Agent = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => setIsRegisterModalOpen(true)}
-                sx={{ bgcolor: '#3949ab', '&:hover': { bgcolor: '#303f9f' } }}
+                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
               >
                 Add New Agent
               </Button>
@@ -1033,10 +1033,10 @@ const Agent = () => {
                 textTransform: 'none',
                 borderRadius: 2,
                 px: 2.5,
-                borderColor: activeFilterCount > 0 ? '#3949ab' : 'divider',
-                color: activeFilterCount > 0 ? '#3949ab' : 'text.secondary',
+                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                 fontWeight: activeFilterCount > 0 ? 700 : 400,
-                '&:hover': { borderColor: '#3949ab', color: '#fff' },
+                '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
             >
               Show Filters
@@ -1047,7 +1047,7 @@ const Agent = () => {
                     ml: 1,
                     px: 0.8,
                     py: 0.1,
-                    bgcolor: '#3949ab',
+                    bgcolor: 'primary.main',
                     color: 'white',
                     borderRadius: '10px',
                     fontSize: '11px',
@@ -1126,7 +1126,7 @@ const Agent = () => {
                     const level = Number(agent.access_level);
                     const colorMap = {
                       1: { color: '#2ca87f', bg: '#e6f4ee' },
-                      2: { color: '#3949ab', bg: '#e8eaf6' },
+                      2: { color: theme.palette.primary.main, bg: theme.palette.primary.light },
                       3: { color: '#f57c00', bg: '#fff3e0' },
                     };
                     const levelConfig = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
@@ -1281,7 +1281,7 @@ const Agent = () => {
                                 School
                               </Typography>
                             </Box>
-                            <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+                            <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
                               <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
                                 {agent.tenants_count ?? 0}
                               </Typography>
@@ -1294,7 +1294,7 @@ const Agent = () => {
                               width: 24,
                               height: 24,
                               borderRadius: '50%',
-                              bgcolor: agent.primaryColor || '#3949ab',
+                              bgcolor: agent.primaryColor || theme.palette.primary.main,
                               border: '2px solid rgba(255,255,255,0.8)',
                               boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
                             }}

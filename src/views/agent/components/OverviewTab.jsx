@@ -52,7 +52,7 @@ const OverviewTab = ({ data }) => {
                 const initials = (row.name || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
                 return (
                     <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                        <Avatar sx={{color:"#3949ab",bgcolor: '#EEEFF9', width: 34, height: 34, fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+                        <Avatar sx={{color: theme.palette.primary.main, bgcolor: theme.palette.primary.light, width: 34, height: 34, fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
                             {initials}
                         </Avatar>
                         <Box>
@@ -68,7 +68,7 @@ const OverviewTab = ({ data }) => {
         agentColumnHelper.accessor('level', {
             header: () => 'Level',
             cell: (info) => (
-                <Box sx={{ bgcolor: '#3949ab', color: '#fff', borderRadius: '4px', px: 1.5, py: 0.3, display: 'inline-block', fontSize: '12px', fontWeight: 700 }}>
+                <Box sx={{ bgcolor: 'primary.main', color: '#fff', borderRadius: '4px', px: 1.5, py: 0.3, display: 'inline-block', fontSize: '12px', fontWeight: 700 }}>
                     {info.getValue()}
                 </Box>
             ),
@@ -118,7 +118,7 @@ const OverviewTab = ({ data }) => {
                 const initials = (row.agent || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
                 return (
                     <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                        <Avatar sx={{ width: 34, height: 34, fontSize: '11px', fontWeight: 700, color:"#3949ab",bgcolor: '#EEEFF9', flexShrink: 0 }}>
+                        <Avatar sx={{ width: 34, height: 34, fontSize: '11px', fontWeight: 700, color:"primary.main",bgcolor: 'primary.light', flexShrink: 0 }}>
                             {initials}
                         </Avatar>
                         <Box>
@@ -197,7 +197,7 @@ const OverviewTab = ({ data }) => {
                 <Button
                     variant="contained"
                     size="small"
-                    sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', textTransform: 'none', fontWeight: 600, '&:hover': { bgcolor: '#1e3a8a' } }}
+                    sx={{ height: 40, px: 3, borderRadius: '6px', color: '#fff', textTransform: 'none', fontWeight: 600 }}
                 >
                     Filter
                 </Button>

@@ -109,7 +109,7 @@ const TotalSchoolModal = ({ open, onClose }) => {
               borderRadius: '6px',
               mr: 1,
               px: 2,
-              '&.Mui-selected': { color: '#fff', bgcolor: '#1E40AF' },
+              '&.Mui-selected': { color: '#fff', bgcolor: 'primary.main' },
             },
             '& .MuiTabs-indicator': { display: 'none' },
           }}
@@ -138,7 +138,7 @@ const TotalSchoolModal = ({ open, onClose }) => {
               <MenuItem value="2025">2025</MenuItem>
             </Select>
           </Box>
-          <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', '&:hover': { bgcolor: '#1e3a8a' } }}>
+          <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px' }}>
             Filter
           </PrimaryButton>
         </Stack>

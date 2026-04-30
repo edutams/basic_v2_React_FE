@@ -2,13 +2,35 @@ import React from 'react';
 import { Button, useTheme } from '@mui/material';
 import PropTypes from 'prop-types';
 
+const DEFAULT_PRIMARY_BG = '#FEC120';
+const DEFAULT_PRIMARY_HOVER = '#EAB308';
+
+/**
+ * Darken a hex color by a given amount (0-1).
+ */
+const darkenColor = (hex, amount = 0.15) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return hex;
+  const r = Math.max(0, Math.round(parseInt(result[1], 16) * (1 - amount)));
+  const g = Math.max(0, Math.round(parseInt(result[2], 16) * (1 - amount)));
+  const b = Math.max(0, Math.round(parseInt(result[3], 16) * (1 - amount)));
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
 const PrimaryButton = ({ children, sx = {}, variant = 'primary', ...props }) => {
     const theme = useTheme();
     const isPrimary = variant === 'primary';
     const isDarkMode = theme.palette.mode === 'dark';
 
+    // Use theme primary color if customized (from organization), otherwise default gold
+    const primaryBg = theme.palette.primary?.main || DEFAULT_PRIMARY_BG;
+    const primaryHover = darkenColor(primaryBg, 0.12);
+
+    // Determine text color based on the primary color's luminance
+    const rgb = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(primaryBg);
+    const isBgDark = rgb ? (parseInt(rgb[1], 16) * 299 + parseInt(rgb[2], 16) * 587 + parseInt(rgb[3], 16) * 114) / 1000 < 128 : false;
     const textColor = isPrimary
-        ? '#1E293B'
+        ? (isBgDark ? '#ffffff' : '#1E293B')
         : (isDarkMode ? 'white' : '#1E293B');
 
     return (
@@ -16,7 +38,7 @@ const PrimaryButton = ({ children, sx = {}, variant = 'primary', ...props }) => 
             variant={isPrimary ? "contained" : "outlined"}
             sx={{
                 bgcolor: isPrimary
-                    ? '#FEC120'
+                    ? primaryBg
                     : (isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'white'),
 
                 color: textColor,
@@ -40,7 +62,7 @@ const PrimaryButton = ({ children, sx = {}, variant = 'primary', ...props }) => 
 
                 '&:hover': {
                     bgcolor: isPrimary
-                        ? '#EAB308'
+                        ? primaryHover
                         : (isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#F8FAFC'),
 
                     border: isPrimary

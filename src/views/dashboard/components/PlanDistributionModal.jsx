@@ -361,7 +361,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                         width: 40,
                         height: 40,
                         borderRadius: '10px',
-                        bgcolor: isDark ? '#3949ab33' : '#c7d2fe',
+                        bgcolor: theme.palette.primary.light,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

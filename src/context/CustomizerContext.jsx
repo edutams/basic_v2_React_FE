@@ -23,6 +23,7 @@ export const CustomizerContextProvider = ({ children }) => {
     const [isLanguage, setIsLanguage] = useState(config.isLanguage);
     const [isSidebarHover, setIsSidebarHover] = useState(false);
     const [isMobileSidebar, setIsMobileSidebar] = useState(false);
+    const [primaryColor, setPrimaryColor] = useState(null);
     // Set attributes immediately
     useEffect(() => {
         document.documentElement.setAttribute("class", activeMode);
@@ -32,7 +33,14 @@ export const CustomizerContextProvider = ({ children }) => {
         document.documentElement.setAttribute("data-boxed-layout", isLayout);
         document.documentElement.setAttribute("data-sidebar-type", isCollapse);
 
-    }, [activeMode, activeDir, activeTheme, activeLayout, isLayout, isCollapse]);
+        // Set CSS custom property for primary color (used by spinner, etc.)
+        if (primaryColor) {
+            document.documentElement.style.setProperty('--primary-color', primaryColor);
+        } else {
+            document.documentElement.style.removeProperty('--primary-color');
+        }
+
+    }, [activeMode, activeDir, activeTheme, activeLayout, isLayout, isCollapse, primaryColor]);
 
     return (
         
@@ -59,7 +67,9 @@ export const CustomizerContextProvider = ({ children }) => {
                 isSidebarHover,
                 setIsSidebarHover,
                 isMobileSidebar,
-                setIsMobileSidebar
+                setIsMobileSidebar,
+                primaryColor,
+                setPrimaryColor
             }}
         >
             {children}

@@ -185,7 +185,7 @@ export default function Dashboard() {
                   height: 36,
                   fontSize: '12px',
                   fontWeight: 700,
-                  bgcolor: '#3949ab',
+                  bgcolor: 'primary.main',
                   flexShrink: 0,
                 }}
               >
@@ -263,7 +263,7 @@ export default function Dashboard() {
                 School
               </Typography>
             </Box>
-            <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+            <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
               <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
                 {info.row.original.tenants_count ?? 0}
               </Typography>
@@ -274,7 +274,7 @@ export default function Dashboard() {
       columnHelper.accessor('primaryColor', {
         header: () => 'Primary Color',
         cell: (info) => {
-          const color = info.getValue() || '#3949ab';
+          const color = info.getValue() || theme.palette.primary.main;
           return (
             <Box
               sx={{
@@ -416,7 +416,7 @@ export default function Dashboard() {
               <ReusableBarChart
                 series={revenueSeries}
                 categories={months}
-                colors={['#3949ab']}
+                colors={[theme.palette.primary.main]}
                 height={250}
                 yAxisPrefix="N"
                 yAxisFormatter={(val) => `${val.toFixed(1)}M`}
@@ -481,7 +481,7 @@ export default function Dashboard() {
               <ReusablePieChart
                 series={planSeries}
                 labels={planLabels}
-                colors={['#3949ab', '#2196f3', '#ff4081', '#9c27b0']}
+                colors={[theme.palette.primary.main, '#2196f3', '#ff4081', '#9c27b0']}
                 height={200}
               />
             </Card>
@@ -523,13 +523,13 @@ export default function Dashboard() {
                     sx={{
                       borderRadius: '8px',
                       textTransform: 'none',
-                      bgcolor: '#DCE0F0',
-                      color: '#4E67CE',
+                      bgcolor: theme.palette.primary.light,
+                      color: theme.palette.primary.main,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1,
                       boxShadow: 'none',
-                      '&:hover': { bgcolor: '#c8cfe8', boxShadow: 'none' },
+                      '&:hover': { bgcolor: theme.palette.primary.light, boxShadow: 'none' },
                     }}
                   >
                     <IconListTree size={16} />

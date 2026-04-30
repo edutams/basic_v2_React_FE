@@ -27,27 +27,35 @@ const TenantAuthProvider = isTenantSubdomain
   : null;
 
 const RootApp = () => {
-  const content = (
+  if (isTenantSubdomain && TenantAuthProvider) {
+    return (
+      <CustomizerContextProvider>
+        <SnackbarProvider>
+          <Suspense fallback={<Spinner />}>
+            <ErrorBoundary>
+              <TenantAuthProvider>
+                <App />
+              </TenantAuthProvider>
+            </ErrorBoundary>
+          </Suspense>
+        </SnackbarProvider>
+      </CustomizerContextProvider>
+    );
+  }
+
+  return (
     <CustomizerContextProvider>
       <SnackbarProvider>
         <Suspense fallback={<Spinner />}>
           <ErrorBoundary>
-            <App />
+            <AuthProvider>
+              <App />
+            </AuthProvider>
           </ErrorBoundary>
         </Suspense>
       </SnackbarProvider>
     </CustomizerContextProvider>
   );
-
-  if (isTenantSubdomain && TenantAuthProvider) {
-    return (
-      <Suspense fallback={<Spinner />}>
-        <TenantAuthProvider>{content}</TenantAuthProvider>
-      </Suspense>
-    );
-  }
-
-  return <AuthProvider>{content}</AuthProvider>;
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(

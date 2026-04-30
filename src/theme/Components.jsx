@@ -1,13 +1,7 @@
  // project imports
 import "./DefaultColors";
-import React, { useContext } from 'react';
-import { CustomizerContext } from 'src/context/CustomizerContext';
 
-const components = (theme) => {
-
-
-  const { isCardShadow } = useContext(CustomizerContext);
-
+const components = (theme, isCardShadow = true) => {
   const borderColor = theme.palette.divider;
 
   return {
@@ -386,6 +380,33 @@ const components = (theme) => {
       styleOverrides: {
         root: {
           borderBottom: `1px solid ${theme.palette.divider}`,
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          minHeight: 48,
+        },
+        indicator: {
+          backgroundColor: theme.palette.primary.main,
+          height: 3,
+          borderRadius: '3px 3px 0 0',
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+          minHeight: 48,
+          '&.Mui-selected': {
+            color: theme.palette.primary.main,
+          },
+          '&:hover': {
+            color: theme.palette.primary.main,
+          },
         },
       },
     },

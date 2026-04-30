@@ -11,26 +11,70 @@ import * as locales from '@mui/material/locale';
 import { CustomizerContext } from '../context/CustomizerContext';
 
 /**
- * Generate light and dark variants from a hex color.
+ * Convert any color format (hex, named, rgb, rgba) to RGB object.
  * Used to dynamically create a primary palette from the organization's primary_color.
  */
-const hexToRgb = (hex) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
-    : null;
+const colorToRgb = (color) => {
+  // Handle hex colors
+  const hexMatch = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
+  if (hexMatch) {
+    return {
+      r: parseInt(hexMatch[1], 16),
+      g: parseInt(hexMatch[2], 16),
+      b: parseInt(hexMatch[3], 16),
+    };
+  }
+
+  // Handle rgb/rgba colors
+  const rgbMatch = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(color);
+  if (rgbMatch) {
+    return {
+      r: parseInt(rgbMatch[1], 10),
+      g: parseInt(rgbMatch[2], 10),
+      b: parseInt(rgbMatch[3], 10),
+    };
+  }
+
+  // Handle named colors by creating a temporary element
+  if (typeof document !== 'undefined') {
+    const tempElem = document.createElement('div');
+    tempElem.style.color = color;
+    document.body.appendChild(tempElem);
+    const computedColor = window.getComputedStyle(tempElem).color;
+    document.body.removeChild(tempElem);
+    
+    const computedRgbMatch = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(computedColor);
+    if (computedRgbMatch) {
+      return {
+        r: parseInt(computedRgbMatch[1], 10),
+        g: parseInt(computedRgbMatch[2], 10),
+        b: parseInt(computedRgbMatch[3], 10),
+      };
+    }
+  }
+
+  return null;
 };
 
 const generatePrimaryPalette = (primaryColor) => {
-  const rgb = hexToRgb(primaryColor);
+  if (!primaryColor) return null;
+
+  const rgb = colorToRgb(primaryColor);
   if (!rgb) return null;
 
   const isDark = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000 < 128;
 
+  // Convert to hex for consistency
+  const toHex = (value) => {
+    const hex = value.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  const hexColor = `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
+
   return {
-    main: primaryColor,
+    main: hexColor,
     light: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.1)`,
-    dark: primaryColor,
+    dark: hexColor,
     contrastText: isDark ? '#ffffff' : '#1E293B',
   };
 };

@@ -41,6 +41,7 @@ const NonTeachingStaffTab = ({
   handleChangeRowsPerPage,
   handleAddStaff,
   handleBulkMenuOpen,
+  handleUploadStaff,
   handleMenuOpen,
   getStatusColor,
 }) => {
@@ -98,8 +99,8 @@ const NonTeachingStaffTab = ({
             Add Single Staff
           </Button>
           <ButtonGroup variant="outlined">
-            <Button startIcon={<IconPlus size={18} />} sx={{ textTransform: 'none' }}>
-              Add Multiple Staff
+            <Button startIcon={<IconPlus size={18} />} sx={{ textTransform: 'none' }} onClick={handleUploadStaff}>
+              Upload Excel
             </Button>
             <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
               <IconChevronDown size={16} />

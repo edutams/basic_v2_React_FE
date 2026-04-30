@@ -289,10 +289,10 @@ const AlcManager = () => {
                 textTransform: 'none',
                 borderRadius: 2,
                 px: 2.5,
-                borderColor: activeFilterCount > 0 ? '#3949ab' : 'divider',
-                color: activeFilterCount > 0 ? '#3949ab' : 'text.secondary',
+                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                 fontWeight: activeFilterCount > 0 ? 700 : 400,
-                '&:hover': { borderColor: '#3949ab', color: '#fff' },
+                '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
             >
               Show Filters
@@ -303,7 +303,7 @@ const AlcManager = () => {
                     ml: 1,
                     px: 0.8,
                     py: 0.1,
-                    bgcolor: '#3949ab',
+                    bgcolor: 'primary.main',
                     color: 'white',
                     borderRadius: '10px',
                     fontSize: '11px',

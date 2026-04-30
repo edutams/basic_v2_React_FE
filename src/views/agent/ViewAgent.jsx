@@ -217,7 +217,7 @@ const ViewAgent = () => {
                         '& .MuiTabs-indicator': {
                           height: 3,
                           borderRadius: '4px 4px 0 0',
-                          bgcolor: '#1E40AF',
+                          bgcolor: 'primary.main',
                         },
                         '& .MuiTab-root': {
                           minHeight: 56,

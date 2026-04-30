@@ -303,9 +303,9 @@ const TotalTransactionModal = ({ open, onClose }) => {
                 height: 40,
                 px: 3,
                 borderRadius: '6px',
-                bgcolor: '#1E40AF',
+                bgcolor: 'primary.main',
                 color: '#fff',
-                '&:hover': { bgcolor: '#1e3a8a' },
+                '&:hover': { bgcolor: 'primary.dark' },
               }}
             >
               Filter

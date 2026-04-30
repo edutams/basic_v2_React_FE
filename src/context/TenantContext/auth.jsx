@@ -1,8 +1,9 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../../api/tenant_api';
 import authApi from '../../api/auth';
 import { PermissionProvider } from './permissions';
 import { validateTenantDomain } from './services/tenant.service';
+import { CustomizerContext } from '../CustomizerContext';
 
 export const TenantAuthContext = createContext(undefined);
 
@@ -26,6 +27,8 @@ export const TenantAuthProvider = ({ children }) => {
   const [isImpersonated, setIsImpersonated] = useState(false);
   const [impersonatorId, setImpersonatorId] = useState(null);
   const [tenantInfo, setTenantInfo] = useState(null);
+
+  const { setPrimaryColor } = useContext(CustomizerContext);
 
   const checkTenantDomain = async () => {
     console.log(2222);
@@ -60,11 +63,16 @@ export const TenantAuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const res = await api.get('/get-user');
-        const { user: userData, permissions: perms } = res.data;
+        const { user: userData, permissions: perms, primary_color } = res.data;
 
         setUser(userData);
         setPermissions(perms || []);
         setIsAuthenticated(true);
+
+        // Restore the agent's primary_color as the tenant's theme color
+        if (primary_color) {
+          setPrimaryColor(primary_color);
+        }
       } catch (err) {
         localStorage.removeItem('tenant_access_token');
         localStorage.removeItem('isImpersonating');
@@ -95,12 +103,17 @@ export const TenantAuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post('/login', credentials);
-      const { access_token, user: userData, permissions: perms, roles } = res.data;
+      const { access_token, user: userData, permissions: perms, roles, primary_color } = res.data;
 
       localStorage.setItem('tenant_access_token', access_token);
       setUser(userData);
       setPermissions(perms || []);
       setIsAuthenticated(true);
+
+      // Set the agent's primary_color as the tenant's theme color
+      if (primary_color) {
+        setPrimaryColor(primary_color);
+      }
 
       return { success: true, user: userData };
     } catch (err) {
@@ -126,6 +139,7 @@ export const TenantAuthProvider = ({ children }) => {
       setError(msg);
       return { success: false, error: msg };
     } finally {
+      setPrimaryColor(null);
       setIsLoading(false);
     }
   };

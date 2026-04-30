@@ -254,7 +254,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               borderRadius: 2,
               bgcolor: '#e8eaf6',
               fontSize: 28,
-              color: '#3949ab',
+              color: 'primary.main',
               flexShrink: 0,
             }}
           >
@@ -580,9 +580,9 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
               textTransform: 'none',
               borderRadius: '8px',
               fontSize: '12px',
-              borderColor: '#3949ab',
-              color: '#3949ab',
-              '&:hover': { bgcolor: '#3949ab', color: '#fff' },
+              borderColor: 'primary.main',
+              color: 'primary.main',
+              '&:hover': { bgcolor: 'primary.main', color: '#fff' },
             }}
           >
             {row.status?.toLowerCase() === 'approved' ? 'View' : 'Review'}

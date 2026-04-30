@@ -14,8 +14,26 @@ import {
   ClickAwayListener,
 } from '@mui/material';
 import { HexColorPicker } from 'react-colorful';
+import { IMaskInput } from 'react-imask';
 import ImageUpload from '../../shared/ImageUpload';
 import locationApi from '../../../api/location';
+
+// Phone mask component
+const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      definitions={{
+        '0': /[0-9]/,
+      }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
 
 const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }) => {
   const [states, setStates] = useState([]);
@@ -139,7 +157,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
               <TextField
                 key="agentPhone"
                 label="Organization Phone No:"
-                placeholder="+234-801-234-5678"
+                placeholder="08000000000"
                 fullWidth
                 name="agentPhone"
                 value={formik.values.agentPhone}
@@ -147,6 +165,9 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                 onBlur={formik.handleBlur}
                 error={formik.touched.agentPhone && Boolean(formik.errors.agentPhone)}
                 helperText={formik.touched.agentPhone && formik.errors.agentPhone}
+                InputProps={{
+                  inputComponent: PhoneMaskCustom,
+                }}
               />
             </Grid>
 
@@ -396,6 +417,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
               <TextField
                 key="phone"
                 label="Admin Phone"
+                placeholder="08000000000"
                 fullWidth
                 name="phone"
                 value={formik.values.phone}
@@ -403,6 +425,9 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                 onBlur={formik.handleBlur}
                 error={formik.touched.phone && Boolean(formik.errors.phone)}
                 helperText={formik.touched.phone && formik.errors.phone}
+                InputProps={{
+                  inputComponent: PhoneMaskCustom,
+                }}
               />
             </Grid>
           </Grid>

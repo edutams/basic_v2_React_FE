@@ -155,7 +155,7 @@ const TotalSubAgentModal = ({ open, onClose }) => {
                           School
                         </Typography>
                       </Box>
-                      <Box sx={{ bgcolor: '#3949ab', px: 1.5, py: 0.5 }}>
+                      <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
                         <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
                           {agent.school ?? 0}
                         </Typography>

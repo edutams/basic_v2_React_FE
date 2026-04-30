@@ -1,7 +1,8 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../../api/auth';
 import { PermissionProvider } from './permissions';
 import axios from 'axios';
+import { CustomizerContext } from '../CustomizerContext';
 
 export const AuthContext = createContext(undefined);
 
@@ -41,6 +42,8 @@ export const AuthProvider = ({ children }) => {
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatorId, setImpersonatorId] = useState(null);
 
+  const { setPrimaryColor } = useContext(CustomizerContext);
+
   useEffect(() => {
     const token = tokenManager.get();
     if (token) {
@@ -61,11 +64,17 @@ export const AuthProvider = ({ children }) => {
         const storedPermissions = localStorage.getItem('permissions');
 
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
           setPermissions(storedPermissions ? JSON.parse(storedPermissions) : []);
           setIsImpersonating(localStorage.getItem('isImpersonating') === 'true');
           setImpersonatorId(localStorage.getItem('impersonator_id') ?? null);
           setIsAuthenticated(true);
+
+          // Restore the organization's primary_color as the theme color
+          if (parsedUser?.organization?.primary_color) {
+            setPrimaryColor(parsedUser.organization.primary_color);
+          }
         } else {
           tokenManager.clear();
           setIsAuthenticated(false);
@@ -102,6 +111,11 @@ export const AuthProvider = ({ children }) => {
       setIsImpersonating(false);
       setImpersonatorId(null);
 
+      // Set the organization's primary_color as the theme color
+      if (userData?.organization?.primary_color) {
+        setPrimaryColor(userData.organization.primary_color);
+      }
+
       return { success: true, user: userData };
     } catch (err) {
       const msg = err.response?.data?.error || 'Login failed';
@@ -124,6 +138,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setIsImpersonating(false);
       setImpersonatorId(null);
+      setPrimaryColor(null);
       setIsLoading(false);
     }
     return { success: true };
@@ -199,6 +214,11 @@ export const AuthProvider = ({ children }) => {
       setIsImpersonating(true);
       setImpersonatorId(impersonator_id);
 
+      // Update theme to impersonated organization's primary_color
+      if (userData?.organization?.primary_color) {
+        setPrimaryColor(userData.organization.primary_color);
+      }
+
       return { success: true, user: userData };
     } catch (err) {
       const msg = err.response?.data?.error || 'Impersonation failed';
@@ -262,6 +282,13 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setIsImpersonating(false);
       setImpersonatorId(null);
+
+      // Restore the original organization's primary_color
+      if (userData?.organization?.primary_color) {
+        setPrimaryColor(userData.organization.primary_color);
+      } else {
+        setPrimaryColor(null);
+      }
 
       localStorage.removeItem('isImpersonating');
       localStorage.removeItem('impersonator_id');

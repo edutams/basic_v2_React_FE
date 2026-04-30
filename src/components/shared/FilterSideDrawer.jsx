@@ -208,8 +208,8 @@ const FilterSideDrawer = ({
             sx={{
               textTransform: 'none',
               borderRadius: 2,
-              bgcolor: '#3949ab',
-              '&:hover': { bgcolor: '#303f9f' },
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
             Apply Filters

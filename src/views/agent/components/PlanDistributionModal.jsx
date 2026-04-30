@@ -117,7 +117,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
                 <MenuItem value="2025">2025</MenuItem>
               </Select>
             </Box>
-            <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', '&:hover': { bgcolor: '#1e3a8a' } }}>
+            <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px' }}>
               Filter
             </PrimaryButton>
           </Stack>
@@ -141,7 +141,7 @@ const PlanDistributionModal = ({ open, onClose }) => {
               <SideStatRow key={i} label={plan.label} count={plan.schoolCount} valueColor={plan.color} iconBg={isDark ? '#2a2a2a' : plan.iconBg} icon={IconBuildingBank} />
             ))}
             <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="center" sx={{ mt: 1.5 }}>
-              <Box sx={{ width: 36, height: 36, borderRadius: '8px', bgcolor: isDark ? '#3949ab33' : '#c7d2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Box sx={{ width: 36, height: 36, borderRadius: '8px', bgcolor: theme.palette.primary.light, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <IconBuildingBank size={18} color="#4a3aff" />
               </Box>
               <Box sx={{ textAlign: 'center' }}>

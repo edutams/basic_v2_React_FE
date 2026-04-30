@@ -116,7 +116,7 @@ const TotalTransactionModal = ({ open, onClose }) => {
                 <MenuItem value="All">Transaction option</MenuItem>
               </Select>
             </Box>
-            <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', '&:hover': { bgcolor: '#1e3a8a' } }}>
+            <PrimaryButton sx={{ height: 40, px: 3, borderRadius: '6px' }}>
               Filter
             </PrimaryButton>
           </Stack>

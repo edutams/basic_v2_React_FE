@@ -17,12 +17,27 @@ import {
   IconButton,
 } from '@mui/material';
 import { Search as SearchIcon, Person as PersonIcon, Close as CloseIcon } from '@mui/icons-material';
+import { IMaskInput } from 'react-imask';
 import { useFormik } from 'formik';
 import { parentValidationSchema } from './validation/parentValidationSchema';
 import PropTypes from 'prop-types';
 import guardianApi from 'src/api/parentApi';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
 import { useNotification } from 'src/hooks/useNotification';
+
+const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      definitions={{ '0': /[0-9]/ }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
 
 const EMPTY_FORM = {
   first_name: '',
@@ -201,7 +216,10 @@ const ParentForm = ({
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="Phone" name="phone" value={formik.values.phone}
-            onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth 
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur} fullWidth required
+            inputProps={{ maxLength: 11, inputMode: 'numeric' }}
+            InputProps={{ inputComponent: PhoneMaskCustom }}
             error={formik.touched.phone && Boolean(formik.errors.phone)}
             helperText={formik.touched.phone && formik.errors.phone} />
         </Grid>

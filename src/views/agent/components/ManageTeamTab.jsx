@@ -8,6 +8,21 @@ import {
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
 import agentApi from '../../../api/agent';
+import { IMaskInput } from 'react-imask';
+
+const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      definitions={{ '0': /[0-9]/ }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
 
 
 
@@ -331,7 +346,10 @@ const ManageTeamTab = ({ organizationId }) => {
                             <TextField fullWidth size="small" label="Last Name" value={formData.last_name} onChange={e => setFormData({ ...formData, last_name: e.target.value })} />
                         </Stack>
                         <TextField fullWidth size="small" label="Email Address" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                        <TextField fullWidth size="small" label="Phone Number" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                        <TextField fullWidth size="small" label="Phone Number" value={formData.phone}
+                          name="phone"
+                          onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                          InputProps={{ inputComponent: PhoneMaskCustom }} />
                         <TextField
                             fullWidth size="small" select label="Permissions"
                             value={newPermissions}
@@ -425,7 +443,10 @@ const ManageTeamTab = ({ organizationId }) => {
                             <TextField fullWidth size="small" label="Last Name" value={editMemberData.last_name} onChange={e => setEditMemberData({ ...editMemberData, last_name: e.target.value })} />
                         </Stack>
                         <TextField fullWidth size="small" label="Email Address" type="email" value={editMemberData.email} onChange={e => setEditMemberData({ ...editMemberData, email: e.target.value })} />
-                        <TextField fullWidth size="small" label="Phone Number" value={editMemberData.phone} onChange={e => setEditMemberData({ ...editMemberData, phone: e.target.value })} />
+                        <TextField fullWidth size="small" label="Phone Number" value={editMemberData.phone}
+                          name="phone"
+                          onChange={e => setEditMemberData({ ...editMemberData, phone: e.target.value })}
+                          InputProps={{ inputComponent: PhoneMaskCustom }} />
                     </Stack>
                 </DialogContent>
                 <Divider />

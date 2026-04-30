@@ -119,6 +119,14 @@ const LearnerManagement = () => {
   const [addLearnerOpen, setAddLearnerOpen]       = useState(false);
   const [addLearnerLoading, setAddLearnerLoading] = useState(false);
 
+  const [editLearnerOpen, setEditLearnerOpen]   = useState(false);
+  const [learnerToEdit, setLearnerToEdit]       = useState(null);
+  const [editLoading, setEditLoading]           = useState(false);
+  const [editValues, setEditValues]             = useState({ first_name: '', last_name: '', middle_name: '', gender: '', date_of_birth: '' });
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [learnerToDelete, setLearnerToDelete]   = useState(null);
+
   const [linkParentOpen, setLinkParentOpen] = useState(false);
   const [linkParentLearner, setLinkParentLearner] = useState(null);
 
@@ -198,6 +206,66 @@ const LearnerManagement = () => {
 
   const handleMenuClose = () => setAnchorEl(null);
 
+  const handleOpenEdit = (row) => {
+    setLearnerToEdit(row);
+    setEditValues({
+      first_name:    row.users?.fname ?? '',
+      last_name:     row.users?.lname ?? '',
+      middle_name:   row.users?.mname ?? '',
+      gender:        row.users?.sex ?? '',
+      date_of_birth: row.users?.dob ?? '',
+      learner_id:    row.users?.user_id ?? '',
+      class_id:      row.class_arm?.programme_class?.class_id ?? '',
+      class_arm_id:  row.class_arm_id ?? '',
+    });
+    setEditLearnerOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmEdit = async (values) => {
+    try {
+      setEditLoading(true);
+      await learnerApi.update(learnerToEdit.users.id, {
+        first_name:    values.first_name,
+        last_name:     values.last_name,
+        middle_name:   values.middle_name,
+        gender:        values.gender,
+        date_of_birth: values.date_of_birth,
+      });
+      // update class arm if changed
+      if (values.class_arm_id && values.class_arm_id !== learnerToEdit.class_arm_id) {
+        await learnerApi.updateRegistration(learnerToEdit.id, { class_arm_id: values.class_arm_id });
+      }
+      notify.success('Learner updated successfully');
+      setEditLearnerOpen(false);
+      setLearnerToEdit(null);
+      fetchLearners();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update learner');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleOpenDelete = (row) => {
+    setLearnerToDelete(row);
+    setDeleteDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await learnerApi.remove(learnerToDelete.id);
+      notify.success('Learner deleted successfully');
+      setDeleteDialogOpen(false);
+      setLearnerToDelete(null);
+      fetchLearners();
+      fetchStats();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to delete learner');
+    }
+  };
+
   const handleSaveLearner = async (values, parentIds = []) => {
     try {
       setAddLearnerLoading(true);
@@ -249,23 +317,6 @@ const LearnerManagement = () => {
     fetchLearners();
     fetchStats();
     return res.data.message || 'Upload complete';
-  };
-
-  const openTemplateDialog = (action) => {
-    setTemplateAction(action);
-    setTemplateClassId('');
-    setTemplateDialogOpen(true);
-  };
-
-  const handleTemplateDialogConfirm = () => {
-    if (!templateClassId) return;
-    if (templateAction === 'download') {
-      handleDownloadTemplate();
-    } else {
-      setTemplateDialogOpen(false);
-      setTemplateClassId('');
-      fileInputRef.current?.click();
-    }
   };
 
   const hasFilters = search !== '' || classId !== '';
@@ -466,8 +517,8 @@ const LearnerManagement = () => {
                           <MenuItem onClick={() => { setLinkParentLearner(selectedRow); setLinkParentOpen(true); handleMenuClose(); }}>
                             Link Parent
                           </MenuItem>
-                          <MenuItem onClick={handleMenuClose}>Edit</MenuItem>
-                          <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
+                          <MenuItem onClick={() => handleOpenEdit(row)}>Edit</MenuItem>
+                          <MenuItem onClick={() => handleOpenDelete(row)} sx={{ color: 'error.main' }}>
                             Delete
                           </MenuItem>
                         </Menu>
@@ -529,7 +580,7 @@ const LearnerManagement = () => {
         onUpload={handleUploadLearners}
       />
 
-      {/* Download Template — class picker dialog */}
+      {/* Download Template  */}
       <Dialog open={downloadDialogOpen} onClose={() => setDownloadDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Download Learner Template</DialogTitle>
         <DialogContent>
@@ -566,6 +617,36 @@ const LearnerManagement = () => {
         onClose={() => setViewParentsOpen(false)}
         learner={viewParentsLearner}
       />
+
+      <AddLearnerModal
+        open={editLearnerOpen}
+        onClose={() => { setEditLearnerOpen(false); setLearnerToEdit(null); }}
+        onSave={handleConfirmEdit}
+        isLoading={editLoading}
+        isEdit
+        initialValues={editValues}
+      />
+
+      {/* Delete Learner */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Delete Learner</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete{' '}
+            <strong>
+              {learnerToDelete?.users
+                ? `${learnerToDelete.users.fname} ${learnerToDelete.users.lname}`
+                : 'this learner'}
+            </strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleConfirmDelete} autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

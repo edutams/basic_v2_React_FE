@@ -185,16 +185,20 @@ const LearnerManagement = () => {
 
   const handleMenuClose = () => setAnchorEl(null);
 
-  const handleSaveLearner = async (values) => {
+  const handleSaveLearner = async (values, parentIds = []) => {
     try {
       setAddLearnerLoading(true);
-      await createLearner(values);
+      const res = await createLearner(values);
+      if (parentIds.length > 0) {
+        const newUserId = res?.data?.id;
+        if (newUserId) await learnerApi.syncParents(newUserId, parentIds);
+      }
       notify.success('Learner added successfully');
       setAddLearnerOpen(false);
       fetchLearners();
       fetchStats();
     } catch (err) {
-      notify.error(err?.response?.data?.message || 'Failed to add learner');
+      notify.error(err?.response?.data?.message || err?.message || 'Failed to add learner');
     } finally {
       setAddLearnerLoading(false);
     }
@@ -253,7 +257,6 @@ const LearnerManagement = () => {
             <Typography variant="h5">Learners</Typography>
             <Button 
               variant="contained"   
-              size="small"
               startIcon={<AddIcon />}  
               onClick={() => setAddLearnerOpen(true)}>
               Add Learner
@@ -448,6 +451,7 @@ const LearnerManagement = () => {
         onClose={() => setAddLearnerOpen(false)}
         onSave={handleSaveLearner}
         isLoading={addLearnerLoading}
+        showLinkParents
       />
 
       <LinkParentModal

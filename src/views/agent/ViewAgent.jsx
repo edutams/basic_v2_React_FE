@@ -106,10 +106,38 @@ const ViewAgent = () => {
                 ? tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)
                 : 'Active',
             })),
-            revenueData: [],
+            revenueData: [
+              { month: 'Jan', revenue: 120000 },
+              { month: 'Feb', revenue: 85000 },
+              { month: 'Mar', revenue: 200000 },
+              { month: 'Apr', revenue: 150000 },
+              { month: 'May', revenue: 310000 },
+              { month: 'Jun', revenue: 270000 },
+              { month: 'Jul', revenue: 190000 },
+              { month: 'Aug', revenue: 230000 },
+              { month: 'Sep', revenue: 175000 },
+              { month: 'Oct', revenue: 290000 },
+              { month: 'Nov', revenue: 340000 },
+              { month: 'Dec', revenue: 410000 },
+            ],
             loginActivities: [],
-            planDistribution: [],
-            recentOnboarding: [],
+            planDistribution: [
+              { label: 'Basic', value: 50 },
+              { label: 'Basic +', value: 35 },
+              { label: 'Basic ++', value: 15 },
+            ],
+            recentOnboarding: (data.tenants || [])
+              .slice()
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .slice(0, 5)
+              .map((tenant) => ({
+                school: tenant.tenant_name || 'Unknown School',
+                agent: data.organization_name || '—',
+                handle: data.organization_email || '—',
+                created_at: tenant.created_at
+                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                  : '—',
+              })),
             topAgents: [],
             topRevenueSchools: [],
             raw: data,

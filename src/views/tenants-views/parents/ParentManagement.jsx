@@ -36,7 +36,8 @@ import {
   DialogActions,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon, CloudUpload as UploadIcon,
+  Download as DownloadIcon } from '@mui/icons-material';
 import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
@@ -340,10 +341,10 @@ const ParentManagement = () => {
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Parents & Guardians</Typography>
             <Box display="flex" gap={1}>
-              <Button variant="outlined" onClick={handleDownloadTemplate}>
+              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
                 Download Template
               </Button>
-              <Button variant="outlined" onClick={() => setUploadModalOpen(true)}>
+              <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
                 Upload Template
               </Button>
               <Button variant="contained" color="primary" onClick={handleOpenAdd}>

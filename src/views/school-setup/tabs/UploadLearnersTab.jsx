@@ -23,6 +23,8 @@ import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
+  CloudUpload as UploadIcon,
+  Download as DownloadIcon, 
 } from '@mui/icons-material';
 import { IconDotsVertical } from '@tabler/icons-react';
 import {
@@ -33,6 +35,7 @@ import {
 import api from '../../../api/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
+import UploadLearnerModal from 'src/components/tenant-components/learners/UploadLearnerModal';
 
 const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const theme = useTheme();
@@ -51,6 +54,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
   const [uploadClassId, setUploadClassId] = useState(null);
   const fileInputRef = useRef(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [notification, setNotification] = useState({
     open: false,
     message: '',
@@ -118,52 +122,20 @@ const handleSaveLearner = async (data) => {
   
   const handleUploadClick = (classId) => {
     setUploadClassId(classId);
-    fileInputRef.current?.click();
+    setUploadModalOpen(true);
   };
 
-  const handleUploadTemplate = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await api.post('school_setup/learners', formData);
-
-      if (response.data.status) {
-         setNotification({
-        open: true,
-        message: response.data.message,
-        severity: 'success',
-      });
-        // Refresh student counts
-        const countsData = await getStudentCountByClass();
-        const countsObj = {};
-        (countsData || []).forEach((item) => {
-          countsObj[item.class_id] = item.count;
-        });
-        setStudentCounts(countsObj);
-
-        onLearnerAdded?.();
-      } else {
-          setNotification({
-        open: true,
-        message: response.data.message || 'Upload failed',
-        severity: 'error',
-      });
-      }
-    } catch (error) {
-      setNotification({
-      open: true,
-      message:
-        error?.response?.data?.message || 'Failed to upload learners',
-      severity: 'error',
-    });
-    } finally {
-      event.target.value = '';
-      setUploadClassId(null);
-    }
+  const handleUploadLearners = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('school_setup/learners', formData);
+    if (!response.data.status) throw new Error(response.data.message || 'Upload failed');
+    const countsData = await getStudentCountByClass();
+    const countsObj = {};
+    (countsData || []).forEach((item) => { countsObj[item.class_id] = item.count; });
+    setStudentCounts(countsObj);
+    onLearnerAdded?.();
+    return response.data.message || 'Upload complete';
   };
 
   const handleDownloadTemplate = async (programmeClassId) => {
@@ -418,7 +390,7 @@ const handleSaveLearner = async (data) => {
                       <Button
                         variant="outlined"
                         size="small"
-                        startIcon={<span>↓</span>}
+                        startIcon={<DownloadIcon />}
                         onClick={() => handleDownloadTemplate(item.programme_class_id)}
                       >
                         Download Template
@@ -426,7 +398,7 @@ const handleSaveLearner = async (data) => {
                       <Button
                         variant="contained"
                         size="small"
-                        startIcon={<span>↑</span>}
+                        startIcon={<UploadIcon />}
                         onClick={() => handleUploadClick(item.id)}
                       >
                         Upload Template
@@ -453,12 +425,10 @@ const handleSaveLearner = async (data) => {
         </Table>
       </TableContainer>
 
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept=".xlsx,.xls"
-        style={{ display: 'none' }}
-        onChange={handleUploadTemplate}
+      <UploadLearnerModal
+        open={uploadModalOpen}
+        onClose={() => { setUploadModalOpen(false); setUploadClassId(null); }}
+        onUpload={handleUploadLearners}
       />
 
       <Box mt={2} display="flex" justifyContent="flex-end">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -37,7 +37,8 @@ import {
   DialogActions,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon,  Add as AddIcon, } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon,  Add as AddIcon,  CloudUpload as UploadIcon,
+  Download as DownloadIcon  } from '@mui/icons-material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -48,6 +49,7 @@ import api from 'src/api/tenant_api';
 import AddLearnerModal from 'src/views/school-setup/tabs/AddLearnerModal';
 import LinkParentModal from 'src/components/tenant-components/learners/LinkParentModal';
 import ViewParentsModal from 'src/components/tenant-components/learners/ViewParentsModal';
+import UploadLearnerModal from 'src/components/tenant-components/learners/UploadLearnerModal';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
@@ -124,10 +126,9 @@ const LearnerManagement = () => {
   const [viewParentsLearner, setViewParentsLearner] = useState(null);
 
   // template download/upload
-  const fileInputRef = useRef(null);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [templateAction, setTemplateAction]         = useState('download'); // 'download' | 'upload'
-  const [templateClassId, setTemplateClassId]       = useState('');
+  const [uploadLearnerOpen, setUploadLearnerOpen] = useState(false);
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [downloadClassId, setDownloadClassId] = useState('');
 
   const fetchLearners = useCallback(async () => {
     try {
@@ -217,7 +218,7 @@ const LearnerManagement = () => {
   };
 
   const handleDownloadTemplate = async () => {
-    const selected = classes.find((c) => c.id === templateClassId);
+    const selected = classes.find((c) => c.id === downloadClassId);
     if (!selected?.programme_class_id) return;
     try {
       const res = await api.get('school_setup/learner_template', {
@@ -233,32 +234,21 @@ const LearnerManagement = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
       notify.success('Template downloaded');
-      setTemplateDialogOpen(false);
-      setTemplateClassId('');
+      setDownloadDialogOpen(false);
+      setDownloadClassId('');
     } catch {
       notify.error('Failed to download template');
     }
   };
 
-  const handleUploadFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('school_setup/learners', formData);
-      if (res.data.status) {
-        notify.success(res.data.message || 'Upload complete');
-        fetchLearners();
-        fetchStats();
-      } else {
-        notify.error(res.data.message || 'Upload failed');
-      }
-    } catch (err) {
-      notify.error(err?.response?.data?.message || 'Upload failed');
-    } finally {
-      e.target.value = '';
-    }
+  const handleUploadLearners = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('school_setup/learners', formData);
+    if (!res.data.status) throw new Error(res.data.message || 'Upload failed');
+    fetchLearners();
+    fetchStats();
+    return res.data.message || 'Upload complete';
   };
 
   const openTemplateDialog = (action) => {
@@ -330,10 +320,10 @@ const LearnerManagement = () => {
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Learners</Typography>
             <Box display="flex" gap={1}>
-              <Button variant="outlined" onClick={() => openTemplateDialog('download')}>
+              <Button variant="outlined"  startIcon={<DownloadIcon />} onClick={() => { setDownloadClassId(''); setDownloadDialogOpen(true); }}>
                 Download Template
               </Button>
-              <Button variant="outlined" onClick={() => openTemplateDialog('upload')}>
+              <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => setUploadLearnerOpen(true)}>
                 Upload Template
               </Button>
               <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddLearnerOpen(true)}>
@@ -533,18 +523,22 @@ const LearnerManagement = () => {
         showLinkParents
       />
 
-      {/* Class picker for template download/upload */}
-      <Dialog open={templateDialogOpen} onClose={() => setTemplateDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          {templateAction === 'download' ? 'Download Learner Template' : 'Upload Learner Template'}
-        </DialogTitle>
+      <UploadLearnerModal
+        open={uploadLearnerOpen}
+        onClose={() => setUploadLearnerOpen(false)}
+        onUpload={handleUploadLearners}
+      />
+
+      {/* Download Template — class picker dialog */}
+      <Dialog open={downloadDialogOpen} onClose={() => setDownloadDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Download Learner Template</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Select the class to {templateAction === 'download' ? 'generate a template for' : 'upload learners into'}.
+            Select the class to generate a template for.
           </Typography>
           <FormControl fullWidth>
             <InputLabel>Class</InputLabel>
-            <Select value={templateClassId} label="Class" onChange={(e) => setTemplateClassId(e.target.value)}>
+            <Select value={downloadClassId} label="Class" onChange={(e) => setDownloadClassId(e.target.value)}>
               <MenuItem value="">Select Class</MenuItem>
               {classes.filter((c) => c.programme_class_id).map((cls) => (
                 <MenuItem key={cls.id} value={cls.id}>{cls.label}</MenuItem>
@@ -553,15 +547,12 @@ const LearnerManagement = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTemplateDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleTemplateDialogConfirm} disabled={!templateClassId}>
-            {templateAction === 'download' ? 'Download' : 'Select File'}
+          <Button onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+            Download
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Hidden file input for upload */}
-      <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleUploadFile} />
 
       <LinkParentModal
         open={linkParentOpen}

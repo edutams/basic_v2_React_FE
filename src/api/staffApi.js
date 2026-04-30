@@ -25,6 +25,25 @@ const staffApi = {
     const response = await tenantApi.delete(`/school_setup/staff/${id}`);
     return response.data;
   },
+
+  downloadTemplate: async (staffType = 'teaching') => {
+    const response = await tenantApi.get('/school_setup/staff_template', {
+      params: { staff_type: staffType },
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  uploadTemplate: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await tenantApi.post('/school_setup/staff/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response;
+  },
 };
 
 export default staffApi;

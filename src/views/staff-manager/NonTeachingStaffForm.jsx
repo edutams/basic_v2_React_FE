@@ -10,7 +10,25 @@ import {
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
+import { IMaskInput } from 'react-imask';
 import PropTypes from 'prop-types';
+
+// Phone mask component
+const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      definitions={{
+        '0': /[0-9]/,
+      }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
 
 const nonTeachingStaffValidationSchema = yup.object({
   staff_id: yup.string(),
@@ -109,12 +127,16 @@ const NonTeachingStaffForm = ({
           <TextField
             label="Phone"
             name="phone_number"
+            placeholder="08000000000"
             value={formik.values.phone_number || ''}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             error={formik.touched.phone_number && Boolean(formik.errors.phone_number)}
             helperText={formik.touched.phone_number && formik.errors.phone_number}
+            InputProps={{
+              inputComponent: PhoneMaskCustom,
+            }}
           />
         </Box>
       </Box>

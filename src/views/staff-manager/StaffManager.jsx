@@ -51,6 +51,7 @@ import StaffModal from './StaffModal';
 import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
+import UploadStaffModal from './components/UploadStaffModal';
 
 const BCrumb = [
   {
@@ -91,6 +92,7 @@ const StaffManager = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
   // Form data - for staff modal
@@ -173,16 +175,36 @@ const StaffManager = () => {
     setBulkMenuAnchorEl(null);
   };
 
-  const handleDownloadTemplate = () => {
-    // TODO: Implement download template functionality
-    notify.info('Download template functionality coming soon');
+  const handleDownloadTemplate = async () => {
     handleBulkMenuClose();
+    try {
+      const res = await staffApi.downloadTemplate(activeTab); // Pass 'teaching' or 'non-teaching'
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = activeTab === 'teaching' ? 'teaching_staff_template.xlsx' : 'non_teaching_staff_template.xlsx';
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Template downloaded');
+    } catch (error) {
+      notify.error('Failed to download template');
+      console.error(error);
+    }
   };
 
   const handleUploadStaff = () => {
-    // TODO: Implement upload staff functionality
-    notify.info('Upload staff functionality coming soon');
+    setUploadModalOpen(true);
     handleBulkMenuClose();
+  };
+
+  const handleUploadTemplate = async (file) => {
+    const res = await staffApi.uploadTemplate(file);
+    const message = res?.message || 'Upload complete';
+    fetchStaff();
+    return message;
   };
 
   const handleAddStaff = () => {
@@ -456,6 +478,7 @@ const StaffManager = () => {
               handleChangeRowsPerPage={handleChangeRowsPerPage}
               handleAddStaff={handleAddStaff}
               handleBulkMenuOpen={handleBulkMenuOpen}
+              handleUploadStaff={handleUploadStaff}
               handleMenuOpen={handleMenuOpen}
               getStatusColor={getStatusColor}
             />
@@ -476,6 +499,7 @@ const StaffManager = () => {
               handleChangeRowsPerPage={handleChangeRowsPerPage}
               handleAddStaff={handleAddStaff}
               handleBulkMenuOpen={handleBulkMenuOpen}
+              handleUploadStaff={handleUploadStaff}
               handleMenuOpen={handleMenuOpen}
               getStatusColor={getStatusColor}
             />
@@ -659,6 +683,13 @@ const StaffManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <UploadStaffModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUpload={handleUploadTemplate}
+        onDownloadTemplate={handleDownloadTemplate}
+      />
 
       {/* Delete Confirmation */}
       <ConfirmationDialog

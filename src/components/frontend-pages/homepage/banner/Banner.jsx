@@ -270,7 +270,7 @@ const Banner = () => {
 
         {/* {lgUp ? (
           <img
-            src={BannerBottomPart}
+            // src={BannerBottomPart}
             alt="banner"
             width={500}
             height={300}

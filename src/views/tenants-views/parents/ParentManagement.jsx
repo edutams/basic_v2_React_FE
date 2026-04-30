@@ -36,7 +36,8 @@ import {
   DialogActions,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon, CloudUpload as UploadIcon,
+  Download as DownloadIcon } from '@mui/icons-material';
 import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
@@ -55,8 +56,8 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
   <Paper
     sx={{
       borderRadius: 2,
-      px: 3,
-      py: 2,
+      p: 3,
+      // py: 3,
       flex: 1,
       minWidth: { xs: '100%', sm: 200 },
       bgcolor: 'background.paper',
@@ -329,7 +330,7 @@ const ParentManagement = () => {
             count={stats.linked}
             label="Guardians Linked"
             icon={LinkIcon}
-             color="primary"
+            color="primary"
             loading={statsLoading}
           />
         </Stack>
@@ -340,10 +341,10 @@ const ParentManagement = () => {
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Parents & Guardians</Typography>
             <Box display="flex" gap={1}>
-              <Button variant="outlined" onClick={handleDownloadTemplate}>
+              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
                 Download Template
               </Button>
-              <Button variant="outlined" onClick={() => setUploadModalOpen(true)}>
+              <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
                 Upload Template
               </Button>
               <Button variant="contained" color="primary" onClick={handleOpenAdd}>
@@ -565,7 +566,14 @@ const ParentManagement = () => {
         onParentUpdate={handleParentUpdate}
       />
 
-      {/* Confirm Delete */}
+      {/* <DeleteParentModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        parent={parentToDelete}
+        onConfirm={handleConfirmDelete}
+      /> */}
+
+      {/* Confirm Delete — inline like ClassStructureTable */}
       <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Delete Parent</DialogTitle>
         <DialogContent>

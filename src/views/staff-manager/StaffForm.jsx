@@ -5,7 +5,25 @@ import * as Yup from 'yup';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { IMaskInput } from 'react-imask';
 import dayjs from 'dayjs';
+
+// Phone mask component
+const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      definitions={{
+        '0': /[0-9]/,
+      }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
 
 const validationSchema = Yup.object({
   // staff_id: Yup.string().required('Staff ID is required'),
@@ -92,13 +110,16 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
                     fullWidth
                     label="Phone"
                     name="phone_number"
-                    placeholder="Phone Number"
+                    placeholder="08000000000"
                     value={values.phone_number}
                     onChange={handleChange}
                     onBlur={handleBlur}
                     error={touched.phone_number && Boolean(errors.phone_number)}
                     helperText={touched.phone_number && errors.phone_number}
                     disabled={isLoading}
+                    InputProps={{
+                      inputComponent: PhoneMaskCustom,
+                    }}
                   />
                 </Grid>
 

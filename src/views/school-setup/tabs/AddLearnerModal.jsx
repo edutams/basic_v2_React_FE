@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Typography,
   Box,
@@ -8,7 +8,15 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Divider,
+  InputAdornment,
+  CircularProgress,
+  Avatar,
+  Chip,
+  IconButton,
+  Alert,
 } from '@mui/material';
+import { Search as SearchIcon, Close as CloseIcon, Person as PersonIcon } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import PropTypes from 'prop-types';
 import { useFormik } from 'formik';
@@ -16,17 +24,63 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { getClassArms, getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
+import learnerApi from 'src/api/learnerApi';
+import { useNotification } from 'src/hooks/useNotification';
+
+const LIST_HEIGHT = 160;
+
+const ParentRow = ({ parent, onClick, showRemove, onRemove }) => {
+  const name = parent.name || `${parent.user?.fname || ''} ${parent.user?.lname || ''}`.trim() || '—';
+  const idCode = parent.user_id_code || parent.user?.user_id || '—';
+  const relationship = parent.relationship
+    ? parent.relationship.charAt(0).toUpperCase() + parent.relationship.slice(1)
+    : '—';
+
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, py: 0.75,
+        border: '1px solid', borderColor: 'divider', borderRadius: 2,
+        bgcolor: 'background.paper', cursor: onClick ? 'pointer' : 'default', flexShrink: 0,
+        '&:hover': onClick ? { bgcolor: 'primary.lighter', borderColor: 'primary.main' } : {},
+      }}
+    >
+      <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.light' }}>
+        <PersonIcon sx={{ fontSize: 16 }} />
+      </Avatar>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={500} noWrap>{name}</Typography>
+        <Typography variant="caption" color="text.secondary" noWrap>ID: {idCode}</Typography>
+      </Box>
+      <Chip label={relationship} size="small" variant="outlined" />
+      {showRemove && (
+        <IconButton size="small" color="error"
+          onClick={(e) => { e.stopPropagation(); onRemove(parent.user_id); }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      )}
+    </Box>
+  );
+};
 
 const AddLearnerModal = ({
   open,
   onClose,
-  classId,        // optional — if omitted a class dropdown is shown
+  classId,
   className,
   onSave,
   isLoading = false,
+  showLinkParents = false,  
 }) => {
+  const notify = useNotification();
   const [classArms, setClassArms]   = useState([]);
   const [allClasses, setAllClasses] = useState([]);
+
+  const [parentSearch, setParentSearch]       = useState('');
+  const [parentResults, setParentResults]     = useState([]);
+  const [parentSearching, setParentSearching] = useState(false);
+  const [linkedParents, setLinkedParents]     = useState([]);
 
   // load flat class list when no classId is pre-supplied
   useEffect(() => {
@@ -79,26 +133,46 @@ const AddLearnerModal = ({
     },
     enableReinitialize: true,
     onSubmit: (values) => {
-      onSave(values);
+      onSave(values, linkedParents.map((p) => p.user_id));
       onClose();
     },
   });
 
-  // reset form every time the modal opens
   useEffect(() => {
     if (open) {
       formik.resetForm();
       setClassArms([]);
+      setParentSearch('');
+      setParentResults([]);
+      setLinkedParents([]);
       if (classId) fetchArms(classId);
     }
   }, [open]);
 
-  // when class_id changes inside the form (dropdown mode), reload arms
   const handleClassChange = (e) => {
     formik.setFieldValue('class_id', e.target.value);
     formik.setFieldValue('class_arm_id', '');
     fetchArms(e.target.value);
   };
+
+  const handleParentSearch = useCallback(async () => {
+    if (!parentSearch.trim()) return;
+    try {
+      setParentSearching(true);
+      const res = await learnerApi.searchGuardians({ search: parentSearch.trim() });
+      const data = res?.data?.data ?? [];
+      if (data.length === 0) notify.info('No parents found');
+      setParentResults(data);
+    } catch {
+      notify.error('Search failed');
+      setParentResults([]);
+    } finally {
+      setParentSearching(false);
+    }
+  }, [parentSearch]);
+
+  const handleAddParent    = (p) => { if (!linkedParents.some((lp) => lp.user_id === p.user_id)) setLinkedParents((prev) => [...prev, p]); };
+  const handleRemoveParent = (uid) => setLinkedParents((prev) => prev.filter((p) => p.user_id !== uid));
 
   const isValid =
     formik.values.last_name &&
@@ -120,7 +194,7 @@ const AddLearnerModal = ({
     );
 
   return (
-    <ReusableModal open={open} onClose={onClose} title={renderTitle()} size="medium">
+    <ReusableModal open={open} onClose={onClose} title={renderTitle()} size="large">
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box component="form" onSubmit={formik.handleSubmit}>
 
@@ -203,7 +277,69 @@ const AddLearnerModal = ({
             </FormControl>
           </Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          {showLinkParents && (
+          <>
+          <Box sx={{ bgcolor: '#F0F9FF', p: 2, borderRadius: 2, mt: 3, mb: 2 }}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+            Link Ward to Parents{' '}
+            <Typography component="span" variant="caption" color="text.secondary">(optional)</Typography>
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 1, mb: 1.5, p: 1.5, bgcolor: 'grey.50', borderRadius: 2, alignItems: 'center' }}>
+            <TextField
+              size="small" placeholder="Search by parent name, ID or phone" value={parentSearch}
+              onChange={(e) => setParentSearch(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleParentSearch()}
+              sx={{ flex: 1 }}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
+            />
+            <Button variant="contained" onClick={handleParentSearch} disabled={parentSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
+              {parentSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
+            </Button>
+          </Box>
+          </Box>
+
+          {parentResults.length > 0 && (
+            <Box sx={{ mb: 1.5 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                {parentResults.length} result{parentResults.length !== 1 ? 's' : ''} — click to link
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, maxHeight: LIST_HEIGHT, overflowY: 'auto', pr: 0.5 }}>
+                {parentResults.map((parent) => {
+                  const alreadyLinked = linkedParents.some((p) => p.user_id === parent.user_id);
+                  return (
+                    <Box key={parent.user_id} sx={{ position: 'relative' }}>
+                      <ParentRow parent={parent} onClick={!alreadyLinked ? () => handleAddParent(parent) : undefined} showRemove={false} />
+                      {alreadyLinked && (
+                        <Chip label="linked" color="success" size="small"
+                          sx={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }} />
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+              <Divider sx={{ mt: 1.5, mb: 1 }} />
+            </Box>
+          )}
+
+          <Typography variant="subtitle2" sx={{ mb: 0.75 }}>
+            Linked Parents {linkedParents.length > 0 && `(${linkedParents.length})`}
+          </Typography>
+          {linkedParents.length === 0 ? (
+            <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center', '& .MuiAlert-icon': { mr: 1.5 } }}>
+              No parents linked yet. Search and click a parent to link them.
+            </Alert>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, maxHeight: LIST_HEIGHT, overflowY: 'auto', pr: 0.5 }}>
+              {linkedParents.map((parent) => (
+                <ParentRow key={parent.user_id} parent={parent} showRemove onRemove={handleRemoveParent} />
+              ))}
+            </Box>
+          )}
+          </>
+          )}
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
             <Button onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button variant="contained" type="submit" disabled={isLoading || !isValid}>
               {isLoading ? 'Saving...' : 'Save'}
@@ -223,6 +359,7 @@ AddLearnerModal.propTypes = {
   className: PropTypes.string,
   onSave: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  showLinkParents: PropTypes.bool,
 };
 
 export default AddLearnerModal;

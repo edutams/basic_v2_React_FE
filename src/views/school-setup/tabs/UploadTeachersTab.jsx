@@ -34,6 +34,7 @@ import {
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import AddTeacherModal from './AddTeacherModal';
 import useNotification from 'src/hooks/useNotification';
+import UploadTeacherModal from 'src/components/tenant-components/staff/UploadTeacherModal';
 import {
   getAllStaff,
   createStaff,
@@ -59,6 +60,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [notification, setNotification] = useState({
     open: false,
     message: '',
@@ -86,50 +88,15 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsLoading(true);
-
-      const result = await uploadTeachers(file);
-
-      fetchTeachers(page, rowsPerPage, searchTerm);
-
-      const { inserted, skipped, logs } = result.data || {};
-
-      let message = result.message;
-
-      const failedCount = logs?.filter((l) => l.status === 'failed').length || 0;
-
-      if (failedCount > 0) {
-        message += ` (${failedCount} failed)`;
-      }
-
-      setNotification({
-        open: true,
-        message,
-        severity: failedCount > 0 ? 'warning' : 'success',
-      });
-    } catch (err) {
-      console.error('Error uploading teachers:', err);
-
-      setNotification({
-        open: true,
-        message: err.response?.data?.message || 'Failed to upload teachers',
-        severity: 'error',
-      });
-    } finally {
-      setIsLoading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
+  const handleUploadTeachers = async (file) => {
+    const result = await uploadTeachers(file);
+    const logs = result.data?.logs || [];
+    const failedCount = logs.filter((l) => l.status === 'failed').length;
+    let message = result.message || 'Upload complete';
+    if (failedCount > 0) message += ` (${failedCount} failed)`;
+    fetchTeachers(page, rowsPerPage, searchTerm);
+    onTeacherAdded?.();
+    return message;
   };
 
   const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
@@ -374,17 +341,10 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
           <Button
             variant="outlined"
             startIcon={<UploadIcon />}
-            onClick={handleUploadClick}
+            onClick={() => setUploadModalOpen(true)}
           >
             Upload
           </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".xlsx,.xls"
-            style={{ display: 'none' }}
-          />
           <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
             Add New Teacher
           </Button>
@@ -541,6 +501,12 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         }}
         className="General"
         isLoading={isLoading}
+      />
+
+      <UploadTeacherModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUpload={handleUploadTeachers}
       />
 
       <Dialog open={confirmDialog.open} onClose={handleConfirmClose} maxWidth="xs" fullWidth>

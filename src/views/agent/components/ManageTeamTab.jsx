@@ -217,8 +217,9 @@ const ManageTeamTab = ({ organizationId }) => {
                 </Stack>
                 <Button
                     variant="contained"
+                    color="primary"
                     onClick={handleOpenAddModal}
-                    sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', '&:hover': { bgcolor: '#303f9f' } }}
+                    sx={{ textTransform: 'none', borderRadius: '8px' }}
                 >
                     Add Team Member
                 </Button>
@@ -256,7 +257,7 @@ const ManageTeamTab = ({ organizationId }) => {
                                         </TableCell>
                                         <TableCell sx={{ py: 1.5 }}>
                                             <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                                                <Avatar src={row.avatar} sx={{ width: 36, height: 36, fontSize: '12px', fontWeight: 700, bgcolor: '#3949ab', flexShrink: 0 }}>
+                                                <Avatar src={row.avatar} sx={{ width: 36, height: 36, fontSize: '12px', fontWeight: 700, bgcolor: theme.palette.primary.main, flexShrink: 0 }}>
                                                     {!row.avatar && initials}
                                                 </Avatar>
                                                 <Box>
@@ -281,7 +282,7 @@ const ManageTeamTab = ({ organizationId }) => {
                                         <TableCell sx={{ py: 1.5 }}>
                                             <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                                                 {(row.permissions || []).slice(0, 6).map(perm => (
-                                                    <Chip key={perm} size="small" label={perm} sx={{ bgcolor: '#e8eaf6', color: '#3949ab', fontWeight: 700, borderRadius: '8px' }} />
+                                                <Chip key={perm} size="small" label={perm} sx={{ bgcolor: '#e8eaf6', color: '#3949ab', fontWeight: 700, borderRadius: '8px' }} />
                                                 ))}
                                                 {(row.permissions?.length > 6) && (
                                                     <Chip size="small" label={`+${row.permissions.length - 6}`} sx={{ bgcolor: '#f1f5f9', color: '#475569', fontWeight: 700, borderRadius: '8px' }} />
@@ -306,15 +307,15 @@ const ManageTeamTab = ({ organizationId }) => {
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)} PaperProps={{ sx: { borderRadius: '8px', minWidth: 160 } }}>
                 <MenuItem onClick={handleOpenManagePermission}>
-                    <Box component={IconShieldLock} size={18} sx={{ mr: 1, color: theme.palette.text.secondary }} />
+                    <IconShieldLock size={18} style={{ marginRight: 8, color: theme.palette.text.secondary }} />
                     <Typography variant="body2">Manage Permission</Typography>
                 </MenuItem>
                 <MenuItem onClick={handleOpenEdit}>
-                    <Box component={IconEdit} size={18} sx={{ mr: 1, color: theme.palette.text.secondary }} />
+                    <IconEdit size={18} style={{ marginRight: 8, color: theme.palette.text.secondary }} />
                     <Typography variant="body2">Edit Member</Typography>
                 </MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); setOpenRemoveConfirm(true); }} sx={{ color: theme.palette.error.main }}>
-                    <Box component={IconTrash} size={18} sx={{ mr: 1, color: theme.palette.error.main }} />
+                    <IconTrash size={18} style={{ marginRight: 8, color: theme.palette.error.main }} />
                     <Typography variant="body2">Remove Member</Typography>
                 </MenuItem>
             </Menu>
@@ -358,7 +359,7 @@ const ManageTeamTab = ({ organizationId }) => {
                 <Divider />
                 <DialogActions sx={{ p: 2 }}>
                     <Button onClick={() => setOpenAddModal(false)} color="inherit" disabled={submitting}>Cancel</Button>
-                    <Button variant="contained" sx={{ bgcolor: '#3949ab' }} onClick={handleAddMember} disabled={submitting}>
+                    <Button variant="contained" color="primary" onClick={handleAddMember} disabled={submitting}>
                         {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Member'}
                     </Button>
                 </DialogActions>
@@ -408,7 +409,7 @@ const ManageTeamTab = ({ organizationId }) => {
                 <Divider />
                 <DialogActions sx={{ p: 2 }}>
                     <Button onClick={() => setOpenPermissionModal(false)} color="inherit" disabled={submitting}>Cancel</Button>
-                    <Button variant="contained" sx={{ bgcolor: '#3949ab' }} onClick={handleSavePermissions} disabled={submitting}>
+                    <Button variant="contained" color="primary" onClick={handleSavePermissions} disabled={submitting}>
                         {submitting ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
                     </Button>
                 </DialogActions>
@@ -430,7 +431,7 @@ const ManageTeamTab = ({ organizationId }) => {
                 <Divider />
                 <DialogActions sx={{ p: 2 }}>
                     <Button onClick={() => setOpenEditModal(false)} color="inherit" disabled={submitting}>Cancel</Button>
-                    <Button variant="contained" sx={{ bgcolor: '#3949ab' }} onClick={handleEditMember} disabled={submitting}>
+                    <Button variant="contained" color="primary" onClick={handleEditMember} disabled={submitting}>
                         {submitting ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
                     </Button>
                 </DialogActions>

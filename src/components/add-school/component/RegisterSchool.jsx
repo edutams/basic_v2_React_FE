@@ -595,7 +595,7 @@ const RegisterSchoolForm = ({
               <Typography
                 variant="caption"
                 fontWeight={600}
-                sx={{ color: '#3949ab', display: 'block', mb: 0.5 }}
+                sx={{ color: 'primary.main', display: 'block', mb: 0.5 }}
               >
                 Same as school owner?
               </Typography>
@@ -640,7 +640,7 @@ const RegisterSchoolForm = ({
               <Typography
                 variant="caption"
                 fontWeight={600}
-                sx={{ color: '#3949ab', display: 'block', mb: 0.5 }}
+                sx={{ color: 'primary.main', display: 'block', mb: 0.5 }}
               >
                 Copy info from an existing person?
               </Typography>

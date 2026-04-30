@@ -171,7 +171,7 @@ const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) =>
           <Chip
             size="small"
             label={`${info.getValue()}`}
-            sx={{ bgcolor: '#e8eaf6', color: '#3949ab', fontWeight: 700, borderRadius: '8px' }}
+            // sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700, borderRadius: '8px' }}
           />
         ),
       }),
@@ -285,12 +285,8 @@ const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) =>
             variant="contained"
             startIcon={<IconUsers size={16} />}
             onClick={onAddAgent}
-            sx={{
-              bgcolor: '#3949ab',
-              textTransform: 'none',
-              borderRadius: '8px',
-              '&:hover': { bgcolor: '#303f9f' },
-            }}
+                           sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+
           >
             Add New Agent
           </Button>
@@ -345,7 +341,8 @@ const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) =>
             variant="contained"
             size="small"
             onClick={() => setPage(0)}
-            sx={{ bgcolor: '#3949ab', textTransform: 'none', borderRadius: '8px', py: 1 }}
+                            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+
           >
             Search
           </Button>

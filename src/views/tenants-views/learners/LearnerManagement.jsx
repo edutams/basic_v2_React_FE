@@ -31,18 +31,25 @@ import {
   Select,
   Link,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon,  Add as AddIcon, } from '@mui/icons-material';
+import { Search as SearchIcon, MoreVert as MoreVertIcon,  Add as AddIcon,  CloudUpload as UploadIcon,
+  Download as DownloadIcon  } from '@mui/icons-material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import learnerApi from 'src/api/learnerApi';
 import { getClassesWithDivisions, createLearner } from 'src/context/TenantContext/services/tenant.service';
+import api from 'src/api/tenant_api';
 import AddLearnerModal from 'src/views/school-setup/tabs/AddLearnerModal';
 import LinkParentModal from 'src/components/tenant-components/learners/LinkParentModal';
 import ViewParentsModal from 'src/components/tenant-components/learners/ViewParentsModal';
+import UploadLearnerModal from 'src/components/tenant-components/learners/UploadLearnerModal';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
@@ -118,6 +125,11 @@ const LearnerManagement = () => {
   const [viewParentsOpen, setViewParentsOpen] = useState(false);
   const [viewParentsLearner, setViewParentsLearner] = useState(null);
 
+  // template download/upload
+  const [uploadLearnerOpen, setUploadLearnerOpen] = useState(false);
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [downloadClassId, setDownloadClassId] = useState('');
+
   const fetchLearners = useCallback(async () => {
     try {
       setLoading(true);
@@ -158,6 +170,7 @@ const LearnerManagement = () => {
             flat.push({
               id: cls.id,
               label: `${programme.programme_code} - ${cls.class_code}`,
+              programme_class_id: cls.pivot?.id,
             });
           });
         });
@@ -185,18 +198,73 @@ const LearnerManagement = () => {
 
   const handleMenuClose = () => setAnchorEl(null);
 
-  const handleSaveLearner = async (values) => {
+  const handleSaveLearner = async (values, parentIds = []) => {
     try {
       setAddLearnerLoading(true);
-      await createLearner(values);
+      const res = await createLearner(values);
+      if (parentIds.length > 0) {
+        const newUserId = res?.data?.id;
+        if (newUserId) await learnerApi.syncParents(newUserId, parentIds);
+      }
       notify.success('Learner added successfully');
       setAddLearnerOpen(false);
       fetchLearners();
       fetchStats();
     } catch (err) {
-      notify.error(err?.response?.data?.message || 'Failed to add learner');
+      notify.error(err?.response?.data?.message || err?.message || 'Failed to add learner');
     } finally {
       setAddLearnerLoading(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    const selected = classes.find((c) => c.id === downloadClassId);
+    if (!selected?.programme_class_id) return;
+    try {
+      const res = await api.get('school_setup/learner_template', {
+        params: { programme_class_id: selected.programme_class_id },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `learner_template_${selected.label}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Template downloaded');
+      setDownloadDialogOpen(false);
+      setDownloadClassId('');
+    } catch {
+      notify.error('Failed to download template');
+    }
+  };
+
+  const handleUploadLearners = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('school_setup/learners', formData);
+    if (!res.data.status) throw new Error(res.data.message || 'Upload failed');
+    fetchLearners();
+    fetchStats();
+    return res.data.message || 'Upload complete';
+  };
+
+  const openTemplateDialog = (action) => {
+    setTemplateAction(action);
+    setTemplateClassId('');
+    setTemplateDialogOpen(true);
+  };
+
+  const handleTemplateDialogConfirm = () => {
+    if (!templateClassId) return;
+    if (templateAction === 'download') {
+      handleDownloadTemplate();
+    } else {
+      setTemplateDialogOpen(false);
+      setTemplateClassId('');
+      fileInputRef.current?.click();
     }
   };
 
@@ -251,13 +319,17 @@ const LearnerManagement = () => {
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Learners</Typography>
-            <Button 
-              variant="contained"   
-              size="small"
-              startIcon={<AddIcon />}  
-              onClick={() => setAddLearnerOpen(true)}>
-              Add Learner
-            </Button>
+            <Box display="flex" gap={1}>
+              <Button variant="outlined"  startIcon={<DownloadIcon />} onClick={() => { setDownloadClassId(''); setDownloadDialogOpen(true); }}>
+                Download Template
+              </Button>
+              <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => setUploadLearnerOpen(true)}>
+                Upload Template
+              </Button>
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddLearnerOpen(true)}>
+                Add Learner
+              </Button>
+            </Box>
           </Box>
         }
       >
@@ -448,7 +520,39 @@ const LearnerManagement = () => {
         onClose={() => setAddLearnerOpen(false)}
         onSave={handleSaveLearner}
         isLoading={addLearnerLoading}
+        showLinkParents
       />
+
+      <UploadLearnerModal
+        open={uploadLearnerOpen}
+        onClose={() => setUploadLearnerOpen(false)}
+        onUpload={handleUploadLearners}
+      />
+
+      {/* Download Template — class picker dialog */}
+      <Dialog open={downloadDialogOpen} onClose={() => setDownloadDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Download Learner Template</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select the class to generate a template for.
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel>Class</InputLabel>
+            <Select value={downloadClassId} label="Class" onChange={(e) => setDownloadClassId(e.target.value)}>
+              <MenuItem value="">Select Class</MenuItem>
+              {classes.filter((c) => c.programme_class_id).map((cls) => (
+                <MenuItem key={cls.id} value={cls.id}>{cls.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+            Download
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <LinkParentModal
         open={linkParentOpen}

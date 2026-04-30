@@ -173,9 +173,9 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               width: 120,
               height: 120,
               borderRadius: 2,
-              bgcolor: '#e8eaf6',
+              bgcolor: 'primary.light',
               fontSize: 28,
-              color: '#3949ab',
+              color: 'primary.main',
               flexShrink: 0,
             }}
           >
@@ -931,11 +931,9 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                   startIcon={<IconUserPlus size={18} />}
                   onClick={() => setOpenAddModal(true)}
                   sx={{
-                    bgcolor: '#3949ab',
                     textTransform: 'none',
                     borderRadius: 2,
                     px: 3,
-                    '&:hover': { bgcolor: '#303f9f' },
                   }}
                 >
                   Add New School
@@ -949,10 +947,10 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                   textTransform: 'none',
                   borderRadius: 2,
                   px: 2.5,
-                  borderColor: activeFilterCount > 0 ? '#3949ab' : 'divider',
-                  color: activeFilterCount > 0 ? '#3949ab' : 'text.secondary',
+                  borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                  color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                   fontWeight: activeFilterCount > 0 ? 700 : 400,
-                  '&:hover': { borderColor: '#3949ab', color: '#fff' },
+                  '&:hover': { borderColor: 'primary.main' },
                 }}
               >
                 Show Filters
@@ -963,7 +961,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                       ml: 1,
                       px: 0.8,
                       py: 0.1,
-                      bgcolor: '#3949ab',
+                      bgcolor: 'primary.main',
                       color: 'white',
                       borderRadius: '10px',
                       fontSize: '11px',

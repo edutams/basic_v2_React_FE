@@ -11,7 +11,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
             height: '100%',
             borderRadius: '16px',
             overflow: 'hidden',
-            bgcolor: isDark ? theme.palette.primary.dark : '#4E67CE',
+            bgcolor: isDark ? theme.palette.primary.dark : theme.palette.primary.main,
             color: 'white',
             display: 'flex',
             flexDirection: 'column',
@@ -93,7 +93,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
                     startIcon={<IconUsers size={18} />}
                     sx={{
                         bgcolor: 'white',
-                        color: '#1E40AF',
+                        color: theme.palette.primary.main,
                         textTransform: 'none',
                         borderRadius: '10px',
                         fontWeight: 600,
@@ -101,7 +101,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
                         py: 1,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                         '&:hover': {
-                            bgcolor: '#f0f4ff',
+                            bgcolor: theme.palette.primary.light,
                             boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
                         }
                     }}

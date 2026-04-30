@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
     Grid, Card, Box, Typography, Stack, MenuItem, Select,
     Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper, Avatar, Chip, IconButton, Button,
-    Menu, ListItemIcon, ListItemText, Divider, useTheme
+    Menu, ListItemIcon, ListItemText, Divider, useTheme, Alert
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import { IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
@@ -12,6 +12,7 @@ import {
     getCoreRowModel,
     useReactTable,
 } from '@tanstack/react-table';
+import ReusablePieChart from 'src/components/shared/charts/ReusablePieChart';
 
 const agentColumnHelper = createColumnHelper();
 const schoolColumnHelper = createColumnHelper();
@@ -51,7 +52,7 @@ const OverviewTab = ({ data }) => {
                 const initials = (row.name || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
                 return (
                     <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                        <Avatar sx={{color:"#3949ab",bgcolor: '#EEEFF9', width: 34, height: 34, fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
+                        <Avatar sx={{color: theme.palette.primary.main, bgcolor: theme.palette.primary.light, width: 34, height: 34, fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>
                             {initials}
                         </Avatar>
                         <Box>
@@ -67,7 +68,7 @@ const OverviewTab = ({ data }) => {
         agentColumnHelper.accessor('level', {
             header: () => 'Level',
             cell: (info) => (
-                <Box sx={{ bgcolor: '#3949ab', color: '#fff', borderRadius: '4px', px: 1.5, py: 0.3, display: 'inline-block', fontSize: '12px', fontWeight: 700 }}>
+                <Box sx={{ bgcolor: 'primary.main', color: '#fff', borderRadius: '4px', px: 1.5, py: 0.3, display: 'inline-block', fontSize: '12px', fontWeight: 700 }}>
                     {info.getValue()}
                 </Box>
             ),
@@ -117,7 +118,7 @@ const OverviewTab = ({ data }) => {
                 const initials = (row.agent || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
                 return (
                     <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                        <Avatar sx={{ width: 34, height: 34, fontSize: '11px', fontWeight: 700, color:"#3949ab",bgcolor: '#EEEFF9', flexShrink: 0 }}>
+                        <Avatar sx={{ width: 34, height: 34, fontSize: '11px', fontWeight: 700, color:"primary.main",bgcolor: 'primary.light', flexShrink: 0 }}>
                             {initials}
                         </Avatar>
                         <Box>
@@ -168,52 +169,15 @@ const OverviewTab = ({ data }) => {
             }
         },
         fill: { opacity: 1, colors: [theme.palette.primary.main] },
-        theme: { mode: isDarkMode ? 'dark' : 'light' },
         tooltip: { theme: isDarkMode ? 'dark' : 'light', y: { formatter: (val) => `# ${val.toLocaleString()}` } },
         grid: { borderColor: theme.palette.divider, strokeDashArray: 4 }
     };
 
     const revenueSeries = [{ name: 'Transaction', data: data.revenueData.map(d => d.revenue) }];
 
-    const planOptions = {
-        chart: { type: 'donut', fontFamily: "'DM Sans', sans-serif", background: 'transparent' },
-        theme: { mode: isDarkMode ? 'dark' : 'light' },
-        labels: data.planDistribution.map(d => d.label),
-        colors: ['#A855F7', '#EC4899', '#3B82F6'], 
-        legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '12px', fontWeight: 600, labels: { colors: theme.palette.text.secondary } },
-        dataLabels: { 
-            enabled: true,
-            formatter: function (val) {
-                return val.toFixed(0) + "%"
-            },
-            style: {
-                fontSize: '12px',
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: 700,
-                colors: ['#fff']
-            },
-            dropShadow: { enabled: false }
-        },
-        plotOptions: { 
-            pie: { 
-                donut: { 
-                    size: '75%',
-                    labels: {
-                        show: true,
-                        total: {
-                            show: true,
-                            label: 'Total',
-                            fontWeight: 700,
-                            color: theme.palette.text.secondary,
-                            formatter: () => '100%'
-                        }
-                    }
-                } 
-            } 
-        },
-        stroke: { show: false }
-    };
-    const planSeries = data.planDistribution.map(d => d.value);
+    const planSeries = [40, 15, 35, 10];
+    const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
+    const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
 
     return (
         <Box sx={{ p: { xs: 1, md: 2 }, bgcolor: isDarkMode ? 'transparent' : '#F8FAFC' }}>
@@ -233,7 +197,7 @@ const OverviewTab = ({ data }) => {
                 <Button
                     variant="contained"
                     size="small"
-                    sx={{ height: 40, px: 3, borderRadius: '6px', bgcolor: '#1E40AF', color: '#fff', textTransform: 'none', fontWeight: 600, '&:hover': { bgcolor: '#1e3a8a' } }}
+                    sx={{ height: 40, px: 3, borderRadius: '6px', color: '#fff', textTransform: 'none', fontWeight: 600 }}
                 >
                     Filter
                 </Button>
@@ -241,8 +205,8 @@ const OverviewTab = ({ data }) => {
 
             <Grid container spacing={3}>
                 {/* Column 1: Transaction Chart */}
-                <Grid size={{ xs: 12, md: 6 }}>
-                    <Card sx={{ p: 3, borderRadius: '12px', height: '100%', border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none' }}>
+                <Grid size={{ xs: 12, md: 5 }}>
+                    <Card sx={{ p: 3, borderRadius: '12px', height: '98%', border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none' }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
                             <Typography variant="h6" fontWeight={800} sx={{ color: theme.palette.text.primary }}>Transaction</Typography>
                             <Button size="small" variant="outlined" startIcon={<IconFilter size={16} />} sx={{ borderRadius: '8px', textTransform: 'none', borderColor: theme.palette.divider, color: theme.palette.text.secondary, fontWeight: 600 }}>
@@ -254,8 +218,8 @@ const OverviewTab = ({ data }) => {
                 </Grid>
 
                 {/* Column 2: Plan Distribution & Credit Facilities */}
-                <Grid size={{ xs: 12, md: 3 }}>
-                    <Stack spacing={3} sx={{ height: '100%' }}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                    <Stack spacing={3} sx={{ maxHeight: '100%' }}>
                         {/* Credit Facilities Card */}
                         <Card sx={{ borderRadius: '8px', border: `1px solid ${theme.palette.divider}`, boxShadow: 'none', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', bgcolor: theme.palette.background.paper }}>
                             {/* Header Section */}
@@ -270,7 +234,7 @@ const OverviewTab = ({ data }) => {
                             <Divider sx={{ borderColor: theme.palette.divider, opacity: 0.6 }} />
                             
                             {/* Content Section */}
-                            <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', flexGrow: 1, gap: 1.5 }}>
+                            <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Box sx={{ 
                                     flex: 1.8, 
                                     bgcolor: isDarkMode ? 'rgba(0,0,0,0.2)' : '#DEE5F6', 
@@ -283,7 +247,7 @@ const OverviewTab = ({ data }) => {
                                     minWidth: 0
                                 }}>
                                     <Typography variant="subtitle2" fontWeight={800} sx={{ color: theme.palette.text.primary, mb: 1, fontSize: '12px', letterSpacing: '0.1px' }}>Total Credit</Typography>
-                                    <Typography fontWeight={800} sx={{ color: theme.palette.text.primary, fontSize: '18px', lineHeight: 1 }}># 100,000,000,000</Typography>
+                                    <Typography fontWeight={800} sx={{ color: theme.palette.text.primary, fontSize: '18px', lineHeight: 1, wordBreak: 'break-word' }}>₦ 100,000,000</Typography>
                                 </Box>
                                 <Box sx={{ flex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                                     <Typography fontWeight={800} sx={{ color: theme.palette.text.primary, fontSize: '28px', lineHeight: 1 }}>1,000</Typography>
@@ -293,8 +257,14 @@ const OverviewTab = ({ data }) => {
                         </Card>
                         <Card sx={{ p: 3, borderRadius: '12px', flex: 1.5, border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none', color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>
                             <Typography variant="subtitle2" fontWeight={800} color="textPrimary" mb={2} sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}>Plan Distribution</Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                <Chart options={planOptions} series={planSeries} type="donut" height={240} />
+                            <Box sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+                                <ReusablePieChart
+                                    series={planSeries}
+                                    colors={planColors}
+                                    labels={planLabels}
+                                    height={170}
+                                    hideCard
+                                />
                             </Box>
                         </Card>
                     </Stack>
@@ -302,7 +272,7 @@ const OverviewTab = ({ data }) => {
 
                 {/* Column 3: Recent Onboarding School */}
                 <Grid size={{ xs: 12, md: 3 }}>
-                    <Card>
+                    <Card sx={{ borderRadius: '12px', height: '98%', border: `1px solid ${theme.palette.divider}`, bgcolor: theme.palette.background.paper, boxShadow: 'none' }}>
                         <Box sx={{  p: 2,}}>
                             <Typography variant="subtitle2" fontWeight={800} color="textPrimary">Recent Onboarding School</Typography>
                         </Box>
@@ -317,7 +287,7 @@ const OverviewTab = ({ data }) => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {data.recentOnboarding.map((row, idx) => (
+                                    {data.recentOnboarding.length > 0 ? data.recentOnboarding.map((row, idx) => (
                                         <TableRow key={idx} sx={{ '&:nth-of-type(odd)': { bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }, '& td': { borderBottom: `1px solid ${theme.palette.divider}` } }}>
                                             <TableCell sx={{ py: 1.5 }}>
                                                 <Typography variant="caption" fontWeight={800} sx={{ color: theme.palette.text.primary, fontSize: '11px' }}>{row.school}</Typography>
@@ -339,7 +309,15 @@ const OverviewTab = ({ data }) => {
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="center" sx={{ py: 2 }}>
+                                                <Alert severity="info" sx={{ justifyContent: 'center', textAlign: 'center' }}>
+                                                    No schools onboarded yet.
+                                                </Alert>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>

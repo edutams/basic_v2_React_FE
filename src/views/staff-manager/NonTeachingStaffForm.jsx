@@ -13,7 +13,6 @@ import * as yup from 'yup';
 import { IMaskInput } from 'react-imask';
 import PropTypes from 'prop-types';
 
-// Phone mask component
 const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   const { onChange, ...other } = props;
   return (

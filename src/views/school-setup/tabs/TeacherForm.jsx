@@ -19,6 +19,21 @@ import {
   getClassArms,
 } from '../../../context/TenantContext/services/tenant.service';
 import { teacherValidationSchema } from './validation/teacherValidationSchema';
+import { IMaskInput } from 'react-imask';
+
+const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
+  const { onChange, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      definitions={{ '0': /[0-9]/ }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+    />
+  );
+});
 
 const TeacherForm = ({
   initialValues = {
@@ -203,6 +218,7 @@ const TeacherForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
+            InputProps={{ inputComponent: PhoneMaskCustom }}
             error={formik.touched.phone_number && Boolean(formik.errors.phone_number)}
             helperText={formik.touched.phone_number && formik.errors.phone_number}
           />

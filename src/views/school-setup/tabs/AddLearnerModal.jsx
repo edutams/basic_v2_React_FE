@@ -26,6 +26,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { getClassArms, getClassesWithDivisions } from '../../../context/TenantContext/services/tenant.service';
 import learnerApi from 'src/api/learnerApi';
 import { useNotification } from 'src/hooks/useNotification';
+import dayjs from 'dayjs';
 
 const LIST_HEIGHT = 160;
 
@@ -71,7 +72,9 @@ const AddLearnerModal = ({
   className,
   onSave,
   isLoading = false,
-  showLinkParents = false,  
+  showLinkParents = false,
+  isEdit = false,
+  initialValues = null,
 }) => {
   const notify = useNotification();
   const [classArms, setClassArms]   = useState([]);
@@ -121,7 +124,18 @@ const AddLearnerModal = ({
   }, [classId]);
 
   const formik = useFormik({
-    initialValues: {
+    initialValues: isEdit && initialValues ? {
+      learner_id:    initialValues.learner_id   ?? '',
+      class_id:      initialValues.class_id     ?? classId ?? '',
+      class_arm_id:  initialValues.class_arm_id ?? '',
+      last_name:     initialValues.last_name    ?? '',
+      first_name:    initialValues.first_name   ?? '',
+      middle_name:   initialValues.middle_name  ?? '',
+      gender:        initialValues.gender       ?? '',
+      date_of_birth: initialValues.date_of_birth
+        ? dayjs(initialValues.date_of_birth)
+        : null,
+    } : {
       learner_id:   '',
       class_id:     classId || '',
       class_arm_id: '',
@@ -145,7 +159,8 @@ const AddLearnerModal = ({
       setParentSearch('');
       setParentResults([]);
       setLinkedParents([]);
-      if (classId) fetchArms(classId);
+      const effectiveClassId = isEdit ? initialValues?.class_id : classId;
+      if (effectiveClassId) fetchArms(effectiveClassId);
     }
   }, [open]);
 
@@ -181,17 +196,17 @@ const AddLearnerModal = ({
     formik.values.class_id &&
     formik.values.class_arm_id;
 
-  const renderTitle = () =>
-    classId ? (
+  const renderTitle = () => {
+    if (isEdit) return 'Edit Learner';
+    return classId ? (
       <>
         Add New Learner —{' '}
         <Typography component="span" color="primary" fontWeight={600}>
           {className}
         </Typography>
       </>
-    ) : (
-      'Add New Learner'
-    );
+    ) : 'Add New Learner';
+  };
 
   return (
     <ReusableModal open={open} onClose={onClose} title={renderTitle()} size="large">
@@ -342,7 +357,7 @@ const AddLearnerModal = ({
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
             <Button onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button variant="contained" type="submit" disabled={isLoading || !isValid}>
-              {isLoading ? 'Saving...' : 'Save'}
+              {isLoading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save'}
             </Button>
           </Box>
 
@@ -360,6 +375,8 @@ AddLearnerModal.propTypes = {
   onSave: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   showLinkParents: PropTypes.bool,
+  isEdit: PropTypes.bool,
+  initialValues: PropTypes.object,
 };
 
 export default AddLearnerModal;

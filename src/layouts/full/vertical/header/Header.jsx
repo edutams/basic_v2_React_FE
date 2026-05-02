@@ -277,7 +277,7 @@ const Header = () => {
           <Button
             variant="contained"
             onClick={handleStopImpersonation}
-            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
+            sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}
           >
             Yes, return to my account
           </Button>

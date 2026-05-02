@@ -229,10 +229,15 @@ const ActionMenuCell = ({
 };
 
 import locationApi from '../../api/location';
+import useNotification from '../../hooks/useNotification';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
+  const notify = useNotification();
+
+  const [impersonateConfirmOpen, setImpersonateConfirmOpen] = useState(false);
+  const [agentToImpersonate, setAgentToImpersonate] = useState(null);
 
   // Revenue Trend Mock Data
   const revenueSeries = [
@@ -653,6 +658,37 @@ const Agent = () => {
     }
   };
 
+  const confirmImpersonate = (agent) => {
+    setAgentToImpersonate(agent);
+    setImpersonateConfirmOpen(true);
+  };
+
+  const handleConfirmedImpersonate = async () => {
+    if (!agentToImpersonate) return;
+
+    try {
+      const result = await impersonateAgent(agentToImpersonate.id);
+      if (result.success) {
+        localStorage.setItem('impersonator_id', agentToImpersonate.id);
+        localStorage.setItem('isImpersonating', 'true');
+
+        notify.success(
+          'Impersonation successful',
+          `You are now impersonating ${agentToImpersonate.organization_name}`,
+        );
+        navigate('/agent');
+      } else {
+        alert(result.error || 'Impersonation failed');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Impersonation failed');
+    } finally {
+      setImpersonateConfirmOpen(false);
+      setAgentToImpersonate(null);
+    }
+  };
+
   const handleAgentUpdate = (updatedAgent) => {
     setData((prevData) =>
       prevData.map((agent) => (agent.s_n === updatedAgent.s_n ? updatedAgent : agent)),
@@ -751,13 +787,21 @@ const Agent = () => {
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">Active School</Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{analytics.activeSchools ?? 0}</Typography>
+              <Typography variant="h6" color="text.primary">
+                Active School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {analytics.activeSchools ?? 0}
+              </Typography>
             </Box>
             <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
             <Box>
-              <Typography variant="h6" color="text.primary">Pending School</Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{analytics.pendingSchools ?? 0}</Typography>
+              <Typography variant="h6" color="text.primary">
+                Pending School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {analytics.pendingSchools ?? 0}
+              </Typography>
             </Box>
           </Box>
         </Paper>
@@ -895,11 +939,13 @@ const Agent = () => {
           </Box>
 
           <Box sx={{ px: 3, mt: 1 }}>
-            {(analytics.loginActivities ?? [
-              { label: 'Teachers', value: 0 },
-              { label: 'Agents',   value: 0 },
-              { label: 'Total',    value: 0 },
-            ]).map((item, index) => (
+            {(
+              analytics.loginActivities ?? [
+                { label: 'Teachers', value: 0 },
+                { label: 'Agents', value: 0 },
+                { label: 'Total', value: 0 },
+              ]
+            ).map((item, index) => (
               <Box
                 key={index}
                 sx={{
@@ -909,7 +955,9 @@ const Agent = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant="h5" color="text.primary">{item.label}</Typography>
+                <Typography variant="h5" color="text.primary">
+                  {item.label}
+                </Typography>
                 <Typography variant="h5" sx={{ color: theme.palette.error.main }}>
                   {item.value}
                 </Typography>
@@ -1342,7 +1390,7 @@ const Agent = () => {
                           <ActionMenuCell
                             agent={agent}
                             navigate={navigate}
-                            handleImpersonate={handleImpersonate}
+                            handleImpersonate={confirmImpersonate}
                             handleUpdateAgent={handleUpdateAgent}
                             handleViewSchools={handleViewSchools}
                             handleManagePermissions={handleManagePermissions}
@@ -1391,6 +1439,20 @@ const Agent = () => {
           handleRefresh={handleRefresh}
           selectedAgent={selectedAgent}
           actionType={isModalOpen ? actionType : 'create'}
+        />
+
+        <ConfirmationDialog
+          open={impersonateConfirmOpen}
+          onClose={() => {
+            setImpersonateConfirmOpen(false);
+            setAgentToImpersonate(null);
+          }}
+          onConfirm={handleConfirmedImpersonate}
+          title="Login as Agent"
+          message={`Are you sure you want to login as ${agentToImpersonate?.organizationName || 'this agent'}?`}
+          confirmText="Yes, Login As"
+          cancelText="Cancel"
+          severity="info"
         />
 
         <ConfirmationDialog

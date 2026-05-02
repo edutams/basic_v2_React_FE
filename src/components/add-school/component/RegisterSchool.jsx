@@ -33,6 +33,24 @@ import {
 } from '../../../context/AgentContext/services/session.service';
 import useNotification from '../../../hooks/useNotification';
 
+import { IMaskInput } from 'react-imask';
+
+const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
+  const { onChange, name, ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="00000000000"
+      definitions={{ 0: /[0-9]/ }}
+      inputRef={ref}
+      onAccept={(value) => onChange({ target: { name, value } })}
+      // onAccept={(value) => onChange({ target: { name: props.name, value } })}
+      overwrite
+      lazy={true}
+    />
+  );
+});
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 const emptyPerson = () => ({
@@ -79,21 +97,21 @@ const fromSelected = (s) => {
       ? Array.isArray(s.school_type)
         ? s.school_type[0] || ''
         : typeof s.school_type === 'string'
-        ? (() => {
-            try {
-              const parsed = JSON.parse(s.school_type);
-              return Array.isArray(parsed) ? (parsed.find((t) => typeof t === 'string') || '') : '';
-            } catch {
-              return s.school_type;
-            }
-          })()
-        : s.school_type
+          ? (() => {
+              try {
+                const parsed = JSON.parse(s.school_type);
+                return Array.isArray(parsed) ? parsed.find((t) => typeof t === 'string') || '' : '';
+              } catch {
+                return s.school_type;
+              }
+            })()
+          : s.school_type
       : '',
     school_divisions: Array.isArray(s.school_divisions)
       ? s.school_divisions.map((d) => d.id ?? d)
       : typeof s.school_divisions === 'object' && s.school_divisions !== null
-      ? Object.values(s.school_divisions)
-      : [],
+        ? Object.values(s.school_divisions)
+        : [],
     session_id: s.session_id || '',
     headcolor: s.color?.headcolor || 'bg-night-sky text-lighter',
     sidecolor: s.color?.sidecolor || 'bg-dark text-lighter',
@@ -133,9 +151,9 @@ const PersonFields = ({ section, formData, errors, onPersonChange, readOnly = fa
       { key: 'first_name', label: 'First Name', md: 6 },
       { key: 'last_name', label: 'Last Name', md: 6 },
       { key: 'middle_name', label: 'Middle Name (optional)', md: 6 },
-      { key: 'phone', label: 'Phone', md: 6 },
+      { key: 'phone', label: 'Phone', md: 6, masked: true },
       { key: 'email', label: 'Email', md: 6 },
-    ].map(({ key, label, md }) => (
+    ].map(({ key, label, md, masked }) => (
       <Grid item size={{ xs: 12, md }} key={key}>
         <TextField
           fullWidth
@@ -145,7 +163,10 @@ const PersonFields = ({ section, formData, errors, onPersonChange, readOnly = fa
           error={Boolean(errors[`${section}.${key}`])}
           helperText={errors[`${section}.${key}`]}
           sx={{ bgcolor: 'white' }}
-          InputProps={{ readOnly }}
+          InputProps={
+            masked ? { inputComponent: PhoneMaskCustom } : readOnly ? { readOnly: true } : undefined
+          }
+          inputProps={readOnly ? { readOnly: true } : undefined}
         />
       </Grid>
     ))}
@@ -442,7 +463,7 @@ const RegisterSchoolForm = ({
       )}
 
       <Grid container spacing={2}>
-         {/* Session Selection */}
+        {/* Session Selection */}
         <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.session_id)}>
             <InputLabel>Session</InputLabel>
@@ -463,7 +484,7 @@ const RegisterSchoolForm = ({
           </FormControl>
         </Grid>
 
-          {/* School Type */}
+        {/* School Type */}
         <Grid size={{ xs: 12, md: 6 }}>
           <FormControl fullWidth error={Boolean(errors.school_type)}>
             <InputLabel>School Type</InputLabel>
@@ -479,7 +500,7 @@ const RegisterSchoolForm = ({
             {errors.school_type && <FormHelperText>{errors.school_type}</FormHelperText>}
           </FormControl>
         </Grid>
-        
+
         {/* School Name & Email */}
         <Grid item size={{ xs: 12 }}>
           <TextField

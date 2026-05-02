@@ -63,20 +63,33 @@ export const AuthProvider = ({ children }) => {
       try {
         const storedUser = localStorage.getItem('user');
         const storedOriginal = localStorage.getItem('original_user');
+        const storedPermissions = localStorage.getItem('permissions');
         const isImp = localStorage.getItem('isImpersonating') === 'true';
+        const storedImpersonatorId = localStorage.getItem('impersonator_id');
 
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
+
           setUser(parsedUser);
+          setIsAuthenticated(true);
           setIsImpersonating(isImp);
 
+          //  Restore permissions from storage
+          if (storedPermissions) {
+            setPermissions(JSON.parse(storedPermissions));
+          }
+
+          //  Restore impersonator ID so stopImpersonation still works
+          if (isImp && storedImpersonatorId) {
+            setImpersonatorId(storedImpersonatorId);
+          }
+
+          //  Restore the original user reference so the banner shows correctly
           if (isImp && storedOriginal) {
             setOriginalUser(JSON.parse(storedOriginal));
           } else {
             setOriginalUser(parsedUser);
           }
-
-          setIsAuthenticated(true);
 
           if (parsedUser?.organization?.primary_color) {
             setPrimaryColor(parsedUser.organization.primary_color);
@@ -212,16 +225,22 @@ export const AuthProvider = ({ children }) => {
       // Save current user as original BEFORE switching
       if (user) {
         localStorage.setItem('original_user', JSON.stringify(user));
+        setOriginalUser(user);
       }
+
+      const newUser = apiUser || apiData;
 
       tokenManager.set(access_token);
       localStorage.setItem('token_expires_in', String(expires_in));
       localStorage.setItem('isImpersonating', 'true');
       localStorage.setItem('impersonator_id', impersonator_id || id);
 
-      const newUser = apiUser || apiData;
+      //  THE FIX: write the impersonated user into localStorage
+      // so restoreUser() picks it up correctly after a refresh
+      localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('permissions', JSON.stringify([])); // or pull from res.data if API returns them
+
       setUser(newUser);
-      setOriginalUser(user); // Save original
       setIsImpersonating(true);
       setImpersonatorId(impersonator_id || id);
 
@@ -238,38 +257,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(false);
     }
   };
-
-  // const impersonateAgent = async (id) => {
-  //   setIsLoading(true);
-  //   setError(null);
-  //   try {
-  //     const res = await api.post(`/landlord/v1/impersonate/agent/${id}`);
-  //     const { access_token, expires_in, user: apiUser, data: apiData, impersonator_id } = res.data;
-
-  //     // Replace token atomically
-  //     tokenManager.set(access_token);
-  //     localStorage.setItem('token_expires_in', String(expires_in));
-
-  //     const userData = apiUser || apiData;
-  //     setUser(userData);
-  //     setIsAuthenticated(true);
-  //     setIsImpersonating(true);
-  //     setImpersonatorId(impersonator_id);
-
-  //     // Update theme to impersonated organization's primary_color
-  //     if (userData?.organization?.primary_color) {
-  //       setPrimaryColor(userData.organization.primary_color);
-  //     }
-
-  //     return { success: true, user: userData };
-  //   } catch (err) {
-  //     const msg = err.response?.data?.error || 'Impersonation failed';
-  //     setError(msg);
-  //     return { success: false, error: msg };
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const impersonateTenant = async (id) => {
     setIsLoading(true);
@@ -307,70 +294,31 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // const stopImpersonation = async () => {
-  //   setIsLoading(true);
-  //   setError(null);
-  //   try {
-  //     // Send impersonator_id as fallback; backend prefers JWT claims
-  //     const res = await api.post('/landlord/v1/impersonate/stop', {
-  //       impersonator_id: impersonatorId,
-  //     });
-
-  //     const { access_token, user: apiUser, data: apiData } = res.data;
-
-  //     tokenManager.set(access_token);
-
-  //     const userData = apiUser || apiData;
-  //     setUser(userData);
-  //     setIsImpersonating(false);
-  //     setImpersonatorId(null);
-
-  //     // Restore the original organization's primary_color
-  //     if (userData?.organization?.primary_color) {
-  //       setPrimaryColor(userData.organization.primary_color);
-  //     } else {
-  //       setPrimaryColor(null);
-  //     }
-
-  //     localStorage.removeItem('isImpersonating');
-  //     localStorage.removeItem('impersonator_id');
-  //     localStorage.setItem('user', JSON.stringify(userData));
-
-  //     window.location.href = '/agent';
-  //     return { success: true };
-  //   } catch (err) {
-  //     const msg = err.response?.data?.error || 'Failed to stop impersonation';
-  //     setError(msg);
-  //     return { success: false, error: msg };
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const stopImpersonation = async () => {
     setIsLoading(true);
     try {
       const res = await api.post('/landlord/v1/impersonate/stop');
-
       const { access_token, user: apiUser, data: apiData } = res.data;
 
       tokenManager.set(access_token);
 
       const restoredUser = apiUser || apiData;
+
+      //  Write the restored admin back to localStorage
+      localStorage.setItem('user', JSON.stringify(restoredUser));
+      localStorage.removeItem('isImpersonating');
+      localStorage.removeItem('impersonator_id');
+      localStorage.removeItem('original_user');
+
       setUser(restoredUser);
       setIsImpersonating(false);
       setImpersonatorId(null);
       setOriginalUser(null);
 
-      localStorage.removeItem('isImpersonating');
-      localStorage.removeItem('impersonator_id');
-      localStorage.removeItem('original_user');
-
       if (restoredUser?.organization?.primary_color) {
         setPrimaryColor(restoredUser.organization.primary_color);
       }
 
-      // Force reload to clear any stale state
       window.location.href = '/agent';
       return { success: true };
     } catch (err) {

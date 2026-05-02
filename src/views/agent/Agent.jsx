@@ -29,13 +29,16 @@ import {
   Card,
   useTheme,
   TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../components/shared/ParentCard';
 import FilterSideDrawer from '../../components/shared/FilterSideDrawer';
 import AgentModal from '../../components/add-agent/components/AgentModal';
-import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import EmptyTableState from '../../components/shared/EmptyTableState';
 import useTableEmptyState from '../../hooks/useTableEmptyState';
 import agentApi from '../../api/agent';
@@ -1441,30 +1444,65 @@ const Agent = () => {
           actionType={isModalOpen ? actionType : 'create'}
         />
 
-        <ConfirmationDialog
+        {/* Impersonate Confirmation */}
+        <Dialog
           open={impersonateConfirmOpen}
           onClose={() => {
             setImpersonateConfirmOpen(false);
             setAgentToImpersonate(null);
           }}
-          onConfirm={handleConfirmedImpersonate}
-          title="Login as Agent"
-          message={`Are you sure you want to login as ${agentToImpersonate?.organizationName || 'this agent'}?`}
-          confirmText="Yes, Login As"
-          cancelText="Cancel"
-          severity="info"
-        />
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 600 }}>Login as Agent</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to login as{' '}
+              <strong>{agentToImpersonate?.organizationName || 'this agent'}</strong>? You will be
+              able to return to your account at any time.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => {
+                setImpersonateConfirmOpen(false);
+                setAgentToImpersonate(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleConfirmedImpersonate}
+              sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
+            >
+              Yes, Login As
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-        <ConfirmationDialog
-          open={deleteDialogOpen}
-          onClose={handleCancelDelete}
-          onConfirm={handleConfirmDelete}
-          title="Delete Agent"
-          message="Are you sure you want to delete this agent? This action cannot be undone."
-          confirmText="Yes, Delete"
-          cancelText="Cancel"
-          severity="error"
-        />
+        {/* Delete Confirmation */}
+        <Dialog open={deleteDialogOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to delete{' '}
+              <strong>{agentToDelete?.organizationName || 'this agent'}</strong>? This action cannot
+              be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button variant="outlined" color="inherit" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+              Yes, Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
         <TotalTransactionModal
           open={isTransactionModalOpen}

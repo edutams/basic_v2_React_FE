@@ -27,7 +27,6 @@ const tokenManager = {
     localStorage.removeItem('isImpersonating');
     localStorage.removeItem('impersonator_id');
     localStorage.removeItem('user');
-    localStorage.removeItem('permissions');
     localStorage.removeItem('roles');
     delete axios.defaults.headers.common['Authorization'];
   },
@@ -41,6 +40,7 @@ export const AuthProvider = ({ children }) => {
   const [permissions, setPermissions] = useState(defaultAuthState.permissions);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonatorId, setImpersonatorId] = useState(null);
+  const [originalUser, setOriginalUser] = useState(null);
 
   const { setPrimaryColor } = useContext(CustomizerContext);
 
@@ -60,26 +60,39 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const storedUser = localStorage.getItem('user');
-        const storedPermissions = localStorage.getItem('permissions');
+        // Always fetch fresh from server — permissions are never read from localStorage
+        const res = await api.get('/landlord/v1/auth/me');
+        const { user: freshUser, permissions: freshPermissions } = res.data;
 
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-          setPermissions(storedPermissions ? JSON.parse(storedPermissions) : []);
-          setIsImpersonating(localStorage.getItem('isImpersonating') === 'true');
-          setImpersonatorId(localStorage.getItem('impersonator_id') ?? null);
-          setIsAuthenticated(true);
+        // Still read impersonation state from localStorage (safe — not a trust boundary)
+        const storedOriginal = localStorage.getItem('original_user');
+        const isImp = localStorage.getItem('isImpersonating') === 'true';
+        const storedImpersonatorId = localStorage.getItem('impersonator_id');
 
-          // Restore the organization's primary_color as the theme color
-          if (parsedUser?.organization?.primary_color) {
-            setPrimaryColor(parsedUser.organization.primary_color);
-          }
-        } else {
-          tokenManager.clear();
-          setIsAuthenticated(false);
+        // Always sync localStorage user to whatever server says
+        localStorage.setItem('user', JSON.stringify(freshUser));
+
+        setUser(freshUser);
+        setPermissions(freshPermissions || []);
+        setIsAuthenticated(true);
+        setIsImpersonating(isImp);
+
+        if (isImp && storedImpersonatorId) {
+          setImpersonatorId(storedImpersonatorId);
         }
-      } catch {
+
+        if (isImp && storedOriginal) {
+          setOriginalUser(JSON.parse(storedOriginal));
+        } else {
+          setOriginalUser(freshUser);
+        }
+
+        if (freshUser?.organization?.primary_color) {
+          setPrimaryColor(freshUser.organization.primary_color);
+        }
+      } catch (e) {
+        // Token is invalid or expired — clear everything
+        console.error(e);
         tokenManager.clear();
         setIsAuthenticated(false);
       } finally {
@@ -202,24 +215,42 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post(`/landlord/v1/impersonate/agent/${id}`);
+
       const { access_token, expires_in, user: apiUser, data: apiData, impersonator_id } = res.data;
 
-      // Replace token atomically
-      tokenManager.set(access_token);
-      localStorage.setItem('token_expires_in', String(expires_in));
-
-      const userData = apiUser || apiData;
-      setUser(userData);
-      setIsAuthenticated(true);
-      setIsImpersonating(true);
-      setImpersonatorId(impersonator_id);
-
-      // Update theme to impersonated organization's primary_color
-      if (userData?.organization?.primary_color) {
-        setPrimaryColor(userData.organization.primary_color);
+      // Save current user as original BEFORE switching
+      if (user) {
+        localStorage.setItem('original_user', JSON.stringify(user));
+        setOriginalUser(user);
       }
 
-      return { success: true, user: userData };
+      tokenManager.set(access_token);
+      localStorage.setItem('token_expires_in', String(expires_in));
+      localStorage.setItem('isImpersonating', 'true');
+      localStorage.setItem('impersonator_id', impersonator_id || id);
+
+      const newUser = apiUser || apiData;
+      localStorage.setItem('user', JSON.stringify(newUser));
+
+      // Fetch the agent's actual permissions fresh
+      const meRes = await api.get('/landlord/v1/auth/me');
+      const freshPermissions = meRes.data?.permissions || [];
+
+      //  THE FIX: write the impersonated user into localStorage
+      // so restoreUser() picks it up correctly after a refresh
+      localStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('permissions', JSON.stringify([])); // or pull from res.data if API returns them
+
+      setUser(newUser);
+      setPermissions(freshPermissions);
+      setIsImpersonating(true);
+      setImpersonatorId(impersonator_id || id);
+
+      if (newUser?.organization?.primary_color) {
+        setPrimaryColor(newUser.organization.primary_color);
+      }
+
+      return { success: true, user: newUser };
     } catch (err) {
       const msg = err.response?.data?.error || 'Impersonation failed';
       setError(msg);
@@ -267,32 +298,28 @@ export const AuthProvider = ({ children }) => {
 
   const stopImpersonation = async () => {
     setIsLoading(true);
-    setError(null);
     try {
-      // Send impersonator_id as fallback; backend prefers JWT claims
-      const res = await api.post('/landlord/v1/impersonate/stop', {
-        impersonator_id: impersonatorId,
-      });
-
+      const res = await api.post('/landlord/v1/impersonate/stop');
       const { access_token, user: apiUser, data: apiData } = res.data;
 
       tokenManager.set(access_token);
 
-      const userData = apiUser || apiData;
-      setUser(userData);
-      setIsImpersonating(false);
-      setImpersonatorId(null);
+      const restoredUser = apiUser || apiData;
 
-      // Restore the original organization's primary_color
-      if (userData?.organization?.primary_color) {
-        setPrimaryColor(userData.organization.primary_color);
-      } else {
-        setPrimaryColor(null);
-      }
-
+      //  Write the restored admin back to localStorage
+      localStorage.setItem('user', JSON.stringify(restoredUser));
       localStorage.removeItem('isImpersonating');
       localStorage.removeItem('impersonator_id');
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.removeItem('original_user');
+
+      setUser(restoredUser);
+      setIsImpersonating(false);
+      setImpersonatorId(null);
+      setOriginalUser(null);
+
+      if (restoredUser?.organization?.primary_color) {
+        setPrimaryColor(restoredUser.organization.primary_color);
+      }
 
       window.location.href = '/agent';
       return { success: true };
@@ -310,6 +337,7 @@ export const AuthProvider = ({ children }) => {
   // ---------------- Context value ----------------
   const contextValue = {
     user,
+    originalUser,
     isAuthenticated,
     isLoading,
     error,

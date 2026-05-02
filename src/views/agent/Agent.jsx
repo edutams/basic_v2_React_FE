@@ -29,13 +29,16 @@ import {
   Card,
   useTheme,
   TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../components/shared/ParentCard';
 import FilterSideDrawer from '../../components/shared/FilterSideDrawer';
 import AgentModal from '../../components/add-agent/components/AgentModal';
-import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import EmptyTableState from '../../components/shared/EmptyTableState';
 import useTableEmptyState from '../../hooks/useTableEmptyState';
 import agentApi from '../../api/agent';
@@ -229,10 +232,15 @@ const ActionMenuCell = ({
 };
 
 import locationApi from '../../api/location';
+import useNotification from '../../hooks/useNotification';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
+  const notify = useNotification();
+
+  const [impersonateConfirmOpen, setImpersonateConfirmOpen] = useState(false);
+  const [agentToImpersonate, setAgentToImpersonate] = useState(null);
 
   // Revenue Trend Mock Data
   const revenueSeries = [
@@ -653,6 +661,37 @@ const Agent = () => {
     }
   };
 
+  const confirmImpersonate = (agent) => {
+    setAgentToImpersonate(agent);
+    setImpersonateConfirmOpen(true);
+  };
+
+  const handleConfirmedImpersonate = async () => {
+    if (!agentToImpersonate) return;
+
+    try {
+      const result = await impersonateAgent(agentToImpersonate.id);
+      if (result.success) {
+        localStorage.setItem('impersonator_id', agentToImpersonate.id);
+        localStorage.setItem('isImpersonating', 'true');
+
+        notify.success(
+          'Impersonation successful',
+          `You are now impersonating ${agentToImpersonate.organization_name}`,
+        );
+        navigate('/agent');
+      } else {
+        alert(result.error || 'Impersonation failed');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Impersonation failed');
+    } finally {
+      setImpersonateConfirmOpen(false);
+      setAgentToImpersonate(null);
+    }
+  };
+
   const handleAgentUpdate = (updatedAgent) => {
     setData((prevData) =>
       prevData.map((agent) => (agent.s_n === updatedAgent.s_n ? updatedAgent : agent)),
@@ -751,13 +790,21 @@ const Agent = () => {
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="h6" color="text.primary">Active School</Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{analytics.activeSchools ?? 0}</Typography>
+              <Typography variant="h6" color="text.primary">
+                Active School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {analytics.activeSchools ?? 0}
+              </Typography>
             </Box>
             <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
             <Box>
-              <Typography variant="h6" color="text.primary">Pending School</Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>{analytics.pendingSchools ?? 0}</Typography>
+              <Typography variant="h6" color="text.primary">
+                Pending School
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {analytics.pendingSchools ?? 0}
+              </Typography>
             </Box>
           </Box>
         </Paper>
@@ -895,11 +942,13 @@ const Agent = () => {
           </Box>
 
           <Box sx={{ px: 3, mt: 1 }}>
-            {(analytics.loginActivities ?? [
-              { label: 'Teachers', value: 0 },
-              { label: 'Agents',   value: 0 },
-              { label: 'Total',    value: 0 },
-            ]).map((item, index) => (
+            {(
+              analytics.loginActivities ?? [
+                { label: 'Teachers', value: 0 },
+                { label: 'Agents', value: 0 },
+                { label: 'Total', value: 0 },
+              ]
+            ).map((item, index) => (
               <Box
                 key={index}
                 sx={{
@@ -909,7 +958,9 @@ const Agent = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant="h5" color="text.primary">{item.label}</Typography>
+                <Typography variant="h5" color="text.primary">
+                  {item.label}
+                </Typography>
                 <Typography variant="h5" sx={{ color: theme.palette.error.main }}>
                   {item.value}
                 </Typography>
@@ -1342,7 +1393,7 @@ const Agent = () => {
                           <ActionMenuCell
                             agent={agent}
                             navigate={navigate}
-                            handleImpersonate={handleImpersonate}
+                            handleImpersonate={confirmImpersonate}
                             handleUpdateAgent={handleUpdateAgent}
                             handleViewSchools={handleViewSchools}
                             handleManagePermissions={handleManagePermissions}
@@ -1393,16 +1444,65 @@ const Agent = () => {
           actionType={isModalOpen ? actionType : 'create'}
         />
 
-        <ConfirmationDialog
-          open={deleteDialogOpen}
-          onClose={handleCancelDelete}
-          onConfirm={handleConfirmDelete}
-          title="Delete Agent"
-          message="Are you sure you want to delete this agent? This action cannot be undone."
-          confirmText="Yes, Delete"
-          cancelText="Cancel"
-          severity="error"
-        />
+        {/* Impersonate Confirmation */}
+        <Dialog
+          open={impersonateConfirmOpen}
+          onClose={() => {
+            setImpersonateConfirmOpen(false);
+            setAgentToImpersonate(null);
+          }}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 600 }}>Login as Agent</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to login as{' '}
+              <strong>{agentToImpersonate?.organizationName || 'this agent'}</strong>? You will be
+              able to return to your account at any time.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={() => {
+                setImpersonateConfirmOpen(false);
+                setAgentToImpersonate(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleConfirmedImpersonate}
+              sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
+            >
+              Yes, Login As
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Confirmation */}
+        <Dialog open={deleteDialogOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to delete{' '}
+              <strong>{agentToDelete?.organizationName || 'this agent'}</strong>? This action cannot
+              be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button variant="outlined" color="inherit" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+              Yes, Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
         <TotalTransactionModal
           open={isTransactionModalOpen}

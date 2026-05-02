@@ -11,6 +11,10 @@ import {
   Divider,
   Typography,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -55,7 +59,8 @@ const Header = () => {
     // Account for sidebar width on large screens
     [theme.breakpoints.up('lg')]: {
       minHeight: TopbarHeight,
-      marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+      marginLeft:
+        isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
     },
     // On smaller screens, full width
     [theme.breakpoints.down('lg')]: {
@@ -66,7 +71,7 @@ const Header = () => {
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
     color: `${theme.palette.text.primary} !important`,
-    paddingLeft: '288px !important', 
+    paddingLeft: '288px !important',
     paddingRight: '16px !important',
     // On smaller screens, reduce padding
     [theme.breakpoints.down('lg')]: {
@@ -87,21 +92,30 @@ const Header = () => {
   }));
 
   const [isVisible, setIsVisible] = useState(false);
-  const { isImpersonating, stopImpersonation } = useContext(AuthContext);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { isImpersonating, stopImpersonation, user } = useContext(AuthContext);
+
+  const handleStopImpersonation = async () => {
+    setConfirmOpen(false);
+    await stopImpersonation(); // existing function handles the rest
+  };
 
   return (
-    <AppBarStyled 
-      position="fixed" 
+    <AppBarStyled
+      position="fixed"
       color="default"
       sx={{
         ...(lgUp && {
-          marginLeft: isCollapse === 'mini-sidebar' ? `${config.miniSidebarWidth}px` : `${config.sidebarWidth}px`,
+          marginLeft:
+            isCollapse === 'mini-sidebar'
+              ? `${config.miniSidebarWidth}px`
+              : `${config.sidebarWidth}px`,
         }),
       }}
     >
       <ToolbarStyled
         sx={{
-          paddingLeft: lgUp 
+          paddingLeft: lgUp
             ? `${(isCollapse === 'mini-sidebar' ? config.miniSidebarWidth : config.sidebarWidth) + 18}px !important`
             : '18px !important',
         }}
@@ -140,8 +154,8 @@ const Header = () => {
           <Box
             sx={{
               // bgcolor: 'warning.main',
-              bgcolor:'#593196',
-              color: 'warning.contrastText',
+              bgcolor: '#593196',
+              color: '#ffffff',
               px: { xs: 1, sm: 2 },
               py: 0.5,
               borderRadius: 1,
@@ -176,7 +190,7 @@ const Header = () => {
               size="small"
               variant="outlined"
               color="inherit"
-              onClick={stopImpersonation}
+              onClick={() => setConfirmOpen(true)}
               sx={{
                 whiteSpace: 'nowrap',
                 fontSize: { xs: '10px', sm: '13px' },
@@ -201,7 +215,6 @@ const Header = () => {
               <IconSun size="21" onClick={() => setActiveMode('light')} />
             )}
           </IconButton>
-          
 
           {/* ------------------------------------------- */}
           {/* Language Dropdown */}
@@ -228,7 +241,6 @@ const Header = () => {
 
           {/* ------------------------------------------- */}
 
-         
           <Profile />
 
           {isVisible && (
@@ -247,6 +259,30 @@ const Header = () => {
           )}
         </Stack>
       </ToolbarStyled>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>Return to your account?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            You are currently impersonating{' '}
+            <strong>{user?.organization?.organization_name || 'this agent'}</strong>. Returning will
+            restore your admin session.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="outlined" color="inherit" onClick={() => setConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleStopImpersonation}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
+          >
+            Yes, return to my account
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppBarStyled>
   );
 };

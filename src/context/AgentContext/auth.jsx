@@ -27,7 +27,6 @@ const tokenManager = {
     localStorage.removeItem('isImpersonating');
     localStorage.removeItem('impersonator_id');
     localStorage.removeItem('user');
-    localStorage.removeItem('permissions');
     localStorage.removeItem('roles');
     delete axios.defaults.headers.common['Authorization'];
   },
@@ -61,41 +60,38 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const storedUser = localStorage.getItem('user');
+        // Always fetch fresh from server — permissions are never read from localStorage
+        const res = await api.get('/landlord/v1/auth/me');
+        const { user: freshUser, permissions: freshPermissions } = res.data;
+
+        // Still read impersonation state from localStorage (safe — not a trust boundary)
         const storedOriginal = localStorage.getItem('original_user');
-        const storedPermissions = localStorage.getItem('permissions');
         const isImp = localStorage.getItem('isImpersonating') === 'true';
         const storedImpersonatorId = localStorage.getItem('impersonator_id');
 
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
+        // Always sync localStorage user to whatever server says
+        localStorage.setItem('user', JSON.stringify(freshUser));
 
-          setUser(parsedUser);
-          setIsAuthenticated(true);
-          setIsImpersonating(isImp);
+        setUser(freshUser);
+        setPermissions(freshPermissions || []);
+        setIsAuthenticated(true);
+        setIsImpersonating(isImp);
 
-          //  Restore permissions from storage
-          if (storedPermissions) {
-            setPermissions(JSON.parse(storedPermissions));
-          }
+        if (isImp && storedImpersonatorId) {
+          setImpersonatorId(storedImpersonatorId);
+        }
 
-          //  Restore impersonator ID so stopImpersonation still works
-          if (isImp && storedImpersonatorId) {
-            setImpersonatorId(storedImpersonatorId);
-          }
+        if (isImp && storedOriginal) {
+          setOriginalUser(JSON.parse(storedOriginal));
+        } else {
+          setOriginalUser(freshUser);
+        }
 
-          //  Restore the original user reference so the banner shows correctly
-          if (isImp && storedOriginal) {
-            setOriginalUser(JSON.parse(storedOriginal));
-          } else {
-            setOriginalUser(parsedUser);
-          }
-
-          if (parsedUser?.organization?.primary_color) {
-            setPrimaryColor(parsedUser.organization.primary_color);
-          }
+        if (freshUser?.organization?.primary_color) {
+          setPrimaryColor(freshUser.organization.primary_color);
         }
       } catch (e) {
+        // Token is invalid or expired — clear everything
         console.error(e);
         tokenManager.clear();
         setIsAuthenticated(false);
@@ -228,12 +224,17 @@ export const AuthProvider = ({ children }) => {
         setOriginalUser(user);
       }
 
-      const newUser = apiUser || apiData;
-
       tokenManager.set(access_token);
       localStorage.setItem('token_expires_in', String(expires_in));
       localStorage.setItem('isImpersonating', 'true');
       localStorage.setItem('impersonator_id', impersonator_id || id);
+
+      const newUser = apiUser || apiData;
+      localStorage.setItem('user', JSON.stringify(newUser));
+
+      // Fetch the agent's actual permissions fresh
+      const meRes = await api.get('/landlord/v1/auth/me');
+      const freshPermissions = meRes.data?.permissions || [];
 
       //  THE FIX: write the impersonated user into localStorage
       // so restoreUser() picks it up correctly after a refresh
@@ -241,6 +242,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('permissions', JSON.stringify([])); // or pull from res.data if API returns them
 
       setUser(newUser);
+      setPermissions(freshPermissions);
       setIsImpersonating(true);
       setImpersonatorId(impersonator_id || id);
 

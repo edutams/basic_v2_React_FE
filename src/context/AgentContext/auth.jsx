@@ -64,7 +64,6 @@ export const AuthProvider = ({ children }) => {
         const res = await api.get('/landlord/v1/auth/me');
         const { user: freshUser, permissions: freshPermissions } = res.data;
 
-        // Still read impersonation state from localStorage (safe — not a trust boundary)
         const storedOriginal = localStorage.getItem('original_user');
         const isImp = localStorage.getItem('isImpersonating') === 'true';
         const storedImpersonatorId = localStorage.getItem('impersonator_id');

@@ -50,6 +50,7 @@ const EMPTY_FORM = {
   occupation: '',
   relationship: '',
   address: '',
+  password: '',
   confirm_password: '',
 };
 

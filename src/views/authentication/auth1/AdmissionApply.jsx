@@ -9,6 +9,7 @@ import { Avatar } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import ReCAPTCHA from 'react-google-recaptcha';
 import ParentForm from 'src/components/tenant-components/parents/ParentForm';
+import guardianApi from 'src/api/parentApi';
 
 const AdmissionApply = () => {
   const navigate = useNavigate();
@@ -31,19 +32,37 @@ const AdmissionApply = () => {
       setError('Please complete the reCAPTCHA verification.');
       return;
     }
-    if (values.password && values.password !== values.confirm_password) {
+    if (!values.password) {
+      setError('Password is required.');
+      return;
+    }
+    if (values.password !== values.confirm_password) {
       setError('Passwords do not match.');
       return;
     }
     setError('');
     setLoading(true);
-    // TODO: wire up API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await guardianApi.admissionParentSignup(values);
       recaptchaRef.current?.reset();
       setCaptchaToken(null);
       navigate('/login', { state: { message: 'Account created successfully. Please log in.' } });
-    }, 1000);
+    } catch (err) {
+      const data = err.response?.data;
+      // Laravel 422 returns { errors: { field: ['msg'] } }, other errors return { message: '...' }
+      let msg = 'Registration failed. Please try again.';
+      if (data?.errors) {
+        // Flatten all field errors into one readable string
+        msg = Object.values(data.errors).flat().join(' ');
+      } else if (data?.message) {
+        msg = data.message;
+      }
+      setError(msg);
+      recaptchaRef.current?.reset();
+      setCaptchaToken(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

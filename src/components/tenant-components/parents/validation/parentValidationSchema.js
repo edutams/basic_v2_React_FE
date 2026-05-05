@@ -11,5 +11,6 @@ export const parentValidationSchema = Yup.object({
   relationship: Yup.string().required('Relationship is required'),
   occupation:   Yup.string().nullable(),
   address:      Yup.string().required('Address is required'),
+  password:     Yup.string().nullable(),
   confirm_password: Yup.string().nullable(),
 });

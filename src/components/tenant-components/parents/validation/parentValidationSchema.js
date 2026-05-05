@@ -1,6 +1,7 @@
 import * as Yup from 'yup';
 
 export const parentValidationSchema = Yup.object({
+  title:        Yup.string().nullable(),
   first_name:   Yup.string().required('First name is required'),
   last_name:    Yup.string().required('Last name is required'),
   middle_name:  Yup.string(),
@@ -10,4 +11,5 @@ export const parentValidationSchema = Yup.object({
   relationship: Yup.string().required('Relationship is required'),
   occupation:   Yup.string().nullable(),
   address:      Yup.string().required('Address is required'),
+  confirm_password: Yup.string().nullable(),
 });

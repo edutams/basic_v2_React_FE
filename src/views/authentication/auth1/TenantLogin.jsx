@@ -41,7 +41,10 @@ const buttonStyle = {
   },
 };
 
-const TenantLogin = () => (
+const TenantLogin = () => {
+  const navigate = useNavigate();
+
+  return (
   <PageContainer title="School Login" description="Tenant Login page">
     <Grid container spacing={0} sx={{ overflowX: 'hidden' }}>
       <Grid
@@ -110,7 +113,7 @@ const TenantLogin = () => (
                     NOW OPEN
                   </Typography>
 
-                  <Button variant="contained" sx={[
+                  <Button variant="contained" onClick={() => navigate('/admission/apply')} sx={[
                       buttonStyle,
                       {
                         background: '#213393A8',
@@ -256,6 +259,7 @@ const TenantLogin = () => (
       </Grid>
     </Grid>
   </PageContainer>
-);
+  );
+};
 
 export default TenantLogin;

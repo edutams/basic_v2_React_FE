@@ -411,6 +411,7 @@ const ParentManagement = () => {
                 <TableRow>
                   <TableCell>S/N</TableCell>
                   <TableCell>Name</TableCell>
+                  <TableCell>Title</TableCell>
                   <TableCell align="center">Wards</TableCell>
                   <TableCell>Contact</TableCell>
                   <TableCell>Status</TableCell>
@@ -421,7 +422,7 @@ const ParentManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <CircularProgress size={24} />
                     </TableCell>
                   </TableRow>
@@ -436,6 +437,12 @@ const ParentManagement = () => {
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {relationshipLabel(row.relationship)}
+                        </Typography>
+                      </TableCell>
+
+                      <TableCell>
+                        <Typography variant="body2">
+                          {row.user?.title || '—'}
                         </Typography>
                       </TableCell>
 
@@ -519,7 +526,7 @@ const ParentManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <Alert
                         severity="info"
                         sx={{

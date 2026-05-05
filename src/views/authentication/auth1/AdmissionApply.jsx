@@ -28,6 +28,7 @@ const AdmissionApply = () => {
   const recaptchaRef = useRef(null);
 
   const handleSubmit = async (values) => {
+    console.log('[AdmissionApply] handleSubmit called', values);
     if (!captchaToken) {
       setError('Please complete the reCAPTCHA verification.');
       return;
@@ -43,16 +44,18 @@ const AdmissionApply = () => {
     setError('');
     setLoading(true);
     try {
+      console.log('[AdmissionApply] calling admissionParentSignup...');
       await guardianApi.admissionParentSignup(values);
       recaptchaRef.current?.reset();
       setCaptchaToken(null);
       navigate('/login', { state: { message: 'Account created successfully. Please log in.' } });
     } catch (err) {
+      console.error('[AdmissionApply] error:', err);
+      console.error('[AdmissionApply] response:', err.response);
+      console.error('[AdmissionApply] response data:', err.response?.data);
       const data = err.response?.data;
-      // Laravel 422 returns { errors: { field: ['msg'] } }, other errors return { message: '...' }
       let msg = 'Registration failed. Please try again.';
       if (data?.errors) {
-        // Flatten all field errors into one readable string
         msg = Object.values(data.errors).flat().join(' ');
       } else if (data?.message) {
         msg = data.message;

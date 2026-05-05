@@ -7,7 +7,7 @@ const guardianApi = {
   getStats: () => tenantApi.get('/guardians/stats'),
   getAll: (params = {}) => tenantApi.get('/guardians', { params }),
   create: (data) => tenantApi.post('/guardians', data),
-  publicRegister: (data) => tenantApi.post('/guardians/register', data),
+  admissionParentSignup: (data) => tenantApi.post('/guardians/register', data),
   update: (id, data) => tenantApi.put(`/guardians/${id}`, data),
   toggleStatus: (id) => tenantApi.patch(`/guardians/${id}/toggle-status`),
   remove: (id) => tenantApi.delete(`/guardians/${id}`),

@@ -230,21 +230,40 @@ const RegisterSchoolForm = ({
   }, []);
 
   // Fetch current session on mount
-  useEffect(() => {
-    getCurrentSessionAndAbove()
-      .then((res) => {
-        const session = res.data || res;
-        setCurrentSession(session);
-        // Only prefill if user hasn't selected anything yet
-        if (!formData.session_id && session?.id) {
-          setFormData((prev) => ({ ...prev, session_id: session.id }));
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to fetch current session:', error);
-      });
-  }, []);
-
+  // useEffect(() => {
+  //   getCurrentSessionAndAbove()
+  //     .then((res) => {
+  //       const session = res.data || res;
+  //       setCurrentSession(session);
+  //       // Only prefill if user hasn't selected anything yet
+  //       if (!formData.session_id && session?.id) {
+  //         setFormData((prev) => ({ ...prev, session_id: session.id }));
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error('Failed to fetch current session:', error);
+  //     });
+  // }, []);
+// Fetch all sessions on mount
+useEffect(() => {
+  getSessions()
+    .then((res) => {
+      const allSessions = res.data || res;
+      setSessions(allSessions);
+      
+      // Find current session
+      const current = allSessions.find(session => session.is_current === 'yes');
+      setCurrentSession(current);
+      
+      // Preselect current session if user hasn't selected anything yet
+      if (!formData.session_id && current?.id) {
+        setFormData((prev) => ({ ...prev, session_id: current.id }));
+      }
+    })
+    .catch((error) => {
+      console.error('Failed to fetch sessions:', error);
+    });
+}, []);
   useEffect(() => {
     if (formData.state_id) {
       getLgasByState(formData.state_id)
@@ -297,7 +316,7 @@ const RegisterSchoolForm = ({
       head: src !== 'none' ? copyPerson(src) : emptyPerson(),
     }));
   };
-
+const [sessions, setSessions] = useState([]);
   // ── validation ───────────────────────────────────────────────────────────
 
   const validateForm = () => {
@@ -471,18 +490,18 @@ const RegisterSchoolForm = ({
           <FormControl fullWidth error={Boolean(errors.session_id)}>
             <InputLabel>Session</InputLabel>
             <Select
-              name="session_id"
-              value={formData.session_id}
-              label="Session"
-              onChange={handleChange}
-            >
-              <MenuItem value="">-- Select Session --</MenuItem>
-              {currentSession && (
-                <MenuItem key={currentSession.id} value={currentSession.id}>
-                  {currentSession.sesname} (Current)
-                </MenuItem>
-              )}
-            </Select>
+  name="session_id"
+  value={formData.session_id}
+  label="Session"
+  onChange={handleChange}
+>
+  <MenuItem value="">-- Select Session --</MenuItem>
+  {sessions.map((session) => (
+    <MenuItem key={session.id} value={session.id}>
+      {session.sesname} {session.is_current === 'yes' && '(Current)'}
+    </MenuItem>
+  ))}
+</Select>
             {errors.session_id && <FormHelperText>{errors.session_id}</FormHelperText>}
           </FormControl>
         </Grid>

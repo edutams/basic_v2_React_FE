@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Avatar, TextField, Stack, Divider, Card } from '@mui/material';
 import { IconSchool, IconVideo, IconArrowRight } from '@tabler/icons-react';
 import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Tabs, Tab, Box } from '@mui/material';
 import { IconHeart, IconPhoto, IconUserCircle } from '@tabler/icons-react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router-dom';
 
 const ProfileTab = () => {
   const location = useLocation();
@@ -13,8 +13,6 @@ const ProfileTab = () => {
   const handleChange = (newValue) => {
     setValue(newValue);
   };
-
-
 
   const ProfileTabs = [
     {
@@ -41,8 +39,18 @@ const ProfileTab = () => {
 
   return (
     <Box mt={1} sx={{ mt: 1, backgroundColor: (theme) => theme.palette.grey[100] }}>
-      <Box justifyContent={'end'} display="flex" sx={{ overflow: 'auto', width: { xs: '333px', sm: 'auto' } }}>
-        <Tabs value={value} onChange={handleChange} aria-label="scrollable prevent tabs example" variant="scrollable" scrollButtons="auto">
+      <Box
+        justifyContent={'end'}
+        display="flex"
+        sx={{ overflow: 'auto', width: { xs: '333px', sm: 'auto' } }}
+      >
+        <Tabs
+          value={value}
+          onChange={handleChange}
+          aria-label="scrollable prevent tabs example"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
           {ProfileTabs.map((tab) => {
             return (
               <Tab

@@ -1,5 +1,5 @@
 import React, { lazy } from 'react';
-import { Navigate } from 'react-router';
+import { Navigate } from 'react-router-dom';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
@@ -35,8 +35,12 @@ const AccountSetting = Loadable(
   lazy(() => import('../views/pages/account-setting/AccountSetting')),
 );
 const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
-const ParentManagement = Loadable(lazy(() => import('../views/tenants-views/parents/ParentManagement')),);
-const LearnerManagement = Loadable(lazy(() => import('../views/tenants-views/learners/LearnerManagement')),);
+const ParentManagement = Loadable(
+  lazy(() => import('../views/tenants-views/parents/ParentManagement')),
+);
+const LearnerManagement = Loadable(
+  lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
+);
 
 const TenantRoutes = [
   {

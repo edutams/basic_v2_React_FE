@@ -32,7 +32,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 const columnHelper = createColumnHelper();
 
@@ -285,8 +285,7 @@ const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) =>
             variant="contained"
             startIcon={<IconUsers size={16} />}
             onClick={onAddAgent}
-                           sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
-
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
           >
             Add New Agent
           </Button>
@@ -341,8 +340,7 @@ const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) =>
             variant="contained"
             size="small"
             onClick={() => setPage(0)}
-                            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
-
+            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
           >
             Search
           </Button>
@@ -411,7 +409,7 @@ const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) =>
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => { }}
+        handleRefresh={() => {}}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />

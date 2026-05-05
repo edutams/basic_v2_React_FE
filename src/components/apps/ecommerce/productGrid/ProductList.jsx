@@ -15,32 +15,24 @@ import {
   Button,
   Skeleton,
 } from '@mui/material';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
-import { ProductContext } from "src/context/EcommerceContext";
+import { ProductContext } from 'src/context/EcommerceContext';
 import ProductSearch from './ProductSearch';
 import { IconBasket, IconMenu2 } from '@tabler/icons-react';
 import AlertCart from '../productCart/AlertCart';
 import emptyCart from 'src/assets/images/products/empty-shopping-cart.svg';
 import BlankCard from '../../../shared/BlankCard';
 
-
 const ProductList = ({ onClick }) => {
-
-
-  const { filteredAndSortedProducts, addToCart, filterReset } =
-    useContext(ProductContext);
+  const { filteredAndSortedProducts, addToCart, filterReset } = useContext(ProductContext);
 
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
-
-
-
 
   // for alert when added something to cart
   const [cartalert, setCartalert] = React.useState(false);
 
   const handleClick = () => {
-
     setCartalert(true);
   };
 
@@ -63,7 +55,7 @@ const ProductList = ({ onClick }) => {
   }, []);
 
   return (
-    (<Box>
+    <Box>
       {/* ------------------------------------------- */}
       {/* Header Detail page */}
       {/* ------------------------------------------- */}
@@ -94,8 +86,9 @@ const ProductList = ({ onClick }) => {
                   xs: 12,
                   lg: 4,
                   md: 4,
-                  sm: 6
-                }}>
+                  sm: 6,
+                }}
+              >
                 {/* ------------------------------------------- */}
                 {/* Product Card */}
                 {/* ------------------------------------------- */}
@@ -127,7 +120,9 @@ const ProductList = ({ onClick }) => {
                       </Fab>
                     </Tooltip>
                     <CardContent sx={{ p: 3, pt: 2 }}>
-                      <Typography variant="h5" fontWeight={600}>{product.title}</Typography>
+                      <Typography variant="h5" fontWeight={600}>
+                        {product.title}
+                      </Typography>
                       <Stack
                         direction="row"
                         alignItems="center"
@@ -163,8 +158,9 @@ const ProductList = ({ onClick }) => {
                 xs: 12,
                 lg: 12,
                 md: 12,
-                sm: 12
-              }}>
+                sm: 12,
+              }}
+            >
               <Box textAlign="center" mt={6}>
                 <img src={emptyCart} alt="cart" width="200px" />
                 <Typography variant="h2">There is no Product</Typography>
@@ -179,7 +175,7 @@ const ProductList = ({ onClick }) => {
           </>
         )}
       </Grid>
-    </Box>)
+    </Box>
   );
 };
 

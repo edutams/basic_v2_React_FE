@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
-import { useParams } from 'react-router';
-import { Link } from 'react-router';
+import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 // MUI Elements
 import {
@@ -16,12 +16,11 @@ import {
   Fab,
   ButtonGroup,
 } from '@mui/material';
-import { ProductContext } from "src/context/EcommerceContext";
+import { ProductContext } from 'src/context/EcommerceContext';
 import { IconCheck, IconMinus, IconPlus } from '@tabler/icons-react';
 import AlertCart from '../productCart/AlertCart';
 
 const ProductDetail = () => {
-
   const { products, addToCart } = useContext(ProductContext);
   const theme = useTheme();
 
@@ -29,7 +28,6 @@ const ProductDetail = () => {
 
   // Get Products
   const product = products.find((prod) => prod.id === parseInt(id));
-
 
   /// select colors on click
   const [scolor, setScolor] = useState(product ? product.colors[0] : '');
@@ -54,10 +52,8 @@ const ProductDetail = () => {
     setCartalert(false);
   };
 
-
-
   return (
-    (<Box p={2}>
+    <Box p={2}>
       {product ? (
         <>
           <Box display="flex" alignItems="center">
@@ -159,8 +155,9 @@ const ProductDetail = () => {
               size={{
                 xs: 12,
                 lg: 4,
-                md: 6
-              }}>
+                md: 6,
+              }}
+            >
               <Button
                 color="primary"
                 size="large"
@@ -179,8 +176,9 @@ const ProductDetail = () => {
               size={{
                 xs: 12,
                 lg: 4,
-                md: 6
-              }}>
+                md: 6,
+              }}
+            >
               <Button
                 color="error"
                 size="large"
@@ -209,7 +207,7 @@ const ProductDetail = () => {
       ) : (
         'No product'
       )}
-    </Box>)
+    </Box>
   );
 };
 

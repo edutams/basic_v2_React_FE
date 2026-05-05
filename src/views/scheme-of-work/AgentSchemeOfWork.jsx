@@ -36,7 +36,7 @@ import {
   CircularProgress,
   Chip,
 } from '@mui/material';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import {
   IconFolder,
@@ -86,7 +86,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
   const [curriculums, setCurriculums] = useState([]);
   const [subjects, setSubjects] = useState([]);
 
-
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [selectedSubtopic, setSelectedSubtopic] = useState(null);
   const [topicModalOpen, setTopicModalOpen] = useState(false);
@@ -127,19 +126,34 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
 
   // Excel modal states
   const [dlTemplateOpen, setDlTemplateOpen] = useState(false);
-  const [dlTemplateFilters, setDlTemplateFilters] = useState({ programme: '', classLevel: '', subject: '', term: '' });
+  const [dlTemplateFilters, setDlTemplateFilters] = useState({
+    programme: '',
+    classLevel: '',
+    subject: '',
+    term: '',
+  });
   const [dlTemplateClasses, setDlTemplateClasses] = useState([]);
   const [dlTemplateSubjects, setDlTemplateSubjects] = useState([]);
 
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadFilters, setUploadFilters] = useState({ programme: '', classLevel: '', subject: '', term: '' });
+  const [uploadFilters, setUploadFilters] = useState({
+    programme: '',
+    classLevel: '',
+    subject: '',
+    term: '',
+  });
   const [uploadClasses, setUploadClasses] = useState([]);
   const [uploadSubjects, setUploadSubjects] = useState([]);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   const [dlSchemeOpen, setDlSchemeOpen] = useState(false);
-  const [dlSchemeFilters, setDlSchemeFilters] = useState({ programme: '', classLevel: '', subject: '', term: '' });
+  const [dlSchemeFilters, setDlSchemeFilters] = useState({
+    programme: '',
+    classLevel: '',
+    subject: '',
+    term: '',
+  });
   const [dlSchemeClasses, setDlSchemeClasses] = useState([]);
   const [dlSchemeSubjects, setDlSchemeSubjects] = useState([]);
   const [downloading, setDownloading] = useState(false);
@@ -157,8 +171,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       ]);
       setTerms(termsRes);
       if (termsRes.length > 0) setActiveTerm(termsRes[0].id);
-      setProgrammes(progsRes.data.map(p => ({ value: p.id, label: p.programme_name })));
-      setCurriculums(curricRes.data.map(c => ({ value: c.id, label: c.curriculum_name })));
+      setProgrammes(progsRes.data.map((p) => ({ value: p.id, label: p.programme_name })));
+      setCurriculums(curricRes.data.map((c) => ({ value: c.id, label: c.curriculum_name })));
     } catch (error) {
       notify.error('Failed to initialize data');
     }
@@ -168,7 +182,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     if (key === 'programme') {
       try {
         const classesRes = await fetchClassesByProgramme(val);
-        setClasses(classesRes.data.map(c => ({ value: c.id, label: c.class_name })));
+        setClasses(classesRes.data.map((c) => ({ value: c.id, label: c.class_name })));
         setSubjects([]); // Clear subjects until a class is selected
       } catch (error) {
         console.error('Failed to fetch classes', error);
@@ -176,7 +190,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     } else if (key === 'classLevel') {
       try {
         const subjectsRes = await fetchSubjectsByClass(val);
-        setSubjects(subjectsRes.data.map(s => ({ value: s.id, label: s.subject_name, curriculum_id: s.curriculum_id })));
+        setSubjects(
+          subjectsRes.data.map((s) => ({
+            value: s.id,
+            label: s.subject_name,
+            curriculum_id: s.curriculum_id,
+          })),
+        );
       } catch (error) {
         console.error('Failed to fetch subjects', error);
       }
@@ -220,7 +240,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         await landlordSchemeApi.updateTopic(selectedTopic.topic_id, topicData);
         notify.success('Topic updated successfully');
       } else {
-        await landlordSchemeApi.addTopic({ ...topicData, scheme_of_work_id: selectedRow.scheme_of_work_id });
+        await landlordSchemeApi.addTopic({
+          ...topicData,
+          scheme_of_work_id: selectedRow.scheme_of_work_id,
+        });
         notify.success('Topic added successfully');
       }
       setTopicModalOpen(false);
@@ -256,16 +279,21 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       } else {
         await landlordSchemeApi.addObjective({
           learning_objective_details: objectiveData.learning_objective_details,
-          sub_topic_id: selectedRow.sub_topic_id
+          sub_topic_id: selectedRow.sub_topic_id,
         });
         notify.success('Learning objective added successfully');
       }
 
       // Update scheme entry with all additional fields
-      if (objectiveData.previous_knowledge || objectiveData.practical_approach ||
-        objectiveData.evaluation || objectiveData.instructional_resources ||
-        objectiveData.teaching_note || objectiveData.teacher_activity ||
-        objectiveData.learner_activity) {
+      if (
+        objectiveData.previous_knowledge ||
+        objectiveData.practical_approach ||
+        objectiveData.evaluation ||
+        objectiveData.instructional_resources ||
+        objectiveData.teaching_note ||
+        objectiveData.teacher_activity ||
+        objectiveData.learner_activity
+      ) {
         await landlordSchemeApi.updateSchemeEntry(selectedRow.scheme_of_work_id, {
           previous_knowledge: objectiveData.previous_knowledge,
           practical_approach: objectiveData.practical_approach,
@@ -303,8 +331,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
 
   const paginatedRows = useMemo(() => {
     let filtered = [];
-    Object.keys(rows).forEach(weekName => {
-      rows[weekName].forEach(row => {
+    Object.keys(rows).forEach((weekName) => {
+      rows[weekName].forEach((row) => {
         filtered.push({ ...row, week: weekName });
       });
     });
@@ -423,7 +451,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     if (!prog) return;
     try {
       const clsRes = await fetchClassesByProgramme(prog);
-      setClasses(clsRes.data.map(c => ({ value: c.id, label: c.class_name })));
+      setClasses(clsRes.data.map((c) => ({ value: c.id, label: c.class_name })));
       setSubjects([]); // Clear subjects until a class is selected
     } catch (e) {
       notify.error('Failed to load filter options');
@@ -434,7 +462,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     if (!classId) return;
     try {
       const subRes = await fetchSubjectsByClass(classId);
-      setSubjects(subRes.data.map(s => ({ value: s.id, label: s.subject_name })));
+      setSubjects(subRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
     } catch (e) {
       notify.error('Failed to load subjects');
     }
@@ -483,7 +511,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       setUploadFile(null);
       fetchScheme(activeFilters, activeTerm);
     } catch (e) {
-      notify.error(e.response?.data?.message || 'Upload failed. Check that the file matches the selected filters.');
+      notify.error(
+        e.response?.data?.message ||
+          'Upload failed. Check that the file matches the selected filters.',
+      );
     } finally {
       setUploading(false);
     }
@@ -515,8 +546,18 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
   };
 
   const statCards = [
-    { title: 'Topics', value: analytics.total_topics, icon: <IconFolder color="#39b65a" />, bgColor: '#eaf7ee' },
-    { title: 'Sub Topics', value: analytics.total_subtopics, icon: <IconFolder color="#39b65a" />, bgColor: '#eaf7ee' },
+    {
+      title: 'Topics',
+      value: analytics.total_topics,
+      icon: <IconFolder color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
+    {
+      title: 'Sub Topics',
+      value: analytics.total_subtopics,
+      icon: <IconFolder color="#39b65a" />,
+      bgColor: '#eaf7ee',
+    },
     {
       title: 'Lesson Content',
       value: '0',
@@ -685,8 +726,15 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       {/* Main Content Area */}
       <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee', overflow: 'hidden' }}>
         <Box sx={{ p: 2, px: 3, bgcolor: '#fafafa', borderBottom: '1px solid #eee' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}>
-            MANAGE {(terms.find(t => t.id === activeTerm)?.term_name || activeTerm || '').toString().toUpperCase()} SCHEME OF WORK
+          <Typography
+            variant="subtitle2"
+            sx={{ fontWeight: 700, letterSpacing: 0.5, color: '#333' }}
+          >
+            MANAGE{' '}
+            {(terms.find((t) => t.id === activeTerm)?.term_name || activeTerm || '')
+              .toString()
+              .toUpperCase()}{' '}
+            SCHEME OF WORK
           </Typography>
         </Box>
         <Box
@@ -703,7 +751,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 fullWidth
                 label="Programme"
                 size="small"
-                value={programmes.some(p => p.value === programme) ? programme : ''}
+                value={programmes.some((p) => p.value === programme) ? programme : ''}
                 onChange={(e) => {
                   setProgramme(e.target.value);
                   handleFilterChange('programme', e.target.value);
@@ -722,7 +770,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 fullWidth
                 label="Class"
                 size="small"
-                value={classes.some(c => c.value === classLevel) ? classLevel : ''}
+                value={classes.some((c) => c.value === classLevel) ? classLevel : ''}
                 onChange={(e) => {
                   setClassLevel(e.target.value);
                   handleFilterChange('classLevel', e.target.value);
@@ -741,7 +789,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 fullWidth
                 label="Curriculum"
                 size="small"
-                value={curriculums.some(c => c.value === curriculum) ? curriculum : ''}
+                value={curriculums.some((c) => c.value === curriculum) ? curriculum : ''}
                 onChange={(e) => setCurriculum(e.target.value)}
               >
                 {curriculums.map((c) => (
@@ -757,14 +805,16 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 fullWidth
                 label="Subject"
                 size="small"
-                value={subjects.some(s => s.value === subject) ? subject : ''}
+                value={subjects.some((s) => s.value === subject) ? subject : ''}
                 onChange={(e) => setSubject(e.target.value)}
               >
-                {subjects.filter(s => !curriculum || s.curriculum_id === curriculum).map((s) => (
-                  <MenuItem key={s.value} value={s.value}>
-                    {s.label}
-                  </MenuItem>
-                ))}
+                {subjects
+                  .filter((s) => !curriculum || s.curriculum_id === curriculum)
+                  .map((s) => (
+                    <MenuItem key={s.value} value={s.value}>
+                      {s.label}
+                    </MenuItem>
+                  ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
@@ -780,39 +830,74 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </Box>
 
-
-
         <TableContainer>
           <Table stickyHeader sx={{ whiteSpace: 'nowrap', borderCollapse: 'collapse' }}>
             <TableHead>
               <TableRow sx={{ bgcolor: '#f8f9fa' }}>
-                <TableCell sx={{ fontWeight: 700, width: '8%', border: '1px solid #dee2e6' }}>Week</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>Topic</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>Sub Topic</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>Learning Objectives</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>Lesson Content</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>Video Content</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700, width: '7%', border: '1px solid #dee2e6' }}>Action</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%', border: '1px solid #dee2e6' }}>
+                  Week
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                  Topic
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>
+                  Sub Topic
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '20%', border: '1px solid #dee2e6' }}>
+                  Learning Objectives
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                  Lesson Content
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '15%', border: '1px solid #dee2e6' }}>
+                  Video Content
+                </TableCell>
+                <TableCell
+                  align="center"
+                  sx={{ fontWeight: 700, width: '7%', border: '1px solid #dee2e6' }}
+                >
+                  Action
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginatedRows.length > 0 ? (
                 paginatedRows.map((row, idx) => {
                   const isFirstInWeek = idx === 0 || row.week !== paginatedRows[idx - 1].week;
-                  const isFirstInTopic = idx === 0 || row.topic_id !== paginatedRows[idx - 1].topic_id || isFirstInWeek;
+                  const isFirstInTopic =
+                    idx === 0 || row.topic_id !== paginatedRows[idx - 1].topic_id || isFirstInWeek;
 
                   return (
                     <TableRow key={`${row.week}-${row.topic_id}-${row.sub_topic_id}-${idx}`} hover>
                       {/* Week Column */}
-                      <TableCell sx={{ verticalAlign: 'top', border: '1px solid #dee2e6', bgcolor: isFirstInWeek ? '#fff' : '#fcfcfc' }}>
+                      <TableCell
+                        sx={{
+                          verticalAlign: 'top',
+                          border: '1px solid #dee2e6',
+                          bgcolor: isFirstInWeek ? '#fff' : '#fcfcfc',
+                        }}
+                      >
                         {isFirstInWeek && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{row.week}</Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {row.week}
+                            </Typography>
                             <IconButton
                               size="small"
                               color="primary"
                               onClick={() => handleAddTopic(row.scheme_of_work_id)}
-                              sx={{ bgcolor: 'primary.light', '&:hover': { bgcolor: 'primary.main', color: '#fff' }, p: 0.5, borderRadius: 1 }}
+                              sx={{
+                                bgcolor: 'primary.light',
+                                '&:hover': { bgcolor: 'primary.main', color: '#fff' },
+                                p: 0.5,
+                                borderRadius: 1,
+                              }}
                             >
                               <IconPlus size={14} />
                             </IconButton>
@@ -823,9 +908,18 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                       {/* Topic Column */}
                       <TableCell sx={{ verticalAlign: 'top', border: '1px solid #dee2e6' }}>
                         {isFirstInTopic && row.topic_name && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
                             <Typography variant="body2">{row.topic_name}</Typography>
-                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, row, 'topic')}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleMenuOpen(e, row, 'topic')}
+                            >
                               <MoreVertIcon fontSize="small" />
                             </IconButton>
                           </Box>
@@ -835,9 +929,18 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                       {/* Sub Topic Column */}
                       <TableCell sx={{ border: '1px solid #dee2e6', verticalAlign: 'top' }}>
                         {row.subtopic_name && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
                             <Typography variant="body2">{row.subtopic_name}</Typography>
-                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, row, 'subtopic')}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleMenuOpen(e, row, 'subtopic')}
+                            >
                               <MoreVertIcon fontSize="small" />
                             </IconButton>
                           </Box>
@@ -845,24 +948,49 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                       </TableCell>
 
                       {/* Learning Objectives Column */}
-                      <TableCell sx={{ border: '1px solid #dee2e6', whiteSpace: 'normal', minWidth: 200, verticalAlign: 'top' }}>
+                      <TableCell
+                        sx={{
+                          border: '1px solid #dee2e6',
+                          whiteSpace: 'normal',
+                          minWidth: 200,
+                          verticalAlign: 'top',
+                        }}
+                      >
                         <List size="small" sx={{ p: 0 }}>
                           {row.learningObjectives?.map((lo, lidx) => (
                             <ListItem
                               key={lo.id}
-                              sx={{ p: 0, px: 1, py: 0.5, borderBottom: lidx !== row.learningObjectives.length - 1 ? '1px dashed #eee' : 'none' }}
+                              sx={{
+                                p: 0,
+                                px: 1,
+                                py: 0.5,
+                                borderBottom:
+                                  lidx !== row.learningObjectives.length - 1
+                                    ? '1px dashed #eee'
+                                    : 'none',
+                              }}
                             >
                               <ListItemText
                                 primary={lo.learning_objective_details}
-                                primaryTypographyProps={{ variant: 'body2', color: 'textSecondary' }}
+                                primaryTypographyProps={{
+                                  variant: 'body2',
+                                  color: 'textSecondary',
+                                }}
                               />
-                              <IconButton size="small" onClick={(e) => handleMenuOpen(e, { ...row, ...lo, id: lo.id }, 'objective')}>
+                              <IconButton
+                                size="small"
+                                onClick={(e) =>
+                                  handleMenuOpen(e, { ...row, ...lo, id: lo.id }, 'objective')
+                                }
+                              >
                                 <MoreVertIcon sx={{ fontSize: 14 }} />
                               </IconButton>
                             </ListItem>
                           ))}
                           {(!row.learningObjectives || row.learningObjectives.length === 0) && (
-                            <Typography variant="body2" color="textSecondary">{row.learning_objective}</Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              {row.learning_objective}
+                            </Typography>
                           )}
                         </List>
                       </TableCell>
@@ -898,7 +1026,9 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
                     <Typography color="textSecondary">
-                      {loading ? 'Fetching Scheme of Work...' : 'No records found. Select filters to begin.'}
+                      {loading
+                        ? 'Fetching Scheme of Work...'
+                        : 'No records found. Select filters to begin.'}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -943,14 +1073,18 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         onClose={() => setTopicModalOpen(false)}
         title={selectedTopic ? 'Edit Topic' : 'Add Topic'}
       >
-        <Box component="form" onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          handleSaveTopic({
-            topic_name: formData.get('topic_name'),
-            topic_description: formData.get('topic_description'),
-          });
-        }} sx={{ mt: 2 }}>
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            handleSaveTopic({
+              topic_name: formData.get('topic_name'),
+              topic_description: formData.get('topic_description'),
+            });
+          }}
+          sx={{ mt: 2 }}
+        >
           <TextField
             name="topic_name"
             label="Topic Name"
@@ -980,14 +1114,18 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         onClose={() => setSubtopicModalOpen(false)}
         title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}
       >
-        <Box component="form" onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          handleSaveSubtopic({
-            subtopic_name: formData.get('subtopic_name'),
-            subtopic_description: formData.get('subtopic_description'),
-          });
-        }} sx={{ mt: 2 }}>
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            handleSaveSubtopic({
+              subtopic_name: formData.get('subtopic_name'),
+              subtopic_description: formData.get('subtopic_description'),
+            });
+          }}
+          sx={{ mt: 2 }}
+        >
           <TextField
             name="subtopic_name"
             label="Subtopic Name"
@@ -1018,20 +1156,24 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         title={selectedObjective ? 'Edit Learning Objective' : 'Add Learning Objective'}
         size="large"
       >
-        <Box component="form" onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          handleSaveObjective({
-            learning_objective_details: formData.get('learning_objective_details'),
-            previous_knowledge: formData.get('previous_knowledge'),
-            practical_approach: formData.get('practical_approach'),
-            evaluation: formData.get('evaluation'),
-            instructional_resources: formData.get('instructional_resources'),
-            teaching_note: formData.get('teaching_note'),
-            teacher_activity: formData.get('teacher_activity'),
-            learner_activity: formData.get('learner_activity'),
-          });
-        }} sx={{ mt: 2 }}>
+        <Box
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            handleSaveObjective({
+              learning_objective_details: formData.get('learning_objective_details'),
+              previous_knowledge: formData.get('previous_knowledge'),
+              practical_approach: formData.get('practical_approach'),
+              evaluation: formData.get('evaluation'),
+              instructional_resources: formData.get('instructional_resources'),
+              teaching_note: formData.get('teaching_note'),
+              teacher_activity: formData.get('teacher_activity'),
+              learner_activity: formData.get('learner_activity'),
+            });
+          }}
+          sx={{ mt: 2 }}
+        >
           <TextField
             name="learning_objective_details"
             label="Learning Objective Details"
@@ -1129,81 +1271,157 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {menuType === 'topic' && [
-          <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>Edit Topic</MenuItem>,
-          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id)}>Add Subtopic</MenuItem>,
-          <MenuItem key="delete" onClick={() => handleDeleteClick('topic', selectedRow.topic_id)} sx={{ color: 'error.main' }}>Delete Topic</MenuItem>
+          <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
+            Edit Topic
+          </MenuItem>,
+          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id)}>
+            Add Subtopic
+          </MenuItem>,
+          <MenuItem
+            key="delete"
+            onClick={() => handleDeleteClick('topic', selectedRow.topic_id)}
+            sx={{ color: 'error.main' }}
+          >
+            Delete Topic
+          </MenuItem>,
         ]}
         {menuType === 'subtopic' && [
-          <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow)}>Edit Subtopic</MenuItem>,
-          <MenuItem key="add-lo" onClick={() => handleAddObjective(selectedRow)}>Add Learning Objective</MenuItem>,
-          <MenuItem key="delete" onClick={() => handleDeleteClick('subtopic', selectedRow.sub_topic_id)} sx={{ color: 'error.main' }}>Delete Subtopic</MenuItem>
+          <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow)}>
+            Edit Subtopic
+          </MenuItem>,
+          <MenuItem key="add-lo" onClick={() => handleAddObjective(selectedRow)}>
+            Add Learning Objective
+          </MenuItem>,
+          <MenuItem
+            key="delete"
+            onClick={() => handleDeleteClick('subtopic', selectedRow.sub_topic_id)}
+            sx={{ color: 'error.main' }}
+          >
+            Delete Subtopic
+          </MenuItem>,
         ]}
         {menuType === 'objective' && [
-          <MenuItem key="edit" onClick={() => handleEditObjective(selectedRow)}>Edit Objective</MenuItem>,
-          <MenuItem key="delete" onClick={() => handleDeleteClick('objective', selectedRow.id)} sx={{ color: 'error.main' }}>Delete Objective</MenuItem>
+          <MenuItem key="edit" onClick={() => handleEditObjective(selectedRow)}>
+            Edit Objective
+          </MenuItem>,
+          <MenuItem
+            key="delete"
+            onClick={() => handleDeleteClick('objective', selectedRow.id)}
+            sx={{ color: 'error.main' }}
+          >
+            Delete Objective
+          </MenuItem>,
         ]}
         {menuType === 'row' && [
-          <MenuItem key="view" onClick={() => handleViewDetails(selectedRow.scheme_of_work_id)}>View Details</MenuItem>,
+          <MenuItem key="view" onClick={() => handleViewDetails(selectedRow.scheme_of_work_id)}>
+            View Details
+          </MenuItem>,
         ]}
       </Menu>
 
       {/* ── Download Template Modal ── */}
-      <Dialog open={dlTemplateOpen} onClose={() => setDlTemplateOpen(false)} fullWidth maxWidth="sm">
+      <Dialog
+        open={dlTemplateOpen}
+        onClose={() => setDlTemplateOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Download Scheme Template</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Select the Programme, Class, and Subject you want to generate a blank upload template for.
+            Select the Programme, Class, and Subject you want to generate a blank upload template
+            for.
           </Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Programme" size="small"
+                select
+                fullWidth
+                label="Programme"
+                size="small"
                 value={dlTemplateFilters.programme}
                 onChange={async (e) => {
                   const val = e.target.value;
-                  setDlTemplateFilters(f => ({ ...f, programme: val, classLevel: '', subject: '' }));
-                  await handleModalProgrammeChange(val, setDlTemplateClasses, setDlTemplateSubjects);
+                  setDlTemplateFilters((f) => ({
+                    ...f,
+                    programme: val,
+                    classLevel: '',
+                    subject: '',
+                  }));
+                  await handleModalProgrammeChange(
+                    val,
+                    setDlTemplateClasses,
+                    setDlTemplateSubjects,
+                  );
                 }}
               >
-                {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+                {programmes.map((p) => (
+                  <MenuItem key={p.value} value={p.value}>
+                    {p.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Class" size="small"
+                select
+                fullWidth
+                label="Class"
+                size="small"
                 value={dlTemplateFilters.classLevel}
                 onChange={async (e) => {
-                  setDlTemplateFilters(f => ({ ...f, classLevel: e.target.value }));
+                  setDlTemplateFilters((f) => ({ ...f, classLevel: e.target.value }));
                   await handleModalClassChange(e.target.value, setDlTemplateSubjects);
                 }}
               >
-                {dlTemplateClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                {dlTemplateClasses.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Subject" size="small"
+                select
+                fullWidth
+                label="Subject"
+                size="small"
                 value={dlTemplateFilters.subject}
-                onChange={e => setDlTemplateFilters(f => ({ ...f, subject: e.target.value }))}
+                onChange={(e) => setDlTemplateFilters((f) => ({ ...f, subject: e.target.value }))}
               >
-                {dlTemplateSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                {dlTemplateSubjects.map((s) => (
+                  <MenuItem key={s.value} value={s.value}>
+                    {s.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Term" size="small"
+                select
+                fullWidth
+                label="Term"
+                size="small"
                 value={dlTemplateFilters.term || activeTerm}
-                onChange={e => setDlTemplateFilters(f => ({ ...f, term: e.target.value }))}
+                onChange={(e) => setDlTemplateFilters((f) => ({ ...f, term: e.target.value }))}
               >
-                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
+                {terms.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.term_name}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
           <Button
-            variant="contained" onClick={handleDownloadTemplate}
+            variant="contained"
+            onClick={handleDownloadTemplate}
             startIcon={<IconDownload size={16} />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
@@ -1213,72 +1431,119 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       </Dialog>
 
       {/* ── Upload Template Modal ── */}
-      <Dialog open={uploadOpen} onClose={() => !uploading && setUploadOpen(false)} fullWidth maxWidth="sm">
+      <Dialog
+        open={uploadOpen}
+        onClose={() => !uploading && setUploadOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Upload Scheme Template</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Select the Programme, Class, and Subject this file was generated for, then choose your completed template file.
+            Select the Programme, Class, and Subject this file was generated for, then choose your
+            completed template file.
           </Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Programme" size="small"
+                select
+                fullWidth
+                label="Programme"
+                size="small"
                 value={uploadFilters.programme}
                 onChange={async (e) => {
                   const val = e.target.value;
-                  setUploadFilters(f => ({ ...f, programme: val, classLevel: '', subject: '' }));
+                  setUploadFilters((f) => ({ ...f, programme: val, classLevel: '', subject: '' }));
                   await handleModalProgrammeChange(val, setUploadClasses, setUploadSubjects);
                 }}
               >
-                {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+                {programmes.map((p) => (
+                  <MenuItem key={p.value} value={p.value}>
+                    {p.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Class" size="small"
+                select
+                fullWidth
+                label="Class"
+                size="small"
                 value={uploadFilters.classLevel}
                 onChange={async (e) => {
-                  setUploadFilters(f => ({ ...f, classLevel: e.target.value }));
+                  setUploadFilters((f) => ({ ...f, classLevel: e.target.value }));
                   await handleModalClassChange(e.target.value, setUploadSubjects);
                 }}
               >
-                {uploadClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                {uploadClasses.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Subject" size="small"
+                select
+                fullWidth
+                label="Subject"
+                size="small"
                 value={uploadFilters.subject}
-                onChange={e => setUploadFilters(f => ({ ...f, subject: e.target.value }))}
+                onChange={(e) => setUploadFilters((f) => ({ ...f, subject: e.target.value }))}
               >
-                {uploadSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                {uploadSubjects.map((s) => (
+                  <MenuItem key={s.value} value={s.value}>
+                    {s.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Term" size="small"
+                select
+                fullWidth
+                label="Term"
+                size="small"
                 value={uploadFilters.term || activeTerm}
-                onChange={e => setUploadFilters(f => ({ ...f, term: e.target.value }))}
+                onChange={(e) => setUploadFilters((f) => ({ ...f, term: e.target.value }))}
               >
-                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
+                {terms.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.term_name}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 12, lg: 12 }}>
               <Box
                 sx={{
-                  border: '2px dashed #e0e0e0', borderRadius: 2, p: 2, textAlign: 'center',
-                  bgcolor: uploadFile ? '#f1f8e9' : '#fafafa', cursor: 'pointer',
+                  border: '2px dashed #e0e0e0',
+                  borderRadius: 2,
+                  p: 2,
+                  textAlign: 'center',
+                  bgcolor: uploadFile ? '#f1f8e9' : '#fafafa',
+                  cursor: 'pointer',
                   '&:hover': { borderColor: '#7cb342' },
                 }}
                 onClick={() => document.getElementById('sow-upload-input').click()}
               >
                 <input
-                  id="sow-upload-input" type="file" accept=".xlsx,.xls" hidden
-                  onChange={e => setUploadFile(e.target.files[0] || null)}
+                  id="sow-upload-input"
+                  type="file"
+                  accept=".xlsx,.xls"
+                  hidden
+                  onChange={(e) => setUploadFile(e.target.files[0] || null)}
                 />
                 {uploadFile ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                    <Chip label={uploadFile.name} color="success" onDelete={() => setUploadFile(null)} />
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}
+                  >
+                    <Chip
+                      label={uploadFile.name}
+                      color="success"
+                      onDelete={() => setUploadFile(null)}
+                    />
                   </Box>
                 ) : (
                   <>
@@ -1293,10 +1558,20 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setUploadOpen(false)} disabled={uploading} sx={{ textTransform: 'none' }}>Cancel</Button>
           <Button
-            variant="contained" onClick={handleUploadTemplate} disabled={uploading}
-            startIcon={uploading ? <CircularProgress size={16} color="inherit" /> : <IconUpload size={16} />}
+            onClick={() => setUploadOpen(false)}
+            disabled={uploading}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleUploadTemplate}
+            disabled={uploading}
+            startIcon={
+              uploading ? <CircularProgress size={16} color="inherit" /> : <IconUpload size={16} />
+            }
             sx={{ textTransform: 'none' }}
           >
             {uploading ? 'Uploading…' : 'Upload'}
@@ -1305,63 +1580,116 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       </Dialog>
 
       {/* ── Download Scheme of Work Modal ── */}
-      <Dialog open={dlSchemeOpen} onClose={() => !downloading && setDlSchemeOpen(false)} fullWidth maxWidth="sm">
+      <Dialog
+        open={dlSchemeOpen}
+        onClose={() => !downloading && setDlSchemeOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Download Scheme of Work</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Select the Programme, Class, Subject, and Term whose uploaded Scheme of Work you want to download.
+            Select the Programme, Class, Subject, and Term whose uploaded Scheme of Work you want to
+            download.
           </Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Programme" size="small"
+                select
+                fullWidth
+                label="Programme"
+                size="small"
                 value={dlSchemeFilters.programme}
                 onChange={async (e) => {
                   const val = e.target.value;
-                  setDlSchemeFilters(f => ({ ...f, programme: val, classLevel: '', subject: '' }));
+                  setDlSchemeFilters((f) => ({
+                    ...f,
+                    programme: val,
+                    classLevel: '',
+                    subject: '',
+                  }));
                   await handleModalProgrammeChange(val, setDlSchemeClasses, setDlSchemeSubjects);
                 }}
               >
-                {programmes.map(p => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
+                {programmes.map((p) => (
+                  <MenuItem key={p.value} value={p.value}>
+                    {p.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Class" size="small"
+                select
+                fullWidth
+                label="Class"
+                size="small"
                 value={dlSchemeFilters.classLevel}
                 onChange={async (e) => {
-                  setDlSchemeFilters(f => ({ ...f, classLevel: e.target.value }));
+                  setDlSchemeFilters((f) => ({ ...f, classLevel: e.target.value }));
                   await handleModalClassChange(e.target.value, setDlSchemeSubjects);
                 }}
               >
-                {dlSchemeClasses.map(c => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                {dlSchemeClasses.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Subject" size="small"
+                select
+                fullWidth
+                label="Subject"
+                size="small"
                 value={dlSchemeFilters.subject}
-                onChange={e => setDlSchemeFilters(f => ({ ...f, subject: e.target.value }))}
+                onChange={(e) => setDlSchemeFilters((f) => ({ ...f, subject: e.target.value }))}
               >
-                {dlSchemeSubjects.map(s => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                {dlSchemeSubjects.map((s) => (
+                  <MenuItem key={s.value} value={s.value}>
+                    {s.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 6, lg: 6 }}>
               <TextField
-                select fullWidth label="Term" size="small"
+                select
+                fullWidth
+                label="Term"
+                size="small"
                 value={dlSchemeFilters.term || activeTerm}
-                onChange={e => setDlSchemeFilters(f => ({ ...f, term: e.target.value }))}
+                onChange={(e) => setDlSchemeFilters((f) => ({ ...f, term: e.target.value }))}
               >
-                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
+                {terms.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.term_name}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDlSchemeOpen(false)} disabled={downloading} sx={{ textTransform: 'none' }}>Cancel</Button>
           <Button
-            variant="contained" onClick={handleDownloadScheme} disabled={downloading}
-            startIcon={downloading ? <CircularProgress size={16} color="inherit" /> : <IconDownload size={16} />}
+            onClick={() => setDlSchemeOpen(false)}
+            disabled={downloading}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDownloadScheme}
+            disabled={downloading}
+            startIcon={
+              downloading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <IconDownload size={16} />
+              )
+            }
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             {downloading ? 'Downloading…' : 'Download'}
@@ -1370,11 +1698,21 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       </Dialog>
 
       {/* View Details Modal */}
-      <Dialog open={viewDetailsModalOpen} onClose={() => setViewDetailsModalOpen(false)} fullWidth maxWidth="lg">
-        <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ fontWeight: 700 }}>
-            Scheme of Work Details
-          </Box>
+      <Dialog
+        open={viewDetailsModalOpen}
+        onClose={() => setViewDetailsModalOpen(false)}
+        fullWidth
+        maxWidth="lg"
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 700,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Box sx={{ fontWeight: 700 }}>Scheme of Work Details</Box>
           <Button
             variant="outlined"
             onClick={handlePrint}
@@ -1402,109 +1740,274 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               <Table>
                 <TableBody>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Week</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Week
+                    </TableCell>
                     {/* <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
                     <Typography variant="body2">{viewDetailsData.week?.week_name || 'Not available'}</Typography>
                   </TableCell> */}
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Topic(s)</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Topic(s)
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.topics?.map(t => t.topic_name).join(', ') || 'Not available'}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.topics?.map((t) => t.topic_name).join(', ') ||
+                          'Not available'}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Sub Topic(s)</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Sub Topic(s)
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
                       <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                        {viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).length > 0 ? (
-                          viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).map((item, idx) => (
-                            <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
-                          ))
+                        {viewDetailsData.topics
+                          ?.flatMap((t) => t.subtopics?.map((s) => s.subtopic_name))
+                          .filter(Boolean).length > 0 ? (
+                          viewDetailsData.topics
+                            ?.flatMap((t) => t.subtopics?.map((s) => s.subtopic_name))
+                            .filter(Boolean)
+                            .map((item, idx) => (
+                              <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>
+                                {item}
+                              </Typography>
+                            ))
                         ) : (
-                          <Typography variant="body2" color="textSecondary">Not available</Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
                         )}
                       </Box>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learning Objectives</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Learning Objectives
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
                       <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                        {viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).length > 0 ? (
-                          viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).map((item, idx) => (
-                            <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
-                          ))
+                        {viewDetailsData.topics
+                          ?.flatMap((t) =>
+                            t.subtopics?.flatMap((s) =>
+                              s.learning_objectives?.map((lo) => lo.learning_objective_details),
+                            ),
+                          )
+                          .filter(Boolean).length > 0 ? (
+                          viewDetailsData.topics
+                            ?.flatMap((t) =>
+                              t.subtopics?.flatMap((s) =>
+                                s.learning_objectives?.map((lo) => lo.learning_objective_details),
+                              ),
+                            )
+                            .filter(Boolean)
+                            .map((item, idx) => (
+                              <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>
+                                {item}
+                              </Typography>
+                            ))
                         ) : (
-                          <Typography variant="body2" color="textSecondary">Not available</Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
                         )}
                       </Box>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Lesson Content</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Lesson Content
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.learning_material || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.learning_material || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Video Content</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Video Content
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
                       {viewDetailsData.resource_links ? (
-                        <Typography component="a" href={viewDetailsData.resource_links} target="_blank" variant="body2" color="primary" sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                        <Typography
+                          component="a"
+                          href={viewDetailsData.resource_links}
+                          target="_blank"
+                          variant="body2"
+                          color="primary"
+                          sx={{
+                            textDecoration: 'none',
+                            '&:hover': { textDecoration: 'underline' },
+                          }}
+                        >
                           {viewDetailsData.resource_links}
                         </Typography>
                       ) : (
-                        <Typography variant="body2" color="textSecondary">Not available</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Not available
+                        </Typography>
                       )}
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Practical Approach</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Practical Approach
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.practical_approach || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.practical_approach || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Starter</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Starter
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.starter || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.starter || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teacher Activity</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Teacher Activity
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.teacher_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.teacher_activity || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learner Activity</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Learner Activity
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.learner_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.learner_activity || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Previous Knowledge</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Previous Knowledge
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.previous_knowledge || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.previous_knowledge || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Evaluation</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Evaluation
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.evaluation || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.evaluation || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Instructional Resources</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Instructional Resources
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.instructional_resources || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.instructional_resources || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teaching Note</TableCell>
+                    <TableCell
+                      component="th"
+                      sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                    >
+                      Teaching Note
+                    </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                      <Typography variant="body2">{viewDetailsData.teaching_note || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                      <Typography variant="body2">
+                        {viewDetailsData.teaching_note || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -1513,12 +2016,20 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setViewDetailsModalOpen(false)} variant="contained" sx={{ textTransform: 'none', bgcolor: '#d8b4fe', color: '#581c87', '&:hover': { bgcolor: '#c084fc' } }}>
+          <Button
+            onClick={() => setViewDetailsModalOpen(false)}
+            variant="contained"
+            sx={{
+              textTransform: 'none',
+              bgcolor: '#d8b4fe',
+              color: '#581c87',
+              '&:hover': { bgcolor: '#c084fc' },
+            }}
+          >
             Close
           </Button>
         </DialogActions>
       </Dialog>
-
     </>
   );
 

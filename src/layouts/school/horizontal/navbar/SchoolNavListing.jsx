@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, List, useMediaQuery } from '@mui/material';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import SchoolMenuItems from '../../vertical/sidebar/SchoolMenuItems';
 import SchoolNavItem from './SchoolNavItem';
 import SchoolNavCollapse from './SchoolNavCollapse';
@@ -28,13 +28,7 @@ const SchoolNavListing = () => {
               />
             );
           } else {
-            return (
-              <SchoolNavItem
-                item={item}
-                key={item.id}
-                pathDirect={pathDirect}
-              />
-            );
+            return <SchoolNavItem item={item} key={item.id} pathDirect={pathDirect} />;
           }
         })}
       </List>

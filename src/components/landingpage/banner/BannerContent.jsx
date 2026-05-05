@@ -1,7 +1,7 @@
 import React from 'react';
 import { Typography, Box, Button, Stack, styled, useMediaQuery } from '@mui/material';
 import { IconRocket } from '@tabler/icons';
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
 // third party
 import { motion } from 'framer-motion';
 
@@ -47,11 +47,10 @@ const BannerContent = () => {
             },
           }}
         >
-          Easy to Customize {' '}
+          Easy to Customize{' '}
           <Typography component={'span'} variant="none" color={'primary'}>
             Admin Dashboard
           </Typography>{' '}
-
         </Typography>
       </motion.div>
       <Box pt={4} pb={3}>
@@ -66,7 +65,8 @@ const BannerContent = () => {
           }}
         >
           <Typography variant="h5" fontWeight={300}>
-            Flexy Admin comes with light & dark color skins, well designed dashboards, applications and pages.
+            Flexy Admin comes with light & dark color skins, well designed dashboards, applications
+            and pages.
           </Typography>
         </motion.div>
       </Box>

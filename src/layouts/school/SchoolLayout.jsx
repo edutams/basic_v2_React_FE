@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
-import { Outlet } from 'react-router';
+import { Outlet } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
 import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
 import Customizer from '../full/shared/customizer/Customizer';
@@ -46,7 +46,7 @@ const SchoolLayout = () => {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-             ...(activeLayout === 'vertical' && { paddingTop: '70px' }),
+            ...(activeLayout === 'vertical' && { paddingTop: '70px' }),
             ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),
@@ -55,7 +55,7 @@ const SchoolLayout = () => {
           {activeLayout === 'horizontal' ? <HorizontalHeader /> : <SchoolHeader />}
 
           {activeLayout === 'horizontal' ? <Navigation /> : ''}
-          
+
           <Container
             sx={{
               maxWidth: '100%!important',

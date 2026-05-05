@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
 import { Chip } from '@mui/material';
 
-import { NavLink, useLocation } from 'react-router';
+import { NavLink, useLocation } from 'react-router-dom';
 
 export const NavLinks = [
   {
@@ -36,22 +36,18 @@ export const NavLinks = [
 ];
 
 const Navigations = () => {
-
-
   const StyledButton = styled(Button)(({ theme }) => ({
     a: {
       color: theme.palette.text.secondary,
       fontWeight: 500,
-      fontSize: "15px",
+      fontSize: '15px',
     },
 
-    "&.active": {
-      backgroundColor: "rgba(93, 135, 255, 0.15)",
+    '&.active': {
+      backgroundColor: 'rgba(93, 135, 255, 0.15)',
       color: theme.palette.primary.main,
     },
   }));
-
-
 
   return (
     <>
@@ -70,10 +66,10 @@ const Navigations = () => {
               label="New"
               size="small"
               sx={{
-                ml: "6px",
+                ml: '6px',
                 borderRadius: '8px',
                 color: 'primary.main',
-                backgroundColor: "rgba(93, 135, 255, 0.15)",
+                backgroundColor: 'rgba(93, 135, 255, 0.15)',
               }}
             />
           ) : null}

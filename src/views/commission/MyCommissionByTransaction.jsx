@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, useTheme, TablePagination, Button, TextField, Grid } from '@mui/material';
 import { IconArrowLeft, IconDownload } from '@tabler/icons-react';
 import PageContainer from '../../components/container/PageContainer';

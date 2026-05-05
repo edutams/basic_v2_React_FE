@@ -1,6 +1,6 @@
 import React from 'react';
 import { ListItemButton, ListItem, styled, ListItemText, useTheme } from '@mui/material';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 const SchoolNavItem = ({ item, level, pathDirect, onClick }) => {
   const Icon = item?.icon;

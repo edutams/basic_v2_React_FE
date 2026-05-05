@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AgentContext/auth';
 
@@ -81,11 +81,7 @@ function TabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box>{children}</Box>}
     </div>
   );
 }
@@ -1181,7 +1177,7 @@ const Agent = () => {
                     <TableCell>
                       <Typography variant="h6">Sub Agent</Typography>
                     </TableCell>
-                      <TableCell>
+                    <TableCell>
                       <Typography variant="h6">Total School</Typography>
                     </TableCell>
                     <TableCell>
@@ -1215,11 +1211,11 @@ const Agent = () => {
                       const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                       const adminInitials = fullName
                         ? fullName
-                          .split(' ')
-                          .slice(0, 2)
-                          .map((w) => w[0])
-                          .join('')
-                          .toUpperCase()
+                            .split(' ')
+                            .slice(0, 2)
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
                         : 'NA';
                       const level = Number(agent.access_level);
                       const colorMap = {
@@ -1273,7 +1269,8 @@ const Agent = () => {
                                     color="textSecondary"
                                     sx={{ display: 'block', lineHeight: 1.4 }}
                                   >
-                                    {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
+                                    {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'}{' '}
+                                    Region
                                   </Typography>
                                   <Typography
                                     variant="caption"
@@ -1376,7 +1373,11 @@ const Agent = () => {
                                 </Typography>
                               </Box>
                               <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
-                                <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
+                                <Typography
+                                  variant="caption"
+                                  fontWeight="700"
+                                  sx={{ color: '#fff' }}
+                                >
                                   {agent.tenants_count ?? 0}
                                 </Typography>
                               </Box>
@@ -1476,7 +1477,10 @@ const Agent = () => {
         </TabPanel>
 
         <TabPanel value={tab} index={1}>
-          <ManageTeamTab organizationId={user?.organization?.id} accessLevel={user?.organization?.access_level ?? 1} />
+          <ManageTeamTab
+            organizationId={user?.organization?.id}
+            accessLevel={user?.organization?.access_level ?? 1}
+          />
         </TabPanel>
         <AgentModal
           open={isRegisterModalOpen || isModalOpen}

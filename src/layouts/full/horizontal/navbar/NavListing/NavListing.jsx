@@ -2,12 +2,11 @@
 // @ts-ignore
 import React, { useContext } from 'react';
 import Menudata from '../Menudata';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { Box, List, useMediaQuery } from '@mui/material';
 import NavItem from '../NavItem/NavItem';
 import NavCollapse from '../NavCollapse/NavCollapse';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-
 
 const NavListing = () => {
   const { pathname } = useLocation();
@@ -15,7 +14,7 @@ const NavListing = () => {
   const pathWithoutLastPart = pathname.slice(0, pathname.lastIndexOf('/'));
   const { isCollapse, isSidebarHover } = useContext(CustomizerContext);
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
-  const hideMenu = lgUp ? isCollapse == "mini-sidebar" && !isSidebarHover : '';
+  const hideMenu = lgUp ? isCollapse == 'mini-sidebar' && !isSidebarHover : '';
 
   return (
     <Box>
@@ -29,15 +28,23 @@ const NavListing = () => {
                 hideMenu={hideMenu}
                 pathWithoutLastPart={pathWithoutLastPart}
                 level={1}
-                key={item.id} onClick={undefined} />
+                key={item.id}
+                onClick={undefined}
+              />
             );
 
             // {/********If Sub No Menu**********/}
           } else {
             return (
-              <NavItem item={item} key={item.id} pathDirect={pathDirect} hideMenu={hideMenu} onClick={function () {
-                throw new Error('Function not implemented.');
-              }} />
+              <NavItem
+                item={item}
+                key={item.id}
+                pathDirect={pathDirect}
+                hideMenu={hideMenu}
+                onClick={function () {
+                  throw new Error('Function not implemented.');
+                }}
+              />
             );
           }
         })}

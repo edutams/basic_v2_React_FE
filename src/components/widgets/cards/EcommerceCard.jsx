@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { CardContent, Typography, Rating, Tooltip, Fab, Stack, Skeleton } from '@mui/material';
 import { Grid } from '@mui/material';
 

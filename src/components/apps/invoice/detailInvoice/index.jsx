@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { InvoiceContext } from 'src/context/InvoiceContext/index';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import {
   Typography,
   Button,
@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { Grid } from '@mui/material';
 import { format, isValid, parseISO } from 'date-fns';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import Logo from 'src/layouts/full/shared/logo/Logo';
 
 const InvoiceDetail = () => {

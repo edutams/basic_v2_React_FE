@@ -2,7 +2,6 @@
 // @ts-ignore
 import React, { useContext } from 'react';
 
-
 // mui imports
 import {
   ListItemIcon,
@@ -16,11 +15,9 @@ import {
 } from '@mui/material';
 
 import { useTranslation } from 'react-i18next';
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
 
 import { CustomizerContext } from 'src/context/CustomizerContext';
-
-
 
 const NavItem = ({ item, level, pathDirect, hideMenu, onClick }) => {
   const { isBorderRadius } = useContext(CustomizerContext);
@@ -54,7 +51,6 @@ const NavItem = ({ item, level, pathDirect, hideMenu, onClick }) => {
       },
     },
   }));
-
 
   return (
     <List component="li" disablePadding key={item?.id && item.title}>

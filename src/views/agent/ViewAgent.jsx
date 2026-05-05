@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 import PageContainer from '../../components/container/PageContainer';
@@ -135,7 +135,11 @@ const ViewAgent = () => {
                 agent: data.organization_name || '—',
                 handle: data.organization_email || '—',
                 created_at: tenant.created_at
-                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })
                   : '—',
               })),
             topAgents: [],

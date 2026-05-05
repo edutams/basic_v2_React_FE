@@ -78,9 +78,10 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      // Small tick to let React flush the isAuthenticated state update
-      // before TenantProtectedRoute evaluates it
-      setTimeout(() => navigate(from, { replace: true }), 50);
+      // Redirect parents to their own dashboard, everyone else to the intended page
+      const isParent = result.user?.roles?.includes('parent') ?? false;
+      const destination = isParent ? '/parent/dashboard' : from;
+      setTimeout(() => navigate(destination, { replace: true }), 50);
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }
@@ -135,7 +136,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
       <Box   component="form" onSubmit={handleSubmit}>
         <Stack spacing={0}>
           <Box>
-            <CustomFormLabel htmlFor="login">Login</CustomFormLabel>
+            <CustomFormLabel htmlFor="login">Email/Phone No</CustomFormLabel>
             <CustomTextField
               id="login"
               name="login"

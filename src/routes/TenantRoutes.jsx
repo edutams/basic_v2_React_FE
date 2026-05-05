@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate } from 'react-router';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
+import ParentProtectedRoute from '../components/auth/ParentProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
 
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
@@ -38,6 +39,7 @@ const AccountSetting = Loadable(
 const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
 const ParentManagement = Loadable(lazy(() => import('../views/tenants-views/parents/ParentManagement')),);
 const LearnerManagement = Loadable(lazy(() => import('../views/tenants-views/learners/LearnerManagement')),);
+const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
 
 const TenantRoutes = [
   {
@@ -98,9 +100,11 @@ const TenantRoutes = [
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'profile', element: <AccountSetting /> },
       { path: 'staff-setup', element: <StaffManager /> },
+
+      //Parent routes
+       { path: 'dashboard', element: <ParentDashboard /> },
     ],
   },
-  { path: '*', element: <Navigate to="/login" replace /> },
 ];
 
 export default TenantRoutes;

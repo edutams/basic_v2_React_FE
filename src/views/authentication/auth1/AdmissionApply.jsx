@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Box, Grid, Typography, Alert } from '@mui/material';
+import { Box, Grid, Typography, Alert, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router';
 import { InfoOutlined } from '@mui/icons-material';
 import { useTenantAuth } from '../../../hooks/useTenantAuth';
@@ -12,10 +12,16 @@ import ParentForm from 'src/components/tenant-components/parents/ParentForm';
 
 const AdmissionApply = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const { tenantInfo } = useTenantAuth();
 
   const schoolName = tenantInfo?.school_name || tenantInfo?.tenant_name || tenantInfo?.name || '';
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
+
+  // Build gradient from the resolved primary color
+  const primary = theme.palette.primary.main;
+  const primaryDark = theme.palette.primary.dark || primary;
+  const leftPanelBg = `linear-gradient(160deg, ${primaryDark} 0%, ${primary} 60%, ${primaryDark} 100%)`;
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,12 +51,11 @@ const AdmissionApply = () => {
   return (
     <PageContainer title="Apply for Admission" description="Create Parent Account">
       <Grid container sx={{ minHeight: '100vh', overflowX: 'hidden' }}>
-
         {/* ── Left panel ── */}
         <Grid
           size={{ xs: 12, lg: 4 }}
           sx={{
-            background: 'linear-gradient(160deg, #0d1b5e 0%, #1a3a8f 60%, #0d1b5e 100%)',
+            background: leftPanelBg,
             display: { xs: 'none', lg: 'flex' },
             flexDirection: 'column',
             alignItems: 'center',
@@ -59,13 +64,23 @@ const AdmissionApply = () => {
             px: 4,
           }}
         >
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+            }}
+          >
             <Avatar
               src={schoolLogo || undefined}
               variant="rounded"
               alt={schoolName}
               sx={{
-                width: 100, height: 100,
+                width: 100,
+                height: 100,
                 bgcolor: schoolLogo ? 'transparent' : 'rgba(255,255,255,0.15)',
                 border: '3px solid rgba(255,255,255,0.3)',
               }}
@@ -73,7 +88,13 @@ const AdmissionApply = () => {
               {!schoolLogo && <IconSchool size={52} color="#fff" />}
             </Avatar>
             {schoolName && (
-              <Typography variant="h5" fontWeight={700} color="#fff" textAlign="center" sx={{ lineHeight: 1.3, maxWidth: 260 }}>
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                color="#fff"
+                textAlign="center"
+                sx={{ lineHeight: 1.3, maxWidth: 260 }}
+              >
                 {schoolName}
               </Typography>
             )}
@@ -87,7 +108,12 @@ const AdmissionApply = () => {
               component="img"
               src={EduTAMSLogo}
               alt="EduTAMS"
-              sx={{ height: 22, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.8 }}
+              sx={{
+                height: 22,
+                objectFit: 'contain',
+                filter: 'brightness(0) invert(1)',
+                opacity: 0.8,
+              }}
             />
           </Box>
         </Grid>
@@ -118,15 +144,15 @@ const AdmissionApply = () => {
               Create Parent Account
             </Typography>
 
-            {/* Info banner */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#e8f4fd', borderRadius: 1, px: 2, py: 1, mb: 3 }}>
-              <InfoOutlined sx={{ color: '#1976d2', fontSize: 18 }} />
-              <Typography variant="caption" color="primary">
-                Fill in your details to create a parent account and apply for admission.
-              </Typography>
-            </Box>
+            <Alert severity="info" icon={<InfoOutlined fontSize="inherit" />} sx={{ mb: 3 }}>
+              Fill in your details to create a parent account and apply for admission.
+            </Alert>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
 
             {/* Reuse ParentForm with confirm password shown */}
             <ParentForm
@@ -140,15 +166,20 @@ const AdmissionApply = () => {
               beforeActions={
                 <ReCAPTCHA
                   ref={recaptchaRef}
-                  sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'}
-                  onChange={(token) => { setCaptchaToken(token); if (error) setError(''); }}
+                  sitekey={
+                    import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
+                    '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+                  }
+                  onChange={(token) => {
+                    setCaptchaToken(token);
+                    if (error) setError('');
+                  }}
                   onExpired={() => setCaptchaToken(null)}
                 />
               }
             />
           </Box>
         </Grid>
-
       </Grid>
     </PageContainer>
   );

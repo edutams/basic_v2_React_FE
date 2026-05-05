@@ -188,7 +188,7 @@ const TenantLogin = () => {
                     sx={[
                       buttonStyle,
                       {
-                        background: '##4CAAF8',
+                        background: '#0f81de',
                         color: '#fff',
                       },
                     ]}

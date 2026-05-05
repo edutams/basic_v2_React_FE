@@ -41,6 +41,10 @@ export const TenantAuthProvider = ({ children }) => {
       window.location.replace('/school-not-found');
     } else {
       setTenantInfo(data);
+      // Apply the org's brand color immediately — even on public pages
+      if (data.primary_color) {
+        setPrimaryColor(data.primary_color);
+      }
     }
   };
 

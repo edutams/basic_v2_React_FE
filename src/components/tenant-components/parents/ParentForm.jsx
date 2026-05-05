@@ -239,7 +239,7 @@ const ParentForm = ({
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="Phone" name="phone" value={formik.values.phone}
             onChange={formik.handleChange}
-            onBlur={formik.handleBlur} fullWidth required
+            onBlur={formik.handleBlur} fullWidth
             inputProps={{ maxLength: 11, inputMode: 'numeric' }}
             InputProps={{ inputComponent: PhoneMaskCustom }}
             error={formik.touched.phone && Boolean(formik.errors.phone)}

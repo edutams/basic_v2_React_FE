@@ -57,6 +57,7 @@ import {
   fetchClassesByProgramme,
   fetchSubjectsByProgramme,
   fetchSubjectsByClass,
+  fetchCurriculums,
 } from '../../api/curriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
@@ -70,7 +71,7 @@ const BCrumb = [
   { title: 'Scheme Of Work' },
 ];
 
-const AgentSchemeOfWork = () => {
+const AgentSchemeOfWork = ({ isTab = false }) => {
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -82,6 +83,7 @@ const AgentSchemeOfWork = () => {
   // Filter options
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [curriculums, setCurriculums] = useState([]);
   const [subjects, setSubjects] = useState([]);
 
 
@@ -116,6 +118,7 @@ const AgentSchemeOfWork = () => {
   // Inline Filters
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
+  const [curriculum, setCurriculum] = useState('');
   const [subject, setSubject] = useState('');
 
   // Drawer states
@@ -147,13 +150,15 @@ const AgentSchemeOfWork = () => {
 
   const initData = async () => {
     try {
-      const [termsRes, progsRes] = await Promise.all([
+      const [termsRes, progsRes, curricRes] = await Promise.all([
         landlordSchemeApi.getTerms(),
         fetchProgrammes(),
+        fetchCurriculums(),
       ]);
       setTerms(termsRes);
       if (termsRes.length > 0) setActiveTerm(termsRes[0].id);
       setProgrammes(progsRes.data.map(p => ({ value: p.id, label: p.programme_name })));
+      setCurriculums(curricRes.data.map(c => ({ value: c.id, label: c.curriculum_name })));
     } catch (error) {
       notify.error('Failed to initialize data');
     }
@@ -171,7 +176,7 @@ const AgentSchemeOfWork = () => {
     } else if (key === 'classLevel') {
       try {
         const subjectsRes = await fetchSubjectsByClass(val);
-        setSubjects(subjectsRes.data.map(s => ({ value: s.id, label: s.subject_name })));
+        setSubjects(subjectsRes.data.map(s => ({ value: s.id, label: s.subject_name, curriculum_id: s.curriculum_id })));
       } catch (error) {
         console.error('Failed to fetch subjects', error);
       }
@@ -184,7 +189,7 @@ const AgentSchemeOfWork = () => {
   };
 
   const handleFetch = () => {
-    const filters = { ...activeFilters, programme, classLevel, subject };
+    const filters = { ...activeFilters, programme, classLevel, curriculum, subject };
     setActiveFilters(filters);
     fetchScheme({ subject: filters.subject, classLevel: filters.classLevel }, activeTerm);
   };
@@ -255,12 +260,12 @@ const AgentSchemeOfWork = () => {
         });
         notify.success('Learning objective added successfully');
       }
-      
+
       // Update scheme entry with all additional fields
-      if (objectiveData.previous_knowledge || objectiveData.practical_approach || 
-          objectiveData.evaluation || objectiveData.instructional_resources || 
-          objectiveData.teaching_note || objectiveData.teacher_activity || 
-          objectiveData.learner_activity) {
+      if (objectiveData.previous_knowledge || objectiveData.practical_approach ||
+        objectiveData.evaluation || objectiveData.instructional_resources ||
+        objectiveData.teaching_note || objectiveData.teacher_activity ||
+        objectiveData.learner_activity) {
         await landlordSchemeApi.updateSchemeEntry(selectedRow.scheme_of_work_id, {
           previous_knowledge: objectiveData.previous_knowledge,
           practical_approach: objectiveData.practical_approach,
@@ -271,7 +276,7 @@ const AgentSchemeOfWork = () => {
           learner_activity: objectiveData.learner_activity,
         });
       }
-      
+
       setObjectiveModalOpen(false);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
@@ -530,9 +535,9 @@ const AgentSchemeOfWork = () => {
     { key: 'search', label: 'Search Scheme of Work', type: 'text', placeholder: 'Search...' },
   ];
 
-  return (
-    <PageContainer title="Scheme Of Work" description="Manage Scheme of Work">
-      <Breadcrumb title="Scheme Of Work" items={BCrumb} />
+  const content = (
+    <>
+      {!isTab && <Breadcrumb title="Scheme Of Work" items={BCrumb} />}
 
       {/* Stat Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -579,7 +584,7 @@ const AgentSchemeOfWork = () => {
       </Grid>
 
       {/* Action Buttons */}
-      <Box
+      {/* <Box
         sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -632,7 +637,7 @@ const AgentSchemeOfWork = () => {
             Download Scheme Template
           </Button>
         </Box>
-      </Box>
+      </Box> */}
 
       {/* Toggles & Filter Action */}
       <Box
@@ -692,7 +697,7 @@ const AgentSchemeOfWork = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <TextField
                 select
                 fullWidth
@@ -734,26 +739,42 @@ const AgentSchemeOfWork = () => {
               <TextField
                 select
                 fullWidth
+                label="Curriculum"
+                size="small"
+                value={curriculums.some(c => c.value === curriculum) ? curriculum : ''}
+                onChange={(e) => setCurriculum(e.target.value)}
+              >
+                {curriculums.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <TextField
+                select
+                fullWidth
                 label="Subject"
                 size="small"
                 value={subjects.some(s => s.value === subject) ? subject : ''}
                 onChange={(e) => setSubject(e.target.value)}
               >
-                {subjects.map((s) => (
+                {subjects.filter(s => !curriculum || s.curriculum_id === curriculum).map((s) => (
                   <MenuItem key={s.value} value={s.value}>
                     {s.label}
                   </MenuItem>
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <Button
                 variant="contained"
                 fullWidth
                 onClick={handleFetch}
-                sx={{ textTransform: 'none', fontWeight: 600 }}
+                sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
               >
-                Fetch Scheme of Work
+                Fetch
               </Button>
             </Grid>
           </Grid>
@@ -1354,8 +1375,8 @@ const AgentSchemeOfWork = () => {
           <Box sx={{ fontWeight: 700 }}>
             Scheme of Work Details
           </Box>
-          <Button 
-            variant="outlined" 
+          <Button
+            variant="outlined"
             onClick={handlePrint}
             startIcon={<IconDownload size={18} />}
             sx={{ textTransform: 'none' }}
@@ -1380,114 +1401,114 @@ const AgentSchemeOfWork = () => {
               </Box>
               <Table>
                 <TableBody>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Week</TableCell>
-                  {/* <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Week</TableCell>
+                    {/* <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
                     <Typography variant="body2">{viewDetailsData.week?.week_name || 'Not available'}</Typography>
                   </TableCell> */}
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Topic(s)</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.topics?.map(t => t.topic_name).join(', ') || 'Not available'}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Sub Topic(s)</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                      {viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).length > 0 ? (
-                        viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).map((item, idx) => (
-                          <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
-                        ))
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Topic(s)</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.topics?.map(t => t.topic_name).join(', ') || 'Not available'}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Sub Topic(s)</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).length > 0 ? (
+                          viewDetailsData.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean).map((item, idx) => (
+                            <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="textSecondary">Not available</Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learning Objectives</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).length > 0 ? (
+                          viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).map((item, idx) => (
+                            <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="textSecondary">Not available</Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Lesson Content</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.learning_material || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Video Content</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      {viewDetailsData.resource_links ? (
+                        <Typography component="a" href={viewDetailsData.resource_links} target="_blank" variant="body2" color="primary" sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+                          {viewDetailsData.resource_links}
+                        </Typography>
                       ) : (
                         <Typography variant="body2" color="textSecondary">Not available</Typography>
                       )}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learning Objectives</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Box component="ul" sx={{ pl: 2, m: 0 }}>
-                      {viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).length > 0 ? (
-                        viewDetailsData.topics?.flatMap(t => t.subtopics?.flatMap(s => s.learning_objectives?.map(lo => lo.learning_objective_details))).filter(Boolean).map((item, idx) => (
-                          <Typography component="li" key={idx} variant="body2" sx={{ mb: 0.5 }}>{item}</Typography>
-                        ))
-                      ) : (
-                        <Typography variant="body2" color="textSecondary">Not available</Typography>
-                      )}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Lesson Content</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.learning_material || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Video Content</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    {viewDetailsData.resource_links ? (
-                      <Typography component="a" href={viewDetailsData.resource_links} target="_blank" variant="body2" color="primary" sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
-                        {viewDetailsData.resource_links}
-                      </Typography>
-                    ) : (
-                      <Typography variant="body2" color="textSecondary">Not available</Typography>
-                    )}
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Practical Approach</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.practical_approach || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Starter</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.starter || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teacher Activity</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.teacher_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learner Activity</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.learner_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Previous Knowledge</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.previous_knowledge || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Evaluation</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.evaluation || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Instructional Resources</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.instructional_resources || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-                <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teaching Note</TableCell>
-                  <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
-                    <Typography variant="body2">{viewDetailsData.teaching_note || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Practical Approach</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.practical_approach || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Starter</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.starter || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teacher Activity</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.teacher_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Learner Activity</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.learner_activity || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Previous Knowledge</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.previous_knowledge || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Evaluation</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.evaluation || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Instructional Resources</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.instructional_resources || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
+                    <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>Teaching Note</TableCell>
+                    <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+                      <Typography variant="body2">{viewDetailsData.teaching_note || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}</Typography>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </Box>
           ) : null}
         </DialogContent>
@@ -1498,6 +1519,14 @@ const AgentSchemeOfWork = () => {
         </DialogActions>
       </Dialog>
 
+    </>
+  );
+
+  if (isTab) return content;
+
+  return (
+    <PageContainer title="Scheme Of Work" description="Manage Scheme of Work">
+      {content}
     </PageContainer>
   );
 };

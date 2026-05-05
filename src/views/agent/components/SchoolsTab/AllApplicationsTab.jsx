@@ -20,10 +20,10 @@ import {
   Avatar,
   Link,
 } from '@mui/material';
-import { IconDotsVertical, IconEye } from '@tabler/icons-react';
+import { IconDotsVertical, IconEye, IconEdit } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { getSpaContact, formatDate, StatusChip } from './Schooltabhelpers';
+import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
 
 const AllApplicationsTab = ({
   prospectList,
@@ -35,6 +35,7 @@ const AllApplicationsTab = ({
   nameValue,
   activeFilters,
   onReview,
+  onEdit,
 }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -250,6 +251,18 @@ const AllApplicationsTab = ({
         >
           Review Application
         </MenuItem>
+        {activeRow?.status === 'pending' && (
+          <MenuItem
+            onClick={() => {
+              onEdit(activeRow);
+              setAnchorEl(null);
+            }}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
+            <IconEdit size={16} />
+            Edit
+          </MenuItem>
+        )}
       </Menu>
     </>
   );

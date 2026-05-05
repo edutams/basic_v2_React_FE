@@ -78,7 +78,7 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
             Cancel
           </Button>
           <Button type="submit" variant="contained" color="primary">
-            Add Subject
+              Add Subject
           </Button>
         </Box>
       </form>

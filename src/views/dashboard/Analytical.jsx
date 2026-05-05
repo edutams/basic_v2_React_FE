@@ -361,7 +361,7 @@ export default function Dashboard() {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
-              title="Total Sub Agents"
+              title="Total Organization"
               value={analyticsLoading ? '...' : String(analytics?.totalSubAgents ?? 0)}
               valueColor="#f59e0b"
               valueBg={isDark ? '#2e1e00' : '#FEF3C7'}
@@ -665,7 +665,11 @@ export default function Dashboard() {
         onClose={() => setIsViewUsersListModalOpen(false)}
         schoolName={selectedSchoolForUsers}
       />
-      <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+      <TotalSchoolModal
+        open={isSchoolModalOpen}
+        onClose={() => setIsSchoolModalOpen(false)}
+        stats={analytics}
+      />
       <TotalTransactionModal
         open={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
@@ -673,6 +677,7 @@ export default function Dashboard() {
       <TotalSubAgentModal
         open={isSubAgentModalOpen}
         onClose={() => setIsSubAgentModalOpen(false)}
+        orgId={analytics?.orgId}
       />
     </PageContainer>
   );

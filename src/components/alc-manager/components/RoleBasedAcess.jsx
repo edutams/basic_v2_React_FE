@@ -29,7 +29,7 @@ import ViewRoleModal from './ViewRoleModal';
 import RolePermissionsModal from './RolePermissionsModal';
 import RoleOrganizationsModal from './RoleOrganizationModal';
 
-const AssignmentManagement = () => {
+const RoleBasedAcess = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -70,22 +70,13 @@ const AssignmentManagement = () => {
     }
   };
 
-  const handleRoleSelection = (selectedRole) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => {
-        if (user.id === currentUserForRole.id) {
-          if (!user.assignedRoles.includes(selectedRole)) {
-            return {
-              ...user,
-              assignedRoles: [...user.assignedRoles, selectedRole],
-            };
-          }
-          return user;
-        }
-        return user;
-      }),
-    );
+  const resetFilters = () => {
+    setNameFilter('');
+    setPage(0);
+  };
 
+  const handleRoleSelection = (selectedRole) => {
+    // ... logic if needed
     setRoleAttachmentModalOpen(false);
   };
 
@@ -130,7 +121,7 @@ const AssignmentManagement = () => {
                     Total Permission
                   </TableCell>
                   <TableCell sx={{ width: { xs: '25%', md: '15%' } }} align="center">
-                    Total Organization
+                    Total Org. Teams
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -151,11 +142,11 @@ const AssignmentManagement = () => {
                         </Box>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell align="center">
                         <Box>
-                          <Typography variant="subtitle2" align="center">
+                          <Typography variant="subtitle2">
                             <Link
-                              sx={{ cursor: 'pointer' }}
+                              sx={{ cursor: 'pointer', textDecoration: 'none' }}
                               onClick={() => {
                                 setSelectedRoleId(row.id);
                                 setPermissionsModalOpen(true);
@@ -166,10 +157,10 @@ const AssignmentManagement = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" align="center">
+                      <TableCell align="center">
+                        <Typography variant="subtitle2">
                           <Link
-                            sx={{ cursor: 'pointer' }}
+                            sx={{ cursor: 'pointer', textDecoration: 'none' }}
                             onClick={() => {
                               setSelectedRoleId(row.id);
                               setOrganizationsModalOpen(true);
@@ -184,20 +175,8 @@ const AssignmentManagement = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      <Alert
-                        severity="info"
-                        sx={{
-                          mb: 3,
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          '& .MuiAlert-icon': {
-                            mr: 1.5,
-                          },
-                        }}
-                      >
-                        {hasFilters
-                          ? 'No users match the current filters.'
-                          : 'No users available. Add new users or adjust filters.'}
+                      <Alert severity="info" sx={{ mb: 3, justifyContent: 'center' }}>
+                        {hasFilters ? 'No roles match the search.' : 'No roles available.'}
                       </Alert>
                     </TableCell>
                   </TableRow>
@@ -244,4 +223,4 @@ const AssignmentManagement = () => {
   );
 };
 
-export default AssignmentManagement;
+export default RoleBasedAcess;

@@ -110,7 +110,7 @@ const PersonCard = ({ title, name, gender, email, phone, image, bgColor }) => (
 
 // ── ReviewModal ───────────────────────────────────────────────────────────────
 
-const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) => {
+const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading, isLevel1 }) => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
 
@@ -345,7 +345,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         >
           Close
         </Button>
-        {prospect.status === 'pending' && (
+        {prospect.status === 'pending' && isLevel1 && (
           <>
             {!showRejectInput ? (
               <Button
@@ -386,6 +386,11 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
             </Button>
           </>
+        )}
+        {prospect.status === 'pending' && !isLevel1 && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            Only Level 1 organizations can approve or reject applications
+          </Typography>
         )}
       </DialogActions>
     </Dialog>
@@ -986,6 +991,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
               }}
+              onEdit={handleEdit}
             />
           )}
           {activeTab === 1 && (
@@ -997,6 +1003,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
               }}
+              onEdit={handleEdit}
             />
           )}
           {activeTab === 2 && (
@@ -1022,6 +1029,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
           onApprove={handleApprove}
           onReject={handleReject}
           loading={actionLoading}
+          isLevel1={isLevel1}
         />
 
         <SchoolProfileModal

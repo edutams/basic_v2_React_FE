@@ -8,7 +8,7 @@ import SetCommissionModal from './SetCommission';
 import ManageReferralModal from './ManageReferral';
 import ManageGateway from './ManageGateway';
 import ChangeColorScheme from './ChangeColorScheme';
-import { agentValidationSchema } from '../validation/agentValidationSchema';
+import { createAgentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 import agentApi from '../../../api/agent';
 import { useAuth } from '../../../hooks/useAuth';
@@ -88,7 +88,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
 
   const formik = useFormik({
     initialValues,
-    validationSchema: agentValidationSchema,
+    validationSchema: createAgentValidationSchema(canEditDomain, canSelectColor),
     enableReinitialize: true,
     onSubmit: (values) => {
       if (actionType === 'update') {

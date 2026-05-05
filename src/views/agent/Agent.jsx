@@ -1247,7 +1247,7 @@ const Agent = () => {
                             ) : (
                               <Stack direction="row" spacing={1.5} alignItems="flex-start">
                                 <Avatar
-                                  src={agent.avatar || agent.admin_avatar}
+                                  src={agent.imgsrc}
                                   alt={agent.organizationName}
                                   sx={{
                                     width: 50,
@@ -1258,7 +1258,7 @@ const Agent = () => {
                                     flexShrink: 0,
                                   }}
                                 >
-                                  {!(agent.avatar || agent.admin_avatar) && initials}
+                                  {!(agent.imgsrc) && initials}
                                 </Avatar>
                                 <Box>
                                   <Typography

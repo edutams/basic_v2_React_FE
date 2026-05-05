@@ -98,7 +98,7 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        kskskks Assign Permissskkkions to{' '}
+         Assign Permissskkkions to{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
           "{currentAgent?.name}"
         </Box>

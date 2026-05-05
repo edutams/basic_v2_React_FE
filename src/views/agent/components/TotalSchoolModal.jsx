@@ -35,10 +35,14 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
   const [chartLoading, setChartLoading] = useState(false);
   const [pendingYear, setPendingYear] = useState(year);
 
-  const fetchChartData = useCallback(async (selectedYear) => {
+  const fetchChartData = useCallback(async (selectedYear, selectedAgent = null) => {
     setChartLoading(true);
     try {
-      const res = await agentApi.getSchoolChartData({ year: selectedYear });
+      const params = { year: selectedYear };
+      if (selectedAgent && selectedAgent !== 'All') {
+        params.agent = selectedAgent;
+      }
+      const res = await agentApi.getSchoolChartData(params);
       if (res.status) {
         setChartData(res.data);
       }
@@ -52,12 +56,14 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
   // Fetch when modal opens or year changes (after Filter click)
   useEffect(() => {
     if (open) {
-      fetchChartData(year);
+      fetchChartData(year, agent);
     }
-  }, [open, year, fetchChartData]);
+  }, [open, year, agent, fetchChartData]);
 
   const handleFilter = () => {
     setYear(pendingYear);
+    // Agent state is already updated by the Select onChange, so we just need to trigger the fetch
+    // The useEffect will automatically run when agent changes
   };
 
   const overviewCategories = chartData?.months || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];

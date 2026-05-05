@@ -17,6 +17,7 @@ import {
   TablePagination,
   CircularProgress,
   Alert,
+  Button,
 } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
@@ -32,12 +33,24 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     if (open && orgId) {
       fetchOrganizations();
     }
   }, [open, orgId, page, search]);
+
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   const fetchOrganizations = async () => {
     setLoading(true);
@@ -69,16 +82,14 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
       sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
     >
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
         <TextField
           size="small"
           placeholder="Search by organization name or code"
           fullWidth
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyPress={handleKeyPress}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -87,6 +98,14 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
             ),
           }}
         />
+        <Button 
+          variant="contained" 
+          size="small"
+          onClick={handleSearch}
+          sx={{ height: 40 }}
+        >
+          Search
+        </Button>
       </Box>
 
       <TableContainer sx={{ maxHeight: 450 }}>

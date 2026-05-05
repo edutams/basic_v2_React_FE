@@ -36,7 +36,7 @@ import { useNavigate } from 'react-router';
 
 const columnHelper = createColumnHelper();
 
-const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) => {
+const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel, isViewingProfile = false }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -280,7 +280,7 @@ const TeamTab = ({ team = [], onAddAgent, isDashboard = false, accessLevel }) =>
           </Box>
           <Typography variant="h5">List of Agents</Typography>
         </Stack>
-        {isDashboard && accessLevel === 1 ? null : (
+        {(isDashboard && accessLevel === 1) || (accessLevel === 1 && isViewingProfile) ? null : (
           <Button
             variant="contained"
             startIcon={<IconUsers size={16} />}

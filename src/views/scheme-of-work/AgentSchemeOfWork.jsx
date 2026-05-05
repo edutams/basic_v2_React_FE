@@ -58,7 +58,7 @@ import {
   fetchSubjectsByProgramme,
   fetchSubjectsByClass,
   fetchCurriculums,
-} from '../../api/curriculumApi';
+} from '../../api/tenantCurriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';

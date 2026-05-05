@@ -203,13 +203,22 @@ function SessionsPanel({ isLevel1 }) {
       sessions.findIndex((s) => s.id === active.id),
       sessions.findIndex((s) => s.id === over.id),
     );
-    setSessions(reordered);
+    
+    // Update sort_order values locally to reflect the new order
+    const updatedSessions = reordered.map((session, index) => ({
+      ...session,
+      sort_order: index + 1
+    }));
+    
+    setSessions(updatedSessions);
     setReordering(true);
     try {
       await agentApi.put('/landlord/v1/calendar/sessions/reorder', {
         ids: reordered.map((s) => s.id),
       });
       notify.success('Session order updated successfully');
+      // Refresh data to ensure consistency with backend
+      fetchSessions();
     } catch {
       notify.error('Failed to save order');
       fetchSessions();
@@ -676,13 +685,22 @@ function TermsPanel({ isLevel1 }) {
       terms.findIndex((t) => t.id === active.id),
       terms.findIndex((t) => t.id === over.id),
     );
-    setTerms(reordered);
+    
+    // Update sort_order values locally to reflect the new order
+    const updatedTerms = reordered.map((term, index) => ({
+      ...term,
+      sort_order: index + 1
+    }));
+    
+    setTerms(updatedTerms);
     setReordering(true);
     try {
       await agentApi.put('/landlord/v1/calendar/terms/reorder', {
         ids: reordered.map((t) => t.id),
       });
       notify.success('Term order updated successfully');
+      // Refresh data to ensure consistency with backend
+      fetchTerms();
     } catch {
       notify.error('Failed to save order');
       fetchTerms();

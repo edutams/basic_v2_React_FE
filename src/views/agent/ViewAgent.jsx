@@ -274,12 +274,14 @@ const ViewAgent = () => {
                         label="Schools"
                         value="3"
                       />
+                      {/* {!(currentUser?.organization?.access_level === 1 && !isDashboard && !isOwnProfile) && ( */}
                       <Tab
                         icon={<IconUsers size={18} />}
                         iconPosition="start"
                         label="Manage Team"
                         value="4"
                       />
+                    {/* )} */}
                     </TabList>
                   </Box>
 
@@ -293,6 +295,7 @@ const ViewAgent = () => {
                         onAddAgent={() => setIsAddAgentModalOpen(true)}
                         isDashboard={isDashboard}
                         accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={!isDashboard && !isOwnProfile}
                       />
                     </TabPanel>
                     <TabPanel value="3" sx={{ p: 3 }}>
@@ -303,7 +306,11 @@ const ViewAgent = () => {
                       />
                     </TabPanel>
                     <TabPanel value="4" sx={{ p: 3 }}>
-                      <ManageTeamTab organizationId={id} />
+                      <ManageTeamTab 
+                        organizationId={id} 
+                        accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={!isDashboard && !isOwnProfile}
+                      />
                     </TabPanel>
                   </Box>
                 </TabContext>

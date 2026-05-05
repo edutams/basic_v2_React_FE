@@ -20,6 +20,7 @@ import { SetCommissionModal, ChangeCommissionTypeModal } from './components/Comm
 import CommissionDetailsModal from './components/CommissionDetailsModal';
 import { mockCommissionData } from './mockData';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
+import useAuth from 'src/hooks/useAuth';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -29,6 +30,7 @@ const BCrumb = [
 
 const CommissionManagement = () => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [value, setValue] = useState('1');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
@@ -147,6 +149,13 @@ const CommissionManagement = () => {
               value="4"
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
+            />
+            <Tab
+              label="My Plan"
+              value="5"
+              icon={<IconLayoutDashboard size={18} />}
+              iconPosition="start"
+              sx={{ display: currentUser?.access_level === 1 ? 'none' : 'block' }}
             />
           </Tabs>
         </Box>

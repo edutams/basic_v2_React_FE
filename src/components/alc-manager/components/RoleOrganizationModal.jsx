@@ -62,11 +62,13 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     if (open && roleId) {
       setPage(0);
       setSearch('');
+      setSearchInput('');
       setError(null);
     }
   }, [open, roleId]);
@@ -93,7 +95,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
       }
     } catch (err) {
       console.error('Failed to fetch role organizations:', err);
-      setError('Failed to load agents. Please try again.');
+      setError('Failed to load organizations. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -102,9 +104,21 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
   const handleClose = () => {
     setUsers([]);
     setSearch('');
+    setSearchInput('');
     setPage(0);
     setError(null);
     onClose();
+  };
+
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const getInitials = (name = '') =>
@@ -146,24 +160,43 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2 }}>
-        <TextField
-          placeholder="Search by name or email"
-          value={search}
-          size="small"
-          fullWidth
-          sx={{ mb: 2 }}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+          <TextField
+            placeholder="Search by name or email"
+            value={searchInput}
+            size="small"
+            fullWidth
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button 
+            variant="contained" 
+            onClick={handleSearch}
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
+            Search
+          </Button>
+          {search && (
+            <Button 
+              variant="outlined" 
+              onClick={() => {
+                setSearch('');
+                setSearchInput('');
+                setPage(0);
+              }}
+              sx={{ minWidth: 'auto', px: 2 }}
+            >
+              Clear
+            </Button>
+          )}
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -288,7 +321,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
                         '& .MuiAlert-icon': { mr: 1 },
                       }}
                     >
-                      {search ? 'No agents match your search.' : 'No agents have this role yet.'}
+                      {search ? 'No organizations match your search.' : 'No organizations have this role yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>

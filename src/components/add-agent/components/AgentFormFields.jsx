@@ -159,6 +159,8 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
             onChange={(val) => formik.setFieldValue('organizationLogo', val)}
             error={formik.touched.organizationLogo && Boolean(formik.errors.organizationLogo)}
             helperText={formik.touched.organizationLogo && formik.errors.organizationLogo}
+                defaultImage={'https://cdn-icons-png.flaticon.com/512/171/171917.png'}
+
           />
         </Grid>
 

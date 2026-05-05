@@ -30,6 +30,7 @@ import {
 import {
   getSessions,
   getCurrentSessionForSelect,
+  getCurrentSessionAndAbove,
 } from '../../../context/AgentContext/services/session.service';
 import useNotification from '../../../hooks/useNotification';
 
@@ -230,7 +231,7 @@ const RegisterSchoolForm = ({
 
   // Fetch current session on mount
   useEffect(() => {
-    getCurrentSessionForSelect()
+    getCurrentSessionAndAbove()
       .then((res) => {
         const session = res.data || res;
         setCurrentSession(session);
@@ -239,7 +240,9 @@ const RegisterSchoolForm = ({
           setFormData((prev) => ({ ...prev, session_id: session.id }));
         }
       })
-      .catch(() => notify.error('Failed to load current session'));
+      .catch((error) => {
+        console.error('Failed to fetch current session:', error);
+      });
   }, []);
 
   useEffect(() => {

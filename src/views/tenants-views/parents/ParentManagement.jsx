@@ -411,7 +411,6 @@ const ParentManagement = () => {
                 <TableRow>
                   <TableCell>S/N</TableCell>
                   <TableCell>Name</TableCell>
-                  <TableCell>Title</TableCell>
                   <TableCell align="center">Wards</TableCell>
                   <TableCell>Contact</TableCell>
                   <TableCell>Status</TableCell>
@@ -433,16 +432,10 @@ const ParentManagement = () => {
 
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
-                          {row.user ? `${row.user.fname} ${row.user.lname}` : '—'}
+                          {row.user ? `${row.user?.title || '-'} ${row.user.fname} ${row.user.lname}` : '—'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {relationshipLabel(row.relationship)}
-                        </Typography>
-                      </TableCell>
-
-                      <TableCell>
-                        <Typography variant="body2">
-                          {row.user?.title || '—'}
                         </Typography>
                       </TableCell>
 

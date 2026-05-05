@@ -3,7 +3,7 @@ import { Box, Grid, Typography, Alert, useTheme } from '@mui/material';
 import { useNavigate } from 'react-router';
 import { InfoOutlined } from '@mui/icons-material';
 import { useTenantAuth } from '../../../hooks/useTenantAuth';
-import EduTAMSLogo from 'src/assets/images/logos/EduTAMS.jpeg';
+import EduTAMSLogo from 'src/assets/images/logos/EduTAMS.png';
 import { IconSchool } from '@tabler/icons-react';
 import { Avatar } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
@@ -99,7 +99,7 @@ const AdmissionApply = () => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+            <Typography variant="caption" color="#fff" fontWeight={500}>
               Powered by
             </Typography>
             <Box
@@ -107,13 +107,12 @@ const AdmissionApply = () => {
               src={EduTAMSLogo}
               alt="EduTAMS"
               sx={{
-                height: 22,
+                height: 24,
                 objectFit: 'contain',
-                filter: 'brightness(0) invert(1)',
-                opacity: 0.8,
               }}
             />
           </Box>
+          
         </Grid>
 
         {/* ── Right panel ── */}

@@ -18,10 +18,8 @@ const AdmissionApply = () => {
   const schoolName = tenantInfo?.school_name || tenantInfo?.tenant_name || tenantInfo?.name || '';
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
 
-  // Build gradient from the resolved primary color
   const primary = theme.palette.primary.main;
-  const primaryDark = theme.palette.primary.dark || primary;
-  const leftPanelBg = `linear-gradient(160deg, ${primaryDark} 0%, ${primary} 60%, ${primaryDark} 100%)`;
+  const leftPanelBg = `linear-gradient(180deg, #020411 -19.51%, ${primary} 81.27%)`;
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

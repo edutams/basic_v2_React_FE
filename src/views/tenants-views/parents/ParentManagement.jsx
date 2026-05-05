@@ -432,7 +432,7 @@ const ParentManagement = () => {
 
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
-                          {row.user ? `${row.user?.title || '-'} ${row.user.fname} ${row.user.lname}` : '—'}
+                          {row.user ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}` : '—'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {relationshipLabel(row.relationship)}

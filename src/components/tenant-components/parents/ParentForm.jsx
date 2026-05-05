@@ -89,7 +89,7 @@ const ParentForm = ({
 
   const initialValues = isEdit && selectedParent
     ? {
-        title:        selectedParent.user?.title ?? '',
+        title:        selectedParent.title ?? '',
         first_name:   selectedParent.user?.fname ?? '',
         last_name:    selectedParent.user?.lname ?? '',
         middle_name:  selectedParent.user?.mname ?? '',
@@ -98,7 +98,7 @@ const ParentForm = ({
         gender:       selectedParent.user?.sex ?? '',
         occupation:   selectedParent.occupation ?? '',
         relationship: selectedParent.relationship ?? '',
-        address:      selectedParent.address ?? '',
+        address:      selectedParent.user?.address ?? '',
         confirm_password: '',
       }
     : EMPTY_FORM;
@@ -394,7 +394,7 @@ const ParentForm = ({
 
       {beforeActions && <Box sx={{ mt: 3 }}>{beforeActions}</Box>}
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" gap={1} sx={{ mt: 3 }}>
+      <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} sx={{ mt: 3 }}>
         <Button color="inherit" onClick={onCancel} disabled={isLoading}>{cancelLabel}</Button>
         <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
           {isLoading ? 'Saving...' : (submitText || (isEdit ? 'Save Changes' : 'Add Parent'))}

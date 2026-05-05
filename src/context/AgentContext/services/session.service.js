@@ -71,3 +71,11 @@ export const getCurrentSessionForSelect = async () => {
     throw error.response?.data || error;
   }
 };
+export const getCurrentSessionAndAbove = async () => {
+  try {
+    const res = await api.get('/landlord/v1/calendar/sessions/current-and-above');
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

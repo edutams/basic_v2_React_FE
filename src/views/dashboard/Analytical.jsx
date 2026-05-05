@@ -534,7 +534,7 @@ export default function Dashboard() {
                     >
                       <IconSchool size={16} />
                     </Box>
-                    <Typography variant="h5">List of Agents</Typography>
+                    <Typography variant="h5">Agent Performance</Typography>
                   </Stack>
                   <Button
                     variant="contained"

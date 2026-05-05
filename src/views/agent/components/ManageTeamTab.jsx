@@ -26,7 +26,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
 
 
 
-const ManageTeamTab = ({ organizationId, accessLevel = 1 }) => {
+const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = false }) => {
     const theme = useTheme();
     const isLevelOne = accessLevel === 1;
 
@@ -236,6 +236,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1 }) => {
                     </Box>
                     <Typography variant="h5">Manage Team</Typography>
                 </Stack>
+                {!(accessLevel === 1 && isViewingProfile) && (
                 <Button
                     variant="contained"
                     color="primary"
@@ -244,6 +245,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1 }) => {
                 >
                     Add Team Member
                 </Button>
+            )}
             </Stack>
 
             {loading ? (

@@ -21,6 +21,12 @@ import {
   Alert,
   CircularProgress,
   Link,
+  FormControl,
+  InputLabel,
+  Select,
+  Avatar,
+  MenuItem as SelectMenuItem,
+  Grid,
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -36,6 +42,7 @@ const RoleBasedAcess = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [nameFilter, setNameFilter] = useState('');
+  const [nameFilterInput, setNameFilterInput] = useState('');
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [currentUserForRole, setCurrentUserForRole] = useState(null);
@@ -72,7 +79,19 @@ const RoleBasedAcess = () => {
 
   const resetFilters = () => {
     setNameFilter('');
+    setNameFilterInput('');
     setPage(0);
+  };
+
+  const handleSearch = () => {
+    setNameFilter(nameFilterInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const handleRoleSelection = (selectedRole) => {
@@ -85,15 +104,15 @@ const RoleBasedAcess = () => {
   return (
     <Box>
       <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
+        <Grid container spacing={1} mb={3} alignItems="center">
+        <Grid size={{ xs: 12, md: 4 }}>
           <TextField
-            placeholder="Search by role"
-            value={nameFilter}
-            onChange={(e) => {
-              setNameFilter(e.target.value);
-              setPage(0);
-            }}
-            sx={{ mb: 2 }}
+            fullWidth
+            size="small"
+            label="Search by Role"
+            value={nameFilterInput}
+            onChange={(e) => setNameFilterInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -102,13 +121,19 @@ const RoleBasedAcess = () => {
               ),
             }}
           />
-
-          {hasFilters && (
-            <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
-              Clear Filters
-            </Button>
-          )}
-        </Box>
+        </Grid>
+       
+        <Grid size="auto">
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSearch}
+            sx={{ height: 40 }}
+          >
+            Search
+          </Button>
+        </Grid>
+      </Grid>
 
         <Paper variant="outlined">
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>

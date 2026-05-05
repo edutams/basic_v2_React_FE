@@ -25,6 +25,7 @@ import {
   Select,
   Avatar,
   MenuItem as SelectMenuItem,
+  Grid,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -47,12 +48,13 @@ const AssignmentManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
+  const [nameFilterInput, setNameFilterInput] = useState('');
   const [userTypeFilter, setUserTypeFilter] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
-  const [currentAgentForRole, setCurrentAgentForRole] = useState(null);
+  const [currentOrganizationForRole, setCurrentOrganizationForRole] = useState(null);
   const [directPermissionModalOpen, setDirectPermissionModalOpen] = useState(false);
   const [viewDirectPermissionModalOpen, setViewDirectPermissionModalOpen] = useState(false);
 
@@ -132,7 +134,7 @@ const AssignmentManagement = () => {
         backgroundColor: (theme) => theme.palette.warning.light,
         color: (theme) => theme.palette.warning.main,
       },
-      agent: {
+      organization: {
         backgroundColor: (theme) => theme.palette.secondary.light,
         color: (theme) => theme.palette.secondary.main,
       },
@@ -189,10 +191,10 @@ const AssignmentManagement = () => {
   };
 
   const handleRoleSelection = async (roleIds) => {
-    if (!currentAgentForRole) return;
+    if (!currentOrganizationForRole) return;
 
     const getCurrentRoleIds = () => {
-      const roles = currentAgentForRole.assignedRoles || [];
+      const roles = currentOrganizationForRole.assignedRoles || [];
       return roles.map((r) => {
         if (typeof r === 'object' && r.id !== undefined) {
           return r.id;
@@ -215,7 +217,7 @@ const AssignmentManagement = () => {
     }
 
     try {
-      const assignRes = await aclApi.assignAgentRole(currentAgentForRole.id, roleIds);
+      const assignRes = await aclApi.assignAgentRole(currentOrganizationForRole.id, roleIds);
 
       const res = await aclApi.getAgents();
       let usersData = [];
@@ -243,9 +245,9 @@ const AssignmentManagement = () => {
 
       setUsers(normalized);
 
-      const updatedCurrentAgent = normalized.find((u) => u.id === currentAgentForRole.id);
+      const updatedCurrentAgent = normalized.find((u) => u.id === currentOrganizationForRole.id);
       if (updatedCurrentAgent) {
-        setCurrentAgentForRole(updatedCurrentAgent);
+        setCurrentOrganizationForRole(updatedCurrentAgent);
       }
 
       if (actionType === 'added') {
@@ -267,10 +269,10 @@ const AssignmentManagement = () => {
   };
 
   const handleDirectPermissionSave = async (permissions) => {
-    if (!currentAgentForRole) return;
+    if (!currentOrganizationForRole) return;
 
     try {
-      await aclApi.assignAgentDirectPermissions(currentAgentForRole.id, permissions);
+      await aclApi.assignAgentDirectPermissions(currentOrganizationForRole.id, permissions);
       notify.success('Direct permissions assigned successfully!');
       setDirectPermissionModalOpen(false);
       fetchUsers();
@@ -281,16 +283,16 @@ const AssignmentManagement = () => {
 
   const handleAction = (action, row) => {
     if (action === 'edit') {
-      setCurrentAgentForRole(row);
+      setCurrentOrganizationForRole(row);
       setRoleAttachmentModalOpen(true);
     } else if (action === 'view') {
-      setCurrentAgentForRole(row);
+      setCurrentOrganizationForRole(row);
       setViewRoleModalOpen(true);
     } else if (action === 'directPermission') {
-      setCurrentAgentForRole(row);
+      setCurrentOrganizationForRole(row);
       setDirectPermissionModalOpen(true);
     } else if (action === 'viewDirectPermission') {
-      setCurrentAgentForRole(row);
+      setCurrentOrganizationForRole(row);
       setViewDirectPermissionModalOpen(true);
     }
     handleMenuClose();
@@ -306,15 +308,15 @@ const AssignmentManagement = () => {
       );
     });
 
-    // Any agent can see agents they created (their children)
-    // Level 1 agents can see ALL agents
+    // Any organization can see organizations they created (their children)
+    // Level 1 organizations can see ALL organizations
     const currentUserId = currentUser?.id;
     if (currentUserLevel && currentUserLevel > 1) {
       filtered = filtered.filter((user) => {
         if (user.id === currentUserId) {
           return false;
         }
-        // Only include agents created by current user (their children)
+        // Only include organizations created by current user (their children)
         return user.parent_id === currentUserId;
       });
     }
@@ -337,9 +339,21 @@ const AssignmentManagement = () => {
 
   const resetFilters = () => {
     setNameFilter('');
+    setNameFilterInput('');
     setUserTypeFilter('');
     setLevelFilter('');
     setPage(0);
+  };
+
+  const handleSearch = () => {
+    setNameFilter(nameFilterInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const hasFilters = nameFilter !== '' || userTypeFilter !== '' || levelFilter !== '';
@@ -352,16 +366,15 @@ const AssignmentManagement = () => {
         </Box>
       }
     >
-      <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
+      <Grid container spacing={1} mb={3} alignItems="center">
+        <Grid size={{ xs: 12, md: 4 }}>
           <TextField
-            placeholder="Search by name"
-            value={nameFilter}
-            onChange={(e) => {
-              setNameFilter(e.target.value);
-              setPage(0);
-            }}
-            sx={{ mb: 2, minWidth: 200 }}
+            fullWidth
+            size="small"
+            label="Search by Name"
+            value={nameFilterInput}
+            onChange={(e) => setNameFilterInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -370,14 +383,16 @@ const AssignmentManagement = () => {
               ),
             }}
           />
-          {/* Agent Level Filter - Only for Level 1 users */}
-          {currentUserLevel === 1 && (
-            <FormControl sx={{ mb: 2, minWidth: 150 }}>
-              <InputLabel id="level-filter-label">Agent Level</InputLabel>
+        </Grid>
+
+        {currentUserLevel === 1 && (
+          <Grid size={{ xs: 12, md: 3 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="level-filter-label">Organization Level</InputLabel>
               <Select
                 labelId="level-filter-label"
                 value={levelFilter}
-                label="Agent Level"
+                label="Organization Level"
                 onChange={(e) => {
                   setLevelFilter(e.target.value);
                   setPage(0);
@@ -391,13 +406,23 @@ const AssignmentManagement = () => {
                 <SelectMenuItem value="5">Level 5</SelectMenuItem>
               </Select>
             </FormControl>
-          )}
-          {hasFilters && (
-            <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
-              Clear Filters
-            </Button>
-          )}
-        </Box>
+          </Grid>
+        )}
+
+        {/* 👇 key change */}
+        <Grid size="auto">
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSearch}
+            sx={{ height: 40 }} // match input height
+          >
+            Search
+          </Button>
+        </Grid>
+      </Grid>
+      <Box sx={{ p: 0 }}>
+
 
         <Paper variant="outlined">
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
@@ -562,24 +587,24 @@ const AssignmentManagement = () => {
       <RoleAttachmentModal
         open={roleAttachmentModalOpen}
         onClose={() => setRoleAttachmentModalOpen(false)}
-        currentAgent={currentAgentForRole}
+        currentAgent={currentOrganizationForRole}
         onRoleSelection={handleRoleSelection}
       />
       <ViewRoleModal
         open={viewRoleModalOpen}
         onClose={() => setViewRoleModalOpen(false)}
-        currentUser={currentAgentForRole}
+        currentUser={currentOrganizationForRole}
       />
       <DirectPermissionModal
         open={directPermissionModalOpen}
         onClose={() => setDirectPermissionModalOpen(false)}
-        currentAgent={currentAgentForRole}
+        currentAgent={currentOrganizationForRole}
         onPermissionSave={handleDirectPermissionSave}
       />
       <ViewDirectPermissionModal
         open={viewDirectPermissionModalOpen}
         onClose={() => setViewDirectPermissionModalOpen(false)}
-        currentUser={currentAgentForRole}
+        currentUser={currentOrganizationForRole}
       />
     </ParentCard>
   );

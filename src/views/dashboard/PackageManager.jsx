@@ -87,7 +87,7 @@ const EduTier = () => {
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
   const [openTotalTransactionModal, setOpenTotalTransactionModal] = useState(false);
   const { user: currentUser } = useAuth();
-  const currentUserLevel = currentUser?.access_level;
+  const currentUserLevel = currentUser?.organization?.access_level;
 
   const handleChange = (event, newValue) => {
     setValue(newValue);

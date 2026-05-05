@@ -244,24 +244,19 @@ const RegisterSchoolForm = ({
   //       console.error('Failed to fetch current session:', error);
   //     });
   // }, []);
-// Fetch all sessions on mount
+// Fetch current session on mount
 useEffect(() => {
-  getSessions()
+  getCurrentSessionAndAbove()
     .then((res) => {
-      const allSessions = res.data || res;
-      setSessions(allSessions);
-      
-      // Find current session
-      const current = allSessions.find(session => session.is_current === 'yes');
-      setCurrentSession(current);
-      
-      // Preselect current session if user hasn't selected anything yet
-      if (!formData.session_id && current?.id) {
-        setFormData((prev) => ({ ...prev, session_id: current.id }));
+      const session = res.data || res;
+      setCurrentSession(session);
+      // Only prefill if user hasn't selected anything yet
+      if (!formData.session_id && session?.id) {
+        setFormData((prev) => ({ ...prev, session_id: session.id }));
       }
     })
     .catch((error) => {
-      console.error('Failed to fetch sessions:', error);
+      console.error('Failed to fetch current session:', error);
     });
 }, []);
   useEffect(() => {
@@ -316,7 +311,6 @@ useEffect(() => {
       head: src !== 'none' ? copyPerson(src) : emptyPerson(),
     }));
   };
-const [sessions, setSessions] = useState([]);
   // ── validation ───────────────────────────────────────────────────────────
 
   const validateForm = () => {
@@ -493,10 +487,9 @@ const [sessions, setSessions] = useState([]);
   name="session_id"
   value={formData.session_id}
   label="Session"
-  onChange={handleChange}
->
+  onChange={handleChange}>
   <MenuItem value="">-- Select Session --</MenuItem>
-  {sessions.map((session) => (
+  {currentSession && currentSession.map((session) => (
     <MenuItem key={session.id} value={session.id}>
       {session.sesname} {session.is_current === 'yes' && '(Current)'}
     </MenuItem>

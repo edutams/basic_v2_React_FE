@@ -265,7 +265,7 @@ const SchoolAlcManager = () => {
                   <TableRow>
                     <TableCell>S/N</TableCell>
                     <TableCell>Role Name</TableCell>
-                    <TableCell>Guard Name</TableCell>
+                    {/* <TableCell>Guard Name</TableCell> */}
                     <TableCell>Description</TableCell>
                     <TableCell align="center">Action</TableCell>
                   </TableRow>
@@ -283,7 +283,7 @@ const SchoolAlcManager = () => {
                       <TableRow key={row.id}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>{row.name}</TableCell>
-                        <TableCell>{row.guard_name}</TableCell>
+                        {/* <TableCell>{row.guard_name}</TableCell> */}
                         <TableCell>{row.description}</TableCell>
 
                         <TableCell align="center">

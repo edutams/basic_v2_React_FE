@@ -23,6 +23,7 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
+  Backdrop,
   Menu,
 } from '@mui/material';
 import {
@@ -105,7 +106,7 @@ function SessionsPanel({ isLevel1 }) {
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null); // session being edited
-  const [form, setForm] = useState({ sesname: '', status: 'active', is_current: 'no' });
+  const [form, setForm] = useState({ sesname: '', status: 'active' });
   const [errors, setErrors] = useState({});
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
@@ -113,6 +114,8 @@ function SessionsPanel({ isLevel1 }) {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [setCurrentOpen, setSetCurrentOpen] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -177,13 +180,13 @@ function SessionsPanel({ isLevel1 }) {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ sesname: '', status: 'active', is_current: 'no' });
+    setForm({ sesname: '', status: 'active' });
     setErrors({});
     setCreateOpen(true);
   };
   const openEdit = (s) => {
     setEditTarget(s);
-    setForm({ sesname: s.sesname, status: s.status, is_current: s.is_current });
+    setForm({ sesname: s.sesname, status: s.status });
     setErrors({});
     setCreateOpen(true);
   };
@@ -201,13 +204,17 @@ function SessionsPanel({ isLevel1 }) {
       sessions.findIndex((s) => s.id === over.id),
     );
     setSessions(reordered);
+    setReordering(true);
     try {
       await agentApi.put('/landlord/v1/calendar/sessions/reorder', {
         ids: reordered.map((s) => s.id),
       });
+      notify.success('Session order updated successfully');
     } catch {
       notify.error('Failed to save order');
       fetchSessions();
+    } finally {
+      setReordering(false);
     }
   };
 
@@ -216,7 +223,6 @@ function SessionsPanel({ isLevel1 }) {
     if (!form.sesname || !/^\d{4}\/\d{4}$/.test(form.sesname))
       errs.sesname = 'Must be YYYY/YYYY (e.g. 2024/2025)';
     if (!form.status) errs.status = 'Required';
-    if (!form.is_current) errs.is_current = 'Required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -280,8 +286,44 @@ function SessionsPanel({ isLevel1 }) {
     setSelectedSession(null);
   };
 
+  const handleSetCurrent = (s) => {
+    handleMenuClose();
+    setSelectedSession(s);
+    setForm({ is_current: s.is_current });
+    setSetCurrentOpen(true);
+  };
+
+  const handleSetCurrentSubmit = async () => {
+    try {
+      setSubmitting(true);
+      await agentApi.put(`/landlord/v1/calendar/sessions/${selectedSession.id}`, {
+        ...selectedSession,
+        is_current: form.is_current,
+      });
+      notify.success('Current session updated');
+      setSetCurrentOpen(false);
+      fetchSessions();
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to update current session');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <>
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: 'column',
+          gap: 2,
+        }}
+        open={reordering}
+      >
+        <CircularProgress color="inherit" />
+        <Typography variant="h6">Order updating...</Typography>
+      </Backdrop>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
@@ -414,6 +456,10 @@ function SessionsPanel({ isLevel1 }) {
                               <IconEdit size={16} style={{ marginRight: 8 }} />
                               Edit
                             </MenuItem>
+                            <MenuItem onClick={() => handleSetCurrent(s)}>
+                              <IconPlus size={16} style={{ marginRight: 8 }} />
+                              Set as Current
+                            </MenuItem>
                             <MenuItem
                               onClick={() => handleDeleteClick(s)}
                               sx={{ color: 'error.main' }}
@@ -489,17 +535,28 @@ function SessionsPanel({ isLevel1 }) {
             <MenuItem value="active">Active</MenuItem>
             <MenuItem value="inactive">Inactive</MenuItem>
           </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDialog}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} /> : editTarget ? 'Save Changes' : 'Create Session'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Set Current Session Dialog */}
+      <Dialog open={setCurrentOpen} onClose={() => setSetCurrentOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Set Current Session</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Updating current session status for <strong>{selectedSession?.sesname}</strong>
+          </Typography>
           <TextField
             fullWidth
             select
-            label="Set as Current Session?"
-            value={form.is_current}
-            error={!!errors.is_current}
-            helperText={errors.is_current}
-            onChange={(e) => {
-              setErrors((p) => ({ ...p, is_current: undefined }));
-              setForm((p) => ({ ...p, is_current: e.target.value }));
-            }}
+            label="Is Current Session?"
+            value={form.is_current || 'no'}
+            onChange={(e) => setForm((p) => ({ ...p, is_current: e.target.value }))}
             margin="normal"
           >
             <MenuItem value="yes">Yes</MenuItem>
@@ -507,9 +564,9 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? <CircularProgress size={20} /> : editTarget ? 'Save Changes' : 'Create Session'}
+          <Button onClick={() => setSetCurrentOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSetCurrentSubmit} disabled={submitting}>
+            {submitting ? <CircularProgress size={20} /> : 'Update Status'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -543,6 +600,7 @@ function TermsPanel({ isLevel1 }) {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -619,13 +677,17 @@ function TermsPanel({ isLevel1 }) {
       terms.findIndex((t) => t.id === over.id),
     );
     setTerms(reordered);
+    setReordering(true);
     try {
       await agentApi.put('/landlord/v1/calendar/terms/reorder', {
         ids: reordered.map((t) => t.id),
       });
+      notify.success('Term order updated successfully');
     } catch {
       notify.error('Failed to save order');
       fetchTerms();
+    } finally {
+      setReordering(false);
     }
   };
 
@@ -698,6 +760,18 @@ function TermsPanel({ isLevel1 }) {
 
   return (
     <>
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: 'column',
+          gap: 2,
+        }}
+        open={reordering}
+      >
+        <CircularProgress color="inherit" />
+        <Typography variant="h6">Order updating...</Typography>
+      </Backdrop>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
@@ -899,6 +973,7 @@ function MappingsPanel() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedMapping, setSelectedMapping] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [reordering, setReordering] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -943,13 +1018,17 @@ function MappingsPanel() {
       mappings.findIndex((m) => m.id === over.id),
     );
     setMappings(reordered);
+    setReordering(true);
     try {
       await agentApi.put('/landlord/v1/calendar/mappings/reorder', {
         ids: reordered.map((m) => m.id),
       });
+      notify.success('Mapping order updated successfully');
     } catch {
       notify.error('Failed to save order');
       fetchAll();
+    } finally {
+      setReordering(false);
     }
   };
 
@@ -1025,6 +1104,18 @@ function MappingsPanel() {
 
   return (
     <>
+      <Backdrop
+        sx={{
+          color: '#fff',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: 'column',
+          gap: 2,
+        }}
+        open={reordering}
+      >
+        <CircularProgress color="inherit" />
+        <Typography variant="h6">Order updating...</Typography>
+      </Backdrop>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">My Session–Term Mappings</Typography>
         <Button

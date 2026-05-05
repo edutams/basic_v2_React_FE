@@ -3,12 +3,30 @@ import { Grid, Box, Button } from '@mui/material';
 import AgentFormFields from './AgentFormFields';
 
 const AgentForm = ({ formik, onCancel, actionType, loading, canSelectColor = true, canEditDomain = true }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log('Form submitted, validation errors:', formik.errors);
+    console.log('Form values:', formik.values);
+    console.log('Form touched:', formik.touched);
+    console.log('Form isValid:', formik.isValid);
+    
+    if (!formik.isValid) {
+      // Touch all fields to show validation errors
+      Object.keys(formik.values).forEach(key => {
+        formik.setFieldTouched(key, true);
+      });
+      return;
+    }
+    
+    formik.handleSubmit();
+  };
+
   return (
-    <form onSubmit={formik.handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <Grid container spacing={2} mb={3}>
-        <AgentFormFields 
-          formik={formik} 
-          canSelectColor={actionType !== 'update' && canSelectColor} 
+        <AgentFormFields
+          formik={formik}
+          canSelectColor={actionType !== 'update' && canSelectColor}
           canEditDomain={canEditDomain}
         />
       </Grid>
@@ -21,7 +39,13 @@ const AgentForm = ({ formik, onCancel, actionType, loading, canSelectColor = tru
           <Button
             type="submit"
             variant="contained"
-            disabled={loading}
+            disabled={loading || !formik.isValid}
+            onClick={(e) => {
+              console.log('Button clicked directly');
+              if (!loading && formik.isValid) {
+                handleSubmit(e);
+              }
+            }}
           >
             {loading ? 'Saving...' : (actionType === 'update' ? 'Update Organization' : 'Create Organization')}
           </Button>

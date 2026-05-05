@@ -23,6 +23,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Avatar,
   MenuItem as SelectMenuItem,
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -70,9 +71,13 @@ const AssignmentManagement = () => {
       // Map organization data to user format for the UI
       const normalized = (usersData || []).map((u) => ({
         id: u.id,
-        name: u.organization_name || u.name,
-        email: u.organization_email || u.email,
+        name: u.name,
+        email: u.email,
         image: u.image || '/src/assets/images/users/default_avatar.png',
+        organization_name: u.organization_name,
+        organization_code: u.organization_code,
+        organization_logo: u.organization_logo,
+        organization_email: u.organization_email,
         level: u.level || null,
         parent_id: u.parent_id || null,
         status: u.status || 'active',
@@ -91,7 +96,13 @@ const AssignmentManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
-
+  const getInitials = (name = '') =>
+    name
+      .split(' ')
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(row);
@@ -217,9 +228,13 @@ const AssignmentManagement = () => {
       // Map organization data to user format for the UI (same as fetchUsers)
       const normalized = (usersData || []).map((u) => ({
         id: u.id,
-        name: u.organization_name || u.name,
-        email: u.organization_email || u.email,
+        name: u.name,
+        email: u.email,
         image: u.image || '/src/assets/images/users/default_avatar.png',
+        organization_name: u.organization_name,
+        organization_code: u.organization_code,
+        organization_logo: u.organization_logo,
+        organization_email: u.organization_email,
         level: u.level || null,
         parent_id: u.parent_id || null,
         status: u.status || 'active',
@@ -389,11 +404,14 @@ const AssignmentManagement = () => {
             <Table sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: '10%' }}>#</TableCell>
-                  <TableCell sx={{ width: { xs: '40%', md: '35%' } }}>
-                    Organization Details
+                  <TableCell sx={{ width: '5%' }}>#</TableCell>
+                  <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>
+                    User Details
                   </TableCell>
-                  <TableCell sx={{ width: { xs: '35%', md: '35%' } }}>Assigned Role</TableCell>
+                  <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>
+                    Organization
+                  </TableCell>
+                  <TableCell sx={{ width: { xs: '30%', md: '35%' } }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Action
                   </TableCell>
@@ -411,48 +429,52 @@ const AssignmentManagement = () => {
                     <TableRow key={user.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 2,
-                            flexWrap: { xs: 'wrap', md: 'nowrap' },
-                          }}
-                        >
-                          <img
-                            src={user.image}
-                            alt={user.name}
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: '50%',
-                              objectFit: 'cover',
-                            }}
-                          />
-
-                          <Box
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            src={user.avatar}
                             sx={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'flex-start',
+                              width: 30,
+                              height: 30,
+                              fontSize: 11,
+                              bgcolor: 'primary.light',
+                              color: 'primary.main',
                             }}
                           >
-                            <Typography variant="subtitle2">{user.name}</Typography>
-                            <Typography variant="caption" color="textSecondary">
+                            {!user.avatar && getInitials(user.name)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={500} noWrap>
+                              {user.name}
+                            </Typography>
+                            <Typography variant="small" color="text.secondary">
                               {user.email}
                             </Typography>
-                            {user.level !== undefined && user.level !== null && (
-                              <Chip
-                                label={`Level: ${user.level}`}
-                                size="small"
-                                sx={{
-                                  mt: 0.5,
-                                  height: 20,
-                                  fontSize: '0.7rem',
-                                  ...getLevelChipSx(user.level),
-                                }}
-                              />
-                            )}
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            src={user?.organization_logo}
+                            sx={{
+                              width: 30,
+                              height: 30,
+                              fontSize: 11,
+                              bgcolor: 'primary.light',
+                              color: 'primary.main',
+                            }}
+                          >
+                            {!user?.organization_logo && getInitials(user?.organization_name)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={500} noWrap>
+                              {user?.organization_name}
+                            </Typography>
+                            <Typography variant="body2">{user.organization_email}</Typography>
+
+                            <Typography variant="body2" color="text.secondary">
+                              {user?.organization_code}
+                            </Typography>
                           </Box>
                         </Box>
                       </TableCell>
@@ -481,14 +503,14 @@ const AssignmentManagement = () => {
                           onClose={handleMenuClose}
                         >
                           <MenuItem onClick={() => handleAction('edit', user)}>
-                            Attach Role
+                            Assign Role
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('view', user)}>View Role</MenuItem>
+                          <MenuItem onClick={() => handleAction('view', user)}>View Assigned Roles</MenuItem>
                           <MenuItem onClick={() => handleAction('directPermission', user)}>
-                            Assign Direct Permission
+                            Assign  Permission
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
-                            View Direct Permission
+                            View  Permission
                           </MenuItem>
                         </Menu>
                       </TableCell>

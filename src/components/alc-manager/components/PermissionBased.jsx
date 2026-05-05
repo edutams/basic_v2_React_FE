@@ -193,7 +193,7 @@ const AssignmentManagement = () => {
                     Total Role
                   </TableCell>
                   <TableCell sx={{ width: { xs: '25%', md: '15%' } }} align="center">
-                    Total Organization
+                    Total Org. Teams
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -210,7 +210,12 @@ const AssignmentManagement = () => {
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box>
-                          <Typography variant="subtitle2">{user.name}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {user.description}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary" sx={{ fontSize: '10px' }}>
+                            {user.name}
+                          </Typography>
                         </Box>
                       </TableCell>
 

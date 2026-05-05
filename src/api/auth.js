@@ -35,8 +35,8 @@ api.interceptors.response.use(
       } catch (refreshError) {
         console.error('Refresh token failed:', refreshError);
         localStorage.removeItem('access_token');
-        if (window.location.pathname !== '/auth/login') {
-          window.location.href = '/auth/login';
+        if (window.location.pathname !== '/agent/login') {
+          window.location.href = '/agent/login';
         }
       }
     }

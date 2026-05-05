@@ -45,61 +45,22 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
     if (!currentAgent?.id) return;
 
     try {
-      // Get direct permissions
-      const directRes = await aclApi.getAgentDirectPermissions(currentAgent.id);
-      const directPerms = directRes?.data || [];
+      // Get direct and inherited permissions in one call
+      const res = await aclApi.getAgentDirectPermissions(currentAgent.id);
+
+      const directPerms = res?.data?.direct || [];
+      const inheritedPerms = res?.data?.inherited || [];
+
       setDirectPermissions(directPerms);
 
-      // Get the organization's roles
-      const rolesRes = await aclApi.getAgents();
-      let agentData = null;
-
-      if (Array.isArray(rolesRes.data)) {
-        agentData = rolesRes.data.find((a) => a.id === currentAgent.id);
-      } else if (rolesRes.data?.data) {
-        agentData = rolesRes.data.data.find((a) => a.id === currentAgent.id);
-      }
-
-      // Get permissions from all assigned roles
-      let rolePermissions = [];
-      if (agentData?.roles && Array.isArray(agentData.roles)) {
-        for (const role of agentData.roles) {
-          try {
-            // Handle both string role names and role objects
-            const roleId = typeof role === 'object' ? role.id : role;
-            const roleName = typeof role === 'object' ? role.name : role;
-
-            // First, get all roles to find the role ID if we have a name
-            const allRolesRes = await aclApi.getRolesList();
-            const allRoles = allRolesRes?.data || [];
-
-            let targetRoleId = roleId;
-            if (!targetRoleId) {
-              const foundRole = allRoles.find((r) => r.name === roleName);
-              targetRoleId = foundRole?.id;
-            }
-
-            if (targetRoleId) {
-              const rolePermsRes = await aclApi.getRolePermissions(targetRoleId);
-              if (rolePermsRes?.data?.permissions) {
-                rolePermissions = [
-                  ...rolePermissions,
-                  ...rolePermsRes.data.permissions.map((p) => p.name),
-                ];
-              }
-            }
-          } catch (err) {
-            console.error('Failed to fetch role permissions:', err);
-          }
-        }
-      }
-
-      // Set all permissions (for display), but only pre-select direct permissions
-      const allPermissions = [...new Set([...directPerms, ...rolePermissions])];
+      // All permissions for the user (direct + inherited)
+      const allPermissions = [...new Set([...directPerms, ...inheritedPerms])];
       setCurrentPermissions(allPermissions);
+
+      // For the checklist, we only pre-select direct permissions
       setSelectedPermissions(directPerms);
     } catch (err) {
-      console.error('Failed to fetch current permissions:', err);
+      console.error('Failed to fetch user permissions:', err);
     }
   };
 
@@ -137,7 +98,7 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        Assign Direct Permissions to{' '}
+        kskskks Assign Permissskkkions to{' '}
         <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
           "{currentAgent?.name}"
         </Box>
@@ -223,14 +184,21 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
                       mr: 1,
                       '&::after': isSelected(permission)
                         ? {
-                            content: '"✓"',
-                            color: '#fff',
-                            fontSize: '12px',
-                          }
+                          content: '"✓"',
+                          color: '#fff',
+                          fontSize: '12px',
+                        }
                         : {},
                     }}
                   />
-                  <Typography variant="body2">{permission.name}</Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {permission.description || permission.name}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary" sx={{ fontSize: '10px' }}>
+                      {permission.name}
+                    </Typography>
+                  </Box>
                   {fromRole && (
                     <Typography variant="caption" color="textSecondary" sx={{ ml: 'auto' }}>
                       (From role)

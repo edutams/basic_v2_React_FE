@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Grid,
   TextField,
@@ -12,6 +12,7 @@ import {
   Typography,
   Paper,
   ClickAwayListener,
+  CircularProgress,
 } from '@mui/material';
 import { HexColorPicker } from 'react-colorful';
 import { IMaskInput } from 'react-imask';
@@ -38,50 +39,107 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
 const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }) => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
+  const [loadingLgas, setLoadingLgas] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchStates = async () => {
-      try {
-        const states = await locationApi.getStates();
-        setStates(states);
-      } catch (error) {
-        console.error("Failed to fetch states", error);
-      }
-    };
-    fetchStates();
+  const fetchStates = useCallback(async () => {
+    try {
+      const states = await locationApi.getStates();
+      setStates(states);
+    } catch (error) {
+      console.error('Failed to fetch states', error);
+    }
   }, []);
 
-  // Fetch LGAs if stateFilter is prefilled (e.g., during Update)
   useEffect(() => {
-    const fetchInitialLgas = async () => {
-      if (formik.values.stateFilter && lgas.length === 0) {
-        try {
-          const initialLgas = await locationApi.getLgas(formik.values.stateFilter);
-          setLgas(initialLgas);
-        } catch (error) {
-          console.error("Failed to fetch LGAs for prefilled state", error);
-        }
-      }
-    };
-    fetchInitialLgas();
-  }, [formik.values.stateFilter]);
+    fetchStates();
+  }, [fetchStates]);
 
-  const handleStateChange = async (event) => {
+  // Fetch LGAs if stateFilter is prefilled (e.g., during Update)
+  const fetchInitialLgas = useCallback(async () => {
+    if (formik.values.stateFilter && lgas.length === 0) {
+      try {
+        const initialLgas = await locationApi.getLgas(formik.values.stateFilter);
+        setLgas(initialLgas);
+      } catch (error) {
+        console.error('Failed to fetch LGAs for prefilled state', error);
+      }
+    }
+  }, [formik.values.stateFilter, lgas.length]);
+
+  useEffect(() => {
+    fetchInitialLgas();
+  }, [fetchInitialLgas]);
+
+  const handleStateChange = useCallback(async (event) => {
     const newStateId = event.target.value;
     formik.setFieldValue('stateFilter', newStateId);
     formik.setFieldValue('lga', '');
     setLgas([]);
 
     if (newStateId) {
+      setLoadingLgas(true);
       try {
         const lgas = await locationApi.getLgas(newStateId);
         setLgas(lgas);
       } catch (error) {
-        console.error("Failed to fetch LGAs", error);
+        console.error('Failed to fetch LGAs', error);
+      } finally {
+        setLoadingLgas(false);
       }
     }
-  };
+  }, [formik]);
+
+  const themeColorMap = useMemo(() => ({
+    primary: '#1976d2',
+    secondary: '#9c27b0',
+    success: '#2e7d32',
+    error: '#d32f2f',
+    warning: '#ed6c02',
+  }), []);
+
+  const handleColorChange = useCallback((e) => {
+    let value = e.target.value.trim();
+
+    if (themeColorMap[value.toLowerCase()]) {
+      formik.setFieldValue('primaryColor', themeColorMap[value.toLowerCase()]);
+      return;
+    }
+
+    if (/^[0-9a-fA-F]{3,6}$/.test(value)) {
+      formik.setFieldValue('primaryColor', `#${value}`);
+      return;
+    }
+
+    if (/^#[0-9a-fA-F]{3,6}$/.test(value)) {
+      formik.setFieldValue('primaryColor', value);
+      return;
+    }
+
+    formik.setFieldValue('primaryColor', value.toLowerCase());
+  }, [formik, themeColorMap]);
+
+  const colorPreviewStyle = useMemo(() => {
+    const color = formik.values.primaryColor;
+    const s = new Option().style;
+    s.color = color;
+    return {
+      width: 22,
+      height: 22,
+      borderRadius: '4px',
+      bgcolor: s.color ? color : '#e0e0e0',
+      border: '1px solid rgba(0,0,0,0.2)',
+      cursor: 'pointer',
+      flexShrink: 0,
+    };
+  }, [formik.values.primaryColor]);
+
+  const colorPickerValue = useMemo(() => {
+    const color = formik.values.primaryColor;
+    const s = new Option().style;
+    s.color = color;
+    return s.color ? color : '#3949ab';
+  }, [formik.values.primaryColor]);
 
   return (
     <>
@@ -201,7 +259,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
               <FormControl
                 fullWidth
                 error={formik.touched.lga && Boolean(formik.errors.lga)}
-                disabled={!formik.values.stateFilter || lgas.length === 0}
+                disabled={!formik.values.stateFilter}
               >
                 <InputLabel>LGA</InputLabel>
                 <Select
@@ -211,13 +269,21 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                 >
-                  <MenuItem value="">-- Choose LGA --</MenuItem>
+                  <MenuItem value="">
+                    {loadingLgas ? 'Loading LGAs...' : '-- Choose LGA --'}
+                  </MenuItem>
                   {lgas.map((lga) => (
                     <MenuItem key={lga.id} value={lga.id}>
                       {lga.lga_name}
                     </MenuItem>
                   ))}
                 </Select>
+                {loadingLgas && (
+                  <CircularProgress
+                    size={16}
+                    sx={{ position: 'absolute', right: 36, top: '50%', mt: '-8px', pointerEvents: 'none' }}
+                  />
+                )}
                 {formik.touched.lga && formik.errors.lga && (
                   <FormHelperText>{formik.errors.lga}</FormHelperText>
                 )}
@@ -233,33 +299,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                       fullWidth
                       label="Primary Color"
                       value={formik.values.primaryColor || ''}
-                      onChange={(e) => {
-                        let value = e.target.value.trim();
-                        const themeColorMap = {
-                          primary: '#1976d2',
-                          secondary: '#9c27b0',
-                          success: '#2e7d32',
-                          error: '#d32f2f',
-                          warning: '#ed6c02',
-                        };
-
-                        if (themeColorMap[value.toLowerCase()]) {
-                          formik.setFieldValue('primaryColor', themeColorMap[value.toLowerCase()]);
-                          return;
-                        }
-
-                        if (/^[0-9a-fA-F]{3,6}$/.test(value)) {
-                          formik.setFieldValue('primaryColor', `#${value}`);
-                          return;
-                        }
-
-                        if (/^#[0-9a-fA-F]{3,6}$/.test(value)) {
-                          formik.setFieldValue('primaryColor', value);
-                          return;
-                        }
-
-                        formik.setFieldValue('primaryColor', value.toLowerCase());
-                      }}
+                      onChange={handleColorChange}
                       onFocus={() => setColorPickerOpen(true)}
                       placeholder="e.g. 3949AB, #3949AB, red, primary"
                       InputProps={{
@@ -267,20 +307,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                           <InputAdornment position="start">
                             <Box
                               onClick={() => setColorPickerOpen(true)}
-                              sx={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: '4px',
-                                bgcolor: (() => {
-                                  const color = formik.values.primaryColor;
-                                  const s = new Option().style;
-                                  s.color = color;
-                                  return s.color ? color : '#e0e0e0';
-                                })(),
-                                border: '1px solid rgba(0,0,0,0.2)',
-                                cursor: 'pointer',
-                                flexShrink: 0,
-                              }}
+                              sx={colorPreviewStyle}
                             />
                             <Typography variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontFamily: 'monospace' }}>
                               #
@@ -306,12 +333,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                         }}
                       >
                         <HexColorPicker
-                          color={(() => {
-                            const color = formik.values.primaryColor;
-                            const s = new Option().style;
-                            s.color = color;
-                            return s.color ? color : '#3949ab';
-                          })()}
+                          color={colorPickerValue}
                           onChange={(color) => formik.setFieldValue('primaryColor', color)}
                         />
                       </Paper>

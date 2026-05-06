@@ -69,13 +69,12 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
     const result = await login({
       login: formData.login,
       password: formData.password,
+      remember: formData.rememberMe,
     });
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      // Small tick to let React flush the isAuthenticated state update
-      // before TenantProtectedRoute evaluates it
-      setTimeout(() => navigate(from, { replace: true }), 50);
+      navigate(from, { replace: true });
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }

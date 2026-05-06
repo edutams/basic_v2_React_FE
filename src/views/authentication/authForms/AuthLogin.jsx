@@ -34,7 +34,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
   const successMessage = location.state?.message;
   const notify = useNotification();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/agent';
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -85,7 +85,7 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      navigate('/agent', { replace: true });
+      navigate(from, { replace: true });
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }

@@ -1,5 +1,5 @@
 import React, { lazy, useEffect } from 'react';
-import { Navigate } from 'react-router';
+import { Navigate } from 'react-router-dom';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { useAuth } from '../hooks/useAuth';

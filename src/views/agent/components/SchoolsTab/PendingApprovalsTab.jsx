@@ -20,10 +20,10 @@ import {
   Avatar,
   Link,
 } from '@mui/material';
-import { IconDotsVertical } from '@tabler/icons-react';
+import { IconDotsVertical, IconEdit } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { getSpaContact, formatDate, StatusChip } from './Schooltabhelpers';
+import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
 
 const PendingApprovalsTab = ({
   prospectList,
@@ -35,6 +35,7 @@ const PendingApprovalsTab = ({
   nameValue,
   activeFilters,
   onReview,
+  onEdit,
 }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -251,6 +252,16 @@ const PendingApprovalsTab = ({
           }}
         >
           Review Application
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onEdit(activeRow);
+            setAnchorEl(null);
+          }}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <IconEdit size={16} />
+          Edit
         </MenuItem>
       </Menu>
     </>

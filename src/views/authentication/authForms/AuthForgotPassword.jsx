@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, TextField, Alert, CircularProgress, Stack } from '@mui/material';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/auth';
 
@@ -21,7 +21,7 @@ const AuthForgotPassword = () => {
     setError('');
 
     try {
-      const res = await api.post('/agent/forgot_password', { email });
+      const res = await api.post('/landlord/v1/auth/forgot_password', { email });
       setMessage(res.data.message || 'Reset link sent to your email!');
 
       navigate(`/agent/verify_otp?email=${encodeURIComponent(email)}`, {

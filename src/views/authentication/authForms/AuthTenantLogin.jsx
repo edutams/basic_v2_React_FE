@@ -9,7 +9,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import { Link, useNavigate, useLocation } from 'react-router';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
@@ -74,14 +74,12 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
     const result = await login({
       login: formData.login,
       password: formData.password,
+      remember: formData.rememberMe,
     });
 
     if (result.success) {
       notify.success('Login successful!', 'Welcome back');
-      // Redirect parents to their own dashboard, everyone else to the intended page
-      const isParent = result.user?.roles?.includes('parent') ?? false;
-      const destination = isParent ? '/parent/dashboard' : from;
-      setTimeout(() => navigate(destination, { replace: true }), 50);
+      navigate(from, { replace: true });
     } else {
       notify.error(result.error || 'Login failed', 'Authentication Error');
     }
@@ -133,7 +131,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
           {successMessage}
         </Alert>
       )}
-      <Box   component="form" onSubmit={handleSubmit}>
+      <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={0}>
           <Box>
             <CustomFormLabel htmlFor="login">Email/Phone No</CustomFormLabel>

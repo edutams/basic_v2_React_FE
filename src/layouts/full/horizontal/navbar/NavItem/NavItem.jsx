@@ -2,15 +2,12 @@
 // @ts-ignore
 import React, { useContext } from 'react';
 
-import { NavLink } from 'react-router'
+import { NavLink } from 'react-router-dom';
 // mui imports
 import { ListItemIcon, List, styled, ListItemText, useTheme, ListItemButton } from '@mui/material';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 
-
-
 const NavItem = ({ item, level, pathDirect, onClick }) => {
-
   const { isBorderRadius } = useContext(CustomizerContext);
 
   const Icon = item.icon;
@@ -24,7 +21,9 @@ const NavItem = ({ item, level, pathDirect, onClick }) => {
     borderRadius: `${isBorderRadius}px`,
     marginBottom: level > 1 ? '3px' : '0px',
     color:
-      level > 1 && pathDirect === item.href ? `${theme.palette.primary.main}!important` : theme.palette.text.primary,
+      level > 1 && pathDirect === item.href
+        ? `${theme.palette.primary.main}!important`
+        : theme.palette.text.primary,
 
     '&:hover': {
       backgroundColor: theme.palette.primary.light,
@@ -38,8 +37,6 @@ const NavItem = ({ item, level, pathDirect, onClick }) => {
       },
     },
   }));
-
-
 
   return (
     <List component="li" disablePadding key={item.id}>
@@ -67,6 +64,5 @@ const NavItem = ({ item, level, pathDirect, onClick }) => {
     </List>
   );
 };
-
 
 export default NavItem;

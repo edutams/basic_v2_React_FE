@@ -81,11 +81,11 @@ const SchoolRoleBasedAccess = () => {
             }}
           />
 
-          {hasFilters && (
+          {/* {hasFilters && (
             <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters
             </Button>
-          )}
+          )} */}
         </Box>
 
         <Paper variant="outlined">

@@ -32,7 +32,6 @@ export const TenantAuthProvider = ({ children }) => {
   const { setPrimaryColor } = useContext(CustomizerContext);
 
   const checkTenantDomain = async () => {
-    console.log(2222);
     if (window.location.pathname === '/school-not-found') return;
 
     const hostname = window.location.hostname;
@@ -97,6 +96,27 @@ export const TenantAuthProvider = ({ children }) => {
     checkTenantDomain();
   }, []);
 
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      localStorage.removeItem('tenant_access_token');
+      localStorage.removeItem('tenant_token_expires_in');
+      localStorage.removeItem('tenant_user');
+      localStorage.removeItem('tenant_permissions');
+      localStorage.removeItem('tenant_roles');
+
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsImpersonated(false);
+      setImpersonatorId(null);
+      setPrimaryColor(null);
+      // TenantProtectedRoute will catch isAuthenticated: false
+      // and redirect to /login with state={{ from: location }}
+    };
+
+    window.addEventListener('tenant_auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('tenant_auth:expired', handleAuthExpired);
+  }, []);
+
   const refreshTenantInfo = async () => {
     const hostname = window.location.hostname;
     const data = await validateTenantDomain(hostname);
@@ -110,9 +130,21 @@ export const TenantAuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post('/login', credentials);
-      const { access_token, user: userData, permissions: perms, roles, primary_color } = res.data;
+      const {
+        access_token,
+        expires_in,
+        user: userData,
+        permissions: perms,
+        roles,
+        primary_color,
+      } = res.data;
 
       localStorage.setItem('tenant_access_token', access_token);
+      localStorage.setItem('tenant_token_expires_in', String(expires_in));
+      localStorage.setItem('tenant_user', JSON.stringify(userData));
+      localStorage.setItem('tenant_permissions', JSON.stringify(perms || []));
+      localStorage.setItem('tenant_roles', JSON.stringify(roles || []));
+
       setUser(userData);
       setPermissions(perms || []);
       setRoles(roles || []);
@@ -138,7 +170,13 @@ export const TenantAuthProvider = ({ children }) => {
     setError(null);
     try {
       await api.post('/logout');
+
       localStorage.removeItem('tenant_access_token');
+      localStorage.removeItem('tenant_token_expires_in');
+      localStorage.removeItem('tenant_user');
+      localStorage.removeItem('tenant_permissions');
+      localStorage.removeItem('tenant_roles');
+
       setUser(null);
       setIsAuthenticated(false);
       return { success: true };

@@ -27,7 +27,7 @@ const AuthVerifyOtp = () => {
     setError('');
 
     api
-      .post('/agent/verify_otp', formData)
+      .post('/landlord/v1/auth/verify_otp', formData)
       .then((res) => {
         const reset_token = res.data.reset_token;
 

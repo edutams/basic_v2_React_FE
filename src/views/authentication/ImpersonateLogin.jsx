@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { CircularProgress, Box, Typography } from '@mui/material';
 
 const ImpersonateLogin = () => {

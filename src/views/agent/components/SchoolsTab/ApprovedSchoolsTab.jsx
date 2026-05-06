@@ -23,7 +23,7 @@ import {
 import { IconDotsVertical } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { getSpaContact, StatusChip } from './Schooltabhelpers';
+import { getSpaContact, StatusChip } from './schoolTabHelpers';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 

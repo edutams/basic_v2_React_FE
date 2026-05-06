@@ -1,7 +1,7 @@
 import React from 'react';
 import { Menu, MenuItem, IconButton, Typography, Box, Tooltip } from '@mui/material';
-import { IconDots } from "@tabler/icons-react";
-import { Link } from 'react-router';
+import { IconDots } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
 import {
   Timeline,
   TimelineItem,
@@ -65,7 +65,7 @@ const DailyActivities = () => {
     setAnchorEl(null);
   };
   return (
-    (<DashboardCard
+    <DashboardCard
       title="Daily Activities"
       subtitle="Overview of Years"
       action={
@@ -97,7 +97,7 @@ const DailyActivities = () => {
             slotProps={{
               list: {
                 'aria-labelledby': 'long-button',
-              }
+              },
             }}
           >
             {options.map((option) => (
@@ -117,15 +117,18 @@ const DailyActivities = () => {
         }}
       >
         {activities.map((activity, index) => (
-          <TimelineItem key={activity.time} sx={{
-            minHeight: '65px'
-          }}>
+          <TimelineItem
+            key={activity.time}
+            sx={{
+              minHeight: '65px',
+            }}
+          >
             <TimelineOppositeContent
               sx={{
                 flex: '0',
               }}
             >
-              <Typography variant="subtitle2" fontWeight="400" whiteSpace='nowrap'>
+              <Typography variant="subtitle2" fontWeight="400" whiteSpace="nowrap">
                 {activity.time}
               </Typography>
             </TimelineOppositeContent>
@@ -139,17 +142,26 @@ const DailyActivities = () => {
               {index !== activities.length - 1 && <TimelineConnector />}
             </TimelineSeparator>
             <TimelineContent>
-              {activity.isRecorded ?
-                <><Typography color="text.primary" variant="h6" fontWeight={600}> {activity.text} </Typography>
-                  <Typography component={Link} variant="h6" color="primary.main" to='/'>#ML-3467</Typography>
-                </> :
-                <Typography color="text.secondary" variant="h6">{activity.text}</Typography>
-              }
+              {activity.isRecorded ? (
+                <>
+                  <Typography color="text.primary" variant="h6" fontWeight={600}>
+                    {' '}
+                    {activity.text}{' '}
+                  </Typography>
+                  <Typography component={Link} variant="h6" color="primary.main" to="/">
+                    #ML-3467
+                  </Typography>
+                </>
+              ) : (
+                <Typography color="text.secondary" variant="h6">
+                  {activity.text}
+                </Typography>
+              )}
             </TimelineContent>
           </TimelineItem>
         ))}
       </Timeline>
-    </DashboardCard>)
+    </DashboardCard>
   );
 };
 

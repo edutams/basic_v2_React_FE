@@ -62,6 +62,8 @@ const AlcManager = () => {
   const [totalRoles, setTotalRoles] = useState(0);
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
@@ -194,26 +196,44 @@ const AlcManager = () => {
 
   const handleCreateRole = async () => {
     try {
-      await aclApi.createRole({
-        name: newRoleForm.roleName,
-        guard_name: newRoleForm.guardName,
-        description: newRoleForm.description,
-      });
-
-      notify.success('Role created successfully!');
+      setSaveLoading(true);
+      if (isEditing) {
+        await aclApi.updateRole(selectedRow.id, {
+          name: newRoleForm.roleName,
+          description: newRoleForm.description,
+        });
+        notify.success('Role updated successfully!');
+      } else {
+        await aclApi.createRole({
+          name: newRoleForm.roleName,
+          guard_name: newRoleForm.guardName,
+          description: newRoleForm.description,
+        });
+        notify.success('Role created successfully!');
+      }
 
       setNewRoleModalOpen(false);
-
       setNewRoleForm({
         roleName: '',
-        // guardName: 'web',
         description: '',
       });
-
       fetchRoles();
     } catch (err) {
-      notify.error(err?.response?.data?.message || 'Failed to create role');
+      notify.error(err?.response?.data?.message || `Failed to ${isEditing ? 'update' : 'create'} role`);
+    } finally {
+      setSaveLoading(false);
     }
+  };
+
+  const handleEditRole = (row) => {
+    setSelectedRow(row);
+    setIsEditing(true);
+    setNewRoleForm({
+      roleName: row.name,
+      description: row.description || '',
+    });
+    setNewRoleModalOpen(true);
+    handleMenuClose();
   };
 
   const filteredRows = rows;
@@ -266,7 +286,11 @@ const AlcManager = () => {
             <Box display="flex" alignItems="center" justifyContent="space-between">
               <Typography variant="h5">Manage Roles</Typography>
 
-              <Button variant="contained" color="primary" onClick={() => setNewRoleModalOpen(true)}>
+              <Button variant="contained" color="primary" onClick={() => {
+                setIsEditing(false);
+                setNewRoleForm({ roleName: '', description: '' });
+                setNewRoleModalOpen(true);
+              }}>
                 New Role
               </Button>
             </Box>
@@ -324,8 +348,8 @@ const AlcManager = () => {
                   <TableRow>
                     <TableCell>S/N</TableCell>
                     <TableCell>Role Name</TableCell>
-                    <TableCell>Guard Name</TableCell>
                     <TableCell>Description</TableCell>
+                    <TableCell>Is System?</TableCell>
                     <TableCell align="center">Action</TableCell>
                   </TableRow>
                 </TableHead>
@@ -342,8 +366,17 @@ const AlcManager = () => {
                       <TableRow key={row.id}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>{row.name}</TableCell>
-                        <TableCell>{row.guard_name}</TableCell>
                         <TableCell>{row.description}</TableCell>
+
+                        <TableCell>
+                          <Chip
+                            label={row.is_sys === 'yes' ? 'Yes' : 'No'}
+                            color={row.is_sys === 'yes' ? 'success' : 'default'}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+                          />
+                        </TableCell>
 
                         <TableCell align="center">
                           <IconButton onClick={(e) => handleMenuOpen(e, row)}>
@@ -355,6 +388,9 @@ const AlcManager = () => {
                             open={Boolean(anchorEl) && selectedRow?.id === row.id}
                             onClose={handleMenuClose}
                           >
+                            <MenuItem onClick={() => handleEditRole(row)}>
+                              Edit Role
+                            </MenuItem>
                             <MenuItem onClick={() => handleAttachPermission(row)}>
                               Attach Permission
                             </MenuItem>
@@ -362,6 +398,7 @@ const AlcManager = () => {
                             <MenuItem onClick={() => handleViewPermission(row)}>
                               View Permission
                             </MenuItem>
+
                           </Menu>
                         </TableCell>
                       </TableRow>
@@ -435,6 +472,8 @@ const AlcManager = () => {
         formData={newRoleForm}
         onFieldChange={handleNewRoleFieldChange}
         onSave={handleCreateRole}
+        isEditing={isEditing}
+        loading={saveLoading}
       />
 
       <FilterSideDrawer

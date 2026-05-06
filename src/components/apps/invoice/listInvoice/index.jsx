@@ -32,7 +32,7 @@ import {
   IconTruck,
 } from '@tabler/icons';
 import CustomCheckbox from 'src/components/forms/theme-elements/CustomCheckbox';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 const InvoiceList = () => {
   const { invoices, deleteInvoice } = useContext(InvoiceContext);
@@ -140,7 +140,7 @@ const InvoiceList = () => {
               </Box>
               <Box>
                 <Typography>Total</Typography>
-                <Typography variant='h5'>{invoices.length} Invoices</Typography>
+                <Typography variant="h5">{invoices.length} Invoices</Typography>
               </Box>
             </Stack>
           </Box>
@@ -172,7 +172,7 @@ const InvoiceList = () => {
               </Box>
               <Box>
                 <Typography>Shipped</Typography>
-                <Typography variant='h5'>{Shipped} Invoices</Typography>
+                <Typography variant="h5">{Shipped} Invoices</Typography>
               </Box>
             </Stack>
           </Box>
@@ -204,7 +204,7 @@ const InvoiceList = () => {
               </Box>
               <Box>
                 <Typography>Delivered</Typography>
-                <Typography variant='h5'>{Delivered} Invoices</Typography>
+                <Typography variant="h5">{Delivered} Invoices</Typography>
               </Box>
             </Stack>
           </Box>
@@ -236,7 +236,7 @@ const InvoiceList = () => {
               </Box>
               <Box>
                 <Typography>Pending</Typography>
-                <Typography variant='h5'>{Pending} Invoices</Typography>
+                <Typography variant="h5">{Pending} Invoices</Typography>
               </Box>
             </Stack>
           </Box>
@@ -291,34 +291,22 @@ const InvoiceList = () => {
                 <CustomCheckbox checked={selectAll} onChange={toggleSelectAll} />
               </TableCell>
               <TableCell>
-                <Typography variant="h5">
-                  Id
-                </Typography>
+                <Typography variant="h5">Id</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h5">
-                  Bill From
-                </Typography>
+                <Typography variant="h5">Bill From</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h5">
-                  Bill To
-                </Typography>
+                <Typography variant="h5">Bill To</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h5">
-                  Total Cost
-                </Typography>
+                <Typography variant="h5">Total Cost</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h5">
-                  Status
-                </Typography>
+                <Typography variant="h5">Status</Typography>
               </TableCell>
               <TableCell align="center">
-                <Typography variant="h5">
-                  Action
-                </Typography>
+                <Typography variant="h5">Action</Typography>
               </TableCell>
             </TableRow>
           </TableHead>
@@ -332,20 +320,16 @@ const InvoiceList = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  <Typography>
-                    {invoice.id}
-                  </Typography>
+                  <Typography>{invoice.id}</Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography>
-                    {invoice.billFrom}
-                  </Typography>
+                  <Typography>{invoice.billFrom}</Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography >{invoice.billTo}</Typography>
+                  <Typography>{invoice.billTo}</Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography >{invoice.totalCost}</Typography>
+                  <Typography>{invoice.totalCost}</Typography>
                 </TableCell>
                 <TableCell>
                   {invoice.status === 'Shipped' ? (

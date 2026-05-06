@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Box, Grid, Typography, Alert, useTheme } from '@mui/material';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { InfoOutlined } from '@mui/icons-material';
 import { useTenantAuth } from '../../../hooks/useTenantAuth';
 import EduTAMSLogo from 'src/assets/images/logos/EduTAMS.png';

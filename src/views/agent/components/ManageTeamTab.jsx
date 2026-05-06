@@ -4,7 +4,7 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, MenuItem, Divider, TableContainer,
     Table, TableHead, TableRow, TableCell, TableBody,
-    Avatar, Chip, IconButton, Menu, Checkbox, ListItemText, CircularProgress
+    Avatar, Chip, IconButton, Menu, Checkbox, CircularProgress
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
 import agentApi from '../../../api/agent';
@@ -26,9 +26,9 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
 
 
 
-const ManageTeamTab = ({ organizationId }) => {
+const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = false }) => {
     const theme = useTheme();
-    const isDark = theme.palette.mode === 'dark';
+    const isLevelOne = accessLevel === 1;
 
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -59,7 +59,13 @@ const ManageTeamTab = ({ organizationId }) => {
         email: '',
         phone: '',
     });
-
+ const getInitials = (name = '') =>
+    name
+      .split(' ')
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
     const fetchTeamMembers = async () => {
         if (!organizationId) return;
         setLoading(true);
@@ -230,6 +236,7 @@ const ManageTeamTab = ({ organizationId }) => {
                     </Box>
                     <Typography variant="h5">Manage Team</Typography>
                 </Stack>
+                {!(accessLevel === 1 && isViewingProfile) && (
                 <Button
                     variant="contained"
                     color="primary"
@@ -238,6 +245,7 @@ const ManageTeamTab = ({ organizationId }) => {
                 >
                     Add Team Member
                 </Button>
+            )}
             </Stack>
 
             {loading ? (
@@ -251,6 +259,9 @@ const ManageTeamTab = ({ organizationId }) => {
                             <TableRow>
                                 <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}>S/N</TableCell>
                                 <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}>Member Details</TableCell>
+                                {isLevelOne && (
+                                    <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}>Organization</TableCell>
+                                )}
                                 <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}>Permissions</TableCell>
                                 <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}>Status</TableCell>
                                 <TableCell sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}>Action</TableCell>
@@ -259,7 +270,7 @@ const ManageTeamTab = ({ organizationId }) => {
                         <TableBody>
                             {members.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                                    <TableCell colSpan={isLevelOne ? 6 : 5} align="center" sx={{ py: 5 }}>
                                         <Typography variant="body2" color="text.secondary">No team members found.</Typography>
                                     </TableCell>
                                 </TableRow>
@@ -279,14 +290,14 @@ const ManageTeamTab = ({ organizationId }) => {
                                                     <Stack direction="row" spacing={1} alignItems="center">
                                                         <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>{row.name}</Typography>
                                                         {row.is_lead === 'yes' && (
-                                                            <Chip size="small" label="Lead" sx={{ bgcolor: '#e8eaf6', color: '#3949ab', fontWeight: 700, borderRadius: '8px', height: 18, fontSize: '10px' }} />
+                                                            <Chip size="small" label="Lead" sx={{ bgcolor: theme.palette.primary.light, color: theme.palette.primary.main, fontWeight: 700, borderRadius: '8px', height: 18, fontSize: '10px' }} />
                                                         )}
                                                     </Stack>
                                                     <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>{row.phone}</Typography>
                                                     <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>{row.email}</Typography>
                                                     <Box sx={{ mt: 0.5 }}>
                                                         {(row.roles || []).map(role => (
-                                                            <Typography key={role} variant="caption" sx={{ fontWeight: 600, color: '#3949ab', mr: 0.5, bgcolor: '#e8eaf6', px: 0.8, py: 0.2, borderRadius: '4px' }}>
+                                                            <Typography key={role} variant="caption" sx={{ fontWeight: 600, color: theme.palette.primary.main, mr: 0.5, bgcolor: theme.palette.primary.light, px: 0.8, py: 0.2, borderRadius: '4px' }}>
                                                                 {role.toUpperCase()}
                                                             </Typography>
                                                         ))}
@@ -294,10 +305,43 @@ const ManageTeamTab = ({ organizationId }) => {
                                                 </Box>
                                             </Stack>
                                         </TableCell>
+                                        {isLevelOne && (
+                                            <TableCell sx={{ py: 1.5 }}>
+                                                {row.organization ? (
+                                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                                      <Avatar
+                                                                        src={row?.organization?.organization_logo}
+                                                                        sx={{
+                                                                          width: 30,
+                                                                          height: 30,
+                                                                          fontSize: 11,
+                                                                          bgcolor: 'primary.light',
+                                                                          color: 'primary.main',
+                                                                        }}
+                                                                      >
+                                                                        {!row?.organization?.organization_logo && getInitials(row?.organization?.organization_name)}
+                                                                      </Avatar>
+                                                                      <Box>
+                                                                        <Typography variant="body2" fontWeight={500} noWrap>
+                                                                          {row?.organization?.organization_name}
+                                                                        </Typography>
+                                                                        <Typography variant="body2">{row.organization?.organization_email}</Typography>
+                                            
+                                                                        <Typography variant="body2" color="text.secondary">
+                                                                          {row?.organization?.organization_code}
+                                                                        </Typography>
+                                                                      </Box>
+                                                                    </Box>
+                                                ) : (
+                                                    <Typography variant="caption" color="textSecondary">—</Typography>
+                                                )}
+                                            </TableCell>
+                                            
+                                        )}
                                         <TableCell sx={{ py: 1.5 }}>
                                             <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                                                 {(row.permissions || []).slice(0, 6).map(perm => (
-                                                <Chip key={perm} size="small" label={perm} sx={{ bgcolor: '#e8eaf6', color: '#3949ab', fontWeight: 700, borderRadius: '8px' }} />
+                                                <Chip key={perm} size="small" label={perm} sx={{ bgcolor: theme.palette.primary.light, color: theme.palette.primary.main, fontWeight: 700, borderRadius: '8px' }} />
                                                 ))}
                                                 {(row.permissions?.length > 6) && (
                                                     <Chip size="small" label={`+${row.permissions.length - 6}`} sx={{ bgcolor: '#f1f5f9', color: '#475569', fontWeight: 700, borderRadius: '8px' }} />
@@ -366,9 +410,18 @@ const ManageTeamTab = ({ organizationId }) => {
                             }}
                         >
                             {availablePermissions.map((perm) => (
-                                <MenuItem key={perm.value} value={perm.value}>
-                                    <Checkbox checked={newPermissions.indexOf(perm.value) > -1} />
-                                    <ListItemText primary={perm.label} />
+                                <MenuItem key={perm.value} value={perm.value} sx={{ alignItems: 'flex-start', py: 1 }}>
+                                    <Checkbox checked={newPermissions.indexOf(perm.value) > -1} size="small" sx={{ mt: 0.2, mr: 0.5, p: 0.5 }} />
+                                    <Box>
+                                        {perm.description && (
+                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.3, mb: 0.2 }}>
+                                                {perm.description}
+                                            </Typography>
+                                        )}
+                                        <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+                                            {perm.label}
+                                        </Typography>
+                                    </Box>
                                 </MenuItem>
                             ))}
                         </TextField>
@@ -410,9 +463,18 @@ const ManageTeamTab = ({ organizationId }) => {
                                                     ? prev.filter(v => v !== perm.value) 
                                                     : [...prev, perm.value]
                                             );
-                                        }}>
-                                            <Checkbox checked={isChecked} />
-                                            <ListItemText primary={perm.label} />
+                                        }} sx={{ alignItems: 'flex-start', py: 1 }}>
+                                            <Checkbox checked={isChecked} size="small" sx={{ mt: 0.2, mr: 0.5, p: 0.5 }} />
+                                            <Box>
+                                                {perm.description && (
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.3, mb: 0.2 }}>
+                                                        {perm.description}
+                                                    </Typography>
+                                                )}
+                                                <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+                                                    {perm.label}
+                                                </Typography>
+                                            </Box>
                                         </MenuItem>
                                     );
                             })}

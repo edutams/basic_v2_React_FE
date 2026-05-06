@@ -4,7 +4,7 @@ import React, { useContext } from 'react';
 
 import { useState } from 'react';
 
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 
 // mui imports
 import {
@@ -26,18 +26,8 @@ import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 
-
-
-
 // FC Component For Dropdown Menu
-const NavCollapse = ({
-  menu,
-  level,
-  pathWithoutLastPart,
-  pathDirect,
-  hideMenu,
-  onClick
-}) => {
+const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu, onClick }) => {
   const { isBorderRadius } = useContext(CustomizerContext);
 
   const Icon = menu?.icon;
@@ -69,9 +59,10 @@ const NavCollapse = ({
     backgroundColor: open && level < 2 ? theme.palette.primary.main : '',
     whiteSpace: 'nowrap',
     '&:hover': {
-      backgroundColor: pathname.includes(menu.href) || open
-        ? theme.palette.primary.main
-        : theme.palette.primary.light,
+      backgroundColor:
+        pathname.includes(menu.href) || open
+          ? theme.palette.primary.main
+          : theme.palette.primary.light,
       color: pathname.includes(menu.href) || open ? 'white' : theme.palette.primary.main,
     },
     color:

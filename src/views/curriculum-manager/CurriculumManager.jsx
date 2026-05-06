@@ -140,6 +140,7 @@ const CurriculumManager = () => {
   const [openAddSubjectModal, setOpenAddSubjectModal] = useState(false);
   const [openEditSubjectModal, setOpenEditSubjectModal] = useState(false);
   const [openDeleteSubjectDialog, setOpenDeleteSubjectDialog] = useState(false);
+  const [subjectSearch, setSubjectSearch] = useState('');
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [subjectFormData, setSubjectFormData] = useState({
     subject_name: '',
@@ -149,6 +150,7 @@ const CurriculumManager = () => {
     pass_mark: 50,
     status: 'compulsory',
   });
+  const [subjectErrors, setSubjectErrors] = useState({});
 
   // Sessions and Terms
   const [sessions, setSessions] = useState([]);
@@ -233,7 +235,7 @@ const CurriculumManager = () => {
     } else {
       setSubjectsList([]);
     }
-  }, [selectedSubjectBankCurriculum]);
+  }, [selectedSubjectBankCurriculum, subjectSearch]);
 
   const loadProgrammes = async () => {
     try {
@@ -282,7 +284,7 @@ const CurriculumManager = () => {
   const loadSubjectsList = async () => {
     try {
       setLoadingSubjects(true);
-      const response = await fetchSubjects(selectedSubjectBankCurriculum);
+      const response = await fetchSubjects(selectedSubjectBankCurriculum, subjectSearch);
       if (response.status) {
         setSubjectsList(response.data);
       }
@@ -876,13 +878,29 @@ const CurriculumManager = () => {
 
   const handleCloseAddSubjectModal = () => {
     setOpenAddSubjectModal(false);
+    setSubjectErrors({});
+  };
+
+  const validateSubject = () => {
+    const errs = {};
+    if (!subjectFormData.subject_name?.trim()) errs.subject_name = 'Subject name is required';
+    if (!subjectFormData.subject_code?.trim()) errs.subject_code = 'Subject code is required';
+    if (!subjectFormData.programme_id) errs.programme_id = 'Please select a program';
+    setSubjectErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleBackendErrors = (errs) => {
+    if (!errs) return;
+    const mapped = {};
+    Object.keys(errs).forEach((key) => {
+      mapped[key] = Array.isArray(errs[key]) ? errs[key][0] : errs[key];
+    });
+    setSubjectErrors(mapped);
   };
 
   const handleCreateSubject = async () => {
-    if (!subjectFormData.subject_name.trim() || !subjectFormData.programme_id) {
-      showSnackbar('Subject name and program are required', 'error');
-      return;
-    }
+    if (!validateSubject()) return;
 
     try {
       setLoadingMutation(true);
@@ -896,10 +914,14 @@ const CurriculumManager = () => {
         handleCloseAddSubjectModal();
         loadSubjectsList();
       } else {
+        if (response.errors) handleBackendErrors(response.errors);
         showSnackbar(response.message || 'Failed to create subject', 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to create subject', 'error');
+      if (error.response?.data?.errors) {
+        handleBackendErrors(error.response.data.errors);
+      }
+      showSnackbar(error.response?.data?.message || 'Failed to create subject', 'error');
     } finally {
       setLoadingMutation(false);
     }
@@ -933,13 +955,11 @@ const CurriculumManager = () => {
       pass_mark: 50,
       status: 'compulsory',
     });
+    setSubjectErrors({});
   };
 
   const handleUpdateSubject = async () => {
-    if (!subjectFormData.subject_name.trim() || !subjectFormData.programme_id) {
-      showSnackbar('Subject name and program are required', 'error');
-      return;
-    }
+    if (!validateSubject()) return;
 
     try {
       setLoadingMutation(true);
@@ -949,10 +969,14 @@ const CurriculumManager = () => {
         handleCloseEditSubjectModal();
         loadSubjectsList();
       } else {
+        if (response.errors) handleBackendErrors(response.errors);
         showSnackbar(response.message || 'Failed to update subject', 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to update subject', 'error');
+      if (error.response?.data?.errors) {
+        handleBackendErrors(error.response.data.errors);
+      }
+      showSnackbar(error.response?.data?.message || 'Failed to update subject', 'error');
     } finally {
       setLoadingMutation(false);
     }
@@ -1392,14 +1416,23 @@ const CurriculumManager = () => {
                       <Typography variant="h6" sx={{ fontWeight: 600 }}>
                         Subject Bank
                       </Typography>
-                      <Button variant="contained" onClick={handleOpenAddSubjectModal}>
-                        Add Subject
-                      </Button>
+                      <Box display="flex" alignItems="center" gap={2}>
+                        <TextField
+                          size="small"
+                          placeholder="Search subjects..."
+                          value={subjectSearch}
+                          onChange={(e) => setSubjectSearch(e.target.value)}
+                          sx={{ width: 200 }}
+                        />
+                        <Button variant="contained" onClick={handleOpenAddSubjectModal}>
+                          Add Subject
+                        </Button>
+                      </Box>
                     </Box>
                   }
                 >
-                  <TableContainer>
-                    <Table sx={{ tableLayout: 'fixed' }}>
+                  <TableContainer sx={{ maxHeight: 600 }}>
+                    <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
                       <TableHead>
                         <TableRow sx={{ bgcolor: '#eef2f7' }}>
                           <TableCell width="8%">S/N</TableCell>
@@ -1852,43 +1885,48 @@ const CurriculumManager = () => {
           <Box sx={{ pt: 2 }}>
             <TextField
               fullWidth
-              label="Subject Name"
+              label="Subject Name" error={!!subjectErrors.subject_name} helperText={subjectErrors.subject_name}
               value={subjectFormData.subject_name}
-              onChange={(e) =>
-                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })
-              }
+              onChange={(e) => {
+                setSubjectErrors((p) => ({ ...p, subject_name: undefined }));
+                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value });
+              }}
               margin="normal"
               required
             />
 
             <TextField
               fullWidth
-              label="Subject Code"
+              label="Subject Code" error={!!subjectErrors.subject_code} helperText={subjectErrors.subject_code} required
               value={subjectFormData.subject_code}
-              onChange={(e) =>
-                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })
-              }
+              onChange={(e) => {
+                setSubjectErrors((p) => ({ ...p, subject_code: undefined }));
+                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value });
+              }}
               margin="normal"
             />
 
-            <Select
-              fullWidth
-              value={subjectFormData.programme_id}
-              onChange={(e) =>
-                setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })
-              }
-              displayEmpty
-              margin="normal"
-            >
-              <MenuItem value="" disabled>
-                Select Program
-              </MenuItem>
-              {programmesList.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>
-                  {prog.programme_name}
-                </MenuItem>
-              ))}
-            </Select>
+            <FormControl fullWidth margin="normal" error={!!subjectErrors.programme_id}>
+              <InputLabel id="program-select-label">Select Program</InputLabel>
+              <Select
+                labelId="program-select-label"
+                label="Select Program"
+                value={subjectFormData.programme_id}
+                onChange={(e) => {
+                  setSubjectErrors((p) => ({ ...p, programme_id: undefined }));
+                  setSubjectFormData({ ...subjectFormData, programme_id: e.target.value });
+                }}
+              >
+                {programmesList.map((prog) => (
+                  <MenuItem key={prog.id} value={prog.id}>
+                    {prog.programme_name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {subjectErrors.programme_id && (
+                <FormHelperText>{subjectErrors.programme_id}</FormHelperText>
+              )}
+            </FormControl>
 
             <TextField
               fullWidth
@@ -1941,43 +1979,48 @@ const CurriculumManager = () => {
           <Box sx={{ pt: 2 }}>
             <TextField
               fullWidth
-              label="Subject Name"
+              label="Subject Name" error={!!subjectErrors.subject_name} helperText={subjectErrors.subject_name}
               value={subjectFormData.subject_name}
-              onChange={(e) =>
-                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })
-              }
+              onChange={(e) => {
+                setSubjectErrors((p) => ({ ...p, subject_name: undefined }));
+                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value });
+              }}
               margin="normal"
               required
             />
 
             <TextField
               fullWidth
-              label="Subject Code"
+              label="Subject Code" error={!!subjectErrors.subject_code} helperText={subjectErrors.subject_code} required
               value={subjectFormData.subject_code}
-              onChange={(e) =>
-                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })
-              }
+              onChange={(e) => {
+                setSubjectErrors((p) => ({ ...p, subject_code: undefined }));
+                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value });
+              }}
               margin="normal"
             />
 
-            <Select
-              fullWidth
-              value={subjectFormData.programme_id}
-              onChange={(e) =>
-                setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })
-              }
-              displayEmpty
-              margin="normal"
-            >
-              <MenuItem value="" disabled>
-                Select Program
-              </MenuItem>
-              {programmesList.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>
-                  {prog.programme_name}
-                </MenuItem>
-              ))}
-            </Select>
+            <FormControl fullWidth margin="normal" error={!!subjectErrors.programme_id}>
+              <InputLabel id="program-select-label">Select Program</InputLabel>
+              <Select
+                labelId="program-select-label"
+                label="Select Program"
+                value={subjectFormData.programme_id}
+                onChange={(e) => {
+                  setSubjectErrors((p) => ({ ...p, programme_id: undefined }));
+                  setSubjectFormData({ ...subjectFormData, programme_id: e.target.value });
+                }}
+              >
+                {programmesList.map((prog) => (
+                  <MenuItem key={prog.id} value={prog.id}>
+                    {prog.programme_name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {subjectErrors.programme_id && (
+                <FormHelperText>{subjectErrors.programme_id}</FormHelperText>
+              )}
+            </FormControl>
 
             <TextField
               fullWidth

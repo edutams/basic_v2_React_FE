@@ -3,12 +3,10 @@ import { CustomizerContext } from 'src/context/CustomizerContext';
 import { ThemeSettings } from './theme/Theme';
 import RTL from './layouts/full/shared/customizer/RTL';
 import { CssBaseline, ThemeProvider } from '@mui/material';
-import { RouterProvider } from 'react-router';
+import { RouterProvider } from 'react-router-dom';
 import router from './routes/Router';
 
-
 function App() {
-
   const theme = ThemeSettings();
   const { activeDir } = useContext(CustomizerContext);
 
@@ -22,4 +20,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

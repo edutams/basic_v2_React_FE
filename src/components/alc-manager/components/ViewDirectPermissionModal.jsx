@@ -28,7 +28,8 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
     try {
       // Get direct permissions
       const directRes = await aclApi.getAgentDirectPermissions(currentUser.id);
-      setDirectPermissions(directRes?.data || []);
+      const directPerms = directRes?.data?.direct || directRes?.data || [];
+      setDirectPermissions(Array.isArray(directPerms) ? directPerms : []);
 
       // Get permissions from roles
       const rolesRes = await aclApi.getAgents();
@@ -69,7 +70,7 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
           }
         }
       }
-      setRolePermissions(rolePerms);
+      setRolePermissions(Array.isArray(rolePerms) ? rolePerms : []);
     } catch (err) {
       console.error('Failed to fetch permissions:', err);
     } finally {
@@ -182,8 +183,8 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
               }}
             >
               <Typography variant="body2" fontWeight={600}>
-                Total Permissions: {directPermissions.length + rolePermissions.length} (
-                {directPermissions.length} direct + {rolePermissions.length} from roles)
+                Total Permissions: {(directPermissions?.length || 0) + (rolePermissions?.length || 0)} (
+                {directPermissions?.length || 0} direct + {rolePermissions?.length || 0} from roles)
               </Typography>
             </Box>
           </>

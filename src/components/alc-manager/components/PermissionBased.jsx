@@ -21,6 +21,7 @@ import {
   Alert,
   CircularProgress,
   Link,
+  Grid,
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -39,6 +40,7 @@ const AssignmentManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [nameFilter, setNameFilter] = useState('');
+  const [nameFilterInput, setNameFilterInput] = useState('');
 
   const [rolesModalOpen, setRolesModalOpen] = useState(false);
   const [orgsModalOpen, setOrgsModalOpen] = useState(false);
@@ -149,7 +151,19 @@ const AssignmentManagement = () => {
 
   const resetFilters = () => {
     setNameFilter('');
+    setNameFilterInput('');
     setPage(0);
+  };
+
+  const handleSearch = () => {
+    setNameFilter(nameFilterInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const hasFilters = nameFilter !== '';
@@ -157,14 +171,12 @@ const AssignmentManagement = () => {
   return (
     <Box>
       <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
+        <Grid container spacing={1} mb={3} alignItems="center">
           <TextField
             placeholder="Search by permission"
-            value={nameFilter}
-            onChange={(e) => {
-              setNameFilter(e.target.value);
-              setPage(0);
-            }}
+            value={nameFilterInput}
+            onChange={(e) => setNameFilterInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             sx={{ mb: 2 }}
             InputProps={{
               startAdornment: (
@@ -174,13 +186,19 @@ const AssignmentManagement = () => {
               ),
             }}
           />
-
-          {hasFilters && (
+          <Button 
+            variant="contained" 
+            onClick={handleSearch}
+            sx={{ height: 'fit-content', mb: 2 }}
+          >
+            Search
+          </Button>
+          {/* {hasFilters && (
             <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters
             </Button>
-          )}
-        </Box>
+          )} */}
+        </Grid>
 
         <Paper variant="outlined">
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
@@ -193,7 +211,7 @@ const AssignmentManagement = () => {
                     Total Role
                   </TableCell>
                   <TableCell sx={{ width: { xs: '25%', md: '15%' } }} align="center">
-                    Total Organization
+                    Total Org. Teams
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -210,7 +228,12 @@ const AssignmentManagement = () => {
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box>
-                          <Typography variant="subtitle2">{user.name}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {user.description}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary" sx={{ fontSize: '10px' }}>
+                            {user.name}
+                          </Typography>
                         </Box>
                       </TableCell>
 

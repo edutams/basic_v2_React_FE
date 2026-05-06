@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { ReactComponent as LogoDark } from 'src/assets/images/logos/logo-dark.svg';
@@ -17,48 +17,54 @@ import { styled } from '@mui/material';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 
-
 const Logo = () => {
   const { isCollapse, isSidebarHover, activeDir, activeMode } = useContext(CustomizerContext);
   const TopbarHeight = config.topbarHeight;
 
   const LinkStyled = styled(Link)(() => ({
     height: TopbarHeight,
-    width: isCollapse == "mini-sidebar" && !isSidebarHover ? '36px' : '180px',
-    marginLeft: isCollapse == "mini-sidebar" && !isSidebarHover ? '6px' : '0',
+    width: isCollapse == 'mini-sidebar' && !isSidebarHover ? '36px' : '180px',
+    marginLeft: isCollapse == 'mini-sidebar' && !isSidebarHover ? '6px' : '0',
     overflow: 'hidden',
     display: 'block',
   }));
 
   if (activeDir === 'ltr') {
     return (
-      <LinkStyled to="/" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        {isCollapse === "mini-sidebar" && !isSidebarHover ? (
-          <h2 style={{
-            fontSize: '16px',
-            margin: 0,
-            fontWeight: 'bold',
-            color: 'inherit',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}>
+      <LinkStyled
+        to="/"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {isCollapse === 'mini-sidebar' && !isSidebarHover ? (
+          <h2
+            style={{
+              fontSize: '16px',
+              margin: 0,
+              fontWeight: 'bold',
+              color: 'inherit',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
             BV
           </h2>
         ) : (
-          <h2 style={{
-            fontSize: '20px',
-            margin: 0,
-            fontWeight: 'bold',
-            color: 'inherit',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }}>
+          <h2
+            style={{
+              fontSize: '20px',
+              margin: 0,
+              fontWeight: 'bold',
+              color: 'inherit',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
             BASIC V2
           </h2>
         )}
@@ -72,33 +78,40 @@ const Logo = () => {
   }
 
   return (
-    <LinkStyled to="/" style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}>
-      {isCollapse === "mini-sidebar" && !isSidebarHover ? (
-        <h2 style={{
-          fontSize: '16px',
-          margin: 0,
-          fontWeight: 'bold',
-          color: 'inherit',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}>
+    <LinkStyled
+      to="/"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {isCollapse === 'mini-sidebar' && !isSidebarHover ? (
+        <h2
+          style={{
+            fontSize: '16px',
+            margin: 0,
+            fontWeight: 'bold',
+            color: 'inherit',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
           BV
         </h2>
       ) : (
-        <h2 style={{
-          fontSize: '20px',
-          margin: 0,
-          fontWeight: 'bold',
-          color: 'inherit',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}>
+        <h2
+          style={{
+            fontSize: '20px',
+            margin: 0,
+            fontWeight: 'bold',
+            color: 'inherit',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
           BASIC V2
         </h2>
       )}

@@ -28,7 +28,7 @@ import {
   IconFileText,
   IconSend,
 } from '@tabler/icons-react';
-import { useNavigate, useLocation } from 'react-router';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
 
 // ── Step definitions ──────────────────────────────────────────────────────────

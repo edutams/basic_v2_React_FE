@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { Box, Grid, Typography, Paper, Button, Chip, Stack } from '@mui/material';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import { Groups as GroupsIcon, AccountBalanceWallet as WalletIcon, School as SchoolIcon } from '@mui/icons-material';

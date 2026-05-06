@@ -16,19 +16,14 @@ import {
   TableBody,
   IconButton,
 } from '@mui/material';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react';
 import emptyCart from 'src/assets/images/products/empty-shopping-cart.svg';
 import { ProductContext } from 'src/context/EcommerceContext/index';
 
-
 const AddToCart = () => {
-  const {
-    cartItems,
-    incrementQuantity,
-    removeFromCart,
-    decrementQuantity,
-  } = useContext(ProductContext);
+  const { cartItems, incrementQuantity, removeFromCart, decrementQuantity } =
+    useContext(ProductContext);
 
   return (
     <Box>
@@ -81,7 +76,10 @@ const AddToCart = () => {
 
                       <TableCell>
                         <ButtonGroup size="small" color="success" aria-label="small button group">
-                          <Button onClick={() => decrementQuantity(product.id)} disabled={product.qty < 2}>
+                          <Button
+                            onClick={() => decrementQuantity(product.id)}
+                            disabled={product.qty < 2}
+                          >
                             <IconMinus stroke={1.5} size="0.8rem" />
                           </Button>
                           <Button>{product.qty}</Button>

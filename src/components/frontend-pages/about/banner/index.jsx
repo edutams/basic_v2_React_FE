@@ -1,20 +1,19 @@
-
-import React from "react";
-import { Box, Stack, Typography, Container, Grid, Button } from "@mui/material";
-import { Link } from "react-router";
+import React from 'react';
+import { Box, Stack, Typography, Container, Grid, Button } from '@mui/material';
+import { Link } from 'react-router-dom';
 
 const Banner = () => {
   return (
-    (<Box
+    <Box
       bgcolor="primary.light"
       sx={{
         paddingTop: {
-          xs: "40px",
-          lg: "100px",
+          xs: '40px',
+          lg: '100px',
         },
         paddingBottom: {
-          xs: "40px",
-          lg: "100px",
+          xs: '40px',
+          lg: '100px',
         },
       }}
     >
@@ -24,8 +23,9 @@ const Banner = () => {
             alignItems="center"
             size={{
               xs: 12,
-              lg: 6
-            }}>
+              lg: 6,
+            }}
+          >
             <Typography
               variant="h1"
               mb={3}
@@ -33,20 +33,15 @@ const Banner = () => {
               fontWeight={700}
               sx={{
                 fontSize: {
-                  xs: "34px",
-                  sm: "48px",
+                  xs: '34px',
+                  sm: '48px',
                 },
               }}
             >
               Get to know Flexy Dashboard Template
             </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <Button
-                variant="contained"
-                size="large"
-                component={Link}
-                to="/auth/register"
-              >
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              <Button variant="contained" size="large" component={Link} to="/auth/register">
                 Create an account
               </Button>
               <Button variant="outlined" size="large">
@@ -59,19 +54,19 @@ const Banner = () => {
             alignItems="center"
             size={{
               xs: 12,
-              lg: 5
-            }}>
+              lg: 5,
+            }}
+          >
             <Typography lineHeight={1.9}>
-              Do you need a highly customizable and developer friendly premium
-              react.js admin template packed with numerous features? Flexy
-              react.js Admin Template has everything you need. This bootstrap
-              based admin template is designed in accordance with industry
+              Do you need a highly customizable and developer friendly premium react.js admin
+              template packed with numerous features? Flexy react.js Admin Template has everything
+              you need. This bootstrap based admin template is designed in accordance with industry
               standards and best practices to provide you.
             </Typography>
           </Grid>
         </Grid>
       </Container>
-    </Box>)
+    </Box>
   );
 };
 

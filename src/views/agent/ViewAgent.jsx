@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 import PageContainer from '../../components/container/PageContainer';
@@ -135,7 +135,11 @@ const ViewAgent = () => {
                 agent: data.organization_name || '—',
                 handle: data.organization_email || '—',
                 created_at: tenant.created_at
-                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })
                   : '—',
               })),
             topAgents: [],
@@ -274,12 +278,14 @@ const ViewAgent = () => {
                         label="Schools"
                         value="3"
                       />
+                      {/* {!(currentUser?.organization?.access_level === 1 && !isDashboard && !isOwnProfile) && ( */}
                       <Tab
                         icon={<IconUsers size={18} />}
                         iconPosition="start"
                         label="Manage Team"
                         value="4"
                       />
+                    {/* )} */}
                     </TabList>
                   </Box>
 
@@ -293,6 +299,7 @@ const ViewAgent = () => {
                         onAddAgent={() => setIsAddAgentModalOpen(true)}
                         isDashboard={isDashboard}
                         accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={!isDashboard && !isOwnProfile}
                       />
                     </TabPanel>
                     <TabPanel value="3" sx={{ p: 3 }}>
@@ -303,7 +310,11 @@ const ViewAgent = () => {
                       />
                     </TabPanel>
                     <TabPanel value="4" sx={{ p: 3 }}>
-                      <ManageTeamTab organizationId={id} />
+                      <ManageTeamTab 
+                        organizationId={id} 
+                        accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={!isDashboard && !isOwnProfile}
+                      />
                     </TabPanel>
                   </Box>
                 </TabContext>

@@ -1,10 +1,9 @@
-
-import React from "react";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import { Link } from "react-router";
-import "./carousel.css";
-import { Box } from "@mui/material";
+import React from 'react';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import { Link } from 'react-router-dom';
+import './carousel.css';
+import { Box } from '@mui/material';
 
 import Demo1 from 'src/assets/images/landingpage/demo-main.jpg';
 import Demo2 from 'src/assets/images/landingpage/demo-dark.jpg';
@@ -57,7 +56,7 @@ const DozensCarousel = () => {
                 alt="user-img"
                 width={380}
                 height={300}
-                style={{ borderRadius: "16px" }}
+                style={{ borderRadius: '16px' }}
               />
             </Link>
           </Box>
@@ -75,7 +74,7 @@ const DozensCarousel = () => {
                 alt="user-img"
                 width={380}
                 height={300}
-                style={{ borderRadius: "16px" }}
+                style={{ borderRadius: '16px' }}
               />
             </Link>
           </Box>
@@ -93,7 +92,7 @@ const DozensCarousel = () => {
                 alt="user-img"
                 width={380}
                 height={300}
-                style={{ borderRadius: "16px" }}
+                style={{ borderRadius: '16px' }}
               />
             </Link>
           </Box>
@@ -111,7 +110,7 @@ const DozensCarousel = () => {
                 alt="user-img"
                 width={380}
                 height={300}
-                style={{ borderRadius: "16px" }}
+                style={{ borderRadius: '16px' }}
               />
             </Link>
           </Box>
@@ -129,7 +128,7 @@ const DozensCarousel = () => {
                 alt="user-img"
                 width={380}
                 height={300}
-                style={{ borderRadius: "16px" }}
+                style={{ borderRadius: '16px' }}
               />
             </Link>
           </Box>
@@ -147,7 +146,7 @@ const DozensCarousel = () => {
                 alt="user-img"
                 width={380}
                 height={300}
-                style={{ borderRadius: "16px" }}
+                style={{ borderRadius: '16px' }}
               />
             </Link>
           </Box>

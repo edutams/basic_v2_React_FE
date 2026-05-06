@@ -30,6 +30,7 @@ import {
 import {
   getSessions,
   getCurrentSessionForSelect,
+  getCurrentSessionAndAbove,
 } from '../../../context/AgentContext/services/session.service';
 import useNotification from '../../../hooks/useNotification';
 
@@ -229,19 +230,35 @@ const RegisterSchoolForm = ({
   }, []);
 
   // Fetch current session on mount
-  useEffect(() => {
-    getCurrentSessionForSelect()
-      .then((res) => {
-        const session = res.data || res;
-        setCurrentSession(session);
-        // Only prefill if user hasn't selected anything yet
-        if (!formData.session_id && session?.id) {
-          setFormData((prev) => ({ ...prev, session_id: session.id }));
-        }
-      })
-      .catch(() => notify.error('Failed to load current session'));
-  }, []);
-
+  // useEffect(() => {
+  //   getCurrentSessionAndAbove()
+  //     .then((res) => {
+  //       const session = res.data || res;
+  //       setCurrentSession(session);
+  //       // Only prefill if user hasn't selected anything yet
+  //       if (!formData.session_id && session?.id) {
+  //         setFormData((prev) => ({ ...prev, session_id: session.id }));
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error('Failed to fetch current session:', error);
+  //     });
+  // }, []);
+// Fetch current session on mount
+useEffect(() => {
+  getCurrentSessionAndAbove()
+    .then((res) => {
+      const session = res.data || res;
+      setCurrentSession(session);
+      // Only prefill if user hasn't selected anything yet
+      if (!formData.session_id && session?.id) {
+        setFormData((prev) => ({ ...prev, session_id: session.id }));
+      }
+    })
+    .catch((error) => {
+      console.error('Failed to fetch current session:', error);
+    });
+}, []);
   useEffect(() => {
     if (formData.state_id) {
       getLgasByState(formData.state_id)
@@ -294,7 +311,6 @@ const RegisterSchoolForm = ({
       head: src !== 'none' ? copyPerson(src) : emptyPerson(),
     }));
   };
-
   // ── validation ───────────────────────────────────────────────────────────
 
   const validateForm = () => {
@@ -468,18 +484,17 @@ const RegisterSchoolForm = ({
           <FormControl fullWidth error={Boolean(errors.session_id)}>
             <InputLabel>Session</InputLabel>
             <Select
-              name="session_id"
-              value={formData.session_id}
-              label="Session"
-              onChange={handleChange}
-            >
-              <MenuItem value="">-- Select Session --</MenuItem>
-              {currentSession && (
-                <MenuItem key={currentSession.id} value={currentSession.id}>
-                  {currentSession.sesname} (Current)
-                </MenuItem>
-              )}
-            </Select>
+  name="session_id"
+  value={formData.session_id}
+  label="Session"
+  onChange={handleChange}>
+  <MenuItem value="">-- Select Session --</MenuItem>
+  {currentSession && currentSession.map((session) => (
+    <MenuItem key={session.id} value={session.id}>
+      {session.sesname} {session.is_current === 'yes' && '(Current)'}
+    </MenuItem>
+  ))}
+</Select>
             {errors.session_id && <FormHelperText>{errors.session_id}</FormHelperText>}
           </FormControl>
         </Grid>

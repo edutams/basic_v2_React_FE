@@ -21,6 +21,12 @@ import {
   Alert,
   CircularProgress,
   Link,
+  FormControl,
+  InputLabel,
+  Select,
+  Avatar,
+  MenuItem as SelectMenuItem,
+  Grid,
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -29,13 +35,14 @@ import ViewRoleModal from './ViewRoleModal';
 import RolePermissionsModal from './RolePermissionsModal';
 import RoleOrganizationsModal from './RoleOrganizationModal';
 
-const AssignmentManagement = () => {
+const RoleBasedAcess = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [nameFilter, setNameFilter] = useState('');
+  const [nameFilterInput, setNameFilterInput] = useState('');
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [currentUserForRole, setCurrentUserForRole] = useState(null);
@@ -70,22 +77,25 @@ const AssignmentManagement = () => {
     }
   };
 
-  const handleRoleSelection = (selectedRole) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) => {
-        if (user.id === currentUserForRole.id) {
-          if (!user.assignedRoles.includes(selectedRole)) {
-            return {
-              ...user,
-              assignedRoles: [...user.assignedRoles, selectedRole],
-            };
-          }
-          return user;
-        }
-        return user;
-      }),
-    );
+  const resetFilters = () => {
+    setNameFilter('');
+    setNameFilterInput('');
+    setPage(0);
+  };
 
+  const handleSearch = () => {
+    setNameFilter(nameFilterInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleRoleSelection = (selectedRole) => {
+    // ... logic if needed
     setRoleAttachmentModalOpen(false);
   };
 
@@ -94,15 +104,15 @@ const AssignmentManagement = () => {
   return (
     <Box>
       <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
+        <Grid container spacing={1} mb={3} alignItems="center">
+        <Grid size={{ xs: 12, md: 4 }}>
           <TextField
-            placeholder="Search by role"
-            value={nameFilter}
-            onChange={(e) => {
-              setNameFilter(e.target.value);
-              setPage(0);
-            }}
-            sx={{ mb: 2 }}
+            fullWidth
+            size="small"
+            label="Search by Role"
+            value={nameFilterInput}
+            onChange={(e) => setNameFilterInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -111,13 +121,19 @@ const AssignmentManagement = () => {
               ),
             }}
           />
-
-          {hasFilters && (
-            <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
-              Clear Filters
-            </Button>
-          )}
-        </Box>
+        </Grid>
+       
+        <Grid size="auto">
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSearch}
+            sx={{ height: 40 }}
+          >
+            Search
+          </Button>
+        </Grid>
+      </Grid>
 
         <Paper variant="outlined">
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
@@ -130,7 +146,7 @@ const AssignmentManagement = () => {
                     Total Permission
                   </TableCell>
                   <TableCell sx={{ width: { xs: '25%', md: '15%' } }} align="center">
-                    Total Organization
+                    Total Org. Teams
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -151,11 +167,11 @@ const AssignmentManagement = () => {
                         </Box>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell align="center">
                         <Box>
-                          <Typography variant="subtitle2" align="center">
+                          <Typography variant="subtitle2">
                             <Link
-                              sx={{ cursor: 'pointer' }}
+                              sx={{ cursor: 'pointer', textDecoration: 'none' }}
                               onClick={() => {
                                 setSelectedRoleId(row.id);
                                 setPermissionsModalOpen(true);
@@ -166,10 +182,10 @@ const AssignmentManagement = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" align="center">
+                      <TableCell align="center">
+                        <Typography variant="subtitle2">
                           <Link
-                            sx={{ cursor: 'pointer' }}
+                            sx={{ cursor: 'pointer', textDecoration: 'none' }}
                             onClick={() => {
                               setSelectedRoleId(row.id);
                               setOrganizationsModalOpen(true);
@@ -184,20 +200,8 @@ const AssignmentManagement = () => {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
-                      <Alert
-                        severity="info"
-                        sx={{
-                          mb: 3,
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          '& .MuiAlert-icon': {
-                            mr: 1.5,
-                          },
-                        }}
-                      >
-                        {hasFilters
-                          ? 'No users match the current filters.'
-                          : 'No users available. Add new users or adjust filters.'}
+                      <Alert severity="info" sx={{ mb: 3, justifyContent: 'center' }}>
+                        {hasFilters ? 'No roles match the search.' : 'No roles available.'}
                       </Alert>
                     </TableCell>
                   </TableRow>
@@ -244,4 +248,4 @@ const AssignmentManagement = () => {
   );
 };
 
-export default AssignmentManagement;
+export default RoleBasedAcess;

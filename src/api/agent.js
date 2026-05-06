@@ -13,6 +13,14 @@ const agentApi = {
     const response = await api.get('/landlord/v1/organizations/get_analytics');
     return response.data;
   },
+  getSchoolChartData: async (params) => {
+    const response = await api.get('/landlord/v1/organizations/get_school_chart_data', { params });
+    return response.data;
+  },
+  getSubOrganizations: async (id, params) => {
+    const response = await api.get(`/landlord/v1/organizations/${id}/sub-organizations`, { params });
+    return response.data;
+  },
   update: async (id, data) => {
     const response = await api.post(`/landlord/v1/organizations/update/${id}`, data);
     return response.data;

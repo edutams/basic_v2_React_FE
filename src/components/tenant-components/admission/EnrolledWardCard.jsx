@@ -41,7 +41,6 @@ const EnrolledWardCard = ({ ward }) => (
       sx={{
         textAlign: 'left',
         flexShrink: 0,
-        display: { xs: 'none', sm: 'block' },
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>

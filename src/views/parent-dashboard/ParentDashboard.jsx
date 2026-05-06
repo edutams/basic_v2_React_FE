@@ -70,11 +70,24 @@ const ParentDashboard = () => {
                 sx={{ bgcolor: '#F1F4F1', color: '#000', fontWeight: 500 }}
               />
             </Box>
-            <Stack spacing={1.5}>
-              {ENROLLED_WARDS.map((ward) => (
-                <EnrolledWardCard key={ward.id} ward={ward} />
-              ))}
-            </Stack>
+
+            {/* Scrollable on mobile, normal stack on sm+ */}
+            <Box
+              sx={{
+                overflowX: { xs: 'auto', sm: 'visible' },
+                mx: { xs: -1, sm: 0 },
+                px: { xs: 1, sm: 0 },
+              }}
+            >
+              <Stack
+                spacing={1.5}
+                sx={{ minWidth: { xs: 560, sm: 'unset' } }}
+              >
+                {ENROLLED_WARDS.map((ward) => (
+                  <EnrolledWardCard key={ward.id} ward={ward} />
+                ))}
+              </Stack>
+            </Box>
           </Paper>
 
           {/* Results banner */}
@@ -132,9 +145,19 @@ const ParentDashboard = () => {
                 sx={{ bgcolor: '#F1F4F1', color: '#000', fontWeight: 500 }}
               />
             </Box>
-            {PROSPECTIVE_WARDS.map((ward) => (
-              <ProspectiveWardCard key={ward.id} ward={ward} />
-            ))}
+            <Box
+              sx={{
+                overflowX: { xs: 'auto', sm: 'visible' },
+                mx: { xs: -1, sm: 0 },
+                px: { xs: 1, sm: 0 },
+              }}
+            >
+              <Box sx={{ minWidth: { xs: 400, sm: 'unset' } }}>
+                {PROSPECTIVE_WARDS.map((ward) => (
+                  <ProspectiveWardCard key={ward.id} ward={ward} />
+                ))}
+              </Box>
+            </Box>
           </Paper>
         </Grid>
 

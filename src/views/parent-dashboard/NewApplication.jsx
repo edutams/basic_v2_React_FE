@@ -20,6 +20,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import WardDetailForm from 'src/components/tenant-components/admission/WardDetailForm';
 import AcademicInfoForm from 'src/components/tenant-components/admission/AcademicInfoForm';
 import AdmissionBatchModal from 'src/components/tenant-components/admission/AdmissionBatchModal';
+import PaymentStep from 'src/components/tenant-components/admission/PaymentStep';
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 const STEPS = [
@@ -263,7 +264,14 @@ const NewApplication = () => {
             isLoading={isLoading}
           />
         );
-      case 2: return <PlaceholderStep label="Payment"   onNext={handleNext} onBack={handleBack} />;
+      case 2:
+        return (
+          <PaymentStep
+            onNext={handleNext}
+            onBack={handleBack}
+            isLoading={isLoading}
+          />
+        );
       case 3: return <PlaceholderStep label="Documents" onNext={handleNext} onBack={handleBack} />;
       case 4: return <PlaceholderStep label="Submit"    onNext={handleNext} onBack={handleBack} />;
       default: return null;

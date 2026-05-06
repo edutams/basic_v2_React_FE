@@ -16,6 +16,9 @@ import CustomTextField from '../../../components/forms/theme-elements/CustomText
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 import { useTenantAuth } from '../../../hooks/useTenantAuth';
 import { useNotification } from '../../../hooks/useNotification';
+import EduTAMSLogo from '../../../assets/images/logos/EduTAMS.jpeg';
+import { Avatar } from '@mui/material';
+import { IconSchool } from '@tabler/icons-react';
 
 const AuthTenantLogin = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({
@@ -25,7 +28,9 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
   });
   const [formErrors, setFormErrors] = useState({});
 
-  const { login, isLoading, error, clearError } = useTenantAuth();
+  const { login, isLoading, error, clearError, tenantInfo } = useTenantAuth();
+  const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || '';
+  const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
   const navigate = useNavigate();
   const location = useLocation();
   const successMessage = location.state?.message;
@@ -83,9 +88,35 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
   return (
     <>
       {title ? (
-        <Typography fontWeight="700" variant="h3" mb={1}>
-          {title}
-        </Typography>
+        <Box mb={2}>
+          {/* School logo */}
+          <Box display="flex" justifyContent="center" mb={1.5}>
+            <Avatar
+              src={schoolLogo || undefined}
+              alt={schoolName || 'School Logo'}
+              variant="rounded"
+              sx={{
+                width: 72,
+                height: 72,
+                borderRadius: 2,
+                bgcolor: schoolLogo ? 'transparent' : 'grey.100',
+                border: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              {!schoolLogo && <IconSchool size={40} color="#9e9e9e" />}
+            </Avatar>
+          </Box>
+
+          {/* <Typography fontWeight="700" variant="h3" textAlign="center">
+            {title}
+          </Typography> */}
+          {schoolName && (
+            <Typography fontWeight="700" variant="h4" textAlign="center">
+              {schoolName}
+            </Typography>
+          )}
+        </Box>
       ) : null}
 
       {subtext}
@@ -103,7 +134,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={0}>
           <Box>
-            <CustomFormLabel htmlFor="login">Login</CustomFormLabel>
+            <CustomFormLabel htmlFor="login">Email/Phone No</CustomFormLabel>
             <CustomTextField
               id="login"
               name="login"
@@ -157,7 +188,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
             disabled={isLoading}
             startIcon={isLoading ? <CircularProgress size={20} /> : null}
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? 'Signing In...' : 'Login to Dashboard'}
           </Button>
         </Box>
       </Box>

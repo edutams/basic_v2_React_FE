@@ -13,7 +13,6 @@ const EnrolledWardCard = ({ ward }) => (
       gap: 2,
     }}
   >
-    {/* Avatar + name/tags/regNo */}
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
       <Avatar src={ward.avatar} sx={{ width: 40, height: 40, flexShrink: 0 }}>
         {ward.name?.[0]}
@@ -38,7 +37,6 @@ const EnrolledWardCard = ({ ward }) => (
       </Box>
     </Box>
 
-    {/* Fee breakdown + total — hidden on xs, shown from sm up */}
     <Box
       sx={{
         textAlign: 'left',
@@ -78,7 +76,6 @@ const EnrolledWardCard = ({ ward }) => (
       </Box>
     </Box>
 
-    {/* View Details — always on the right end */}
     <Button
       size="small"
       endIcon={<ArrowForwardIcon />}

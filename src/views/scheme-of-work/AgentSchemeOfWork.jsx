@@ -56,9 +56,9 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchSubjectsByProgramme,
-  fetchSubjectsByClass,
+  fetchSubjects,
   fetchCurriculums,
-} from '../../api/tenantCurriculumApi';
+} from '../../api/curriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
@@ -162,6 +162,19 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     initData();
   }, []);
 
+  // Fetch subjects when curriculum changes
+  useEffect(() => {
+    if (curriculum) {
+      fetchSubjects(curriculum)
+        .then((subjectsRes) => {
+          setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+        })
+        .catch((error) => {
+          console.error('Failed to fetch subjects:', error);
+        });
+    }
+  }, [curriculum]);
+
   const initData = async () => {
     try {
       const [termsRes, progsRes, curricRes] = await Promise.all([
@@ -186,19 +199,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         setSubjects([]); // Clear subjects until a class is selected
       } catch (error) {
         console.error('Failed to fetch classes', error);
-      }
-    } else if (key === 'classLevel') {
-      try {
-        const subjectsRes = await fetchSubjectsByClass(val);
-        setSubjects(
-          subjectsRes.data.map((s) => ({
-            value: s.id,
-            label: s.subject_name,
-            curriculum_id: s.curriculum_id,
-          })),
-        );
-      } catch (error) {
-        console.error('Failed to fetch subjects', error);
       }
     }
   }, []);
@@ -458,10 +458,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     }
   };
 
-  const handleModalClassChange = async (classId, setSubjects) => {
+  const handleModalClassChange = async (classId, setSubjects, curriculumId) => {
     if (!classId) return;
     try {
-      const subRes = await fetchSubjectsByClass(classId);
+      const subRes = await fetchSubjects(curriculumId);
       setSubjects(subRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
     } catch (e) {
       notify.error('Failed to load subjects');
@@ -805,16 +805,14 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                 fullWidth
                 label="Subject"
                 size="small"
-                value={subjects.some((s) => s.value === subject) ? subject : ''}
+                value={subject}
                 onChange={(e) => setSubject(e.target.value)}
               >
-                {subjects
-                  .filter((s) => !curriculum || s.curriculum_id === curriculum)
-                  .map((s) => (
-                    <MenuItem key={s.value} value={s.value}>
-                      {s.label}
-                    </MenuItem>
-                  ))}
+                {subjects.map((s) => (
+                  <MenuItem key={s.value} value={s.value}>
+                    {s.label}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
@@ -1740,12 +1738,12 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               <Table>
                 <TableBody>
                   <TableRow sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                    <TableCell
+                    {/* <TableCell
                       component="th"
                       sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
                     >
                       Week
-                    </TableCell>
+                    </TableCell> */}
                     {/* <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
                     <Typography variant="body2">{viewDetailsData.week?.week_name || 'Not available'}</Typography>
                   </TableCell> */}

@@ -34,8 +34,26 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
   const [chartData, setChartData] = useState(null);
   const [chartLoading, setChartLoading] = useState(false);
   const [pendingYear, setPendingYear] = useState(year);
+  const [allAgents, setAllAgents] = useState([]);
 
   const fetchChartData = useCallback(async (selectedYear, selectedAgent = null) => {
+    setChartLoading(true);
+    try {
+      const params = { year: selectedYear };
+      const res = await agentApi.getSchoolChartData(params);
+      if (res.status) {
+        setChartData(res.data);
+        // Store all agents for the select options
+        setAllAgents(res.data.agentPerformance || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch school chart data', e);
+    } finally {
+      setChartLoading(false);
+    }
+  }, []);
+
+  const fetchFilteredChartData = useCallback(async (selectedYear, selectedAgent = null) => {
     setChartLoading(true);
     try {
       const params = { year: selectedYear };
@@ -47,23 +65,23 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
         setChartData(res.data);
       }
     } catch (e) {
-      console.error('Failed to fetch school chart data', e);
+      console.error('Failed to fetch filtered school chart data', e);
     } finally {
       setChartLoading(false);
     }
   }, []);
 
-  // Fetch when modal opens or year changes (after Filter click)
+  // Fetch initial data when modal opens
   useEffect(() => {
     if (open) {
-      fetchChartData(year, agent);
+      fetchChartData(year);
     }
-  }, [open, year, agent, fetchChartData]);
+  }, [open, year, fetchChartData]);
 
   const handleFilter = () => {
     setYear(pendingYear);
-    // Agent state is already updated by the Select onChange, so we just need to trigger the fetch
-    // The useEffect will automatically run when agent changes
+    // Fetch filtered data only when filter button is clicked
+    fetchFilteredChartData(pendingYear, agent);
   };
 
   const overviewCategories = chartData?.months || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -124,7 +142,7 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
       sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
     >
       {/* Top stat cards */}
-      <Grid container spacing={2} mb={3}>
+      <Grid container spacing={2} mb={3} mt={3}>
         <Grid size={{ xs: 12, sm: 3 }}>
           <TopCard
             label="Total School"
@@ -136,7 +154,7 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
         </Grid>
         <Grid size={{ xs: 12, sm: 3 }}>
           <TopCard
-            label="Active Schools"
+            label="Approved Schools"
             value={stats?.activeSchools ?? 0}
             valueColor="#16a34a"
             iconBg={isDark ? '#0d2e1e' : '#dcfee6'}
@@ -147,6 +165,15 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
           <TopCard
             label="Pending Schools"
             value={stats?.pendingSchools ?? 0}
+            valueColor="#dae11d"
+            iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
+            icon={IconBuildingCommunity}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 3 }}>
+          <TopCard
+            label="Rejected Schools"
+            value={stats?.rejected ?? 0}
             valueColor="#e11d48"
             iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
             icon={IconBuildingCommunity}
@@ -173,7 +200,7 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
             '& .MuiTabs-indicator': { display: 'none' },
           }}
         >
-          <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconChartBar size={16} /><span>Overview</span></Stack>} value="1" />
+          <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconChartBar size={16} /><span>Overvieeeew</span></Stack>} value="1" />
           <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconSchool size={16} /><span>Agent Performance</span></Stack>} value="2" />
         </Tabs>
 
@@ -189,7 +216,7 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
                 sx={{ '& fieldset': { border: 'none' }, minWidth: 140, fontSize: '13px', fontWeight: 600, color: isDark ? '#fff' : '#333' }}
               >
                 <MenuItem value="All">All Agents</MenuItem>
-                {(chartData?.agentPerformance || []).map((a, i) => (
+                {allAgents.map((a, i) => (
                   <MenuItem key={i} value={a.name}>{a.name}</MenuItem>
                 ))}
               </Select>

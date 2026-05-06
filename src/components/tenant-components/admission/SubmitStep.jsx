@@ -21,6 +21,7 @@ import PropTypes from 'prop-types';
 const SECTIONS = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
 
 const QuickJump = () => (
+  <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2 }}>
   <Box sx={{ position: 'sticky', top: 24 }}>
     <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
       Quick jump
@@ -40,6 +41,7 @@ const QuickJump = () => (
       ))}
     </Stack>
   </Box>
+  </Paper>
 );
 
 // ── Section wrapper ───────────────────────────────────────────────────────────

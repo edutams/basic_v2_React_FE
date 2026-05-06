@@ -40,6 +40,7 @@ const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffMan
 const ParentManagement = Loadable(lazy(() => import('../views/tenants-views/parents/ParentManagement')),);
 const LearnerManagement = Loadable(lazy(() => import('../views/tenants-views/learners/LearnerManagement')),);
 const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
+const NewApplication  = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
 
 const TenantRoutes = [
   {
@@ -101,8 +102,16 @@ const TenantRoutes = [
       { path: 'profile', element: <AccountSetting /> },
       { path: 'staff-setup', element: <StaffManager /> },
 
-      //Parent routes
-       { path: 'dashboard', element: <ParentDashboard /> },
+      // ── Parent routes ──
+      { path: 'dashboard',                    element: <ParentDashboard /> },
+      { path: 'admission/new-application',    element: <NewApplication /> },
+
+      // Admission Application
+      { path: 'application-setup',  element: <NewApplication /> },
+      // { path: 'admission-status',   element: <NewApplication /> },  
+      // { path: 'admission-letter',   element: <NewApplication /> },   
+
+      
     ],
   },
 ];

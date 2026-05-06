@@ -70,7 +70,7 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
   </Paper>
 );
 
-// ── Admission Banner ──────────────────────────────────────────────────────────
+// ── Admission Banner 
 const AdmissionBanner = ({ session, onApply }) => {
   const theme = useTheme();
   const primary = theme.palette.primary.main;
@@ -135,7 +135,6 @@ const AdmissionBanner = ({ session, onApply }) => {
         </Box>
       </Box>
 
-      {/* Right: CTA */}
       <Button
         variant="contained"
         endIcon={<ArrowForwardIcon />}
@@ -156,7 +155,7 @@ const AdmissionBanner = ({ session, onApply }) => {
   );
 };
 
-// ── Enrolled Ward Card ────────────────────────────────────────────────────────
+//  Enrolled Ward Card 
 const EnrolledWardCard = ({ ward }) => (
   <Paper
     variant="outlined"
@@ -229,7 +228,7 @@ const EnrolledWardCard = ({ ward }) => (
   </Paper>
 );
 
-// ── Admission Step ────────────────────────────────────────────────────────────
+// ── Admission Step 
 const STEPS = ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
 
 const AdmissionSteps = ({ currentStep }) => (
@@ -281,7 +280,7 @@ const AdmissionSteps = ({ currentStep }) => (
   </Box>
 );
 
-// ── Prospective Ward Card ─────────────────────────────────────────────────────
+// ── Prospective Ward Card
 const ProspectiveWardCard = ({ ward }) => {
   const [expanded, setExpanded] = React.useState(ward.expanded ?? false);
 
@@ -404,23 +403,19 @@ const ProspectiveWardCard = ({ ward }) => {
   );
 };
 
-// ── Main Dashboard ────────────────────────────────────────────────────────────
+// ── Main Dashboard 
 const ParentDashboard = () => {
   const navigate = useNavigate();
   const { tenantInfo } = useContext(TenantAuthContext);
 
   const session = tenantInfo?.academic_session || '2025/2026';
 
-  // Admission batch modal state
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
 
   const handleApplyAdmission = (batch) => {
-    console.log('Selected batch:', batch);
-    // TODO: Navigate to admission application form with selected batch
-    // navigate('/admission/apply', { state: { batch } });
+    navigate('/admission/new-application', { state: { batch } });
   };
 
-  // Placeholder data — replace with real API calls
   const enrolledWards = [
     {
       id: 1,

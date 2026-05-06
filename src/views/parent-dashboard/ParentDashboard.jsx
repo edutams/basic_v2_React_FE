@@ -40,12 +40,20 @@ const ParentDashboard = () => {
 
       {/* ── Stat Cards ── */}
       <Box sx={{ mb: 3 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <StatCard icon={GroupsIcon} count={ENROLLED_WARDS.length}    label="Enrolled Ward"     />
-          <StatCard icon={GroupsIcon} count={PROSPECTIVE_WARDS.length} label="Prospective Ward"  />
-          <StatCard icon={WalletIcon} count="₦35,000"                  label="Outstanding Fees"  />
-          <StatCard icon={WalletIcon} count="₦35,000"                  label="Wallet Balance"    />
-        </Stack>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <StatCard icon={GroupsIcon} count={ENROLLED_WARDS.length}    label="Enrolled Ward"    />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <StatCard icon={GroupsIcon} count={PROSPECTIVE_WARDS.length} label="Prospective Ward" />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <StatCard icon={WalletIcon} count="₦35,000"                  label="Outstanding Fees" />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+            <StatCard icon={WalletIcon} count="₦35,000"                  label="Wallet Balance"   />
+          </Grid>
+        </Grid>
       </Box>
 
       <Grid container spacing={3}>

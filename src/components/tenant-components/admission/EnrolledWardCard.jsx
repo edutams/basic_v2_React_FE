@@ -5,33 +5,48 @@ import PropTypes from 'prop-types';
 const EnrolledWardCard = ({ ward }) => (
   <Paper
     variant="outlined"
-    sx={{ p: 2, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2 }}
+    sx={{
+      p: 2,
+      borderRadius: 2,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2,
+    }}
   >
-    <Avatar src={ward.avatar} sx={{ width: 40, height: 40 }}>
-      {ward.name?.[0]}
-    </Avatar>
-
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Typography variant="subtitle2" fontWeight={700} noWrap>
-        {ward.name}
-      </Typography>
-      <Stack direction="row" spacing={0.5} flexWrap="wrap" mt={0.3}>
-        {ward.tags?.map((t) => (
-          <Chip
-            key={t}
-            label={t}
-            size="small"
-            sx={{ fontSize: 10, bgcolor: '#E7F3D4', color: '#000000', fontWeight: 600 }}
-          />
-        ))}
-      </Stack>
-      <Typography variant="caption" color="text.secondary">
-        {ward.regNo}
-      </Typography>
+    {/* Avatar + name/tags/regNo */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
+      <Avatar src={ward.avatar} sx={{ width: 40, height: 40, flexShrink: 0 }}>
+        {ward.name?.[0]}
+      </Avatar>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="subtitle2" fontWeight={700} noWrap>
+          {ward.name}
+        </Typography>
+        <Stack direction="row" spacing={0.5} flexWrap="wrap" mt={0.3}>
+          {ward.tags?.map((t) => (
+            <Chip
+              key={t}
+              label={t}
+              size="small"
+              sx={{ fontSize: 10, bgcolor: '#E7F3D4', color: '#000000', fontWeight: 600 }}
+            />
+          ))}
+        </Stack>
+        <Typography variant="caption" color="text.secondary">
+          {ward.regNo}
+        </Typography>
+      </Box>
     </Box>
 
-    <Box sx={{ textAlign: 'left', flexShrink: 0 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+    {/* Fee breakdown + total — hidden on xs, shown from sm up */}
+    <Box
+      sx={{
+        textAlign: 'left',
+        flexShrink: 0,
+        display: { xs: 'none', sm: 'block' },
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
         <Box>
           <Typography variant="caption" color="text.secondary" display="block">
             Compulsory: <strong>₦{ward.compulsory?.toLocaleString()}</strong>
@@ -63,10 +78,11 @@ const EnrolledWardCard = ({ ward }) => (
       </Box>
     </Box>
 
+    {/* View Details — always on the right end */}
     <Button
       size="small"
       endIcon={<ArrowForwardIcon />}
-      sx={{ ml: 1, whiteSpace: 'nowrap', fontSize: '0.75rem' }}
+      sx={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: '0.75rem' }}
     >
       View Details
     </Button>

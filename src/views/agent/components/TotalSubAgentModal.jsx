@@ -18,6 +18,10 @@ import {
   CircularProgress,
   Alert,
   Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
@@ -34,12 +38,13 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [level, setLevel] = useState('');
 
   useEffect(() => {
     if (open && orgId) {
       fetchOrganizations();
     }
-  }, [open, orgId, page, search]);
+  }, [open, orgId, page, search, level]);
 
   const handleSearch = () => {
     setSearch(searchInput);
@@ -55,10 +60,17 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
   const fetchOrganizations = async () => {
     setLoading(true);
     try {
-      const res = await agentApi.getSubOrganizations(orgId, {
+      const params = {
         page: page + 1,
         search,
-      });
+      };
+      
+      // Add level parameter if it's set
+      if (level) {
+        params.access_level = level;
+      }
+      
+      const res = await agentApi.getSubOrganizations(orgId, params);
       if (res.status) {
         setData(res.data.data || []);
         setTotalRows(res.data.total || 0);
@@ -86,7 +98,6 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
         <TextField
           size="small"
           placeholder="Search by organization name or code"
-          fullWidth
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -97,7 +108,22 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
               </InputAdornment>
             ),
           }}
+          sx={{ flex: 1 }}
         />
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Level</InputLabel>
+          <Select
+            value={level}
+            label="Level"
+            onChange={(e) => setLevel(e.target.value)}
+          >
+            <MenuItem value="">All Levels</MenuItem>
+            <MenuItem value="2">Level 2</MenuItem>
+            <MenuItem value="3">Level 3</MenuItem>
+            <MenuItem value="4">Level 4</MenuItem>
+            <MenuItem value="5">Level 5</MenuItem>
+          </Select>
+        </FormControl>
         <Button 
           variant="contained" 
           size="small"
@@ -146,7 +172,13 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
                           {org.organization_name}
                         </Typography>
                         <Typography fontSize="12px" color="text.secondary">
-                          {org.organization_code} | {org.email}
+                          {org.organization_code} | {org.organization_email}
+                        </Typography>
+                        <Typography fontSize="12px" color="text.secondary">
+                          {org.organization_phone}
+                        </Typography>
+                        <Typography fontSize="12px" color="text.secondary">
+                          {org.organization_domain}
                         </Typography>
                       </Box>
                     </Stack>

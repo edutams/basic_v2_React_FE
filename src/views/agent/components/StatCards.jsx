@@ -121,7 +121,44 @@ const StatCard = ({ title, value, valueColor, valueBg, subStats = [], onIconClic
   );
 };
 
-const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick }) => {
+const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, accessLevel = 1 }) => {
+  // Get available sub-agent levels based on user access level
+  const getSubAgentLevels = () => {
+    switch (accessLevel) {
+      case 1:
+        return [
+          { label: 'Lv2', value: stats.subAgentLevels?.lv2?.toString() || '0' },
+          { label: 'Lv3', value: stats.subAgentLevels?.lv3?.toString() || '0' },
+          { label: 'Lv4', value: stats.subAgentLevels?.lv4?.toString() || '0' },
+          { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
+        ]; // Show all levels
+      case 2:
+        return [
+          { label: 'Lv3', value: stats.subAgentLevels?.lv3?.toString() || '0' },
+          { label: 'Lv4', value: stats.subAgentLevels?.lv4?.toString() || '0' },
+          { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
+        ]; // Show level 3 downward
+      case 3:
+        return [
+          { label: 'Lv4', value: stats.subAgentLevels?.lv4?.toString() || '0' },
+          { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
+        ]; // Show level 4 downward
+      case 4:
+        return [
+          { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
+        ]; // Show level 5 only
+      case 5:
+        return []; // Don't show any sub-stats
+      default:
+        return [
+          { label: 'Lv2', value: stats.subAgentLevels?.lv2?.toString() || '0' },
+          { label: 'Lv3', value: stats.subAgentLevels?.lv3?.toString() || '0' },
+          { label: 'Lv4', value: stats.subAgentLevels?.lv4?.toString() || '0' },
+          { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
+        ]; // Default to all levels
+    }
+  };
+
   return (
     <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
       {/* Total Transaction Value */}
@@ -147,11 +184,7 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick }
           value={stats.totalSubAgents}
           valueColor="#f59e0b"
           valueBg="#fef3c7"
-          subStats={[
-            { label: 'Lv3', value: stats.subAgentBreakdown?.lv3?.toString() || '0' },
-            { label: 'Lv4', value: stats.subAgentBreakdown?.lv4?.toString() || '0' },
-            { label: 'Lv5', value: stats.subAgentBreakdown?.lv5?.toString() || '0' },
-          ]}
+          subStats={getSubAgentLevels()}
           onIconClick={onSubAgentClick}
           onClick={onSubAgentClick}
         />
@@ -161,15 +194,13 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick }
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
         <StatCard
           title="Total School"
-          value={stats.totalSchool}
+          value={stats.totalSchools}
           valueColor="#4a3aff"
           valueBg="#e8e6ff"
           subStats={[
-            { label: 'Primary School', value: stats.schoolBreakdown?.primary?.toString() || '0' },
-            {
-              label: 'Senior Secondary',
-              value: stats.schoolBreakdown?.secondary?.toString() || '0',
-            },
+            { label: 'Active', value: stats.activeSchools?.toString() || '0' },
+            { label: 'Pending', value: stats.pendingSchools?.toString() || '0' },
+            { label: 'Rejected', value: stats.rejectedSchools?.toString() || '0' },
           ]}
           onIconClick={onSchoolClick}
           onClick={onSchoolClick}
@@ -183,20 +214,21 @@ StatCards.propTypes = {
   stats: PropTypes.shape({
     totalTransaction: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     transactionCount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    totalSchool: PropTypes.number,
+    totalSchools: PropTypes.number,
     totalSubAgents: PropTypes.number,
+    activeSchools: PropTypes.number,
+    pendingSchools: PropTypes.number,
+    rejectedSchools: PropTypes.number,
     commission: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     volume: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    subAgentBreakdown: PropTypes.shape({
+    subAgentLevels: PropTypes.shape({
+      lv2: PropTypes.number,
       lv3: PropTypes.number,
       lv4: PropTypes.number,
       lv5: PropTypes.number,
     }),
-    schoolBreakdown: PropTypes.shape({
-      primary: PropTypes.number,
-      secondary: PropTypes.number,
-    }),
   }).isRequired,
+  accessLevel: PropTypes.number,
   onTransactionClick: PropTypes.func,
   onSubAgentClick: PropTypes.func,
   onSchoolClick: PropTypes.func,

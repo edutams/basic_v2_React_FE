@@ -34,7 +34,8 @@ const PermissionAttachmentModal = ({
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [permissionSearchLocal, setPermissionSearchLocal] = useState('');
 
-  const displayPermissions = availablePermissions.length > 0 ? availablePermissions : permissions;
+  const displayPermissions =
+    availablePermissions.length > 0 ? availablePermissions : permissions;
 
   useEffect(() => {
     if (availablePermissions.length > 0) {
@@ -78,24 +79,36 @@ const PermissionAttachmentModal = ({
     if (onPermissionChange) {
       onPermissionChange(permission);
     }
+
     setSelectedPermissions((prev) => {
       const exists = prev.some(
-        (p) => String(p.id) === String(permission.id) || p.name === permission.name,
+        (p) =>
+          String(p.id) === String(permission.id) ||
+          p.name === permission.name,
       );
+
       return exists
-        ? prev.filter((p) => String(p.id) !== String(permission.id) && p.name !== permission.name)
+        ? prev.filter(
+            (p) =>
+              String(p.id) !== String(permission.id) &&
+              p.name !== permission.name,
+          )
         : [...prev, permission];
     });
   };
 
   const isSelected = (permission) => {
     return selectedPermissions.some(
-      (p) => String(p.id) === String(permission.id) || p.name === permission.name,
+      (p) =>
+        String(p.id) === String(permission.id) ||
+        p.name === permission.name,
     );
   };
 
   const filteredPermissions = displayPermissions.filter((permission) =>
-    permission?.name?.toLowerCase()?.includes(permissionSearchLocal?.toLowerCase() || ''),
+    permission?.name
+      ?.toLowerCase()
+      ?.includes(permissionSearchLocal?.toLowerCase() || ''),
   );
 
   const handleSave = () => {
@@ -107,6 +120,7 @@ const PermissionAttachmentModal = ({
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setPermissionSearchLocal(value);
+
     if (onPermissionSearchChange) {
       onPermissionSearchChange(value);
     }
@@ -121,49 +135,73 @@ const PermissionAttachmentModal = ({
         </Box>
       </DialogTitle>
 
-      <DialogContent dividers>
-        <Typography variant="body1" gutterBottom>
-          Select permissions to attach to this role:
-        </Typography>
+      {/* 🔥 Custom structured content */}
+      <DialogContent dividers sx={{ p: 0 }}>
+        {/* Top description */}
+        <Box sx={{ p: 2 }}>
+          <Typography variant="body1">
+            Select permissions to attach to this role:
+          </Typography>
+        </Box>
 
-        <TextField
-          autoFocus
-          placeholder="Search Permissions"
-          type="text"
-          fullWidth
-          variant="outlined"
-          value={permissionSearchLocal}
-          onChange={handleSearchChange}
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
+        {/* 🔥 Sticky Search Section */}
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+            backgroundColor: 'background.paper',
+            p: 2,
+            borderBottom: '1px solid #eee',
           }}
-        />
+        >
+          <TextField
+            autoFocus
+            placeholder="Search Permissions"
+            fullWidth
+            variant="outlined"
+            value={permissionSearchLocal}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        <Typography variant="caption" color="textSecondary" sx={{ mb: 2, display: 'block' }}>
-          Current permissions: {selectedPermissions.length} permissions assigned
-        </Typography>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ mt: 1, display: 'block' }}
+          >
+            Current permissions: {selectedPermissions.length} permissions assigned
+          </Typography>
+        </Box>
 
+        {/* 🔽 Scrollable Permissions List */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress size={24} />
           </Box>
         ) : (
           <Box
             sx={{
+              p: 2,
+              maxHeight: 400,
+              overflowY: 'auto',
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: 1,
-              maxHeight: 400,
-              overflow: 'auto',
             }}
           >
             {filteredPermissions.map((permission) => (
-              <ListItem key={permission.id} disablePadding sx={{ padding: '4px 8px' }}>
+              <ListItem
+                key={permission.id}
+                disablePadding
+                sx={{ padding: '4px 8px' }}
+              >
                 <ListItemButton
                   onClick={() => handleToggle(permission)}
                   sx={{
@@ -173,10 +211,32 @@ const PermissionAttachmentModal = ({
                     width: '100%',
                   }}
                 >
-                  <Checkbox size="small" checked={isSelected(permission)} sx={{ marginRight: 1 }} />
+                  <Checkbox
+                    size="small"
+                    checked={isSelected(permission)}
+                    sx={{ marginRight: 1 }}
+                  />
                   <ListItemText
-                    primary={permission.name}
-                    primaryTypographyProps={{ variant: 'body2' }}
+                    primary={
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          flexGrow: 1,
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {permission.description || permission.name}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="textSecondary"
+                          sx={{ fontSize: '10px' }}
+                        >
+                          {permission.name}
+                        </Typography>
+                      </Box>
+                    }
                   />
                 </ListItemButton>
               </ListItem>
@@ -187,7 +247,7 @@ const PermissionAttachmentModal = ({
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
+        <Button onClick={handleSave} variant="contained">
           Save Permissions
         </Button>
       </DialogActions>

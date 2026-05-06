@@ -35,6 +35,7 @@ import {
   DialogActions,
   Tabs,
   Tab,
+  CircularProgress,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -817,7 +818,7 @@ const Agent = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant="h6" color="text.primary">
-                Active School
+                Approved 
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
                 {analytics.activeSchools ?? 0}
@@ -826,10 +827,19 @@ const Agent = () => {
             <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
             <Box>
               <Typography variant="h6" color="text.primary">
-                Pending School
+                Pending
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
                 {analytics.pendingSchools ?? 0}
+              </Typography>
+            </Box>
+            <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Rejected
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {analytics.rejectedSchools ?? 0}
               </Typography>
             </Box>
           </Box>
@@ -1195,9 +1205,7 @@ const Agent = () => {
                   {tableLoading ? (
                     <TableRow>
                       <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Loading organizations...
-                        </Typography>
+                        <CircularProgress size={24} />
                       </TableCell>
                     </TableRow>
                   ) : !emptyState.isEmpty ? (
@@ -1555,7 +1563,11 @@ const Agent = () => {
           </DialogActions>
         </Dialog>
 
-        <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+        <TotalSchoolModal 
+          open={isSchoolModalOpen} 
+          onClose={() => setIsSchoolModalOpen(false)} 
+          stats={analytics}
+        />
         <TotalTransactionModal
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}

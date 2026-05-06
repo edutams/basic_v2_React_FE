@@ -22,25 +22,19 @@ import {
   MoreHoriz as MoreHorizIcon,
   ChangeCircleOutlined as ChangeIcon,
 } from '@mui/icons-material';
-import {
-  IconSchool,
-  IconCreditCard,
-  IconFileText,
-  IconSend,
-} from '@tabler/icons-react';
+import { IconSchool, IconCreditCard, IconFileText, IconSend } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 const STEPS = [
-  { label: 'Ward Detail',    icon: GroupsIcon,      isTabler: false },
-  { label: 'Academic info',  icon: IconSchool,      isTabler: true  },
-  { label: 'Payment',        icon: IconCreditCard,  isTabler: true  },
-  { label: 'Documents',      icon: IconFileText,    isTabler: true  },
-  { label: 'Submit',         icon: IconSend,        isTabler: true  },
+  { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
+  { label: 'Academic info', icon: IconSchool, isTabler: true },
+  { label: 'Payment', icon: IconCreditCard, isTabler: true },
+  { label: 'Documents', icon: IconFileText, isTabler: true },
+  { label: 'Submit', icon: IconSend, isTabler: true },
 ];
 
-// ── Stepper ───────────────────────────────────────────────────────────────────
 const StepperBar = ({ activeStep }) => (
   <Box
     sx={{
@@ -53,9 +47,9 @@ const StepperBar = ({ activeStep }) => (
     }}
   >
     {STEPS.map((step, i) => {
-      const done   = i < activeStep;
+      const done = i < activeStep;
       const active = i === activeStep;
-      const Icon   = step.icon;
+      const Icon = step.icon;
 
       return (
         <React.Fragment key={step.label}>
@@ -86,10 +80,7 @@ const StepperBar = ({ activeStep }) => (
               }}
             >
               {step.isTabler ? (
-                <Icon
-                  size={20}
-                  color={active ? '#fff' : done ? '#1976d2' : '#9e9e9e'}
-                />
+                <Icon size={20} color={active ? '#fff' : done ? '#1976d2' : '#9e9e9e'} />
               ) : (
                 <Icon
                   sx={{
@@ -102,12 +93,7 @@ const StepperBar = ({ activeStep }) => (
 
             {/* Label */}
             <Box sx={{ textAlign: 'center' }}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-                lineHeight={1}
-              >
+              <Typography variant="caption" color="text.secondary" display="block" lineHeight={1}>
                 STEP {i + 1}
               </Typography>
               <Typography
@@ -360,13 +346,47 @@ const WardDetailStep = ({ onNext, onBack }) => {
               renderValue={(v) => v || ''}
             >
               {[
-                'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
-                'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
-                'Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa',
-                'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
-                'Yobe','Zamfara',
+                'Abia',
+                'Adamawa',
+                'Akwa Ibom',
+                'Anambra',
+                'Bauchi',
+                'Bayelsa',
+                'Benue',
+                'Borno',
+                'Cross River',
+                'Delta',
+                'Ebonyi',
+                'Edo',
+                'Ekiti',
+                'Enugu',
+                'FCT',
+                'Gombe',
+                'Imo',
+                'Jigawa',
+                'Kaduna',
+                'Kano',
+                'Katsina',
+                'Kebbi',
+                'Kogi',
+                'Kwara',
+                'Lagos',
+                'Nasarawa',
+                'Niger',
+                'Ogun',
+                'Ondo',
+                'Osun',
+                'Oyo',
+                'Plateau',
+                'Rivers',
+                'Sokoto',
+                'Taraba',
+                'Yobe',
+                'Zamfara',
               ].map((s) => (
-                <MenuItem key={s} value={s}>{s}</MenuItem>
+                <MenuItem key={s} value={s}>
+                  {s}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -427,9 +447,6 @@ const WardDetailStep = ({ onNext, onBack }) => {
           >
             Back
           </Button>
-          <IconButton size="small">
-            <MoreHorizIcon />
-          </IconButton>
         </Box>
 
         <Button
@@ -467,14 +484,14 @@ const PlaceholderStep = ({ label, onNext, onBack }) => (
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={onBack}
-        sx={{ color: 'text.secondary', fontWeight: 600 }}
+        // sx={{ color: 'text.secondary', fontWeight: 600 }}
       >
         Back
       </Button>
       <Button
         variant="contained"
         onClick={onNext}
-        sx={{ fontWeight: 700, px: 4, borderRadius: 2 }}
+        // sx={{ fontWeight: 700, px: 4, borderRadius: 2 }}
       >
         Save and Continue
       </Button>
@@ -484,8 +501,8 @@ const PlaceholderStep = ({ label, onNext, onBack }) => (
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const NewApplication = () => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Batch passed from the dashboard modal via router state
   const batch = location.state?.batch ?? null;
@@ -520,39 +537,47 @@ const NewApplication = () => {
 
   return (
     <PageContainer title="New Application" description="Apply for admission">
-      {/* ── Back to dashboard ── */}
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/dashboard')}
-        sx={{ color: 'text.secondary', fontWeight: 500, mb: 2, pl: 0 }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 3,
+        }}
       >
-        Back to dashboard
-      </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              bgcolor: 'primary.lighter',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <GroupsIcon sx={{ color: 'primary.main', fontSize: 22 }} />
+          </Box>
 
-      {/* ── Page header ── */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            bgcolor: 'primary.lighter',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
+              New Application
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Session: {batch?.session_term ?? '2025/28'} &nbsp;·&nbsp; ₦
+              {(batch?.pre_application_fee ?? 5000).toLocaleString()} Application Fee
+            </Typography>
+          </Box>
+        </Box>
+
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/dashboard')}
+          sx={{ color: 'text.secondary', fontWeight: 500 }}
         >
-          <GroupsIcon sx={{ color: 'primary.main', fontSize: 22 }} />
-        </Box>
-        <Box>
-          <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
-            New Application
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Session: {batch?.session_term ?? '2025/28'} &nbsp;·&nbsp; ₦
-            {(batch?.pre_application_fee ?? 5000).toLocaleString()} Application Fee
-          </Typography>
-        </Box>
+          Back to dashboard
+        </Button>
       </Box>
 
       {/* ── Stepper ── */}
@@ -562,17 +587,12 @@ const NewApplication = () => {
       <Grid container spacing={3} alignItems="flex-start">
         {/* Main form card */}
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 } }}>
-            {renderStep()}
-          </Paper>
+          <Paper sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 } }}>{renderStep()}</Paper>
         </Grid>
 
         {/* Batch summary sidebar */}
         <Grid size={{ xs: 12, lg: 4 }}>
-          <BatchSummaryCard
-            batch={batch}
-            onChangeBatch={() => navigate('/dashboard')}
-          />
+          <BatchSummaryCard batch={batch} onChangeBatch={() => navigate('/dashboard')} />
         </Grid>
       </Grid>
     </PageContainer>

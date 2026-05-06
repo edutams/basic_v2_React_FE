@@ -77,7 +77,7 @@ const CommissionTable = ({ data, activeTab, onEditCommission, onChangeType, onVi
           {/* HEADER */}
           <TableHead>
             <TableRow>
-              <TableCell>Agent</TableCell>
+              <TableCell>Organization</TableCell>
               {showCommissionType && <TableCell>Commission Type</TableCell>}
               {showSchools && <TableCell>Schools</TableCell>}
               {showPayoutDate && <TableCell>Payout Date</TableCell>}

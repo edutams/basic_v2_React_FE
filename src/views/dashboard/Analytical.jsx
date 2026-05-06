@@ -337,12 +337,16 @@ export default function Dashboard() {
               valueBg={isDark ? '#1e2a4a' : '#EEF2FF'}
               subStats={[
                 {
-                  label: 'Active',
+                  label: 'Approved',
                   value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0),
                 },
                 {
                   label: 'Pending',
                   value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0),
+                },
+                {
+                  label: 'Rejected',
+                  value: analyticsLoading ? '...' : String(analytics?.rejectedSchools ?? 0),
                 },
               ]}
               onIconClick={() => setIsSchoolModalOpen(true)}

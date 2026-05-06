@@ -205,7 +205,7 @@ const EnrolledWardCard = ({ ward }) => (
     variant="outlined"
     sx={{ p: 2, borderRadius: 2, display: 'flex', alignItems: 'center', gap: 2 }}
   >
-    <Avatar src={ward.avatar} sx={{ width: 40, height: 40, bgcolor: 'primary.light' }}>
+    <Avatar src={ward.avatar} sx={{ width: 40, height: 40 }}>
       {ward.name?.[0]}
     </Avatar>
     <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -214,54 +214,59 @@ const EnrolledWardCard = ({ ward }) => (
       </Typography>
       <Stack direction="row" spacing={0.5} flexWrap="wrap" mt={0.3}>
         {ward.tags?.map((t) => (
-          <Chip key={t} label={t} size="small" variant="outlined" sx={{ fontSize: 10 }} />
+          <Chip
+            key={t}
+            label={t}
+            size="small"
+            sx={{ fontSize: 10, bgcolor: '#E7F3D4', color: '#000000', fontWeight: 600 }}
+          />
         ))}
       </Stack>
       <Typography variant="caption" color="text.secondary">
         {ward.regNo}
       </Typography>
     </Box>
-   <Box sx={{ textAlign: 'left', flexShrink: 0 }}>
-  {/* Compulsory & Optional */}
- <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, }}>
-  
-  {/* LEFT SIDE */}
-  <Box>
-    <Typography variant="caption" color="text.secondary" display="block">
-      Compulsory: <strong>₦{ward.compulsory?.toLocaleString()}</strong>
-    </Typography>
-    <Typography variant="caption" color="text.secondary" display="block">
-      Optional: <strong>₦{ward.optional?.toLocaleString()}</strong>
-    </Typography>
-  </Box>
+    <Box sx={{ textAlign: 'left', flexShrink: 0 }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}
+      >
+        <Box>
+          <Typography variant="caption" color="text.secondary" display="block">
+            Compulsory: <strong>₦{ward.compulsory?.toLocaleString()}</strong>
+          </Typography>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+            Optional: <strong>₦{ward.optional?.toLocaleString()}</strong>
+          </Typography>
+        </Box>
 
-  {/* RIGHT SIDE */}
-  <Box sx={{ textAlign: 'left' }}>
-    <Typography
-      variant="body2"
-      fontWeight={700}
-      sx={{ color: '#F57C00' }}
-    >
-      Total Payable
-    </Typography>
+        <Box sx={{ textAlign: 'left' }}>
+          <Typography variant="body2" fontWeight={700} sx={{ color: '#E28327' }}>
+            Total Payable
+          </Typography>
 
-    <Chip
-      label={`₦ ${ward.total?.toLocaleString()}`}
+          <Box
+            sx={{
+              mt: 0.5,
+              px: 1.5,
+              bgcolor: '#C5A07A',
+              color: '#fff',
+              fontWeight: 700,
+              borderRadius: '4px',
+              display: 'inline-block',
+              fontSize: '0.75rem',
+            }}
+          >
+            ₦ {ward.total?.toLocaleString()}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+
+    <Button
       size="small"
-      sx={{
-        mt: 0.5,
-        bgcolor: '#D7B899',
-        color: '#fff',
-        fontWeight: 700,
-      }}
-    />
-  </Box>
-
-</Box>
-
-</Box>
-
-    <Button size="small" endIcon={<ArrowForwardIcon />} sx={{ ml: 1, whiteSpace: 'nowrap', fontSize: '0.75rem', }}>
+      endIcon={<ArrowForwardIcon />}
+      sx={{ ml: 1, whiteSpace: 'nowrap', fontSize: '0.75rem' }}
+    >
       View Details
     </Button>
   </Paper>
@@ -325,7 +330,6 @@ const ProspectiveWardCard = ({ ward }) => {
 
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', mb: 1.5 }}>
-      {/* Header row */}
       <Box
         sx={{
           display: 'flex',
@@ -340,7 +344,7 @@ const ProspectiveWardCard = ({ ward }) => {
           sx={{
             width: 36,
             height: 36,
-            bgcolor: ward.avatarBg || 'primary.light',
+            // bgcolor: ward.avatarBg || 'primary.light',
             fontSize: 14,
             fontWeight: 700,
           }}
@@ -355,12 +359,24 @@ const ProspectiveWardCard = ({ ward }) => {
             {ward.class} · Application #{ward.applicationNo}
           </Typography>
         </Box>
+
         <Chip
+          icon={
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                bgcolor: ward.status === 'Admitted' ? 'success.main' : 'warning.main',
+                ml: 0.5,
+              }}
+            />
+          }
           label={ward.status}
           size="small"
           sx={{
-            bgcolor: ward.status === 'Admitted' ? '#E8F5E9' : '#EDE7F6',
-            color: ward.status === 'Admitted' ? 'success.dark' : 'deep-purple',
+            bgcolor: ward.status === 'Admitted' ? '#E8F5E9' : '#FFF4E5',
+            color: ward.status === 'Admitted' ? 'success.dark' : 'warning.dark',
             fontWeight: 600,
             fontSize: 11,
           }}
@@ -381,6 +397,9 @@ const ProspectiveWardCard = ({ ward }) => {
                 p: 1.5,
                 borderRadius: 2,
                 bgcolor: '#FFF8F0',
+                border: '1px solid',
+                borderColor: '#FFD8AB',
+                boxShadow: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -388,7 +407,19 @@ const ProspectiveWardCard = ({ ward }) => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <WalletIcon sx={{ color: 'warning.main', fontSize: 20 }} />
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    bgcolor: '#FFD8AB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <WalletIcon sx={{ color: '#EF9146', fontSize: 18 }} />
+                </Box>
                 <Box>
                   <Typography variant="body2" fontWeight={600}>
                     {ward.actionLabel}
@@ -403,8 +434,8 @@ const ProspectiveWardCard = ({ ward }) => {
               <Button
                 variant="contained"
                 size="small"
-                color="warning"
-                sx={{ borderRadius: 2, fontWeight: 700 }}
+                // color="warning"
+                sx={{ borderRadius: 1, fontWeight: 700 , bgcolor:"#EF9146", fontSize: '0.75rem'}}
               >
                 Pay now
               </Button>
@@ -430,7 +461,7 @@ const ParentDashboard = () => {
       id: 1,
       name: 'Blessing Okafor',
       avatar: null,
-      tags: ['JSS 1', 'JSS 2A'],
+      tags: ['ESA/02 | JSS 2A'],
       regNo: 'FAH/2025/098',
       compulsory: 30000,
       optional: 10000,
@@ -440,7 +471,7 @@ const ParentDashboard = () => {
       id: 2,
       name: 'Blessing Okafor',
       avatar: null,
-      tags: ['JSS 1', 'JSS 2A'],
+      tags: ['ESA/02 | JSS 2A'],
       regNo: 'FAH/2025/098',
       compulsory: 30000,
       optional: 10000,
@@ -552,7 +583,7 @@ const ParentDashboard = () => {
                 label={`${session} — 2nd Term`}
                 size="small"
                 sx={{
-                  bgcolor: 'primary.light',
+                  bgcolor: '#F1F4F1',
                   color: '#000000',
                   fontWeight: 500,
                 }}
@@ -563,73 +594,77 @@ const ParentDashboard = () => {
                 <EnrolledWardCard key={ward.id} ward={ward} />
               ))}
             </Stack>
+          </Paper>
 
-            <Paper
-              sx={{
-                mt: 2.5,
-                p: 2,
-                borderRadius: 2,
-                background: 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 2,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    bgcolor: 'rgba(255,255,255,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <SchoolIcon sx={{ color: '#fff' }} />
-                </Box>
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Check Your Ward Result
-                  </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.85 }}>
-                    View Academic Performance For All Wards
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                variant="contained"
+          <Paper
+            sx={{
+              mt: 2.5,
+              p: 2,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
                 sx={{
-                  bgcolor: '#FFD600',
-                  color: '#1a1a1a',
-                  fontWeight: 700,
-                  borderRadius: 2,
-                  '&:hover': { bgcolor: '#FFC400' },
-                  whiteSpace: 'nowrap',
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(255,255,255,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                Access
-              </Button>
-            </Paper>
+                <SchoolIcon sx={{ color: '#fff' }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Check Your Ward Result
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.85 }}>
+                  View Academic Performance For All Wards
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="contained"
+              sx={{
+                bgcolor: '#FFD600',
+                color: '#1a1a1a',
+                fontWeight: 700,
+                borderRadius: 2,
+                '&:hover': { bgcolor: '#FFC400' },
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Access
+            </Button>
           </Paper>
         </Grid>
 
-        {/* <Grid size={{ xs: 12, lg: 6 }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
           <Paper sx={{ borderRadius: 3, p: 2.5 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6" fontWeight={700}>
                 Prospective
               </Typography>
-              <Chip label={`${session} — 2nd Term Admission`} size="small" variant="outlined" />
+              <Chip
+                label={`${session} — 2nd Term Admission`}
+                size="small"
+                sx={{ bgcolor: '#F1F4F1', color: '#000000', fontWeight: 500 }}
+              />
             </Box>
             {prospectiveWards.map((ward) => (
               <ProspectiveWardCard key={ward.id} ward={ward} />
             ))}
           </Paper>
-        </Grid> */}
+        </Grid>
       </Grid>
     </PageContainer>
   );

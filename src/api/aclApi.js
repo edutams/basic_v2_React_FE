@@ -130,8 +130,10 @@ const aclApi = {
     return response.data;
   },
 
-  getSchoolRolePermissions: async (roleId) => {
-    const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions`);
+  getSchoolRolePermissions: async (roleId, params) => {
+    const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions`, {
+      params,
+    });
     return response.data;
   },
 
@@ -180,6 +182,28 @@ const aclApi = {
 
   getSchoolPermissionAnalytics: async (params) => {
     const response = await tenantApi.get('/censis/acl/permissions/analytics', {
+      params,
+    });
+    return response.data;
+  },
+
+  // Modal-specific API functions
+  getSchoolRoleUsers: async (roleId, params) => {
+    const response = await tenantApi.get(`/censis/acl/roles/${roleId}/users`, {
+      params,
+    });
+    return response.data;
+  },
+
+  getSchoolRolesByPermission: async (permissionId, params) => {
+    const response = await tenantApi.get(`/censis/acl/permissions/${permissionId}/roles`, {
+      params,
+    });
+    return response.data;
+  },
+
+  getSchoolUsersByPermission: async (permissionId, params) => {
+    const response = await tenantApi.get(`/censis/acl/permissions/${permissionId}/users`, {
       params,
     });
     return response.data;

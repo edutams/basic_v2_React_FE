@@ -76,6 +76,7 @@ const SchoolRoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelectio
           placeholder="Search Roles"
           type="text"
           fullWidth
+          size="small"  
           variant="outlined"
           sx={{ mb: 2 }}
           value={searchTerm}

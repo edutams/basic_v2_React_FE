@@ -51,7 +51,7 @@ const ParentModal = ({
         onCancel={onClose}
         isEdit={actionType === 'update'}
         isLoading={isLoading}
-        submitText={actionType === 'create' ? 'Add Parent' : 'Save Changes'}
+        submitText={actionType === 'create' ? 'Create Account' : 'Save Changes'}
       />
     </ReusableModal>
   );

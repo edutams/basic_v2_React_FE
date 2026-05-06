@@ -49,53 +49,9 @@ import ParentModal from 'src/components/tenant-components/parents/ParentModal';
 import UploadParentModal from 'src/components/tenant-components/parents/UploadParentModal';
 import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
 import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsModal';
+import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Parent Management' }];
-
-const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
-  <Paper
-    sx={{
-      borderRadius: 2,
-      p: 3,
-      // py: 3,
-      flex: 1,
-      minWidth: { xs: '100%', sm: 200 },
-      bgcolor: 'background.paper',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    }}
-  >
-    <Box
-      sx={{
-        width: 48,
-        height: 48,
-        borderRadius: '50%',
-        bgcolor: 'primary.light',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Icon size={22} color={color} />
-    </Box>
-
-    <Box sx={{ textAlign: 'center' }}>
-      {loading ? (
-        <CircularProgress size={24} />
-      ) : (
-        <>
-          <Typography fontSize={26} fontWeight={700}>
-            {count}
-          </Typography>
-          <Typography fontSize={14} color="text.secondary">
-            {label}
-          </Typography>
-        </>
-      )}
-    </Box>
-  </Paper>
-);
 
 const ParentManagement = () => {
   const notify = useNotification();
@@ -421,7 +377,7 @@ const ParentManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <CircularProgress size={24} />
                     </TableCell>
                   </TableRow>
@@ -432,7 +388,7 @@ const ParentManagement = () => {
 
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
-                          {row.user ? `${row.user.fname} ${row.user.lname}` : '—'}
+                          {row.user ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}` : '—'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {relationshipLabel(row.relationship)}
@@ -519,7 +475,7 @@ const ParentManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       <Alert
                         severity="info"
                         sx={{

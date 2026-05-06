@@ -24,6 +24,7 @@ export const TenantAuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
   const [permissions, setPermissions] = useState(defaultAuthState.permissions);
+  const [roles, setRoles] = useState([]);
   const [isImpersonated, setIsImpersonated] = useState(false);
   const [impersonatorId, setImpersonatorId] = useState(null);
   const [tenantInfo, setTenantInfo] = useState(null);
@@ -40,6 +41,10 @@ export const TenantAuthProvider = ({ children }) => {
       window.location.replace('/school-not-found');
     } else {
       setTenantInfo(data);
+      // Apply the org's brand color immediately — even on public pages
+      if (data.primary_color) {
+        setPrimaryColor(data.primary_color);
+      }
     }
   };
 
@@ -62,10 +67,11 @@ export const TenantAuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const res = await api.get('/get-user');
-        const { user: userData, permissions: perms, primary_color } = res.data;
+        const { user: userData, permissions: perms, roles: userRoles, primary_color } = res.data;
 
         setUser(userData);
         setPermissions(perms || []);
+        setRoles(userRoles || []);
         setIsAuthenticated(true);
 
         // Restore the agent's primary_color as the tenant's theme color
@@ -80,6 +86,7 @@ export const TenantAuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setIsImpersonated(false);
         setImpersonatorId(null);
+        setRoles([]);
       } finally {
         setIsLoading(false);
       }
@@ -140,6 +147,7 @@ export const TenantAuthProvider = ({ children }) => {
 
       setUser(userData);
       setPermissions(perms || []);
+      setRoles(roles || []);
       setIsAuthenticated(true);
 
       // Set the agent's primary_color as the tenant's theme color
@@ -147,7 +155,7 @@ export const TenantAuthProvider = ({ children }) => {
         setPrimaryColor(primary_color);
       }
 
-      return { success: true, user: userData };
+      return { success: true, user: { ...userData, roles: roles || [] } };
     } catch (err) {
       const msg = err.response?.data?.message || err.response?.data?.error || 'Login failed';
       setError(msg);
@@ -260,6 +268,8 @@ export const TenantAuthProvider = ({ children }) => {
     changePassword,
     clearError,
     permissions,
+    roles,
+    isParent: Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'parent'),
     isImpersonated,
     impersonatorId,
     stopImpersonation,

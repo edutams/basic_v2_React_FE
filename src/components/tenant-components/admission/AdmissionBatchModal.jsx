@@ -136,11 +136,11 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                     <TableCell>
                       <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
                         Pre-Application :{' '}
-                        <strong style={{ color: '#000', fontWeight: 700 }}>₦ {batch.pre_application_fee.toLocaleString()}</strong>
+                        <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.pre_application_fee.toLocaleString()}</strong>
                       </Typography>
                       <Typography variant="caption" color="primary.main" display="block" fontWeight={600} mt={0.3}>
                         Post-Admission :{' '}
-                        <strong style={{ color: '#000', fontWeight: 700 }}>₦ {batch.post_admission_fee.toLocaleString()}</strong>
+                        <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.post_admission_fee.toLocaleString()}</strong>
                       </Typography>
                     </TableCell>
 

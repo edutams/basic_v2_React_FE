@@ -31,7 +31,7 @@ import { fetchHolidays, createHolidays, deleteHoliday } from '../../../api/holid
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
-const HolidaySection = () => {
+const HolidaySection = ({ refreshKey }) => {
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -70,8 +70,9 @@ const HolidaySection = () => {
     setSnackbar({ open: true, message, severity });
   };
 
-  // Load sessions on mount
+  // Load sessions on mount and when refreshKey changes
   useEffect(() => {
+    console.log('HolidaySection: refreshKey changed to:', refreshKey);
     const loadSessions = async () => {
       try {
         setLoading(true);
@@ -87,9 +88,9 @@ const HolidaySection = () => {
       }
     };
     loadSessions();
-  }, []);
+  }, [refreshKey]);
 
-  // Load terms when session changes
+  // Load terms when session changes or refreshKey changes
   useEffect(() => {
     if (!selectedSessionId) return;
     const loadTerms = async () => {
@@ -112,7 +113,7 @@ const HolidaySection = () => {
       }
     };
     loadTerms();
-  }, [selectedSessionId]);
+  }, [selectedSessionId, refreshKey]);
 
   // Load holidays when term changes
   useEffect(() => {
@@ -272,7 +273,7 @@ const HolidaySection = () => {
               onClick={handleOpenModal}
               disabled={!selectedTermId}
             >
-              Create Holiday
+              Create Holidayww
             </Button>
           </Box>
         }

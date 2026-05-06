@@ -440,9 +440,11 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
-   // Analytics state for TotalSchoolModal
-    const [analytics, setAnalytics] = useState(null);
-    const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
+
+  // Analytics state for TotalSchoolModal
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const schoolFilterDefs = [
     {
       key: 'status',
@@ -520,13 +522,17 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
           }
         };
         fetchAnalytics();
-      }, []);
+      }, [analyticsRefreshKey]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleFilterApply = (v) => {
     setActiveFilters(v);
     setPage(0);
+  };
+  const handleApplicationStatusChange = () => {
+    // Increment refresh key to trigger fresh analytics fetch
+    setAnalyticsRefreshKey(prev => prev + 1);
   };
   const handleFilterReset = () => {
     setActiveFilters({});
@@ -539,7 +545,9 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
       await approveProspectiveTenant(id);
       await fetchProspects();
       await fetchSchools();
+      await refreshAnalytics();
       setReviewOpen(false);
+      handleApplicationStatusChange(); // Trigger analytics refresh
       notify('School approved and provisioned successfully');
     } catch (err) {
       notify(err?.message || 'Approval failed', 'error');
@@ -553,7 +561,10 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     try {
       await rejectProspectiveTenant(id, reason);
       await fetchProspects();
+      await fetchSchools();
+      await refreshAnalytics();
       setReviewOpen(false);
+      handleApplicationStatusChange(); // Trigger analytics refresh
       notify('Application rejected');
     } catch {
       notify('Rejection failed', 'error');
@@ -1141,6 +1152,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
           open={openTotalSchoolModal}
           onClose={() => setOpenTotalSchoolModal(false)}
           stats={analytics}
+          refreshKey={analyticsRefreshKey}
         />
 
         <Snackbar

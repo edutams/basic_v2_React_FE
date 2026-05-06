@@ -20,6 +20,9 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
+  Avatar,
+  Grid
+
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -32,15 +35,23 @@ const SchoolAssignmentManagement = () => {
   const notify = useNotification();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [nameFilter, setNameFilter] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [nameFilter, setNameFilter] = useState('');
 
   const [roleAttachmentModalOpen, setRoleAttachmentModalOpen] = useState(false);
   const [viewRoleModalOpen, setViewRoleModalOpen] = useState(false);
   const [currentUserForRole, setCurrentUserForRole] = useState(null);
+  const getInitials = (name = '') =>
+    name
+      .split(' ')
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
 
   const fetchUsers = async () => {
     try {
@@ -206,6 +217,17 @@ const SchoolAssignmentManagement = () => {
     handleMenuClose();
   };
 
+  const handleSearch = () => {
+    setNameFilter(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredUsers = users.filter((user) => {
     const term = nameFilter.toLowerCase();
     return user.name?.toLowerCase().includes(term) || user.email?.toLowerCase().includes(term);
@@ -232,29 +254,38 @@ const SchoolAssignmentManagement = () => {
       }
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
-          <TextField
-            placeholder="Search by name"
-            value={nameFilter}
-            onChange={(e) => {
-              setNameFilter(e.target.value);
-              setPage(0);
-            }}
-            sx={{ mb: 2 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-          {/* {hasFilters && (
-            <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
-              Clear Filters
+
+
+        <Grid container spacing={1} mb={3} alignItems="center">
+          <Grid size={{ xs: 12, md: 'auto' }}>
+            <TextField
+              placeholder="Search by name"
+              size="small"
+
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid size="auto">
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSearch}
+              sx={{ height: 35 }}
+            >
+              Search
             </Button>
-          )} */}
-        </Box>
+          </Grid>
+        </Grid>
 
         <Paper variant="outlined">
           <TableContainer>
@@ -281,18 +312,19 @@ const SchoolAssignmentManagement = () => {
                     <TableRow key={user.id} hover>
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <img
-                            src={user.image || '/src/assets/images/users/default_avatar.png'}
-                            alt={user.name}
-                            style={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: '50%',
-                              objectFit: 'cover',
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            src={user.avatar}
+                            sx={{
+                              width: 30,
+                              height: 30,
+                              fontSize: 11,
+                              bgcolor: 'primary.light',
+                              color: 'primary.main',
                             }}
-                          />
-
+                          >
+                            {!user.avatar && getInitials(user.name)}
+                          </Avatar>
                           <Box>
                             <Typography variant="subtitle2">{user.name}</Typography>
                             <Typography variant="caption" color="textSecondary">

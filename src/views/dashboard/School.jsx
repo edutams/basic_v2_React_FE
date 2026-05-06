@@ -439,23 +439,35 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 Reject
               </Button>
             ) : (
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<CancelOutlinedIcon />}
-                onClick={() => onReject(prospect.id, rejectReason)}
-                disabled={loading}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
-              >
-                {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
-              </Button>
+              <>
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
+                  onClick={() => setShowRejectInput(false)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Cancel Rejection
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
+                  onClick={() => onReject(prospect.id, rejectReason)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
+                </Button>
+              </>
             )}
             <Button
               variant="contained"
               color="success"
               startIcon={<CheckCircleOutlineIcon />}
               onClick={() => onApprove(prospect.id)}
-              disabled={loading}
+              disabled={loading || showRejectInput}
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
@@ -759,6 +771,17 @@ const SchoolDashboard = () => {
     notify('Action completed successfully');
   };
 
+  const refreshAnalytics = async () => {
+    try {
+      // Refresh school analytics
+      await fetchSchools();
+      // Refresh prospect analytics  
+      await fetchProspects();
+    } catch (error) {
+      console.error('Failed to refresh analytics:', error);
+    }
+  };
+
   const handleDeactivate = async (school) => {
     try {
       const newStatus = school.status === 'active' ? 'inactive' : 'active';
@@ -806,6 +829,7 @@ const SchoolDashboard = () => {
       await approveProspectiveTenant(id);
       await fetchProspects();
       await fetchSchools();
+      await refreshAnalytics();
       setReviewOpen(false);
       notify('School approved and provisioned successfully');
     } catch (err) {
@@ -820,6 +844,8 @@ const SchoolDashboard = () => {
     try {
       await rejectProspectiveTenant(id, reason);
       await fetchProspects();
+      await fetchSchools();
+      await refreshAnalytics();
       setReviewOpen(false);
       notify('Application rejected');
     } catch {
@@ -849,6 +875,9 @@ const SchoolDashboard = () => {
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const pendingProspects = prospectList.filter((p) => p.status === 'pending');
+
+  // All prospects for the main table (including rejected)
+  const allProspects = prospectList;
 
   const subscribedSchools = schoolList.filter((s) => s.subscribed);
 
@@ -1255,8 +1284,8 @@ const SchoolDashboard = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginate(filterByName(pendingProspects)).length > 0 ? (
-                    paginate(filterByName(pendingProspects)).map((row, i) => (
+                  {paginate(filterByName(allProspects)).length > 0 ? (
+                    paginate(filterByName(allProspects)).map((row, i) => (
                       <ProspectRow
                         key={row.id}
                         row={row}

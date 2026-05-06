@@ -10,6 +10,7 @@ import AdmissionBanner from 'src/components/tenant-components/admission/Admissio
 import EnrolledWardCard from 'src/components/tenant-components/admission/EnrolledWardCard';
 import ProspectiveWardCard from 'src/components/tenant-components/admission/ProspectiveWardCard';
 import AdmissionBatchModal from 'src/components/tenant-components/admission/AdmissionBatchModal';
+import ward from 'src/assets/images/backgrounds/ward.png';
 
 const ENROLLED_WARDS = [
   { id: 1, name: 'Blessing Okafor', avatar: null, tags: ['ESA/02 | JSS 2A'], regNo: 'FAH/2025/098', compulsory: 30000, optional: 10000, total: 40000 },
@@ -117,6 +118,7 @@ const ParentDashboard = () => {
                 }}
               >
                 <SchoolIcon sx={{ color: '#fff' }} />
+                <img src="" alt="" />
               </Box>
               <Box>
                 <Typography variant="subtitle1" fontWeight={700}>Check Your Ward Result</Typography>

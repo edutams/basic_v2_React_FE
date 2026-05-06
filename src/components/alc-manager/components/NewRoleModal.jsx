@@ -7,12 +7,13 @@ import {
   Button,
   TextField,
   Box,
+  CircularProgress,
 } from '@mui/material';
 
-const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) => {
+const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditing, loading }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Add New Role</DialogTitle>
+      <DialogTitle>{isEditing ? 'Edit Role' : 'Add New Role'}</DialogTitle>
       <DialogContent dividers>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
           <TextField
@@ -40,9 +41,17 @@ const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) => {
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onSave} variant="contained" color="primary">
-          Add Role
+        <Button onClick={onClose} disabled={loading}>
+          Cancel
+        </Button>
+        <Button onClick={onSave} variant="contained" color="primary" disabled={loading}>
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : isEditing ? (
+            'Save Changes'
+          ) : (
+            'Add Role'
+          )}
         </Button>
       </DialogActions>
     </Dialog>

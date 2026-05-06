@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AgentContext/auth';
 
@@ -33,6 +33,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tabs,
+  Tab,
+  CircularProgress,
 } from '@mui/material';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -65,6 +68,24 @@ import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
+
+import ManageTeamTab from './components/ManageTeamTab';
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
+  );
+}
 
 const BCrumb = [
   {
@@ -155,10 +176,11 @@ const ActionMenuCell = ({
         }}
       >
         <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate(`/agent/view/${agent.id}`);
-          }}
+          component="a"
+          href={`/agent/view/${agent.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleClose}
         >
           View Agent Profile
         </MenuItem>
@@ -186,23 +208,23 @@ const ActionMenuCell = ({
         >
           View School
         </MenuItem>
-        <MenuItem
+        {/* <MenuItem
           onClick={() => {
             handleClose();
             handleManagePermissions(agent);
           }}
         >
           Manage Permission
-        </MenuItem>
-        <MenuItem
+        </MenuItem> */}
+        {/* <MenuItem
           onClick={() => {
             handleClose();
             handleSetCommission(agent);
           }}
         >
           Update Commission
-        </MenuItem>
-        <MenuItem
+        </MenuItem> */}
+        {/* <MenuItem
           onClick={() => {
             handleClose();
             handleManageReferral(agent);
@@ -217,15 +239,15 @@ const ActionMenuCell = ({
           }}
         >
           Manage Payment Gateway
-        </MenuItem>
-        <MenuItem
+        </MenuItem> */}
+        {/* <MenuItem
           onClick={() => {
             handleClose();
             handleDeleteAgent(agent);
           }}
         >
           Delete Agent
-        </MenuItem>
+        </MenuItem> */}
       </Menu>
     </>
   );
@@ -238,6 +260,11 @@ const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
   const notify = useNotification();
+
+  const [tab, setTab] = useState(0);
+  const handleTabChange = (event, newValue) => {
+    setTab(newValue);
+  };
 
   const [impersonateConfirmOpen, setImpersonateConfirmOpen] = useState(false);
   const [agentToImpersonate, setAgentToImpersonate] = useState(null);
@@ -791,7 +818,7 @@ const Agent = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant="h6" color="text.primary">
-                Active School
+                Approved 
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
                 {analytics.activeSchools ?? 0}
@@ -800,10 +827,19 @@ const Agent = () => {
             <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
             <Box>
               <Typography variant="h6" color="text.primary">
-                Pending School
+                Pending
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
                 {analytics.pendingSchools ?? 0}
+              </Typography>
+            </Box>
+            <Box sx={{ width: '1px', height: 40, background: '#E5E7EB' }} />
+            <Box>
+              <Typography variant="h6" color="text.primary">
+                Rejected
+              </Typography>
+              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
+                {analytics.rejectedSchools ?? 0}
               </Typography>
             </Box>
           </Box>
@@ -1029,179 +1065,237 @@ const Agent = () => {
       </Box>
 
       <Box sx={{ mt: 3 }}>
-        <ParentCard
-          title={
-            <Stack
-              direction="row"
-              spacing={1}
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ width: '100%' }}
-            >
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Box
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    bgcolor: '#2ca87f',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                  }}
-                >
-                  <IconSchool size={16} />
-                </Box>
-                <Typography variant="h5">List of Organizations</Typography>
-              </Stack>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setIsRegisterModalOpen(true)}
-                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
-              >
-                Add New Agent
-              </Button>
-            </Stack>
-          }
-        >
-          {/* Filter Button */}
-          <Box
-            sx={{
-              mb: 2,
-              display: 'flex',
-              gap: 2,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-            }}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={tab}
+            onChange={handleTabChange}
+            aria-label="agent management tabs"
+            textColor="primary"
+            indicatorColor="primary"
           >
-            <Button
-              variant="outlined"
-              startIcon={<IconAdjustmentsHorizontal size={18} />}
-              onClick={() => setFilterDrawerOpen(true)}
+            <Tab
+              label="Organizations"
+              sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
+            />
+            <Tab
+              label="Manage Team"
+              sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
+            />
+          </Tabs>
+        </Box>
+
+        <TabPanel value={tab} index={0}>
+          <ParentCard
+            title={
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ width: '100%' }}
+              >
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 24,
+                      height: 24,
+                      bgcolor: '#2ca87f',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                    }}
+                  >
+                    <IconSchool size={16} />
+                  </Box>
+                  <Typography variant="h5">List of Organizations</Typography>
+                </Stack>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setIsRegisterModalOpen(true)}
+                  sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+                >
+                  Add New Agent
+                </Button>
+              </Stack>
+            }
+          >
+            {/* Filter Button */}
+            <Box
               sx={{
-                textTransform: 'none',
-                borderRadius: 2,
-                px: 2.5,
-                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
-                fontWeight: activeFilterCount > 0 ? 700 : 400,
-                '&:hover': { borderColor: 'primary.main', color: '#fff' },
+                mb: 2,
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                justifyContent: 'flex-end',
               }}
             >
-              Show Filters
-              {activeFilterCount > 0 && (
-                <Box
-                  component="span"
-                  sx={{
-                    ml: 1,
-                    px: 0.8,
-                    py: 0.1,
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    borderRadius: '10px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {activeFilterCount}
-                </Box>
-              )}
-            </Button>
-          </Box>
+              <Button
+                variant="outlined"
+                startIcon={<IconAdjustmentsHorizontal size={18} />}
+                onClick={() => setFilterDrawerOpen(true)}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  px: 2.5,
+                  borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                  color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
+                  fontWeight: activeFilterCount > 0 ? 700 : 400,
+                  '&:hover': { borderColor: 'primary.main', color: '#fff' },
+                }}
+              >
+                Show Filters
+                {activeFilterCount > 0 && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      px: 0.8,
+                      py: 0.1,
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      borderRadius: '10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {activeFilterCount}
+                  </Box>
+                )}
+              </Button>
+            </Box>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <Typography variant="h6">S/N</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Organization Details</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Admin Details</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Gateway</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Access Level</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Sub Agent</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Performance</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Primary Color</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Status</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h6">Action</Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableLoading ? (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Loading organizations...
-                      </Typography>
+                    <TableCell>
+                      <Typography variant="h6">S/N</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Organization Details</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Admin Details</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Access Level</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Sub Agent</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Total School</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Status</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Primary Color</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6">Action</Typography>
                     </TableCell>
                   </TableRow>
-                ) : !emptyState.isEmpty ? (
-                  filteredData.map((agent) => {
-                    const initials = (agent.organizationName || 'NA')
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((w) => w[0])
-                      .join('')
-                      .toUpperCase();
-                    const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
-                    const adminInitials = fullName
-                      ? fullName
-                          .split(' ')
-                          .slice(0, 2)
-                          .map((w) => w[0])
-                          .join('')
-                          .toUpperCase()
-                      : 'NA';
-                    const level = Number(agent.access_level);
-                    const colorMap = {
-                      1: { color: '#2ca87f', bg: '#e6f4ee' },
-                      2: { color: theme.palette.primary.main, bg: theme.palette.primary.light },
-                      3: { color: '#f57c00', bg: '#fff3e0' },
-                    };
-                    const levelConfig = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
+                </TableHead>
+                <TableBody>
+                  {tableLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                        <CircularProgress size={24} />
+                      </TableCell>
+                    </TableRow>
+                  ) : !emptyState.isEmpty ? (
+                    filteredData.map((agent) => {
+                      const initials = (agent.organizationName || 'NA')
+                        .split(' ')
+                        .slice(0, 2)
+                        .map((w) => w[0])
+                        .join('')
+                        .toUpperCase();
+                      const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
+                      const adminInitials = fullName
+                        ? fullName
+                            .split(' ')
+                            .slice(0, 2)
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
+                        : 'NA';
+                      const level = Number(agent.access_level);
+                      const colorMap = {
+                        1: { color: '#2ca87f', bg: '#e6f4ee' },
+                        2: { color: theme.palette.primary.main, bg: theme.palette.primary.light },
+                        3: { color: '#f57c00', bg: '#fff3e0' },
+                      };
+                      const levelConfig = colorMap[level] || { color: '#757575', bg: '#f5f5f5' };
 
-                    return (
-                      <TableRow key={agent.id} hover>
-                        <TableCell>
-                          <Typography color="textSecondary" variant="h6" fontWeight="400">
-                            {agent.s_n}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {editRowId === agent.s_n ? (
-                            <TextField
-                              variant="outlined"
-                              value={editedData?.organizationName || ''}
-                              onChange={(e) => handleChange(e, 'organizationName', agent)}
-                              fullWidth
-                            />
-                          ) : (
+                      return (
+                        <TableRow key={agent.id} hover>
+                          <TableCell>
+                            <Typography color="textSecondary" variant="h6" fontWeight="400">
+                              {agent.s_n}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {editRowId === agent.s_n ? (
+                              <TextField
+                                variant="outlined"
+                                value={editedData?.organizationName || ''}
+                                onChange={(e) => handleChange(e, 'organizationName', agent)}
+                                fullWidth
+                              />
+                            ) : (
+                              <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                                <Avatar
+                                  src={agent.imgsrc}
+                                  alt={agent.organizationName}
+                                  sx={{
+                                    width: 50,
+                                    height: 50,
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    bgcolor: '#2196f3',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {!(agent.imgsrc) && initials}
+                                </Avatar>
+                                <Box>
+                                  <Typography
+                                    variant="subtitle2"
+                                    fontWeight="700"
+                                    sx={{ lineHeight: 1.3, color: 'text.primary' }}
+                                  >
+                                    {agent.organizationName || 'N/A'}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="textSecondary"
+                                    sx={{ display: 'block', lineHeight: 1.4 }}
+                                  >
+                                    {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'}{' '}
+                                    Region
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="textSecondary"
+                                    sx={{ display: 'block', lineHeight: 1.4 }}
+                                  >
+                                    {agent.contactDetails || 'N/A'}
+                                  </Typography>
+                                </Box>
+                              </Stack>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             <Stack direction="row" spacing={1.5} alignItems="flex-start">
                               <Avatar
                                 src={agent.avatar || agent.admin_avatar}
-                                alt={agent.organizationName}
+                                alt={fullName}
                                 sx={{
                                   width: 50,
                                   height: 50,
@@ -1211,7 +1305,7 @@ const Agent = () => {
                                   flexShrink: 0,
                                 }}
                               >
-                                {!(agent.avatar || agent.admin_avatar) && initials}
+                                {!(agent.avatar || agent.admin_avatar) && adminInitials}
                               </Avatar>
                               <Box>
                                 <Typography
@@ -1219,217 +1313,183 @@ const Agent = () => {
                                   fontWeight="700"
                                   sx={{ lineHeight: 1.3, color: 'text.primary' }}
                                 >
-                                  {agent.organizationName || 'N/A'}
+                                  {fullName || 'N/A'}
                                 </Typography>
                                 <Typography
                                   variant="caption"
                                   color="textSecondary"
                                   sx={{ display: 'block', lineHeight: 1.4 }}
                                 >
-                                  {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
+                                  {agent.phone || 'N/A'}
                                 </Typography>
                                 <Typography
                                   variant="caption"
                                   color="textSecondary"
                                   sx={{ display: 'block', lineHeight: 1.4 }}
                                 >
-                                  {agent.contactDetails || 'N/A'}
+                                  {agent.email || 'N/A'}
                                 </Typography>
                               </Box>
                             </Stack>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                            <Avatar
-                              src={agent.avatar || agent.admin_avatar}
-                              alt={fullName}
-                              sx={{
-                                width: 50,
-                                height: 50,
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                bgcolor: '#2196f3',
-                                flexShrink: 0,
-                              }}
-                            >
-                              {!(agent.avatar || agent.admin_avatar) && adminInitials}
-                            </Avatar>
-                            <Box>
-                              <Typography
-                                variant="subtitle2"
-                                fontWeight="700"
-                                sx={{ lineHeight: 1.3, color: 'text.primary' }}
-                              >
-                                {fullName || 'N/A'}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="textSecondary"
-                                sx={{ display: 'block', lineHeight: 1.4 }}
-                              >
-                                {agent.phone || 'N/A'}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="textSecondary"
-                                sx={{ display: 'block', lineHeight: 1.4 }}
-                              >
-                                {agent.email || 'N/A'}
-                              </Typography>
-                            </Box>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="subtitle2" fontWeight="500">
-                            -
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={`${level}`}
-                            sx={{
-                              bgcolor: levelConfig.bg,
-                              color: levelConfig.color,
-                              fontWeight: 600,
-                              borderRadius: '8px',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              bgcolor: '#ede9fe',
-                              color: '#6d28d9',
-                              borderRadius: '20px',
-                              px: 2,
-                              py: 0.4,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: 700,
-                              fontSize: '13px',
-                              minWidth: '36px',
-                            }}
-                          >
-                            {agent.sub_agents_count ?? 0}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Stack
-                            direction="row"
-                            spacing={0}
-                            sx={{
-                              borderRadius: '6px',
-                              overflow: 'hidden',
-                              fontWeight: '800',
-                              width: 'fit-content',
-                            }}
-                          >
-                            <Box sx={{ px: 1.5, py: 0.5 }}>
-                              <Typography variant="subtitle3" fontWeight="800" color="#333333">
-                                School
-                              </Typography>
-                            </Box>
-                            <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
-                              <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
-                                {agent.tenants_count ?? 0}
-                              </Typography>
-                            </Box>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: '50%',
-                              bgcolor: agent.primaryColor || theme.palette.primary.main,
-                              border: '2px solid rgba(255,255,255,0.8)',
-                              boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {editRowId === agent.s_n ? (
-                            <Select
-                              value={editedData?.status || ''}
-                              onChange={(e) => handleChange(e, 'status', agent)}
-                              variant="outlined"
-                              fullWidth
-                            >
-                              {statusOptions.map((option) => (
-                                <MenuItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          ) : (
+                          </TableCell>
+
+                          <TableCell>
                             <Chip
-                              sx={{
-                                bgcolor:
-                                  agent.status === 'Active'
-                                    ? '#dcfee6'
-                                    : agent.status === 'Inactive'
-                                      ? '#ffe4e6'
-                                      : '#f3f4f6',
-                                color:
-                                  agent.status === 'Active'
-                                    ? '#16a34a'
-                                    : agent.status === 'Inactive'
-                                      ? '#e11d48'
-                                      : '#4b5563',
-                                borderRadius: '6px',
-                                fontWeight: 600,
-                                px: 2,
-                              }}
                               size="small"
-                              label={agent.status}
+                              label={`${level}`}
+                              sx={{
+                                bgcolor: levelConfig.bg,
+                                color: levelConfig.color,
+                                fontWeight: 600,
+                                borderRadius: '8px',
+                              }}
                             />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <ActionMenuCell
-                            agent={agent}
-                            navigate={navigate}
-                            handleImpersonate={confirmImpersonate}
-                            handleUpdateAgent={handleUpdateAgent}
-                            handleViewSchools={handleViewSchools}
-                            handleManagePermissions={handleManagePermissions}
-                            handleSetCommission={handleSetCommission}
-                            handleManageReferral={handleManageReferral}
-                            handleManageGateway={handleManageGateway}
-                            handleDeleteAgent={handleDeleteAgent}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <EmptyTableState
-                    colSpan={10}
-                    message={emptyState.message}
-                    description={emptyState.description}
-                    type={emptyState.type}
-                  />
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 20, 50, 100]}
-            component="div"
-            count={totalRows}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(event, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(event) => {
-              setRowsPerPage(parseInt(event.target.value, 10));
-              setPage(0);
-            }}
+                          </TableCell>
+                          <TableCell>
+                            <Box
+                              sx={{
+                                bgcolor: '#ede9fe',
+                                color: '#6d28d9',
+                                borderRadius: '20px',
+                                px: 2,
+                                py: 0.4,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 700,
+                                fontSize: '13px',
+                                minWidth: '36px',
+                              }}
+                            >
+                              {agent.sub_agents_count ?? 0}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Stack
+                              direction="row"
+                              spacing={0}
+                              sx={{
+                                borderRadius: '6px',
+                                overflow: 'hidden',
+                                fontWeight: '800',
+                                width: 'fit-content',
+                              }}
+                            >
+                              <Box sx={{ px: 1.5, py: 0.5 }}>
+                                <Typography variant="subtitle3" fontWeight="800" color="#333333">
+                                  School
+                                </Typography>
+                              </Box>
+                              <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
+                                <Typography
+                                  variant="caption"
+                                  fontWeight="700"
+                                  sx={{ color: '#fff' }}
+                                >
+                                  {agent.tenants_count ?? 0}
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Box
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: '50%',
+                                bgcolor: agent.primaryColor || theme.palette.primary.main,
+                                border: '2px solid rgba(255,255,255,0.8)',
+                                boxShadow: '0 0 0 1px rgba(0,0,0,0.12)',
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {editRowId === agent.s_n ? (
+                              <Select
+                                value={editedData?.status || ''}
+                                onChange={(e) => handleChange(e, 'status', agent)}
+                                variant="outlined"
+                                fullWidth
+                              >
+                                {statusOptions.map((option) => (
+                                  <MenuItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            ) : (
+                              <Chip
+                                sx={{
+                                  bgcolor:
+                                    agent.status === 'Active'
+                                      ? '#dcfee6'
+                                      : agent.status === 'Inactive'
+                                        ? '#ffe4e6'
+                                        : '#f3f4f6',
+                                  color:
+                                    agent.status === 'Active'
+                                      ? '#16a34a'
+                                      : agent.status === 'Inactive'
+                                        ? '#e11d48'
+                                        : '#4b5563',
+                                  borderRadius: '6px',
+                                  fontWeight: 600,
+                                  px: 2,
+                                }}
+                                size="small"
+                                label={agent.status}
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <ActionMenuCell
+                              agent={agent}
+                              navigate={navigate}
+                              handleImpersonate={confirmImpersonate}
+                              handleUpdateAgent={handleUpdateAgent}
+                              handleViewSchools={handleViewSchools}
+                              handleManagePermissions={handleManagePermissions}
+                              handleSetCommission={handleSetCommission}
+                              handleManageReferral={handleManageReferral}
+                              handleManageGateway={handleManageGateway}
+                              handleDeleteAgent={handleDeleteAgent}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <EmptyTableState
+                      colSpan={10}
+                      message={emptyState.message}
+                      description={emptyState.description}
+                      type={emptyState.type}
+                    />
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 20, 50, 100]}
+              component="div"
+              count={totalRows}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={(event, newPage) => setPage(newPage)}
+              onRowsPerPageChange={(event) => {
+                setRowsPerPage(parseInt(event.target.value, 10));
+                setPage(0);
+              }}
+            />
+          </ParentCard>
+        </TabPanel>
+
+        <TabPanel value={tab} index={1}>
+          <ManageTeamTab
+            organizationId={user?.organization?.id}
+            accessLevel={user?.organization?.access_level ?? 1}
           />
-        </ParentCard>
+        </TabPanel>
         <AgentModal
           open={isRegisterModalOpen || isModalOpen}
           onClose={() => {
@@ -1503,7 +1563,11 @@ const Agent = () => {
           </DialogActions>
         </Dialog>
 
-        <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+        <TotalSchoolModal 
+          open={isSchoolModalOpen} 
+          onClose={() => setIsSchoolModalOpen(false)} 
+          stats={analytics}
+        />
         <TotalTransactionModal
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}

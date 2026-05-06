@@ -5,7 +5,7 @@ import { IconChevronDown } from '@tabler/icons';
 import AppLinks from 'src/layouts/full/vertical/header/AppLinks';
 import QuickLinks from 'src/layouts/full/vertical/header/QuickLinks';
 import DemosDD from './DemosDD';
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
 
 const Navigations = () => {
   const StyledButton = styled(Button)(({ theme }) => ({

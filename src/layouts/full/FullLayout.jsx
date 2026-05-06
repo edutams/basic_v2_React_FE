@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
-import { Outlet } from 'react-router';
+import { Outlet } from 'react-router-dom';
 import Header from './vertical/header/Header';
 import Sidebar from './vertical/sidebar/Sidebar';
 import Customizer from './shared/customizer/Customizer';
@@ -16,7 +16,7 @@ const MainWrapper = styled('div')(() => ({
   display: 'flex',
   minHeight: '100vh',
   width: '100%',
-  overflowX: 'auto', 
+  overflowX: 'auto',
 }));
 
 const PageWrapper = styled('div')(() => ({
@@ -26,7 +26,7 @@ const PageWrapper = styled('div')(() => ({
   flexDirection: 'column',
   zIndex: 1,
   backgroundColor: 'transparent',
-  overflowX: 'auto', 
+  overflowX: 'auto',
 }));
 
 const FullLayout = () => {

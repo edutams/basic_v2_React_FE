@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useContext } from 'react';
 import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 import PageContainer from '../../components/container/PageContainer';
@@ -19,6 +19,7 @@ import TotalSubAgentModal from './components/TotalSubAgentModal';
 import AgentModal from '../../components/add-agent/components/AgentModal';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
+import { AuthContext } from '../../context/AgentContext/auth';
 
 import agentApi from '../../api/agent';
 import SchoolsTab from './components/SchoolsTab/SchoolsTab';
@@ -34,6 +35,7 @@ const ViewAgent = () => {
   const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
   const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
   const theme = useTheme();
+  const { user } = useContext(AuthContext);
 
   const isOwnProfile = currentUser && currentUser.organization.id == id;
   const isDashboard = !paramId;
@@ -42,6 +44,10 @@ const ViewAgent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+
+  // Analytics state for TotalSchoolModal
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   useEffect(() => {
     const fetchAgentDetails = async () => {
@@ -67,30 +73,13 @@ const ViewAgent = () => {
             stats: {
               totalTransaction: data.total_transaction_value || 0,
               transactionCount: data.transaction_count || 0,
-              totalSchool: data.tenants_count || 0,
-              totalSubAgents: data.sub_organizations_count || 0,
-              commission: data.total_commission || 0,
-              volume: data.transaction_volume || 0,
-              subAgentBreakdown: {
-                lv3: (data.sub_organizations || []).filter((c) => c.access_level === 3).length,
-                lv4: (data.sub_organizations || []).filter((c) => c.access_level === 4).length,
-                lv5: (data.sub_organizations || []).filter((c) => c.access_level === 5).length,
-              },
-              schoolBreakdown: { primary: 0, secondary: 0 },
+              totalSchools: analytics?.totalSchools || 0,
+              activeSchools: analytics?.activeSchools || 0,
+              pendingSchools: analytics?.pendingSchools || 0,
+              rejectedSchools: analytics?.rejectedSchools || 0,
+              totalAgents: data.total_agents || 0,
+              totalSubAgents: data.totalSubAgents || 0,
             },
-            team: (data.sub_organizations || []).map((child) => ({
-              name: child.organization_name,
-              handle: child.organization_email,
-              phone: child.organization_phone,
-              id: child.id,
-              transaction: '0',
-              performance: '0',
-              level: child.access_level,
-              descendent: child.sub_organizations_count || 0,
-              status: child.status
-                ? child.status.charAt(0).toUpperCase() + child.status.slice(1)
-                : 'Inactive',
-            })),
             schools: (data.tenants || []).map((tenant) => ({
               school: tenant.tenant_name || 'Unknown School',
               contact:
@@ -106,6 +95,7 @@ const ViewAgent = () => {
                 ? tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)
                 : 'Active',
             })),
+            team: data.users || [],
             revenueData: [
               { month: 'Jan', revenue: 120000 },
               { month: 'Feb', revenue: 85000 },
@@ -135,7 +125,11 @@ const ViewAgent = () => {
                 agent: data.organization_name || '—',
                 handle: data.organization_email || '—',
                 created_at: tenant.created_at
-                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })
                   : '—',
               })),
             topAgents: [],
@@ -158,6 +152,21 @@ const ViewAgent = () => {
       setIsLoading(false);
     }
   }, [id, refreshKey]);
+
+  // Fetch analytics for TotalSchoolModal
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await agentApi.getAnalytics();
+        if (res.status) setAnalytics(res.data);
+      } catch (e) {
+        console.error('Failed to fetch analytics', e);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, []);
 
   const BCrumb = [
     { to: '/agent', title: 'Home' },
@@ -212,6 +221,7 @@ const ViewAgent = () => {
                   onTransactionClick={() => setIsTransactionModalOpen(true)}
                   onSchoolClick={() => setIsSchoolModalOpen(true)}
                   onSubAgentClick={() => setIsSubAgentModalOpen(true)}
+                  accessLevel={user?.organization?.access_level}
                 />
               </Grid>
             </Grid>
@@ -274,12 +284,14 @@ const ViewAgent = () => {
                         label="Schools"
                         value="3"
                       />
+                      {/* {!(currentUser?.organization?.access_level === 1 && !isDashboard && !isOwnProfile) && ( */}
                       <Tab
                         icon={<IconUsers size={18} />}
                         iconPosition="start"
                         label="Manage Team"
                         value="4"
                       />
+                    {/* )} */}
                     </TabList>
                   </Box>
 
@@ -293,6 +305,7 @@ const ViewAgent = () => {
                         onAddAgent={() => setIsAddAgentModalOpen(true)}
                         isDashboard={isDashboard}
                         accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={!isDashboard && !isOwnProfile}
                       />
                     </TabPanel>
                     <TabPanel value="3" sx={{ p: 3 }}>
@@ -303,7 +316,11 @@ const ViewAgent = () => {
                       />
                     </TabPanel>
                     <TabPanel value="4" sx={{ p: 3 }}>
-                      <ManageTeamTab organizationId={id} />
+                      <ManageTeamTab 
+                        organizationId={id} 
+                        accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={!isDashboard && !isOwnProfile}
+                      />
                     </TabPanel>
                   </Box>
                 </TabContext>
@@ -317,7 +334,11 @@ const ViewAgent = () => {
         )}
 
         {/* Modals */}
-        <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+        <TotalSchoolModal 
+          open={isSchoolModalOpen} 
+          onClose={() => setIsSchoolModalOpen(false)} 
+          stats={analytics} 
+        />
         <TotalTransactionModal
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}

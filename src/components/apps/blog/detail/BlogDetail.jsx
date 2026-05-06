@@ -1,5 +1,5 @@
 import React, { useEffect, useContext } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import {
   CardContent,
   Stack,
@@ -18,9 +18,8 @@ import { IconEye, IconMessage2, IconPoint, IconQuote } from '@tabler/icons-react
 import { format } from 'date-fns';
 import BlogComment from './BlogComment';
 import { uniqueId } from 'lodash';
-import { BlogContext } from "src/context/BlogContext";
+import { BlogContext } from 'src/context/BlogContext';
 import BlankCard from '../../../shared/BlankCard';
-
 
 const BlogDetail = () => {
   const { posts, isLoading, setLoading, addComment } = useContext(BlogContext);
@@ -28,7 +27,13 @@ const BlogDetail = () => {
   const title = useLocation();
 
   const getTitle = title.pathname.split('/').pop();
-  const post = posts.find((p) => p.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '') === getTitle);
+  const post = posts.find(
+    (p) =>
+      p.title
+        .toLowerCase()
+        .replace(/ /g, '-')
+        .replace(/[^\w-]+/g, '') === getTitle,
+  );
 
   const [replyTxt, setReplyTxt] = React.useState('');
 
@@ -114,10 +119,7 @@ const BlogDetail = () => {
               <Stack direction="row" ml="auto" alignItems="center">
                 <IconPoint size="16" />
 
-
-                <small>
-                  {post?.createdAt ? format(new Date(post.createdAt), 'E, MMM d') : ''}
-                </small>
+                <small>{post?.createdAt ? format(new Date(post.createdAt), 'E, MMM d') : ''}</small>
               </Stack>
             </Stack>
           </CardContent>
@@ -183,9 +185,7 @@ const BlogDetail = () => {
       <Box mt={4}>
         <BlankCard>
           <CardContent>
-            <Typography variant="h4">
-              Post Comments
-            </Typography>
+            <Typography variant="h4">Post Comments</Typography>
             <br />
             <TextField
               rows={4}
@@ -201,12 +201,10 @@ const BlogDetail = () => {
             </Button>
 
             <Stack direction="row" gap={2} alignItems="center" mb={3} mt={5}>
-              <Typography variant="h4" >
-                Comments
-              </Typography>
+              <Typography variant="h4">Comments</Typography>
               <Box px={1.5} py={0.5} color="primary.main" bgcolor={'primary.light'}>
-                <Typography variant="h5" >
-                  {post?.comments?.length || 0}  {/* Optional chaining and fallback */}
+                <Typography variant="h5">
+                  {post?.comments?.length || 0} {/* Optional chaining and fallback */}
                 </Typography>
               </Box>
             </Stack>

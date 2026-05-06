@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import { styled } from '@mui/material';
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
 
 import c2aImg from 'src/assets/images/landingpage/c2a.webp';
 
@@ -43,7 +43,13 @@ const C2a2 = () => {
         <Container maxWidth="lg">
           <Grid container justifyContent="space-between" spacing={3}>
             <Grid size={{ xs: 12, sm: 12, lg: 5 }}>
-              <Typography variant="h2" fontSize='28px' color="background.paper" fontWeight={600} mt={4}>
+              <Typography
+                variant="h2"
+                fontSize="28px"
+                color="background.paper"
+                fontWeight={600}
+                mt={4}
+              >
                 Build your app with our highly customizable React based Dashboard
               </Typography>
 

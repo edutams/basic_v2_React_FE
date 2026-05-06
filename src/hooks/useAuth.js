@@ -7,13 +7,19 @@ export const useAuth = () => {
   const agentContext = useContext(AuthContext);
   const tenantContext = useContext(TenantAuthContext);
 
-  const context = agentContext || tenantContext;
-
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider or TenantAuthProvider');
+  // Use the context whose provider is actually mounted in this app instance.
+  // TenantAuthContext is only provided inside the tenant app, so if it exists
+  // and has an authenticated (or loading) session, prefer it.
+  // AgentContext is only provided inside the landlord/agent app.
+  if (tenantContext !== undefined) {
+    return tenantContext;
   }
 
-  return context;
+  if (agentContext !== undefined) {
+    return agentContext;
+  }
+
+  throw new Error('useAuth must be used within an AuthProvider or TenantAuthProvider');
 };
 
 export default useAuth;

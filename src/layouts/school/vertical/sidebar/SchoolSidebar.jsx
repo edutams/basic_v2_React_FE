@@ -10,25 +10,18 @@ import { useContext } from 'react';
 
 const SchoolSidebar = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
-  const {
-    isCollapse,
-    isSidebarHover,
-    setIsSidebarHover,
-    isMobileSidebar,
-    setIsMobileSidebar,
-  } = useContext(CustomizerContext);
+  const { isCollapse, isSidebarHover, setIsSidebarHover, isMobileSidebar, setIsMobileSidebar } =
+    useContext(CustomizerContext);
 
   const MiniSidebarWidth = config.miniSidebarWidth;
   const SidebarWidth = config.sidebarWidth;
 
   const theme = useTheme();
   const toggleWidth =
-    isCollapse == "mini-sidebar" && !isSidebarHover
-      ? MiniSidebarWidth
-      : SidebarWidth;
+    isCollapse == 'mini-sidebar' && !isSidebarHover ? MiniSidebarWidth : SidebarWidth;
 
   const onHoverEnter = () => {
-    if (isCollapse == "mini-sidebar") {
+    if (isCollapse == 'mini-sidebar') {
       setIsSidebarHover(true);
     }
   };
@@ -43,7 +36,7 @@ const SchoolSidebar = () => {
         sx={{
           width: toggleWidth,
           flexShrink: 0,
-          ...(isCollapse == "mini-sidebar" && {
+          ...(isCollapse == 'mini-sidebar' && {
             position: 'absolute',
           }),
         }}
@@ -62,7 +55,7 @@ const SchoolSidebar = () => {
                 }),
                 width: toggleWidth,
               },
-            }
+            },
           }}
         >
           <Box
@@ -95,7 +88,7 @@ const SchoolSidebar = () => {
             border: '0 !important',
             boxShadow: (theme) => theme.shadows[8],
           },
-        }
+        },
       }}
     >
       <Box px={2}>

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter } from 'react-router-dom';
 import TenantRoutes from './TenantRoutes';
 import AgentRoutes from './AgentRoutes';
 import { validateTenantDomain } from '../context/TenantContext/services/tenant.service';

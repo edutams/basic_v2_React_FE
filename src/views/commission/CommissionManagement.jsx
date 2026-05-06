@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -20,20 +20,22 @@ import { SetCommissionModal, ChangeCommissionTypeModal } from './components/Comm
 import CommissionDetailsModal from './components/CommissionDetailsModal';
 import { mockCommissionData } from './mockData';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
+import useAuth from 'src/hooks/useAuth';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { to: '/agent', title: 'Agent' },
+  { to: '/Organization', title: 'Organization' },
   { title: 'Manage Commission' },
 ];
 
 const CommissionManagement = () => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [value, setValue] = useState('1');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [typeModalOpen, setTypeModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -63,18 +65,18 @@ const CommissionManagement = () => {
     setPage(0);
   };
 
-  const handleEditCommission = (agent) => {
-    setSelectedAgent(agent);
+  const handleEditCommission = (Organization) => {
+    setSelectedOrganization(Organization);
     setEditModalOpen(true);
   };
 
-  const handleChangeType = (agent) => {
-    setSelectedAgent(agent);
+  const handleChangeType = (Organization) => {
+    setSelectedOrganization(Organization);
     setTypeModalOpen(true);
   };
 
-  const handleViewDetails = (agent) => {
-    setSelectedAgent(agent);
+  const handleViewDetails = (Organization) => {
+    setSelectedOrganization(Organization);
     setDetailsModalOpen(true);
   };
 
@@ -87,15 +89,15 @@ const CommissionManagement = () => {
   const getTitle = () => {
     switch (value) {
       case '1':
-        return 'Agent Overview';
+        return 'Organization Overview';
       case '2':
-        return 'Manage Agent Commission';
+        return 'Manage Organization Commission';
       case '3':
         return 'Commission by Subscription';
       case '4':
         return 'Commission by Transaction';
       default:
-        return 'Agent Overview';
+        return 'Organization Overview';
     }
   };
 
@@ -148,6 +150,13 @@ const CommissionManagement = () => {
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
             />
+            <Tab
+              label="My Plan"
+              value="5"
+              icon={<IconLayoutDashboard size={18} />}
+              iconPosition="start"
+              sx={{ display: currentUser?.access_level === 1 ? 'none' : 'block' }}
+            />
           </Tabs>
         </Box>
 
@@ -160,9 +169,9 @@ const CommissionManagement = () => {
               {(() => {
                 switch (value) {
                   case '1':
-                    return 'Agent Overview';
+                    return 'Organization Overview';
                   case '2':
-                    return 'Manage Agent Commission';
+                    return 'Manage Organization Commission';
                   case '3':
                     return 'Commission by Subscription';
                   case '4':
@@ -236,17 +245,17 @@ const CommissionManagement = () => {
       <SetCommissionModal
         open={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        agent={selectedAgent}
+        Organization={selectedOrganization}
       />
       <ChangeCommissionTypeModal
         open={typeModalOpen}
         onClose={() => setTypeModalOpen(false)}
-        agent={selectedAgent}
+        Organization={selectedOrganization}
       />
       <CommissionDetailsModal
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
-        agent={selectedAgent}
+        Organization={selectedOrganization}
       />
     </PageContainer>
   );

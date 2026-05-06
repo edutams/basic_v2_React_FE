@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { Box, List, useMediaQuery } from '@mui/material';
 import NavItem from '../../../full/vertical/sidebar/NavItem';
 import NavCollapse from '../../../full/vertical/sidebar/NavCollapse';

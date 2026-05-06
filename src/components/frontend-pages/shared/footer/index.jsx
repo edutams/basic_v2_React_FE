@@ -1,21 +1,12 @@
+import React from 'react';
+import { Box, Grid, Typography, Container, Divider, Stack, Tooltip } from '@mui/material';
 
-import React from "react";
-import {
-  Box,
-  Grid,
-  Typography,
-  Container,
-  Divider,
-  Stack,
-  Tooltip,
-} from "@mui/material";
-
-import { Link } from "react-router";
+import { Link } from 'react-router-dom';
 
 import IconFacebook from 'src/assets/images/frontend-pages/icons/icon-facebook.svg';
 import IconTwitter from 'src/assets/images/frontend-pages/icons/icon-twitter.svg';
 import IconInstagram from 'src/assets/images/frontend-pages/icons/icon-instagram.svg';
-import Logo from 'src/assets/images/logos/logoIcon.svg'
+import Logo from 'src/assets/images/logos/logoIcon.svg';
 const footerLinks = [
   {
     id: 1,
@@ -28,7 +19,6 @@ const footerLinks = [
         title: false,
         titleText: 'Kanban',
         link: '/apps/kanban',
-
       },
       {
         title: false,
@@ -133,127 +123,106 @@ const footerLinks = [
 ];
 
 const Footer = () => {
-  return (<>
-    <Container
-      maxWidth="lg"
-      sx={{
-        pt: {
-          xs: "30px",
-          lg: "60px",
-        },
-      }}
-    >
-      <Grid container spacing={3} justifyContent="space-between" mb={7}>
-        {footerLinks.map((footerlink, i) => (
-          <Grid
-            key={i}
-            size={{
-              xs: 6,
-              sm: 4,
-              lg: 2
-            }}>
-            {footerlink.children.map((child, i) => (
-              <React.Fragment key={i}>
-                {child.title ? (
-                  <Typography fontSize="17px" fontWeight="600" mb="22px">
-                    {child.titleText}
-                  </Typography>
-                ) : (
-                  <Link to={`${child.link}`}>
-                    <Typography
-                      sx={{
-                        display: "block",
-                        padding: "10px 0",
-                        fontSize: "15px",
-                        color: (theme) => theme.palette.text.primary,
-                        "&:hover": {
-                          color: (theme) => theme.palette.primary.main,
-                        },
-                      }}
-                      component="span"
-                    >
+  return (
+    <>
+      <Container
+        maxWidth="lg"
+        sx={{
+          pt: {
+            xs: '30px',
+            lg: '60px',
+          },
+        }}
+      >
+        <Grid container spacing={3} justifyContent="space-between" mb={7}>
+          {footerLinks.map((footerlink, i) => (
+            <Grid
+              key={i}
+              size={{
+                xs: 6,
+                sm: 4,
+                lg: 2,
+              }}
+            >
+              {footerlink.children.map((child, i) => (
+                <React.Fragment key={i}>
+                  {child.title ? (
+                    <Typography fontSize="17px" fontWeight="600" mb="22px">
                       {child.titleText}
                     </Typography>
-                  </Link>
-                )}
-              </React.Fragment>
-            ))}
+                  ) : (
+                    <Link to={`${child.link}`}>
+                      <Typography
+                        sx={{
+                          display: 'block',
+                          padding: '10px 0',
+                          fontSize: '15px',
+                          color: (theme) => theme.palette.text.primary,
+                          '&:hover': {
+                            color: (theme) => theme.palette.primary.main,
+                          },
+                        }}
+                        component="span"
+                      >
+                        {child.titleText}
+                      </Typography>
+                    </Link>
+                  )}
+                </React.Fragment>
+              ))}
+            </Grid>
+          ))}
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6,
+              lg: 2,
+            }}
+          >
+            <Typography fontSize="17px" fontWeight="600" mb="22px">
+              Follow us
+            </Typography>
+
+            <Stack direction="row" gap="20px">
+              <Tooltip title="Facebook">
+                <Link to="#">
+                  <img src={IconFacebook} alt="facebook" width={22} height={22} />
+                </Link>
+              </Tooltip>
+              <Tooltip title="Twitter">
+                <Link to="#">
+                  <img src={IconTwitter} alt="twitter" width={22} height={22} />
+                </Link>
+              </Tooltip>
+              <Tooltip title="Instagram">
+                <Link to="#">
+                  <img src={IconInstagram} alt="instagram" width={22} height={22} />
+                </Link>
+              </Tooltip>
+            </Stack>
           </Grid>
-        ))}
-        <Grid
-          size={{
-            xs: 6,
-            sm: 6,
-            lg: 2
-          }}>
-          <Typography fontSize="17px" fontWeight="600" mb="22px">
-            Follow us
-          </Typography>
-
-          <Stack direction="row" gap="20px">
-            <Tooltip title="Facebook">
-              <Link to="#">
-                <img
-                  src={IconFacebook}
-                  alt="facebook"
-                  width={22}
-                  height={22}
-                />
-              </Link>
-            </Tooltip>
-            <Tooltip title="Twitter">
-              <Link to="#">
-                <img
-                  src={IconTwitter}
-                  alt="twitter"
-                  width={22}
-                  height={22}
-                />
-              </Link>
-            </Tooltip>
-            <Tooltip title="Instagram">
-              <Link to="#">
-                <img
-                  src={IconInstagram}
-                  alt="instagram"
-                  width={22}
-                  height={22}
-                />
-              </Link>
-            </Tooltip>
-          </Stack>
         </Grid>
-      </Grid>
 
-      <Divider />
+        <Divider />
 
-      <Box
-        py="40px"
-        flexWrap="wrap"
-        display="flex"
-        justifyContent="space-between"
-      >
-        <Stack direction="row" gap={1} alignItems="center">
-          <img
-            src={Logo}
-            width={20}
-            height={20}
-            alt="logo"
-          />
+        <Box py="40px" flexWrap="wrap" display="flex" justifyContent="space-between">
+          <Stack direction="row" gap={1} alignItems="center">
+            <img src={Logo} width={20} height={20} alt="logo" />
+            <Typography variant="body1" fontSize="15px">
+              All rights reserved by Flexy.{' '}
+            </Typography>
+          </Stack>
           <Typography variant="body1" fontSize="15px">
-            All rights reserved by Flexy.{" "}
+            Produced by{' '}
+            <Typography component={Link} color="primary.main" to="https://wrappixel.com/">
+              Wrappixel
+            </Typography>
+            .
           </Typography>
-        </Stack>
-        <Typography variant="body1" fontSize="15px">
-          Produced by{" "}
-          <Typography component={Link} color="primary.main" to="https://wrappixel.com/">
-            Wrappixel
-          </Typography>
-          .
-        </Typography>
-      </Box>
-    </Container>
-  </>);
+        </Box>
+      </Container>
+    </>
+  );
 };
 
 export default Footer;

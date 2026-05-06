@@ -12,7 +12,7 @@ import {
   TableCell,
   TableRow,
 } from '@mui/material';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconPrinter } from '@tabler/icons-react';
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -64,20 +64,22 @@ const ViewSchemeDetails = ({ api }) => {
 
   const detailRows = [
     // { label: 'Week', value: data.week?.week_name },
-    { label: 'Topic(s)', value: data.topics?.map(t => t.topic_name).join(', ') },
+    { label: 'Topic(s)', value: data.topics?.map((t) => t.topic_name).join(', ') },
     {
       label: 'Sub Topic(s)',
       isList: true,
-      value: data.topics?.flatMap(t => t.subtopics?.map(s => s.subtopic_name)).filter(Boolean)
+      value: data.topics?.flatMap((t) => t.subtopics?.map((s) => s.subtopic_name)).filter(Boolean),
     },
     {
       label: 'Learning Objectives',
       isList: true,
-      value: data.topics?.flatMap(t =>
-        t.subtopics?.flatMap(s =>
-          s.learning_objectives?.map(lo => lo.learning_objective_details)
+      value: data.topics
+        ?.flatMap((t) =>
+          t.subtopics?.flatMap((s) =>
+            s.learning_objectives?.map((lo) => lo.learning_objective_details),
+          ),
         )
-      ).filter(Boolean)
+        .filter(Boolean),
     },
     { label: 'Lesson Content', value: data.learning_material },
     { label: 'Video Content', value: data.resource_links, isLink: true },
@@ -92,17 +94,31 @@ const ViewSchemeDetails = ({ api }) => {
   ];
 
   return (
-    <PageContainer title="Scheme Of Work Details" description="View full details of the scheme entry">
+    <PageContainer
+      title="Scheme Of Work Details"
+      description="View full details of the scheme entry"
+    >
       <Breadcrumb
         title="Details"
         items={[
-          { to: isAgentContext ? '/agent/scheme-of-work' : '/scheme-of-work', title: 'Scheme Of Work' },
-          { title: 'Details' }
+          {
+            to: isAgentContext ? '/agent/scheme-of-work' : '/scheme-of-work',
+            title: 'Scheme Of Work',
+          },
+          { title: 'Details' },
         ]}
       />
 
       <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee' }}>
-        <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
+        <Box
+          sx={{
+            p: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderBottom: '1px solid #eee',
+          }}
+        >
           <Box sx={{ display: 'flex', gap: 2 }}>
             <IconButton onClick={() => navigate(-1)} size="small">
               <IconArrowLeft size={20} />
@@ -125,7 +141,10 @@ const ViewSchemeDetails = ({ api }) => {
             <TableBody>
               {detailRows.map((row, i) => (
                 <TableRow key={i} sx={{ '&:nth-of-type(odd)': { bgcolor: '#fafafa' } }}>
-                  <TableCell component="th" sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}>
+                  <TableCell
+                    component="th"
+                    sx={{ fontWeight: 700, width: '25%', borderBottom: '1px solid #eee', py: 2 }}
+                  >
                     {row.label}
                   </TableCell>
                   <TableCell sx={{ borderBottom: '1px solid #eee', py: 2 }}>
@@ -138,7 +157,9 @@ const ViewSchemeDetails = ({ api }) => {
                             </Typography>
                           ))
                         ) : (
-                          <Typography variant="body2" color="textSecondary">Not available</Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
                         )}
                       </Box>
                     ) : row.isLink ? (
@@ -149,16 +170,25 @@ const ViewSchemeDetails = ({ api }) => {
                           target="_blank"
                           variant="body2"
                           color="primary"
-                          sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                          sx={{
+                            textDecoration: 'none',
+                            '&:hover': { textDecoration: 'underline' },
+                          }}
                         >
                           {row.value}
                         </Typography>
                       ) : (
-                        <Typography variant="body2" color="textSecondary">Not available</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Not available
+                        </Typography>
                       )
                     ) : (
                       <Typography variant="body2">
-                        {row.value || <Typography component="span" variant="body2" color="textSecondary">Not available</Typography>}
+                        {row.value || (
+                          <Typography component="span" variant="body2" color="textSecondary">
+                            Not available
+                          </Typography>
+                        )}
                       </Typography>
                     )}
                   </TableCell>
@@ -167,8 +197,19 @@ const ViewSchemeDetails = ({ api }) => {
             </TableBody>
           </Table>
         </CardContent>
-        <Box sx={{ p: 3, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #eee' }}>
-          <Button variant="contained" onClick={() => navigate(-1)} sx={{ textTransform: 'none', bgcolor: '#d8b4fe', color: '#581c87', '&:hover': { bgcolor: '#c084fc' } }}>
+        <Box
+          sx={{ p: 3, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #eee' }}
+        >
+          <Button
+            variant="contained"
+            onClick={() => navigate(-1)}
+            sx={{
+              textTransform: 'none',
+              bgcolor: '#d8b4fe',
+              color: '#581c87',
+              '&:hover': { bgcolor: '#c084fc' },
+            }}
+          >
             Close
           </Button>
         </Box>

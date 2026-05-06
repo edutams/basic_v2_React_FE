@@ -22,7 +22,7 @@ import {
   Collapse,
 } from '@mui/material';
 
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import AppLinks from './AppLinks';
 import QuickLinks from './QuickLinks';
 import Search from './Search';
@@ -109,7 +109,7 @@ const MobileRightSidebar = () => {
   );
 
   return (
-    (<Box>
+    <Box>
       <IconButton
         color="inherit"
         onClick={() => setShowDrawer(true)}
@@ -129,22 +129,19 @@ const MobileRightSidebar = () => {
         open={showDrawer}
         onClose={() => setShowDrawer(false)}
         slotProps={{
-          paper: { sx: { width: '300px' } }
+          paper: { sx: { width: '300px' } },
         }}
       >
-
         <Box p={3} pb={0}>
           <Typography variant="h5" fontWeight={600}>
             Navigation
           </Typography>
         </Box>
 
-
-
         {/* component */}
         {cartContent}
       </Drawer>
-    </Box>)
+    </Box>
   );
 };
 

@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 import {
   CardContent,
@@ -11,16 +11,12 @@ import {
   Grid,
   Tooltip,
   Box,
-
 } from '@mui/material';
 import { IconEye, IconMessage2, IconPoint } from '@tabler/icons-react';
 
 import BlankCard from '../../shared/BlankCard';
 
-
-
 const BlogCard = ({ post }) => {
-
   const { coverImg, title, view, comments, category, author, createdAt } = post;
 
   const linkTo = title
@@ -29,22 +25,19 @@ const BlogCard = ({ post }) => {
     .replace(/[^\w-]+/g, '');
 
   return (
-    (<Grid
+    <Grid
       display="flex"
       alignItems="stretch"
       size={{
         xs: 12,
         lg: 4,
         md: 4,
-        sm: 6
-      }}>
+        sm: 6,
+      }}
+    >
       <BlankCard className="hoverCard">
         <>
-          <Typography
-            component={Link}
-            to={`/frontend-pages/blog/detail/${linkTo}`}
-
-          >
+          <Typography component={Link} to={`/frontend-pages/blog/detail/${linkTo}`}>
             <CardMedia component="img" height="240" image={coverImg} alt="green iguana" />
           </Typography>
           <CardContent>
@@ -54,8 +47,9 @@ const BlogCard = ({ post }) => {
               </Tooltip>
               <Chip
                 sx={{
-                  marginLeft: 'auto', marginTop: '-21px',
-                  backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#262e3f' : 'white'
+                  marginLeft: 'auto',
+                  marginTop: '-21px',
+                  backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#262e3f' : 'white'),
                 }}
                 label="2 min Read"
                 size="small"
@@ -65,12 +59,12 @@ const BlogCard = ({ post }) => {
             <Box my={3}>
               <Typography
                 gutterBottom
-                variant="h4" fontSize='18px'
+                variant="h4"
+                fontSize="18px"
                 color="inherit"
                 sx={{ textDecoration: 'none' }}
                 component={Link}
                 to={`/frontend-pages/blog/detail/${linkTo}`}
-
               >
                 {title}
               </Typography>
@@ -91,7 +85,7 @@ const BlogCard = ({ post }) => {
           </CardContent>
         </>
       </BlankCard>
-    </Grid>)
+    </Grid>
   );
 };
 

@@ -26,6 +26,8 @@ const tokenManager = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('isImpersonating');
     localStorage.removeItem('impersonator_id');
+    localStorage.removeItem('permissions');
+    localStorage.removeItem('token_expires_in');
     localStorage.removeItem('user');
     localStorage.removeItem('roles');
     delete axios.defaults.headers.common['Authorization'];
@@ -64,7 +66,6 @@ export const AuthProvider = ({ children }) => {
         const res = await api.get('/landlord/v1/auth/me');
         const { user: freshUser, permissions: freshPermissions } = res.data;
 
-        // Still read impersonation state from localStorage (safe — not a trust boundary)
         const storedOriginal = localStorage.getItem('original_user');
         const isImp = localStorage.getItem('isImpersonating') === 'true';
         const storedImpersonatorId = localStorage.getItem('impersonator_id');
@@ -101,6 +102,20 @@ export const AuthProvider = ({ children }) => {
     };
 
     restoreUser();
+  }, []);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      tokenManager.clear();
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsImpersonating(false);
+      setImpersonatorId(null);
+      setPrimaryColor(null);
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('auth:expired', handleAuthExpired);
   }, []);
 
   const login = async (credentials) => {
@@ -204,9 +219,17 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      await api.post('/landlord/v1/refresh_token');
+      const res = await api.post('/landlord/v1/auth/refresh_token');
+      const { access_token, expires_in } = res.data;
+      tokenManager.set(access_token);
+      localStorage.setItem('token_expires_in', String(expires_in));
+      return true;
     } catch (err) {
       console.error('Token refresh failed', err);
+      tokenManager.clear();
+      setUser(null);
+      setIsAuthenticated(false);
+      return false;
     }
   };
 

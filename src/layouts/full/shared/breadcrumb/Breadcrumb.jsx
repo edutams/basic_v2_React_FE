@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Breadcrumbs, Link } from '@mui/material';
-import { NavLink } from 'react-router';
+import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 

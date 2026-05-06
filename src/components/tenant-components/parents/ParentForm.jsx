@@ -16,7 +16,7 @@ import {
   Chip,
   IconButton,
 } from '@mui/material';
-import { Search as SearchIcon, Person as PersonIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Person as PersonIcon, Close as CloseIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { IMaskInput } from 'react-imask';
 import { useFormik } from 'formik';
 import { parentValidationSchema } from './validation/parentValidationSchema';
@@ -40,6 +40,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
 });
 
 const EMPTY_FORM = {
+  title: '',
   first_name: '',
   last_name: '',
   middle_name: '',
@@ -49,6 +50,8 @@ const EMPTY_FORM = {
   occupation: '',
   relationship: '',
   address: '',
+  password: '',
+  confirm_password: '',
 };
 
 const LIST_HEIGHT = 160;
@@ -76,11 +79,18 @@ const ParentForm = ({
   isEdit = false,
   isLoading = false,
   submitText,
+  showConfirmPassword = false,
+  hideWardLink = false,
+  cancelLabel = 'Cancel',
+  beforeActions = null,
 }) => {
   const notify = useNotification();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const initialValues = isEdit && selectedParent
     ? {
+        title:        selectedParent.title ?? '',
         first_name:   selectedParent.user?.fname ?? '',
         last_name:    selectedParent.user?.lname ?? '',
         middle_name:  selectedParent.user?.mname ?? '',
@@ -89,7 +99,8 @@ const ParentForm = ({
         gender:       selectedParent.user?.sex ?? '',
         occupation:   selectedParent.occupation ?? '',
         relationship: selectedParent.relationship ?? '',
-        address:      selectedParent.address ?? '',
+        address:      selectedParent.user?.address ?? '',
+        confirm_password: '',
       }
     : EMPTY_FORM;
 
@@ -177,6 +188,18 @@ const ParentForm = ({
       <Grid container spacing={2}>
 
         <Grid size={{ xs: 12, sm: 6 }}>
+          <FormControl fullWidth>
+            <InputLabel>Title</InputLabel>
+            <Select name="title" value={formik.values.title} onChange={formik.handleChange} onBlur={formik.handleBlur} label="Title">
+              <MenuItem value="">—</MenuItem>
+              {['Mr', 'Mrs', 'Miss', 'Dr', 'Prof', 'Alhaji', 'Alhaja', 'Chief'].map((t) => (
+                <MenuItem key={t} value={t}>{t}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="First Name" name="first_name" value={formik.values.first_name}
             onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth 
             error={formik.touched.first_name && Boolean(formik.errors.first_name)}
@@ -217,7 +240,7 @@ const ParentForm = ({
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="Phone" name="phone" value={formik.values.phone}
             onChange={formik.handleChange}
-            onBlur={formik.handleBlur} fullWidth required
+            onBlur={formik.handleBlur} fullWidth
             inputProps={{ maxLength: 11, inputMode: 'numeric' }}
             InputProps={{ inputComponent: PhoneMaskCustom }}
             error={formik.touched.phone && Boolean(formik.errors.phone)}
@@ -235,12 +258,60 @@ const ParentForm = ({
           </FormControl>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6 }}>
+        {/* <Grid size={{ xs: 12, sm: 6 }}>
           <TextField label="Occupation" name="occupation" value={formik.values.occupation}
             onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth
             error={formik.touched.occupation && Boolean(formik.errors.occupation)}
             helperText={formik.touched.occupation && formik.errors.occupation} />
-        </Grid>
+        </Grid> */}
+
+         {/* Confirm Password — only shown when explicitly requested (e.g. public registration) */}
+        {showConfirmPassword && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Password" name="password" value={formik.values.password || ''}
+              onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth
+              type={showPassword ? 'text' : 'password'}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setShowPassword((v) => !v)}>
+                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+        )}
+        {showConfirmPassword && (
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Confirm Password" name="confirm_password" value={formik.values.confirm_password || ''}
+              onChange={formik.handleChange} onBlur={formik.handleBlur} fullWidth
+              type={showConfirm ? 'text' : 'password'}
+              error={
+                formik.values.confirm_password &&
+                formik.values.password !== formik.values.confirm_password
+              }
+              helperText={
+                formik.values.confirm_password &&
+                formik.values.password !== formik.values.confirm_password
+                  ? 'Passwords do not match'
+                  : ''
+              }
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setShowConfirm((v) => !v)}>
+                      {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+        )}
 
         <Grid size={{ xs: 12 }}>
           <TextField label="Address" name="address" value={formik.values.address}
@@ -249,9 +320,11 @@ const ParentForm = ({
             helperText={formik.touched.address && formik.errors.address} />
         </Grid>
 
+       
+
       </Grid>
 
-      {!isEdit && (
+      {!isEdit && !hideWardLink && (
         <>
         <Box sx={{ bgcolor: '#F0F9FF', p: 2, borderRadius: 2, mt: 3, mb: 2 }}>
           <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
@@ -320,8 +393,10 @@ const ParentForm = ({
         </>
       )}
 
-      <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
-        <Button color="inherit" onClick={onCancel} disabled={isLoading}>Cancel</Button>
+      {beforeActions && <Box sx={{ mt: 3 }}>{beforeActions}</Box>}
+
+      <Box display="flex" justifyContent="flex-end" alignItems="center" gap={2} sx={{ mt: 3 }}>
+        <Button color="inherit" onClick={onCancel} disabled={isLoading}>{cancelLabel}</Button>
         <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
           {isLoading ? 'Saving...' : (submitText || (isEdit ? 'Save Changes' : 'Add Parent'))}
         </Button>
@@ -337,6 +412,10 @@ ParentForm.propTypes = {
   isEdit: PropTypes.bool,
   isLoading: PropTypes.bool,
   submitText: PropTypes.string,
+  showConfirmPassword: PropTypes.bool,
+  hideWardLink: PropTypes.bool,
+  cancelLabel: PropTypes.string,
+  beforeActions: PropTypes.node,
 };
 
 export default ParentForm;

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { Box, List, useMediaQuery } from '@mui/material';
 import NavItem from './NavItem';
 import NavCollapse from './NavCollapse';
@@ -27,7 +27,7 @@ import {
   IconCalendarClock,
   IconArchive,
 } from '@tabler/icons-react';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 import api from '../../../../api/auth';
 
 const iconMapper = {

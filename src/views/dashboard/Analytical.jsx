@@ -21,7 +21,7 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import PageContainer from '../../components/container/PageContainer';
 import ParentCard from '../../components/shared/ParentCard';
 import agentApi from '../../api/agent';
@@ -336,8 +336,18 @@ export default function Dashboard() {
               valueColor="#4a3aff"
               valueBg={isDark ? '#1e2a4a' : '#EEF2FF'}
               subStats={[
-                { label: 'Active', value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0) },
-                { label: 'Pending', value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0) },
+                {
+                  label: 'Approved',
+                  value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0),
+                },
+                {
+                  label: 'Pending',
+                  value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0),
+                },
+                {
+                  label: 'Rejected',
+                  value: analyticsLoading ? '...' : String(analytics?.rejectedSchools ?? 0),
+                },
               ]}
               onIconClick={() => setIsSchoolModalOpen(true)}
               onClick={() => setIsSchoolModalOpen(true)}
@@ -361,15 +371,27 @@ export default function Dashboard() {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
-              title="Total Sub Agents"
+              title="Total Organization"
               value={analyticsLoading ? '...' : String(analytics?.totalSubAgents ?? 0)}
               valueColor="#f59e0b"
               valueBg={isDark ? '#2e1e00' : '#FEF3C7'}
               subStats={[
-                { label: 'Lv2', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv2 ?? 0) },
-                { label: 'Lv3', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv3 ?? 0) },
-                { label: 'Lv4', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv4 ?? 0) },
-                { label: 'Lv5', value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv5 ?? 0) },
+                {
+                  label: 'Lv2',
+                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv2 ?? 0),
+                },
+                {
+                  label: 'Lv3',
+                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv3 ?? 0),
+                },
+                {
+                  label: 'Lv4',
+                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv4 ?? 0),
+                },
+                {
+                  label: 'Lv5',
+                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv5 ?? 0),
+                },
               ]}
               onIconClick={() => setIsSubAgentModalOpen(true)}
               onClick={() => setIsSubAgentModalOpen(true)}
@@ -428,9 +450,10 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 3 }}>
             <LoginActivitiesCard
               title="Login Activities (30 days)"
-              activities={analyticsLoading
-                ? [{ label: 'Loading...', value: '...' }]
-                : (analytics?.loginActivities ?? loginActivities)
+              activities={
+                analyticsLoading
+                  ? [{ label: 'Loading...', value: '...' }]
+                  : (analytics?.loginActivities ?? loginActivities)
               }
               onIconClick={() => setIsLoggedInUsersModalOpen(true)}
             />
@@ -515,7 +538,7 @@ export default function Dashboard() {
                     >
                       <IconSchool size={16} />
                     </Box>
-                    <Typography variant="h5">List of Agents</Typography>
+                    <Typography variant="h5">Agent Performance</Typography>
                   </Stack>
                   <Button
                     variant="contained"
@@ -665,7 +688,11 @@ export default function Dashboard() {
         onClose={() => setIsViewUsersListModalOpen(false)}
         schoolName={selectedSchoolForUsers}
       />
-      <TotalSchoolModal open={isSchoolModalOpen} onClose={() => setIsSchoolModalOpen(false)} />
+      <TotalSchoolModal
+        open={isSchoolModalOpen}
+        onClose={() => setIsSchoolModalOpen(false)}
+        stats={analytics}
+      />
       <TotalTransactionModal
         open={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
@@ -673,6 +700,7 @@ export default function Dashboard() {
       <TotalSubAgentModal
         open={isSubAgentModalOpen}
         onClose={() => setIsSubAgentModalOpen(false)}
+        orgId={analytics?.orgId}
       />
     </PageContainer>
   );

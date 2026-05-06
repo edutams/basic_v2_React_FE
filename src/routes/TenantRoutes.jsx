@@ -1,7 +1,8 @@
 import React, { lazy } from 'react';
-import { Navigate } from 'react-router';
+import { Navigate } from 'react-router-dom';
 import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
+import ParentProtectedRoute from '../components/auth/ParentProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
 
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
@@ -22,6 +23,7 @@ const ClassStructureManager = Loadable(
 );
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
+const AdmissionApply = Loadable(lazy(() => import('../views/authentication/auth1/AdmissionApply')));
 const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 const SchoolNotFound = Loadable(lazy(() => import('../views/authentication/SchoolNotFound')));
@@ -37,12 +39,19 @@ const AccountSetting = Loadable(
 const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
 const ParentManagement = Loadable(lazy(() => import('../views/tenants-views/parents/ParentManagement')),);
 const LearnerManagement = Loadable(lazy(() => import('../views/tenants-views/learners/LearnerManagement')),);
+const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
+const NewApplication  = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
 
 const TenantRoutes = [
   {
     path: '/login',
     element: <BlankLayout />,
     children: [{ index: true, element: <TenantLogin /> }],
+  },
+  {
+    path: '/admission/apply',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <AdmissionApply /> }],
   },
   {
     path: '/impersonate-login/:token',
@@ -92,9 +101,19 @@ const TenantRoutes = [
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'profile', element: <AccountSetting /> },
       { path: 'staff-setup', element: <StaffManager /> },
+
+      // ── Parent routes ──
+      { path: 'dashboard',                    element: <ParentDashboard /> },
+      { path: 'admission/new-application',    element: <NewApplication /> },
+
+      // Admission Application
+      { path: 'application-setup',  element: <NewApplication /> },
+      // { path: 'admission-status',   element: <NewApplication /> },  
+      // { path: 'admission-letter',   element: <NewApplication /> },   
+
+      
     ],
   },
-  { path: '*', element: <Navigate to="/login" replace /> },
 ];
 
 export default TenantRoutes;

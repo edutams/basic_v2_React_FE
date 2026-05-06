@@ -46,12 +46,13 @@ import {
   rejectProspectiveTenant,
   updateSchool,
 } from '../../../../context/AgentContext/services/school.service';
+import agentApi from '../../../../api/agent';
 import SchoolProfileModal from '../../../../components/shared/SchoolProfileModal';
 import FilterSideDrawer from '../../../../components/shared/FilterSideDrawer';
 import ReusablePieChart from '../../../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../../../dashboard/components/PlanDistributionModal';
 import LoginActivities from '../../../dashboard/components/LoginActivities';
-import TotalSchoolModal from '../../../dashboard/components/TotalSchoolModal';
+import TotalSchoolModal from '../../components/TotalSchoolModal';
 
 import {
   getSpaContact,
@@ -110,7 +111,7 @@ const PersonCard = ({ title, name, gender, email, phone, image, bgColor }) => (
 
 // ── ReviewModal ───────────────────────────────────────────────────────────────
 
-const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) => {
+const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading, isLevel1 }) => {
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
 
@@ -345,7 +346,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         >
           Close
         </Button>
-        {prospect.status === 'pending' && (
+        {prospect.status === 'pending' && isLevel1 && (
           <>
             {!showRejectInput ? (
               <Button
@@ -386,6 +387,11 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
             </Button>
           </>
+        )}
+        {prospect.status === 'pending' && !isLevel1 && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            Only Level 1 organizations can approve or reject applications
+          </Typography>
         )}
       </DialogActions>
     </Dialog>
@@ -434,7 +440,9 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
-
+   // Analytics state for TotalSchoolModal
+    const [analytics, setAnalytics] = useState(null);
+    const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const schoolFilterDefs = [
     {
       key: 'status',
@@ -496,6 +504,23 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     fetchProspects();
     fetchSchools();
   }, [fetchProspects, fetchSchools]);
+
+
+
+     // Fetch analytics for TotalSchoolModal
+      useEffect(() => {
+        const fetchAnalytics = async () => {
+          try {
+            const res = await agentApi.getAnalytics();
+            if (res.status) setAnalytics(res.data);
+          } catch (e) {
+            console.error('Failed to fetch analytics', e);
+          } finally {
+            setAnalyticsLoading(false);
+          }
+        };
+        fetchAnalytics();
+      }, []);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -600,14 +625,16 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
 
   const subscribedSchools = schoolList.filter((s) => !!(s.raw || s).domains?.[0]?.domain);
 
+  // Use analytics data from API instead of hardcoded calculations
   const schoolSummary = {
-    total: schoolList.length,
-    active: schoolList.filter((s) => (s.raw || s).status === 'active').length,
-    inactive: schoolList.filter((s) => (s.raw || s).status === 'inactive').length,
-    pending: pendingProspects.length,
-    subscriptions: subscribedSchools.length,
-    primary: subscribedSchools.filter((s) => getSchoolType(s).includes('primary')).length,
-    secondary: subscribedSchools.filter((s) => getSchoolType(s).includes('secondary')).length,
+    total: analytics?.totalSchools || 0,
+    active: analytics?.activeSchools || 0,
+    inactive: analytics?.inactiveSchools || 0,
+    pending: analytics?.pendingSchools || 0,
+    rejected: analytics?.rejectedSchools || 0,
+    subscriptions: analytics?.subscriptions || subscribedSchools.length,
+    primary: analytics?.primarySchools || subscribedSchools.filter((s) => getSchoolType(s).includes('primary')).length,
+    secondary: analytics?.secondarySchools || subscribedSchools.filter((s) => getSchoolType(s).includes('secondary')).length,
   };
 
   const planSeries = [40, 15, 35, 10];
@@ -677,16 +704,23 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Active
+                    Approved
                   </Typography>
                   <Typography fontWeight={600}>{schoolSummary.active}</Typography>
                 </Box>
                 <Divider orientation="vertical" flexItem />
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Inactive
+                    Pending
                   </Typography>
-                  <Typography fontWeight={600}>{schoolSummary.inactive}</Typography>
+                  <Typography fontWeight={600}>{schoolSummary.pending}</Typography>
+                </Box>
+                 <Divider orientation="vertical" flexItem />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Rejected
+                  </Typography>
+                  <Typography fontWeight={600}>{schoolSummary.rejected}</Typography>
                 </Box>
               </Box>
             </Paper>
@@ -986,6 +1020,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
               }}
+              onEdit={handleEdit}
             />
           )}
           {activeTab === 1 && (
@@ -997,6 +1032,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
               }}
+              onEdit={handleEdit}
             />
           )}
           {activeTab === 2 && (
@@ -1022,6 +1058,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
           onApprove={handleApprove}
           onReject={handleReject}
           loading={actionLoading}
+          isLevel1={isLevel1}
         />
 
         <SchoolProfileModal
@@ -1103,6 +1140,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
         <TotalSchoolModal
           open={openTotalSchoolModal}
           onClose={() => setOpenTotalSchoolModal(false)}
+          stats={analytics}
         />
 
         <Snackbar

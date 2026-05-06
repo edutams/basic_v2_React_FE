@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 
 //Carousel slider for product
 import Slider from 'react-slick';
@@ -11,8 +11,7 @@ import './Carousel.css';
 //Carousel slider data
 import SliderData from './SliderData';
 
-import { ProductContext } from "src/context/EcommerceContext";
-
+import { ProductContext } from 'src/context/EcommerceContext';
 
 const ProductCarousel = () => {
   const { products } = useContext(ProductContext);
@@ -35,7 +34,6 @@ const ProductCarousel = () => {
   // Find the product by Id
   const product = products.find((p) => p.id === Number(id));
   const getProductImage = product ? product.photo : '';
-
 
   const settings = {
     focusOnSelect: true,

@@ -153,17 +153,14 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
           </Alert>
         )}
 
-        <TableContainer sx={{ maxHeight: 400 }}>
-          <Table stickyHeader size="small">
+        <TableContainer>
+          <Table >
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '8%' }}>#</TableCell>
                 <TableCell sx={{ width: '50%' }}>Role</TableCell>
-                <TableCell sx={{ width: '25%' }} align="center">
-                  Guard
-                </TableCell>
-                <TableCell sx={{ width: '17%' }} align="center">
-                  Users
+                <TableCell sx={{ width: '17%' }} >
+                  Description
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -181,28 +178,31 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
 
                     <TableCell>
-                      <Chip
-                        label={role.name}
-                        size="small"
-                        color={roleChipColor(role.name)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-
-                    <TableCell align="center">
-                      <Typography variant="body2" color="text.secondary">
-                        {role.guard_name ?? '—'}
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {role.description || role.name}
                       </Typography>
+
                     </TableCell>
 
-                    <TableCell align="center">
+                    <TableCell>
+
+                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: '10px' }}>
+                        {role.name}
+                      </Typography>
+
+                    </TableCell>
+
+
+
+
+                    {/* <TableCell align="center">
                       <Chip
                         label={(role.users_count ?? role.pivot?.model_type) ? 1 : '—'}
                         size="small"
                         variant="filled"
                         color="primary"
                       />
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 ))
               ) : (

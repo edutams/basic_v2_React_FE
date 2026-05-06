@@ -24,6 +24,7 @@ export const TenantAuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(defaultAuthState.isLoading);
   const [error, setError] = useState(defaultAuthState.error);
   const [permissions, setPermissions] = useState(defaultAuthState.permissions);
+  const [roles, setRoles] = useState([]);
   const [isImpersonated, setIsImpersonated] = useState(false);
   const [impersonatorId, setImpersonatorId] = useState(null);
   const [tenantInfo, setTenantInfo] = useState(null);
@@ -31,7 +32,6 @@ export const TenantAuthProvider = ({ children }) => {
   const { setPrimaryColor } = useContext(CustomizerContext);
 
   const checkTenantDomain = async () => {
-    console.log(2222);
     if (window.location.pathname === '/school-not-found') return;
 
     const hostname = window.location.hostname;
@@ -41,6 +41,10 @@ export const TenantAuthProvider = ({ children }) => {
       window.location.replace('/school-not-found');
     } else {
       setTenantInfo(data);
+      // Apply the org's brand color immediately — even on public pages
+      if (data.primary_color) {
+        setPrimaryColor(data.primary_color);
+      }
     }
   };
 
@@ -63,10 +67,11 @@ export const TenantAuthProvider = ({ children }) => {
       setIsLoading(true);
       try {
         const res = await api.get('/get-user');
-        const { user: userData, permissions: perms, primary_color } = res.data;
+        const { user: userData, permissions: perms, roles: userRoles, primary_color } = res.data;
 
         setUser(userData);
         setPermissions(perms || []);
+        setRoles(userRoles || []);
         setIsAuthenticated(true);
 
         // Restore the agent's primary_color as the tenant's theme color
@@ -81,6 +86,7 @@ export const TenantAuthProvider = ({ children }) => {
         setIsAuthenticated(false);
         setIsImpersonated(false);
         setImpersonatorId(null);
+        setRoles([]);
       } finally {
         setIsLoading(false);
       }
@@ -88,6 +94,27 @@ export const TenantAuthProvider = ({ children }) => {
 
     restoreUser();
     checkTenantDomain();
+  }, []);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      localStorage.removeItem('tenant_access_token');
+      localStorage.removeItem('tenant_token_expires_in');
+      localStorage.removeItem('tenant_user');
+      localStorage.removeItem('tenant_permissions');
+      localStorage.removeItem('tenant_roles');
+
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsImpersonated(false);
+      setImpersonatorId(null);
+      setPrimaryColor(null);
+      // TenantProtectedRoute will catch isAuthenticated: false
+      // and redirect to /login with state={{ from: location }}
+    };
+
+    window.addEventListener('tenant_auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('tenant_auth:expired', handleAuthExpired);
   }, []);
 
   const refreshTenantInfo = async () => {
@@ -103,11 +130,24 @@ export const TenantAuthProvider = ({ children }) => {
     setError(null);
     try {
       const res = await api.post('/login', credentials);
-      const { access_token, user: userData, permissions: perms, roles, primary_color } = res.data;
+      const {
+        access_token,
+        expires_in,
+        user: userData,
+        permissions: perms,
+        roles,
+        primary_color,
+      } = res.data;
 
       localStorage.setItem('tenant_access_token', access_token);
+      localStorage.setItem('tenant_token_expires_in', String(expires_in));
+      localStorage.setItem('tenant_user', JSON.stringify(userData));
+      localStorage.setItem('tenant_permissions', JSON.stringify(perms || []));
+      localStorage.setItem('tenant_roles', JSON.stringify(roles || []));
+
       setUser(userData);
       setPermissions(perms || []);
+      setRoles(roles || []);
       setIsAuthenticated(true);
 
       // Set the agent's primary_color as the tenant's theme color
@@ -115,7 +155,7 @@ export const TenantAuthProvider = ({ children }) => {
         setPrimaryColor(primary_color);
       }
 
-      return { success: true, user: userData };
+      return { success: true, user: { ...userData, roles: roles || [] } };
     } catch (err) {
       const msg = err.response?.data?.message || err.response?.data?.error || 'Login failed';
       setError(msg);
@@ -130,7 +170,13 @@ export const TenantAuthProvider = ({ children }) => {
     setError(null);
     try {
       await api.post('/logout');
+
       localStorage.removeItem('tenant_access_token');
+      localStorage.removeItem('tenant_token_expires_in');
+      localStorage.removeItem('tenant_user');
+      localStorage.removeItem('tenant_permissions');
+      localStorage.removeItem('tenant_roles');
+
       setUser(null);
       setIsAuthenticated(false);
       return { success: true };
@@ -222,6 +268,8 @@ export const TenantAuthProvider = ({ children }) => {
     changePassword,
     clearError,
     permissions,
+    roles,
+    isParent: Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'parent'),
     isImpersonated,
     impersonatorId,
     stopImpersonation,

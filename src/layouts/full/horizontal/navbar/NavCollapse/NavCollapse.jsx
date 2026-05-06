@@ -2,11 +2,10 @@
 // @ts-ignore
 import React, { useContext } from 'react';
 import { useTheme } from '@mui/material/styles';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 
 // mui imports
 import { ListItemIcon, styled, ListItemText, Box, ListItemButton } from '@mui/material';
-
 
 // custom imports
 import NavItem from '../NavItem/NavItem';
@@ -16,9 +15,6 @@ import NavItem from '../NavItem/NavItem';
 // @ts-ignore
 import { IconChevronDown } from '@tabler/icons-react';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-
-
-
 
 // FC Component For Dropdown Menu
 const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu }) => {
@@ -72,7 +68,6 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu })
     backgroundColor: theme.palette.background.paper,
   }));
 
-
   // If Menu has Children
   const submenus = menu.children?.map((item) => {
     if (item.children) {
@@ -83,7 +78,9 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu })
           level={level + 1}
           pathWithoutLastPart={pathWithoutLastPart}
           pathDirect={pathDirect}
-          hideMenu={hideMenu} onClick={undefined} />
+          hideMenu={hideMenu}
+          onClick={undefined}
+        />
       );
     } else {
       return (
@@ -92,9 +89,11 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu })
           item={item}
           level={level + 1}
           pathDirect={pathDirect}
-          hideMenu={hideMenu} onClick={function () {
+          hideMenu={hideMenu}
+          onClick={function () {
             throw new Error('Function not implemented.');
-          }} />
+          }}
+        />
       );
     }
   });
@@ -102,7 +101,6 @@ const NavCollapse = ({ menu, level, pathWithoutLastPart, pathDirect, hideMenu })
   return (
     <React.Fragment key={menu.id}>
       <ListItemStyled
-
         component="li"
         selected={pathWithoutLastPart === menu.href}
         className={open ? 'selected' : ''}

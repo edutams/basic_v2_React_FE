@@ -109,7 +109,7 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
           </Typography>
           {agent && (
             <Typography variant="body2" color="text.secondary">
-              Agent: {agent.agentName} ({agent.email})
+              Organization: {agent.agentName} ({agent.email})
             </Typography>
           )}
         </Box>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,162 +12,216 @@ import {
   Stack,
   Chip,
   useTheme,
+  TextField,
+  InputAdornment,
+  TablePagination,
+  CircularProgress,
+  Alert,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
+import { IconSearch } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
+import agentApi from 'src/api/agent';
 
-const TotalSubAgentModal = ({ open, onClose }) => {
+const TotalSubAgentModal = ({ open, onClose, orgId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const getLevelColors = (level) => {
-    const colors = {
-      'Level 1': { bg: '#dcfce7', color: '#166534' },
-      'Level 2': { bg: '#dbeafe', color: '#1d4ed8' },
-      'Level 3': { bg: '#fef3c7', color: '#92400e' },
-      'Level 4': { bg: '#fce7f3', color: '#be185d' },
-      'Level 5': { bg: '#e0e7ff', color: '#4338ca' },
-    };
-    return colors[level] || { bg: '#f3f4f6', color: '#4b5563' };
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [level, setLevel] = useState('');
+
+  useEffect(() => {
+    if (open && orgId) {
+      fetchOrganizations();
+    }
+  }, [open, orgId, page, search, level]);
+
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setPage(0);
   };
 
-  const agentData = [
-    {
-      sn: 1,
-      agentName: 'John Doe',
-      email: 'john@example.com',
-      phone: '08012345678',
-      level: 'Level 1',
-      transaction: '₦50,000',
-      school: '10',
-    },
-    {
-      sn: 2,
-      agentName: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '08023456789',
-      level: 'Level 2',
-      transaction: '₦75,000',
-      school: '20',
-    },
-    {
-      sn: 3,
-      agentName: 'Mike Johnson',
-      email: 'mike@example.com',
-      phone: '08034567890',
-      level: 'Level 1',
-      transaction: '₦30,000',
-      school: '30',
-    },
-    {
-      sn: 4,
-      agentName: 'Sarah Williams',
-      email: 'sarah@example.com',
-      phone: '08045678901',
-      level: 'Level 3',
-      transaction: '₦100,000',
-      school: '20',
-    },
-    {
-      sn: 5,
-      agentName: 'David Brown',
-      email: 'david@example.com',
-      phone: '08056789012',
-      level: 'Level 2',
-      transaction: '₦45,000',
-      school: '10',
-    },
-  ];
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const fetchOrganizations = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: page + 1,
+        search,
+      };
+      
+      // Add level parameter if it's set
+      if (level) {
+        params.access_level = level;
+      }
+      
+      const res = await agentApi.getSubOrganizations(orgId, params);
+      if (res.status) {
+        setData(res.data.data || []);
+        setTotalRows(res.data.total || 0);
+        setRowsPerPage(res.data.per_page || 10);
+      }
+    } catch (e) {
+      console.error('Failed to fetch sub organizations', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <StandardModal
       open={open}
       onClose={onClose}
-      title="Total Sub Agents"
+      title="Total Organizations"
       maxWidth="md"
       padding={3}
       dividers={false}
       headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
       sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
     >
-      <TableContainer>
-        <Table>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
+        <TextField
+          size="small"
+          placeholder="Search by organization name or code"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyPress={handleKeyPress}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconSearch size={18} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ flex: 1 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Level</InputLabel>
+          <Select
+            value={level}
+            label="Level"
+            onChange={(e) => setLevel(e.target.value)}
+          >
+            <MenuItem value="">All Levels</MenuItem>
+            <MenuItem value="2">Level 2</MenuItem>
+            <MenuItem value="3">Level 3</MenuItem>
+            <MenuItem value="4">Level 4</MenuItem>
+            <MenuItem value="5">Level 5</MenuItem>
+          </Select>
+        </FormControl>
+        <Button 
+          variant="contained" 
+          size="small"
+          onClick={handleSearch}
+          sx={{ height: 40 }}
+        >
+          Search
+        </Button>
+      </Box>
+
+      <TableContainer sx={{ maxHeight: 450 }}>
+        <Table stickyHeader size="small">
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Agent Name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Level</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Transaction</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>School</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Organization Details</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }} align="center">
+                Access Level
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }} align="center">
+                Status
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {agentData.map((agent) => {
-              const levelColors = getLevelColors(agent.level);
-              return (
-                <TableRow key={agent.sn} hover>
-                  <TableCell>{agent.sn}</TableCell>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                  <CircularProgress size={30} />
+                </TableCell>
+              </TableRow>
+            ) : data.length > 0 ? (
+              data.map((org, index) => (
+                <TableRow key={org.id} hover>
+                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar sx={{ width: 36, height: 36, fontSize: '14px' }}>
-                        {agent.agentName
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
+                      <Avatar 
+                        src={org.organization_logo} 
+                        sx={{ width: 36, height: 36, fontSize: '14px', bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}
+                      >
+                        {org.organization_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                       </Avatar>
                       <Box>
-                        <Typography fontWeight={600} fontSize="14px">
-                          {agent.agentName}
+                        <Typography fontWeight={700} fontSize="14px">
+                          {org.organization_name}
                         </Typography>
                         <Typography fontSize="12px" color="text.secondary">
-                          {agent.email}
+                          {org.organization_code} | {org.organization_email}
                         </Typography>
                         <Typography fontSize="12px" color="text.secondary">
-                          {agent.phone}
+                          {org.organization_phone}
+                        </Typography>
+                        <Typography fontSize="12px" color="text.secondary">
+                          {org.organization_domain}
                         </Typography>
                       </Box>
                     </Stack>
                   </TableCell>
-                  <TableCell>
+                  <TableCell align="center">
                     <Chip
-                      label={agent.level}
+                      label={`Level ${org.access_level}`}
                       size="small"
-                      sx={{
-                        bgcolor: levelColors.bg,
-                        color: levelColors.color,
-                        fontWeight: 600,
-                      }}
+                      sx={{ fontWeight: 600, bgcolor: 'primary.light', color: 'primary.main' }}
                     />
                   </TableCell>
-                  <TableCell>{agent.transaction}</TableCell>
-                  <TableCell>
-                    <Stack
-                      direction="row"
-                      spacing={0}
-                      sx={{
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        fontWeight: '800',
-                        width: 'fit-content',
-                      }}
-                    >
-                      <Box sx={{ px: 1.5, py: 0.5 }}>
-                        <Typography variant="subtitle3" fontWeight="800" color="#333333">
-                          School
-                        </Typography>
-                      </Box>
-                      <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
-                        <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
-                          {agent.school ?? 0}
-                        </Typography>
-                      </Box>
-                    </Stack>
+                  <TableCell align="center">
+                    <Chip
+                      label={org.status === 'active' ? 'Active' : 'Inactive'}
+                      size="small"
+                      color={org.status === 'active' ? 'success' : 'default'}
+                      variant="outlined"
+                      sx={{ fontWeight: 600 }}
+                    />
                   </TableCell>
                 </TableRow>
-              );
-            })}
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                  <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                    {search ? 'No organizations match your search.' : 'No organizations found.'}
+                  </Alert>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      <TablePagination
+        rowsPerPageOptions={[10]}
+        component="div"
+        count={totalRows}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={(_, newPage) => setPage(newPage)}
+      />
     </StandardModal>
   );
 };

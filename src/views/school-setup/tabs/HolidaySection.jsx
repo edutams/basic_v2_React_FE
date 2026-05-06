@@ -273,7 +273,7 @@ const HolidaySection = ({ refreshKey }) => {
               onClick={handleOpenModal}
               disabled={!selectedTermId}
             >
-              Create Holidayww
+              Create Holiday
             </Button>
           </Box>
         }

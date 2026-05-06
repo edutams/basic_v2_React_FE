@@ -21,6 +21,8 @@ import WardDetailForm from 'src/components/tenant-components/admission/WardDetai
 import AcademicInfoForm from 'src/components/tenant-components/admission/AcademicInfoForm';
 import AdmissionBatchModal from 'src/components/tenant-components/admission/AdmissionBatchModal';
 import PaymentStep from 'src/components/tenant-components/admission/PaymentStep';
+import DocumentsStep from 'src/components/tenant-components/admission/DocumentsStep';
+import SubmitStep from 'src/components/tenant-components/admission/SubmitStep';
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 const STEPS = [
@@ -212,6 +214,7 @@ const NewApplication = () => {
   const [activeStep, setActiveStep]     = useState(0);
   const [wardData,   setWardData]       = useState(null);
   const [academicData, setAcademicData] = useState(null);
+  const [documentsData, setDocumentsData] = useState(null);
   const [isLoading,  setIsLoading]      = useState(false);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
@@ -272,8 +275,29 @@ const NewApplication = () => {
             isLoading={isLoading}
           />
         );
-      case 3: return <PlaceholderStep label="Documents" onNext={handleNext} onBack={handleBack} />;
-      case 4: return <PlaceholderStep label="Submit"    onNext={handleNext} onBack={handleBack} />;
+      case 3:
+        return (
+          <DocumentsStep
+            onNext={(files) => { setDocumentsData(files); handleNext(); }}
+            onBack={handleBack}
+            isLoading={isLoading}
+          />
+        );
+      case 4:
+        return (
+          <SubmitStep
+            wardData={wardData}
+            academicData={academicData}
+            documentsData={documentsData}
+            selectedBatch={selectedBatch}
+            onBack={handleBack}
+            onSubmit={() => {
+              // TODO: final submission API call
+              handleNext();
+            }}
+            isLoading={isLoading}
+          />
+        );
       default: return null;
     }
   };
@@ -328,7 +352,16 @@ const NewApplication = () => {
       {/* ── Content + Sidebar ── */}
       <Grid container spacing={3} alignItems="flex-start">
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Paper sx={{ borderRadius: 3, p: { xs: 2.5, sm: 3.5 } }}>
+          <Paper
+            sx={{
+              borderRadius: 3,
+              p: { xs: 2.5, sm: 3.5 },
+              ...(activeStep === 4 && {
+                maxHeight: '75vh',
+                overflowY: 'auto',
+              }),
+            }}
+          >
             {renderStep()}
           </Paper>
         </Grid>

@@ -417,9 +417,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           <ParentCard
             title={
               <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h5">Manawge Sessions</Typography>
+                <Typography variant="h5">Manage Sessions</Typography>
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<AddIcon />}
                   onClick={() => {
                     handleOpenEditModal();
@@ -592,6 +593,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                     variant="contained"
                     onClick={handleAutoGenerate}
                     disabled={loading || !activeSessionTermId}
+                  size="small"
+
                   >
                     Generate
                   </Button>
@@ -717,6 +720,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
             onClick={handleSaveDisplayName}
             variant="contained"
             disabled={loading || !displayName.trim()}
+                  size="small"
+
           >
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
@@ -769,12 +774,17 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
+          <Button 
+          
+                  size="small"
+          onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
           <Button
             onClick={handleConfirmToggleStatus}
             variant="contained"
             color="primary"
             disabled={loading}
+                  size="small"
+
           >
             Confirm
           </Button>

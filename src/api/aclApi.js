@@ -208,6 +208,15 @@ const aclApi = {
     });
     return response.data;
   },
+    getSchoolRolePermissions: async (roleId, params = {}) => {
+    const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions`, { params });
+    return response.data;
+  },
+
+  getSchoolAllRolePermissions: async (roleId) => {
+    const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions/all`);
+    return response.data;
+  },
 };
 
 export default aclApi;

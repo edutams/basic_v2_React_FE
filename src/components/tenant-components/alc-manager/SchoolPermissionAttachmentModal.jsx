@@ -40,6 +40,7 @@ const SchoolPermissionAttachmentModal = ({
     }
   }, [open, availablePermissions]);
 
+  
   const fetchPermissions = async () => {
     setLoading(true);
     try {
@@ -59,7 +60,19 @@ const SchoolPermissionAttachmentModal = ({
   };
 
   const isSelected = (permission) => {
-    return selectedPermissions.some((p) => p.id === permission.id || p.name === permission.name);
+    console.log(selectedPermissions,4444);
+    
+    if (!Array.isArray(selectedPermissions)) {
+      return false;
+    }
+    return selectedPermissions.some((p) => {
+      // Check multiple possible ID fields and name fields
+      return p.id === permission.id || 
+             p.permission_id === permission.id ||
+             p.id === permission.permission_id ||
+             p.name === permission.name ||
+             p.permission_name === permission.name;
+    });
   };
 
   const filteredPermissions = permissions.filter((perm) =>

@@ -995,6 +995,7 @@ const AgentCurriculumManager = () => {
 
             <Select
               fullWidth
+              label="Status"
               value={subjectFormData.status}
               onChange={(e) => setSubjectFormData({ ...subjectFormData, status: e.target.value })}
               margin="normal"

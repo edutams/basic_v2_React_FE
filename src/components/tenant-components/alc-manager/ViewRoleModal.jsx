@@ -56,17 +56,18 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
     }
   };
 
+  const roleColorMap = {
+    user: { bg: '#e8f5e9', color: '#2e7d32' },
+    admin: { bg: '#ffebee', color: '#c62828' },
+    customer: { bg: '#e3f2fd', color: '#1565c0' },
+    manager: { bg: '#fff3e0', color: '#ef6c00' },
+    teacher: { bg: '#fff8e1', color: '#f9a825' },
+    staff: { bg: '#e3f2fd', color: '#1565c0' },
+    super_admin: { bg: '#e8eaf6', color: '#3f51b5' },
+    superadmin: { bg: '#e8eaf6', color: '#3f51b5' },
+  };
+
   const getRoleColors = (roleName) => {
-    const roleColorMap = {
-      user: { bg: '#e8f5e9', color: '#2e7d32' },
-      admin: { bg: '#ffebee', color: '#c62828' },
-      customer: { bg: '#e3f2fd', color: '#1565c0' },
-      manager: { bg: '#fff3e0', color: '#ef6c00' },
-      teacher: { bg: '#fff8e1', color: '#f9a825' },
-      staff: { bg: '#e3f2fd', color: '#1565c0' },
-      super_admin: { bg: '#e8eaf6', color: '#3f51b5' },
-      superadmin: { bg: '#e8eaf6', color: '#3f51b5' },
-    };
     const normalizedRole = roleName?.toString().toLowerCase();
     return roleColorMap[normalizedRole] || { bg: '#f5f5f5', color: '#616161' };
   };
@@ -96,7 +97,12 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
             {displayRoles.length > 0 ? (
               displayRoles.map((role, index) => {
                 const roleName = typeof role === 'object' ? role.name : role;
-                const colors = getRoleColors(roleName);
+                const roleColors = getRoleColors(roleName);
+                
+                // Add alternating colors on top of role-based colors
+                const alternatingColors = ['primary', 'secondary', 'success', 'warning', 'info', 'error'];
+                const alternatingColor = alternatingColors[index % alternatingColors.length];
+                const isAlternating = !roleColors || index >= Object.keys(roleColorMap).length;
 
                 return (
                   <Chip
@@ -105,8 +111,12 @@ const ViewRoleModal = ({ open, onClose, currentUser }) => {
                     size="small"
                     sx={{
                       borderRadius: '8px',
-                      backgroundColor: colors.bg,
-                      color: colors.color,
+                      backgroundColor: isAlternating 
+                        ? `${alternatingColor}.main` 
+                        : roleColors.bg,
+                      color: isAlternating 
+                        ? `${alternatingColor}.contrastText` 
+                        : roleColors.color,
                       fontWeight: 500,
                     }}
                   />

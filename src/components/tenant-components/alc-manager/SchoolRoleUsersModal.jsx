@@ -212,7 +212,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role }) => {
                     
                     <TableCell>
                       <Chip
-                        label={user.status || 'Active'}
+                        label={user.status}
                         size="small"
                         color={user.status === 'active' ? 'success' : 'default'}
                         variant="outlined"

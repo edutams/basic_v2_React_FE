@@ -68,12 +68,13 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
         search,
       };
       const res = await aclApi.getSchoolUsersByPermission(permission.id, params);
-      
+
       if (res?.data) {
         const raw = res.data.data ?? res.data ?? [];
         setUsers(Array.isArray(raw) ? raw : []);
-        setTotalRows(res.data.total ?? (Array.isArray(raw) ? raw.length : 0));
-        setRowsPerPage(res.data.per_page ?? 10);
+        // Use the correct total from paginated response
+        setTotalRows(res.data.total ?? res.total ?? (Array.isArray(raw) ? raw.length : 0));
+        setRowsPerPage(res.data.per_page ?? res.per_page ?? 10);
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -146,11 +147,10 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
               ),
             }}
           />
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             size="small"
             onClick={handleSearch}
-            sx={{ minWidth: '80px' }}
           >
             Search
           </Button>
@@ -168,8 +168,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
               <TableRow>
                 <TableCell sx={{ width: '10%' }}>#</TableCell>
                 <TableCell sx={{ width: '40%' }}>User Details</TableCell>
-                <TableCell sx={{ width: '30%' }}>Email</TableCell>
-                <TableCell sx={{ width: '20%' }}>Roles</TableCell>
+                <TableCell sx={{ width: '20%' }}>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -184,47 +183,43 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
                   <TableRow key={user.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar
                           src={user.avatar}
                           sx={{
-                            width: 32,
-                            height: 32,
-                            fontSize: 12,
+                            width: 30,
+                            height: 30,
+                            fontSize: 11,
                             bgcolor: 'primary.light',
                             color: 'primary.main',
                           }}
                         >
-                          {!user.avatar && getInitials(user.name)}
+                          {!user.avatar &&
+                            getInitials(user.full_name ?? `${user.fname} ${user.lname}`)}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {user.name}
+                          <Typography variant="body2" fontWeight={500} noWrap>
+                            {user.full_name ?? `${user.fname} ${user.lname}`}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            ID: {user.id}
+
+
+                          <Typography variant="small" color="text.secondary">
+                            {user.email}
                           </Typography>
                         </Box>
+
                       </Box>
                     </TableCell>
+
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {user.email}
-                      </Typography>
+                      <Chip
+                        label={user.status}
+                        size="small"
+                        color={user.status === 'active' ? 'success' : 'default'}
+                        variant="outlined"
+                      />
                     </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {user.roles?.map((role) => (
-                          <Chip
-                            key={role.id}
-                            label={role.name}
-                            size="small"
-                            variant="outlined"
-                            sx={{ fontSize: '10px' }}
-                          />
-                        ))}
-                      </Box>
-                    </TableCell>
+
                   </TableRow>
                 ))
               ) : (

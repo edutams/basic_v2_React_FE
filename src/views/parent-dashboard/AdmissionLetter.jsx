@@ -12,24 +12,87 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 
-// ── Mock letter data — replace with real API ──────────────────────────────────
+// ── Print / Download helper
+const toDataUrl = (url) =>
+  new Promise((resolve) => {
+    if (!url) {
+      resolve(null);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL());
+    };
+    img.onerror = () => resolve(null); // fallback — just skip if blocked
+    img.src = url;
+  });
+
+const printLetter = async () => {
+  // Inject a one-time print stylesheet that hides everything except the letter
+  const styleId = 'admission-print-style';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+      @media print {
+        body > * { display: none !important; }
+        #admission-letter-root { display: block !important; }
+        #admission-letter-root * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        #admission-letter-root img {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          max-width: 100% !important;
+        }
+        #admission-letter-root svg {
+          display: inline-block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const el = document.getElementById('admission-letter-print');
+  if (!el) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'admission-letter-root';
+  wrapper.style.display = 'none'; 
+  wrapper.appendChild(el.cloneNode(true));
+  document.body.appendChild(wrapper);
+
+  window.print();
+
+  document.body.removeChild(wrapper);
+};
 const MOCK_LETTER = {
-  reference: 'EDU/ADM/2025/10428',
+  reference: 'TASUES/ADM/2025/10428',
   date: 'August 30, 2025',
   parentName: 'Mrs. Adaeze Okafor',
   studentName: 'Chinaza Okafor',
   class: 'JSS 1 — Section A',
+  schoolEmail: 'admissions@tasues.school',
   session: '2025/26',
   resumption: 'September 16, 2025',
   acceptanceFee: '₦35,000',
   deadline: 'September 5, 2025',
   signatoryScript: 'M. Adekunle',
   signatoryName: 'Mrs. M. Adekunle',
-  signatoryTitle: 'Registrar, EduTAMS Basic v2',
+  signatoryTitle: 'Registrar, TASUES Secondary School',
   generatedDate: '24/04/2026',
 };
 
-// ── Info cell inside the details box ─────────────────────────────────────────
 const DetailCell = ({ label, value }) => (
   <Box>
     <Typography
@@ -45,7 +108,7 @@ const DetailCell = ({ label, value }) => (
   </Box>
 );
 
-// ── The printable letter card ─────────────────────────────────────────────────
+// ── The printable letter card
 const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail }) => {
   const theme = useTheme();
 
@@ -61,12 +124,18 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
         boxShadow: '0 4px 32px rgba(0,0,0,0.10)',
       }}
     >
-      {/* Top colour bar */}
       <Box sx={{ height: 8, background: bg }} />
 
       <Box sx={{ p: { xs: 3, sm: 5 } }}>
         {/* School header */}
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={{ xs: 2, md: 0 }}
+          mb={4}
+        >
           <Box display="flex" alignItems="center" gap={1.5}>
             <Avatar
               src={schoolLogo}
@@ -75,6 +144,7 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
             >
               <SchoolIcon sx={{ color: 'primary.main' }} />
             </Avatar>
+
             <Box>
               <Typography variant="subtitle1" fontWeight={800} lineHeight={1}>
                 {schoolName?.toUpperCase() ?? 'SCHOOL'}
@@ -85,7 +155,11 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
             </Box>
           </Box>
 
-          <Box sx={{ textAlign: 'right' }}>
+          <Box
+            sx={{
+              textAlign: { xs: 'left', md: 'right' }, // 👈 align properly on mobile
+            }}
+          >
             <Typography variant="body2" fontWeight={700}>
               {schoolName}
             </Typography>
@@ -128,12 +202,10 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
 
         <Divider sx={{ mb: 3 }} />
 
-        {/* Salutation */}
         <Typography variant="body1" mb={2}>
           Dear {letter.parentName},
         </Typography>
 
-        {/* Offer heading */}
         <Typography variant="h5" fontWeight={800} mb={1.5}>
           Offer of Admission —{' '}
           <Typography component="span" variant="h5" fontWeight={800} color="primary.main">
@@ -141,7 +213,6 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
           </Typography>
         </Typography>
 
-        {/* Body paragraph */}
         <Typography variant="body2" mb={3} lineHeight={1.8}>
           Following the successful completion of the entrance examination and review of your child's
           application, we are pleased to offer{' '}
@@ -173,19 +244,17 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
           </Grid>
         </Paper>
 
-        {/* Closing paragraphs */}
         <Typography variant="body2" mb={2} lineHeight={1.8}>
           To confirm this offer, please make payment of the acceptance fee through your parent
           dashboard before the deadline above. Once payment is received, your child will be
           automatically enrolled and assigned a student ID.
         </Typography>
 
-        <Typography variant="body2"  mb={4} lineHeight={1.8}>
-          We look forward to welcoming {(letter.studentName ?? '').split(' ')[0]} into the EduTAMS
-          family.
+        <Typography variant="body2" mb={4} lineHeight={1.8}>
+          We look forward to welcoming {(letter.studentName ?? '').split(' ')[0]} into the{' '}
+          {schoolName}.
         </Typography>
 
-        {/* Signature */}
         <Box mb={3}>
           <Typography variant="h6" sx={{ fontFamily: 'cursive', color: 'primary.main', mb: 0.5 }}>
             {letter.signatoryScript}
@@ -200,7 +269,6 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* Footer */}
         <Box display="flex" justifyContent="space-between">
           <Typography variant="caption" color="text.disabled">
             Generated by EduTAMS · {letter.generatedDate}
@@ -214,7 +282,6 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
   );
 };
 
-// ── Page ──────────────────────────────────────────────────────────────────────
 const AdmissionLetter = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -224,12 +291,8 @@ const AdmissionLetter = () => {
   const schoolName = tenantInfo?.school_name ?? tenantInfo?.name ?? 'FunmiSchool';
   const schoolLogo = tenantInfo?.logo_url ?? tenantInfo?.logo ?? null;
 
-  const handlePrint = () => window.print();
-
-  const handleDownload = () => {
-    // TODO: call API to get PDF blob, or use window.print() with print CSS
-    window.print();
-  };
+  const handlePrint = () => printLetter();
+  const handleDownload = () => printLetter(); 
 
   return (
     <PageContainer title="Admission Letter" description="View admission letter">
@@ -281,7 +344,6 @@ const AdmissionLetter = () => {
         </Box>
       </Box>
 
-      {/* ── Letter ── */}
       <Box sx={{ bgcolor: '#EEF2F7', py: 4, px: { xs: 1, sm: 3 }, borderRadius: 3 }}>
         <LetterCard letter={letter} schoolName={schoolName} schoolLogo={schoolLogo} />
       </Box>

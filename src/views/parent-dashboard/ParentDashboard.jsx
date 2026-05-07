@@ -1,3 +1,4 @@
+import { useTheme } from '@mui/material/styles';
 import { useContext, useState } from 'react';
 import { Box, Grid, Typography, Paper, Button, Chip, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -33,6 +34,9 @@ const ParentDashboard = () => {
   const handleApplyAdmission = (batch) => {
     navigate('/admission/new-application', { state: { batch } });
   };
+
+   const theme = useTheme();
+    const bg = `linear-gradient(90deg, #121212e3 0%, ${theme.palette.primary.main} 100%)`;
 
   return (
     <PageContainer title="Parent Dashboard" description="Parent portal">
@@ -72,7 +76,6 @@ const ParentDashboard = () => {
               />
             </Box>
 
-            {/* Scrollable on mobile, normal stack on sm+ */}
             <Box
               sx={{
                 overflowX: { xs: 'auto', sm: 'visible' },
@@ -91,13 +94,12 @@ const ParentDashboard = () => {
             </Box>
           </Paper>
 
-          {/* Results banner */}
           <Paper
             sx={{
               mt: 2.5,
               p: 2,
               borderRadius: 2,
-              background: 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
+              background: bg,
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -106,20 +108,7 @@ const ParentDashboard = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box
-                sx={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  bgcolor: 'rgba(255,255,255,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <SchoolIcon sx={{ color: '#fff' }} />
-                <img src="" alt="" />
-              </Box>
+                <img src={ward} alt="ward" style={{ width: 70, height: 70, objectFit: 'contain' }} />
               <Box>
                 <Typography variant="subtitle1" fontWeight={700}>Check Your Ward Result</Typography>
                 <Typography variant="caption" sx={{ opacity: 0.85 }}>
@@ -129,7 +118,7 @@ const ParentDashboard = () => {
             </Box>
             <Button
               variant="contained"
-              sx={{ bgcolor: '#FFD600', color: '#1a1a1a', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#FFC400' }, whiteSpace: 'nowrap' }}
+              sx={{ bgcolor: '#DFFF7D', color: '#1a1a1a', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#FFC400' }, whiteSpace: 'nowrap' }}
             >
               Access
             </Button>

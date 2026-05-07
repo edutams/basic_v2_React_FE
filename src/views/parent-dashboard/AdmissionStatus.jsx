@@ -30,9 +30,9 @@ const AdmissionStepper = ({ currentStep }) => (
                   width: 44,
                   height: 44,
                   borderRadius: '50%',
-                  bgcolor: done ? 'success.dark' : active ? 'primary.main' : 'grey.100',
+                  bgcolor: done ? 'primary.main' : active ? 'primary.main' : 'grey.100',
                   border: '2px solid',
-                  borderColor: done ? 'success.dark' : active ? 'primary.main' : 'grey.300',
+                  borderColor: done ? 'primary.main' : active ? 'primary.main' : 'grey.300',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -50,7 +50,7 @@ const AdmissionStepper = ({ currentStep }) => (
               <Typography
                 variant="caption"
                 fontWeight={active ? 700 : done ? 600 : 400}
-                color={active ? 'primary.main' : done ? 'success.dark' : 'text.secondary'}
+                color={active ? 'primary.main' : done ? 'primary.dark' : 'text.secondary'}
                 mt={0.75}
                 textAlign="center"
               >
@@ -63,7 +63,7 @@ const AdmissionStepper = ({ currentStep }) => (
                 sx={{
                   flex: 1,
                   height: 3,
-                  bgcolor: done ? 'success.main' : 'grey.200',
+                  bgcolor: done ? 'primary.main' : 'grey.200',
                   borderRadius: 2,
                   mb: 2.5,
                   minWidth: 16,

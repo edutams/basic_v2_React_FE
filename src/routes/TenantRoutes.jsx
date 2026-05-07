@@ -42,6 +42,7 @@ const LearnerManagement = Loadable(lazy(() => import('../views/tenants-views/lea
 const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
 const NewApplication  = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
 const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionStatus')));
+const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
 
 const TenantRoutes = [
   {
@@ -108,6 +109,8 @@ const TenantRoutes = [
       { path: 'admission/new-application',    element: <NewApplication /> },
       { path: 'admission-status',             element: <AdmissionStatus /> },
       { path: 'admission-status/:id',         element: <AdmissionStatus /> },
+      { path: 'admission-letter',             element: <AdmissionLetter /> },
+      { path: 'admission-letter/:id',         element: <AdmissionLetter /> },
 
       // Admission Application
       { path: 'application-setup',  element: <NewApplication /> },

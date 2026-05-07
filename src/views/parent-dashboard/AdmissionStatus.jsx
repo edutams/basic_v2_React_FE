@@ -295,7 +295,7 @@ const AdmissionStatus = () => {
             amount={app.acceptanceFee}
             dueLabel={app.feeDue}
             onPay={() => {}}
-            onViewLetter={() => {}}
+            onViewLetter={() => navigate('/admission-letter', { state: { letter: { ...app, parentName: 'Mrs. Adaeze Okafor' } } })}
           />
         </Grid>
       </Grid>

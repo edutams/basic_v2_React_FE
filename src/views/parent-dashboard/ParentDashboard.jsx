@@ -14,8 +14,8 @@ import AdmissionBatchModal from 'src/components/tenant-components/admission/Admi
 import ward from 'src/assets/images/backgrounds/ward.png';
 
 const ENROLLED_WARDS = [
-  { id: 1, name: 'Blessing Okafor', avatar: null, tags: ['ESA/02 | JSS 2A'], regNo: 'FAH/2025/098', compulsory: 30000, optional: 10000, total: 40000 },
-  { id: 2, name: 'Blessing Okafor', avatar: null, tags: ['ESA/02 | JSS 2A'], regNo: 'FAH/2025/098', compulsory: 30000, optional: 10000, total: 40000 },
+  { id: 1, name: 'Blessing Okafor', avatar: null, tags: ['ESA/01 | JSS 2A'], regNo: 'FAH/2025/098', compulsory: 30000, optional: 10000, total: 40000 },
+  { id: 2, name: 'Kolawole Johnson', avatar: null, tags: ['ESA/02 | JSS1A'], regNo: 'FAH/2025/099', compulsory: 30000, optional: 10000, total: 40000 },
 ];
 
 const PROSPECTIVE_WARDS = [
@@ -29,10 +29,23 @@ const ParentDashboard = () => {
   const { tenantInfo } = useContext(TenantAuthContext);
 
   const session = tenantInfo?.academic_session || '2025/2026';
+  const term    = tenantInfo?.academic_term    || '';
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
 
   const handleApplyAdmission = (batch) => {
     navigate('/admission/new-application', { state: { batch } });
+  };
+
+  const handleViewEnrolledWard = (ward) => {
+    // Normalize enrolled ward shape to match what AdmissionStatus expects
+    const normalized = {
+      ...ward,
+      applicationNo: ward.regNo,
+      class: ward.tags?.[0] ?? '—',
+      session: session,
+      term: term,
+    };
+    navigate(`/admission-status/${ward.id}`, { state: { ward: normalized } });
   };
 
    const theme = useTheme();
@@ -70,7 +83,7 @@ const ParentDashboard = () => {
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6" fontWeight={700}>Enrolled Ward</Typography>
               <Chip
-                label={`${session} — 2nd Term`}
+                label={`${session}${term ? ` — ${term}` : ''}`}
                 size="small"
                 sx={{ bgcolor: '#F1F4F1', color: '#000', fontWeight: 500 }}
               />
@@ -88,7 +101,7 @@ const ParentDashboard = () => {
                 sx={{ minWidth: { xs: 560, sm: 'unset' } }}
               >
                 {ENROLLED_WARDS.map((ward) => (
-                  <EnrolledWardCard key={ward.id} ward={ward} />
+                  <EnrolledWardCard key={ward.id} ward={ward} onViewDetails={handleViewEnrolledWard} />
                 ))}
               </Stack>
             </Box>
@@ -131,7 +144,7 @@ const ParentDashboard = () => {
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6" fontWeight={700}>Prospective</Typography>
               <Chip
-                label={`${session} — 2nd Term Admission`}
+                label={`${session}${term ? ` — ${term} Admission` : ' Admission'}`}
                 size="small"
                 sx={{ bgcolor: '#F1F4F1', color: '#000', fontWeight: 500 }}
               />

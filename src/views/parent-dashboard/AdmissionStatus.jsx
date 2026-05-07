@@ -213,12 +213,22 @@ const AdmissionStatus = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const app = location.state?.application ?? MOCK_APPLICATION;
+  const raw = location.state?.application ?? location.state?.ward ?? MOCK_APPLICATION;
+
+  // Enrolled ward cards 
+  const app = {
+    currentStep: 3,       
+    status: 'Enrolled',
+    timeline: [],
+    acceptanceFee: null,
+    feeDue: null,
+    ...raw,
+  };
 
   const statusColor =
     app.status === 'Admitted'
       ? { bgcolor: 'success.light', color: 'success.dark' }
-      : { bgcolor: 'warning.light', color: 'warning.dark' };
+      : { bgcolor: 'success.light', color: 'success.dark' };
 
   return (
     <PageContainer title="Admission Status" description="Application status">
@@ -254,7 +264,7 @@ const AdmissionStatus = () => {
           </Box>
 
           <Typography variant="body2" color="text.secondary">
-            Application #{app.applicationNo} · {app.class} · Session {app.session}
+            Application #{app.applicationNo} · {app.class} · Session {app.session}{app.term ? ` · ${app.term}` : ''}
           </Typography>
         </Box>
 
@@ -277,27 +287,35 @@ const AdmissionStatus = () => {
             <Typography variant="h6" fontWeight={700} mb={2.5}>
               Activity timeline
             </Typography>
-            {app.timeline.map((event, i) => (
-              <TimelineEvent
-                key={i}
-                type={event.type}
-                title={event.title}
-                date={event.date}
-                detail={event.detail}
-                isLast={i === app.timeline.length - 1}
-              />
-            ))}
+            {app.timeline.length > 0 ? (
+              app.timeline.map((event, i) => (
+                <TimelineEvent
+                  key={i}
+                  type={event.type}
+                  title={event.title}
+                  date={event.date}
+                  detail={event.detail}
+                  isLast={i === app.timeline.length - 1}
+                />
+              ))
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No activity recorded yet.
+              </Typography>
+            )}
           </Paper>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <ActionCard
-            amount={app.acceptanceFee}
-            dueLabel={app.feeDue}
-            onPay={() => {}}
-            onViewLetter={() => navigate('/admission-letter', { state: { letter: { ...app, parentName: 'Mrs. Adaeze Okafor' } } })}
-          />
-        </Grid>
+        {app.acceptanceFee && (
+          <Grid size={{ xs: 12, lg: 5 }}>
+            <ActionCard
+              amount={app.acceptanceFee}
+              dueLabel={app.feeDue}
+              onPay={() => {}}
+              onViewLetter={() => navigate('/admission-letter', { state: { letter: { ...app, parentName: 'Mrs. Adaeze Okafor' } } })}
+            />
+          </Grid>
+        )}
       </Grid>
     </PageContainer>
   );

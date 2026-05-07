@@ -2,7 +2,7 @@ import { Box, Paper, Avatar, Typography, Stack, Chip, Button } from '@mui/materi
 import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const EnrolledWardCard = ({ ward }) => (
+const EnrolledWardCard = ({ ward, onViewDetails }) => (
   <Paper
     variant="outlined"
     sx={{
@@ -46,10 +46,16 @@ const EnrolledWardCard = ({ ward }) => (
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
         <Box>
           <Typography variant="caption" color="text.secondary" display="block">
-            Compulsory: <strong>₦{ward.compulsory?.toLocaleString()}</strong>
+            Compulsory:{' '}
+            <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              ₦{ward.compulsory?.toLocaleString()}
+            </Typography>
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-            Optional: <strong>₦{ward.optional?.toLocaleString()}</strong>
+            Optional:{' '}
+            <Typography  variant="caption" component="span" sx={{ fontWeight: 600, color: 'primary.main' }}>
+              ₦{ward.optional?.toLocaleString()}
+            </Typography>
           </Typography>
         </Box>
 
@@ -78,6 +84,7 @@ const EnrolledWardCard = ({ ward }) => (
     <Button
       size="small"
       endIcon={<ArrowForwardIcon />}
+      onClick={() => onViewDetails?.(ward)}
       sx={{ flexShrink: 0, whiteSpace: 'nowrap', fontSize: '0.75rem' }}
     >
       View Details
@@ -95,6 +102,7 @@ EnrolledWardCard.propTypes = {
     optional: PropTypes.number,
     total: PropTypes.number,
   }).isRequired,
+  onViewDetails: PropTypes.func,
 };
 
 export default EnrolledWardCard;

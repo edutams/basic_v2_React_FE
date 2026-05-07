@@ -17,13 +17,15 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
+import { IconUserFilled } from '@tabler/icons-react';
+
 // ── Quick Jump sidebar ────────────────────────────────────────────────────────
 const SECTIONS = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
 
 const QuickJump = () => (
   <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2 }}>
   <Box sx={{ position: 'sticky', top: 24 }}>
-    <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+    <Typography variant="h5" fontWeight={700} color="text.secondary" display="block" mb={1}>
       Quick jump
     </Typography>
     <Stack spacing={0.5}>
@@ -32,7 +34,7 @@ const QuickJump = () => (
           key={s}
           href={`#section-${s.toLowerCase().replace(' ', '-')}`}
           underline="hover"
-          variant="caption"
+          variant="h6"
           color="primary.main"
           sx={{ fontWeight: 500 }}
         >
@@ -144,7 +146,7 @@ const SubmitStep = ({
   // Derive display values with safe fallbacks
   const applicantName = wardData
     ? `${wardData.surname ?? ''} ${wardData.first_name ?? ''} ${wardData.other_name ?? ''}`.trim()
-    : 'Queensley Skoolpay Ademola';
+    : 'Adeyemi Oluwadunke';
 
   const intendingClass = academicData?.class_id
     ? `JSS 1 — Diamond`
@@ -159,12 +161,10 @@ const SubmitStep = ({
   return (
     <Grid container spacing={3} alignItems="flex-start">
 
-      {/* ── Main content ── */}
       <Grid size={{ xs: 12, md: 9 }}>
 
         {/* 1 — Ward Detail */}
         <Section number={1} title="Tell us about your ward" subtitle="Basic information" id="section-ward-detail">
-          {/* Passport photo placeholder */}
           <Box display="flex" flexDirection="column" alignItems="center" mb={2.5}>
             <Box
               sx={{
@@ -179,7 +179,10 @@ const SubmitStep = ({
                 mb: 1,
               }}
             >
-              <Typography variant="h5">👤</Typography>
+              <Typography variant="h5">
+                 <IconUserFilled size="50" />,
+              </Typography>
+
             </Box>
             <Typography variant="body2" fontWeight={700}>{applicantName}</Typography>
             <Typography variant="caption" color="text.secondary">
@@ -237,9 +240,9 @@ const SubmitStep = ({
             </>
           )}
 
-          <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+          {/* <Typography variant="caption" color="text.secondary" display="block" mb={1}>
             Intending Class
-          </Typography>
+          </Typography> */}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 4 }}>
               <Field label="Intending Class"         value={intendingClass}                />

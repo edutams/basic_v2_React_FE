@@ -304,6 +304,7 @@ const NewApplication = () => {
 
   return (
     <PageContainer title="New Application" description="Apply for admission">
+      <Box sx={activeStep === 4 ? { overflow: 'hidden', height: '100vh' } : {}}>
 
       {/* ── Page header ── */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
@@ -357,7 +358,7 @@ const NewApplication = () => {
               borderRadius: 3,
               p: { xs: 2.5, sm: 3.5 },
               ...(activeStep === 4 && {
-                maxHeight: '75vh',
+                height: 'calc(100vh - 260px)',
                 overflowY: 'auto',
               }),
             }}
@@ -377,6 +378,7 @@ const NewApplication = () => {
         onApply={(newBatch) => setSelectedBatch(newBatch)}
       />
 
+      </Box>
     </PageContainer>
   );
 };

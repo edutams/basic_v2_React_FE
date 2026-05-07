@@ -58,7 +58,7 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver
           width: 44,
           height: 44,
           borderRadius: 2,
-          bgcolor: 'primary.lighter',
+          bgcolor: 'primary.light',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

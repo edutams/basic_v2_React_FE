@@ -142,7 +142,6 @@ const SchoolTotalPermissionModal = ({ open, onClose, permission }) => {
             variant="contained" 
             size="small"
             onClick={handleSearch}
-            sx={{ minWidth: '80px' }}
           >
             Search
           </Button>
@@ -159,8 +158,8 @@ const SchoolTotalPermissionModal = ({ open, onClose, permission }) => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '8%' }}>#</TableCell>
-                <TableCell sx={{ width: '50%' }}>Role</TableCell>
-                <TableCell sx={{ width: '17%' }}>
+                <TableCell sx={{ width: '10%' }}>Role</TableCell>
+                <TableCell sx={{ width: '50%' }}>
                   Description
                 </TableCell>
               </TableRow>
@@ -177,18 +176,18 @@ const SchoolTotalPermissionModal = ({ open, onClose, permission }) => {
                 roles.map((role, index) => (
                   <TableRow key={role.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {role.description || role.name}
-                      </Typography>
-                    </TableCell>
-
-                    <TableCell>
-                      <Typography variant="caption" color="textSecondary" sx={{ fontSize: '10px' }}>
+ <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 300 }}>
                         {role.name}
                       </Typography>
                     </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 300 }}>
+                        {role.description}
+                      </Typography>
+                    </TableCell>
+
+                   
                   </TableRow>
                 ))
               ) : (

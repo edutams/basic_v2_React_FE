@@ -272,6 +272,8 @@ const HolidaySection = ({ refreshKey }) => {
               startIcon={<IconPlus size={16} />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
+                  size="small"
+
             >
               Create Holiday
             </Button>
@@ -463,8 +465,12 @@ const HolidaySection = ({ refreshKey }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveHolidays} disabled={saving}>
+          <Button 
+                size="small"
+           onClick={handleCloseModal}>Cancel</Button>
+          <Button  
+                  size="small"
+          variant="contained" onClick={handleSaveHolidays} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Create Holiday'}
           </Button>
         </DialogActions>

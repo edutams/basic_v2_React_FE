@@ -22,7 +22,7 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-// ── Quick Jump sidebar ────────────────────────────────────────────────────────
+// ── Quick Jump sidebar 
 const JUMP_LINKS = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
 
 const QuickJump = () => (
@@ -47,7 +47,6 @@ const QuickJump = () => (
   </Box>
 );
 
-// ── Read-only field — same MUI TextField as WardDetailForm, just not editable ─
 const ReadField = ({ label, value }) => (
   <TextField
     label={label}
@@ -58,7 +57,6 @@ const ReadField = ({ label, value }) => (
   />
 );
 
-// ── Read-only multiline textarea ──────────────────────────────────────────────
 const ReadTextarea = ({ label, value }) => (
   <TextField
     label={label}
@@ -71,7 +69,6 @@ const ReadTextarea = ({ label, value }) => (
   />
 );
 
-// ── Section wrapper ───────────────────────────────────────────────────────────
 const Section = ({ number, title, subtitle, id, children }) => (
   <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2 }} id={id}>
     <Box display="flex" alignItems="flex-start" gap={1.5} mb={2}>
@@ -108,7 +105,6 @@ const Section = ({ number, title, subtitle, id, children }) => (
   </Paper>
 );
 
-// ── Receipt row ───────────────────────────────────────────────────────────────
 const ReceiptRow = ({ label, amount, bold }) => (
   <Box
     display="flex"
@@ -128,7 +124,6 @@ const ReceiptRow = ({ label, amount, bold }) => (
   </Box>
 );
 
-// ── Document row ──────────────────────────────────────────────────────────────
 const DocRow = ({ label, filename, required }) => (
   <Box
     display="flex"
@@ -188,7 +183,6 @@ const DocRow = ({ label, filename, required }) => (
   </Box>
 );
 
-// ── Main step ─────────────────────────────────────────────────────────────────
 const SubmitStep = ({
   wardData,
   academicData,
@@ -210,7 +204,6 @@ const SubmitStep = ({
 
   return (
     <Grid container spacing={3} alignItems="flex-start">
-      {/* ── Main content ── */}
       <Grid size={{ xs: 12, md: 9 }}>
         {/* 1 — Ward Detail */}
         <Section
@@ -219,12 +212,8 @@ const SubmitStep = ({
           subtitle="Basic information"
           id="section-ward-detail"
         >
-          {/* Avatar */}
           <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
             <Box sx={{ position: 'relative', mb: 1 }}>
-              {/* <Avatar sx={{ width: 72, height: 72, bgcolor: 'grey.300', fontSize: 28 }}>
-                {wardData?.surname?.[0] ?? 'Q'}
-              </Avatar> */}
               <Avatar
                 src={wardData?.imageUrl} 
                 sx={{ width: 72, height: 72, bgcolor: 'grey.300' }}
@@ -239,7 +228,7 @@ const SubmitStep = ({
                   width: 20,
                   height: 20,
                   borderRadius: '50%',
-                  bgcolor: 'success.main',
+                  bgcolor: 'primary.dark',
                   border: '2px solid #fff',
                   display: 'flex',
                   alignItems: 'center',
@@ -291,7 +280,6 @@ const SubmitStep = ({
             Previous school information
           </Typography>
 
-          {/* Previous school textarea */}
           <Box sx={{ mb: 2 }}>
             <ReadTextarea
               label=""
@@ -349,7 +337,6 @@ const SubmitStep = ({
           id="section-payment"
         >
           <Box>
-            {/* Receipt header */}
             <Box
               display="flex"
               justifyContent="space-between"
@@ -446,7 +433,6 @@ const SubmitStep = ({
 
               <Divider sx={{ mb: 1 }} />
 
-              {/* Fee rows */}
               <Box sx={{ mb: 0.5 }}>
                 <Box display="flex" justifyContent="space-between" sx={{ py: 0.5 }}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600}>
@@ -587,7 +573,6 @@ const SubmitStep = ({
           </Button>
         </Section>
 
-        {/* Footer nav */}
         <Box display="flex" sx={{ mt: 1, mb: 2 }}>
           <Button
             color="inherit"

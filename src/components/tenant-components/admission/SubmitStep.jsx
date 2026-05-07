@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, Stack, Link, Button } from '@mui/material';
+import { Box, Grid, Typography, Stack, Link, Button, Paper } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
@@ -12,8 +12,9 @@ import FinalReview     from './review/FinalReview';
 const JUMP_LINKS = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
 
 const QuickJump = () => (
-  <Box sx={{ position: 'sticky', top: 24 }}>
-    <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+   <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2 }}>
+      <Box sx={{ position: 'sticky', top: 24 }}>
+    <Typography variant="h6" fontWeight={700} color="text.secondary" display="block" mb={1}>
       Quick jump
     </Typography>
     <Stack spacing={0.5}>
@@ -22,7 +23,7 @@ const QuickJump = () => (
           key={s}
           href={`#section-${s.toLowerCase().replace(' ', '-')}`}
           underline="hover"
-          variant="caption"
+          variant="h6"
           color="primary.main"
           sx={{ fontWeight: 500 }}
         >
@@ -31,6 +32,7 @@ const QuickJump = () => (
       ))}
     </Stack>
   </Box>
+   </Paper>
 );
 
 // ── Main 

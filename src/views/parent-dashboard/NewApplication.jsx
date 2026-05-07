@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@mui/material/styles';
 import {
   Box,
   Grid,
@@ -13,8 +14,11 @@ import {
   ArrowBack as ArrowBackIcon,
   Groups as GroupsIcon,
   Visibility as VisibilityIcon,
+  School as SchoolIcon,
+  CreditCard as CreditCardIcon,
+  Description as DescriptionIcon,
+  Send as SendIcon,
 } from '@mui/icons-material';
-import { IconSchool, IconCreditCard, IconFileText, IconSend } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
 import WardDetailForm from 'src/components/tenant-components/admission/WardDetailForm';
@@ -27,88 +31,97 @@ import SubmitStep from 'src/components/tenant-components/admission/SubmitStep';
 // ── Step definitions ──────────────────────────────────────────────────────────
 const STEPS = [
   { label: 'Ward Detail',   icon: GroupsIcon,     isTabler: false },
-  { label: 'Academic info', icon: IconSchool,     isTabler: true  },
-  { label: 'Payment',       icon: IconCreditCard, isTabler: true  },
-  { label: 'Documents',     icon: IconFileText,   isTabler: true  },
-  { label: 'Submit',        icon: IconSend,       isTabler: true  },
+  { label: 'Academic info', icon: SchoolIcon,     isTabler: false  },
+  { label: 'Payment',       icon: CreditCardIcon, isTabler: false  },
+  { label: 'Documents',     icon: DescriptionIcon,   isTabler: false  },
+  { label: 'Submit',        icon: SendIcon,       isTabler: false  },
 ];
 
-// ── Stepper ───────────────────────────────────────────────────────────────────
-const StepperBar = ({ activeStep }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, overflowX: 'auto', pb: 1 }}>
-    {STEPS.map((step, i) => {
-      const done   = i < activeStep;
-      const active = i === activeStep;
-      const Icon   = step.icon;
 
-      return (
-        <React.Fragment key={step.label}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 0.75,
-              minWidth: 90,
-              flexShrink: 0,
-            }}
-          >
+// ── Stepper ───────────────────────────────────────────────────────────────────
+const StepperBar = ({ activeStep }) => {
+  const theme = useTheme(); // ✅ correct place
+
+  const getIconColor = (active, done) =>
+    active
+      ? '#fff'
+      : done
+      ? theme.palette.primary.main
+      : theme.palette.grey[500];
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, overflowX: 'auto', pb: 1 }}>
+      {STEPS.map((step, i) => {
+        const done = i < activeStep;
+        const active = i === activeStep;
+        const Icon = step.icon;
+
+        return (
+          <React.Fragment key={step.label}>
             <Box
               sx={{
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                border: '2px solid',
-                borderColor: active || done ? 'primary.main' : 'grey.300',
-                bgcolor: active ? 'primary.main' : 'transparent',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s',
+                gap: 0.75,
+                minWidth: 90,
+                flexShrink: 0,
               }}
             >
-              {step.isTabler ? (
-                <Icon size={20} color={active ? '#fff' : done ? '#1976d2' : '#9e9e9e'} />
-              ) : (
-                <Icon sx={{ fontSize: 20, color: active ? '#fff' : done ? 'primary.main' : 'grey.400' }} />
-              )}
-            </Box>
-
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary" display="block" lineHeight={1}>
-                STEP {i + 1}
-              </Typography>
-              <Typography
-                variant="caption"
-                fontWeight={active || done ? 700 : 400}
-                color={active || done ? 'text.primary' : 'text.secondary'}
-                display="block"
-                lineHeight={1.3}
-                mt={0.3}
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '2px solid',
+                  borderColor: active || done ? 'primary.main' : 'grey.300',
+                  bgcolor: active ? 'primary.main' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s',
+                }}
               >
-                {step.label}
-              </Typography>
+                <Icon sx={{ fontSize: 20, color: getIconColor(active, done) }} />
+              </Box>
+
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="caption" color="text.secondary" display="block" lineHeight={1}>
+                  STEP {i + 1}
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  fontWeight={active || done ? 700 : 400}
+                  color={active || done ? 'text.primary' : 'text.secondary'}
+                  display="block"
+                  lineHeight={1.3}
+                  mt={0.3}
+                >
+                  {step.label}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
 
-          {i < STEPS.length - 1 && (
-            <Box
-              sx={{
-                flex: 1,
-                height: 2,
-                bgcolor: done ? 'primary.main' : 'grey.200',
-                mb: 3.5,
-                minWidth: 20,
-              }}
-            />
-          )}
-        </React.Fragment>
-      );
-    })}
-  </Box>
-);
+            {i < STEPS.length - 1 && (
+              <Box
+                sx={{
+                  flex: 1,
+                  height: 2,
+                  bgcolor: done ? 'primary.main' : 'grey.200',
+                  mb: 3.5,
+                  minWidth: 20,
+                }}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </Box>
+  );
+};
 
-// ── Batch Summary Sidebar ─────────────────────────────────────────────────────
+// ── Batch Summary Sidebar
 const BatchSummaryCard = ({ batch, onChangeBatch }) => (
   <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
     <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
@@ -177,34 +190,7 @@ const BatchSummaryCard = ({ batch, onChangeBatch }) => (
   </Paper>
 );
 
-// ── Placeholder for steps not yet built ──────────────────────────────────────
-const PlaceholderStep = ({ label, onNext, onBack }) => (
-  <Box>
-    <Typography variant="h6" fontWeight={700} mb={0.5}>{label}</Typography>
-    <Divider sx={{ mb: 3 }} />
-    <Typography color="text.secondary">This step is coming soon.</Typography>
-
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        mt: 4,
-        pt: 2,
-        borderTop: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ color: 'text.secondary', fontWeight: 600 }}>
-        Back
-      </Button>
-      <Button variant="contained" onClick={onNext} sx={{ fontWeight: 700, px: 4, borderRadius: 2 }}>
-        Save and Continue
-      </Button>
-    </Box>
-  </Box>
-);
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Main Page 
 const NewApplication = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
@@ -218,7 +204,6 @@ const NewApplication = () => {
   const [isLoading,  setIsLoading]      = useState(false);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
-  // Keep selected batch in local state so it can be swapped via the modal
   const [selectedBatch, setSelectedBatch] = useState(batch);
 
   const handleNext = () => setActiveStep((s) => Math.min(s + 1, STEPS.length - 1));
@@ -292,7 +277,6 @@ const NewApplication = () => {
             selectedBatch={selectedBatch}
             onBack={handleBack}
             onSubmit={() => {
-              // TODO: final submission API call
               handleNext();
             }}
             isLoading={isLoading}
@@ -306,7 +290,6 @@ const NewApplication = () => {
     <PageContainer title="New Application" description="Apply for admission">
       <Box sx={activeStep === 4 ? { overflow: 'hidden', height: '100vh' } : {}}>
 
-      {/* ── Page header ── */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Divider
@@ -347,7 +330,6 @@ const NewApplication = () => {
         </Button>
       </Box>
 
-      {/* ── Stepper ── */}
       <StepperBar activeStep={activeStep} />
 
       {/* ── Content + Sidebar ── */}

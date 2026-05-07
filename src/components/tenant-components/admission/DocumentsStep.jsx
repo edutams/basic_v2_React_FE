@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -7,28 +7,84 @@ import {
   Paper,
   IconButton,
   Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   FileUpload as UploadIcon,
   Close as CloseIcon,
   InsertDriveFile as FileIcon,
+  Visibility as EyeIcon,
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
 // ── Document definitions ──────────────────────────────────────────────────────
 const DOCUMENTS = [
-  { key: 'birth_certificate',    label: 'Birth certificate',      required: true  },
-  { key: 'previous_school_report', label: 'Previous school report', required: true  },
-  { key: 'passport_photo',       label: 'Passport photo',         required: true  },
-  { key: 'medical_record',       label: 'Medical record',         required: false },
+  { key: 'birth_certificate',      label: 'Birth certificate',      required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
+  { key: 'previous_school_report', label: 'Previous school report', required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
+  { key: 'passport_photo',         label: 'Passport photo',         required: true,  accept: '.jpg,.jpeg,.png'      },
+  { key: 'medical_record',         label: 'Medical record',         required: false, accept: '.pdf,.jpg,.jpeg,.png' },
 ];
 
 const ACCEPTED = '.pdf,.jpg,.jpeg,.png';
 const MAX_MB   = 5;
 
+const isImage = (file) => file?.type?.startsWith('image/');
+
+// ── Preview dialog ────────────────────────────────────────────────────────────
+const PreviewDialog = ({ file, onClose }) => {
+  const [objectUrl, setObjectUrl] = useState(null);
+
+  useEffect(() => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setObjectUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  if (!file) return null;
+
+  return (
+    <Dialog open onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}
+      >
+        <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ flex: 1, mr: 1 }}>
+          {file.name}
+        </Typography>
+        <IconButton size="small" onClick={onClose}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 2, textAlign: 'center', bgcolor: '#f5f5f5' }}>
+        {objectUrl && isImage(file) ? (
+          <Box
+            component="img"
+            src={objectUrl}
+            alt={file.name}
+            sx={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 2, objectFit: 'contain' }}
+          />
+        ) : objectUrl ? (
+          <Box sx={{ height: '70vh' }}>
+            <iframe
+              src={objectUrl}
+              title={file.name}
+              width="100%"
+              height="100%"
+              style={{ border: 'none', borderRadius: 8 }}
+            />
+          </Box>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // ── Single upload row ─────────────────────────────────────────────────────────
-const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver, onDragLeave, onDrop }) => {
+const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver, onDragOver, onDragLeave, onDrop }) => {
   const inputRef = useRef(null);
 
   return (
@@ -45,7 +101,7 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver
         borderColor: isDragOver ? 'primary.main' : 'divider',
         bgcolor: isDragOver ? 'primary.lighter' : 'background.paper',
         transition: 'all 0.15s',
-        cursor: 'pointer',
+        cursor: file ? 'default' : 'pointer',
       }}
       onClick={() => !file && inputRef.current?.click()}
       onDragOver={onDragOver}
@@ -58,14 +114,17 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver
           width: 44,
           height: 44,
           borderRadius: 2,
-          bgcolor: 'primary.light',
+          bgcolor: file ? 'success.light' : 'primary.light',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <UploadIcon sx={{ color: 'primary.main', fontSize: 22 }} />
+        {file
+          ? <FileIcon sx={{ color: 'success.dark', fontSize: 22 }} />
+          : <UploadIcon sx={{ color: 'primary.main', fontSize: 22 }} />
+        }
       </Box>
 
       {/* Label + hint / selected file */}
@@ -79,7 +138,6 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver
 
         {file ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
-            <FileIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
             <Typography variant="caption" color="text.secondary" noWrap>
               {file.name}
             </Typography>
@@ -92,19 +150,31 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver
         ) : (
           <Typography variant="caption" color="text.secondary">
             Click to upload or drag and drop
+            {doc.accept === '.jpg,.jpeg,.png' ? ' · JPG or PNG only' : ' · PDF, JPG or PNG'}
           </Typography>
         )}
       </Box>
 
-      {/* Action — remove if file selected, else Choose file */}
+      {/* Actions when file is selected: eye + remove */}
       {file ? (
-        <IconButton
-          size="small"
-          color="error"
-          onClick={(e) => { e.stopPropagation(); onRemove(); }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <IconButton
+            size="small"
+            onClick={(e) => { e.stopPropagation(); onPreview(); }}
+            sx={{ color: 'primary.main' }}
+            title="Preview file"
+          >
+            <EyeIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
+            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            title="Remove file"
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
       ) : (
         <Button
           variant="outlined"
@@ -120,7 +190,7 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED}
+        accept={doc.accept ?? ACCEPTED}
         style={{ display: 'none' }}
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -134,11 +204,19 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, isDragOver, onDragOver
 
 // ── Main step ─────────────────────────────────────────────────────────────────
 const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
-  const [files, setFiles]       = useState({});
+  const [files,    setFiles]    = useState({});
   const [dragOver, setDragOver] = useState(null);
-  const [errors, setErrors]     = useState({});
+  const [errors,   setErrors]   = useState({});
+  const [preview,  setPreview]  = useState(null); // File object to preview
 
   const handleFile = (key, file) => {
+    const doc = DOCUMENTS.find((d) => d.key === key);
+    const acceptedExts = (doc?.accept ?? ACCEPTED).split(',').map((e) => e.trim().toLowerCase());
+    const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+    if (!acceptedExts.includes(fileExt)) {
+      setErrors((prev) => ({ ...prev, [key]: `Invalid file type. Accepted: ${acceptedExts.join(', ')}` }));
+      return;
+    }
     if (file.size > MAX_MB * 1024 * 1024) {
       setErrors((prev) => ({ ...prev, [key]: `File exceeds ${MAX_MB}MB limit` }));
       return;
@@ -163,13 +241,11 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
   const allRequiredOk = requiredKeys.every((k) => Boolean(files[k]));
 
   const handleSubmit = () => {
-    // Validate required
     const newErrors = {};
     requiredKeys.forEach((k) => {
       if (!files[k]) newErrors[k] = 'This document is required';
     });
     if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
-    // TODO: pass files to API
     onNext(files);
   };
 
@@ -179,7 +255,7 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
         Upload required documents
       </Typography>
       <Typography variant="body2" color="text.secondary" mb={3}>
-        PDF, JPG or PNG. Max {MAX_MB}MB each.
+        PDF, JPG or PNG · Max {MAX_MB}MB each · Passport photo accepts images only.
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -190,6 +266,7 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
               file={files[doc.key] ?? null}
               onFileChange={(f) => handleFile(doc.key, f)}
               onRemove={() => handleRemove(doc.key)}
+              onPreview={() => setPreview(files[doc.key])}
               isDragOver={dragOver === doc.key}
               onDragOver={(e) => { e.preventDefault(); setDragOver(doc.key); }}
               onDragLeave={() => setDragOver(null)}
@@ -204,7 +281,7 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
         ))}
       </Box>
 
-      {/* Footer — matches ParentForm action row */}
+      {/* Footer */}
       <Divider sx={{ mt: 4, mb: 2 }} />
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
@@ -219,14 +296,17 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
           {isLoading ? 'Saving...' : 'Save and Continue'}
         </Button>
       </Box>
+
+      {/* File preview dialog */}
+      {preview && <PreviewDialog file={preview} onClose={() => setPreview(null)} />}
     </Box>
   );
 };
 
 DocumentsStep.propTypes = {
-  onNext:     PropTypes.func.isRequired,
-  onBack:     PropTypes.func.isRequired,
-  isLoading:  PropTypes.bool,
+  onNext:    PropTypes.func.isRequired,
+  onBack:    PropTypes.func.isRequired,
+  isLoading: PropTypes.bool,
 };
 
 export default DocumentsStep;

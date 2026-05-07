@@ -352,7 +352,7 @@ const NewApplication = () => {
 
       {/* ── Content + Sidebar ── */}
       <Grid container spacing={3} alignItems="flex-start">
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12, lg: activeStep === 4 ? 12 : 8 }}>
           <Paper
             sx={{
               borderRadius: 3,
@@ -367,7 +367,7 @@ const NewApplication = () => {
           </Paper>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
+        <Grid size={{ xs: 12, lg: 4 }} sx={{ display: activeStep === 4 ? 'none' : 'block' }}>
           <BatchSummaryCard batch={selectedBatch} onChangeBatch={() => setBatchModalOpen(true)} />
         </Grid>
       </Grid>

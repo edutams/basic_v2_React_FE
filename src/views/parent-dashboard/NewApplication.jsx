@@ -122,7 +122,7 @@ const StepperBar = ({ activeStep }) => {
 };
 
 // ── Batch Summary Sidebar
-const BatchSummaryCard = ({ batch, onChangeBatch }) => (
+const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
   <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
     <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
       Selected Admission Batch Detail
@@ -155,38 +155,41 @@ const BatchSummaryCard = ({ batch, onChangeBatch }) => (
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          bgcolor: '#FFF5F5',
+          bgcolor: 'error.light',
           borderRadius: 2,
           px: 2,
           py: 1.25,
           mb: 1.5,
         }}
       >
-        <Typography variant="body2" color="error.main" fontWeight={500}>{label}</Typography>
-        <Typography variant="body2" color="error.main" fontWeight={700}>
+        <Typography variant="body2" color="error.dark" fontWeight={500}>{label}</Typography>
+        <Typography variant="body2" color="error.dark" fontWeight={700}>
           ₦{value.toLocaleString()}
         </Typography>
       </Box>
     ))}
 
-    <Divider sx={{ mb: 2 }} />
-
-    <Button
-      fullWidth
-      variant="outlined"
-      startIcon={<VisibilityIcon />}
-      onClick={onChangeBatch}
-      sx={{
-        borderRadius: 2,
-        fontWeight: 600,
-        textTransform: 'none',
-        borderColor: 'grey.300',
-        color: 'text.primary',
-        '&:hover': { borderColor: 'primary.main', color: '#FFFF' },
-      }}
-    > 
-      Change your Admission Batch
-    </Button>
+    {activeStep !== 3 && (
+      <>
+        <Divider sx={{ mb: 2 }} />
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<VisibilityIcon />}
+          onClick={onChangeBatch}
+          sx={{
+            borderRadius: 2,
+            fontWeight: 600,
+            textTransform: 'none',
+            borderColor: 'grey.300',
+            color: 'text.primary',
+            '&:hover': { borderColor: 'primary.main', color: '#FFFF' },
+          }}
+        >
+          Change your Admission Batch
+        </Button>
+      </>
+    )}
   </Paper>
 );
 
@@ -196,15 +199,53 @@ const NewApplication = () => {
   const location  = useLocation();
 
   const batch = location.state?.batch ?? null;
+  const existingWard = location.state?.ward ?? null;
 
-  const [activeStep, setActiveStep]     = useState(0);
-  const [wardData,   setWardData]       = useState(null);
-  const [academicData, setAcademicData] = useState(null);
+  // Map prospective ward data → per-step initial values
+  const seedWardData = existingWard
+    ? (() => {
+        const parts = (existingWard.name ?? '').trim().split(' ');
+        return {
+          surname:         existingWard.surname         ?? parts[0] ?? '',
+          first_name:      existingWard.first_name      ?? parts[1] ?? '',
+          other_name:      existingWard.other_name      ?? parts.slice(2).join(' '),
+          dob:             existingWard.dob             ?? '',
+          gender:          existingWard.gender          ?? '',
+          state_of_origin: existingWard.state_of_origin ?? '',
+          lga:             existingWard.lga             ?? '',
+          home_address:    existingWard.home_address    ?? '',
+        };
+      })()
+    : null;
+
+  const seedAcademicData = existingWard
+    ? {
+        has_previous_school:   existingWard.has_previous_school   ?? false,
+        previous_school_name:  existingWard.previous_school_name  ?? '',
+        previous_school_state: existingWard.previous_school_state ?? '',
+        previous_school_lga:   existingWard.previous_school_lga   ?? '',
+        previous_class:        existingWard.previous_class        ?? '',
+        programme_id:          existingWard.programme_id          ?? '',
+        class_id:              existingWard.class_id              ?? '',
+        boarding_status:       existingWard.boarding_status       ?? '',
+      }
+    : null;
+
+  // Resume at the step where progress stopped.
+  // ward.step: 0=Applied(ward detail done), 1=E-Exam(academic done), 2=Admitted, 3=Enrolled
+  // Map to stepper index: step 0 → resume at step 1 (academic), step 1+ → resume at step 2 (payment)
+  const resumeStep = existingWard
+    ? existingWard.step >= 1 ? 2 : existingWard.step >= 0 ? 1 : 0
+    : 0;
+
+  const [activeStep, setActiveStep]     = useState(resumeStep);
+  const [wardData,   setWardData]       = useState(seedWardData);
+  const [academicData, setAcademicData] = useState(existingWard?.step >= 1 ? seedAcademicData : null);
   const [documentsData, setDocumentsData] = useState(null);
   const [isLoading,  setIsLoading]      = useState(false);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
-  const [selectedBatch, setSelectedBatch] = useState(batch);
+  const [selectedBatch, setSelectedBatch] = useState(existingWard?.batch ?? batch);
 
   const handleNext = () => setActiveStep((s) => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => {
@@ -334,7 +375,7 @@ const NewApplication = () => {
 
       {/* ── Content + Sidebar ── */}
       <Grid container spacing={3} alignItems="flex-start">
-        <Grid size={{ xs: 12, lg: activeStep === 4 ? 12 : 8 }}>
+        <Grid size={{ xs: 12, lg: activeStep === 4 || activeStep === 2 ? 12 : 8 }}>
           <Paper
             sx={{
               borderRadius: 3,
@@ -349,8 +390,8 @@ const NewApplication = () => {
           </Paper>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }} sx={{ display: activeStep === 4 ? 'none' : 'block' }}>
-          <BatchSummaryCard batch={selectedBatch} onChangeBatch={() => setBatchModalOpen(true)} />
+        <Grid size={{ xs: 12, lg: 4 }} sx={{ display: activeStep === 4 || activeStep === 2 ? 'none' : 'block' }}>
+          <BatchSummaryCard batch={selectedBatch} onChangeBatch={() => setBatchModalOpen(true)} activeStep={activeStep} />
         </Grid>
       </Grid>
 

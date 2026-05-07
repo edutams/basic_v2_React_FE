@@ -16,11 +16,12 @@ import ward from 'src/assets/images/backgrounds/ward.png';
 const ENROLLED_WARDS = [
   { id: 1, name: 'Blessing Okafor', avatar: null, tags: ['ESA/01 | JSS 2A'], regNo: 'FAH/2025/098', compulsory: 30000, optional: 10000, total: 40000 },
   { id: 2, name: 'Kolawole Johnson', avatar: null, tags: ['ESA/02 | JSS1A'], regNo: 'FAH/2025/099', compulsory: 30000, optional: 10000, total: 40000 },
+  { id: 3, name: 'Amina Mohammed', avatar: null, tags: ['ESA/03 | JSS1A'], regNo: 'FAH/2025/100', compulsory: 30000, optional: 10000, total: 40000 },
 ];
 
 const PROSPECTIVE_WARDS = [
   { id: 1, name: 'Chinaza Okafor', initials: 'JD', class: 'JSS1', applicationNo: 'A-10428', status: 'Exam Scheduled', step: 1, expanded: false },
-  { id: 2, name: 'Chinaza Okafor', initials: 'CO', class: 'JSS 1', applicationNo: 'A-10428', status: 'Admitted', step: 2, expanded: true, actionLabel: 'Pay acceptance fee · ₦35,000', actionDue: 'Sep 5, 2023 to confirm enrollment' },
+  { id: 2, name: 'Olaoluwa Serah', initials: 'OS', class: 'JSS 1', applicationNo: 'A-10427', status: 'Admitted', step: 2, expanded: true, actionLabel: 'Pay acceptance fee · ₦35,000', actionDue: 'Sep 5, 2023 to confirm enrollment' },
 ];
 
 // ── Dashboard 
@@ -46,6 +47,10 @@ const ParentDashboard = () => {
       term: term,
     };
     navigate(`/admission-status/${ward.id}`, { state: { ward: normalized } });
+  };
+
+  const handleViewProspectiveWard = (ward) => {
+    navigate('/admission/new-application', { state: { ward } });
   };
 
    const theme = useTheme();
@@ -79,8 +84,8 @@ const ParentDashboard = () => {
         <Grid size={{ xs: 12, lg: 7 }}>
 
           {/* Enrolled wards */}
-          <Paper sx={{ borderRadius: 3, p: 2.5 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Paper sx={{ borderRadius: 3, p: 2.5, height: 350, display: 'flex', flexDirection: 'column' }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexShrink={0}>
               <Typography variant="h6" fontWeight={700}>Enrolled Ward</Typography>
               <Chip
                 label={`${session}${term ? ` — ${term}` : ''}`}
@@ -89,17 +94,8 @@ const ParentDashboard = () => {
               />
             </Box>
 
-            <Box
-              sx={{
-                overflowX: { xs: 'auto', sm: 'visible' },
-                mx: { xs: -1, sm: 0 },
-                px: { xs: 1, sm: 0 },
-              }}
-            >
-              <Stack
-                spacing={1.5}
-                sx={{ minWidth: { xs: 560, sm: 'unset' } }}
-              >
+            <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
+              <Stack spacing={1.5}>
                 {ENROLLED_WARDS.map((ward) => (
                   <EnrolledWardCard key={ward.id} ward={ward} onViewDetails={handleViewEnrolledWard} />
                 ))}
@@ -131,7 +127,7 @@ const ParentDashboard = () => {
             </Box>
             <Button
               variant="contained"
-              sx={{ bgcolor: '#DFFF7D', color: '#1a1a1a', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#FFC400' }, whiteSpace: 'nowrap' }}
+              sx={{ bgcolor: '#DFFF7D', color: '#1a1a1a', fontWeight: 700, borderRadius: 2, '&:hover': { bgcolor: '#cdf84e' }, whiteSpace: 'nowrap' }}
             >
               Access
             </Button>
@@ -140,8 +136,8 @@ const ParentDashboard = () => {
 
         {/* Prospective wards */}
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Paper sx={{ borderRadius: 3, p: 2.5 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Paper sx={{ borderRadius: 3, p: 2.5, height: 350, display: 'flex', flexDirection: 'column' }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexShrink={0}>
               <Typography variant="h6" fontWeight={700}>Prospective</Typography>
               <Chip
                 label={`${session}${term ? ` — ${term} Admission` : ' Admission'}`}
@@ -149,18 +145,10 @@ const ParentDashboard = () => {
                 sx={{ bgcolor: '#F1F4F1', color: '#000', fontWeight: 500 }}
               />
             </Box>
-            <Box
-              sx={{
-                overflowX: { xs: 'auto', sm: 'visible' },
-                mx: { xs: -1, sm: 0 },
-                px: { xs: 1, sm: 0 },
-              }}
-            >
-              <Box sx={{ minWidth: { xs: 400, sm: 'unset' } }}>
-                {PROSPECTIVE_WARDS.map((ward) => (
-                  <ProspectiveWardCard key={ward.id} ward={ward} />
-                ))}
-              </Box>
+            <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
+              {PROSPECTIVE_WARDS.map((ward) => (
+                <ProspectiveWardCard key={ward.id} ward={ward} onViewDetails={handleViewProspectiveWard} />
+              ))}
             </Box>
           </Paper>
         </Grid>

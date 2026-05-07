@@ -131,7 +131,7 @@ const SchoolAlcManager = () => {
   const handleAttachPermission = async (row) => {
     try {
       setSelectedRow(row);
-      const res = await aclApi.getSchoolRolePermissions(row.id);
+      const res = await aclApi.getSchoolAllRolePermissions(row.id);
       setSelectedPermissions(res?.data ?? []);
 
       setPermissionModalOpen(true);
@@ -143,6 +143,9 @@ const SchoolAlcManager = () => {
 
   const handlePermissionChange = (permission) => {
     setSelectedPermissions((prev) => {
+      if (!Array.isArray(prev)) {
+        return [permission];
+      }
       const exists = prev.some((p) => p.id === permission.id);
 
       return exists ? prev.filter((p) => p.id !== permission.id) : [...prev, permission];
@@ -151,16 +154,39 @@ const SchoolAlcManager = () => {
 
   const handleSavePermissions = async () => {
     try {
-      await aclApi.attachSchoolRolePermissions(
+      // Check if any permissions are selected
+      if (!selectedPermissions || selectedPermissions.length === 0) {
+        notify.error('Please select at least one permission');
+        return;
+      }
+
+      const response = await aclApi.attachSchoolRolePermissions(
         selectedRow.id,
         selectedPermissions.map((p) => p.name),
       );
 
-      notify.success('Permissions updated successfully!');
-      setPermissionModalOpen(false);
-      fetchRoles();
+      if (response.status) {
+        notify.success('Permissions updated successfully!');
+        setPermissionModalOpen(false);
+        fetchRoles();
+      } else {
+        // Handle validation errors
+        if (response.errors) {
+          notify.error(response.errors.permissions?.[0] || response.message || 'Failed to update permissions');
+        } else {
+          notify.error(response.message || 'Failed to update permissions');
+        }
+      }
     } catch (err) {
-      notify.error('Permission update failed');
+      console.error('Save permissions error:', err);
+      
+      // Handle validation errors from API response
+      if (err.response?.data?.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        notify.error(errorMessages[0] || 'Validation failed');
+      } else {
+        notify.error(err.response?.data?.message || 'Permission update failed');
+      }
     }
   };
 
@@ -173,9 +199,10 @@ const SchoolAlcManager = () => {
     }
   };
 
-  const handleViewPermission = async (row) => {
+  const handleViewPermissions = async (row) => {
     try {
-      const res = await aclApi.getSchoolRolePermissions(row.id);
+      setSelectedRow(row);
+      const res = await aclApi.getSchoolAllRolePermissions(row.id);
       setPermissionsToView(res.data ?? []);
       setViewPermissionModalOpen(true);
       handleMenuClose();
@@ -347,7 +374,7 @@ const SchoolAlcManager = () => {
                               Attach Permission
                             </MenuItem>
 
-                            <MenuItem onClick={() => handleViewPermission(row)}>
+                            <MenuItem onClick={() => handleViewPermissions(row)}>
                               View Permission
                             </MenuItem>
                           </Menu>

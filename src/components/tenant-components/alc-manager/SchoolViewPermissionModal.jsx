@@ -25,36 +25,28 @@ const SchoolViewPermissionModal = ({ open, onClose, selectedRow, permissionsToVi
         </Typography>
         <Box sx={{ mt: 1 }}>
           {permissionsToView && permissionsToView.length > 0 ? (
-            <ul style={{ margin: 0, paddingLeft: '16px' }}>
-              {permissionsToView.map((permission) => (
-                <li key={permission.id}>
-                  <Typography variant="body2">{permission.name}</Typography>
-                </li>
-              ))}
-            </ul>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {permissionsToView.map((permission, index) => {
+                const colors = ['primary', 'secondary', 'success', 'warning', 'info', 'error'];
+                const color = colors[index % colors.length];
+                
+                return (
+                  <Chip
+                    key={permission.id || index}
+                    label={permission.name || permission}
+                    color={color}
+                    variant="outlined"
+                    size="small"
+                  />
+                );
+              })}
+            </Box>
           ) : (
             <Typography variant="body2" color="textSecondary">
               No permissions attached to this role.
             </Typography>
           )}
         </Box>
-        {/* {permissionsToView.length > 0 ? (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {permissionsToView.map((permission, index) => (
-              <Chip
-                key={index}
-                label={permission.name || permission}
-                color="primary"
-                variant="outlined"
-                size="small"
-              />
-            ))}
-          </Box>
-        ) : (
-          <Typography variant="body1" color="textSecondary">
-            No permissions attached to this role.
-          </Typography>
-        )} */}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>

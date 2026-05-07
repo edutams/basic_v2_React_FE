@@ -24,7 +24,7 @@ const TopCard = ({ label, value, icon: Icon, iconBg, valueColor }) => {
   );
 };
 
-const TotalSchoolModal = ({ open, onClose, stats }) => {
+const TotalSchoolModal = ({ open, onClose, stats, refreshKey }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [tabValue, setTabValue] = useState('1');
@@ -35,6 +35,8 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
   const [chartLoading, setChartLoading] = useState(false);
   const [pendingYear, setPendingYear] = useState(year);
   const [allAgents, setAllAgents] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const fetchChartData = useCallback(async (selectedYear, selectedAgent = null) => {
     setChartLoading(true);
@@ -70,6 +72,21 @@ const TotalSchoolModal = ({ open, onClose, stats }) => {
       setChartLoading(false);
     }
   }, []);
+
+  // Fetch analytics for TotalSchoolModal
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await agentApi.getAnalytics();
+        if (res.status) setAnalytics(res.data);
+      } catch (e) {
+        console.error('Failed to fetch analytics', e);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [refreshKey]);
 
   // Fetch initial data when modal opens
   useEffect(() => {

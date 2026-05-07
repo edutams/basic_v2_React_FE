@@ -128,8 +128,10 @@ const SchoolPermissionAttachmentModal = ({
                 >
                   <Checkbox size="small" checked={isSelected(permission)} sx={{ marginRight: 1 }} />
                   <ListItemText
-                    primary={permission.name}
+                    primary={permission.description}
+                    secondary={permission.name}
                     primaryTypographyProps={{ variant: 'body2' }}
+                    secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
                   />
                 </ListItemButton>
               </ListItem>

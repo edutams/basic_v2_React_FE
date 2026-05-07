@@ -179,7 +179,7 @@ const SessionWeekManager = () => {
             onChange={handleMainTabChange}
             sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
           >
-            <Tab label="Session/Term Mapping" />
+            <Tab label="Session/Term ssMapping" />
             <Tab label="Week Manager" />
             <Tab label="Set Holiday" />
           </Tabs>

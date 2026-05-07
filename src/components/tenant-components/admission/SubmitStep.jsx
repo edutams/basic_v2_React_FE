@@ -11,28 +11,36 @@ import FinalReview     from './review/FinalReview';
 // ── Quick jump
 const JUMP_LINKS = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
 
+const handleJump = (e, id) => {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
+};
+
 const QuickJump = () => (
-   <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2 }}>
-      <Box sx={{ position: 'sticky', top: 24 }}>
+  <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2, position: 'sticky', top: 24 }}>
     <Typography variant="h6" fontWeight={700} color="text.secondary" display="block" mb={1}>
       Quick jump
     </Typography>
     <Stack spacing={0.5}>
-      {JUMP_LINKS.map((s) => (
-        <Link
-          key={s}
-          href={`#section-${s.toLowerCase().replace(' ', '-')}`}
-          underline="hover"
-          variant="h6"
-          color="primary.main"
-          sx={{ fontWeight: 500 }}
-        >
-          · {s}
-        </Link>
-      ))}
+      {JUMP_LINKS.map((s) => {
+        const id = `section-${s.toLowerCase().replace(' ', '-')}`;
+        return (
+          <Link
+            key={s}
+            href={`#${id}`}
+            underline="hover"
+            variant="h6"
+            color="primary.main"
+            sx={{ fontWeight: 500 }}
+            onClick={(e) => handleJump(e, id)}
+          >
+            · {s}
+          </Link>
+        );
+      })}
     </Stack>
-  </Box>
-   </Paper>
+  </Paper>
 );
 
 // ── Main 
@@ -55,7 +63,7 @@ const SubmitStep = ({ wardData, academicData, documentsData, selectedBatch, onBa
         <WardReview     wardData={wardData}       intendingClass={intendingClass} />
         <AcademicReview academicData={academicData} intendingClass={intendingClass} />
         <PaymentReview  totalPaid={totalPaid} />
-        <DocumentsReview />
+        <DocumentsReview documentsData={documentsData} />
         <FinalReview
           applicantName={applicantName}
           intendingClass={intendingClass}

@@ -294,13 +294,53 @@ const AdmissionStatus = () => {
       </Box>
 
       {/* Application cards */}
-      {applications.map((app, i) => (
-        <ApplicationCard
-          key={app.id ?? i}
-          app={app}
-          defaultOpen={applications.length === 1}
-        />
-      ))}
+      {applications.length === 0 ? (
+        <Paper
+          variant="outlined"
+          sx={{
+            borderRadius: 3,
+            p: { xs: 4, sm: 6 },
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <Box
+            sx={{
+              width: 72, height: 72, borderRadius: '50%',
+              bgcolor: 'grey.100',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <DescriptionIcon sx={{ fontSize: 36, color: 'text.disabled' }} />
+          </Box>
+          <Box>
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              No applications yet
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360 }}>
+              You haven't submitted any admission applications. Start a new application to get your ward enrolled.
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/admission/new-application')}
+            sx={{ mt: 1, fontWeight: 700, borderRadius: 2, px: 4 }}
+          >
+            Start New Application
+          </Button>
+        </Paper>
+      ) : (
+        applications.map((app, i) => (
+          <ApplicationCard
+            key={app.id ?? i}
+            app={app}
+            defaultOpen={applications.length === 1}
+          />
+        ))
+      )}
     </PageContainer>
   );
 };

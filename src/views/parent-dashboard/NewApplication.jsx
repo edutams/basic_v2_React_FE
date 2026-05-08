@@ -353,7 +353,7 @@ const NewApplication = () => {
           </Box>
           <Box>
             <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
-              New Application
+              Application Form
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Session: {selectedBatch?.session_term ?? '2025/26'}&nbsp;·&nbsp;

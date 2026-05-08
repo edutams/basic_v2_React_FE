@@ -16,6 +16,7 @@ import {
 import { IconClipboardCheck, IconSearch, IconTrophy, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
+import AdmissionBatchModal from 'src/components/tenant-components/admission/AdmissionBatchModal';
 
 // ── Stepper ───────────────────────────────────────────────────────────────────
 const STEPS = ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
@@ -217,35 +218,40 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
 
 // ── Mock data (multiple wards) ────────────────────────────────────────────────
 const MOCK_APPLICATIONS = [
-  {
-    id: 1, name: 'Chinaza Okafor', status: 'Admitted',
-    applicationNo: 'A-10428', class: 'JSS 1', session: '2025/26',
-    currentStep: 2, acceptanceFee: 35000, feeDue: 'Acceptance fee due Sep 5',
-    timeline: [
-      { type: 'submitted', title: 'Application submitted',  date: 'Aug 12, 2025', detail: '₦5,000 paid'        },
-      { type: 'reviewed',  title: 'Application reviewed',   date: 'Aug 15, 2025', detail: 'Approved for exam'  },
-      { type: 'exam',      title: 'E-Exam completed',       date: 'Aug 24, 2025', detail: 'Score 84/100'       },
-      { type: 'decision',  title: 'Admission decision',     date: 'Aug 30, 2025', detail: 'Admitted to JSS 1'  },
-      { type: 'fee',       title: 'Acceptance fee',         date: 'Due Sep 5, 2025', detail: '₦35,000'         },
-      { type: 'pending',   title: 'Auto-enrollment',        date: '',             detail: 'Awaiting acceptance fee' },
-    ],
-  },
-  {
-    id: 2, name: 'Emeka Okafor', status: 'Exam Scheduled',
-    applicationNo: 'A-10431', class: 'JSS 2', session: '2025/26',
-    currentStep: 1, acceptanceFee: null, feeDue: null,
-    timeline: [
-      { type: 'submitted', title: 'Application submitted', date: 'Aug 14, 2025', detail: '₦5,000 paid'       },
-      { type: 'reviewed',  title: 'Application reviewed',  date: 'Aug 18, 2025', detail: 'Approved for exam' },
-      { type: 'pending',   title: 'E-Exam scheduled',      date: 'Sep 2, 2025',  detail: 'Awaiting exam'     },
-    ],
-  },
+  // {
+  //   id: 1, name: 'Chinaza Okafor', status: 'Admitted',
+  //   applicationNo: 'A-10428', class: 'JSS 1', session: '2025/26',
+  //   currentStep: 2, acceptanceFee: 35000, feeDue: 'Acceptance fee due Sep 5',
+  //   timeline: [
+  //     { type: 'submitted', title: 'Application submitted',  date: 'Aug 12, 2025', detail: '₦5,000 paid'        },
+  //     { type: 'reviewed',  title: 'Application reviewed',   date: 'Aug 15, 2025', detail: 'Approved for exam'  },
+  //     { type: 'exam',      title: 'E-Exam completed',       date: 'Aug 24, 2025', detail: 'Score 84/100'       },
+  //     { type: 'decision',  title: 'Admission decision',     date: 'Aug 30, 2025', detail: 'Admitted to JSS 1'  },
+  //     { type: 'fee',       title: 'Acceptance fee',         date: 'Due Sep 5, 2025', detail: '₦35,000'         },
+  //     { type: 'pending',   title: 'Auto-enrollment',        date: '',             detail: 'Awaiting acceptance fee' },
+  //   ],
+  // },
+  // {
+  //   id: 2, name: 'Emeka Okafor', status: 'Exam Scheduled',
+  //   applicationNo: 'A-10431', class: 'JSS 2', session: '2025/26',
+  //   currentStep: 1, acceptanceFee: null, feeDue: null,
+  //   timeline: [
+  //     { type: 'submitted', title: 'Application submitted', date: 'Aug 14, 2025', detail: '₦5,000 paid'       },
+  //     { type: 'reviewed',  title: 'Application reviewed',  date: 'Aug 18, 2025', detail: 'Approved for exam' },
+  //     { type: 'pending',   title: 'E-Exam scheduled',      date: 'Sep 2, 2025',  detail: 'Awaiting exam'     },
+  //   ],
+  // },
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 const AdmissionStatus = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
+
+  const handleApplyAdmission = (batch) => {
+    navigate('/admission/new-application', { state: { batch } });
+  };
 
   // If navigated with a single ward/application, show just that one (expanded)
   // Otherwise show all mock applications
@@ -310,7 +316,7 @@ const AdmissionStatus = () => {
           <Box
             sx={{
               width: 72, height: 72, borderRadius: '50%',
-              bgcolor: 'grey.100',
+              bgcolor: 'primary.light',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -326,7 +332,7 @@ const AdmissionStatus = () => {
           </Box>
           <Button
             variant="contained"
-            onClick={() => navigate('/admission/new-application')}
+            onClick={() => setBatchModalOpen(true)}
             sx={{ mt: 1, fontWeight: 700, borderRadius: 2, px: 4 }}
           >
             Start New Application
@@ -341,6 +347,12 @@ const AdmissionStatus = () => {
           />
         ))
       )}
+
+      <AdmissionBatchModal
+        open={batchModalOpen}
+        onClose={() => setBatchModalOpen(false)}
+        onApply={handleApplyAdmission}
+      />
     </PageContainer>
   );
 };

@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, TextField, Alert, CircularProgress } from '@mui/material';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import api from '../../../api/auth';
+import { Box, Button, TextField, Alert, CircularProgress } from '@mui/material';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import agentApi from '../../../api/auth';
+import tenantApi from '../../../api/tenant_api';
 
 const AuthVerifyOtp = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isAgentFlow = location.pathname.startsWith('/agent');
+  const api = isAgentFlow ? agentApi : tenantApi;
+  const apiEndpoint = isAgentFlow ? '/landlord/v1/auth/verify_otp' : '/verify_otp';
+  const resetPath = isAgentFlow ? '/agent/reset_password' : '/reset_password';
 
   const [formData, setFormData] = useState({
     email: searchParams.get('email') || '',
@@ -27,23 +34,17 @@ const AuthVerifyOtp = () => {
     setError('');
 
     api
-      .post('/landlord/v1/auth/verify_otp', formData)
+      .post(apiEndpoint, formData)
       .then((res) => {
         const reset_token = res.data.reset_token;
+        const query = reset_token
+          ? `?token=${reset_token}&email=${encodeURIComponent(formData.email)}`
+          : `?email=${encodeURIComponent(formData.email)}`;
 
-        navigate(
-          `/agent/reset_password?token=${reset_token}&email=${encodeURIComponent(formData.email)}`,
-          {
-            replace: true,
-            state: {
-              message: 'OTP verified successfully! Please reset your password.',
-            },
-          },
-        );
-
-        setTimeout(() => {
-          window.location.href = `/agent/reset_password?token=${reset_token}&email=${encodeURIComponent(formData.email)}`;
-        }, 1000);
+        navigate(`${resetPath}${query}`, {
+          replace: true,
+          state: { message: 'OTP verified successfully! Please reset your password.' },
+        });
       })
       .catch((err) => {
         setError(err.response?.data?.error || err.response?.data?.message || 'Invalid OTP');

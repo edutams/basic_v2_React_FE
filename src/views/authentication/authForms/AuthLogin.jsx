@@ -20,7 +20,7 @@ import { useNotification } from '../../../hooks/useNotification';
 
 // import AuthSocialButtons from './AuthSocialButtons';
 
-const AuthLogin = ({ title, subtitle, subtext }) => {
+const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forgot_password' }) => {
   const [formData, setFormData] = useState({
     login: '',
     password: '',
@@ -161,20 +161,13 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
             <FormGroup>
               <FormControlLabel
-                control={
-                  <CustomCheckbox
-                    name="rememberMe"
-                    checked={formData.rememberMe}
-                    onChange={handleInputChange}
-                    disabled={isLoading}
-                  />
-                }
-                label="Remember this Device"
+                control={<CustomCheckbox defaultChecked />}
+                label="Remeber this Device"
               />
             </FormGroup>
             <Typography
               component={Link}
-              to="/agent/forgot_password"
+              to={forgotPasswordPath}
               fontWeight="500"
               sx={{
                 textDecoration: 'none',

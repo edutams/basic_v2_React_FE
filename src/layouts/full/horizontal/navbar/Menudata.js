@@ -525,19 +525,19 @@ const Menuitems = [
             id: uniqueId(),
             title: 'Forgot Password',
             icon: IconRotate,
-            href: '/agent/forgot_password',
+            href: '/auth/forgot_password',
             children: [
               {
                 id: uniqueId(),
                 title: 'Side Forgot Password',
                 icon: IconPoint,
-                href: '/agent/forgot_password',
+                href: '/auth/forgot_password',
               },
               {
                 id: uniqueId(),
                 title: 'Boxed Forgot Password',
                 icon: IconPoint,
-                href: '/agent/forgot_password2',
+                href: '/auth/forgot_password2',
               },
             ],
           },

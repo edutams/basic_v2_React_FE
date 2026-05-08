@@ -18,7 +18,7 @@ const AdmissionBanner = ({ session, onApply }) => {
         p: { xs: 2.5, sm: 3 },
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: { xs: 'flex-start', sm: 'space-between' },
         gap: 2,
         flexWrap: 'wrap',
       }}

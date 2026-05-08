@@ -20,7 +20,7 @@ import EduTAMSLogo from '../../../assets/images/logos/EduTAMS.jpeg';
 import { Avatar } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 
-const AuthTenantLogin = ({ title, subtitle, subtext }) => {
+const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount }) => {
   const [formData, setFormData] = useState({
     login: '',
     password: '',
@@ -162,7 +162,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
               disabled={isLoading}
             />
           </Box>
-          <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
+          {/* <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
             <FormGroup>
               <FormControlLabel
                 control={
@@ -176,6 +176,25 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
                 label="Remember this Device"
               />
             </FormGroup>
+          </Stack> */}
+          <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
+            <FormGroup>
+              <FormControlLabel
+                control={<CustomCheckbox defaultChecked />}
+                label="Remeber this Device"
+              />
+            </FormGroup>
+            <Typography
+              component={Link}
+              to="/forgot_password"
+              fontWeight="500"
+              sx={{
+                textDecoration: 'none',
+                color: 'primary.main',
+              }}
+            >
+              Forgot Password ?
+            </Typography>
           </Stack>
         </Stack>
         <Box mt={2}>
@@ -189,6 +208,21 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
             startIcon={isLoading ? <CircularProgress size={20} /> : null}
           >
             {isLoading ? 'Signing In...' : 'Login to Dashboard'}
+          </Button>
+        </Box>
+
+        <Box mt={1.5}>
+          <Button
+            {...(onCreateAccount
+              ? { onClick: onCreateAccount }
+              : { component: Link, to: '/admission/apply' })}
+            variant="outlined"
+            size="large"
+            fullWidth
+            color="primary"
+            disabled={isLoading}
+          >
+            Create Parent Account
           </Button>
         </Box>
       </Box>

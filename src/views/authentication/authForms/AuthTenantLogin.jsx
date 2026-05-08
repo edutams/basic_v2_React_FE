@@ -191,6 +191,20 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
             {isLoading ? 'Signing In...' : 'Login to Dashboard'}
           </Button>
         </Box>
+
+        <Box mt={1.5}>
+          <Button
+            component={Link}
+            to="/admission/apply"
+            variant="outlined"
+            size="large"
+            fullWidth
+            color="primary"
+            disabled={isLoading}
+          >
+            Create Parent Account
+          </Button>
+        </Box>
       </Box>
 
       {subtitle}

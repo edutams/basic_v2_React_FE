@@ -29,12 +29,12 @@ const agentApi = {
     const response = await api.get(`/landlord/v1/organizations/get_organization_details/${id}`);
     return response.data;
   },
-  getTeamMembers: async (id) => {
-    const response = await api.get(`/landlord/v1/organizations/team/${id}`);
+  getTeamMembers: async () => {
+    const response = await api.get(`/landlord/v1/organizations/team`);
     return response.data;
   },
-  addTeamMember: async (id, data) => {
-    const response = await api.post(`/landlord/v1/organizations/team/${id}`, data);
+  addTeamMember: async (data) => {
+    const response = await api.post(`/landlord/v1/organizations/team`, data);
     return response.data;
   },
   updateTeamMember: async (orgId, memberId, data) => {

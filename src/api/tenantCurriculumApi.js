@@ -69,8 +69,9 @@ export const fetchProgrammes = async () => {
 };
 
 // Fetch subjects by curriculum
-export const fetchSubjects = async (curriculumId) => {
-  const response = await api.get(`/curriculum/subjects/${curriculumId}`);
+export const fetchSubjects = async (curriculumId, search = '') => {
+  const params = search ? { search } : {};
+  const response = await api.get(`/curriculum/subjects/${curriculumId}`, { params });
   return response.data;
 };
 

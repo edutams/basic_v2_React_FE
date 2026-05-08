@@ -16,11 +16,14 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
   const [loading, setLoading] = useState(false);
   const [directPermissions, setDirectPermissions] = useState([]);
   const [rolePermissions, setRolePermissions] = useState([]);
+  
 
   useEffect(() => {
-    if (open && currentUser) {
-      fetchPermissions();
-    }
+  console.log(currentUser,9599559);
+
+    // if (open && currentUser) {
+    //   fetchPermissions();
+    // }
   }, [open, currentUser]);
 
   const fetchPermissions = async () => {

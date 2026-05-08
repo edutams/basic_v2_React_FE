@@ -70,7 +70,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
         if (!organizationId) return;
         setLoading(true);
         try {
-            const res = await agentApi.getTeamMembers(organizationId);
+            const res = await agentApi.getTeamMembers();
             if (res.status === true) setMembers(res.data || []);
         } catch (e) {
             console.error('Failed to fetch team members', e);
@@ -210,7 +210,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
         setSubmitting(true);
         try {
             const payload = { ...formData, permissions: newPermissions };
-            const res = await agentApi.addTeamMember(organizationId, payload);
+            const res = await agentApi.addTeamMember(payload);
             if (res.status) {
                 fetchTeamMembers();
                 setOpenAddModal(false);
@@ -275,7 +275,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                                     </TableCell>
                                 </TableRow>
                             ) : members.map((row, index) => {
-                                const initials = (row.name || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+                                const initials = (row.full_name || 'NA').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
                                 return (
                                     <TableRow key={row.id} hover>
                                         <TableCell sx={{ py: 1.5 }}>
@@ -288,7 +288,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                                                 </Avatar>
                                                 <Box>
                                                     <Stack direction="row" spacing={1} alignItems="center">
-                                                        <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>{row.name}</Typography>
+                                                        <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>{row.full_name}</Typography>
                                                         {row.is_lead === 'yes' && (
                                                             <Chip size="small" label="Lead" sx={{ bgcolor: theme.palette.primary.light, color: theme.palette.primary.main, fontWeight: 700, borderRadius: '8px', height: 18, fontSize: '10px' }} />
                                                         )}
@@ -297,8 +297,8 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                                                     <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.4 }}>{row.email}</Typography>
                                                     <Box sx={{ mt: 0.5 }}>
                                                         {(row.roles || []).map(role => (
-                                                            <Typography key={role} variant="caption" sx={{ fontWeight: 600, color: theme.palette.primary.main, mr: 0.5, bgcolor: theme.palette.primary.light, px: 0.8, py: 0.2, borderRadius: '4px' }}>
-                                                                {role.toUpperCase()}
+                                                            <Typography key={typeof role === 'string' ? role : role.name} variant="caption" sx={{ fontWeight: 600, color: theme.palette.primary.main, mr: 0.5, bgcolor: theme.palette.primary.light, px: 0.8, py: 0.2, borderRadius: '4px' }}>
+                                                                {(typeof role === 'string' ? role : role.name || role).toUpperCase()}
                                                             </Typography>
                                                         ))}
                                                     </Box>
@@ -341,7 +341,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                                         <TableCell sx={{ py: 1.5 }}>
                                             <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                                                 {(row.permissions || []).slice(0, 6).map(perm => (
-                                                <Chip key={perm} size="small" label={perm} sx={{ bgcolor: theme.palette.primary.light, color: theme.palette.primary.main, fontWeight: 700, borderRadius: '8px' }} />
+                                                    <Chip key={perm.name || perm} size="small" label={perm.name || perm} sx={{ bgcolor: theme.palette.primary.light, color: theme.palette.primary.main, fontWeight: 700, borderRadius: '8px' }} />
                                                 ))}
                                                 {(row.permissions?.length > 6) && (
                                                     <Chip size="small" label={`+${row.permissions.length - 6}`} sx={{ bgcolor: '#f1f5f9', color: '#475569', fontWeight: 700, borderRadius: '8px' }} />
@@ -349,7 +349,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                                             </Stack>
                                         </TableCell>
                                         <TableCell sx={{ py: 1.5 }}>
-                                            <Chip size="small" label={row.status} sx={{ bgcolor: row.status === 'Active' ? '#dcfee6' : '#ffe4e6', color: row.status === 'Active' ? '#16a34a' : '#e11d48', fontWeight: 600, borderRadius: '6px' }} />
+                                            <Chip size="small" label={row.status} sx={{ bgcolor: row.status === 'active' ? '#dcfee6' : '#ffe4e6', color: row.status === 'active' ? '#16a34a' : '#e11d48', fontWeight: 600, borderRadius: '6px' }} />
                                         </TableCell>
                                         <TableCell sx={{ py: 1.5 }}>
                                             <IconButton size="small" onClick={(e) => handleActionClick(e, row)}>

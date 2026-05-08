@@ -28,6 +28,8 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Grid,
+  FormHelperText,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -109,15 +111,15 @@ const SubjectBank = () => {
     }
   };
 
-  const fetchSubjectsData = async () => {
+  const fetchSubjectsData = async (search = '') => {
     if (!selectedCurriculum) {
       setSubjects([]);
       return;
     }
-    
+
     setLoadingSubjects(true);
     try {
-      const response = await fetchSubjects(selectedCurriculum);
+      const response = await fetchSubjects(selectedCurriculum, search);
       if (response.status) {
         setSubjects(response.data);
       }
@@ -177,6 +179,7 @@ const SubjectBank = () => {
       programme_id: subject.programme_id,
       pass_mark: subject.pass_mark,
       unit: subject.unit,
+      status: subject.status || '',
       curriculum_id: selectedCurriculum,
     });
     setOpenEditSubjectModal(true);
@@ -399,165 +402,259 @@ const SubjectBank = () => {
   useEffect(() => {
     fetchSubjectsData();
   }, [selectedCurriculum]);
+
+  useEffect(() => {
+  fetchSubjectsData(subjectSearch);
+}, [subjectSearch]);
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-        width: '100%',
-      }}
-    >
-      {/* Curriculum and Subject Panels on Same Row */}
+    <>
+    <Alert>Select curriculum to upload subjects</Alert>
       <Box
         sx={{
           display: 'flex',
+          flexDirection: 'column',
           gap: 3,
-          flexDirection: { xs: 'column', md: 'row' },
           width: '100%',
+          mt:2,
+          mb:2
         }}
       >
-        {/* LEFT - Curriculum Panel */}
-        <Box sx={{ flex: { md: 5 }, width: '100%' }}>
-          <ParentCard
-            title={
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Curriculum
-              </Typography>
-            }
-          >
-            <TableContainer>
-              <Table sx={{ tableLayout: 'fixed' }}>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                    <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
-                      Curriculum Name
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {curriculumData.length > 0 ? (
-                    curriculumData.map((item, i) => (
-                      <TableRow key={item.id} hover>
-                        <TableCell>
-                          <Radio
-                            size="small"
-                            checked={selectedCurriculum === item.id}
-                            onChange={() => setSelectedCurriculum(item.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              px: 2,
-                              py: 0.5,
-                              bgcolor: '#f5f7fa',
-                              borderRadius: 2,
-                              display: 'inline-block',
-                            }}
-                          >
-                            {item.curriculum_name}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={item.status}
-                            size="small"
-                            sx={{
-                              bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                              color: item.status === 'active' ? '#166534' : '#991b1b',
-                            }}
-                          />
+        {/* Curriculum and Subject Panels on Same Row */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 3,
+            flexDirection: { xs: 'column', md: 'row' },
+            width: '100%',
+          }}
+        >
+          
+          {/* LEFT - Curriculum Panel */}
+          <Box sx={{ flex: { md: 5 }, width: '100%' }}>
+            <ParentCard
+            
+            >
+              <TableContainer>
+                <Table sx={{ tableLayout: 'fixed' }}>
+                  <TableHead>
+                    <TableRow >
+                      <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
+                        Curriculum Name
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {curriculumData.length > 0 ? (
+                      curriculumData.map((item, i) => (
+                        <TableRow key={item.id} hover>
+                          <TableCell>
+                            <Radio
+                              size="small"
+                              checked={selectedCurriculum === item.id}
+                              onChange={() => setSelectedCurriculum(item.id)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box
+                              sx={{
+                                px: 2,
+                                py: 0.5,
+                                bgcolor: '#f5f7fa',
+                                borderRadius: 2,
+                                display: 'inline-block',
+                              }}
+                            >
+                              {item.curriculum_name}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={item.status}
+                              size="small"
+                              sx={{
+                                bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                color: item.status === 'active' ? '#166534' : '#991b1b',
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          <Typography color="textSecondary">No curriculums found</Typography>
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center">
-                        <Typography color="textSecondary">No curriculums found</Typography>
-                      </TableCell>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </ParentCard>
+          </Box>
+
+          {/* RIGHT - Subject Panel */}
+          <Box sx={{ flex: { md: 7 }, width: '100%' }}>
+            <ParentCard
+              title={
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Subject Bank
+                  </Typography>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <TextField
+                      size="small"
+                      placeholder="Search subjects..."
+                      value={subjectSearch}
+                      onChange={(e) => setSubjectSearch(e.target.value)}
+                      sx={{ width: 200 }}
+                    />
+                    <Button variant="contained" size='small' onClick={handleOpenAddSubjectModal}>
+                      Add Subject
+                    </Button>
+                  </Box>
+                </Box>
+              }
+            >
+              <TableContainer sx={{ maxHeight: 600 }}>
+                <Table  sx={{ tableLayout: 'fixed' }}>
+                  <TableHead>
+                    <TableRow >
+                      <TableCell width="8%">S/N</TableCell>
+                      <TableCell width="25%">Subject</TableCell>
+                      <TableCell width="18%">Subject Code</TableCell>
+                      <TableCell width="18%">Program</TableCell>
+                      <TableCell width="12%">Passmark</TableCell>
+                      <TableCell width="10%">Unit</TableCell>
+                      <TableCell width="9%" />
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </ParentCard>
+                  </TableHead>
+                  <TableBody>
+                    {loadingSubjects ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          <CircularProgress size={24} />
+                        </TableCell>
+                      </TableRow>
+                    ) : subjects.length > 0 ? (
+                      subjects.map((subject, i) => (
+                          <TableRow key={subject.id} hover>
+                            <TableCell>{i + 1}</TableCell>
+                            <TableCell>{subject.subject_name}</TableCell>
+                            <TableCell>{subject.subject_code}</TableCell>
+                            <TableCell>{subject.programme_name}</TableCell>
+                            <TableCell>{subject.pass_mark}</TableCell>
+                            <TableCell>{subject.unit}</TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleOpenEditModal(e, subject)}
+                              >
+                                <MoreVertIcon size={18} />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          <Typography color="textSecondary">
+                            {selectedCurriculum ? 'No subjects found for this curriculum' : 'Please select a curriculum to view subjects'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </ParentCard>
+          </Box>
         </Box>
 
-        {/* RIGHT - Subject Panel */}
-        <Box sx={{ flex: { md: 7 }, width: '100%' }}>
+        {/* Subject Group Card Below */}
+        <Box sx={{ width: '100%' }}>
           <ParentCard
             title={
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Subject Bank
+                  Subject Groups
                 </Typography>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <TextField
-                    size="small"
-                    placeholder="Search subjects..."
-                    value={subjectSearch}
-                    onChange={(e) => setSubjectSearch(e.target.value)}
-                    sx={{ width: 200 }}
-                  />
-                  <Button variant="contained" size='small' onClick={handleOpenAddSubjectModal}>
-                    Add Subject
-                  </Button>
-                </Box>
+                <Button variant="contained" size='small' onClick={handleOpenCreateSubjectGroupModal}>
+                  Create Group
+                </Button>
               </Box>
             }
           >
             <TableContainer sx={{ maxHeight: 600 }}>
-              <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
+              <Table  sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                    <TableCell width="8%">S/N</TableCell>
-                    <TableCell width="25%">Subject</TableCell>
-                    <TableCell width="18%">Subject Code</TableCell>
-                    <TableCell width="18%">Program</TableCell>
-                    <TableCell width="12%">Passmark</TableCell>
+                  <TableRow >
+                    <TableCell width="8%">#</TableCell>
+                    <TableCell width="22%">Group Name</TableCell>
+                    <TableCell width="30%">Subjects</TableCell>
                     <TableCell width="10%">Unit</TableCell>
-                    <TableCell width="9%" />
+                    <TableCell width="12%">Pass Mark</TableCell>
+                    <TableCell width="20%">Status</TableCell>
+                    <TableCell width="8%" align="center">
+                      Action
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {loadingSubjects ? (
+                  {loadingSubjectGroups ? (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
                         <CircularProgress size={24} />
                       </TableCell>
                     </TableRow>
-                  ) : subjects.length > 0 ? (
-                    subjects
-                      .filter((subject) =>
-                        subject.subject_name?.toLowerCase().includes(subjectSearch.toLowerCase())
-                      )
-                      .map((subject, i) => (
-                        <TableRow key={subject.id} hover>
-                          <TableCell>{i + 1}</TableCell>
-                          <TableCell>{subject.subject_name}</TableCell>
-                          <TableCell>{subject.subject_code}</TableCell>
-                          <TableCell>{subject.programme_name}</TableCell>
-                          <TableCell>{subject.pass_mark}</TableCell>
-                          <TableCell>{subject.unit}</TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleOpenEditModal(e, subject)}
-                            >
-                              <MoreVertIcon size={18} />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                  ) : subjectGroupsList.length > 0 ? (
+                    subjectGroupsList.map((grp, i) => (
+                      <TableRow key={grp.id} hover>
+                        <TableCell>{i + 1}</TableCell>
+                        <TableCell>{grp.group_name}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {grp.subjects?.map((s) => (
+                              <Chip
+                                key={s.id}
+                                label={s.subject_name}
+                                size="small"
+                                sx={{
+                                  bgcolor: '#334155',
+                                  color: '#fff',
+                                  fontSize: '0.7rem',
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        </TableCell>
+                        <TableCell>{grp.unit}</TableCell>
+                        <TableCell>{grp.pass_mark}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={grp.status === 'active' ? 'active' : 'inactive'}
+                            size="small"
+                            sx={{
+                              bgcolor: grp.status === 'active' ? '#dcfce7' : '#fee2e2',
+                              color: grp.status === 'active' ? '#166534' : '#991b1b',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleOpenEditSubjectGroupModal(e, grp)}
+                          >
+                            <MoreVertIcon size={18} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} align="center">
-                        <Typography color="textSecondary">
-                          {selectedCurriculum ? 'No subjects found for this curriculum' : 'Please select a curriculum to view subjects'}
-                        </Typography>
+                        <Typography color="textSecondary">No subject groups yet</Typography>
                       </TableCell>
                     </TableRow>
                   )}
@@ -566,317 +663,381 @@ const SubjectBank = () => {
             </TableContainer>
           </ParentCard>
         </Box>
-      </Box>
 
-      {/* Subject Group Card Below */}
-      <Box sx={{ width: '100%' }}>
-        <ParentCard
-          title={
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Subject Groups
-              </Typography>
-              <Button variant="contained" size='small' onClick={handleOpenCreateSubjectGroupModal}>
-                Create Group
-              </Button>
-            </Box>
-          }
+        {/* Subject Action Menu */}
+        <Menu
+          id="subject-menu"
+          anchorEl={subjectAnchorEl}
+          open={openSubjectMenu}
+          onClose={handleCloseSubjectMenu}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
-          <TableContainer sx={{ maxHeight: 600 }}>
-            <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                  <TableCell width="8%">#</TableCell>
-                  <TableCell width="22%">Group Name</TableCell>
-                  <TableCell width="30%">Subjects</TableCell>
-                  <TableCell width="10%">Unit</TableCell>
-                  <TableCell width="12%">Pass Mark</TableCell>
-                  <TableCell width="20%">Status</TableCell>
-                  <TableCell width="8%" align="center">
-                    Action
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loadingSubjectGroups ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
-                ) : subjectGroupsList.length > 0 ? (
-                  subjectGroupsList.map((grp, i) => (
-                    <TableRow key={grp.id} hover>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell>{grp.group_name}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {grp.subjects?.map((s) => (
-                            <Chip
-                              key={s.id}
-                              label={s.subject_name}
-                              size="small"
-                              sx={{
-                                bgcolor: '#334155',
-                                color: '#fff',
-                                fontSize: '0.7rem',
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{grp.unit}</TableCell>
-                      <TableCell>{grp.pass_mark}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={grp.status === 'active' ? 'active' : 'inactive'}
-                          size="small"
-                          sx={{
-                            bgcolor: grp.status === 'active' ? '#dcfce7' : '#fee2e2',
-                            color: grp.status === 'active' ? '#166534' : '#991b1b',
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleOpenEditSubjectGroupModal(e, grp)}
-                        >
-                          <MoreVertIcon size={18} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <Typography color="textSecondary">No subject groups yet</Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </ParentCard>
-      </Box>
-
-      {/* Subject Action Menu */}
-      <Menu
-        id="subject-menu"
-        anchorEl={subjectAnchorEl}
-        open={openSubjectMenu}
-        onClose={handleCloseSubjectMenu}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <MenuItem onClick={() => handleOpenEditModal(null, selectedSubject)}>
-          <IconEdit size={18} style={{ marginRight: 8 }} />
-          Edit
-        </MenuItem>
-        <MenuItem onClick={handleOpenDeleteModal} sx={{ color: 'error.main' }}>
-          <IconTrash size={18} style={{ marginRight: 8 }} />
-          Delete
-        </MenuItem>
-      </Menu>
-
-      {/* Add Subject Modal */}
-      <Dialog open={openAddSubjectModal} onClose={handleCloseAddSubjectModal} maxWidth="md" fullWidth>
-        <DialogTitle>Add New Subject</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Subject Name"
-              value={subjectFormData.subject_name}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.subject_name}
-              helperText={fieldErrors.subject_name?.[0]}
-            />
-            <TextField
-              fullWidth
-              label="Subject Code"
-              value={subjectFormData.subject_code}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.subject_code}
-              helperText={fieldErrors.subject_code?.[0]}
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Program</InputLabel>
-              <Select
-                value={subjectFormData.programme_id}
-                onChange={(e) => setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })}
-                label="Program"
-              >
-                {programmesList.map((prog) => (
-                  <MenuItem key={prog.id} value={prog.id}>
-                    {prog.programme_name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              label="Pass Mark"
-              type="number"
-              value={subjectFormData.pass_mark}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.pass_mark}
-              helperText={fieldErrors.pass_mark?.[0]}
-            />
-            <TextField
-              fullWidth
-              label="Unit"
-              type="number"
-              value={subjectFormData.unit}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, unit: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.unit}
-              helperText={fieldErrors.unit?.[0]}
-            />
-            <Select
-              fullWidth
-              label="Status"
-              value={subjectFormData.status}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, status: e.target.value })}
-              margin="normal"
-            >
-              <MenuItem value="compulsory">Compulsory</MenuItem>
-              <MenuItem value="optional">Optional</MenuItem>
-            </Select>
-            {/* <TextField
-              fullWidth
-              type="hidden"
-              value={subjectFormData.curriculum_id}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, curriculum_id: e.target.value })}
-              margin="normal"
-            /> */}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button size='small' onClick={handleCloseAddSubjectModal}>Cancel</Button>
-          <Button variant="contained" size='small' onClick={handleCreateSubject}>
-            Add Subject
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Edit Subject Modal */}
-      <Dialog open={openEditSubjectModal} onClose={handleCloseEditSubjectModal} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Subject</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Subject Name"
-              value={subjectFormData.subject_name}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_name: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.subject_name}
-              helperText={fieldErrors.subject_name?.[0]}
-            />
-            <TextField
-              fullWidth
-              label="Subject Code"
-              value={subjectFormData.subject_code}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, subject_code: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.subject_code}
-              helperText={fieldErrors.subject_code?.[0]}
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Program</InputLabel>
-              <Select
-                value={subjectFormData.programme_id}
-                onChange={(e) => setSubjectFormData({ ...subjectFormData, programme_id: e.target.value })}
-                label="Program"
-              >
-                {programmesList.map((prog) => (
-                  <MenuItem key={prog.id} value={prog.id}>
-                    {prog.programme_name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              label="Pass Mark"
-              type="number"
-              value={subjectFormData.pass_mark}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, pass_mark: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.pass_mark}
-              helperText={fieldErrors.pass_mark?.[0]}
-            />
-            <TextField
-              fullWidth
-              label="Unit"
-              type="number"
-              value={subjectFormData.unit}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, unit: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.unit}
-              helperText={fieldErrors.unit?.[0]}
-            />
-            <TextField
-              fullWidth
-              type="hidden"
-              value={subjectFormData.curriculum_id}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, curriculum_id: e.target.value })}
-              margin="normal"
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button size='small' onClick={handleCloseEditSubjectModal}>Cancel</Button>
-          <Button variant="contained" size='small' onClick={handleUpdateSubject}>
-            Update Subject
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Subject Modal */}
-      <Dialog open={openDeleteSubjectModal} onClose={handleCloseDeleteSubjectModal} maxWidth="sm" fullWidth>
-        <DialogTitle>Delete Subject</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button size='small' onClick={handleCloseDeleteSubjectModal}>Cancel</Button>
-          <Button variant="contained" color="error" size='small' onClick={handleDeleteSubject}>
+          <MenuItem onClick={() => handleOpenEditModal(null, selectedSubject)}>
+            <IconEdit size={18} style={{ marginRight: 8 }} />
+            Edit
+          </MenuItem>
+          <MenuItem onClick={handleOpenDeleteModal} sx={{ color: 'error.main' }}>
+            <IconTrash size={18} style={{ marginRight: 8 }} />
             Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </MenuItem>
+        </Menu>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
+        {/* Add Subject Modal */}
+        <Dialog
+          open={openAddSubjectModal}
+          onClose={handleCloseAddSubjectModal}
+          maxWidth="sm"
+          fullWidth
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <DialogTitle>Add New Subject</DialogTitle>
+
+          <DialogContent>
+            <Box sx={{ pt: 1 }}>
+              <Grid container spacing={2}>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Subject Name"
+                    value={subjectFormData.subject_name}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        subject_name: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.subject_name}
+                    helperText={fieldErrors.subject_name?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Subject Code"
+                    value={subjectFormData.subject_code}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        subject_code: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.subject_code}
+                    helperText={fieldErrors.subject_code?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth size="small" error={!!fieldErrors.programme_id}>
+                    <InputLabel>Program</InputLabel>
+
+                    <Select
+                      value={subjectFormData.programme_id}
+                      onChange={(e) =>
+                        setSubjectFormData({
+                          ...subjectFormData,
+                          programme_id: e.target.value,
+                        })
+                      }
+                      label="Program"
+                    >
+                      {programmesList.map((prog) => (
+                        <MenuItem key={prog.id} value={prog.id}>
+                          {prog.programme_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {fieldErrors.programme_id && (
+                      <FormHelperText>{fieldErrors.programme_id?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth size="small" error={!!fieldErrors.status}>
+                    <InputLabel>Status</InputLabel>
+
+                    <Select
+                      value={subjectFormData.status}
+                      onChange={(e) =>
+                        setSubjectFormData({
+                          ...subjectFormData,
+                          status: e.target.value,
+                        })
+                      }
+                      label="Status"
+                      name="status"
+                    >
+                      <MenuItem value="compulsory">
+                        Compulsory
+                      </MenuItem>
+
+                      <MenuItem value="optional">
+                        Optional
+                      </MenuItem>
+                    </Select>
+                    {fieldErrors.status && (
+                      <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Pass Mark"
+                    type="number"
+                    value={subjectFormData.pass_mark}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        pass_mark: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.pass_mark}
+                    helperText={fieldErrors.pass_mark?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Unit"
+                    type="number"
+                    value={subjectFormData.unit}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        unit: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.unit}
+                    helperText={fieldErrors.unit?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+              </Grid>
+            </Box>
+          </DialogContent>
+
+          <DialogActions>
+            <Button
+              size="small"
+              onClick={handleCloseAddSubjectModal}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleCreateSubject}
+            >
+              Add Subject
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Subject Modal */}
+        <Dialog
+          open={openEditSubjectModal}
+          onClose={handleCloseEditSubjectModal}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Edit Subject</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 1 }}>
+              <Grid container spacing={2}>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Subject Name"
+                    value={subjectFormData.subject_name}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        subject_name: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.subject_name}
+                    helperText={fieldErrors.subject_name?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Subject Code"
+                    value={subjectFormData.subject_code}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        subject_code: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.subject_code}
+                    helperText={fieldErrors.subject_code?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth size="small" error={!!fieldErrors.programme_id}>
+                    <InputLabel>Program</InputLabel>
+                    <Select
+                      value={subjectFormData.programme_id}
+                      onChange={(e) =>
+                        setSubjectFormData({
+                          ...subjectFormData,
+                          programme_id: e.target.value,
+                        })
+                      }
+                      label="Program"
+                    >
+                      {programmesList.map((prog) => (
+                        <MenuItem key={prog.id} value={prog.id}>
+                          {prog.programme_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {fieldErrors.programme_id && (
+                      <FormHelperText>{fieldErrors.programme_id?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth size="small" error={!!fieldErrors.status}>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={subjectFormData.status}
+                      onChange={(e) =>
+                        setSubjectFormData({
+                          ...subjectFormData,
+                          status: e.target.value,
+                        })
+                      }
+                      label="Status"
+                      name="status"
+                    >
+                      <MenuItem value="compulsory">
+                        Compulsory
+                      </MenuItem>
+                      <MenuItem value="optional">
+                        Optional
+                      </MenuItem>
+                    </Select>
+                    {fieldErrors.status && (
+                      <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Pass Mark"
+                    type="number"
+                    value={subjectFormData.pass_mark}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        pass_mark: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.pass_mark}
+                    helperText={fieldErrors.pass_mark?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Unit"
+                    type="number"
+                    value={subjectFormData.unit}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        unit: e.target.value,
+                      })
+                    }
+                    required
+                    error={!!fieldErrors.unit}
+                    helperText={fieldErrors.unit?.[0]}
+                    size="small"
+                  />
+                </Grid>
+
+              </Grid>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              size="small"
+              onClick={handleCloseEditSubjectModal}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleUpdateSubject}
+            >
+              Update Subject
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Subject Modal */}
+        <Dialog open={openDeleteSubjectModal} onClose={handleCloseDeleteSubjectModal} maxWidth="sm" fullWidth>
+          <DialogTitle>Delete Subject</DialogTitle>
+          <DialogContent>
+            <Typography>
+              Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button size='small' onClick={handleCloseDeleteSubjectModal}>Cancel</Button>
+            <Button variant="contained" color="error" size='small' onClick={handleDeleteSubject}>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    </>
   );
 };
 

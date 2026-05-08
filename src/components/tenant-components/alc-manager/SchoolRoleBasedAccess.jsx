@@ -16,9 +16,12 @@ import {
   Button,
   Alert,
   CircularProgress,
+  Grid
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon } from '@mui/icons-material';
+import SchoolRolePermissionsModal from './SchoolRolePermissionsModal';
+import SchoolRoleUsersModal from './SchoolRoleUsersModal';
 
 const SchoolRoleBasedAccess = () => {
   const [roles, setRoles] = useState([]);
@@ -27,6 +30,10 @@ const SchoolRoleBasedAccess = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [nameFilter, setNameFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [permissionModalOpen, setPermissionModalOpen] = useState(false);
+  const [usersModalOpen, setUsersModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
 
   useEffect(() => {
     fetchRoles();
@@ -53,9 +60,31 @@ const SchoolRoleBasedAccess = () => {
     }
   };
 
+  const handleSearch = () => {
+    setNameFilter(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const resetFilters = () => {
     setNameFilter('');
+    setSearchInput('');
     setPage(0);
+  };
+
+  const handleTotalPermissionClick = (role) => {
+    setSelectedRole(role);
+    setPermissionModalOpen(true);
+  };
+
+  const handleTotalUsersClick = (role) => {
+    setSelectedRole(role);
+    setUsersModalOpen(true);
   };
 
   const hasFilters = nameFilter !== '';
@@ -63,30 +92,36 @@ const SchoolRoleBasedAccess = () => {
   return (
     <Box>
       <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
-          <TextField
-            placeholder="Search by role"
-            value={nameFilter}
-            onChange={(e) => {
-              setNameFilter(e.target.value);
-              setPage(0);
-            }}
-            sx={{ mb: 2 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+        <Grid container spacing={1} mb={3} alignItems="center">
+          <Grid size={{ xs: 12, md: 'auto' }}>
+            <TextField
+              placeholder="Search by role"
+              size="small"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              sx={{ minWidth: 250 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
 
-          {/* {hasFilters && (
-            <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
-              Clear Filters
+          <Grid size="auto">
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSearch}
+              sx={{ height: 35 }}
+            >
+              Search
             </Button>
-          )} */}
-        </Box>
+          </Grid>
+        </Grid>
 
         <Paper variant="outlined">
           <TableContainer>
@@ -122,13 +157,33 @@ const SchoolRoleBasedAccess = () => {
 
                       <TableCell>
                         <Box>
-                          <Typography variant="subtitle2" align="center">
+                          <Typography
+                            variant="subtitle2"
+                            align="center"
+                            sx={{
+                              cursor: 'pointer',
+                              color: 'primary.main',
+                              textDecoration: 'underline',
+                              '&:hover': { color: 'primary.dark' }
+                            }}
+                            onClick={() => handleTotalPermissionClick(row)}
+                          >
                             {row.totalPermissions}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="subtitle2" align="center">
+                        <Typography
+                          variant="subtitle2"
+                          align="center"
+                          sx={{
+                            cursor: 'pointer',
+                            color: 'primary.main',
+                            textDecoration: 'underline',
+                            '&:hover': { color: 'primary.dark' }
+                          }}
+                          onClick={() => handleTotalUsersClick(row)}
+                        >
                           {row.totalUsers}
                         </Typography>
                       </TableCell>
@@ -174,6 +229,18 @@ const SchoolRoleBasedAccess = () => {
           </TableContainer>
         </Paper>
       </Box>
+
+      <SchoolRolePermissionsModal
+        open={permissionModalOpen}
+        onClose={() => setPermissionModalOpen(false)}
+        role={selectedRole}
+      />
+
+      <SchoolRoleUsersModal
+        open={usersModalOpen}
+        onClose={() => setUsersModalOpen(false)}
+        role={selectedRole}
+      />
     </Box>
   );
 };

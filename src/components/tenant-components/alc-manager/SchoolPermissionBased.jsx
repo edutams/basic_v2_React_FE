@@ -16,9 +16,12 @@ import {
   Button,
   Alert,
   CircularProgress,
+  Grid
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon } from '@mui/icons-material';
+import SchoolTotalPermissionModal from './SchoolTotalPermissionModal';
+import SchoolTotalUsersModal from './SchoolTotalUsersModal';
 
 const SchoolPermissionBased = () => {
   const [permissions, setPermissions] = useState([]);
@@ -27,6 +30,10 @@ const SchoolPermissionBased = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [nameFilter, setNameFilter] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [permissionModalOpen, setPermissionModalOpen] = useState(false);
+  const [usersModalOpen, setUsersModalOpen] = useState(false);
+  const [selectedPermission, setSelectedPermission] = useState(null);
 
   useEffect(() => {
     fetchPermissions();
@@ -56,9 +63,31 @@ const SchoolPermissionBased = () => {
     }
   };
 
+  const handleSearch = () => {
+    setNameFilter(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const resetFilters = () => {
     setNameFilter('');
+    setSearchInput('');
     setPage(0);
+  };
+
+  const handleTotalRoleClick = (permission) => {
+    setSelectedPermission(permission);
+    setPermissionModalOpen(true);
+  };
+
+  const handleTotalUsersClick = (permission) => {
+    setSelectedPermission(permission);
+    setUsersModalOpen(true);
   };
 
   const hasFilters = nameFilter !== '';
@@ -66,30 +95,37 @@ const SchoolPermissionBased = () => {
   return (
     <Box>
       <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end', mb: 2 }}>
-          <TextField
-            placeholder="Search by permission"
-            value={nameFilter}
-            onChange={(e) => {
-              setNameFilter(e.target.value);
-              setPage(0);
-            }}
-            sx={{ mb: 2 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
 
-          {/* {hasFilters && (
-            <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
-              Clear Filters
+        <Grid container spacing={1} mb={3} alignItems="center">
+          <Grid size={{ xs: 12, md: 'auto' }}>
+            <TextField
+              placeholder="Search by permission"
+              size="small"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              sx={{ minWidth: 250 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+
+          <Grid size="auto">
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSearch}
+              sx={{ height: 35 }}
+            >
+              Search
             </Button>
-          )} */}
-        </Box>
+          </Grid>
+        </Grid>
 
         <Paper variant="outlined">
           <TableContainer>
@@ -125,13 +161,33 @@ const SchoolPermissionBased = () => {
 
                       <TableCell>
                         <Box>
-                          <Typography variant="subtitle2" align="center">
+                          <Typography
+                            variant="subtitle2"
+                            align="center"
+                            sx={{
+                              cursor: 'pointer',
+                              color: 'primary.main',
+                              textDecoration: 'underline',
+                              '&:hover': { color: 'primary.dark' }
+                            }}
+                            onClick={() => handleTotalRoleClick(item)}
+                          >
                             {item.roles_count}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="subtitle2" align="center">
+                        <Typography
+                          variant="subtitle2"
+                          align="center"
+                          sx={{
+                            cursor: 'pointer',
+                            color: 'primary.main',
+                            textDecoration: 'underline',
+                            '&:hover': { color: 'primary.dark' }
+                          }}
+                          onClick={() => handleTotalUsersClick(item)}
+                        >
                           {item.users_count}
                         </Typography>
                       </TableCell>
@@ -179,6 +235,18 @@ const SchoolPermissionBased = () => {
           </TableContainer>
         </Paper>
       </Box>
+
+      <SchoolTotalPermissionModal
+        open={permissionModalOpen}
+        onClose={() => setPermissionModalOpen(false)}
+        permission={selectedPermission}
+      />
+
+      <SchoolTotalUsersModal
+        open={usersModalOpen}
+        onClose={() => setUsersModalOpen(false)}
+        permission={selectedPermission}
+      />
     </Box>
   );
 };

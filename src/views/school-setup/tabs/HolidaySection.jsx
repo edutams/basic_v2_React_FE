@@ -31,7 +31,7 @@ import { fetchHolidays, createHolidays, deleteHoliday } from '../../../api/holid
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
-const HolidaySection = () => {
+const HolidaySection = ({ refreshKey }) => {
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -70,8 +70,9 @@ const HolidaySection = () => {
     setSnackbar({ open: true, message, severity });
   };
 
-  // Load sessions on mount
+  // Load sessions on mount and when refreshKey changes
   useEffect(() => {
+    console.log('HolidaySection: refreshKey changed to:', refreshKey);
     const loadSessions = async () => {
       try {
         setLoading(true);
@@ -87,9 +88,9 @@ const HolidaySection = () => {
       }
     };
     loadSessions();
-  }, []);
+  }, [refreshKey]);
 
-  // Load terms when session changes
+  // Load terms when session changes or refreshKey changes
   useEffect(() => {
     if (!selectedSessionId) return;
     const loadTerms = async () => {
@@ -112,7 +113,7 @@ const HolidaySection = () => {
       }
     };
     loadTerms();
-  }, [selectedSessionId]);
+  }, [selectedSessionId, refreshKey]);
 
   // Load holidays when term changes
   useEffect(() => {
@@ -271,6 +272,8 @@ const HolidaySection = () => {
               startIcon={<IconPlus size={16} />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
+                  size="small"
+
             >
               Create Holiday
             </Button>
@@ -462,8 +465,12 @@ const HolidaySection = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseModal}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveHolidays} disabled={saving}>
+          <Button 
+                size="small"
+           onClick={handleCloseModal}>Cancel</Button>
+          <Button  
+                  size="small"
+          variant="contained" onClick={handleSaveHolidays} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Create Holiday'}
           </Button>
         </DialogActions>

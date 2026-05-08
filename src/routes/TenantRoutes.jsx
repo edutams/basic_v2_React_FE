@@ -23,6 +23,9 @@ const ClassStructureManager = Loadable(
 );
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
+const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
+const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
+const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/ResetPassword')));
 const AdmissionApply = Loadable(lazy(() => import('../views/authentication/auth1/AdmissionApply')));
 const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
@@ -41,12 +44,29 @@ const ParentManagement = Loadable(lazy(() => import('../views/tenants-views/pare
 const LearnerManagement = Loadable(lazy(() => import('../views/tenants-views/learners/LearnerManagement')),);
 const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
 const NewApplication  = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
+const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionStatus')));
+const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
 
 const TenantRoutes = [
   {
     path: '/login',
     element: <BlankLayout />,
     children: [{ index: true, element: <TenantLogin /> }],
+  },
+  {
+    path: '/forgot_password',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <ForgotPassword /> }],
+  },
+  {
+    path: '/verify_otp',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <VerifyOtp /> }],
+  },
+  {
+    path: '/reset_password',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <ResetPassword /> }],
   },
   {
     path: '/admission/apply',
@@ -105,6 +125,10 @@ const TenantRoutes = [
       // ── Parent routes ──
       { path: 'dashboard',                    element: <ParentDashboard /> },
       { path: 'admission/new-application',    element: <NewApplication /> },
+      { path: 'admission-status',             element: <AdmissionStatus /> },
+      { path: 'admission-status/:id',         element: <AdmissionStatus /> },
+      { path: 'admission-letter',             element: <AdmissionLetter /> },
+      { path: 'admission-letter/:id',         element: <AdmissionLetter /> },
 
       // Admission Application
       { path: 'application-setup',  element: <NewApplication /> },

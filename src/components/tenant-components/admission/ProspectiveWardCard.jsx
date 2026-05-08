@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
-import { Box, Paper, Avatar, Typography, Chip, Button, IconButton } from '@mui/material';
+import React from 'react';
+import { Box, Paper, Avatar, Typography, Chip, Button } from '@mui/material';
 import {
   AccountBalanceWallet as WalletIcon,
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as PendingIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-//  Admission progress stepper 
+// Admission progress stepper
 const ADMISSION_STEPS = ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
 
 const AdmissionSteps = ({ currentStep }) => (
@@ -62,18 +60,24 @@ const AdmissionSteps = ({ currentStep }) => (
   </Box>
 );
 
-//  Prospective ward card 
-const ProspectiveWardCard = ({ ward }) => {
-  const [expanded, setExpanded] = useState(ward.expanded ?? false);
-
+// Prospective ward card — always expanded, click header to navigate to application
+const ProspectiveWardCard = ({ ward, onViewDetails }) => {
   const isAdmitted = ward.status === 'Admitted';
 
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', mb: 1.5 }}>
-      {/* Header row — always visible */}
+      {/* Header row — clickable */}
       <Box
-        sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, cursor: 'pointer' }}
-        onClick={() => setExpanded((v) => !v)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          p: 1.5,
+          cursor: 'pointer',
+          transition: 'background 0.15s',
+          '&:hover': { bgcolor: 'action.hover' },
+        }}
+        onClick={() => onViewDetails?.(ward)}
       >
         <Avatar sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 700 }}>
           {ward.initials}
@@ -109,70 +113,65 @@ const ProspectiveWardCard = ({ ward }) => {
             fontSize: 11,
           }}
         />
-
-        <IconButton size="small">
-          {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-        </IconButton>
       </Box>
 
-      {/* Expanded detail */}
-      {expanded && (
-        <Box sx={{ px: 2, pb: 2 }}>
-          <AdmissionSteps currentStep={ward.step ?? 2} />
+      {/* Detail — always visible */}
+      <Box sx={{ px: 2, pb: 2 }}>
+        <AdmissionSteps currentStep={ward.step ?? 2} />
 
-          {ward.actionLabel && (
-            <Paper
-              sx={{
-                mt: 1,
-                p: 1.5,
-                borderRadius: 2,
-                bgcolor: '#FFF8F0',
-                border: '1px solid',
-                borderColor: '#FFD8AB',
-                boxShadow: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 1,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    bgcolor: '#FFD8AB',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <WalletIcon sx={{ color: '#EF9146', fontSize: 18 }} />
-                </Box>
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>
-                    {ward.actionLabel}
-                  </Typography>
-                  {ward.actionDue && (
-                    <Typography variant="caption" color="text.secondary">
-                      Due {ward.actionDue}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-
-              <Button
-                variant="contained"
-                size="small"
-                sx={{ borderRadius: 1, fontWeight: 700, bgcolor: '#EF9146', fontSize: '0.75rem' }}
+        {ward.actionLabel && (
+          <Paper
+            sx={{
+              mt: 1,
+              p: 1.5,
+              borderRadius: 2,
+              bgcolor: '#FFF8F0',
+              border: '1px solid',
+              borderColor: '#FFD8AB',
+              boxShadow: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  bgcolor: '#FFD8AB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                Pay now
-              </Button>
-            </Paper>
-          )}
-        </Box>
-      )}
+                <WalletIcon sx={{ color: '#EF9146', fontSize: 18 }} />
+              </Box>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>
+                  {ward.actionLabel}
+                </Typography>
+                {ward.actionDue && (
+                  <Typography variant="caption" color="text.secondary">
+                    Due {ward.actionDue}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+
+            <Button
+              variant="contained"
+              size="small"
+              onClick={(e) => { e.stopPropagation(); onViewDetails?.(ward); }}
+              sx={{ borderRadius: 1, fontWeight: 700, bgcolor: '#EF9146', fontSize: '0.75rem' }}
+            >
+              Pay now
+            </Button>
+          </Paper>
+        )}
+      </Box>
     </Paper>
   );
 };
@@ -189,6 +188,7 @@ ProspectiveWardCard.propTypes = {
     actionLabel: PropTypes.string,
     actionDue: PropTypes.string,
   }).isRequired,
+  onViewDetails: PropTypes.func,
 };
 
 export default ProspectiveWardCard;

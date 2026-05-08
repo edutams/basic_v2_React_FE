@@ -47,7 +47,7 @@ import {
   saveWeeks,
 } from '../../../api/weekApi';
 
-const SetCalendarTab = ({ onSaveAndContinue }) => {
+const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -203,6 +203,9 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
         showSnackbar('Display name updated successfully', 'success');
         handleCloseEditModal();
         loadSessionTerms(selectedSessionId);
+        // Trigger HolidaySection refresh
+        console.log('SetCalendarTab: Calling onUpdate callback');
+        if (onUpdate) onUpdate();
       } else {
         showSnackbar(response.message || 'Failed to update display name', 'error');
       }
@@ -239,6 +242,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
         showSnackbar('Subscribed successfully', 'success');
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
+        // Trigger HolidaySection refresh
+        if (onUpdate) onUpdate();
       } else {
         showSnackbar(response.message || 'Failed to subscribe', 'error');
       }
@@ -273,6 +278,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
         );
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
+        // Trigger HolidaySection refresh
+        if (onUpdate) onUpdate();
       } else {
         const errorMessage =
           response.data?.original?.message ||
@@ -413,6 +420,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                 <Typography variant="h5">Manage Sessions</Typography>
                 <Button
                   variant="contained"
+                  size="small"
                   startIcon={<AddIcon />}
                   onClick={() => {
                     handleOpenEditModal();
@@ -585,6 +593,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
                     variant="contained"
                     onClick={handleAutoGenerate}
                     disabled={loading || !activeSessionTermId}
+                  size="small"
+
                   >
                     Generate
                   </Button>
@@ -676,7 +686,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
       <Dialog open={openEditModal} onClose={handleCloseEditModal} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Term Name</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
+          <Box >
             <TextField
               select
               fullWidth
@@ -684,6 +694,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
               value={selectedAppTermId}
               onChange={(e) => setSelectedAppTermId(e.target.value)}
               margin="normal"
+              size='small'
             >
               {allLandlordTerms.map((term) => (
                 <MenuItem key={term.app_term_id} value={term.app_term_id}>
@@ -697,6 +708,7 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               margin="normal"
+              size='small'
               required
               helperText="Input your own display name for the selected term"
             />
@@ -708,6 +720,8 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
             onClick={handleSaveDisplayName}
             variant="contained"
             disabled={loading || !displayName.trim()}
+                  size="small"
+
           >
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
@@ -760,12 +774,17 @@ const SetCalendarTab = ({ onSaveAndContinue }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
+          <Button 
+          
+                  size="small"
+          onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
           <Button
             onClick={handleConfirmToggleStatus}
             variant="contained"
             color="primary"
             disabled={loading}
+                  size="small"
+
           >
             Confirm
           </Button>

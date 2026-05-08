@@ -1191,10 +1191,10 @@ const Agent = () => {
                       <Typography variant="h6">Total School</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="h6">Status</Typography>
+                      <Typography variant="h6">Primary Color</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="h6">Primary Color</Typography>
+                      <Typography variant="h6">Status</Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="h6">Action</Typography>

@@ -28,8 +28,10 @@ import {
 } from '@mui/material';
 
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 
 import ParentCard from 'src/components/shared/ParentCard';
+import FilterSideDrawer from 'src/components/shared/FilterSideDrawer';
 import PermissionAttachmentModal from 'src/components/tenant-components/alc-manager/SchoolPermissionAttachmentModal';
 import ViewPermissionModal from 'src/components/tenant-components/alc-manager/SchoolViewPermissionModal';
 import NewRoleModal from 'src/components/tenant-components/alc-manager/SchoolNewRoleModal';
@@ -61,6 +63,14 @@ const SchoolAlcManager = () => {
   const [newRoleModalOpen, setNewRoleModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
+
+  const schoolFilterDefs = [
+    { key: 'name', label: 'Role Name', type: 'text', placeholder: 'Search by role name…' },
+  ];
+
   const [newRoleForm, setNewRoleForm] = useState({
     roleName: '',
     guardName: 'web',
@@ -77,10 +87,19 @@ const SchoolAlcManager = () => {
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const res = await aclApi.getSchoolRoles({
+      const params = {
         page: page + 1,
         per_page: rowsPerPage,
+      };
+      
+      // Add filter parameters
+      Object.keys(activeFilters).forEach(key => {
+        if (activeFilters[key]) {
+          params[key] = activeFilters[key];
+        }
       });
+      
+      const res = await aclApi.getSchoolRoles(params);
 
       const rolesArray = res?.data?.data ?? [];
       const total = res?.data?.total ?? 0;
@@ -98,7 +117,7 @@ const SchoolAlcManager = () => {
   useEffect(() => {
     fetchRoles();
     fetchAllPermissions();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, activeFilters]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -112,7 +131,7 @@ const SchoolAlcManager = () => {
   const handleAttachPermission = async (row) => {
     try {
       setSelectedRow(row);
-      const res = await aclApi.getSchoolRolePermissions(row.id);
+      const res = await aclApi.getSchoolAllRolePermissions(row.id);
       setSelectedPermissions(res?.data ?? []);
 
       setPermissionModalOpen(true);
@@ -124,6 +143,9 @@ const SchoolAlcManager = () => {
 
   const handlePermissionChange = (permission) => {
     setSelectedPermissions((prev) => {
+      if (!Array.isArray(prev)) {
+        return [permission];
+      }
       const exists = prev.some((p) => p.id === permission.id);
 
       return exists ? prev.filter((p) => p.id !== permission.id) : [...prev, permission];
@@ -132,16 +154,39 @@ const SchoolAlcManager = () => {
 
   const handleSavePermissions = async () => {
     try {
-      await aclApi.attachSchoolRolePermissions(
+      // Check if any permissions are selected
+      if (!selectedPermissions || selectedPermissions.length === 0) {
+        notify.error('Please select at least one permission');
+        return;
+      }
+
+      const response = await aclApi.attachSchoolRolePermissions(
         selectedRow.id,
         selectedPermissions.map((p) => p.name),
       );
 
-      notify.success('Permissions updated successfully!');
-      setPermissionModalOpen(false);
-      fetchRoles();
+      if (response.status) {
+        notify.success('Permissions updated successfully!');
+        setPermissionModalOpen(false);
+        fetchRoles();
+      } else {
+        // Handle validation errors
+        if (response.errors) {
+          notify.error(response.errors.permissions?.[0] || response.message || 'Failed to update permissions');
+        } else {
+          notify.error(response.message || 'Failed to update permissions');
+        }
+      }
     } catch (err) {
-      notify.error('Permission update failed');
+      console.error('Save permissions error:', err);
+      
+      // Handle validation errors from API response
+      if (err.response?.data?.errors) {
+        const errorMessages = Object.values(err.response.data.errors).flat();
+        notify.error(errorMessages[0] || 'Validation failed');
+      } else {
+        notify.error(err.response?.data?.message || 'Permission update failed');
+      }
     }
   };
 
@@ -154,9 +199,10 @@ const SchoolAlcManager = () => {
     }
   };
 
-  const handleViewPermission = async (row) => {
+  const handleViewPermissions = async (row) => {
     try {
-      const res = await aclApi.getSchoolRolePermissions(row.id);
+      setSelectedRow(row);
+      const res = await aclApi.getSchoolAllRolePermissions(row.id);
       setPermissionsToView(res.data ?? []);
       setViewPermissionModalOpen(true);
       handleMenuClose();
@@ -199,6 +245,16 @@ const SchoolAlcManager = () => {
     return rows.filter((row) => row?.name?.toLowerCase()?.includes(term));
   }, [rows, roleType]);
 
+  const handleFilterApply = (filters) => {
+    setActiveFilters(filters);
+    setPage(0);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+    setPage(0);
+  };
+
   const resetFilters = () => {
     setRoleType('');
     setPage(0);
@@ -230,33 +286,51 @@ const SchoolAlcManager = () => {
             </Box>
           }
         >
-          <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-end' }}>
-            <TextField
-              placeholder="Search by role name"
-              value={roleType}
-              onChange={(e) => {
-                setRoleType(e.target.value);
-                setPage(0);
+          <Box
+            sx={{
+              mb: 2,
+              display: 'flex',
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Button
+              variant="outlined"
+              startIcon={<IconAdjustmentsHorizontal size={18} />}
+              onClick={() => setFilterDrawerOpen(true)}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 2.5,
+                borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
+                fontWeight: activeFilterCount > 0 ? 700 : 400,
+                '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
-              // sx={{ width: 400 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            {hasFilters && (
-              <Button
-                variant="outlined"
-                onClick={resetFilters}
-                sx={{ height: 'fit-content', mb: 0.5 }}
-              >
-                Clear Filters
-              </Button>
-            )}
+            >
+              Show Filters
+              {activeFilterCount > 0 && (
+                <Box
+                  component="span"
+                  sx={{
+                    ml: 1,
+                    px: 0.8,
+                    py: 0.1,
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    borderRadius: '10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {activeFilterCount}
+                </Box>
+              )}
+            </Button>
           </Box>
+        
 
           <Paper variant="outlined">
             <TableContainer>
@@ -300,7 +374,7 @@ const SchoolAlcManager = () => {
                               Attach Permission
                             </MenuItem>
 
-                            <MenuItem onClick={() => handleViewPermission(row)}>
+                            <MenuItem onClick={() => handleViewPermissions(row)}>
                               View Permission
                             </MenuItem>
                           </Menu>
@@ -380,6 +454,15 @@ const SchoolAlcManager = () => {
         formData={newRoleForm}
         onFieldChange={handleNewRoleFieldChange}
         onSave={handleCreateRole}
+      />
+
+      <FilterSideDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        filters={schoolFilterDefs}
+        activeFilters={activeFilters}
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
       />
     </PageContainer>
   );

@@ -69,8 +69,9 @@ export const fetchProgrammes = async () => {
 };
 
 // Fetch subjects by curriculum
-export const fetchSubjects = async (curriculumId) => {
-  const response = await api.get(`/curriculum/subjects/${curriculumId}`);
+export const fetchSubjects = async (curriculumId, search = '') => {
+  const params = search ? { search } : {};
+  const response = await api.get(`/curriculum/subjects/${curriculumId}`, { params });
   return response.data;
 };
 
@@ -136,22 +137,16 @@ export const fetchClassArmsByProgramme = async (programmeId, params = {}) => {
 };
 
 // Get available curriculums for import
-export const fetchAvailableCurriculumsForImport = async () => {
-  const response = await api.get('/curriculum/get-available-for-import');
-  return response.data;
-};
+// export const fetchAvailableCurriculumsForImport = async () => {
+//   const response = await api.get('/curriculum/get-available-for-import');
+//   return response.data;
+// };
 
 // Import curriculum from agent/landlord
 export const importCurriculum = async (agentCurriculumId) => {
   const response = await api.post('/curriculum/import', {
     agent_curriculum_id: agentCurriculumId,
   });
-  return response.data;
-};
-
-// Import all curriculums from agent/landlord at once
-export const importAllCurriculums = async () => {
-  const response = await api.post('/curriculum/import-all');
   return response.data;
 };
 
@@ -173,5 +168,29 @@ export const updateSubjectGroup = async (id, data) => {
 
 export const deleteSubjectGroup = async (id) => {
   const response = await api.delete(`/curriculum/subject-groups/${id}`);
+  return response.data;
+};
+
+// Fetch agent curriculums for import
+export const fetchAgentCurriculums = async () => {
+  const response = await api.get('/curriculum/get-agent-curriculums');
+  return response.data;
+};
+
+// Fetch subjects for specific agent curriculum
+export const fetchCurriculumSubjects = async (curriculumId) => {
+  const response = await api.get(`/curriculum/get-agent-curriculum-subjects/${curriculumId}`);
+  return response.data;
+};
+
+// Import all curriculums from agent/landlord at once
+export const importAllCurriculums = async () => {
+  const response = await api.post('/curriculum/import-all');
+  return response.data;
+};
+
+// Import selected curriculums with optional subjects
+export const importSelectedCurriculums = async (importData) => {
+  const response = await api.post('/curriculum/import-agent-curriculum', importData);
   return response.data;
 };

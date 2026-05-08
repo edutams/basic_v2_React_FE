@@ -1,17 +1,28 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, TextField, Alert, CircularProgress, Stack } from '@mui/material';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import api from '../../../api/auth';
+import { Box, Button, Alert, CircularProgress, Stack } from '@mui/material';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import agentApi from '../../../api/auth';
+import tenantApi from '../../../api/tenant_api';
 
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 
-const AuthForgotPassword = () => {
+const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
+  const location = useLocation();
+
+  // Auto-detect paths based on current route if not explicitly provided
+  const isAgentFlow = location.pathname.startsWith('/agent');
+  const resolvedLoginPath = loginPath ?? (isAgentFlow ? '/agent/login' : '/login');
+  const resolvedVerifyOtpPath = verifyOtpPath ?? (isAgentFlow ? '/agent/verify_otp' : '/verify_otp');
+
+  // Agent uses the landlord axios instance; tenant uses tenantApi (adds X-Tenant-ID header)
+  const api = isAgentFlow ? agentApi : tenantApi;
+  const apiEndpoint = isAgentFlow ? '/landlord/v1/auth/forgot_password' : '/forgot_password';
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,68 +32,68 @@ const AuthForgotPassword = () => {
     setError('');
 
     try {
-      const res = await api.post('/landlord/v1/auth/forgot_password', { email });
+      const res = await api.post(apiEndpoint, { email });
+
       setMessage(res.data.message || 'Reset link sent to your email!');
 
-      navigate(`/agent/verify_otp?email=${encodeURIComponent(email)}`, {
+      navigate(`${resolvedVerifyOtpPath}?email=${encodeURIComponent(email)}`, {
         replace: true,
-        state: { message: 'Reset link sent to your email. Please verify your OTP.' },
+        state: {
+          message: 'Reset link sent to your email. Please verify your OTP.',
+        },
       });
-
-      setTimeout(() => {
-        window.location.href = `/agent/verify_otp?email=${encodeURIComponent(email)}`;
-      }, 1000);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset link');
     } finally {
       setLoading(false);
     }
   };
-  return (
-    <>
-      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-        {message && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {message}
-          </Alert>
-        )}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        <Stack mt={4} spacing={2}>
-          <CustomFormLabel htmlFor="reset-email">Email Adddress</CustomFormLabel>
-          <CustomTextField
-            id="reset-email"
-            variant="outlined"
-            fullWidth
-            label="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            type="email"
-            sx={{ mb: 3 }}
-          />
 
-          <Button
-            fullWidth
-            variant="contained"
-            color="primary"
-            type="submit"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
+  return (
+    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+      {message && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {message}
+        </Alert>
+      )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      <Stack mt={4} spacing={2}>
+        <CustomFormLabel htmlFor="reset-email">Email Address</CustomFormLabel>
+
+        <CustomTextField
+          id="reset-email"
+          fullWidth
+          label="Email Address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          type="email"
+          sx={{ mb: 3 }}
+        />
+
+        <Button
+          fullWidth
+          variant="contained"
+          type="submit"
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} /> : null}
+        >
+          {loading ? 'Sending...' : 'Send Reset Link'}
+        </Button>
+
+        <Box mt={2} textAlign="center">
+          <Button component={Link} to={resolvedLoginPath} fullWidth>
+            Back to Login
           </Button>
-          <Box mt={2} textAlign="center">
-            <Button component={Link} to="/agent/login" color="primary" fullWidth>
-              Back to Login
-            </Button>
-          </Box>
-        </Stack>
-      </Box>
-    </>
+        </Box>
+      </Stack>
+    </Box>
   );
 };
+
 export default AuthForgotPassword;

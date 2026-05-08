@@ -20,7 +20,7 @@ import EduTAMSLogo from '../../../assets/images/logos/EduTAMS.jpeg';
 import { Avatar } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 
-const AuthTenantLogin = ({ title, subtitle, subtext }) => {
+const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount }) => {
   const [formData, setFormData] = useState({
     login: '',
     password: '',
@@ -213,8 +213,9 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
 
         <Box mt={1.5}>
           <Button
-            component={Link}
-            to="/admission/apply"
+            {...(onCreateAccount
+              ? { onClick: onCreateAccount }
+              : { component: Link, to: '/admission/apply' })}
             variant="outlined"
             size="large"
             fullWidth

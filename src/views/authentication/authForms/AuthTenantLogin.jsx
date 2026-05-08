@@ -176,6 +176,15 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
                 label="Remember this Device"
               />
             </FormGroup>
+            <Typography
+              component={Link}
+              to="/forgot-password"
+              variant="body2"
+              color="primary"
+              sx={{ textDecoration: 'none', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}
+            >
+              Forgot password?
+            </Typography>
           </Stack>
         </Stack>
         <Box mt={2}>

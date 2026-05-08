@@ -162,7 +162,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
               disabled={isLoading}
             />
           </Box>
-          <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
+          {/* <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
             <FormGroup>
               <FormControlLabel
                 control={
@@ -176,15 +176,25 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
                 label="Remember this Device"
               />
             </FormGroup>
-            {/* <Typography
+          </Stack> */}
+          <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
+            <FormGroup>
+              <FormControlLabel
+                control={<CustomCheckbox defaultChecked />}
+                label="Remeber this Device"
+              />
+            </FormGroup>
+            <Typography
               component={Link}
-              to="/forgot-password"
-              variant="body2"
-              color="primary"
-              sx={{ textDecoration: 'none', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}
+              to="/forgot_password"
+              fontWeight="500"
+              sx={{
+                textDecoration: 'none',
+                color: 'primary.main',
+              }}
             >
-              Forgot password?
-            </Typography> */}
+              Forgot Password ?
+            </Typography>
           </Stack>
         </Stack>
         <Box mt={2}>

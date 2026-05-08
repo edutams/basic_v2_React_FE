@@ -23,6 +23,7 @@ const ClassStructureManager = Loadable(
 );
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
+const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
 const AdmissionApply = Loadable(lazy(() => import('../views/authentication/auth1/AdmissionApply')));
 const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
@@ -49,6 +50,11 @@ const TenantRoutes = [
     path: '/login',
     element: <BlankLayout />,
     children: [{ index: true, element: <TenantLogin /> }],
+  },
+  {
+     path: '/forgot_password',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <ForgotPassword /> }],
   },
   {
     path: '/admission/apply',

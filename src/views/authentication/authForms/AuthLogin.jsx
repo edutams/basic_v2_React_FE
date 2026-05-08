@@ -161,15 +161,8 @@ const AuthLogin = ({ title, subtitle, subtext }) => {
           <Stack justifyContent="space-between" direction="row" alignItems="center" my={2}>
             <FormGroup>
               <FormControlLabel
-                control={
-                  <CustomCheckbox
-                    name="rememberMe"
-                    checked={formData.rememberMe}
-                    onChange={handleInputChange}
-                    disabled={isLoading}
-                  />
-                }
-                label="Remember this Device"
+                control={<CustomCheckbox defaultChecked />}
+                label="Remeber this Device"
               />
             </FormGroup>
             <Typography

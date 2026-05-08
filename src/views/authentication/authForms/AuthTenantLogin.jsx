@@ -176,7 +176,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
                 label="Remember this Device"
               />
             </FormGroup>
-            <Typography
+            {/* <Typography
               component={Link}
               to="/forgot-password"
               variant="body2"
@@ -184,7 +184,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext }) => {
               sx={{ textDecoration: 'none', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}
             >
               Forgot password?
-            </Typography>
+            </Typography> */}
           </Stack>
         </Stack>
         <Box mt={2}>

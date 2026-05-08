@@ -76,7 +76,7 @@ const AuthForgotPassword = () => {
             {loading ? 'Sending...' : 'Send Reset Link'}
           </Button>
           <Box mt={2} textAlign="center">
-            <Button component={Link} to="/agent/login" color="primary">
+            <Button component={Link} to="/agent/login" color="primary" fullWidth>
               Back to Login
             </Button>
           </Box>

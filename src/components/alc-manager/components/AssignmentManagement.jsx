@@ -534,9 +534,9 @@ const AssignmentManagement = () => {
                           <MenuItem onClick={() => handleAction('directPermission', user)}>
                             Assign  Permission
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
+                          {/* <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
                             View  Permission
-                          </MenuItem>
+                          </MenuItem> */}
                         </Menu>
                       </TableCell>
                     </TableRow>

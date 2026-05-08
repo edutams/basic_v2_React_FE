@@ -321,18 +321,7 @@ function SessionsPanel({ isLevel1 }) {
 
   return (
     <>
-      <Backdrop
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          flexDirection: 'column',
-          gap: 2,
-        }}
-        open={reordering}
-      >
-        <CircularProgress color="inherit" />
-        <Typography variant="h6">Order updating...</Typography>
-      </Backdrop>
+     
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
@@ -393,10 +382,11 @@ function SessionsPanel({ isLevel1 }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {loading || reordering ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
                     <CircularProgress size={24} />
+                    {reordering && <Typography variant="body2">Order updating...</Typography>}
                   </TableCell>
                 </TableRow>
               ) : filteredSessions.length === 0 ? (
@@ -778,18 +768,7 @@ function TermsPanel({ isLevel1 }) {
 
   return (
     <>
-      <Backdrop
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          flexDirection: 'column',
-          gap: 2,
-        }}
-        open={reordering}
-      >
-        <CircularProgress color="inherit" />
-        <Typography variant="h6">Order updating...</Typography>
-      </Backdrop>
+      
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
@@ -849,10 +828,11 @@ function TermsPanel({ isLevel1 }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {loading || reordering ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center">
                     <CircularProgress size={24} />
+                    {reordering && <Typography variant="body2">Order updating...</Typography>}
                   </TableCell>
                 </TableRow>
               ) : filteredTerms.length === 0 ? (

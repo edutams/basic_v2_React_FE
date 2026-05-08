@@ -48,6 +48,7 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           sx={{ mb: 2 }}
           error={!!errors.name}
           helperText={errors.name}
+          size='small'
         />
         <CustomTextField
           label="Subject Code"
@@ -58,6 +59,7 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           sx={{ mb: 2 }}
           error={!!errors.code}
           helperText={errors.code}
+          size='small'
         />
         <CustomTextField
           select
@@ -69,15 +71,16 @@ const AddSubjectModal = ({ open, onClose, onSubmit }) => {
           sx={{ mb: 2 }}
           error={!!errors.status}
           helperText={errors.status}
+          size='small'
         >
           <MenuItem value="active">Active</MenuItem>
           <MenuItem value="inactive">Inactive</MenuItem>
         </CustomTextField>
         <Box display="flex" justifyContent="flex-end" mt={2}>
-          <Button onClick={onClose} sx={{ mr: 1 }} color="inherit" type="button">
+          <Button size='small' onClick={onClose} sx={{ mr: 1 }} color="inherit" type="button">
             Cancel
           </Button>
-          <Button type="submit" variant="contained" color="primary">
+          <Button type="submit" size='small' variant="contained" color="primary">
               Add Subject
           </Button>
         </Box>

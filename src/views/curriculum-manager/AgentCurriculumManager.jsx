@@ -51,6 +51,7 @@ import {
   FormControl,
   InputLabel,
   FormHelperText,
+  Grid
 } from '@mui/material';
 import { MoreVert as MoreVertIcon, Subject } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -98,6 +99,7 @@ const AgentCurriculumManager = () => {
     subject_name: '',
     subject_code: '',
     programme_id: '',
+    pass_mark: '',
     unit: '',
     status: 'compulsory',
   });
@@ -421,6 +423,7 @@ const AgentCurriculumManager = () => {
       subject_name: subject.subject_name,
       subject_code: subject.subject_code || '',
       programme_id: subject.programme_id || '',
+      pass_mark: subject.pass_mark || '',
       unit: subject.unit || '',
       status: subject.prog_subject_status || 'compulsory',
     });
@@ -437,6 +440,7 @@ const AgentCurriculumManager = () => {
       subject_name: '',
       subject_code: '',
       programme_id: '',
+      pass_mark:"",
       unit: '',
       status: 'compulsory',
     });
@@ -525,7 +529,7 @@ const AgentCurriculumManager = () => {
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Typography variant="h5">Curriculum</Typography>
-                      <Button variant="contained" onClick={handleOpenCreateModal}>
+                      <Button variant="contained" size='small' onClick={handleOpenCreateModal}>
                         Create Curriculum
                       </Button>
                     </Box>
@@ -634,7 +638,7 @@ const AgentCurriculumManager = () => {
                           </strong>
                         </Typography>
 
-                        <Button variant="contained" onClick={handleOpenAddSubjectModal}>
+                        <Button size='small' variant="contained" onClick={handleOpenAddSubjectModal}>
                           Add Subject
                         </Button>
 
@@ -658,6 +662,7 @@ const AgentCurriculumManager = () => {
                             <TableCell width="7%">Code</TableCell>
                             <TableCell width="15%">Program</TableCell>
                             <TableCell width="5%">Unit</TableCell>
+                            <TableCell width="5%">Pass</TableCell>
                             <TableCell width="12%">Status</TableCell>
                             <TableCell width="5%">Action</TableCell>
                           </TableRow>
@@ -725,6 +730,20 @@ const AgentCurriculumManager = () => {
                                     }}
                                   >
                                     {item.unit || '-'}
+                                  </Box>
+                                </TableCell>
+                                <TableCell>
+                                  <Box
+                                    sx={{
+                                      px: 2,
+                                      py: 0.5,
+                                      bgcolor: '#eef2f7',
+                                      borderRadius: 2,
+                                      fontWeight: 600,
+                                      display: 'inline-block',
+                                    }}
+                                  >
+                                    {item.pass_mark || '-'}
                                   </Box>
                                 </TableCell>
                                 <TableCell>
@@ -853,12 +872,14 @@ const AgentCurriculumManager = () => {
               onChange={(e) => setFormData({ ...formData, curriculum_name: e.target.value })}
               margin="normal"
               required
+              size='small'
             />
             <Select
               fullWidth
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               margin="normal"
+              size='small'
             >
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
@@ -885,12 +906,14 @@ const AgentCurriculumManager = () => {
               onChange={(e) => setFormData({ ...formData, curriculum_name: e.target.value })}
               margin="normal"
               required
+              size='small'
             />
             <Select
               fullWidth
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               margin="normal"
+              size='small'
             >
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
@@ -915,8 +938,9 @@ const AgentCurriculumManager = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
+          <Button size='small' onClick={handleCloseDeleteDialog}>Cancel</Button>
           <Button
+            size='small'
             onClick={handleDeleteCurriculum}
             variant="contained"
             color="error"
@@ -938,71 +962,133 @@ const AgentCurriculumManager = () => {
         <DialogTitle>Add Subject</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Subject Name" error={!!subjectErrors.subject_name} helperText={subjectErrors.subject_name}
-              value={subjectFormData.subject_name}
-              onChange={(e) => {
-                setSubjectErrors((p) => ({ ...p, subject_name: undefined }));
-                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value });
-              }}
-              margin="normal"
-              required
-            />
+            <Grid container spacing={2}>
 
-            <TextField
-              fullWidth
-              label="Subject Code" error={!!subjectErrors.subject_code} helperText={subjectErrors.subject_code} required
-              value={subjectFormData.subject_code}
-              onChange={(e) => {
-                setSubjectErrors((p) => ({ ...p, subject_code: undefined }));
-                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value });
-              }}
-              margin="normal"
-            />
+              {/* Subject Name */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Subject Name"
+                  error={!!subjectErrors.subject_name}
+                  helperText={subjectErrors.subject_name}
+                  value={subjectFormData.subject_name}
+                  onChange={(e) => {
+                    setSubjectErrors((p) => ({ ...p, subject_name: undefined }));
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      subject_name: e.target.value,
+                    });
+                  }}
+                  size="small"
+                  required
+                />
+              </Grid>
 
-            <FormControl fullWidth margin="normal" error={!!subjectErrors.programme_id}>
-              <InputLabel id="program-select-label">Select Program</InputLabel>
-              <Select
-                labelId="program-select-label"
-                label="Select Program"
-                value={subjectFormData.programme_id}
-                onChange={(e) => {
-                  setSubjectErrors((p) => ({ ...p, programme_id: undefined }));
-                  setSubjectFormData({ ...subjectFormData, programme_id: e.target.value });
-                }}
-              >
-                {programmesList.map((prog) => (
-                  <MenuItem key={prog.id} value={prog.id}>
-                    {prog.programme_name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {subjectErrors.programme_id && (
-                <FormHelperText>{subjectErrors.programme_id}</FormHelperText>
-              )}
-            </FormControl>
+              {/* Subject Code */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Subject Code"
+                  error={!!subjectErrors.subject_code}
+                  helperText={subjectErrors.subject_code}
+                  value={subjectFormData.subject_code}
+                  onChange={(e) => {
+                    setSubjectErrors((p) => ({ ...p, subject_code: undefined }));
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      subject_code: e.target.value,
+                    });
+                  }}
+                  size="small"
+                  required
+                />
+              </Grid>
 
-            <TextField
-              fullWidth
-              label="Unit"
-              value={subjectFormData.unit}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, unit: e.target.value })}
-              margin="normal"
-              type="number"
-              inputProps={{ min: 0 }}
-            />
+              {/* Programme */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth error={!!subjectErrors.programme_id} size="small">
+                  <InputLabel id="program-select-label">Select Program</InputLabel>
+                  <Select
+                    labelId="program-select-label"
+                    label="Select Program"
+                    value={subjectFormData.programme_id}
+                    onChange={(e) => {
+                      setSubjectErrors((p) => ({ ...p, programme_id: undefined }));
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        programme_id: e.target.value,
+                      });
+                    }}
+                  >
+                    {programmesList.map((prog) => (
+                      <MenuItem key={prog.id} value={prog.id}>
+                        {prog.programme_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
 
-            <Select
-              fullWidth
-              label="Status"
-              value={subjectFormData.status}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, status: e.target.value })}
-              margin="normal"
-            >
-              <MenuItem value="compulsory">Compulsory</MenuItem>
-              <MenuItem value="optional">Optional</MenuItem>
-            </Select>
+                  {subjectErrors.programme_id && (
+                    <FormHelperText>{subjectErrors.programme_id}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+
+              {/* Unit */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Unit"
+                  value={subjectFormData.unit}
+                  onChange={(e) =>
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      unit: e.target.value,
+                    })
+                  }
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  size="small"
+                />
+              </Grid>
+              {/* pass_mark */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Passmark"
+                  value={subjectFormData.pass_mark}
+                  onChange={(e) =>
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      pass_mark: e.target.value,
+                    })
+                  }
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  size="small"
+                />
+              </Grid>
+
+              {/* Status */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    label="Status"
+                    value={subjectFormData.status}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        status: e.target.value,
+                      })
+                    }
+                  >
+                    <MenuItem value="compulsory">Compulsory</MenuItem>
+                    <MenuItem value="optional">Optional</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+            </Grid>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -1023,70 +1109,135 @@ const AgentCurriculumManager = () => {
         <DialogTitle>Edit Subject</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Subject Name" error={!!subjectErrors.subject_name} helperText={subjectErrors.subject_name}
-              value={subjectFormData.subject_name}
-              onChange={(e) => {
-                setSubjectErrors((p) => ({ ...p, subject_name: undefined }));
-                setSubjectFormData({ ...subjectFormData, subject_name: e.target.value });
-              }}
-              margin="normal"
-              required
-            />
+            <Grid container spacing={2}>
 
-            <TextField
-              fullWidth
-              label="Subject Code" error={!!subjectErrors.subject_code} helperText={subjectErrors.subject_code} required
-              value={subjectFormData.subject_code}
-              onChange={(e) => {
-                setSubjectErrors((p) => ({ ...p, subject_code: undefined }));
-                setSubjectFormData({ ...subjectFormData, subject_code: e.target.value });
-              }}
-              margin="normal"
-            />
+              {/* Subject Name */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Subject Name"
+                  error={!!subjectErrors.subject_name}
+                  helperText={subjectErrors.subject_name}
+                  value={subjectFormData.subject_name}
+                  onChange={(e) => {
+                    setSubjectErrors((p) => ({ ...p, subject_name: undefined }));
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      subject_name: e.target.value,
+                    });
+                  }}
+                  required
+                />
+              </Grid>
 
-            <FormControl fullWidth margin="normal" error={!!subjectErrors.programme_id}>
-              <InputLabel id="edit-program-select-label">Select Program</InputLabel>
-              <Select
-                labelId="edit-program-select-label"
-                label="Select Program"
-                value={subjectFormData.programme_id}
-                onChange={(e) => {
-                  setSubjectErrors((p) => ({ ...p, programme_id: undefined }));
-                  setSubjectFormData({ ...subjectFormData, programme_id: e.target.value });
-                }}
-              >
-                {programmesList.map((prog) => (
-                  <MenuItem key={prog.id} value={prog.id}>
-                    {prog.programme_name}
-                  </MenuItem>
-                ))}
-              </Select>
-              {subjectErrors.programme_id && (
-                <FormHelperText>{subjectErrors.programme_id}</FormHelperText>
-              )}
-            </FormControl>
+              {/* Subject Code */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Subject Code"
+                  error={!!subjectErrors.subject_code}
+                  helperText={subjectErrors.subject_code}
+                  value={subjectFormData.subject_code}
+                  onChange={(e) => {
+                    setSubjectErrors((p) => ({ ...p, subject_code: undefined }));
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      subject_code: e.target.value,
+                    });
+                  }}
+                  required
+                />
+              </Grid>
 
-            <TextField
-              fullWidth
-              label="Unit"
-              value={subjectFormData.unit}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, unit: e.target.value })}
-              margin="normal"
-              type="number"
-              inputProps={{ min: 0 }}
-            />
+              {/* Programme */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth error={!!subjectErrors.programme_id}>
+                  <InputLabel id="edit-program-select-label">
+                    Select Program
+                  </InputLabel>
 
-            <Select
-              fullWidth
-              value={subjectFormData.status}
-              onChange={(e) => setSubjectFormData({ ...subjectFormData, status: e.target.value })}
-              margin="normal"
-            >
-              <MenuItem value="compulsory">Compulsory</MenuItem>
-              <MenuItem value="optional">Optional</MenuItem>
-            </Select>
+                  <Select
+                    labelId="edit-program-select-label"
+                    label="Select Program"
+                    value={subjectFormData.programme_id}
+                    onChange={(e) => {
+                      setSubjectErrors((p) => ({ ...p, programme_id: undefined }));
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        programme_id: e.target.value,
+                      });
+                    }}
+                  >
+                    {programmesList.map((prog) => (
+                      <MenuItem key={prog.id} value={prog.id}>
+                        {prog.programme_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+
+                  {subjectErrors.programme_id && (
+                    <FormHelperText>
+                      {subjectErrors.programme_id}
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+
+              {/* Unit */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Unit"
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  value={subjectFormData.unit}
+                  onChange={(e) =>
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      unit: e.target.value,
+                    })
+                  }
+                />
+              </Grid>
+
+ {/* Passmark */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Passmark"
+                  value={subjectFormData.pass_mark}
+                  onChange={(e) =>
+                    setSubjectFormData({
+                      ...subjectFormData,
+                      pass_mark: e.target.value,
+                    })
+                  }
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  size="small"
+                />
+              </Grid>
+              {/* Status */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    label="Status"
+                    value={subjectFormData.status}
+                    onChange={(e) =>
+                      setSubjectFormData({
+                        ...subjectFormData,
+                        status: e.target.value,
+                      })
+                    }
+                  >
+                    <MenuItem value="compulsory">Compulsory</MenuItem>
+                    <MenuItem value="optional">Optional</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+            </Grid>
           </Box>
         </DialogContent>
         <DialogActions>

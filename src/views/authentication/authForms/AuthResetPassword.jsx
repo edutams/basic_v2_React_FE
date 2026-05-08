@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, TextField, Alert, CircularProgress } from '@mui/material';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import api from '../../../api/auth';
+import React, { useState } from 'react';
+import { Box, Button, TextField, Alert, CircularProgress } from '@mui/material';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import agentApi from '../../../api/auth';
+import tenantApi from '../../../api/tenant_api';
 
 const AuthResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isAgentFlow = location.pathname.startsWith('/agent');
+  const api = isAgentFlow ? agentApi : tenantApi;
+  const apiEndpoint = isAgentFlow ? '/landlord/v1/auth/reset_password' : '/reset_password';
+  const loginPath = isAgentFlow ? '/agent/login' : '/login';
 
   const [formData, setFormData] = useState({
     email: searchParams.get('email') || '',
@@ -29,26 +36,17 @@ const AuthResetPassword = () => {
     setError('');
 
     try {
-      const res = await api.post('/landlord/v1/auth/reset_password', formData);
-      setMessage(res.data.message || 'Password reset successfully! Redirecting to login...');
+      const res = await api.post(apiEndpoint, formData);
+      setMessage(res.data.message || 'Password reset successfully!');
       localStorage.removeItem('access_token');
-      setFormData({
-        email: '',
-        token: '',
-        password: '',
-        password_confirmation: '',
-      });
+      setFormData({ email: '', token: '', password: '', password_confirmation: '' });
 
-      navigate('/agent/login', {
+      navigate(loginPath, {
         replace: true,
         state: { message: 'Password reset successful! Please login with your new password.' },
       });
-
-      setTimeout(() => {
-        window.location.href = '/agent/login';
-      }, 1000);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to reset password');
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to reset password');
     } finally {
       setLoading(false);
     }

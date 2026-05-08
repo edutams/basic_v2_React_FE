@@ -20,7 +20,11 @@ const cardStyle = {
   alignItems: 'center',
   gap: 1.5,
 };
-const cardStyle1 = { background: '#212F76', borderRadius: 2, border: '2px solid #e6d300' };
+const cardStyle1 = {
+  bgcolor: 'primary.main',
+  borderRadius: 2,
+  border: '2px solid #e6d300',
+};
 const cardStyle2 = { background: '#2E2414', borderRadius: 2, border: '2px solid #C8B80C' };
 const cardStyle3 = { background: '#4CAAF8', borderRadius: 2, border: '2px solid #A39500' };
 
@@ -28,7 +32,7 @@ const buttonStyle = {
   borderRadius: 1,
   px: 4,
   textTransform: 'none',
-  '&:hover': { background: '#1f2d75' },
+  // '&:hover': { background: '#1f2d75' },
 };
 
 const IconCircle = ({ children }) => (
@@ -56,9 +60,18 @@ const TenantLogin = () => {
   const recaptchaRef = useRef(null);
 
   const handleAdmissionSubmit = async (values) => {
-    if (!captchaToken) { setError('Please complete the reCAPTCHA verification.'); return; }
-    if (!values.password) { setError('Password is required.'); return; }
-    if (values.password !== values.confirm_password) { setError('Passwords do not match.'); return; }
+    if (!captchaToken) {
+      setError('Please complete the reCAPTCHA verification.');
+      return;
+    }
+    if (!values.password) {
+      setError('Password is required.');
+      return;
+    }
+    if (values.password !== values.confirm_password) {
+      setError('Passwords do not match.');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -110,23 +123,52 @@ const TenantLogin = () => {
             },
           }}
         >
-          <Box position="relative" sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <Box px={3}><Logo /></Box>
+          <Box
+            position="relative"
+            sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+          >
+            <Box px={3}>
+              <Logo />
+            </Box>
 
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', px: 2 }}>
-              <Grid container spacing={3} sx={{ justifyContent: 'center', maxWidth: 1100, margin: '0 auto' }}>
-
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                px: 2,
+              }}
+            >
+              <Grid
+                container
+                spacing={3}
+                sx={{ justifyContent: 'center', maxWidth: 1100, margin: '0 auto' }}
+              >
                 <Grid item xs={12} sm={6} md={4}>
                   <Box sx={[cardStyle1, cardStyle]}>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <IconCircle><SchoolIcon fontSize="small" /></IconCircle>
+                      <IconCircle>
+                        <SchoolIcon fontSize="small" />
+                      </IconCircle>
                       <Typography variant="h6">2026/2027 Admission</Typography>
                     </Box>
-                    <Typography variant="h4" fontWeight="bold" textAlign="center">NOW OPEN</Typography>
+                    <Typography variant="h4" fontWeight="bold" textAlign="center">
+                      NOW OPEN
+                    </Typography>
                     <Button
                       variant="contained"
                       onClick={() => setView('apply')}
-                      sx={[buttonStyle, { background: '#213393A8', color: '#fff' }]}
+                      sx={[
+                        buttonStyle,
+                        {
+                          bgcolor: 'primary.dark',
+                          color: '#fff',
+                          '&:hover': {
+                            bgcolor: 'primary.light',
+                          },
+                        },
+                      ]}
                     >
                       Apply Now
                     </Button>
@@ -136,11 +178,18 @@ const TenantLogin = () => {
                 <Grid item xs={12} sm={6} md={4}>
                   <Box sx={[cardStyle2, cardStyle]}>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <IconCircle><SchoolIcon fontSize="small" /></IconCircle>
+                      <IconCircle>
+                        <SchoolIcon fontSize="small" />
+                      </IconCircle>
                       <Typography variant="h6">2026/2027 Result</Typography>
                     </Box>
-                    <Typography variant="h4" fontWeight="bold" textAlign="center">IS OUT</Typography>
-                    <Button variant="contained" sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}>
+                    <Typography variant="h4" fontWeight="bold" textAlign="center">
+                      IS OUT
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}
+                    >
                       Check Result
                     </Button>
                   </Box>
@@ -149,16 +198,22 @@ const TenantLogin = () => {
                 <Grid item xs={12} sm={6} md={4}>
                   <Box sx={[cardStyle3, cardStyle]}>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <IconCircle><SchoolIcon fontSize="small" /></IconCircle>
+                      <IconCircle>
+                        <SchoolIcon fontSize="small" />
+                      </IconCircle>
                       <Typography variant="h6">Check Admission</Typography>
                     </Box>
-                    <Typography variant="h4" fontWeight="bold" textAlign="center">STATUS</Typography>
-                    <Button variant="contained" sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}>
+                    <Typography variant="h4" fontWeight="bold" textAlign="center">
+                      STATUS
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}
+                    >
                       Check Admission
                     </Button>
                   </Box>
                 </Grid>
-
               </Grid>
 
               <Box sx={{ display: { xs: 'none', lg: 'flex' }, justifyContent: 'center', mt: 4 }}>
@@ -195,12 +250,30 @@ const TenantLogin = () => {
             >
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
                 <Box sx={{ width: '100%' }}>
-                  <AuthTenantLogin title="Institution Portal" onCreateAccount={() => setView('apply')} />
+                  <AuthTenantLogin
+                    title="Institution Portal"
+                    onCreateAccount={() => setView('apply')}
+                  />
                 </Box>
               </Box>
-              <Box sx={{ pb: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                <Typography variant="caption" color="text.secondary">Powered by</Typography>
-                <Box component="img" src={EduTAMSLogo} alt="EduTAMS" sx={{ height: 24, objectFit: 'contain' }} />
+              <Box
+                sx={{
+                  pb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Powered by
+                </Typography>
+                <Box
+                  component="img"
+                  src={EduTAMSLogo}
+                  alt="EduTAMS"
+                  sx={{ height: 24, objectFit: 'contain' }}
+                />
               </Box>
             </Box>
           ) : (
@@ -244,16 +317,34 @@ const TenantLogin = () => {
                         import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
                         '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
                       }
-                      onChange={(token) => { setCaptchaToken(token); if (error) setError(''); }}
+                      onChange={(token) => {
+                        setCaptchaToken(token);
+                        if (error) setError('');
+                      }}
                       onExpired={() => setCaptchaToken(null)}
                     />
                   }
                 />
               </Box>
 
-              <Box sx={{ pt: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                <Typography variant="caption" color="text.secondary">Powered by</Typography>
-                <Box component="img" src={EduTAMSLogo} alt="EduTAMS" sx={{ height: 24, objectFit: 'contain' }} />
+              <Box
+                sx={{
+                  pt: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Powered by
+                </Typography>
+                <Box
+                  component="img"
+                  src={EduTAMSLogo}
+                  alt="EduTAMS"
+                  sx={{ height: 24, objectFit: 'contain' }}
+                />
               </Box>
             </Box>
           )}

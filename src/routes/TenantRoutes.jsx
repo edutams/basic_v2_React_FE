@@ -24,6 +24,8 @@ const ClassStructureManager = Loadable(
 const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
 const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
 const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
+const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
+const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/ResetPassword')));
 const AdmissionApply = Loadable(lazy(() => import('../views/authentication/auth1/AdmissionApply')));
 const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
@@ -52,9 +54,19 @@ const TenantRoutes = [
     children: [{ index: true, element: <TenantLogin /> }],
   },
   {
-     path: '/forgot_password',
+    path: '/forgot_password',
     element: <BlankLayout />,
     children: [{ index: true, element: <ForgotPassword /> }],
+  },
+  {
+    path: '/verify_otp',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <VerifyOtp /> }],
+  },
+  {
+    path: '/reset_password',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <ResetPassword /> }],
   },
   {
     path: '/admission/apply',

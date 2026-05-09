@@ -343,7 +343,6 @@ const Stage1 = ({ onNext, onBack, onSkip }) => {
   );
 };
 
-// ── Stage 2: Manage Sessions ─────────────────────────────────────────────────
 const Stage2 = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell

@@ -604,7 +604,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                   </IconButton> */}
                 </Box>
 
-                <TableContainer>
+                <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
                   <Table sx={{ whiteSpace: 'nowrap' }}>
                     <TableHead>
                       <TableRow>

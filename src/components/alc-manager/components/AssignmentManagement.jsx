@@ -422,20 +422,14 @@ const AssignmentManagement = () => {
         </Grid>
       </Grid>
       <Box sx={{ p: 0 }}>
-
-
         <Paper variant="outlined">
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
             <Table sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>#</TableCell>
-                  <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>
-                    User Details
-                  </TableCell>
-                  <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>
-                    Organization
-                  </TableCell>
+                  <TableCell sx={{ width: { xs: '30%', md: '25%' } }}>User Details</TableCell>
+                  <TableCell sx={{ width: { xs: '25%', md: '20%' } }}>Organization</TableCell>
                   <TableCell sx={{ width: { xs: '30%', md: '35%' } }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '15%' }} align="center">
                     Action
@@ -456,7 +450,7 @@ const AssignmentManagement = () => {
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar
-                            src={user.avatar}
+                            src={user.image}
                             sx={{
                               width: 30,
                               height: 30,
@@ -465,7 +459,7 @@ const AssignmentManagement = () => {
                               color: 'primary.main',
                             }}
                           >
-                            {!user.avatar && getInitials(user.name)}
+                            {!user.image && getInitials(user.name)}
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={500} noWrap>
@@ -530,9 +524,11 @@ const AssignmentManagement = () => {
                           <MenuItem onClick={() => handleAction('edit', user)}>
                             Assign Role
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('view', user)}>View Assigned Roles</MenuItem>
+                          <MenuItem onClick={() => handleAction('view', user)}>
+                            View Assigned Roles
+                          </MenuItem>
                           <MenuItem onClick={() => handleAction('directPermission', user)}>
-                            Assign  Permission
+                            Assign Permission
                           </MenuItem>
                           {/* <MenuItem onClick={() => handleAction('viewDirectPermission', user)}>
                             View  Permission

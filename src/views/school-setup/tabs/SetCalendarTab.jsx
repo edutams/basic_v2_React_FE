@@ -411,7 +411,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Grid container spacing={3}>
+      <ParentCard>
+   <Grid container spacing={3}>
         {/* Manage Sessions Column */}
         <Grid size={{ xs: 12, md: 6 }}>
           <ParentCard
@@ -675,6 +676,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           )}
         </Grid>
       </Grid>
+      </ParentCard>
+   
 
       {/* <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>

@@ -19,11 +19,11 @@ import {
 import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
 import { getFullImageUrl } from '../../helpers/ImageHelper';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
-// import SetupIllustration from '../../assets/images/setup/setup2.png';
 import SetupIllustration from '../../assets/images/setup/setup.png';
+import SetCalendarTab from './tabs/SetCalendarTab';
 
 // ── Shared layout shell ──────────────────────────────────────────────────────
-const SetupShell = ({ children, onBack, onSkip, onSaveAndContinue, saving, backLabel, stage, totalStages }) => {
+const SetupShell = ({ children, onBack, onSkip, onSaveAndContinue, saving, backLabel, stage, totalStages, noPadding }) => {
   const navigate = useNavigate();
   const { logout } = useContext(TenantAuthContext);
 
@@ -180,7 +180,7 @@ const SetupShell = ({ children, onBack, onSkip, onSaveAndContinue, saving, backL
         </Box>
 
         {/* Stage content */}
-        <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 3, md: '60px' }, pt: 4, pb: 2 }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', px: noPadding ? 0 : { xs: 3, md: '60px' }, pt: noPadding ? 0 : 4, pb: 2 }}>
           {children}
         </Box>
 
@@ -345,6 +345,31 @@ const Stage1 = ({ onNext, onBack, onSkip }) => {
   );
 };
 
+// ── Stage 2: Manage Sessions ─────────────────────────────────────────────────
+const Stage2 = ({ onNext, onBack, onSkip }) => {
+  return (
+    <SetupShell
+      onBack={onBack}
+      onSkip={onSkip}
+      onSaveAndContinue={onNext}
+      saving={false}
+      stage={2}
+      totalStages={3}
+      noPadding
+    >
+      <Box sx={{ px: { xs: 3, md: '60px' }, pt: 4, pb: 1 }}>
+        <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
+          Manage Sessions
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3 }}>
+          Select the session and subscribe
+        </Typography>
+      </Box>
+      <SetCalendarTab onSaveAndContinue={onNext} />
+    </SetupShell>
+  );
+};
+
 // ── Main controller ──────────────────────────────────────────────────────────
 const InitialSetup = () => {
   const navigate = useNavigate();
@@ -365,6 +390,10 @@ const InitialSetup = () => {
   // Stage routing — add more stages here as you build them
   if (stage === 1) {
     return <Stage1 onNext={goNext} onBack={goBack} onSkip={goSkip} />;
+  }
+
+  if (stage === 2) {
+    return <Stage2 onNext={goNext} onBack={goBack} onSkip={goSkip} />;
   }
 
   // Fallback: if stage is beyond what's built, go to complete-setup

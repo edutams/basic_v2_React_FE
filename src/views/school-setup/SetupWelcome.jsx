@@ -264,8 +264,8 @@ const SetupWelcome = () => {
           objectFit: 'contain',
           objectPosition: 'bottom left',
           zIndex: 3,
-          animation: `${anim('floatUp', '1s', '0.5s')}, float 5s ease-in-out 1.5s infinite`,
-          filter: `drop-shadow(0 16px 32px ${primary}2e)`,
+          // animation: `${anim('floatUp', '1s', '0.5s')}, float 5s ease-in-out 1.5s infinite`,
+          // filter: `drop-shadow(0 16px 32px ${primary}2e)`,
         }}
       />
 
@@ -331,6 +331,61 @@ const SetupWelcome = () => {
             How to setup your Profile
           </Typography>
           <IconChevronRight size={15} color="#666" />
+        </Box>
+      </Box>
+
+      {/* ══════════════════════════════════════════
+          NOTE + ARROW → START SETUP
+      ══════════════════════════════════════════ */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 90,
+          right: 36,
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          animation: `${anim('fadeUp', '0.6s', '1.1s')}, bounce 2s ease-in-out 2s infinite`,
+          pointerEvents: 'none',
+        }}
+      >
+        {/* Note bubble */}
+        <Box
+          sx={{
+            bgcolor: '#FFD43B',
+            color: '#333',
+            px: 1.5,
+            py: 0.6,
+            borderRadius: '8px !important',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            mb: 0.5,
+          }}
+        >
+          <Typography sx={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            👆 Click here to begin!
+          </Typography>
+        </Box>
+
+        {/* Curved arrow pointing down toward the button */}
+        <Box sx={{ mr: 1.5 }}>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path
+              d="M4 4 C4 16, 18 16, 22 24"
+              stroke="#FFD43B"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              fill="none"
+            />
+            <path
+              d="M18 22 L22 24 L20 19"
+              stroke="#FFD43B"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </svg>
         </Box>
       </Box>
 

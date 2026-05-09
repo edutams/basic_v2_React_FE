@@ -65,6 +65,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AllApplicationsTab from './AllApplicationsTab';
 import PendingApprovalsTab from './PendingApprovalsTab';
 import ApprovedSchoolsTab from './ApprovedSchoolsTab';
+import { usePermissions } from '../../../../context/AgentContext/permissions';
 
 // ── PersonCard ────────────────────────────────────────────────────────────────
 
@@ -111,7 +112,9 @@ const PersonCard = ({ title, name, gender, email, phone, image, bgColor }) => (
 
 // ── ReviewModal ───────────────────────────────────────────────────────────────
 
-const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading, isLevel1 }) => {
+const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) => {
+  const { can } = usePermissions();
+
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
 
@@ -346,7 +349,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading, is
         >
           Close
         </Button>
-        {prospect.status === 'pending' && isLevel1 && (
+        {prospect.status === 'pending' && can('landlord.school.approval') && (
           <>
             {!showRejectInput ? (
               <Button
@@ -388,7 +391,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading, is
             </Button>
           </>
         )}
-        {prospect.status === 'pending' && !isLevel1 && (
+        {prospect.status === 'pending' && !can('landlord.school.approval') && (
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
             Only Level 1 organizations can approve or reject applications
           </Typography>
@@ -403,7 +406,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading, is
 const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const theme = useTheme();
   const { user } = useAuth();
-  const isLevel1 = user?.organization?.access_level === 1;
+  const { can } = usePermissions();
 
   const [activeTab, setActiveTab] = useState(0);
   const [nameValue, setNameValue] = useState('');
@@ -507,22 +510,20 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     fetchSchools();
   }, [fetchProspects, fetchSchools]);
 
-
-
-     // Fetch analytics for TotalSchoolModal
-      useEffect(() => {
-        const fetchAnalytics = async () => {
-          try {
-            const res = await agentApi.getAnalytics();
-            if (res.status) setAnalytics(res.data);
-          } catch (e) {
-            console.error('Failed to fetch analytics', e);
-          } finally {
-            setAnalyticsLoading(false);
-          }
-        };
-        fetchAnalytics();
-      }, [analyticsRefreshKey]);
+  // Fetch analytics for TotalSchoolModal
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await agentApi.getAnalytics();
+        if (res.status) setAnalytics(res.data);
+      } catch (e) {
+        console.error('Failed to fetch analytics', e);
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [analyticsRefreshKey]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -532,7 +533,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   };
   const handleApplicationStatusChange = () => {
     // Increment refresh key to trigger fresh analytics fetch
-    setAnalyticsRefreshKey(prev => prev + 1);
+    setAnalyticsRefreshKey((prev) => prev + 1);
   };
   const handleFilterReset = () => {
     setActiveFilters({});
@@ -545,7 +546,6 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
       await approveProspectiveTenant(id);
       await fetchProspects();
       await fetchSchools();
-      await refreshAnalytics();
       setReviewOpen(false);
       handleApplicationStatusChange(); // Trigger analytics refresh
       notify('School approved and provisioned successfully');
@@ -562,7 +562,6 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
       await rejectProspectiveTenant(id, reason);
       await fetchProspects();
       await fetchSchools();
-      await refreshAnalytics();
       setReviewOpen(false);
       handleApplicationStatusChange(); // Trigger analytics refresh
       notify('Application rejected');
@@ -644,8 +643,12 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     pending: analytics?.pendingSchools || 0,
     rejected: analytics?.rejectedSchools || 0,
     subscriptions: analytics?.subscriptions || subscribedSchools.length,
-    primary: analytics?.primarySchools || subscribedSchools.filter((s) => getSchoolType(s).includes('primary')).length,
-    secondary: analytics?.secondarySchools || subscribedSchools.filter((s) => getSchoolType(s).includes('secondary')).length,
+    primary:
+      analytics?.primarySchools ||
+      subscribedSchools.filter((s) => getSchoolType(s).includes('primary')).length,
+    secondary:
+      analytics?.secondarySchools ||
+      subscribedSchools.filter((s) => getSchoolType(s).includes('secondary')).length,
   };
 
   const planSeries = [40, 15, 35, 10];
@@ -660,7 +663,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
         {/* ── Analytics Cards ── */}
-        {isLevel1 && (
+        {can('landlord.school.analytics') && (
           <Box
             sx={{
               display: 'grid',
@@ -726,7 +729,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
                   </Typography>
                   <Typography fontWeight={600}>{schoolSummary.pending}</Typography>
                 </Box>
-                 <Divider orientation="vertical" flexItem />
+                <Divider orientation="vertical" flexItem />
                 <Box>
                   <Typography variant="caption" color="text.secondary">
                     Rejected
@@ -959,18 +962,9 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
             spacing={2}
             mb={3}
           >
-            <TextField
-              size="small"
-              placeholder="Search by name…"
-              value={nameValue}
-              onChange={(e) => {
-                setNameValue(e.target.value);
-                setPage(0);
-              }}
-              sx={{ minWidth: 260, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              {activeTab === 0 && !isLevel1 && (
+            <Box />
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ marginLeft: 'auto' }}>
+              {activeTab === 0 && can('landlord.school.create') && (
                 <Button
                   variant="contained"
                   startIcon={<IconUserPlus size={18} />}
@@ -1069,7 +1063,6 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
           onApprove={handleApprove}
           onReject={handleReject}
           loading={actionLoading}
-          isLevel1={isLevel1}
         />
 
         <SchoolProfileModal

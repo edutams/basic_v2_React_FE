@@ -32,7 +32,7 @@ import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from '../dashboard/components/PlanDistributionModal';
 import TotalSchoolModal from '../dashboard/components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
-import useAuth from 'src/hooks/useAuth';
+import { usePermissions } from '../../context/AgentContext/permissions';
 
 const planSeries = [40, 15, 35, 10];
 
@@ -86,8 +86,7 @@ const EduTier = () => {
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
   const [openTotalTransactionModal, setOpenTotalTransactionModal] = useState(false);
-  const { user: currentUser } = useAuth();
-  const currentUserLevel = currentUser?.organization?.access_level;
+  const { can } = usePermissions();
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -573,25 +572,30 @@ const EduTier = () => {
                 variant="scrollable"
                 aria-label="basic tabs example"
               >
-                <Tab
-                  iconPosition="start"
-                  icon={<IconUserCircle size="22" />}
-                  label="Modules"
-                  {...a11yProps(0)}
-                />
-                <Tab
-                  iconPosition="start"
-                  icon={<IconBell size="22" />}
-                  label="Packages"
-                  {...a11yProps(1)}
-                />
-                <Tab
-                  iconPosition="start"
-                  icon={<IconArticle size="22" />}
-                  label="Plan"
-                  {...a11yProps(2)}
-                />
-                {currentUserLevel !== 1 && (
+                {can('landlord.plan.manager') && (
+                  <>
+                    <Tab
+                      iconPosition="start"
+                      icon={<IconUserCircle size="22" />}
+                      label="Modules"
+                      {...a11yProps(0)}
+                    />
+                    <Tab
+                      iconPosition="start"
+                      icon={<IconBell size="22" />}
+                      label="Packages"
+                      {...a11yProps(1)}
+                    />
+                    <Tab
+                      iconPosition="start"
+                      icon={<IconArticle size="22" />}
+                      label="Plan"
+                      {...a11yProps(2)}
+                    />
+                  </>
+                )}
+
+                {can('landlord.plan.my_plan') && (
                   <Tab
                     iconPosition="start"
                     icon={<IconChecklist size="22" />}
@@ -612,7 +616,7 @@ const EduTier = () => {
               <TabPanel value={value} index={2}>
                 <PlanTab />
               </TabPanel>
-              {currentUserLevel !== 1 && (
+              {can('landlord.plan.my_plan') && (
                 <TabPanel value={value} index={3}>
                   <MyPlanTab />
                 </TabPanel>

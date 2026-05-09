@@ -605,7 +605,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                 </Box>
 
                 <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
-                  <Table sx={{ whiteSpace: 'nowrap' }}>
+                  <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>

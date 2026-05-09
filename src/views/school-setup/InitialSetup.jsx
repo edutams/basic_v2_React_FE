@@ -180,7 +180,7 @@ const SetupShell = ({ children, onBack, onSkip, onSaveAndContinue, saving, backL
         </Box>
 
         {/* Stage content */}
-        <Box sx={{ flex: 1, overflowY: 'auto', px: noPadding ? 0 : { xs: 3, md: '60px' }, pt: noPadding ? 0 : 4, pb: 2 }}>
+        <Box sx={{ flex: 1, overflow: noPadding ? 'hidden' : 'auto', overflowY: noPadding ? 'hidden' : 'auto', px: noPadding ? 0 : { xs: 3, md: '60px' }, pt: noPadding ? 0 : 4, pb: 2 }}>
           {children}
         </Box>
 

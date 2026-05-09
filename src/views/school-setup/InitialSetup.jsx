@@ -16,11 +16,13 @@ import {
   IconUpload,
   IconPhoto,
 } from '@tabler/icons-react';
-import { getTenantInfo, updateSchoolLogo } from '../../api/tenant_api';
+import { getTenantInfo } from '../../api/tenant_api';
 import { getFullImageUrl } from '../../helpers/ImageHelper';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
 import SetupIllustration from '../../assets/images/setup/setup.png';
 import SetCalendarTab from './tabs/SetCalendarTab';
+import { useNotification } from '../../hooks/useNotification';
+import UploadLogoModal from '../../components/tenant-components/school/UploadLogoModal';
 
 // ── Shared layout shell ──────────────────────────────────────────────────────
 const SetupShell = ({ children, onBack, onSkip, onSaveAndContinue, saving, backLabel, stage, totalStages, noPadding }) => {
@@ -234,11 +236,12 @@ const SetupShell = ({ children, onBack, onSkip, onSaveAndContinue, saving, backL
 // ── Stage 1: School Profile ──────────────────────────────────────────────────
 const Stage1 = ({ onNext, onBack, onSkip }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
+  const notify = useNotification();
   const [tenantData, setTenantData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [logoModalOpen, setLogoModalOpen] = useState(false);
 
   useEffect(() => {
     getTenantInfo()
@@ -251,25 +254,15 @@ const Stage1 = ({ onNext, onBack, onSkip }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleBrowseClick = () => document.getElementById('school-logo-input').click();
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) { setLogo(URL.createObjectURL(file)); setLogoFile(file); }
+  const handleLogoUploaded = (newLogoUrl) => {
+    setLogo(newLogoUrl);
+    refreshTenantInfo();
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (logoFile) {
-        const formData = new FormData();
-        formData.append('school_logo', logoFile);
-        const res = await updateSchoolLogo(formData);
-        if (res.data?.school_logo) { setLogo(getFullImageUrl(res.data.school_logo)); refreshTenantInfo(); }
-      }
       onNext();
-    } catch (e) {
-      console.error(e);
     } finally {
       setSaving(false);
     }
@@ -292,9 +285,8 @@ const Stage1 = ({ onNext, onBack, onSkip }) => {
         <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
           {/* Logo upload */}
           <Box sx={{ flexShrink: 0 }}>
-            <input type="file" id="school-logo-input" hidden accept="image/*" onChange={handleFileChange} />
             <Box
-              onClick={handleBrowseClick}
+              onClick={() => setLogoModalOpen(true)}
               sx={{
                 width: 160, height: 160,
                 border: '1.5px dashed', borderColor: 'divider',
@@ -310,7 +302,7 @@ const Stage1 = ({ onNext, onBack, onSkip }) => {
               }
             </Box>
             <Box
-              onClick={handleBrowseClick}
+              onClick={() => setLogoModalOpen(true)}
               sx={{
                 mt: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75,
                 cursor: 'pointer', border: '1px solid', borderColor: 'divider',
@@ -341,6 +333,12 @@ const Stage1 = ({ onNext, onBack, onSkip }) => {
           </Box>
         </Box>
       )}
+
+      <UploadLogoModal
+        open={logoModalOpen}
+        onClose={() => setLogoModalOpen(false)}
+        onUploaded={handleLogoUploaded}
+      />
     </SetupShell>
   );
 };
@@ -370,6 +368,134 @@ const Stage2 = ({ onNext, onBack, onSkip }) => {
   );
 };
 
+// ── Stage 3: Confirm School Head / Admin Detail ──────────────────────────────
+const Stage3 = ({ onNext, onBack, onSkip }) => {
+  const [admins, setAdmins] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getTenantInfo()
+      .then((res) => {
+        const d = res.data;
+        setAdmins({
+          owner: {
+            title: 'School Owner Detail',
+            lastName:   d.administrator_info?.school_owner?.school_owner_last_name  || '',
+            firstName:  d.administrator_info?.school_owner?.school_owner_first_name || '',
+            otherName:  d.administrator_info?.school_owner?.school_owner_middle_name || '',
+            phone:      d.administrator_info?.school_owner?.school_owner_phone       || '',
+            email:      d.administrator_info?.school_owner?.school_owner_email       || '',
+          },
+          head: {
+            title: 'School Head Detail',
+            lastName:   d.administrator_info?.school_head?.school_head_last_name   || '',
+            firstName:  d.administrator_info?.school_head?.school_head_first_name  || '',
+            otherName:  d.administrator_info?.school_head?.school_head_middle_name || '',
+            phone:      d.administrator_info?.school_head?.school_head_phone       || '',
+            email:      d.administrator_info?.school_head?.school_head_email       || '',
+          },
+          spa: {
+            title: 'Portal Admin',
+            lastName:   d.administrator_info?.school_spa?.admin_last_name   || '',
+            firstName:  d.administrator_info?.school_spa?.admin_first_name  || '',
+            otherName:  d.administrator_info?.school_spa?.admin_middle_name || '',
+            phone:      d.administrator_info?.school_spa?.admin_phone       || '',
+            email:      d.administrator_info?.school_spa?.admin_email       || '',
+          },
+        });
+      })
+      .catch((e) => console.error(e))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const adminList = admins ? [admins.owner, admins.head, admins.spa] : [];
+
+  const fieldRow = (label, value) => (
+    <Box key={label}>
+      <Typography sx={{ fontSize: 11, fontWeight: 600, color: 'text.secondary', mb: 0.4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        {label}
+      </Typography>
+      <TextField
+        fullWidth
+        size="small"
+        value={value || ''}
+        slotProps={{ input: { readOnly: true } }}
+        sx={{ bgcolor: '#fff' }}
+      />
+    </Box>
+  );
+
+  return (
+    <SetupShell onBack={onBack} onSkip={onSkip} onSaveAndContinue={onNext} saving={false} stage={3} totalStages={3}>
+      <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
+        Confirm School Head/Admin Detail
+      </Typography>
+      <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 4, lineHeight: 1.6 }}>
+        Confirm your school owner details. If the details are incorrect click{' '}
+        <Link href="#" sx={{ fontWeight: 700, color: 'primary.main' }}>Get Help</Link>
+      </Typography>
+
+      {loading ? (
+        <Box display="flex" justifyContent="center" pt={6}><CircularProgress /></Box>
+      ) : (
+        <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
+          {adminList.map((admin) => (
+            <Box
+              key={admin.title}
+              sx={{
+                flex: '1 1 260px',
+                bgcolor: '#fff',
+                borderRadius: '12px !important',
+                border: '1px solid',
+                borderColor: 'divider',
+                p: 2.5,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}
+            >
+              {/* Card header */}
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  bgcolor: 'primary.main',
+                  color: '#fff',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: '20px !important',
+                  alignSelf: 'flex-start',
+                  mb: 0.5,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 18, height: 18,
+                    borderRadius: '50% !important',
+                    bgcolor: 'rgba(255,255,255,0.25)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 700,
+                  }}
+                >
+                  i
+                </Box>
+                <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{admin.title}</Typography>
+              </Box>
+
+              {fieldRow('Surname',    admin.lastName)}
+              {fieldRow('First Name', admin.firstName)}
+              {fieldRow('Other Name', admin.otherName)}
+              {fieldRow('Phone',      admin.phone)}
+              {fieldRow('Email',      admin.email)}
+            </Box>
+          ))}
+        </Box>
+      )}
+    </SetupShell>
+  );
+};
+
 // ── Main controller ──────────────────────────────────────────────────────────
 const InitialSetup = () => {
   const navigate = useNavigate();
@@ -383,7 +509,6 @@ const InitialSetup = () => {
     else goToStage(stage - 1);
   };
   const goSkip = () => {
-    // For now skip goes to complete-setup; extend per stage as needed
     navigate('/complete-setup');
   };
 
@@ -396,7 +521,11 @@ const InitialSetup = () => {
     return <Stage2 onNext={goNext} onBack={goBack} onSkip={goSkip} />;
   }
 
-  // Fallback: if stage is beyond what's built, go to complete-setup
+  if (stage === 3) {
+    return <Stage3 onNext={() => navigate('/complete-setup')} onBack={goBack} onSkip={goSkip} />;
+  }
+
+  // Fallback
   navigate('/complete-setup');
   return null;
 };

@@ -1,0 +1,281 @@
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Button, Link } from '@mui/material';
+import {
+  IconVideo,
+  IconChevronRight,
+  IconPower,
+  IconArrowLeft,
+} from '@tabler/icons-react';
+import { TenantAuthContext } from '../../../context/TenantContext/auth';
+import SetupIllustration from '../../../assets/images/setup/setup.png';
+
+/**
+ * Shared full-viewport shell used by every setup stage.
+ * Props:
+ *  - stage        : current stage number (1-based)
+ *  - totalStages  : total number of stages (drives the dot indicators)
+ *  - onBack       : called when Back is clicked
+ *  - onSkip       : called when Skip is clicked
+ *  - onSaveAndContinue : called when Save & Continue is clicked
+ *  - saving       : disables the Save & Continue button while true
+ *  - backLabel    : optional override for the Back button label
+ *  - noPadding    : removes px/pt from the content area (for stages with their own layout)
+ *  - children     : the stage content rendered in the right panel
+ */
+const SetupShell = ({
+  children,
+  stage,
+  totalStages,
+  onBack,
+  onSkip,
+  onSaveAndContinue,
+  saving = false,
+  backLabel,
+  noPadding = false,
+}) => {
+  const navigate = useNavigate();
+  const { logout } = useContext(TenantAuthContext);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  return (
+    <Box
+      sx={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        overflow: 'hidden',
+        m: 0,
+        p: 0,
+        borderRadius: '0 !important',
+      }}
+    >
+      {/* ── LEFT panel ── */}
+      <Box
+        sx={{
+          width: '32%',
+          flexShrink: 0,
+          bgcolor: 'primary.main',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          px: { xs: 3, md: '40px' },
+          py: { xs: 4, md: '52px' },
+          pb: { md: '120px' },
+          borderRadius: '0 !important',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Typography
+          sx={{
+            color: '#fff',
+            fontSize: { xs: 24, md: 32 },
+            fontWeight: 800,
+            lineHeight: 1.2,
+            mb: 2.5,
+            maxWidth: 280,
+          }}
+        >
+          Build a smarter school experience in minutes.
+        </Typography>
+
+        <Typography
+          sx={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.7, maxWidth: 280 }}
+        >
+          From lesson planning to student engagement—everything in one place.
+          Teach better. Manage easier.
+        </Typography>
+
+        {/* Stage progress dots */}
+        <Box sx={{ display: 'flex', gap: 1, mt: 4 }}>
+          {Array.from({ length: totalStages }).map((_, i) => (
+            <Box
+              key={i}
+              sx={{
+                width: i + 1 === stage ? 20 : 8,
+                height: 8,
+                borderRadius: '4px !important',
+                bgcolor: i + 1 === stage ? '#fff' : 'rgba(255,255,255,0.35)',
+                transition: 'all 0.3s ease',
+              }}
+            />
+          ))}
+        </Box>
+
+        <Box
+          component="img"
+          src={SetupIllustration}
+          alt="Setup illustration"
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            maxHeight: '38%',
+            objectFit: 'contain',
+            objectPosition: 'bottom center',
+          }}
+        />
+      </Box>
+
+      {/* ── RIGHT panel ── */}
+      <Box
+        sx={{
+          flex: 1,
+          bgcolor: '#f0f0f0',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: '0 !important',
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: 0.75,
+            px: 3,
+            pt: 2,
+            flexShrink: 0,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography sx={{ fontSize: 13, color: 'rgba(0,0,0,0.5)' }}>
+                Having Troubles?
+              </Typography>
+              <Link
+                href="#"
+                underline="hover"
+                sx={{ fontSize: 13, fontWeight: 700, color: 'primary.main' }}
+              >
+                Get Help
+              </Link>
+            </Box>
+            <Box
+              onClick={handleLogout}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                cursor: 'pointer',
+                '&:hover': { opacity: 0.75 },
+              }}
+            >
+              <IconPower size={15} color="#e53935" />
+              <Typography sx={{ fontSize: 13, fontWeight: 600, color: '#e53935' }}>
+                Logout
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
+              px: 1.5,
+              py: 0.6,
+              bgcolor: '#fff',
+              borderRadius: '10px !important',
+              boxShadow: '0px 3px 14px rgba(0,0,0,0.12)',
+              cursor: 'pointer',
+            }}
+          >
+            <Box
+              sx={{
+                width: 32,
+                height: 22,
+                bgcolor: 'primary.main',
+                borderRadius: '6px !important',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <IconVideo size={13} color="#fff" />
+            </Box>
+            <Typography
+              sx={{ fontSize: 13, fontWeight: 500, color: 'text.primary', whiteSpace: 'nowrap' }}
+            >
+              How to setup your Profile
+            </Typography>
+            <IconChevronRight size={15} color="#666" />
+          </Box>
+        </Box>
+
+        {/* Stage content area */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: noPadding ? 'hidden' : 'auto',
+            overflowY: noPadding ? 'hidden' : 'auto',
+            px: noPadding ? 0 : { xs: 3, md: '60px' },
+            pt: noPadding ? 0 : 4,
+            pb: noPadding ? 0 : 2,
+          }}
+        >
+          {children}
+        </Box>
+
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: { xs: 3, md: '60px' },
+            py: 2.5,
+            bgcolor: '#f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Button
+            size="small"
+            startIcon={<IconArrowLeft size={16} />}
+            onClick={onBack}
+            sx={{ fontSize: 14, fontWeight: 600, color: 'text.primary', textTransform: 'none' }}
+          >
+            {backLabel || 'Back'}
+          </Button>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Button
+              size="small"
+              onClick={onSkip}
+              sx={{ fontSize: 14, fontWeight: 600, color: 'primary.main' }}
+            >
+              Skip
+            </Button>
+            <Button
+              size="small"
+              variant="contained"
+              endIcon={<IconChevronRight size={16} />}
+              onClick={onSaveAndContinue}
+              disabled={saving}
+              sx={{
+                fontSize: 14,
+                fontWeight: 600,
+                textTransform: 'none',
+                px: 3,
+                py: 1,
+                borderRadius: '8px !important',
+              }}
+            >
+              {saving ? 'Saving...' : 'Save & Continue'}
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export default SetupShell;

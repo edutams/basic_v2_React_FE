@@ -10,6 +10,34 @@ import {
 import { TenantAuthContext } from '../../../context/TenantContext/auth';
 import SetupIllustration from '../../../assets/images/setup/setup.png';
 
+// ── Keyframes ────────────────────────────────────────────────────────────────
+const keyframes = {
+  '@keyframes fadeSlideLeft': {
+    from: { opacity: 0, transform: 'translateX(-32px)' },
+    to:   { opacity: 1, transform: 'translateX(0)' },
+  },
+  '@keyframes fadeUp': {
+    from: { opacity: 0, transform: 'translateY(20px)' },
+    to:   { opacity: 1, transform: 'translateY(0)' },
+  },
+  '@keyframes fadeIn': {
+    from: { opacity: 0 },
+    to:   { opacity: 1 },
+  },
+  '@keyframes floatUp': {
+    from: { opacity: 0, transform: 'translateY(40px)' },
+    to:   { opacity: 1, transform: 'translateY(0)' },
+  },
+  '@keyframes bounce': {
+    '0%, 100%': { transform: 'translateY(0)' },
+    '40%':      { transform: 'translateY(-6px)' },
+    '60%':      { transform: 'translateY(-3px)' },
+  },
+};
+
+const anim = (name, duration = '0.55s', delay = '0s') =>
+  `${name} ${duration} cubic-bezier(0.22,1,0.36,1) ${delay} both`;
+
 /**
  * Shared full-viewport shell used by every setup stage.
  * Props:
@@ -57,6 +85,7 @@ const SetupShell = ({
       {/* ── LEFT panel ── */}
       <Box
         sx={{
+          ...keyframes,
           width: '32%',
           flexShrink: 0,
           bgcolor: 'primary.main',
@@ -79,20 +108,34 @@ const SetupShell = ({
             lineHeight: 1.2,
             mb: 2.5,
             maxWidth: 280,
+            animation: anim('fadeSlideLeft', '0.55s', '0.1s'),
           }}
         >
           Build a smarter school experience in minutes.
         </Typography>
 
         <Typography
-          sx={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.7, maxWidth: 280 }}
+          sx={{
+            color: 'rgba(255,255,255,0.72)',
+            fontSize: 13,
+            lineHeight: 1.7,
+            maxWidth: 280,
+            animation: anim('fadeUp', '0.55s', '0.25s'),
+          }}
         >
           From lesson planning to student engagement—everything in one place.
           Teach better. Manage easier.
         </Typography>
 
         {/* Stage progress dots */}
-        <Box sx={{ display: 'flex', gap: 1, mt: 4 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            mt: 4,
+            animation: anim('fadeIn', '0.5s', '0.4s'),
+          }}
+        >
           {Array.from({ length: totalStages }).map((_, i) => (
             <Box
               key={i}
@@ -119,6 +162,7 @@ const SetupShell = ({
             maxHeight: '38%',
             objectFit: 'contain',
             objectPosition: 'bottom center',
+            animation: anim('floatUp', '0.8s', '0.5s'),
           }}
         />
       </Box>

@@ -7,6 +7,7 @@ import { TenantAuthContext } from '../../../context/TenantContext/auth';
 import { useNotification } from '../../../hooks/useNotification';
 import UploadLogoModal from '../../../components/tenant-components/school/UploadLogoModal';
 import SetupShell from './SetupShell';
+
 const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
   const notify = useNotification();

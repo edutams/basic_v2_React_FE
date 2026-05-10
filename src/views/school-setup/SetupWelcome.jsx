@@ -340,47 +340,60 @@ const SetupWelcome = () => {
       <Box
         sx={{
           position: 'absolute',
-          bottom: 90,
-          right: 36,
+          bottom: 110,
+          right: 28,
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
-          animation: `${anim('fadeUp', '0.6s', '1.1s')}, bounce 2s ease-in-out 2s infinite`,
+          gap: 0,
+          animation: `${anim('fadeUp', '0.7s', '1.2s')}, bounce 2.4s ease-in-out 2.2s infinite`,
           pointerEvents: 'none',
         }}
       >
-        {/* Note bubble */}
+        {/* Speech bubble */}
         <Box
           sx={{
-            bgcolor: '#FFD43B',
-            color: '#333',
-            px: 1.5,
-            py: 0.6,
-            borderRadius: '8px !important',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-            mb: 0.5,
+            position: 'relative',
+            bgcolor: '#fff',
+            border: '2px solid',
+            borderColor: 'primary.main',
+            borderRadius: '14px !important',
+            px: 2,
+            py: 1.25,
+            boxShadow: `0 6px 24px ${primary}22`,
           }}
         >
-          <Typography sx={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>
-            👆 Click here to begin!
+          {/* Bubble text */}
+          <Typography
+            sx={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'primary.main',
+              whiteSpace: 'nowrap',
+              letterSpacing: 0.2,
+            }}
+          >
+            🚀 Ready? Click to get started!
           </Typography>
         </Box>
 
-        {/* Curved arrow pointing down toward the button */}
-        <Box sx={{ mr: 1.5 }}>
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        {/* Curved arrow pointing down-right toward the Start Setup button */}
+        <Box sx={{ mr: 4, mt: 0.5 }}>
+          <svg width="48" height="52" viewBox="0 0 48 52" fill="none">
+            {/* Curve from top-left, sweeping down and to the right */}
             <path
-              d="M4 4 C4 16, 18 16, 22 24"
-              stroke="#FFD43B"
-              strokeWidth="2.5"
+              d="M8 4 C4 22, 20 36, 40 46"
+              stroke={primary}
+              strokeWidth="2.2"
               strokeLinecap="round"
               fill="none"
             />
+            {/* Arrowhead pointing down-right */}
             <path
-              d="M18 22 L22 24 L20 19"
-              stroke="#FFD43B"
-              strokeWidth="2.5"
+              d="M30 44 L40 46 L36 36"
+              stroke={primary}
+              strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"

@@ -7,8 +7,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableFooter,
-  TablePagination,
   TextField,
   IconButton,
   Button,
@@ -20,13 +18,10 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  Search as SearchIcon,
-  MoreVert as MoreVertIcon,
   Add as AddIcon,
   CloudUpload as UploadIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
-import { IconDotsVertical } from '@tabler/icons-react';
 import {
   getClassesWithDivisions,
   createLearner,
@@ -44,8 +39,6 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [loading, setLoading] = useState(true);
   const [classes, setClasses] = useState([]);
   const [studentCounts, setStudentCounts] = useState({});
@@ -173,17 +166,6 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
     );
   }, [classes, searchTerm]);
 
-  const paginatedClasses = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredClasses.slice(start, start + rowsPerPage);
-  }, [filteredClasses, page, rowsPerPage]);
-
-  const handleChangePage = (event, newPage) => setPage(newPage);
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -193,33 +175,20 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   }
 
   return (
-    <Box>
-      <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-        <TextField
-          placeholder="Search classes..."
-          value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
-          size="small"
-          sx={{ width: 300 }}
-          InputProps={{
-            startAdornment: <SearchIcon style={{ marginRight: 8, color: theme.palette.text.disabled }} />,
-          }}
-        />
-      </Box>
-
-      <TableContainer>
-        <Table sx={{ borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
+        <Table stickyHeader sx={{ borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '15%' }}>No. Uploaded</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '20%' }}>Upload Using Forms</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '40%' }}>Upload Using Excel File</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>No. Uploaded</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '20%', bgcolor: '#fff' }}>Upload Using Forms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '40%', bgcolor: '#fff' }}>Upload Using Excel File</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {paginatedClasses.map((item, index) => {
+            {filteredClasses.map((item, index) => {
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isHighlighted
                 ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
@@ -298,19 +267,6 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
               );
             })}
           </TableBody>
-
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                count={filteredClasses.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </TableRow>
-          </TableFooter>
         </Table>
       </TableContainer>
 

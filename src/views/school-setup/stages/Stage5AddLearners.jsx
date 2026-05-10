@@ -2,8 +2,6 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import UploadLearnersTab from '../tabs/UploadLearnersTab';
-import learner from '../../../assets/images/setup/learner.png';
-import ParentCard from 'src/components/shared/ParentCard';
 
 const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
   return (
@@ -13,21 +11,44 @@ const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}
-      leftImage={learner}
+      noPadding
       leftTitle="Add your learners."
       leftSubtitle="Upload or manually add learners into their respective classes."
     >
-      <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
-        Add Learners
-      </Typography>
-      <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3, lineHeight: 1.6 }}>
-        Add your learners into their classes
-      </Typography>
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          px: { xs: 3, md: '60px' },
+          pt: 4,
+          pb: 1,
+        }}
+      >
+        <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5, flexShrink: 0 }}>
+          Add Learners
+        </Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, lineHeight: 1.6, flexShrink: 0 }}>
+          Add your learners into their classes
+        </Typography>
 
-<ParentCard>
-  <UploadLearnersTab onSaveAndContinue={onNext} />
-</ParentCard>
-      
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            bgcolor: '#fff',
+            borderRadius: '12px !important',
+            border: '1px solid',
+            borderColor: 'divider',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <UploadLearnersTab onSaveAndContinue={onNext} />
+        </Box>
+      </Box>
     </SetupShell>
   );
 };

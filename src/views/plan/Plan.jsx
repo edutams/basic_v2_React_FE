@@ -44,6 +44,7 @@ const Plan = () => {
   const [open, setOpen] = useState(false);
   const [openPackageModal, setOpenPackageModal] = useState(false);
   const [openManagePackagesModal, setOpenManagePackagesModal] = useState(false);
+  const [openManageModuleModal, setOpenManageModuleModal] = useState(false);
   const [plans, setPlans] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -179,6 +180,34 @@ const Plan = () => {
   const handleCloseManagePackages = () => {
     setOpenManagePackagesModal(false);
     setSelectedPlan(null);
+  };
+
+  const handleOpenManageModule = (plan) => {
+    handleActionClose();
+    setSelectedPlan(plan);
+    setOpenManageModuleModal(true);
+  };
+
+  const handleCloseManageModule = () => {
+    setOpenManageModuleModal(false);
+    setSelectedPlan(null);
+  };
+
+  const handleSavePlanModules = async (moduleIds) => {
+    if (selectedPlan) {
+      try {
+        await eduTierApi.savePlanModules(selectedPlan.id, moduleIds);
+        setOpenManageModuleModal(false);
+        setSnackbarMessage('Plan modules updated successfully');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        fetchData();
+      } catch (error) {
+        setSnackbarMessage('Failed to update plan modules');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    }
   };
 
   const handleSavePackageFeatures = async (features) => {
@@ -418,6 +447,9 @@ const Plan = () => {
                           <MenuItem onClick={() => handleOpenManagePackages(plan)}>
                             Manage Packages
                           </MenuItem>
+                          <MenuItem onClick={() => handleOpenManageModule(plan)}>
+                            Manage Module
+                          </MenuItem>
                           <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
                             Delete Plan
                           </MenuItem>
@@ -530,6 +562,21 @@ const Plan = () => {
           <ManagePackagesModal
             selectedPlan={selectedPlan}
             onClose={handleCloseManagePackages}
+          />
+        </ReusableModal>
+        <ReusableModal
+          open={openManageModuleModal}
+          onClose={handleCloseManageModule}
+          title={`Manage Modules - ${selectedPlan?.name || 'Plan'}`}
+          size="large"
+          showDivider={true}
+          showCloseButton={true}
+        >
+          <ManageModule
+            selectedPlan={selectedPlan}
+            modules={modules}
+            onSave={handleSavePlanModules}
+            onCancel={handleCloseManageModule}
           />
         </ReusableModal>
       </ParentCard>

@@ -572,28 +572,29 @@ const EduTier = () => {
                 variant="scrollable"
                 aria-label="basic tabs example"
               >
-                {can('landlord.plan.manager') && (
-                  <>
-                    <Tab
-                      iconPosition="start"
-                      icon={<IconUserCircle size="22" />}
-                      label="Modules"
-                      {...a11yProps(0)}
-                    />
-                    <Tab
-                      iconPosition="start"
-                      icon={<IconBell size="22" />}
-                      label="Packages"
-                      {...a11yProps(1)}
-                    />
-                    <Tab
-                      iconPosition="start"
-                      icon={<IconArticle size="22" />}
-                      label="Plan"
-                      {...a11yProps(2)}
-                    />
-                  </>
-                )}
+                {can('landlord.plan.manager') && [
+                  <Tab
+                    key="modules"
+                    iconPosition="start"
+                    icon={<IconUserCircle size="22" />}
+                    label="Modules"
+                    {...a11yProps(0)}
+                  />,
+                  <Tab
+                    key="packages"
+                    iconPosition="start"
+                    icon={<IconBell size="22" />}
+                    label="Packages"
+                    {...a11yProps(1)}
+                  />,
+                  <Tab
+                    key="plan"
+                    iconPosition="start"
+                    icon={<IconArticle size="22" />}
+                    label="Plan"
+                    {...a11yProps(2)}
+                  />
+                ]}
 
                 {can('landlord.plan.my_plan') && (
                   <Tab

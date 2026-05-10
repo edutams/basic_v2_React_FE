@@ -18,6 +18,10 @@ const eduTierApi = {
     const response = await api.delete(`/landlord/v1/edu_tier/plans/delete_plan/${id}`);
     return response.data;
   },
+  getPackagesByPlan: async (planId) => {
+    const response = await api.get(`/landlord/v1/edu_tier/plans/package_plan/${planId}`);
+    return response.data;
+  },
 
   // Packages
   getPackages: async (params = {}) => {

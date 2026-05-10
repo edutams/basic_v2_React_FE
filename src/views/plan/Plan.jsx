@@ -35,6 +35,7 @@ import PlanForm from '../../components/add-plan/component/PlanForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PackageModal from '../../components/package/PackageModal';
 import ManageModule from '../../components/add-plan/component/ManageModule';
+import ManagePackagesModal from '../../components/plan/ManagePackagesModal';
 import eduTierApi from '../../api/eduTierApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
@@ -521,21 +522,15 @@ const Plan = () => {
         <ReusableModal
           open={openManagePackagesModal}
           onClose={handleCloseManagePackages}
-          title={`Module Configuration - ${selectedPlan?.name || 'Plan'}`}
+          title={`Manage Packages - ${selectedPlan?.name || 'Plan'}`}
           size="large"
           showDivider={true}
           showCloseButton={true}
         >
-          <Box sx={{ mt: 4 }}>
-            <ManageModule
-              selectedPlan={selectedPlan}
-              currentPermissions={selectedPlan?.modules?.map((m) => m.id) || []}
-              modules={modules}
-              packages={packages}
-              onSave={handleSavePackageFeatures}
-              onCancel={handleCloseManagePackages}
-            />
-          </Box>
+          <ManagePackagesModal
+            selectedPlan={selectedPlan}
+            onClose={handleCloseManagePackages}
+          />
         </ReusableModal>
       </ParentCard>
     </PageContainer>

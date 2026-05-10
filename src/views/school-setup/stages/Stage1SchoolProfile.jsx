@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Box, Typography, TextField, Link, CircularProgress } from '@mui/material';
+import { Box, Typography, TextField, Link, CircularProgress, useTheme } from '@mui/material';
 import { IconUpload, IconPhoto } from '@tabler/icons-react';
 import { getTenantInfo } from '../../../api/tenant_api';
 import { getFullImageUrl } from '../../../helpers/ImageHelper';
@@ -8,9 +8,24 @@ import { useNotification } from '../../../hooks/useNotification';
 import UploadLogoModal from '../../../components/tenant-components/school/UploadLogoModal';
 import SetupShell from './SetupShell';
 
+// ── Keyframes ────────────────────────────────────────────────────────────────
+const keyframes = {
+  '@keyframes fadeUp': {
+    from: { opacity: 0, transform: 'translateY(16px)' },
+    to:   { opacity: 1, transform: 'translateY(0)' },
+  },
+  '@keyframes bounce': {
+    '0%, 100%': { transform: 'translateY(0)' },
+    '40%':      { transform: 'translateY(-6px)' },
+    '60%':      { transform: 'translateY(-3px)' },
+  },
+};
+
 const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
   const notify = useNotification();
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
 
   const [tenantData, setTenantData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +88,9 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
         <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
           {/* Logo upload box */}
           <Box sx={{ flexShrink: 0 }}>
+
+
+
             <Box
               onClick={() => setLogoModalOpen(true)}
               sx={{
@@ -113,18 +131,89 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 gap: 0.75,
                 cursor: 'pointer',
                 border: '1px solid',
-                borderColor: 'divider',
+                borderColor: logo ? 'divider' : 'primary.main',
                 borderRadius: '8px !important',
                 py: 0.75,
                 bgcolor: '#fff',
+                transition: 'border-color 0.2s, box-shadow 0.2s',
                 '&:hover': { borderColor: 'primary.main' },
+                ...(
+                  !logo && {
+                    boxShadow: `0 0 0 3px ${primary}22`,
+                  }
+                ),
               }}
             >
-              <IconUpload size={15} color="#555" />
-              <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'text.primary' }}>
+              <IconUpload size={15} color={logo ? '#555' : primary} />
+              <Typography sx={{ fontSize: 13, fontWeight: 500, color: logo ? 'text.primary' : 'primary.main' }}>
                 Browse
               </Typography>
             </Box>
+
+            {/* Arrow hint — below Browse, only when no logo — matches welcome screen style */}
+            {!logo && (
+              <Box
+                sx={{
+                  ...keyframes,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: 160,
+                  mt: 0.5,
+                  pointerEvents: 'none',
+                  animation: `fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both, bounce 2.4s ease-in-out 1.6s infinite`,
+                }}
+              >
+                {/* Curved arrow pointing UP toward Browse button */}
+                <Box sx={{ mb: 0.5, ml: 4 }}>
+                  <svg width="48" height="52" viewBox="0 0 48 52" fill="none">
+                    {/* Curve from bottom-left sweeping up to top-right */}
+                    <path
+                      d="M8 48 C12 30, 28 16, 40 6"
+                      stroke={primary}
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      fill="none"
+                    />
+                    {/* Arrowhead at the top-right tip pointing up */}
+                    <path
+                      d="M30 8 L40 6 L38 16"
+                      stroke={primary}
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                </Box>
+
+                {/* Speech bubble */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    bgcolor: '#fff',
+                    border: '2px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: '14px !important',
+                    px: 2,
+                    py: 1.25,
+                    boxShadow: `0 6px 24px ${primary}22`,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: 'primary.main',
+                      whiteSpace: 'nowrap',
+                      letterSpacing: 0.2,
+                    }}
+                  >
+                    👆 Click here to upload logo
+                  </Typography>
+                </Box>
+              </Box>
+            )}
           </Box>
 
           {/* Read-only school fields */}

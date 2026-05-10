@@ -3,7 +3,7 @@ import { Box, Typography, TextField, Link, CircularProgress } from '@mui/materia
 import { getTenantInfo } from '../../../api/tenant_api';
 import SetupShell from './SetupShell';
 
-const AdminCard = ({ admin }) => {
+const AdminCard = ({ admin, index }) => {
   const fields = [
     { label: 'Surname',    value: admin.lastName },
     { label: 'First Name', value: admin.firstName },
@@ -54,7 +54,7 @@ const AdminCard = ({ admin }) => {
             fontWeight: 700,
           }}
         >
-          i
+          {index + 1}
         </Box>
         <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{admin.title}</Typography>
       </Box>
@@ -149,8 +149,8 @@ const Stage3AdminDetail = ({ onNext, onBack, onSkip }) => {
         </Box>
       ) : (
         <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
-          {admins.map((admin) => (
-            <AdminCard key={admin.title} admin={admin} />
+          {admins.map((admin, i) => (
+            <AdminCard key={admin.title} admin={admin} index={i} />
           ))}
         </Box>
       )}

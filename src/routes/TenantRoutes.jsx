@@ -107,6 +107,15 @@ const TenantRoutes = [
     children: [{ index: true, element: <Error /> }],
   },
   {
+    path: '/complete-setup',
+    element: (
+      <TenantProtectedRoute>
+        <BlankLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <CompleteSetup /> }],
+  },
+  {
     path: '/',
     element: (
       <TenantProtectedRoute>
@@ -115,8 +124,6 @@ const TenantRoutes = [
     ),
     children: [
       { index: true, element: <SchoolDashboardMain /> },
-
-      { path: 'complete-setup', element: <CompleteSetup /> },
 
       { path: 'acl-manager', element: <AlcManager /> },
 

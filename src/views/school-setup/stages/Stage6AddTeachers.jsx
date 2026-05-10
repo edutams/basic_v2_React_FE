@@ -1,19 +1,19 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
-import UploadLearnersTab from '../tabs/UploadLearnersTab';
+import UploadTeachersTab from '../tabs/UploadTeachersTab';
 
-const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
+const Stage6AddTeachers = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell
-      stage={5}
+      stage={6}
       totalStages={6}
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}
       noPadding
-      leftTitle="Add your learners."
-      leftSubtitle="Upload or manually add learners into their respective classes."
+      leftTitle="Add your teachers."
+      leftSubtitle="Onboard your teaching and non-teaching staff to your school portal."
     >
       <Box
         sx={{
@@ -27,10 +27,10 @@ const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
         }}
       >
         <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5, flexShrink: 0 }}>
-          Add Learners
+          Add Teachers
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, lineHeight: 1.6, flexShrink: 0 }}>
-          Add your learners into their classes
+          Onboard your teachers to your school
         </Typography>
 
         <Box
@@ -46,11 +46,11 @@ const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
             flexDirection: 'column',
           }}
         >
-          <UploadLearnersTab onSaveAndContinue={onNext} />
+          <UploadTeachersTab onSaveAndContinue={onNext} />
         </Box>
       </Box>
     </SetupShell>
   );
 };
 
-export default Stage5AddLearners;
+export default Stage6AddTeachers;

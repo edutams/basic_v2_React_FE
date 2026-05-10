@@ -5,6 +5,7 @@ import Stage2ManageSessions from './stages/Stage2ManageSessions';
 import Stage3AdminDetail    from './stages/Stage3AdminDetail';
 import Stage4ClassArms      from './stages/Stage4ClassArms';
 import Stage5AddLearners    from './stages/Stage5AddLearners';
+import Stage6AddTeachers    from './stages/Stage6AddTeachers';
 
 const InitialSetup = () => {
   const navigate = useNavigate();
@@ -24,7 +25,8 @@ const InitialSetup = () => {
   if (stage === 2) return <Stage2ManageSessions onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
   if (stage === 3) return <Stage3AdminDetail    onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
   if (stage === 4) return <Stage4ClassArms      onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 5) return <Stage5AddLearners    onNext={goFinish} onBack={goBack} onSkip={goSkip} />;
+  if (stage === 5) return <Stage5AddLearners    onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
+  if (stage === 6) return <Stage6AddTeachers    onNext={goFinish} onBack={goBack} onSkip={goSkip} />;
 
   goFinish();
   return null;

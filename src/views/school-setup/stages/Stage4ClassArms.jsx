@@ -23,7 +23,7 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell
       stage={4}
-      totalStages={5}
+      totalStages={6}
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={handleSaveAndContinue}

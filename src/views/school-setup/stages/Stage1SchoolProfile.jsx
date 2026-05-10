@@ -65,7 +65,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell
       stage={1}
-      totalStages={3}
+      totalStages={5}
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={handleSave}

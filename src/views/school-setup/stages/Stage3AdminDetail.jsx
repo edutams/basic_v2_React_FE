@@ -129,7 +129,7 @@ const Stage3AdminDetail = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell
       stage={3}
-      totalStages={3}
+      totalStages={5}
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}

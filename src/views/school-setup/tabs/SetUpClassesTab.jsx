@@ -7,8 +7,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableFooter,
-  TablePagination,
   TextField,
   IconButton,
   Button,
@@ -32,8 +30,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
@@ -188,20 +184,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     });
   }, [classes, searchTerm]);
 
-  const paginatedClasses = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredClasses.slice(start, start + rowsPerPage);
-  }, [filteredClasses, page, rowsPerPage]);
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -211,26 +193,10 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
   }
 
   return (
-    <Box>
-      {/* Search Bar */}
-      {/* <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-        <TextField
-          placeholder="Search classes..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(0);
-          }}
-          size="small"
-          sx={{ width: 300 }}
-          InputProps={{
-            startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
-          }}
-        />
-      </Box> */}
-
-      <TableContainer>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
         <Table
+          stickyHeader
           sx={{
             borderCollapse: 'separate',
             borderSpacing: '12px 10px',
@@ -238,16 +204,14 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
         >
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
-
-              <TableCell sx={{ fontWeight: 600, width: '25%' }}>No. of Arms</TableCell>
-
-              <TableCell sx={{ fontWeight: 600, width: '50%' }}>Class Arm Names</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>No. of Arms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '50%', bgcolor: '#fff' }}>Class Arm Names</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {paginatedClasses.map((classItem, index) => {
+            {filteredClasses.map((classItem, index) => {
               const isInactive = classItem.status === 'inactive';
               const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isInactive
@@ -398,23 +362,10 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
               );
             })}
           </TableBody>
-
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[10, 20, 50]}
-                count={filteredClasses.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </TableRow>
-          </TableFooter>
         </Table>
       </TableContainer>
 
-      <Box mt={2} display="flex" justifyContent="flex-end">
+      <Box mt={2} display="flex" justifyContent="flex-end" sx={{ display: 'none' }}>
         <Button
           variant="contained"
           onClick={handleSaveAndContinue}

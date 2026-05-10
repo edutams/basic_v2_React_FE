@@ -3,22 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import Stage1SchoolProfile  from './stages/Stage1SchoolProfile';
 import Stage2ManageSessions from './stages/Stage2ManageSessions';
 import Stage3AdminDetail    from './stages/Stage3AdminDetail';
+import Stage4ClassArms      from './stages/Stage4ClassArms';
+import Stage5AddLearners    from './stages/Stage5AddLearners';
 
-/**
- * InitialSetup — stage controller for /school-profile
- *
- * URL param:  ?stage=1 | 2 | 3
- *
- * Stage 1 → School Profile  (logo upload + read-only school fields)
- * Stage 2 → Manage Sessions (SetCalendarTab)
- * Stage 3 → Admin Detail    (School Owner / Head / Portal Admin cards)
- *
- * To add a new stage:
- *  1. Create stages/Stage4YourName.jsx
- *  2. Import it here
- *  3. Add `if (stage === 4) return <Stage4YourName ... />;`
- *  4. Update totalStages prop in SetupShell (via the stage component)
- */
 const InitialSetup = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,9 +22,10 @@ const InitialSetup = () => {
 
   if (stage === 1) return <Stage1SchoolProfile  onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
   if (stage === 2) return <Stage2ManageSessions onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 3) return <Stage3AdminDetail    onNext={goFinish} onBack={goBack} onSkip={goSkip} />;
+  if (stage === 3) return <Stage3AdminDetail    onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
+  if (stage === 4) return <Stage4ClassArms      onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
+  if (stage === 5) return <Stage5AddLearners    onNext={goFinish} onBack={goBack} onSkip={goSkip} />;
 
-  // Any unknown stage → complete setup
   goFinish();
   return null;
 };

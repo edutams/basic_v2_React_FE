@@ -61,6 +61,10 @@ const SetupShell = ({
   saving = false,
   backLabel,
   noPadding = false,
+  leftVariant = 'light', // 'light' = white panel (default), 'dark' = primary colour panel
+  leftImage,             // optional image override for the left panel illustration
+  leftTitle = 'Build a smarter school experience in minutes.',
+  leftSubtitle = 'From lesson planning to student engagement—everything in one place. Teach better. Manage easier.',
 }) => {
   const navigate = useNavigate();
   const { logout } = useContext(TenantAuthContext);
@@ -88,21 +92,22 @@ const SetupShell = ({
           ...keyframes,
           width: '32%',
           flexShrink: 0,
-          bgcolor: 'primary.main',
+          bgcolor: leftVariant === 'dark' ? 'primary.main' : '#fff',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           px: { xs: 3, md: '40px' },
           py: { xs: 4, md: '52px' },
-          pb: { md: '120px' },
           borderRadius: '0 !important',
           position: 'relative',
           overflow: 'hidden',
+          borderRight: leftVariant === 'dark' ? 'none' : '1px solid',
+          borderColor: 'divider',
         }}
       >
         <Typography
           sx={{
-            color: '#fff',
+            color: leftVariant === 'dark' ? '#fff' : 'primary.main',
             fontSize: { xs: 24, md: 32 },
             fontWeight: 800,
             lineHeight: 1.2,
@@ -111,20 +116,19 @@ const SetupShell = ({
             animation: anim('fadeSlideLeft', '0.55s', '0.1s'),
           }}
         >
-          Build a smarter school experience in minutes.
+          {leftTitle}
         </Typography>
 
         <Typography
           sx={{
-            color: 'rgba(255,255,255,0.72)',
+            color: leftVariant === 'dark' ? 'rgba(255,255,255,0.72)' : 'text.secondary',
             fontSize: 13,
             lineHeight: 1.7,
             maxWidth: 280,
             animation: anim('fadeUp', '0.55s', '0.25s'),
           }}
         >
-          From lesson planning to student engagement—everything in one place.
-          Teach better. Manage easier.
+          {leftSubtitle}
         </Typography>
 
         {/* Stage progress dots */}
@@ -143,28 +147,89 @@ const SetupShell = ({
                 width: i + 1 === stage ? 20 : 8,
                 height: 8,
                 borderRadius: '4px !important',
-                bgcolor: i + 1 === stage ? '#fff' : 'rgba(255,255,255,0.35)',
+                bgcolor: i + 1 === stage
+                  ? (leftVariant === 'dark' ? '#fff' : 'primary.main')
+                  : (leftVariant === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.15)'),
                 transition: 'all 0.3s ease',
               }}
             />
           ))}
         </Box>
 
-        <Box
-          component="img"
-          src={SetupIllustration}
-          alt="Setup illustration"
-          sx={{
+        {/* Two concentric semicircles + illustration — only on light variant */}
+        {leftVariant === 'light' && (
+          <Box sx={{
             position: 'absolute',
             bottom: 0,
             left: 0,
-            width: '100%',
-            maxHeight: '38%',
-            objectFit: 'contain',
-            objectPosition: 'bottom center',
-            animation: anim('floatUp', '0.8s', '0.5s'),
-          }}
-        />
+            right: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            pointerEvents: 'none',
+          }}>
+            {/* Outer semicircle — light lavender */}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                width: '92%',
+                paddingBottom: '46%',
+                borderRadius: '50% 50% 0 0 / 100% 100% 0 0 !important',
+                bgcolor: 'primary.light',
+                animation: anim('fadeIn', '0.6s', '0.3s'),
+              }}
+            />
+            {/* Inner semicircle — deeper indigo/blue */}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                width: '72%',
+                paddingBottom: '36%',
+                borderRadius: '50% 50% 0 0 / 100% 100% 0 0 !important',
+                bgcolor: 'primary.main',
+                animation: anim('fadeIn', '0.6s', '0.4s'),
+              }}
+            />
+            {/* Illustration centered on inner circle */}
+            <Box
+              component="img"
+              src={leftImage || SetupIllustration}
+              alt="Setup illustration"
+              sx={{
+                position: 'relative',
+                zIndex: 2,
+                width: '75%',
+                maxHeight: '50%',
+                objectFit: 'contain',
+                objectPosition: 'bottom center',
+                animation: anim('floatUp', '0.8s', '0.5s'),
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Dark variant illustration */}
+        {leftVariant === 'dark' && (
+          <Box
+            component="img"
+            src={leftImage || SetupIllustration}
+            alt="Setup illustration"
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: '100%',
+              maxHeight: '38%',
+              objectFit: 'contain',
+              objectPosition: 'bottom center',
+              zIndex: 2,
+              animation: anim('floatUp', '0.8s', '0.5s'),
+            }}
+          />
+        )}
       </Box>
 
       {/* ── RIGHT panel ── */}

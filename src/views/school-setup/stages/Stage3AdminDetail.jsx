@@ -3,6 +3,7 @@ import { Box, Typography, TextField, Link, CircularProgress } from '@mui/materia
 import { getTenantInfo } from '../../../api/tenant_api';
 import SetupShell from './SetupShell';
 
+
 const AdminCard = ({ admin, index }) => {
   const fields = [
     { label: 'Surname',    value: admin.lastName },
@@ -132,6 +133,8 @@ const Stage3AdminDetail = ({ onNext, onBack, onSkip }) => {
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}
+      leftTitle="Confirm your admin details."
+      leftSubtitle="Review your school owner, head, and portal admin information before proceeding."
     >
       <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
         Confirm School Head/Admin Detail

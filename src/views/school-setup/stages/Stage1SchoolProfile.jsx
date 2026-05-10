@@ -70,6 +70,9 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       onSkip={onSkip}
       onSaveAndContinue={handleSave}
       saving={saving}
+      leftVariant="dark"
+      leftTitle="Set up your school profile."
+      leftSubtitle="Upload your logo and confirm your school details to get started."
     >
       <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 1 }}>
         Set Up Your School Profile

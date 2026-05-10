@@ -443,7 +443,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
               </Box>
             ) : currentSession ? (
               <>
-                <Box sx={{ mb: 2 }}>
+                <Box sx={{ mb: 2 }} id="tour-session-select">
                   <TextField
                     select
                     fullWidth
@@ -459,7 +459,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                     ))}
                   </TextField>
                 </Box>
-                <Paper variant="outlined">
+                <Paper variant="outlined" id="tour-terms-table">
                   <TableContainer>
                     <Table sx={{ whiteSpace: 'nowrap' }}>
                       <TableHead>

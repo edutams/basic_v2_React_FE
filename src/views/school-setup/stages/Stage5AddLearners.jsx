@@ -2,6 +2,8 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import UploadLearnersTab from '../tabs/UploadLearnersTab';
+import learner from '../../../assets/images/setup/learner.png';
+import ParentCard from 'src/components/shared/ParentCard';
 
 const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
   return (
@@ -11,6 +13,7 @@ const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}
+      leftImage={learner}
       leftTitle="Add your learners."
       leftSubtitle="Upload or manually add learners into their respective classes."
     >
@@ -21,7 +24,10 @@ const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
         Add your learners into their classes
       </Typography>
 
-      <UploadLearnersTab onSaveAndContinue={onNext} />
+<ParentCard>
+  <UploadLearnersTab onSaveAndContinue={onNext} />
+</ParentCard>
+      
     </SetupShell>
   );
 };

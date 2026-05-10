@@ -1,16 +1,33 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import SetUpClassesTab from '../tabs/SetUpClassesTab';
 
 const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
+  const tabRef = useRef(null);
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveAndContinue = async () => {
+    if (tabRef.current?.save) {
+      setSaving(true);
+      try {
+        await tabRef.current.save();
+      } finally {
+        setSaving(false);
+      }
+    } else {
+      onNext();
+    }
+  };
+
   return (
     <SetupShell
       stage={4}
       totalStages={5}
       onBack={onBack}
       onSkip={onSkip}
-      onSaveAndContinue={onNext}
+      onSaveAndContinue={handleSaveAndContinue}
+      saving={saving}
       noPadding
       leftTitle="Create your class arms."
       leftSubtitle="Set up class arms and deactivate any class you currently do not have in your school."
@@ -48,7 +65,7 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
             flexDirection: 'column',
           }}
         >
-          <SetUpClassesTab onSaveAndContinue={onNext} />
+          <SetUpClassesTab ref={tabRef} onSaveAndContinue={onNext} />
         </Box>
       </Box>
     </SetupShell>

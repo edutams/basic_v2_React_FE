@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useImperativeHandle, forwardRef } from 'react';
 import {
   Box,
   Table,
@@ -23,7 +23,7 @@ import {
   saveClasses,
 } from '../../../context/TenantContext/services/tenant.service';
 
-const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
+const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [hasChanges, setHasChanges] = useState(false);
@@ -39,8 +39,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     severity: 'success',
   });
 
-  const generateDefaultArmNames = (count) => {
-    const letters = [];
+  const generateDefaultArmNames = (count) => {    const letters = [];
     for (let i = 0; i < count; i++) {
       // Generate A, B, C, ... Z, AA, AB, etc.
       let letter = '';
@@ -114,6 +113,11 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
       setSaving(false);
     }
   };
+
+  // Expose save function to parent via ref
+  useImperativeHandle(ref, () => ({
+    save: handleSaveAndContinue,
+  }));
 
   const handleChange = () => {
     setHasChanges(true);
@@ -392,6 +396,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
       </Snackbar>
     </Box>
   );
-};
+});
 
 export default SetUpClassesTab;

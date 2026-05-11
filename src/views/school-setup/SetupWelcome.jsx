@@ -81,11 +81,9 @@ const SetupWelcome = () => {
       sx={{
         ...keyframes,
         width: '100vw',
-        // Use dvh with vh fallback for mobile browser chrome
         minHeight: '100vh',
         height: { xs: 'auto', sm: '100vh' },
         display: 'flex',
-        // Stack vertically on mobile only; tablet + desktop are side-by-side
         flexDirection: { xs: 'column', sm: 'row' },
         overflow: { xs: 'auto', sm: 'hidden' },
         position: 'relative',
@@ -97,7 +95,6 @@ const SetupWelcome = () => {
       {/* ── LEFT / TOP PANEL ─────────────────────────────────────────── */}
       <Box
         sx={{
-          // Full width on mobile only, 62% on tablet + desktop
           width: { xs: '100%', sm: '62%' },
           flexShrink: 0,
           bgcolor: 'primary.main',
@@ -105,10 +102,9 @@ const SetupWelcome = () => {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          // Tighter padding on small screens; generous on desktop
           px: { xs: 3, sm: 5, md: '60px' },
           pt: { xs: 7, sm: '52px' },
-          pb: { xs: 5, sm: '140px' },
+          pb: { xs: 0, sm: '140px' },
           borderRadius: '0 !important',
           position: 'relative',
           zIndex: 1,
@@ -236,58 +232,143 @@ const SetupWelcome = () => {
             ))}
           </Box>
 
-          {/* ── "Start Setup" button — inline on mobile, absolute on desktop ── */}
+          {/* ── "Start Setup" button + mobile illustration row ── */}
           {isTablet && (
             <Box
-              onClick={handleStartSetup}
-              data-tour="welcome-start"
               sx={{
-                mt: 4,
-                display: 'inline-flex',
+                mt: 3,
+                display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                gap: 1,
-                bgcolor: '#FFD43B',
-                color: 'primary.dark',
-                px: 3,
-                py: 1.5,
-                borderRadius: '12px !important',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                animation: anim('fadeUp', '0.6s', '0.75s'),
-                '&:hover': { opacity: 0.9, transform: 'translateY(-2px)' },
-                '&:active': { transform: 'translateY(0)' },
+                gap: 0,
               }}
             >
-              <Typography
-                sx={{ fontSize: 14, fontWeight: 700, color: 'inherit', letterSpacing: 0.3 }}
-              >
-                Start Setup
-              </Typography>
+              {/* Start Setup button — sits on top */}
               <Box
+                onClick={handleStartSetup}
+                data-tour="welcome-start"
                 sx={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 26,
-                  height: 26,
-                  borderRadius: '50% !important',
-                  bgcolor: 'rgba(0,0,0,0.12)',
+                  gap: 1,
+                  bgcolor: '#FFD43B',
+                  color: 'primary.dark',
+                  px: 3,
+                  py: 1.5,
+                  borderRadius: '12px !important',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  animation: anim('fadeUp', '0.6s', '0.75s'),
+                  zIndex: 2,
+                  '&:hover': { opacity: 0.9, transform: 'translateY(-2px)' },
+                  '&:active': { transform: 'translateY(0)' },
                 }}
               >
-                <IconArrowRight size={15} />
+                <Typography
+                  sx={{ fontSize: 14, fontWeight: 700, color: 'inherit', letterSpacing: 0.3 }}
+                >
+                  Start Setup
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 26,
+                    height: 26,
+                    borderRadius: '50% !important',
+                    bgcolor: 'rgba(0,0,0,0.12)',
+                  }}
+                >
+                  <IconArrowRight size={15} />
+                </Box>
+              </Box>
+
+              {/* Full-width illustration — circle + image below the button */}
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: 'calc(100% + 48px)', // bleed past the panel's px padding
+                  mx: '-24px',
+                  height: 220,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Circle — explicit vw-based square so it's always a circle */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    width: '100vw',
+                    height: '100vw',
+                    borderRadius: '50% !important',
+                    background: 'radial-gradient(circle, #ffffff 60%, #e8edf8 100%)',
+                    boxShadow: `0 8px 40px ${primary}1f`,
+                    bottom: '-60vw',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 0,
+                  }}
+                />
+                {/* Illustration sits on top of the circle */}
+                <Box
+                  component="img"
+                  src={SetupImage}
+                  alt="School setup"
+                  sx={{
+                    height: 210,
+                    width: 'auto',
+                    objectFit: 'contain',
+                    objectPosition: 'bottom center',
+                    position: 'relative',
+                    zIndex: 1,
+                    animation: anim('floatUp', '0.8s', '0.9s'),
+                  }}
+                />
+
+                {/* Powered by — sits at the bottom of the circle on mobile */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 10,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    animation: anim('fadeIn', '0.6s', '1.1s'),
+                  }}
+                >
+                  <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, whiteSpace: 'nowrap' }}>
+                    Powered by
+                  </Typography>
+                  <Box
+                    component="img"
+                    src={EduTAMSLogo}
+                    alt="EduTAMS"
+                    sx={{
+                      height: 16,
+                      filter: 'brightness(0) invert(1)',
+                      opacity: 0.65,
+                      objectFit: 'contain',
+                    }}
+                  />
+                </Box>
               </Box>
             </Box>
           )}
         </Box>
 
-        {/* Powered-by footer */}
+        {/* Powered-by footer — desktop only (mobile version lives inside the illustration block) */}
         <Box
           sx={{
-            position: { xs: 'relative', md: 'absolute' },
-            bottom: { md: 28 },
-            left: { md: '60px' },
-            mt: { xs: 4, md: 0 },
-            display: 'flex',
+            display: { xs: 'none', sm: 'flex' },
+            position: 'absolute',
+            bottom: 28,
+            left: '60px',
             alignItems: 'center',
             gap: 1,
             zIndex: 2,
@@ -309,48 +390,45 @@ const SetupWelcome = () => {
         </Box>
       </Box>
 
-      {/* ── RIGHT / BOTTOM PANEL ─────────────────────────────────────── */}
+      {/* ── RIGHT / BOTTOM PANEL — hidden on mobile ──────────────────── */}
       <Box
         sx={{
+          display: { xs: 'none', sm: 'block' },
           flex: 1,
-          // Give the right panel a minimum height on mobile so the image shows
-          minHeight: { xs: 260, sm: 'unset' },
           background: 'linear-gradient(160deg, #f0f4ff 0%, #e8edf8 100%)',
           borderRadius: '0 !important',
           position: 'relative',
         }}
       />
 
-      {/* White circle behind illustration */}
+      {/* White circle behind illustration — hidden on mobile */}
       <Box
         sx={{
+          display: { xs: 'none', sm: 'block' },
           position: 'absolute',
-          // Scale the circle relative to the layout
-          width: { xs: '70vw', sm: '60vw', md: '40vw', lg: '35vw' },
-          height: { xs: '70vw', sm: '60vw', md: '40vw', lg: '35vw' },
+          width: { sm: '60vw', md: '40vw', lg: '35vw' },
+          height: { sm: '60vw', md: '40vw', lg: '35vw' },
           borderRadius: '50% !important',
           background: 'radial-gradient(circle, #ffffff 60%, #e8edf8 100%)',
           boxShadow: `0 8px 40px ${primary}1f`,
-          // On mobile the right panel is below the left, so anchor to bottom of viewport
-          bottom: { xs: '-12vw', sm: '-10vw', md: '-9vw' },
-          left: { xs: '15%', sm: '25%', md: '37%', lg: '37%' },
-
+          bottom: { sm: '-10vw', md: '-9vw' },
+          left: { sm: '25%', md: '37%', lg: '37%' },
           zIndex: 2,
           animation: anim('floatUp', '0.9s', '0.3s'),
         }}
       />
 
-      {/* Illustration */}
+      {/* Illustration — hidden on mobile */}
       <Box
         component="img"
         src={SetupImage}
         alt="School setup"
         sx={{
+          display: { xs: 'none', sm: 'block' },
           position: 'absolute',
           bottom: 0,
-          left: { xs: '8%', sm: '20%', md: '30%'},
-          height: { xs: '44%', sm: '48%', md: '65%' },
-          maxHeight: { xs: 220, sm: 'none' },
+          left: { sm: '20%', md: '30%' },
+          height: { sm: '48%', md: '65%' },
           objectFit: 'contain',
           objectPosition: 'bottom left',
           zIndex: 3,

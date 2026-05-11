@@ -1,13 +1,13 @@
 import agentApi from './auth';
 
 const gatewayApi = {
-  getAll: (params = {}) => agentApi.get('/landlord/v1/gateways', { params }),
+  getAll: (params = {}) => agentApi.get('/v1/landlord/gateways', { params }),
 
-  create: (data) => agentApi.post('/landlord/v1/gateways', data),
+  create: (data) => agentApi.post('/v1/landlord/gateways', data),
 
-  update: (id, data) => agentApi.put(`/landlord/v1/gateways/${id}`, data),
+  update: (id, data) => agentApi.put(`/v1/landlord/gateways/${id}`, data),
 
-  delete: (id) => agentApi.delete(`/landlord/v1/gateways/${id}`),
+  delete: (id) => agentApi.delete(`/v1/landlord/gateways/${id}`),
 };
 
 export default gatewayApi;

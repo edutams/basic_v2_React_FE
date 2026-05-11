@@ -11,7 +11,7 @@ const AuthVerifyOtp = () => {
 
   const isAgentFlow = location.pathname.startsWith('/agent');
   const api = isAgentFlow ? agentApi : tenantApi;
-  const apiEndpoint = isAgentFlow ? '/landlord/v1/auth/verify_otp' : '/verify_otp';
+  const apiEndpoint = isAgentFlow ? '/v1/landlord/auth/verify_otp' : '/verify_otp';
   const resetPath = isAgentFlow ? '/agent/reset_password' : '/reset_password';
 
   const [formData, setFormData] = useState({

@@ -272,7 +272,7 @@ const EduTier = () => {
                 justifyContent: 'center',
                 cursor: 'pointer',
               }}
-              // onClick={() => setOpenTotalSchoolModal(true)}
+            // onClick={() => setOpenTotalSchoolModal(true)}
             >
               <IconChartBar size={22} color="#FFFFFF" />
             </Box>

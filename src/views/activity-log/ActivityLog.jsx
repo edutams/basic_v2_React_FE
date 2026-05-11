@@ -68,7 +68,7 @@ const ActivityLog = () => {
       if (from) params.append('date_from', from);
       if (to) params.append('date_to', to);
 
-      const response = await api.get(`/landlord/v1/activity-logs?${params.toString()}`);
+      const response = await api.get(`/v1/landlord/activity-logs?${params.toString()}`);
       setLogs(response.data.data);
       setTotal(response.data.total);
       setError(null);

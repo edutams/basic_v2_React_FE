@@ -66,7 +66,7 @@ const TeachingStaffTab = ({
           }}
         >
           <Tab label="Profiling" value="profiling" />
-          {/* <Tab label="Allocation" value="allocation" /> */}
+          <Tab label="Allocation" value="allocation" />
         </Tabs>
       </Box>
 

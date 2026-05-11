@@ -267,7 +267,16 @@ const StaffManager = () => {
           ? values.date_of_appointment.format('YYYY-MM-DD')
           : null,
         status: values.status,
+        class_session_term_id: values.class_session_term_id,
+        class_programme_id: values.class_programme_id,
+        class_arm_id: values.class_arm_id,
+        subject_session_term_id: values.subject_session_term_id,
+        subject_programme_id: values.subject_programme_id,
+        subject_curriculum_id: values.subject_curriculum_id,
+        subject_id: values.subject_id,
+        subject_class_arm_id: values.subject_class_arm_id,
       };
+      // return console.log(apiData, 53553)
 
       // Add role for non-teaching staff
       if (activeTab === 'non-teaching') {
@@ -304,6 +313,15 @@ const StaffManager = () => {
           ? values.date_of_appointment.format('YYYY-MM-DD')
           : null,
         status: values.status,
+        class_session_term_id: values.class_session_term_id,
+        class_programme_id: values.class_programme_id,
+        class_id: values.class_id,
+        class_arm_id: values.class_arm_id,
+        subject_session_term_id: values.subject_session_term_id,
+        subject_programme_id: values.subject_programme_id,
+        subject_class_arm_id: values.subject_class_arm_id,
+        subject_curriculum_id: values.subject_curriculum_id,
+        subject_id: values.subject_id,
       };
 
       // Add role for non-teaching staff

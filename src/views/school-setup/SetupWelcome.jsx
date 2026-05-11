@@ -82,10 +82,10 @@ const SetupWelcome = () => {
         ...keyframes,
         width: '100vw',
         minHeight: '100vh',
-        height: { xs: 'auto', sm: '100vh' },
+        height: '100vh',
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
-        overflow: { xs: 'auto', sm: 'hidden' },
+        overflow: 'hidden',
         position: 'relative',
         m: 0,
         p: 0,
@@ -109,7 +109,7 @@ const SetupWelcome = () => {
           position: 'relative',
           zIndex: 1,
           overflow: 'hidden',
-          minHeight: { xs: 340, sm: 'unset' },
+          minHeight: { xs: '100vh', sm: 'unset' },
         }}
       >
         {/* Ripple rings (decorative — hidden on xs to reduce noise) */}
@@ -146,7 +146,7 @@ const SetupWelcome = () => {
           </>
         )}
 
-        <Box sx={{ position: 'relative', zIndex: 2 }}>
+        <Box sx={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', flex: { xs: 1, sm: 'unset' }, minHeight: { xs: 0, sm: 'unset' } }}>
           <Typography
             variant="h5"
             data-tour="welcome-heading"
@@ -236,68 +236,30 @@ const SetupWelcome = () => {
           {isTablet && (
             <Box
               sx={{
-                mt: 3,
+                mt: 2,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
+                flex: 1,
                 gap: 0,
+                position: 'relative',
               }}
             >
-              {/* Start Setup button — sits on top */}
-              <Box
-                onClick={handleStartSetup}
-                data-tour="welcome-start"
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  bgcolor: '#FFD43B',
-                  color: 'primary.dark',
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: '12px !important',
-                  cursor: 'pointer',
-                  transition: 'all 0.25s ease',
-                  animation: anim('fadeUp', '0.6s', '0.75s'),
-                  zIndex: 2,
-                  '&:hover': { opacity: 0.9, transform: 'translateY(-2px)' },
-                  '&:active': { transform: 'translateY(0)' },
-                }}
-              >
-                <Typography
-                  sx={{ fontSize: 14, fontWeight: 700, color: 'inherit', letterSpacing: 0.3 }}
-                >
-                  Start Setup
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 26,
-                    height: 26,
-                    borderRadius: '50% !important',
-                    bgcolor: 'rgba(0,0,0,0.12)',
-                  }}
-                >
-                  <IconArrowRight size={15} />
-                </Box>
-              </Box>
-
-              {/* Full-width illustration — circle + image below the button */}
+              {/* Full-width illustration — circle + image */}
               <Box
                 sx={{
                   position: 'relative',
                   width: 'calc(100% + 48px)', // bleed past the panel's px padding
                   mx: '-24px',
-                  height: 220,
+                  flex: 1,
+                  minHeight: 200,
                   display: 'flex',
                   alignItems: 'flex-end',
                   justifyContent: 'center',
                   overflow: 'hidden',
                 }}
               >
-                {/* Circle — explicit vw-based square so it's always a circle */}
+                {/* Circle — anchored to the very bottom of the container */}
                 <Box
                   sx={{
                     position: 'absolute',
@@ -306,7 +268,7 @@ const SetupWelcome = () => {
                     borderRadius: '50% !important',
                     background: 'radial-gradient(circle, #ffffff 60%, #e8edf8 100%)',
                     boxShadow: `0 8px 40px ${primary}1f`,
-                    bottom: '-60vw',
+                    bottom: '-52vw',
                     left: '50%',
                     transform: 'translateX(-50%)',
                     zIndex: 0,
@@ -318,7 +280,7 @@ const SetupWelcome = () => {
                   src={SetupImage}
                   alt="School setup"
                   sx={{
-                    height: 210,
+                    height: 250,
                     width: 'auto',
                     objectFit: 'contain',
                     objectPosition: 'bottom center',
@@ -327,6 +289,50 @@ const SetupWelcome = () => {
                     animation: anim('floatUp', '0.8s', '0.9s'),
                   }}
                 />
+
+                {/* Start Setup button — floats over the top of the circle */}
+                <Box
+                  onClick={handleStartSetup}
+                  data-tour="welcome-start"
+                  sx={{
+                    position: 'absolute',
+                    top: 16,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    bgcolor: '#FFD43B',
+                    color: 'primary.dark',
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: '12px !important',
+                    cursor: 'pointer',
+                    transition: 'all 0.25s ease',
+                    animation: anim('fadeUp', '0.6s', '0.75s'),
+                    zIndex: 3,
+                    whiteSpace: 'nowrap',
+                    '&:hover': { opacity: 0.9, transform: 'translateX(-50%) translateY(-2px)' },
+                    '&:active': { transform: 'translateX(-50%) translateY(0)' },
+                  }}
+                >
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: 'inherit', letterSpacing: 0.3 }}>
+                    Start Setup
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50% !important',
+                      bgcolor: 'rgba(0,0,0,0.12)',
+                    }}
+                  >
+                    <IconArrowRight size={15} />
+                  </Box>
+                </Box>
 
                 {/* Powered by — sits at the bottom of the circle on mobile */}
                 <Box
@@ -461,14 +467,14 @@ const SetupWelcome = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Typography sx={{ fontSize: { xs: 11, md: 13 }, color: 'rgba(0,0,0,0.45)' }}>
+            <Typography sx={{ fontSize: { xs: 11, md: 13 }, color: { xs: 'rgba(255,255,255,0.8)', sm: 'rgba(0,0,0,0.45)' } }}>
               Having Troubles?
             </Typography>
             <Link
               href="#"
               underline="hover"
               data-tour="welcome-help"
-              sx={{ fontSize: { xs: 11, md: 13 }, fontWeight: 700, color: 'primary.main' }}
+              sx={{ fontSize: { xs: 11, md: 13 }, fontWeight: 700, color: { xs: '#FFD43B', sm: 'primary.main' } }}
             >
               Get Help
             </Link>
@@ -490,10 +496,10 @@ const SetupWelcome = () => {
           </Box>
         </Box>
 
-        {/* "How to setup" pill — hide on very small screens to avoid crowding */}
+        {/* "How to setup" pill */}
         <Box
           sx={{
-            display: { xs: 'none', sm: 'inline-flex' },
+            display: 'inline-flex',
             alignItems: 'center',
             gap: 1,
             px: 1.5,

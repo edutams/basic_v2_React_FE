@@ -16,7 +16,7 @@ import {
   Button,
   Alert,
   CircularProgress,
-  Grid
+  Grid,
 } from '@mui/material';
 import aclApi from 'src/api/aclApi';
 import { Search as SearchIcon } from '@mui/icons-material';
@@ -95,7 +95,6 @@ const SchoolPermissionBased = () => {
   return (
     <Box>
       <Box sx={{ p: 0 }}>
-
         <Grid container spacing={1} mb={3} alignItems="center">
           <Grid size={{ xs: 12, md: 'auto' }}>
             <TextField
@@ -116,12 +115,7 @@ const SchoolPermissionBased = () => {
           </Grid>
 
           <Grid size="auto">
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleSearch}
-              sx={{ height: 35 }}
-            >
+            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 35 }}>
               Search
             </Button>
           </Grid>
@@ -155,6 +149,9 @@ const SchoolPermissionBased = () => {
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>
                         <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {item.description}
+                          </Typography>
                           <Typography variant="subtitle2">{item.name}</Typography>
                         </Box>
                       </TableCell>
@@ -168,7 +165,7 @@ const SchoolPermissionBased = () => {
                               cursor: 'pointer',
                               color: 'primary.main',
                               textDecoration: 'underline',
-                              '&:hover': { color: 'primary.dark' }
+                              '&:hover': { color: 'primary.dark' },
                             }}
                             onClick={() => handleTotalRoleClick(item)}
                           >
@@ -184,7 +181,7 @@ const SchoolPermissionBased = () => {
                             cursor: 'pointer',
                             color: 'primary.main',
                             textDecoration: 'underline',
-                            '&:hover': { color: 'primary.dark' }
+                            '&:hover': { color: 'primary.dark' },
                           }}
                           onClick={() => handleTotalUsersClick(item)}
                         >

@@ -130,13 +130,6 @@ const aclApi = {
     return response.data;
   },
 
-  getSchoolRolePermissions: async (roleId, params) => {
-    const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions`, {
-      params,
-    });
-    return response.data;
-  },
-
   attachSchoolRolePermissions: async (roleId, permissions) => {
     const response = await tenantApi.post(`/censis/acl/roles/${roleId}/permissions`, {
       permissions,
@@ -208,7 +201,7 @@ const aclApi = {
     });
     return response.data;
   },
-    getSchoolRolePermissions: async (roleId, params = {}) => {
+  getSchoolRolePermissions: async (roleId, params = {}) => {
     const response = await tenantApi.get(`/censis/acl/roles/${roleId}/permissions`, { params });
     return response.data;
   },

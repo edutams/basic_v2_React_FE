@@ -174,7 +174,7 @@ const Header = () => {
                 whiteSpace: 'nowrap',
               }}
             >
-              You are impersonating an agent
+              Logged in as Agent
             </Typography>
             <Typography
               variant="body2"

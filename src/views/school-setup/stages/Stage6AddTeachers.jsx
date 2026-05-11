@@ -21,8 +21,8 @@ const Stage6AddTeachers = ({ onNext, onBack, onSkip }) => {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          px: { xs: 2, md: '60px' },
-          pt: { xs: '80px', md: '90px' },
+          px: { xs: 2, sm: 3, md: '60px' },
+          pt: { xs: '80px', sm: '85px', md: '90px' },
           pb: 1,
         }}
       >

@@ -517,12 +517,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
               }
             >
               <Paper variant="outlined" sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
                   <TextField
                     label="No. of Weeks"
                     type="number"
                     size="small"
-                    sx={{ width: 120 }}
+                    sx={{ width: { xs: '100%', sm: 120 } }}
                     value={autoGenerateConfig.numWeeks}
                     onChange={(e) =>
                       setAutoGenerateConfig({
@@ -535,25 +535,22 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                     label="Start Date"
                     type="date"
                     size="small"
-                    sx={{ width: 160 }}
+                    sx={{ width: { xs: '100%', sm: 160 } }}
                     value={autoGenerateConfig.startDate}
                     onChange={(e) =>
                       setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
                     }
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                   />
                   <Button
                     variant="contained"
                     onClick={handleAutoGenerate}
                     disabled={loading || !activeSessionTermId}
-                  size="small"
-
+                    size="small"
+                    sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
                   >
                     Generate
                   </Button>
-                  {/* <IconButton color="primary" onClick={handleAddWeek} disabled={!activeSessionTermId}>
-                    <AddIcon />
-                  </IconButton> */}
                 </Box>
 
                 <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>

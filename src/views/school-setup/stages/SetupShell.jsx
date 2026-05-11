@@ -339,10 +339,10 @@ const SetupShell = ({
         <Box
           sx={{
             flex: 1,
-            overflow: noPadding ? 'hidden' : 'auto',
-            overflowY: noPadding ? 'hidden' : 'auto',
-            px: noPadding ? 0 : { xs: 2, md: '60px' },
-            pt: noPadding ? 0 : { xs: '80px', md: '90px' },
+            overflow: noPadding ? { xs: 'auto', sm: 'hidden' } : 'auto',
+            overflowY: noPadding ? { xs: 'auto', sm: 'hidden' } : 'auto',
+            px: noPadding ? 0 : { xs: 2, sm: 3, md: '60px' },
+            pt: noPadding ? 0 : { xs: '80px', sm: '85px', md: '90px' },
             pb: noPadding ? 0 : 2,
           }}
         >
@@ -352,7 +352,7 @@ const SetupShell = ({
         <Box
           sx={{
             flexShrink: 0,
-            px: { xs: 2, md: '60px' },
+            px: { xs: 2, sm: 3, md: '60px' },
             py: 2.5,
             bgcolor: '#f0f0f0',
             display: 'flex',

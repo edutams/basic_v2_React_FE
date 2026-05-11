@@ -234,6 +234,16 @@ const StaffManager = () => {
         date_of_appointment: selectedStaff.date_of_appointment || null,
         status: selectedStaff.status || 'active',
         role: activeTab === 'non-teaching' ? selectedStaff.role || '' : undefined,
+        // Allocation fields from class_teacher
+        class_session_term_id: selectedStaff.class_teacher?.session_term_id || '',
+        class_programme_id: selectedStaff.class_teacher?.class_arm?.programme_class?.programme_id || '',
+        class_arm_id: selectedStaff.class_teacher?.class_arm_id || '',
+        // Allocation fields from subject_teacher
+        subject_session_term_id: selectedStaff.subject_teacher?.session_term_id || '',
+        subject_programme_id: selectedStaff.subject_teacher?.class_arm?.programme_class?.programme_id || '',
+        subject_class_arm_id: selectedStaff.subject_teacher?.class_arm_id || '',
+        subject_curriculum_id: selectedStaff.subject_teacher?.subject?.curriculum_id || '',
+        subject_id: selectedStaff.subject_teacher?.subject_id || '',
       });
       setEditModalOpen(true);
     }

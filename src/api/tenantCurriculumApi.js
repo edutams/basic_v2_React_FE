@@ -197,6 +197,6 @@ export const importSelectedCurriculums = async (importData) => {
 
 // Fetch session terms
 export const fetchSessionTerms = async () => {
-  const response = await api.get('/curriculum/session-terms');
+  const response = await api.get('/curriculum/get-subscribed-session-terms');
   return response.data;
 };

@@ -51,7 +51,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
     const fetchInitialDependencies = async () => {
       if (values.class_programme_id) {
         try {
-          const res = await fetchClassesByProgramme(values.class_programme_id);
+          const res = await fetchClassArmsByProgramme(values.class_programme_id);
           setClasses(res.data || res || []);
         } catch (error) { }
       }
@@ -61,9 +61,19 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
           setSubjects(res.data || res || []);
         } catch (error) { }
       }
+      // Also load classes for subject programme if it exists
+      if (values.subject_programme_id && values.subject_programme_id !== values.class_programme_id) {
+        try {
+          const res = await fetchClassArmsByProgramme(values.subject_programme_id);
+          // We could maintain separate state for subject classes, but for now use the same classes state
+          if (!classes.length) {
+            setClasses(res.data || res || []);
+          }
+        } catch (error) { }
+      }
     };
     fetchInitialDependencies();
-  }, [values.class_programme_id, values.subject_curriculum_id]);
+  }, [values.class_programme_id, values.subject_curriculum_id, values.subject_programme_id]);
 
   const handleProgrammeChange = async (programmeId) => {
     setFieldValue('class_programme_id', programmeId);
@@ -95,6 +105,21 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
     }
   };
 
+  const handleSubjectProgrammeChange = async (programmeId) => {
+    setFieldValue('subject_programme_id', programmeId);
+    setFieldValue('subject_class_arm_id', '');
+    if (programmeId) {
+      try {
+        const res = await fetchClassArmsByProgramme(programmeId);
+        setClasses(res.data || res || []);
+      } catch (error) {
+        notify.error('Failed to load classes');
+      }
+    } else {
+      setClasses([]);
+    }
+  };
+
   return (
     <>
       <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: 'primary.main' }}>
@@ -119,7 +144,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
             <MenuItem value="">Select Session Term</MenuItem>
             {sessionTerms.map((st) => (
               <MenuItem key={st.id} value={st.id}>
-                {st.display_name}
+                {st.session.sesname} - {st?.display_term?.display_name}
               </MenuItem>
             ))}
           </TextField>
@@ -183,7 +208,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
             <MenuItem value="">Select Session Term</MenuItem>
             {sessionTerms.map((st) => (
               <MenuItem key={st.id} value={st.id}>
-                {st.display_name}
+                {st.session.sesname} - {st?.display_term?.display_name}
               </MenuItem>
             ))}
           </TextField>
@@ -195,7 +220,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
             label="Programme"
             name="subject_programme_id"
             value={values.subject_programme_id}
-            onChange={handleChange}
+            onChange={(e) => handleSubjectProgrammeChange(e.target.value)}
             disabled={loadingOptions || isLoading}
           >
             <MenuItem value="">Select Programme</MenuItem>
@@ -214,7 +239,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
             name="subject_class_arm_id"
             value={values.subject_class_arm_id}
             onChange={handleChange}
-            disabled={!values.class_programme_id || isLoading}
+            disabled={!values.subject_programme_id || isLoading}
           >
             <MenuItem value="">Select Class</MenuItem>
             {classes.map((c) => (

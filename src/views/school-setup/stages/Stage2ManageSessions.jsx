@@ -18,7 +18,7 @@ const Stage2ManageSessions = ({ onNext, onBack, onSkip }) => {
       leftSubtitle="Select the academic session and subscribe to get your school calendar running."
     >
       <Box sx={{ px: { xs: 3, md: '60px' }, pt: 4, pb: 1 }}>
-        <Typography data-tour="stage2-heading" sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
+        <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
           Manage Sessions
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3 }}>

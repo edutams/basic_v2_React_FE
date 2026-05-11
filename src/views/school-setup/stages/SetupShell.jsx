@@ -368,7 +368,6 @@ const SetupShell = ({
               endIcon={<IconChevronRight size={16} />}
               onClick={onSaveAndContinue}
               disabled={saving}
-              data-tour="shell-save-continue"
               sx={{
                 fontSize: 14,
                 fontWeight: 600,

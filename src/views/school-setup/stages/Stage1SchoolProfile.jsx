@@ -241,7 +241,6 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
             <Box sx={{ flexShrink: 0 }}>
               <Box
                 onClick={() => setLogoModalOpen(true)}
-                data-tour="stage1-logo"
                 sx={{
                   width: 160,
                   height: 160,
@@ -362,7 +361,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
               )}
             </Box>
 
-            <Box data-tour="stage1-details">
+            <Box>
             <ParentCard>
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -407,7 +406,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
             </Box>
           </Box>
 
-          <Box data-tour="stage1-admins">
+          <Box>
           <ParentCard>
             <Typography sx={{ fontSize: 20, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
               Confirm School Head / Admin Detail

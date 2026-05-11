@@ -21,13 +21,12 @@ export const packageValidationSchema = yup.object({
   package_code: yup
     .string()
     .min(3, 'Package code must be at least 3 characters')
-    .max(20, 'Package code must be less than 20 characters')
-    .required('Package code is required'),
+    .max(20, 'Package code must be less than 20 characters'),
   // package_order: yup
-    // .number()
-    // .integer('Order must be an integer')
-    // .min(0, 'Order must be at least 0')
-    // .required('Order is required'),
+  // .number()
+  // .integer('Order must be an integer')
+  // .min(0, 'Order must be at least 0')
+  // .required('Order is required'),
 });
 
 export const createPackageValidationSchema = packageValidationSchema;

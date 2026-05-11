@@ -165,7 +165,7 @@ const ModuleManagement = ({
               variant="contained"
               startIcon={<AddIcon />}
               onClick={onAttachModule}
-              sx={{ ml: 2 }}
+              size="small"
             >
               Attach Module
             </Button>
@@ -246,7 +246,7 @@ const ModuleManagement = ({
                               borderRadius: '8px',
                             }}
                             size="small"
-                            label={status.toUpperCase()}
+                            label={status}
                           />
                         </TableCell>
                         <TableCell align="center">
@@ -277,13 +277,13 @@ const ModuleManagement = ({
                                 <>Activate</>
                               )}
                             </MenuItem>
-                            <MenuItem
+                            {/* <MenuItem
                               onClick={() => handleDeleteModule(mod)}
                               sx={{ color: 'error.main' }}
                             >
-                              {/* <DeleteIcon sx={{ mr: 1, fontSize: 18 }} /> */}
+                              <DeleteIcon sx={{ mr: 1, fontSize: 18 }} />
                               Delete
-                            </MenuItem>
+                            </MenuItem> */}
                           </Menu>
                         </TableCell>
                       </TableRow>
@@ -326,9 +326,8 @@ const ModuleManagement = ({
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Delete Module"
-        message={`Are you sure you want to delete "${
-          moduleToDelete?.module_name || moduleToDelete?.mod_name
-        }"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${moduleToDelete?.module_name || moduleToDelete?.mod_name
+          }"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         severity="error"

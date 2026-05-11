@@ -57,14 +57,15 @@ const eduTierApi = {
   },
   getPackageModules: async (packageId) => {
     const response = await api.get(
-      `/v1/landlord/edu_tier/packages/${packageId}/get_package_modules`,
+      `/v1/landlord/edu_tier/packages/${packageId}/module_package`,
     );
     return response.data;
   },
   saveModule: async (data) => {
-    if (data.id) {
+    const moduleId = data.id || data.mod_id;
+    if (moduleId) {
       const response = await api.put(
-        `/v1/landlord/edu_tier/modules/update_module/${data.id}`,
+        `/v1/landlord/edu_tier/modules/update_module/${moduleId}`,
         data,
       );
       return response.data;

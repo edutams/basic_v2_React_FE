@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
 
       try {
         // Always fetch fresh from server — permissions are never read from localStorage
-        const res = await api.get('/landlord/v1/auth/me');
+        const res = await api.get('/v1/landlord/auth/me');
         const { user: freshUser, permissions: freshPermissions } = res.data;
 
         const storedOriginal = localStorage.getItem('original_user');
@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post('/landlord/v1/auth/login', credentials);
+      const res = await api.post('/v1/landlord/auth/login', credentials);
 
       const { access_token, expires_in, user, permissions, roles } = res.data;
 
@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await api.post('/landlord/v1/auth/logout');
+      await api.post('/v1/landlord/auth/logout');
     } catch {
       /* best-effort */
     } finally {
@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await api.post('/landlord/v1/auth/register', credentials);
+      await api.post('/v1/landlord/auth/register', credentials);
       setUser(credentials);
       setIsAuthenticated(true);
       return { success: true, user: credentials };
@@ -192,7 +192,7 @@ export const AuthProvider = ({ children }) => {
   const updateAgentProfile = async (data, isMultipart = false) => {
     setError(null);
     try {
-      const res = await api.post('/landlord/v1/update_agent_profile', data, {
+      const res = await api.post('/v1/landlord/update_agent_profile', data, {
         headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
       });
       const userData = res.data?.user || res.data?.data;
@@ -208,7 +208,7 @@ export const AuthProvider = ({ children }) => {
   const changePassword = async (passwordData) => {
     setError(null);
     try {
-      await api.put('/landlord/v1/change_password', passwordData);
+      await api.put('/v1/landlord/change_password', passwordData);
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.error || 'Password change failed';
@@ -219,7 +219,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = async () => {
     try {
-      const res = await api.post('/landlord/v1/auth/refresh_token');
+      const res = await api.post('/v1/landlord/auth/refresh_token');
       const { access_token, expires_in } = res.data;
       tokenManager.set(access_token);
       localStorage.setItem('token_expires_in', String(expires_in));
@@ -237,7 +237,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post(`/landlord/v1/impersonate/agent/${id}`);
+      const res = await api.post(`/v1/landlord/impersonate/agent/${id}`);
 
       const { access_token, expires_in, user: apiUser, data: apiData, impersonator_id } = res.data;
 
@@ -256,7 +256,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(newUser));
 
       // Fetch the agent's actual permissions fresh
-      const meRes = await api.get('/landlord/v1/auth/me');
+      const meRes = await api.get('/v1/landlord/auth/me');
       const freshPermissions = meRes.data?.permissions || [];
 
       //  THE FIX: write the impersonated user into localStorage
@@ -287,7 +287,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post(`/landlord/v1/impersonate/tenant/${id}`);
+      const res = await api.post(`/v1/landlord/impersonate/tenant/${id}`);
       const { access_token, expires_in, user: apiUser, data: apiData, redirect_url } = res.data;
 
       // Check if there's a redirect URL (open in new tab approach)
@@ -322,7 +322,7 @@ export const AuthProvider = ({ children }) => {
   const stopImpersonation = async () => {
     setIsLoading(true);
     try {
-      const res = await api.post('/landlord/v1/impersonate/stop');
+      const res = await api.post('/v1/landlord/impersonate/stop');
       const { access_token, user: apiUser, data: apiData } = res.data;
 
       tokenManager.set(access_token);

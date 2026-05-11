@@ -11,7 +11,7 @@ const AuthResetPassword = () => {
 
   const isAgentFlow = location.pathname.startsWith('/agent');
   const api = isAgentFlow ? agentApi : tenantApi;
-  const apiEndpoint = isAgentFlow ? '/landlord/v1/auth/reset_password' : '/reset_password';
+  const apiEndpoint = isAgentFlow ? '/v1/landlord/auth/reset_password' : '/reset_password';
   const loginPath = isAgentFlow ? '/agent/login' : '/login';
 
   const [formData, setFormData] = useState({

@@ -44,7 +44,6 @@ api.interceptors.response.use(
 
     // Only attempt refresh on 401, non-auth routes, and only once per request
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
-
       if (isRefreshing) {
         // Queue this request until the ongoing refresh completes
         return new Promise((resolve, reject) => {
@@ -61,7 +60,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshRes = await api.post('/landlord/v1/auth/refresh_token');
+        const refreshRes = await api.post('/v1/landlord/auth/refresh_token');
         const newToken = refreshRes.data.access_token;
 
         localStorage.setItem('access_token', newToken);

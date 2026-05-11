@@ -1,12 +1,20 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Box, Typography, TextField, Link, CircularProgress, useTheme } from '@mui/material';
+import { useState, useEffect, useContext } from 'react';
+import {
+  Box,
+  Typography,
+  TextField,
+  Link,
+  CircularProgress,
+  useTheme,
+  Divider,
+} from '@mui/material';
 import { IconUpload, IconPhoto } from '@tabler/icons-react';
 import { getTenantInfo } from '../../../api/tenant_api';
 import { getFullImageUrl } from '../../../helpers/ImageHelper';
 import { TenantAuthContext } from '../../../context/TenantContext/auth';
-import { useNotification } from '../../../hooks/useNotification';
 import UploadLogoModal from '../../../components/tenant-components/school/UploadLogoModal';
 import SetupShell from './SetupShell';
+import ParentCard from '../../../components/shared/ParentCard';
 
 // ── Keyframes ────────────────────────────────────────────────────────────────
 const keyframes = {
@@ -21,13 +29,104 @@ const keyframes = {
   },
 };
 
+// ── Admin card ────────────────────────────────────────────────────────────────
+const AdminCard = ({ admin, index }) => {
+  const fields = [
+    { label: 'Surname', value: admin.lastName },
+    { label: 'First Name', value: admin.firstName },
+    { label: 'Other Name', value: admin.otherName },
+    { label: 'Phone', value: admin.phone },
+    { label: 'Email', value: admin.email },
+  ];
+
+  return (
+    <Box
+      sx={{
+        flex: '1 1 220px',
+        bgcolor: '#fff',
+        borderRadius: '12px !important',
+        border: '1px solid',
+        borderColor: 'divider',
+        p: 2.5,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+      }}
+    >
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.75,
+          bgcolor: 'primary.main',
+          color: '#fff',
+          px: 1.5,
+          py: 0.5,
+          borderRadius: '20px !important',
+          alignSelf: 'flex-start',
+          mb: 0.5,
+        }}
+      >
+        <Box
+          sx={{
+            width: 18,
+            height: 18,
+            borderRadius: '50% !important',
+            bgcolor: 'rgba(255,255,255,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 10,
+            fontWeight: 700,
+          }}
+        >
+          {index + 1}
+        </Box>
+        <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{admin.title}</Typography>
+      </Box>
+
+      {fields.map(({ label, value }) => (
+        <Box
+          key={label}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: 'text.primary',
+            }}
+          >
+            {label}:
+          </Typography>
+
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: 'text.secondary',
+            }}
+          >
+            {value || 'N/A'}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+// ── Main stage ────────────────────────────────────────────────────────────────
 const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
-  const notify = useNotification();
   const theme = useTheme();
   const primary = theme.palette.primary.main;
 
   const [tenantData, setTenantData] = useState(null);
+  const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [logo, setLogo] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -37,7 +136,8 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
     getTenantInfo()
       .then((res) => {
         const d = res.data;
-        // school_type may be a JSON string, array, or plain string
+
+        // Normalise school_type (may be JSON string, array, or plain string)
         let schoolType = d.school_type;
         if (typeof schoolType === 'string') {
           try {
@@ -58,7 +158,35 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
           address: d.address || '',
           schoolType: schoolTypeLabel,
         });
+
         setLogo(getFullImageUrl(d.school_logo));
+
+        setAdmins([
+          {
+            title: 'School Owner Detail',
+            lastName: d.administrator_info?.school_owner?.school_owner_last_name || '',
+            firstName: d.administrator_info?.school_owner?.school_owner_first_name || '',
+            otherName: d.administrator_info?.school_owner?.school_owner_middle_name || '',
+            phone: d.administrator_info?.school_owner?.school_owner_phone || '',
+            email: d.administrator_info?.school_owner?.school_owner_email || '',
+          },
+          {
+            title: 'School Head Detail',
+            lastName: d.administrator_info?.school_head?.school_head_last_name || '',
+            firstName: d.administrator_info?.school_head?.school_head_first_name || '',
+            otherName: d.administrator_info?.school_head?.school_head_middle_name || '',
+            phone: d.administrator_info?.school_head?.school_head_phone || '',
+            email: d.administrator_info?.school_head?.school_head_email || '',
+          },
+          {
+            title: 'Portal Admin',
+            lastName: d.administrator_info?.school_spa?.admin_last_name || '',
+            firstName: d.administrator_info?.school_spa?.admin_first_name || '',
+            otherName: d.administrator_info?.school_spa?.admin_middle_name || '',
+            phone: d.administrator_info?.school_spa?.admin_phone || '',
+            email: d.administrator_info?.school_spa?.admin_email || '',
+          },
+        ]);
       })
       .catch((e) => console.error(e))
       .finally(() => setLoading(false));
@@ -81,14 +209,14 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell
       stage={1}
-      totalStages={6}
+      totalStages={5}
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={handleSave}
       saving={saving}
       leftVariant="dark"
       leftTitle="Set up your school profile."
-      leftSubtitle="Upload your logo and confirm your school details to get started."
+      leftSubtitle="Upload your logo, confirm your school details and admin information to get started."
     >
       <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 1 }}>
         Set Up Your School Profile
@@ -108,248 +236,193 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
           <CircularProgress />
         </Box>
       ) : (
-        <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
-          {/* Logo upload box */}
-          <Box sx={{ flexShrink: 0 }}>
-            <Box
-              onClick={() => setLogoModalOpen(true)}
-              sx={{
-                width: 160,
-                height: 160,
-                border: '1.5px dashed',
-                borderColor: 'divider',
-                borderRadius: '12px !important',
-                bgcolor: '#fff',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                '&:hover': { borderColor: 'primary.main' },
-              }}
-            >
-              {logo ? (
-                <Box
-                  component="img"
-                  src={logo}
-                  alt="School logo"
-                  sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                />
-              ) : (
-                <IconPhoto size={48} color="#bbb" strokeWidth={1} />
-              )}
-            </Box>
-
-            <Box
-              onClick={() => setLogoModalOpen(true)}
-              sx={{
-                mt: 1.5,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 0.75,
-                cursor: 'pointer',
-                border: '1px solid',
-                borderColor: logo ? 'divider' : 'primary.main',
-                borderRadius: '8px !important',
-                py: 0.75,
-                bgcolor: '#fff',
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-                '&:hover': { borderColor: 'primary.main' },
-                ...(!logo && {
-                  boxShadow: `0 0 0 3px ${primary}22`,
-                }),
-              }}
-            >
-              <IconUpload size={15} color={logo ? '#555' : primary} />
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: logo ? 'text.primary' : 'primary.main',
-                }}
-              >
-                Browse
-              </Typography>
-            </Box>
-
-            {/* Arrow hint — below Browse, only when no logo */}
-            {!logo && (
+        <>
+          <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start', mb: 3 }}>
+            <Box sx={{ flexShrink: 0 }}>
               <Box
+                onClick={() => setLogoModalOpen(true)}
                 sx={{
-                  ...keyframes,
+                  width: 160,
+                  height: 160,
+                  border: '1.5px dashed',
+                  borderColor: 'divider',
+                  borderRadius: '12px !important',
+                  bgcolor: '#fff',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  width: 160,
-                  mt: 0.5,
-                  pointerEvents: 'none',
-                  animation: `fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both, bounce 2.4s ease-in-out 1.6s infinite`,
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  '&:hover': { borderColor: 'primary.main' },
                 }}
               >
-                <Box sx={{ mb: 0.5, ml: 4 }}>
-                  <svg width="48" height="52" viewBox="0 0 48 52" fill="none">
-                    {/* Curve from bottom-left sweeping up to top-right */}
-                    <path
-                      d="M8 48 C12 30, 28 16, 40 6"
-                      stroke={primary}
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-                    <path
-                      d="M30 8 L40 6 L38 16"
-                      stroke={primary}
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                  </svg>
-                </Box>
-
-                {/* Speech bubble */}
-                <Box
-                  sx={{
-                    position: 'relative',
-                    bgcolor: '#fff',
-                    border: '2px solid',
-                    borderColor: 'primary.main',
-                    borderRadius: '14px !important',
-                    px: 2,
-                    py: 1.25,
-                    boxShadow: `0 6px 24px ${primary}22`,
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: 'primary.main',
-                      whiteSpace: 'nowrap',
-                      letterSpacing: 0.2,
-                    }}
-                  >
-                    👆 Click here to upload logo
-                  </Typography>
-                </Box>
+                {logo ? (
+                  <Box
+                    component="img"
+                    src={logo}
+                    alt="School logo"
+                    sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <IconPhoto size={48} color="#bbb" strokeWidth={1} />
+                )}
               </Box>
-            )}
-          </Box>
-
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            {/* School Name */}
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  mb: 0.75,
-                  color: 'text.primary',
-                }}
-              >
-                School Name
-              </Typography>
 
               <Box
+                onClick={() => setLogoModalOpen(true)}
                 sx={{
-                  p: 1.5,
-                  bgcolor: '#fff',
+                  mt: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 0.75,
+                  cursor: 'pointer',
                   border: '1px solid',
-                  borderColor: 'divider',
+                  borderColor: logo ? 'divider' : 'primary.main',
+                  borderRadius: '8px !important',
+                  py: 0.75,
+                  bgcolor: '#fff',
+                  transition: 'border-color 0.2s, box-shadow 0.2s',
+                  '&:hover': { borderColor: 'primary.main' },
+                  ...(!logo && { boxShadow: `0 0 0 3px ${primary}22` }),
                 }}
               >
-                <Typography sx={{ fontSize: 14 }}>
-                  {tenantData?.name || 'No school name available'}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* Acronym + School Type */}
-            <Box display="flex" gap={2}>
-              <Box flex={1}>
+                <IconUpload size={15} color={logo ? '#555' : primary} />
                 <Typography
                   sx={{
                     fontSize: 13,
-                    fontWeight: 600,
-                    mb: 0.75,
-                    color: 'text.primary',
+                    fontWeight: 500,
+                    color: logo ? 'text.primary' : 'primary.main',
                   }}
                 >
-                  Acronym
+                  Browse
                 </Typography>
+              </Box>
 
+              {/* Arrow hint — only when no logo */}
+              {!logo && (
                 <Box
                   sx={{
-                    p: 1.5,
-                    bgcolor: '#fff',
-                    border: '1px solid',
-                    borderColor: 'divider',
+                    ...keyframes,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: 160,
+                    mt: 0.5,
+                    pointerEvents: 'none',
+                    animation: `fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both, bounce 2.4s ease-in-out 1.6s infinite`,
                   }}
                 >
-                  <Typography sx={{ fontSize: 14 }}>
+                  <Box sx={{ mb: 0.5, ml: 4 }}>
+                    <svg width="48" height="52" viewBox="0 0 48 52" fill="none">
+                      <path
+                        d="M8 48 C12 30, 28 16, 40 6"
+                        stroke={primary}
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                      <path
+                        d="M30 8 L40 6 L38 16"
+                        stroke={primary}
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                    </svg>
+                  </Box>
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      bgcolor: '#fff',
+                      border: '2px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: '14px !important',
+                      px: 2,
+                      py: 1.25,
+                      boxShadow: `0 6px 24px ${primary}22`,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: 'primary.main',
+                        whiteSpace: 'nowrap',
+                        letterSpacing: 0.2,
+                      }}
+                    >
+                      👆 Click here to upload logo
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+
+            <ParentCard>
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant='h6' sx={{ fontWeight: 700 }}>School Name:</Typography>
+
+                  <Typography variant='h6' sx={{color: 'text.secondary' }}>
+                    {tenantData?.name || 'No school name available'}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant='h6' sx={{ fontWeight: 700 }}>Acronym:</Typography>
+
+                  <Typography variant='h6' sx={{ color: 'text.secondary' }}>
                     {tenantData?.shortName || 'No acronym available'}
                   </Typography>
                 </Box>
-              </Box>
 
-              <Box flex={1}>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    mb: 0.75,
-                    color: 'text.primary',
-                  }}
-                >
-                  School Type
-                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant='h6' sx={{fontWeight: 700 }}>School Type:</Typography>
 
-                <Box
-                  sx={{
-                    p: 1.5,
-                    bgcolor: '#fff',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Typography sx={{ fontSize: 14 }}>
+                  <Typography
+                  variant='h6'
+                    sx={{
+                      color: 'text.secondary',
+                      textTransform: 'capitalize',
+                    }}
+                  >
                     {tenantData?.schoolType || 'No school type available'}
                   </Typography>
                 </Box>
-              </Box>
-            </Box>
 
-            {/* Address */}
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  mb: 0.75,
-                  color: 'text.primary',
-                }}
-              >
-                Address
-              </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography variant='h6' sx={{ fontWeight: 700 }}>Address:</Typography>
 
-              <Box
-                sx={{
-                  p: 1.5,
-                  bgcolor: '#fff',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  // minHeight: 80,
-                }}
-              >
-                <Typography sx={{ fontSize: 14 }}>
-                  {tenantData?.address || 'No address available'}
-                </Typography>
+                  <Typography variant='h6' sx={{ color: 'text.secondary' }}>
+                    {tenantData?.address || 'No address available'}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
+            </ParentCard>
           </Box>
-        </Box>
+
+          <ParentCard >
+            <Typography sx={{ fontSize: 20, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
+              Confirm School Head / Admin Detail
+            </Typography>
+            <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3, lineHeight: 1.6 }}>
+              Confirm your school owner details. If the details are incorrect click{' '}
+              <Link href="#" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                Get Help
+              </Link>
+              .
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
+              {admins.map((admin, i) => (
+                <AdminCard key={admin.title} admin={admin} index={i} />
+              ))}
+            </Box>
+          </ParentCard>
+        </>
       )}
 
       <UploadLogoModal

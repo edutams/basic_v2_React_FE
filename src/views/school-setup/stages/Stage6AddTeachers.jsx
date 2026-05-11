@@ -6,8 +6,8 @@ import UploadTeachersTab from '../tabs/UploadTeachersTab';
 const Stage6AddTeachers = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell
-      stage={6}
-      totalStages={6}
+      stage={5}
+      totalStages={5}
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}

@@ -253,8 +253,8 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
               const cellBg = isInactive
                 ? isDark ? 'action.disabledBackground' : '#e0e0e0'
                 : isHighlighted
-                ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
-                : isDark ? 'action.hover' : '#f6f7f9';
+                  ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
+                  : isDark ? 'action.hover' : '#f6f7f9';
               const className = classItem.class_code || '';
 
               return (
@@ -274,7 +274,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         gap: 1,
                       }}
                     >
-                      <IconButton
+                      {/* <IconButton
                         size="small"
                         color={isInactive ? 'success' : 'error'}
                         onMouseEnter={() => setIconHovered(index)}
@@ -282,7 +282,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         onClick={() => handleToggleClassStatus(classItem.unique_key)}
                       >
                         {isInactive ? '✓' : '✕'}
-                      </IconButton>
+                      </IconButton> */}
 
                       <TextField
                         size="small"
@@ -291,6 +291,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         // defaultValue={classItem.class_code}
                         defaultValue={`${classItem.programme_code} - ${classItem.class_code}`}
                         onChange={handleChange}
+
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: isInactive
@@ -327,6 +328,8 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         disabled={isInactive}
                         value={classItem.no_of_arms || 0}
                         onChange={(e) => handleNoOfArmsChange(classItem.unique_key, e.target.value)}
+                        slotProps={{ htmlInput: { min: 0 } }}
+
                         sx={{
                           width: 70,
                           '& .MuiOutlinedInput-root': {

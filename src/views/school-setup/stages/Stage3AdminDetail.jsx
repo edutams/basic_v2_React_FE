@@ -27,7 +27,6 @@ const AdminCard = ({ admin, index }) => {
         gap: 2,
       }}
     >
-      {/* Card title badge */}
       <Box
         sx={{
           display: 'inline-flex',

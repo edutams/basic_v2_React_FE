@@ -12,12 +12,12 @@ import SetupShell from './SetupShell';
 const keyframes = {
   '@keyframes fadeUp': {
     from: { opacity: 0, transform: 'translateY(16px)' },
-    to:   { opacity: 1, transform: 'translateY(0)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
   },
   '@keyframes bounce': {
     '0%, 100%': { transform: 'translateY(0)' },
-    '40%':      { transform: 'translateY(-6px)' },
-    '60%':      { transform: 'translateY(-3px)' },
+    '40%': { transform: 'translateY(-6px)' },
+    '60%': { transform: 'translateY(-3px)' },
   },
 };
 
@@ -77,9 +77,13 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 1 }}>
         Set Up Your School Profile
       </Typography>
-      <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 4, maxWidth: 480, lineHeight: 1.6 }}>
+      <Typography
+        sx={{ fontSize: 13, color: 'text.secondary', mb: 4, maxWidth: 480, lineHeight: 1.6 }}
+      >
         Upload your school logo and check your school details. If the details are incorrect click{' '}
-        <Link href="#" sx={{ fontWeight: 600, color: 'primary.main' }}>(Get Help)</Link>{' '}
+        <Link href="#" sx={{ fontWeight: 600, color: 'primary.main' }}>
+          (Get Help)
+        </Link>{' '}
         to make a complaint.
       </Typography>
 
@@ -91,9 +95,6 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
         <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
           {/* Logo upload box */}
           <Box sx={{ flexShrink: 0 }}>
-
-
-
             <Box
               onClick={() => setLogoModalOpen(true)}
               sx={{
@@ -140,20 +141,24 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 bgcolor: '#fff',
                 transition: 'border-color 0.2s, box-shadow 0.2s',
                 '&:hover': { borderColor: 'primary.main' },
-                ...(
-                  !logo && {
-                    boxShadow: `0 0 0 3px ${primary}22`,
-                  }
-                ),
+                ...(!logo && {
+                  boxShadow: `0 0 0 3px ${primary}22`,
+                }),
               }}
             >
               <IconUpload size={15} color={logo ? '#555' : primary} />
-              <Typography sx={{ fontSize: 13, fontWeight: 500, color: logo ? 'text.primary' : 'primary.main' }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: logo ? 'text.primary' : 'primary.main',
+                }}
+              >
                 Browse
               </Typography>
             </Box>
 
-            {/* Arrow hint — below Browse, only when no logo — matches welcome screen style */}
+            {/* Arrow hint — below Browse, only when no logo */}
             {!logo && (
               <Box
                 sx={{
@@ -167,7 +172,6 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                   animation: `fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both, bounce 2.4s ease-in-out 1.6s infinite`,
                 }}
               >
-                {/* Curved arrow pointing UP toward Browse button */}
                 <Box sx={{ mb: 0.5, ml: 4 }}>
                   <svg width="48" height="52" viewBox="0 0 48 52" fill="none">
                     {/* Curve from bottom-left sweeping up to top-right */}
@@ -178,7 +182,6 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                       strokeLinecap="round"
                       fill="none"
                     />
-                    {/* Arrowhead at the top-right tip pointing up */}
                     <path
                       d="M30 8 L40 6 L38 16"
                       stroke={primary}
@@ -219,39 +222,63 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
             )}
           </Box>
 
-          {/* Read-only school fields */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             {[
-              { label: 'School Name', value: tenantData?.name, placeholder: 'Enter School Name' },
-              { label: 'Acronym', value: tenantData?.shortName, placeholder: 'e.g. GSS' },
-            ].map(({ label, value, placeholder }) => (
+              { label: 'School Name', value: tenantData?.name },
+              { label: 'Acronym', value: tenantData?.shortName },
+            ].map(({ label, value }) => (
               <Box key={label}>
-                <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75, color: 'text.primary' }}>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    mb: 0.75,
+                    color: 'text.primary',
+                  }}
+                >
                   {label}
                 </Typography>
-                <TextField
-                  fullWidth
-                  placeholder={placeholder}
-                  value={value || ''}
-                  slotProps={{ input: { readOnly: true } }}
-                  sx={{ bgcolor: '#fff' }}
-                />
+
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: '#fff',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Typography sx={{ fontSize: 14 }}>
+                    {value || `No ${label.toLowerCase()} available`}
+                  </Typography>
+                </Box>
               </Box>
             ))}
 
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75, color: 'text.primary' }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  mb: 0.75,
+                  color: 'text.primary',
+                }}
+              >
                 Address
               </Typography>
-              <TextField
-                fullWidth
-                placeholder="Enter school address"
-                value={tenantData?.address || ''}
-                slotProps={{ input: { readOnly: true } }}
-                multiline
-                rows={3}
-                sx={{ bgcolor: '#fff' }}
-              />
+
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: '#fff',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  minHeight: 80,
+                }}
+              >
+                <Typography sx={{ fontSize: 14}}>
+                  {tenantData?.address || 'No address available'}
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </Box>

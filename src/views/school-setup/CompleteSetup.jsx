@@ -47,7 +47,6 @@ const CompleteSetup = () => {
         p: 0,
       }}
     >
-      {/* ── LEFT — blue congratulations panel ── */}
       <Box
         sx={{
           width: '60%',
@@ -78,7 +77,6 @@ const CompleteSetup = () => {
           />
         ))}
 
-        {/* Shield icon in circle */}
         <Box
           sx={{
             width: 120,
@@ -98,7 +96,6 @@ const CompleteSetup = () => {
           <IconShieldCheck size={56} color="#fff" strokeWidth={1.5} />
         </Box>
 
-        {/* Congratulations text */}
         <Typography
           sx={{
             color: '#fff',
@@ -117,7 +114,6 @@ const CompleteSetup = () => {
           You've successfully completed your school setup.
         </Typography>
 
-        {/* Continue to Dashboard button */}
         <Button
           variant="contained"
           onClick={() => navigate('/')}
@@ -145,7 +141,6 @@ const CompleteSetup = () => {
         </Button>
       </Box>
 
-      {/* ── RIGHT — support message panel ── */}
       <Box
         sx={{
           flex: 1,

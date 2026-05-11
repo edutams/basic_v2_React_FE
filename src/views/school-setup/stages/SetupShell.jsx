@@ -61,8 +61,8 @@ const SetupShell = ({
   saving = false,
   backLabel,
   noPadding = false,
-  leftVariant = 'light', // 'light' = white panel (default), 'dark' = primary colour panel
-  leftImage,             // optional image override for the left panel illustration
+  leftVariant = 'light', 
+  leftImage,             
   leftTitle = 'Build a smarter school experience in minutes.',
   leftSubtitle = 'From lesson planning to student engagement—everything in one place. Teach better. Manage easier.',
 }) => {
@@ -156,7 +156,7 @@ const SetupShell = ({
           ))}
         </Box>
 
-        {/* Two concentric semicircles + illustration — only on light variant */}
+        {/* Two concentric semicircles + illustration */}
         {leftVariant === 'light' && (
           <Box sx={{
             position: 'absolute',
@@ -169,7 +169,7 @@ const SetupShell = ({
             justifyContent: 'flex-end',
             pointerEvents: 'none',
           }}>
-            {/* Outer semicircle — light lavender */}
+            {/* Outer semicircle */}
             <Box
               sx={{
                 position: 'absolute',
@@ -181,7 +181,7 @@ const SetupShell = ({
                 animation: anim('fadeIn', '0.6s', '0.3s'),
               }}
             />
-            {/* Inner semicircle — deeper indigo/blue */}
+            {/* Inner semicircle  */}
             <Box
               sx={{
                 position: 'absolute',
@@ -211,7 +211,6 @@ const SetupShell = ({
           </Box>
         )}
 
-        {/* Dark variant illustration */}
         {leftVariant === 'dark' && (
           <Box
             component="img"

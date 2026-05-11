@@ -32,7 +32,6 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
       leftTitle="Create your class arms."
       leftSubtitle="Set up class arms and deactivate any class you currently do not have in your school."
     >
-      {/* Fixed layout — no page scroll, only table scrolls */}
       <Box
         sx={{
           height: '100%',
@@ -51,7 +50,6 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
           Setup your class arm and deactivate any class you currently do not have in your school
         </Typography>
 
-        {/* Card fills remaining height, table inside scrolls */}
         <Box
           sx={{
             flex: 1,

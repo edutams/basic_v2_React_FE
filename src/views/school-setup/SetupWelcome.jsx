@@ -326,8 +326,8 @@ const SetupWelcome = () => {
         sx={{
           position: 'absolute',
           // Scale the circle relative to the layout
-          width: { xs: '70vw', sm: '60vw', md: '40vw', lg: '40vw' },
-          height: { xs: '70vw', sm: '60vw', md: '40vw', lg: '40vw' },
+          width: { xs: '70vw', sm: '60vw', md: '40vw', lg: '35vw' },
+          height: { xs: '70vw', sm: '60vw', md: '40vw', lg: '35vw' },
           borderRadius: '50% !important',
           background: 'radial-gradient(circle, #ffffff 60%, #e8edf8 100%)',
           boxShadow: `0 8px 40px ${primary}1f`,
@@ -349,7 +349,7 @@ const SetupWelcome = () => {
           position: 'absolute',
           bottom: 0,
           left: { xs: '8%', sm: '20%', md: '30%'},
-          height: { xs: '44%', sm: '48%', md: '70%' },
+          height: { xs: '44%', sm: '48%', md: '65%' },
           maxHeight: { xs: 220, sm: 'none' },
           objectFit: 'contain',
           objectPosition: 'bottom left',

@@ -26,6 +26,7 @@ import {
   getAllStates,
   getLgasByState,
   createProspectiveTenant,
+  updateProspectiveTenant,
 } from '../../../context/AgentContext/services/school.service';
 import {
   getSessions,
@@ -427,12 +428,17 @@ useEffect(() => {
 
       let res;
       if (actionType === 'update') {
-        res = await updateSchool(selectedSchool.id, {
+        const payload = {
           ...base,
           headcolor: formData.headcolor,
           sidecolor: formData.sidecolor,
           bodycolor: formData.bodycolor,
-        });
+        };
+        if (useProspective) {
+          res = await updateProspectiveTenant(selectedSchool.id, payload);
+        } else {
+          res = await updateSchool(selectedSchool.id, payload);
+        }
       } else if (useProspective) {
         res = await createProspectiveTenant(base);
       } else {

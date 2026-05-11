@@ -117,6 +117,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
+  const [openConfirmReject, setOpenConfirmReject] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -152,7 +153,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         }}
       >
         <Typography variant="subtitle1" fontWeight={700}>
-          Review Application
+          Review Apwwplication
         </Typography>
         <StatusChip status={prospect.status} />
       </Box>
@@ -316,6 +317,47 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             </Typography>
           )}
         </Box>
+        {/* Submitted / Rejected-by banner */}
+        <Box
+          sx={{
+            px: 3,
+            py: 1.5,
+            mx: 3,
+            mb: 2,
+            bgcolor: '#EEF4FF',
+            borderLeft: '4px solid #3B82F6',
+            borderRadius: 1,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2">
+            <Box component="span" sx={{ fontWeight: 700 }}>
+              Date Rejected:
+            </Box>{' '}
+            <Box component="span" sx={{ color: '#6b7280' }}>
+              {formatDate(prospect.created_at)}
+            </Box>
+          </Typography>
+          {prospect.rejected_by && prospect.rejected_at && (
+            <Typography variant="body2" sx={{ textAlign: 'right' }}>
+              <Box component="span" sx={{ fontWeight: 700 }}>
+                Rejected by &amp; Reviewed by:
+              </Box>{' '}
+              <Box component="span" sx={{ fontWeight: 600 }}>
+                {prospect.rejected_by?.full_name ||
+                  `${prospect.rejected_by?.fname || ''} ${prospect.rejected_by?.lname || ''}`.trim() ||
+                  '—'}
+              </Box>{' '}
+              <Box component="span" sx={{ color: '#6b7280' }}>
+                at {formatDate(prospect.rejected_at)}
+              </Box>
+            </Typography>
+          )}
+        </Box>
 
         {prospect.rejection_reason && (
           <Box sx={{ px: 3, pb: 2 }}>
@@ -352,43 +394,60 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         {prospect.status === 'pending' && can('landlord.school.approval') && (
           <>
             {!showRejectInput ? (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<CancelOutlinedIcon />}
-                onClick={() => setShowRejectInput(true)}
-                disabled={loading}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
-              >
-                Reject
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
+                  onClick={() => setShowRejectInput(true)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Reject
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<CheckCircleOutlineIcon />}
+                  onClick={() => onApprove(prospect.id)}
+                  disabled={loading}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    bgcolor: '#2e7d32',
+                    '&:hover': { bgcolor: '#1b5e20' },
+                  }}
+                >
+                  {loading ? (
+                    <CircularProgress size={18} color="inherit" />
+                  ) : (
+                    'Approve & Provision'
+                  )}
+                </Button>
+              </>
             ) : (
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<CancelOutlinedIcon />}
-                onClick={() => onReject(prospect.id, rejectReason)}
-                disabled={loading}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
-              >
-                {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  onClick={() => setShowRejectInput(false)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Cancel Rejection
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
+                  onClick={() => setOpenConfirmReject(true)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
+                </Button>
+              </>
             )}
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<CheckCircleOutlineIcon />}
-              onClick={() => onApprove(prospect.id)}
-              disabled={loading}
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                bgcolor: '#2e7d32',
-                '&:hover': { bgcolor: '#1b5e20' },
-              }}
-            >
-              {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
-            </Button>
           </>
         )}
         {prospect.status === 'pending' && !can('landlord.school.approval') && (
@@ -397,6 +456,19 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
           </Typography>
         )}
       </DialogActions>
+
+      <ConfirmationDialog
+        open={openConfirmReject}
+        onClose={() => setOpenConfirmReject(false)}
+        onConfirm={() => {
+          setOpenConfirmReject(false);
+          onReject(prospect.id, rejectReason);
+        }}
+        title="Confirm Rejection"
+        message={`Are you sure you want to reject this School Application for "${prospect.tenant_name}"?`}
+        confirmText="Yes, Reject"
+        severity="error"
+      />
     </Dialog>
   );
 };
@@ -428,6 +500,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const [reviewProspect, setReviewProspect] = useState(null);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [isEditingProspective, setIsEditingProspective] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileSchool, setProfileSchool] = useState(null);
@@ -594,6 +667,8 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
 
   const handleEdit = (school) => {
     setSelectedSchool(school);
+    // If activeTab is 0 or 1, it's a prospective tenant
+    setIsEditingProspective(activeTab === 0 || activeTab === 1);
     setOpenEditModal(true);
   };
   const handleViewProfile = (school) => {
@@ -1103,7 +1178,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
               fetchSchools();
             }}
             onCancel={() => setOpenEditModal(false)}
-            useProspective={false}
+            useProspective={isEditingProspective}
           />
         </ReusableModal>
 

@@ -38,12 +38,12 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          px: { xs: 3, md: '60px' },
-          pt: 4,
+          px: { xs: 2, md: '60px' },
+          pt: { xs: '80px', md: '90px' },
           pb: 1,
         }}
       >
-        <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5, flexShrink: 0 }}>
+        <Typography sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 0.5, flexShrink: 0 }}>
           Create Class Arms
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, maxWidth: 480, lineHeight: 1.6, flexShrink: 0 }}>

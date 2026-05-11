@@ -80,20 +80,21 @@ const SetupShell = ({
         width: '100vw',
         height: '100vh',
         display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
         overflow: 'hidden',
         m: 0,
         p: 0,
         borderRadius: '0 !important',
       }}
     >
-      {/* ── LEFT panel ── */}
+      {/* ── LEFT panel — hidden on mobile ── */}
       <Box
         sx={{
           ...keyframes,
+          display: { xs: 'none', sm: 'flex' },
           width: '32%',
           flexShrink: 0,
           bgcolor: leftVariant === 'dark' ? 'primary.main' : '#fff',
-          display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           px: { xs: 3, md: '40px' },
@@ -240,28 +241,41 @@ const SetupShell = ({
           flexDirection: 'column',
           borderRadius: '0 !important',
           overflow: 'hidden',
+          position: 'relative',
         }}
       >
+        {/* ── TOP-RIGHT CONTROLS — matches SetupWelcome pattern ── */}
         <Box
           sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            zIndex: 10,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-end',
             gap: 0.75,
-            px: 3,
-            pt: 2,
-            flexShrink: 0,
+            px: { xs: 2, md: 3 },
+            pt: { xs: 1.5, md: 2 },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: { xs: 1.5, md: 2 },
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography sx={{ fontSize: 13, color: 'rgba(0,0,0,0.5)' }}>
+              <Typography sx={{ fontSize: { xs: 11, md: 13 }, color: 'rgba(0,0,0,0.5)' }}>
                 Having Troubles?
               </Typography>
               <Link
                 href="#"
                 underline="hover"
-                sx={{ fontSize: 13, fontWeight: 700, color: 'primary.main' }}
+                sx={{ fontSize: { xs: 11, md: 13 }, fontWeight: 700, color: 'primary.main' }}
               >
                 Get Help
               </Link>
@@ -276,13 +290,14 @@ const SetupShell = ({
                 '&:hover': { opacity: 0.75 },
               }}
             >
-              <IconPower size={15} color="#e53935" />
-              <Typography sx={{ fontSize: 13, fontWeight: 600, color: '#e53935' }}>
+              <IconPower size={14} color="#e53935" />
+              <Typography sx={{ fontSize: { xs: 11, md: 13 }, fontWeight: 600, color: '#e53935' }}>
                 Logout
               </Typography>
             </Box>
           </Box>
 
+          {/* "How to setup" pill */}
           <Box
             sx={{
               display: 'inline-flex',
@@ -292,8 +307,10 @@ const SetupShell = ({
               py: 0.6,
               bgcolor: '#fff',
               borderRadius: '10px !important',
-              boxShadow: '0px 3px 14px rgba(0,0,0,0.12)',
+              boxShadow: '0px 3px 14px rgba(0,0,0,0.1)',
               cursor: 'pointer',
+              transition: 'all 0.2s',
+              '&:hover': { boxShadow: '0px 6px 20px rgba(0,0,0,0.12)', transform: 'translateY(-1px)' },
             }}
           >
             <Box
@@ -310,7 +327,7 @@ const SetupShell = ({
               <IconVideo size={13} color="#fff" />
             </Box>
             <Typography
-              sx={{ fontSize: 13, fontWeight: 500, color: 'text.primary', whiteSpace: 'nowrap' }}
+              sx={{ fontSize: { xs: 11, sm: 13 }, fontWeight: 500, color: 'text.primary', whiteSpace: 'nowrap' }}
             >
               How to setup your Profile
             </Typography>
@@ -324,8 +341,8 @@ const SetupShell = ({
             flex: 1,
             overflow: noPadding ? 'hidden' : 'auto',
             overflowY: noPadding ? 'hidden' : 'auto',
-            px: noPadding ? 0 : { xs: 3, md: '60px' },
-            pt: noPadding ? 0 : 4,
+            px: noPadding ? 0 : { xs: 2, md: '60px' },
+            pt: noPadding ? 0 : { xs: '80px', md: '90px' },
             pb: noPadding ? 0 : 2,
           }}
         >
@@ -335,7 +352,7 @@ const SetupShell = ({
         <Box
           sx={{
             flexShrink: 0,
-            px: { xs: 3, md: '60px' },
+            px: { xs: 2, md: '60px' },
             py: 2.5,
             bgcolor: '#f0f0f0',
             display: 'flex',

@@ -7,6 +7,7 @@ import {
   CircularProgress,
   useTheme,
   Divider,
+  Button
 } from '@mui/material';
 import { IconUpload, IconPhoto } from '@tabler/icons-react';
 import { getTenantInfo } from '../../../api/tenant_api';
@@ -42,7 +43,7 @@ const AdminCard = ({ admin, index }) => {
   return (
     <Box
       sx={{
-        flex: '1 1 220px',
+        flex: '1 1 200px',
         bgcolor: '#fff',
         borderRadius: '12px !important',
         border: '1px solid',
@@ -218,11 +219,11 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       leftTitle="Set up your school profile."
       leftSubtitle="Upload your logo, confirm your school details and admin information to get started."
     >
-      <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 1 }}>
+      <Typography sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 1 }}>
         Set Up Your School Profile
       </Typography>
       <Typography
-        sx={{ fontSize: 13, color: 'text.secondary', mb: 4, maxWidth: 480, lineHeight: 1.6 }}
+        sx={{ fontSize: 13, color: 'text.secondary', mb: { xs: 3, sm: 4 }, maxWidth: 480, lineHeight: 1.6 }}
       >
         Upload your school logo and check your school details. If the details are incorrect click{' '}
         <Link href="#" sx={{ fontWeight: 600, color: 'primary.main' }}>
@@ -237,8 +238,8 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
         </Box>
       ) : (
         <>
-          <Box sx={{ display: 'flex', gap: 4, alignItems: 'flex-start', mb: 3 }}>
-            <Box sx={{ flexShrink: 0 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 3, sm: 4 }, alignItems: 'flex-start', mb: 3 }}>
+            <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'center', sm: 'flex-start' } }}>
               <Box
                 onClick={() => setLogoModalOpen(true)}
                 sx={{
@@ -269,7 +270,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 )}
               </Box>
 
-              <Box
+              <Button size='small'
                 onClick={() => setLogoModalOpen(true)}
                 sx={{
                   mt: 1.5,
@@ -298,7 +299,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 >
                   Browse
                 </Typography>
-              </Box>
+              </Button>
 
               {/* Arrow hint — only when no logo */}
               {!logo && (
@@ -361,7 +362,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
               )}
             </Box>
 
-            <Box>
+            <Box sx={{ flex: 1, width: { xs: '100%', sm: 'auto' } }}>
             <ParentCard>
               <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

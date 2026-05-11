@@ -16,7 +16,7 @@ const AdminCard = ({ admin, index }) => {
   return (
     <Box
       sx={{
-        flex: '1 1 260px',
+        flex: '1 1 200px',
         bgcolor: '#fff',
         borderRadius: '12px !important',
         border: '1px solid',
@@ -135,7 +135,7 @@ const Stage3AdminDetail = ({ onNext, onBack, onSkip }) => {
       leftTitle="Confirm your admin details."
       leftSubtitle="Review your school owner, head, and portal admin information before proceeding."
     >
-      <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
+      <Typography sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
         Confirm School Head/Admin Detail
       </Typography>
       <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 4, lineHeight: 1.6 }}>

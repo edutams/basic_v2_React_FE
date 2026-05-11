@@ -466,13 +466,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                         <TableRow>
                           <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell>
+                          {/* <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell> */}
                           <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                             Status
                           </TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          {/* <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                             Start Date
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                             Action
                           </TableCell>
@@ -484,7 +484,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                           <TableRow key={item.app_term_id} hover>
                             <TableCell>{i + 1 + termsPage * termsRowsPerPage}</TableCell>
                             <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
-                            <TableCell>{item.term_name}</TableCell>
+                            {/* <TableCell>{item.term_name}</TableCell> */}
                             <TableCell align="center">
                               {item.is_subscribed === 'yes' ? (
                                 <Chip
@@ -500,9 +500,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                                 '-'
                               )}
                             </TableCell>
-                            <TableCell align="center">
+                            {/* <TableCell align="center">
                               {item.start_date || (item.is_subscribed === 'yes' ? 'Not Set' : '-')}
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell align="center">
                               <IconButton
                                 size="small"

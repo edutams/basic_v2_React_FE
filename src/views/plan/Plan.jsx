@@ -447,9 +447,7 @@ const Plan = () => {
                           <MenuItem onClick={() => handleOpenManagePackages(plan)}>
                             Manage Packages
                           </MenuItem>
-                          <MenuItem onClick={() => handleOpenManageModule(plan)}>
-                            Manage Module
-                          </MenuItem>
+
                           <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
                             Delete Plan
                           </MenuItem>
@@ -545,7 +543,7 @@ const Plan = () => {
           <PackageModal
             open={openPackageModal}
             onClose={handleClose}
-            handleRefresh={() => {}}
+            handleRefresh={() => { }}
             selectedPackage={selectedPlan}
             actionType="update"
           />

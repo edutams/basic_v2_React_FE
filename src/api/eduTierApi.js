@@ -19,7 +19,13 @@ const eduTierApi = {
     return response.data;
   },
   getPackagesByPlan: async (planId) => {
-    const response = await api.get(`/landlord/v1/edu_tier/plans/package_plan/${planId}`);
+    const response = await api.get(`/v1/landlord/edu_tier/plans/package_plan/${planId}`);
+    return response.data;
+  },
+  savePlanModulesNew: async (planId, data) => {
+    const response = await api.post(`/v1/landlord/edu_tier/plans/plan_module/${planId}`, {
+      data: JSON.stringify(data),
+    });
     return response.data;
   },
 

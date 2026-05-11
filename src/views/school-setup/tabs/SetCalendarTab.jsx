@@ -538,7 +538,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
 
         {/* Generate Week Column */}
         <Grid size={{ xs: 12, md: 6 }}>
-          {activeSessionTermId && (
+          {activeSessionTermId ? (
             <ParentCard
               id="generate-week-section"
               title={
@@ -593,8 +593,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                     variant="contained"
                     onClick={handleAutoGenerate}
                     disabled={loading || !activeSessionTermId}
-                  size="small"
-
+                    size="small"
                   >
                     Generate
                   </Button>
@@ -672,6 +671,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                 </TableContainer>
               </Paper>
             </ParentCard>
+          ) : (
+            <Alert severity="warning" sx={{ mt: 3 }}>
+              No weeks generated yet. Subscribe to a term first to set the weeks
+            </Alert>
           )}
         </Grid>
       </Grid>

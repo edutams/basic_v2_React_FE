@@ -2,34 +2,31 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
+  Checkbox,
+  FormControlLabel,
+  Button,
   CircularProgress,
   Alert,
-  Grid,
-  Card,
-  CardContent,
-  CardHeader,
-  Avatar,
   Divider,
   IconButton,
-  Tooltip,
+  Collapse,
+  Grid,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
-  Inventory as InventoryIcon,
-  ViewModule as ViewModuleIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
+  ChevronRight as ChevronRightIcon,
+  Save as SaveIcon,
 } from '@mui/icons-material';
 import eduTierApi from '../../api/eduTierApi';
+import useNotification from '../../hooks/useNotification';
 
 const ManagePackagesModal = ({ selectedPlan, onClose }) => {
-  const [packages, setPackages] = useState([]);
+  const notify = useNotification();
+  const [pkgData, setPkgData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState({});
 
   useEffect(() => {
     if (selectedPlan?.id) {
@@ -43,7 +40,43 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
     try {
       const response = await eduTierApi.getPackagesByPlan(selectedPlan.id);
       if (response.success) {
-        setPackages(response.data || []);
+        const transformed = response.data.map((pkg) => {
+          const flatModules = [];
+
+          const processModules = (modules) => {
+            modules.forEach((mod) => {
+              // Check if mod.plans is an array and contains the selected plan
+              // The backend now filters plans to only include the current one if it exists
+              const hasPlan = Array.isArray(mod.plans) && mod.plans.length > 0;
+              
+              flatModules.push({
+                ...mod,
+                ckmstatus: hasPlan,
+                sub_modules: undefined, // Clear to avoid circularity if needed
+              });
+              
+              if (mod.sub_modules && mod.sub_modules.length > 0) {
+                processModules(mod.sub_modules);
+              }
+            });
+          };
+
+          if (pkg.modules) {
+            processModules(pkg.modules);
+          }
+
+          return { ...pkg, modules: flatModules };
+        });
+        setPkgData(transformed);
+
+        // Auto-expand all for the screenshot look
+        const initialExpanded = {};
+        transformed.forEach((pkg) => {
+          pkg.modules.forEach((mod) => {
+            initialExpanded[mod.id] = true;
+          });
+        });
+        setExpanded(initialExpanded);
       } else {
         setError(response.message || 'Failed to fetch packages');
       }
@@ -55,172 +88,190 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
     }
   };
 
-  const getModuleIcon = (icon) => {
-    if (!icon) return <ViewModuleIcon />;
-    // You can add more icon mappings based on your icon classes
-    return <ViewModuleIcon />;
+  const handleToggleModule = (pkgId, moduleId, checked) => {
+    setPkgData((prev) =>
+      prev.map((pkg) => {
+        if (pkg.id !== pkgId) return pkg;
+        const updatedModules = pkg.modules.map((mod) => {
+          if (mod.id === moduleId) return { ...mod, ckmstatus: checked };
+          if (isDescendant(pkg.modules, moduleId, mod)) return { ...mod, ckmstatus: checked };
+          return mod;
+        });
+        return { ...pkg, modules: updatedModules };
+      }),
+    );
   };
 
-  const renderModule = (module) => {
-    const isInPlan = module.plans && module.plans.some(plan => plan.id === selectedPlan?.id);
-    
+  const isDescendant = (modules, parentId, targetMod) => {
+    let curr = targetMod;
+    while (curr.parent_id) {
+      if (curr.parent_id === parentId) return true;
+      const parent = modules.find((m) => m.id === curr.parent_id);
+      if (!parent) break;
+      curr = parent;
+    }
+    return false;
+  };
+
+  const toggleExpand = (id) => {
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const response = await eduTierApi.savePlanModulesNew(selectedPlan.id, pkgData);
+      if (response.success) {
+        notify.success('Packages updated successfully');
+        onClose();
+      } else {
+        notify.error(response.message || 'Failed to update packages');
+      }
+    } catch (err) {
+      notify.error('An error occurred while saving');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderModuleTree = (pkgId, modules, parentId = null, level = 0) => {
+    const levelModules = modules.filter((m) => m.parent_id === parentId);
+    if (levelModules.length === 0) return null;
+
     return (
-      <Grid item xs={12} sm={6} md={4} key={module.id}>
-        <Card
-          sx={{
-            mb: 2,
-            border: isInPlan ? '2px solid #4caf50' : '1px solid #e0e0e0',
-            backgroundColor: isInPlan ? '#f8fff8' : '#ffffff',
-            '&:hover': {
-              boxShadow: 2,
-            },
-          }}
-        >
-          <CardContent sx={{ pb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Avatar sx={{ bgcolor: isInPlan ? '#4caf50' : '#757575', mr: 2 }}>
-                {getModuleIcon(module.mod_icon)}
-              </Avatar>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                  {module.mod_name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {module.mod_description}
-                </Typography>
-              </Box>
-              <Box sx={{ ml: 1 }}>
-                {isInPlan ? (
-                  <CheckCircleIcon sx={{ color: '#4caf50', fontSize: '1.5rem' }} />
-                ) : (
-                  <CancelIcon sx={{ color: '#757575', fontSize: '1.5rem' }} />
+      <Box sx={{ ml: 2 }}>
+        {levelModules.map((mod) => {
+          const hasChildren = modules.some((m) => m.parent_id === mod.id);
+          const isExpanded = expanded[mod.id];
+
+          return (
+            <Box key={mod.id} sx={{ mb: 0.2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <FormControlLabel
+                  sx={{ mr: 0 }}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={mod.ckmstatus}
+                      onChange={(e) => handleToggleModule(pkgId, mod.id, e.target.checked)}
+                      sx={{ p: 0.5 }}
+                      id={`module-checkbox-${mod.id}`}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2"
+                      htmlFor={`module-checkbox-${mod.id}`}
+                      sx={{
+                        color: level === 0 ? '#333' : '#666'
+                      }}>
+                      {mod.module_name || mod.mod_name}
+                    </Typography>
+                  }
+                />
+                {hasChildren && (
+                  <IconButton size="small" onClick={() => toggleExpand(mod.id)} sx={{ p: 0, ml: 0.5 }}>
+                    {isExpanded ? <ExpandMoreIcon fontSize="inherit" /> : <ChevronRightIcon fontSize="inherit" />}
+                  </IconButton>
                 )}
               </Box>
-            </Box>
-            
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-              <Chip
-                size="small"
-                label={module.mod_status || 'Unknown'}
-                sx={{
-                  bgcolor: module.mod_status === 'active' ? '#e8f5e8' : '#ffebee',
-                  color: module.mod_status === 'active' ? '#2e7d32' : '#c62828',
-                  fontSize: '0.75rem',
-                }}
-              />
-              {module.is_sidebar === 'YES' && (
-                <Chip
-                  size="small"
-                  label="Sidebar"
-                  sx={{
-                    bgcolor: '#e3f2fd',
-                    color: '#1976d2',
-                    fontSize: '0.75rem',
-                  }}
-                />
+              {hasChildren && (
+                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                  {renderModuleTree(pkgId, modules, mod.id, level + 1)}
+                </Collapse>
               )}
             </Box>
-          </CardContent>
-        </Card>
-      </Grid>
+          );
+        })}
+      </Box>
     );
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress size={40} />
-        <Typography sx={{ ml: 2 }}>Loading packages...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
       </Box>
     );
   }
 
   if (error) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        {error}
-      </Alert>
-    );
-  }
-
-  if (!packages.length) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <InventoryIcon sx={{ fontSize: 48, color: '#757575', mb: 2 }} />
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          No Packages Available
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          This plan doesn't have any packages assigned yet.
-        </Typography>
-      </Box>
-    );
+    return <Alert severity="error">{error}</Alert>;
   }
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Showing packages and their modules for <strong>{selectedPlan?.name}</strong>. 
-        Modules highlighted in green are currently included in this plan.
-      </Typography>
-
-      {packages.map((pkg) => (
-        <Accordion key={pkg.id} sx={{ mb: 2 }}>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            sx={{
-              backgroundColor: '#f8f9fa',
-              '&:hover': {
-                backgroundColor: '#f0f1f3',
-              },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <Avatar sx={{ bgcolor: '#1976d2', mr: 2 }}>
-                <InventoryIcon />
-              </Avatar>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                  {pkg.pac_name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {pkg.pac_description}
-                </Typography>
+    <Box sx={{ maxHeight: '80vh', overflowY: 'auto', p: 3 }}>
+      <Grid container spacing={2}>
+        {pkgData.map((pkg) => (
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={pkg.id}>
+            <Box
+              sx={{
+                borderRadius: 2,
+                p: 2,
+              }}
+            >
+              {/* PACKAGE HEADER */}
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={pkg.modules.every(m => m.ckmstatus)}
+                      indeterminate={
+                        pkg.modules.some(m => m.ckmstatus) &&
+                        !pkg.modules.every(m => m.ckmstatus)
+                      }
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setPkgData(prev =>
+                          prev.map(p =>
+                            p.id !== pkg.id
+                              ? p
+                              : {
+                                ...p,
+                                modules: p.modules.map(m => ({
+                                  ...m,
+                                  ckmstatus: checked,
+                                })),
+                              },
+                          ),
+                        );
+                      }}
+                      id={`pack-checkbox-${pkg.id}`}
+                    />
+                  }
+                  label={
+                    <Typography variant="subtitle2">
+                      {pkg.package_name || pkg.pac_name}
+                    </Typography>
+                  }
+                />
               </Box>
-              <Chip
-                size="small"
-                label={`${pkg.modules?.length || 0} modules`}
-                sx={{
-                  bgcolor: '#e3f2fd',
-                  color: '#1976d2',
-                  mr: 2,
-                }}
-              />
-              <Chip
-                size="small"
-                label={pkg.pac_status || 'Unknown'}
-                sx={{
-                  bgcolor: pkg.pac_status === 'active' ? '#e8f5e8' : '#ffebee',
-                  color: pkg.pac_status === 'active' ? '#2e7d32' : '#c62828',
-                }}
-              />
+
+              {/* MODULE TREE */}
+              <Box sx={{ pl: 2 }}>
+                {renderModuleTree(pkg.id, pkg.modules)}
+              </Box>
             </Box>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Grid container spacing={2}>
-              {pkg.modules && pkg.modules.length > 0 ? (
-                pkg.modules.map(renderModule)
-              ) : (
-                <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
-                    No modules available in this package
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+          </Grid>
+        ))}
+      </Grid>
+
+      <Divider sx={{ my: 4 }} />
+
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, pb: 1 }}>
+        <Button onClick={onClose} variant="outlined" color="inherit" sx={{ textTransform: 'none' }}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+          disabled={saving}
+          sx={{ textTransform: 'none', px: 4 }}
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </Box>
     </Box>
   );
 };

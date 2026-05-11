@@ -355,13 +355,13 @@ const SetupShell = ({
           </Button>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Button
+            {/* <Button
               size="small"
               onClick={onSkip}
               sx={{ fontSize: 14, fontWeight: 600, color: 'primary.main' }}
             >
               Skip
-            </Button>
+            </Button> */}
             <Button
               size="small"
               variant="contained"

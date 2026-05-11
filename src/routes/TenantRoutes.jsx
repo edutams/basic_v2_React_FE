@@ -112,7 +112,7 @@ const TenantRoutes = [
     children: [{ index: true, element: <Error /> }],
   },
   {
-    path: '/complete-setup',
+    path: '/complete-setup', 
     element: (
       <TenantProtectedRoute>
         <SetupTourProvider>

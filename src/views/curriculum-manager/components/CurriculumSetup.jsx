@@ -46,28 +46,13 @@ import {
   importSelectedCurriculums,
 } from '../../../api/tenantCurriculumApi';
 
-const SubjectBox = ({ curriculum, subjects, selectedSubjectIds, onSubjectSelect, onSelectAll }) => {
-  const allSubjectsSelected = subjects.length > 0 &&
-    subjects.every(subject => selectedSubjectIds.includes(subject.id));
-
+const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
   return (
     <Paper sx={{ mb: 2, p: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="subtitle2" fontWeight="bold">
           {curriculum.curriculum_name}
         </Typography>
-        {subjects.length > 0 && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={allSubjectsSelected}
-                onChange={(e) => onSelectAll(curriculum.id, e.target.checked)}
-              />
-            }
-            label="Select All"
-          />
-        )}
       </Box>
       <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
         {subjects.length === 0 ? (
@@ -79,51 +64,45 @@ const SubjectBox = ({ curriculum, subjects, selectedSubjectIds, onSubjectSelect,
         ) : (
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
+              display: 'flex',
+              flexDirection: 'column',
               gap: 1,
               px: 1,
             }}
           >
             {subjects.map((subject) => (
-              <FormControlLabel
+              <Box
                 key={subject.id}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={selectedSubjectIds.includes(subject.id)}
-                    onChange={(e) =>
-                      onSubjectSelect(
-                        curriculum.id,
-                        subject.id,
-                        e.target.checked
-                      )
-                    }
-                  />
-                }
-                label={
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: '0.75rem',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {subject.subject_name}
-                  </Typography>
-                }
                 sx={{
-                  ml: 0,
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  flexWrap: 'nowrap',
-
-                  '& .MuiFormControlLabel-label': {
-                    fontSize: '0.75rem',
-                    lineHeight: 1.2,
-                  },
+                  p: 1,
+                  bgcolor: 'background.default',
+                  borderRadius: 1
                 }}
-              />
+              >
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {subject.subject_name}
+                </Typography>
+
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Chip
+                    label={`${subject.schemes ? Object.keys(subject.schemes).length : 0} Schemes`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={() => onViewSchemes(subject)}
+                    disabled={!subject.schemes || Object.keys(subject.schemes).length === 0}
+                  >
+                    View
+                  </Button>
+                </Box>
+              </Box>
             ))}
           </Box>
         )}
@@ -154,12 +133,12 @@ const CurriculumSetup = () => {
   const [agentCurriculums, setAgentCurriculums] = useState([]);
   const [selectedCurriculums, setSelectedCurriculums] = useState([]);
   const [curriculumSubjects, setCurriculumSubjects] = useState({});
-  const [selectedSubjects, setSelectedSubjects] = useState({});
   const [loadingAgentCurriculums, setLoadingAgentCurriculums] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [openImportConfirmModal, setOpenImportConfirmModal] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
   const [selectedCurriculum, setSelectedCurriculum] = useState(null);
+  const [viewSchemesSubject, setViewSchemesSubject] = useState(null);
   const [curriculumAnchorEl, setCurriculumAnchorEl] = useState(null);
   const [openCurriculumMenu, setOpenCurriculumMenu] = useState(false);
   const [formData, setFormData] = useState({
@@ -417,20 +396,6 @@ const CurriculumSetup = () => {
     setOpenImportModal(false);
   };
 
-  const handleImportCurriculum = async () => {
-    try {
-      const response = await importAllCurriculums();
-      if (response.status) {
-        showSnackbar('Curriculum imported successfully', 'success');
-        handleCloseImportModal();
-        fetchCurriculumsData();
-      } else {
-        showSnackbar(response.message || 'Failed to import curriculum', 'error');
-      }
-    } catch (error) {
-      showSnackbar('Failed to import curriculum', 'error');
-    }
-  };
 
   const handleOpenMenu = (event, curriculum) => {
     setSelectedCurriculum(curriculum);
@@ -488,15 +453,6 @@ const CurriculumSetup = () => {
         ? [...prev, curriculumId]
         : prev.filter(id => id !== curriculumId);
 
-      // Clear selected subjects when curriculum is deselected
-      if (!checked) {
-        setSelectedSubjects(prev => {
-          const newSubjects = { ...prev };
-          delete newSubjects[curriculumId];
-          return newSubjects;
-        });
-      }
-
       // Load subjects if curriculum is selected
       if (checked && !curriculumSubjects[curriculumId]) {
         loadCurriculumSubjects(curriculumId);
@@ -521,21 +477,12 @@ const CurriculumSetup = () => {
     }
   };
 
-  const handleSubjectSelect = (curriculumId, subjectId, checked) => {
-    setSelectedSubjects(prev => ({
-      ...prev,
-      [curriculumId]: checked
-        ? [...(prev[curriculumId] || []), subjectId]
-        : (prev[curriculumId] || []).filter(id => id !== subjectId)
-    }));
+  const handleViewSchemes = (subject) => {
+    setViewSchemesSubject(subject);
   };
 
-  const handleSelectAllSubjects = (curriculumId, checked) => {
-    const subjects = curriculumSubjects[curriculumId] || [];
-    setSelectedSubjects(prev => ({
-      ...prev,
-      [curriculumId]: checked ? subjects.map(s => s.id) : []
-    }));
+  const handleCloseViewSchemes = () => {
+    setViewSchemesSubject(null);
   };
 
   const handleImportSelected = async () => {
@@ -552,7 +499,7 @@ const CurriculumSetup = () => {
     setLoadingImport(true);
     const importData = selectedCurriculums.map(curriculumId => ({
       curriculum_id: curriculumId,
-      subject_ids: selectedSubjects[curriculumId] || []
+      subject_ids: (curriculumSubjects[curriculumId] || []).map(s => s.id)
     }));
 
     try {
@@ -945,7 +892,7 @@ const CurriculumSetup = () => {
       <Dialog
         open={openImportModal}
         onClose={handleCloseImportModal}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
       >
         <DialogTitle>
@@ -999,7 +946,7 @@ const CurriculumSetup = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell padding="checkbox">
-                          
+
                           <Checkbox
                             size="small"
                             checked={
@@ -1158,17 +1105,12 @@ const CurriculumSetup = () => {
                       const subjects =
                         curriculumSubjects[curriculumId] || [];
 
-                      const selectedSubjectIds =
-                        selectedSubjects[curriculumId] || [];
-
                       return (
                         <SubjectBox
                           key={curriculumId}
                           curriculum={curriculum}
                           subjects={subjects}
-                          selectedSubjectIds={selectedSubjectIds}
-                          onSubjectSelect={handleSubjectSelect}
-                          onSelectAll={handleSelectAllSubjects}
+                          onViewSchemes={handleViewSchemes}
                         />
                       );
                     })}
@@ -1216,7 +1158,7 @@ const CurriculumSetup = () => {
             <Box sx={{ ml: 2 }}>
               {selectedCurriculums.map(curriculumId => {
                 const curriculum = agentCurriculums.find(c => c.id === curriculumId);
-                const subjectCount = (selectedSubjects[curriculumId] || []).length;
+                const subjectCount = (curriculumSubjects[curriculumId] || []).length;
                 return (
                   <Box key={curriculumId} sx={{ mb: 1 }}>
                     <Typography variant="body2" fontWeight="bold">
@@ -1224,7 +1166,7 @@ const CurriculumSetup = () => {
                     </Typography>
                     {subjectCount > 0 && (
                       <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-                        {subjectCount} subject(s) selected
+                        {subjectCount} subject(s) included
                       </Typography>
                     )}
                   </Box>
@@ -1237,16 +1179,65 @@ const CurriculumSetup = () => {
           <Button size="small" onClick={() => setOpenImportConfirmModal(false)}>
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
-            size="small" 
-            onClick={handleConfirmImport} 
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmImport}
             color="primary"
             disabled={loadingImport}
             startIcon={loadingImport ? <CircularProgress size={16} /> : null}
           >
             {loadingImport ? 'Importing...' : 'Confirm Import'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* View Schemes Modal */}
+      <Dialog open={Boolean(viewSchemesSubject)} onClose={handleCloseViewSchemes} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Schemes of Work
+          <Typography variant="caption" display="block" color="text.secondary">
+            {viewSchemesSubject?.subject_name}
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          {viewSchemesSubject?.schemes?.length > 0 ? (
+            <Box display="flex" flexDirection="column" gap={2}>
+              {viewSchemesSubject.schemes.map((scheme, index) => (
+                <Paper key={scheme.id || index} variant="outlined" sx={{ p: 2 }}>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {scheme.term?.term_name || `Term ${scheme.term_id}`} - {scheme.week?.week_name || `Week ${scheme.week_id}`}
+                  </Typography>
+                  {scheme.learning_objective && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      <strong>Objective:</strong> {scheme.learning_objective}
+                    </Typography>
+                  )}
+                  {scheme.topics && scheme.topics.length > 0 && (
+                    <Box mt={1}>
+                      <Typography variant="body2" fontWeight="bold">Topics:</Typography>
+                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                        {scheme.topics.map(topic => (
+                          <li key={topic.id}>
+                            <Typography variant="body2" color="text.secondary">
+                              {topic.topic_name}
+                            </Typography>
+                          </li>
+                        ))}
+                      </ul>
+                    </Box>
+                  )}
+                </Paper>
+              ))}
+            </Box>
+          ) : (
+            <Typography color="text.secondary" align="center">
+              No schemes of work available.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseViewSchemes}>Close</Button>
         </DialogActions>
       </Dialog>
 

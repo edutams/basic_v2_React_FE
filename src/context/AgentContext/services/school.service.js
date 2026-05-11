@@ -187,3 +187,12 @@ export const deleteProspectiveTenant = async (id) => {
     throw error.response?.data || error;
   }
 };
+
+export const updateProspectiveTenant = async (id, data) => {
+  try {
+    const res = await api.put(`/v1/landlord/prospective-tenants/${id}/update-prospective-tenant`, data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

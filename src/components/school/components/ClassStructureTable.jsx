@@ -19,7 +19,14 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const ClassStructureTable = ({ classStructures = [], onToggleStatus, isLoading = false }) => {
+const ClassStructureTable = ({ 
+  classStructures = [], 
+  onToggleStatus, 
+  onNoOfArmsChange,
+  onGenerateArms,
+  onArmNameChange,
+  isLoading = false 
+}) => {
   const [confirm, setConfirm] = useState({ open: false, structure: null });
 
   const handleToggleClick = (structure) => {
@@ -37,35 +44,100 @@ const ClassStructureTable = ({ classStructures = [], onToggleStatus, isLoading =
 
   const isActive = confirm.structure?.status === 'active';
 
-  const renderArms = (arms) => {
-    if (!arms || arms.length === 0) {
+  const renderArms = (structure) => {
+    const isInactive = structure.status === 'inactive';
+    
+    if (isInactive) {
+      // Display read-only arms for inactive classes
+      if (!structure.arms || structure.arms.length === 0) {
+        return (
+          <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
+            No arms created yet
+          </Typography>
+        );
+      }
+      
       return (
-        <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-          No arms created yet
-        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {structure.arms.map((arm, i) => (
+            <TextField
+              key={i}
+              size="small"
+              value={arm.arm_names}
+              disabled
+              sx={{
+                width: 90,
+                '& .MuiInputBase-input.Mui-disabled': {
+                  WebkitTextFillColor: '#374151',
+                  fontSize: '0.8rem',
+                },
+                '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#d1d5db',
+                },
+              }}
+            />
+          ))}
+        </Box>
       );
     }
-
+    
+    // Editable arms for active classes
     return (
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        {arms.map((arm, i) => (
+      <Box>
+        <Box display="flex" gap={1} alignItems="center" mb={1}>
           <TextField
-            key={i}
             size="small"
-            value={arm.arm_names}
-            disabled
+            type="number"
+            value={structure.no_of_arms || 0}
+            slotProps={{ htmlInput: { min: 0 } }}
+            onChange={(e) => onNoOfArmsChange && onNoOfArmsChange(structure.id, e.target.value)}
             sx={{
-              width: 90,
-              '& .MuiInputBase-input.Mui-disabled': {
-                WebkitTextFillColor: '#374151',
-                fontSize: '0.8rem',
-              },
-              '& .MuiOutlinedInput-root.Mui-disabled .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#d1d5db',
+              width: 70,
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'background.paper',
+                borderRadius: '8px',
+                '& fieldset': { borderColor: 'divider' },
+                '&:hover fieldset': { borderColor: 'text.disabled' },
+                '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '2px' },
               },
             }}
           />
-        ))}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => onGenerateArms && onGenerateArms(structure.id)}
+          >
+            Generate
+          </Button>
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {structure.arm_names && structure.arm_names.length > 0 ? (
+            structure.arm_names.map((armName, i) => (
+              <TextField
+                key={i}
+                size="small"
+                value={armName}
+                slotProps={{ htmlInput: { min: 0 } }}
+                onChange={(e) => onArmNameChange && onArmNameChange(structure.id, i, e.target.value)}
+                sx={{
+                  width: 90,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'background.paper',
+                    borderRadius: '8px',
+                    '& fieldset': { borderColor: 'divider' },
+                    '&:hover fieldset': { borderColor: 'text.disabled' },
+                    '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '2px' },
+                  },
+                }}
+              />
+            ))
+          ) : (
+            <Typography variant="body2" color="text.info" sx={{ p: 1 }}>
+              Click Generate to create arms
+            </Typography>
+          )}
+        </Box>
       </Box>
     );
   };
@@ -101,17 +173,12 @@ const ClassStructureTable = ({ classStructures = [], onToggleStatus, isLoading =
                       {structure.class_name}
                     </Typography> */}
                     {structure.class_code && (
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="body2" >
                         {structure.class_code}
                       </Typography>
                     )}
-                    {structure.programme_code && (
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {structure.programme_code}
-                      </Typography>
-                    )}
                   </TableCell>
-                  <TableCell>{renderArms(structure.arms)}</TableCell>
+                  <TableCell>{renderArms(structure)}</TableCell>
                   <TableCell>
                     <Chip
                       label={structure.status === 'active' ? 'active' : 'inactive'}
@@ -176,6 +243,9 @@ const ClassStructureTable = ({ classStructures = [], onToggleStatus, isLoading =
 ClassStructureTable.propTypes = {
   classStructures: PropTypes.array,
   onToggleStatus: PropTypes.func.isRequired,
+  onNoOfArmsChange: PropTypes.func,
+  onGenerateArms: PropTypes.func,
+  onArmNameChange: PropTypes.func,
   isLoading: PropTypes.bool,
 };
 

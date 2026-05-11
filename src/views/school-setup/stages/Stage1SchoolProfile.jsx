@@ -37,10 +37,22 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
     getTenantInfo()
       .then((res) => {
         const d = res.data;
+        // school_type may be a JSON string, array, or plain string
+        let schoolType = d.school_type;
+        if (typeof schoolType === 'string') {
+          try { schoolType = JSON.parse(schoolType); } catch { /* keep as string */ }
+        }
+        const schoolTypeLabel = Array.isArray(schoolType)
+          ? schoolType.map((t) => String(t).replace(/-/g, ' ')).join(', ')
+          : schoolType
+          ? String(schoolType).replace(/-/g, ' ')
+          : '';
+
         setTenantData({
           name: d.tenant_name || '',
           shortName: d.tenant_short_name || '',
           address: d.address || '',
+          schoolType: schoolTypeLabel,
         });
         setLogo(getFullImageUrl(d.school_logo));
       })
@@ -222,65 +234,117 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
             )}
           </Box>
 
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            {[
-              { label: 'School Name', value: tenantData?.name },
-              { label: 'Acronym', value: tenantData?.shortName },
-            ].map(({ label, value }) => (
-              <Box key={label}>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    mb: 0.75,
-                    color: 'text.primary',
-                  }}
-                >
-                  {label}
-                </Typography>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+  {/* School Name */}
+  <Box>
+    <Typography
+      sx={{
+        fontSize: 13,
+        fontWeight: 600,
+        mb: 0.75,
+        color: 'text.primary',
+      }}
+    >
+      School Name
+    </Typography>
 
-                <Box
-                  sx={{
-                    p: 1.5,
-                    bgcolor: '#fff',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Typography sx={{ fontSize: 14 }}>
-                    {value || `No ${label.toLowerCase()} available`}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
+    <Box
+      sx={{
+        p: 1.5,
+        bgcolor: '#fff',
+        border: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Typography sx={{ fontSize: 14 }}>
+        {tenantData?.name || 'No school name available'}
+      </Typography>
+    </Box>
+  </Box>
 
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  mb: 0.75,
-                  color: 'text.primary',
-                }}
-              >
-                Address
-              </Typography>
+  {/* Acronym + School Type */}
+  <Box display="flex" gap={2}>
+    <Box flex={1}>
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 600,
+          mb: 0.75,
+          color: 'text.primary',
+        }}
+      >
+        Acronym
+      </Typography>
 
-              <Box
-                sx={{
-                  p: 1.5,
-                  bgcolor: '#fff',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  minHeight: 80,
-                }}
-              >
-                <Typography sx={{ fontSize: 14}}>
-                  {tenantData?.address || 'No address available'}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
+      <Box
+        sx={{
+          p: 1.5,
+          bgcolor: '#fff',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Typography sx={{ fontSize: 14 }}>
+          {tenantData?.shortName || 'No acronym available'}
+        </Typography>
+      </Box>
+    </Box>
+
+    <Box flex={1}>
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 600,
+          mb: 0.75,
+          color: 'text.primary',
+        }}
+      >
+        School Type
+      </Typography>
+
+      <Box
+        sx={{
+          p: 1.5,
+          bgcolor: '#fff',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <Typography sx={{ fontSize: 14 }}>
+          {tenantData?.schoolType || 'No school type available'}
+        </Typography>
+      </Box>
+    </Box>
+  </Box>
+
+  {/* Address */}
+  <Box>
+    <Typography
+      sx={{
+        fontSize: 13,
+        fontWeight: 600,
+        mb: 0.75,
+        color: 'text.primary',
+      }}
+    >
+      Address
+    </Typography>
+
+    <Box
+      sx={{
+        p: 1.5,
+        bgcolor: '#fff',
+        border: '1px solid',
+        borderColor: 'divider',
+        minHeight: 80,
+      }}
+    >
+      <Typography sx={{ fontSize: 14 }}>
+        {tenantData?.address || 'No address available'}
+      </Typography>
+    </Box>
+  </Box>
+</Box>
         </Box>
       )}
 

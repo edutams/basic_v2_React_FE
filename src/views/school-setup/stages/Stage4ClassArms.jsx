@@ -43,7 +43,7 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
           pb: 1,
         }}
       >
-        <Typography sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5, flexShrink: 0 }}>
+        <Typography data-tour="stage3-heading" sx={{ fontSize: 26, fontWeight: 800, color: 'text.primary', mb: 0.5, flexShrink: 0 }}>
           Create Class Arms
         </Typography>
         <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, maxWidth: 480, lineHeight: 1.6, flexShrink: 0 }}>

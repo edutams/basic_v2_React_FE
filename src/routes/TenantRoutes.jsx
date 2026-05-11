@@ -4,6 +4,7 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
 import ParentProtectedRoute from '../components/auth/ParentProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
+import { SetupTourProvider } from '../context/SetupTourContext';
 
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
@@ -53,7 +54,9 @@ const TenantRoutes = [
     path: '/setup-welcome',
     element: (
       <TenantProtectedRoute>
-        <BlankLayout />
+        <SetupTourProvider>
+          <BlankLayout />
+        </SetupTourProvider>
       </TenantProtectedRoute>
     ),
     children: [{ index: true, element: <SetupWelcome /> }],
@@ -62,7 +65,9 @@ const TenantRoutes = [
     path: '/school-profile',
     element: (
       <TenantProtectedRoute>
-        <BlankLayout />
+        <SetupTourProvider>
+          <BlankLayout />
+        </SetupTourProvider>
       </TenantProtectedRoute>
     ),
     children: [{ index: true, element: <InitialSetup /> }],
@@ -110,7 +115,9 @@ const TenantRoutes = [
     path: '/complete-setup',
     element: (
       <TenantProtectedRoute>
-        <BlankLayout />
+        <SetupTourProvider>
+          <BlankLayout />
+        </SetupTourProvider>
       </TenantProtectedRoute>
     ),
     children: [{ index: true, element: <CompleteSetup /> }],

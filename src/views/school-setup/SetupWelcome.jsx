@@ -1,8 +1,9 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Link, useTheme } from '@mui/material';
 import { IconVideo, IconChevronRight, IconPower, IconArrowRight } from '@tabler/icons-react';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
+import { useSetupTour } from '../../context/SetupTourContext';
 import EduTAMSLogo from '../../assets/images/logos/EduTAMS.png';
 import SetupImage from '../../assets/images/setup/setup.png';
 
@@ -55,8 +56,15 @@ const SetupWelcome = () => {
   const { tenantInfo, logout } = useContext(TenantAuthContext);
   const theme = useTheme();
   const primary = theme.palette.primary.main;
+  const { startTour } = useSetupTour();
 
   const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
+
+  // Auto-start the tour when the welcome page mounts
+  useEffect(() => {
+    const timer = setTimeout(() => startTour(), 800);
+    return () => clearTimeout(timer);
+  }, [startTour]);
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
   const handleStartSetup = () => navigate('/school-profile?stage=1');
@@ -117,6 +125,7 @@ const SetupWelcome = () => {
         <Box sx={{ position: 'relative', zIndex: 2 }}>
           <Typography
             variant="h5"
+            data-tour="welcome-heading"
             sx={{
               color: 'rgba(255,255,255,0.85)',
               mb: 0.25,
@@ -277,7 +286,7 @@ const SetupWelcome = () => {
             <Typography sx={{ fontSize: 13, color: 'rgba(0,0,0,0.45)' }}>
               Having Troubles?
             </Typography>
-            <Link href="#" underline="hover" sx={{ fontSize: 13, fontWeight: 700, color: 'primary.main' }}>
+            <Link href="#" underline="hover" data-tour="welcome-help" sx={{ fontSize: 13, fontWeight: 700, color: 'primary.main' }}>
               Get Help
             </Link>
           </Box>
@@ -384,6 +393,7 @@ const SetupWelcome = () => {
 
       <Box
         onClick={handleStartSetup}
+        data-tour="welcome-start"
         sx={{
           position: 'absolute',
           bottom: 28,

@@ -496,7 +496,6 @@ const SetupWelcome = () => {
           </Box>
         </Box>
 
-        {/* "How to setup" pill */}
         <Box
           sx={{
             display: 'inline-flex',

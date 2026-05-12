@@ -79,10 +79,7 @@ const agentApi = {
     const response = await api.get(`/v1/landlord/organizations/${orgId}/schools`);
     return response.data;
   },
-  deleteOrganization: async (orgId) => {
-    const response = await api.delete(`/v1/landlord/organizations/${orgId}`);
-    return response.data;
-  },
+
 };
 
 export default agentApi;

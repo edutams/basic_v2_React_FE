@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, useTheme } from '@mui/material';
 import { IconShieldCheck, IconArrowLeft } from '@tabler/icons-react';
@@ -29,14 +29,22 @@ const anim = (name, duration = '0.6s', delay = '0s') =>
 
 const CompleteSetup = () => {
   const navigate = useNavigate();
-  const { tenantInfo } = useContext(TenantAuthContext);
+  const { tenantInfo, refreshTenantInfo } = useContext(TenantAuthContext);
   const theme = useTheme();
   const primary = theme.palette.primary.main;
 
-  const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
-
   const status = tenantInfo?.onboarding_status || 'pending';
   const isApproved = status === 'approved';
+
+  const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
+
+  // Poll every 15s while waiting for approval
+  // SetupRedirectHandler will auto-navigate to '/' once approved
+  useEffect(() => {
+    if (isApproved) return;
+    const interval = setInterval(refreshTenantInfo, 15000);
+    return () => clearInterval(interval);
+  }, [isApproved, refreshTenantInfo]);
 
   const handleContinue = () => navigate('/');
   const handleBack = () => navigate('/school-profile?stage=5&edit=true'); // or stage=1

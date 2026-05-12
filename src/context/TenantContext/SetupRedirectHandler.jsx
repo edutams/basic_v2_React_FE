@@ -13,20 +13,20 @@ const SetupRedirectHandler = () => {
     const { onboarding_status = 'pending', onboarding_stage = 0 } = tenantInfo;
     const currentPath = location.pathname;
 
+    const isSetupPage =
+      currentPath.startsWith('/setup-welcome') ||
+      currentPath.startsWith('/school-profile') ||
+      currentPath === '/complete-setup';
+
     // ==================== APPROVED SCHOOLS ====================
     if (onboarding_status === 'approved') {
-      // Allow them to see the complete-setup page once
-      if (currentPath === '/complete-setup') {
-        return; // Do nothing - let them see the welcome screen
-      }
-      // Otherwise, send them to dashboard
-      if (currentPath !== '/') {
+      if (isSetupPage) {
         navigate('/', { replace: true });
       }
       return;
     }
 
-    // ==================== COMPLETED BUT NOT APPROVED ====================
+    // ── COMPLETED (awaiting approval) → stay on /complete-setup
     if (onboarding_status === 'completed' || onboarding_stage >= 5) {
       if (currentPath !== '/complete-setup') {
         navigate('/complete-setup', { replace: true });
@@ -34,9 +34,9 @@ const SetupRedirectHandler = () => {
       return;
     }
 
-    // ==================== STILL IN SETUP ====================
+    // ── STILL SETTING UP → keep on setup pages only
     if (onboarding_stage < 5) {
-      if (!currentPath.startsWith('/setup-welcome') && !currentPath.startsWith('/school-profile')) {
+      if (!isSetupPage) {
         navigate('/setup-welcome', { replace: true });
       }
     }

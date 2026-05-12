@@ -58,6 +58,7 @@ const TenantRoutes = [
     path: '/setup-welcome',
     element: (
       <TenantProtectedRoute>
+        <SetupRedirectHandler />
         <BlankLayout />
       </TenantProtectedRoute>
     ),
@@ -67,6 +68,7 @@ const TenantRoutes = [
     path: '/school-profile',
     element: (
       <TenantProtectedRoute>
+        <SetupRedirectHandler />
         <BlankLayout />
       </TenantProtectedRoute>
     ),
@@ -115,6 +117,7 @@ const TenantRoutes = [
     path: '/complete-setup',
     element: (
       <TenantProtectedRoute>
+        <SetupRedirectHandler />
         <BlankLayout />
       </TenantProtectedRoute>
     ),

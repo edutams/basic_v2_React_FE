@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import SetCalendarTab from './tabs/SetCalendarTab';
-import HolidaySection from './tabs/HolidaySection';
+import SetCalendarTab from './components/SetCalendarTab';
+import HolidaySection from './components/HolidaySection';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Calendar' }];
 

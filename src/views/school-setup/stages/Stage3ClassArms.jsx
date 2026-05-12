@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
-import SetUpClassesTab from '../tabs/SetUpClassesTab';
+import SetUpClassesTab from '../components/SetUpClassesTab';
 
 const Stage3ClassArms = ({ onNext, onBack, onSkip }) => {
   const tabRef = useRef(null);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import SetCalendarTab from '../tabs/SetCalendarTab';
+import SetCalendarTab from '../components/SetCalendarTab';
 import SetupShell from './SetupShell';
 import Stage2Image from '../../../assets/images/setup/setup2.png';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
-import UploadTeachersTab from '../tabs/UploadTeachersTab';
+import UploadTeachersTab from '../components/UploadTeachersTab';
 
 const Stage5AddTeachers = ({ onNext, onBack, onSkip }) => {
   const [canContinue, setCanContinue] = useState(false);

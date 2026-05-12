@@ -81,7 +81,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   // ── Hint positioning ─────────────────────────────────────────────────────
   const generateBtnRef = useRef(null);
   const paperRef = useRef(null);
+  const actionBtnRef = useRef(null);       // ref on first row's ⋮ button
+  const tableWrapRef = useRef(null);       // ref on the Box wrapping the table
   const [hintStyle, setHintStyle] = useState(null);
+  const [actionHintStyle, setActionHintStyle] = useState(null);
 
   useLayoutEffect(() => {
     const btn = generateBtnRef.current;
@@ -92,7 +95,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       const btnRect = btn.getBoundingClientRect();
       const paperRect = paper.getBoundingClientRect();
       setHintStyle({
-        // Position hint just below the button, aligned to its left edge
         top: btnRect.bottom - paperRect.top + 6,
         left: btnRect.left - paperRect.left,
         width: btnRect.width,
@@ -100,12 +102,32 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     };
 
     calc();
-
-    // ResizeObserver catches wrapping, sidebar collapse, any layout shift
     const ro = new ResizeObserver(calc);
     ro.observe(paper);
     return () => ro.disconnect();
   }, [weeks.length, activeSessionTermId, sessionTerms.length]);
+
+  // Measure the ⋮ action button in the first row
+  useLayoutEffect(() => {
+    const btn = actionBtnRef.current;
+    const wrap = tableWrapRef.current;
+    if (!btn || !wrap) return;
+
+    const calc = () => {
+      const btnRect = btn.getBoundingClientRect();
+      const wrapRect = wrap.getBoundingClientRect();
+      setActionHintStyle({
+        // Place hint below the button, aligned to its left edge
+        top: btnRect.bottom - wrapRect.top + 6,
+        left: btnRect.left - wrapRect.left - 80, // offset left so bubble doesn't overlap button
+      });
+    };
+
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [sessionTerms.length]);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -366,7 +388,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                     </TextField>
                   </Box>
 
-                  <Box sx={{ position: 'relative' }}>
+                  <Box ref={tableWrapRef} sx={{ position: 'relative' }}>
                     <Paper variant="outlined">
                       <TableContainer>
                         <Table sx={{ whiteSpace: 'nowrap' }}>
@@ -399,7 +421,11 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                                   )}
                                 </TableCell>
                                 <TableCell align="center">
-                                  <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                                  <IconButton
+                                    ref={i === 0 ? actionBtnRef : null}
+                                    size="small"
+                                    onClick={(e) => handleMenuOpen(e, item)}
+                                  >
                                     <MoreVertIcon size={18} />
                                   </IconButton>
                                 </TableCell>
@@ -410,15 +436,20 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                       </TableContainer>
                     </Paper>
 
-                    {/* Subscribe hint */}
-                    {!sessionTerms.some((t) => t.is_subscribed === 'yes') && (
+                    {/* Subscribe hint — measured from the first row's ⋮ button */}
+                    {!sessionTerms.some((t) => t.is_subscribed === 'yes') && actionHintStyle && (
                       <ArrowHint
                         show
                         label="Click ⋮ to subscribe"
                         direction="up-right"
                         mode="persistent"
                         delay="0.8s"
-                        position={{ position: 'absolute', top: 110, right: 40 }}
+                        position={{
+                          position: 'absolute',
+                          top: actionHintStyle.top,
+                          left: actionHintStyle.left,
+                          zIndex: 10,
+                        }}
                       />
                     )}
                   </Box>

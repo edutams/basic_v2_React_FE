@@ -240,11 +240,11 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
             Add New Teacher
           </Button>
 
-          {/* Sequential hints — one at a time, 5s each */}
+          {/* Sequential hints — one at a time, 5s each, arrow points UP to the button */}
           <ArrowHint
             show={activeHint === 'download'}
             label="📥 Download the template first"
-            direction="down-left"
+            direction="up-left"
             mode="persistent"
             delay="0s"
             position={{ position: 'absolute', top: '100%', left: 0, zIndex: 20, mt: 1 }}
@@ -252,7 +252,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           <ArrowHint
             show={activeHint === 'upload'}
             label="📤 Upload your filled template"
-            direction="down-left"
+            direction="up-right"
             mode="persistent"
             delay="0s"
             position={{ position: 'absolute', top: '100%', left: '33%', zIndex: 20, mt: 1 }}
@@ -260,7 +260,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           <ArrowHint
             show={activeHint === 'add'}
             label="👆 Or add a teacher manually"
-            direction="down-right"
+            direction="up-right"
             mode="persistent"
             delay="0s"
             position={{ position: 'absolute', top: '100%', right: 0, zIndex: 20, mt: 1 }}

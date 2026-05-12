@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useContext } from 'react';
 import {
   Box,
   Grid,
@@ -23,10 +23,11 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
-import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
-import { Add as AddIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
+import ArrowHint from 'src/components/shared/ArrowHint';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import {
   fetchCurrentSession,
@@ -39,26 +40,15 @@ import {
 import {
   fetchWeeks,
   autoGenerateWeeks,
-  addWeek,
-  deleteWeek,
   toggleWeekStatus,
-  saveWeeks,
 } from '../../../api/weekApi';
 
-const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
+const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  const handleChange = () => {
-    setHasChanges(true);
-  };
-
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectAll, setSelectAll] = useState(false);
-
-  // Pagination state for Terms table — removed
-  // Pagination state for Weeks table — removed
 
   // Session and session terms state
   const [currentSession, setCurrentSession] = useState(null);
@@ -67,10 +57,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
 
   // Edit modal state
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [selectedTerm, setSelectedTerm] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
+
   // Notification state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -88,29 +78,58 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   });
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
 
+  // ── Hint positioning ─────────────────────────────────────────────────────
+  const generateBtnRef = useRef(null);
+  const paperRef = useRef(null);
+  const [hintStyle, setHintStyle] = useState(null);
+
+  useLayoutEffect(() => {
+    const btn = generateBtnRef.current;
+    const paper = paperRef.current;
+    if (!btn || !paper) return;
+
+    const calc = () => {
+      const btnRect = btn.getBoundingClientRect();
+      const paperRect = paper.getBoundingClientRect();
+      setHintStyle({
+        // Position hint just below the button, aligned to its left edge
+        top: btnRect.bottom - paperRect.top + 6,
+        left: btnRect.left - paperRect.left,
+        width: btnRect.width,
+      });
+    };
+
+    calc();
+
+    // ResizeObserver catches wrapping, sidebar collapse, any layout shift
+    const ro = new ResizeObserver(calc);
+    ro.observe(paper);
+    return () => ro.disconnect();
+  }, [weeks.length, activeSessionTermId, sessionTerms.length]);
+
   // Fetch data on component mount
   useEffect(() => {
     loadData();
   }, []);
 
+  // Notify parent when stage is completable: subscribed term + weeks generated
+  useEffect(() => {
+    const isReady =
+      sessionTerms.some((t) => t.is_subscribed === 'yes') && weeks.length > 0;
+    onReadyChange?.(isReady);
+  }, [sessionTerms, weeks, onReadyChange]);
+
   const loadData = async () => {
     try {
       setLoading(true);
-
-      // Fetch Current Sessions (where is_current is yes)
       const sessionRes = await fetchCurrentSession();
       if (sessionRes.status && sessionRes.data.length > 0) {
         setSessions(sessionRes.data);
-        // Preselect the first current session
         const initialSessionId = sessionRes.data[0].id;
         setSelectedSessionId(initialSessionId);
         setCurrentSession(sessionRes.data[0]);
-
-        // Load terms for this session
         await loadSessionTerms(initialSessionId);
       }
-
-      // Fetch all landlord terms for the dropdown
       const termsRes = await fetchTerms();
       if (termsRes.status) {
         setAllLandlordTerms(termsRes.data);
@@ -127,7 +146,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       const termsRes = await fetchSessionTerms(sessionId);
       if (termsRes.status) {
         setSessionTerms(termsRes.data);
-        // Find if there's an active session term to load weeks automatically
         const activeST = termsRes.data.find((t) => t.status === 'active');
         if (activeST && activeST.session_term_id) {
           setActiveSessionTermId(activeST.session_term_id);
@@ -172,14 +190,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Handle edit term name
-  const handleOpenEditModal = () => {
-    setOpenEditModal(true);
-  };
-
   const handleCloseEditModal = () => {
     setOpenEditModal(false);
-    setSelectedTerm(null);
     setDisplayName('');
   };
 
@@ -188,7 +200,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       showSnackbar('Term and Display name are required', 'error');
       return;
     }
-
     try {
       setLoading(true);
       const response = await updateDisplayName(selectedAppTermId, displayName);
@@ -196,8 +207,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         showSnackbar('Display name updated successfully', 'success');
         handleCloseEditModal();
         loadSessionTerms(selectedSessionId);
-        // Trigger HolidaySection refresh
-        console.log('SetCalendarTab: Calling onUpdate callback');
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(response.message || 'Failed to update display name', 'error');
@@ -217,7 +226,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     loadSessionTerms(sessionId);
   };
 
-  // Handle subscribe click (shows confirmation)
   const handleSubscribeClick = (term) => {
     setConfirmSubscribe({ open: true, term });
   };
@@ -225,9 +233,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const handleConfirmSubscribe = async () => {
     const term = confirmSubscribe.term;
     setConfirmSubscribe({ open: false, term: null });
-
     if (!selectedSessionId || !term) return;
-
     try {
       setLoading(true);
       const response = await subscribeSessionTerm(selectedSessionId, term.app_term_id);
@@ -235,7 +241,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         showSnackbar('Subscribed successfully', 'success');
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
-        // Trigger HolidaySection refresh
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(response.message || 'Failed to subscribe', 'error');
@@ -254,16 +259,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const handleConfirmToggleStatus = async () => {
     const term = confirmStatus.term;
     setConfirmStatus({ open: false, term: null });
-
     if (!term || !term.session_term_id) return;
-
     try {
       setLoading(true);
       const response = await toggleSessionTermStatus(term.session_term_id);
-
       const isSuccess =
         response.status === true && (!response.data || response.data.status !== false);
-
       if (isSuccess) {
         showSnackbar(
           `Term ${term.status === 'active' ? 'deactivated' : 'activated'} successfully`,
@@ -271,7 +272,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         );
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
-        // Trigger HolidaySection refresh
         if (onUpdate) onUpdate();
       } else {
         const errorMessage =
@@ -279,7 +279,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           response.data?.message ||
           response.message ||
           'Failed to update status';
-
         showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
@@ -291,18 +290,16 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       setLoading(false);
     }
   };
-  // Week Logic
+
   const handleAutoGenerate = async () => {
     if (!activeSessionTermId || !autoGenerateConfig.startDate) {
       showSnackbar('Set start date first', 'error');
       return;
     }
-
     if (autoGenerateConfig.numWeeks > 15 || autoGenerateConfig.numWeeks < 1) {
       showSnackbar('Number of weeks must be between 1 and 15', 'error');
       return;
     }
-
     try {
       setLoading(true);
       const response = await autoGenerateWeeks(activeSessionTermId, {
@@ -312,9 +309,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       if (response.status) {
         setWeeks(response.data);
         showSnackbar('Weeks generated successfully', 'success');
-        // Refresh session terms to update the Start Date in the main table
         loadSessionTerms(selectedSessionId);
-        // Refresh header to show updated week count immediately
         refreshTenantInfo();
       }
     } catch (error) {
@@ -335,304 +330,252 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     }
   };
 
-  const handleAddWeek = async () => {
-    try {
-      const response = await addWeek(activeSessionTermId);
-      if (response.status) {
-        setWeeks(response.data);
-        // Refresh session terms to update the Start Date in the main table
-        loadSessionTerms(selectedSessionId);
-        // Refresh header to show updated week count immediately
-        refreshTenantInfo();
-      }
-    } catch (error) {
-      showSnackbar('Failed to add week', 'error');
-    }
-  };
-
-  // const handleDeleteWeek = async (weekId) => {
-  //   try {
-  //     const response = await deleteWeek(activeSessionTermId, weekId);
-  //     if (response.status) {
-  //       setWeeks(response.data);
-  //       // Refresh session terms to update the Start Date if necessary
-  //       loadSessionTerms(selectedSessionId);
-  //     }
-  //   } catch (error) {
-  //     showSnackbar('Failed to delete week', 'error');
-  //   }
-  // };
-
-  const handleSelectAll = () => {
-    const newSelectAll = !selectAll;
-    setSelectAll(newSelectAll);
-  };
-
-  const handleToggleSelect = (termName) => {
-    setHasChanges(true);
-  };
-
-  // (pagination removed)
-
   return (
     <Box sx={{ p: 2 }}>
       <ParentCard>
-   <Grid container spacing={3}>
-        {/* Manage Sessions Column */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <ParentCard
-            title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h5">Manage Sessions</Typography>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    handleOpenEditModal();
-                  }}
-                >
-                  Edit Term Name
-                </Button>
-              </Box>
-            }
-          >
-            {loading && !currentSession ? (
-              <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                sx={{ minHeight: 200 }}
-              >
-                <CircularProgress />
-              </Box>
-            ) : currentSession ? (
-              <>
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Select Session"
-                    value={selectedSessionId}
-                    onChange={handleSessionChange}
-                    size="small"
-                  >
-                    {sessions.map((session) => (
-                      <MenuItem key={session.id} value={session.id}>
-                        {session.sesname}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+        <Grid container spacing={3}>
+          {/* ── Manage Sessions ── */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <ParentCard
+              title={
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h5">Manage Sessions</Typography>
                 </Box>
-                <Paper variant="outlined">
-                  <TableContainer>
-                    <Table sx={{ whiteSpace: 'nowrap' }}>
+              }
+            >
+              {loading && !currentSession ? (
+                <Box display="flex" justifyContent="center" alignItems="center" sx={{ minHeight: 200 }}>
+                  <CircularProgress />
+                </Box>
+              ) : currentSession ? (
+                <>
+                  <Box sx={{ mb: 2 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Select Session"
+                      value={selectedSessionId}
+                      onChange={handleSessionChange}
+                      size="small"
+                    >
+                      {sessions.map((session) => (
+                        <MenuItem key={session.id} value={session.id}>
+                          {session.sesname}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+
+                  <Box sx={{ position: 'relative' }}>
+                    <Paper variant="outlined">
+                      <TableContainer>
+                        <Table sx={{ whiteSpace: 'nowrap' }}>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {sessionTerms.map((item, i) => (
+                              <TableRow key={item.app_term_id} hover>
+                                <TableCell>{i + 1}</TableCell>
+                                <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
+                                <TableCell align="center">
+                                  {item.is_subscribed === 'yes' ? (
+                                    <Chip
+                                      label={item.status === 'active' ? 'active' : 'inactive'}
+                                      size="small"
+                                      sx={{
+                                        bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                        color: item.status === 'active' ? '#166534' : '#92400e',
+                                        fontWeight: 500,
+                                      }}
+                                    />
+                                  ) : (
+                                    '-'
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                                    <MoreVertIcon size={18} />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Paper>
+
+                    {/* Subscribe hint */}
+                    {!sessionTerms.some((t) => t.is_subscribed === 'yes') && (
+                      <ArrowHint
+                        show
+                        label="Click ⋮ to subscribe"
+                        direction="up-right"
+                        mode="persistent"
+                        delay="0.8s"
+                        position={{ position: 'absolute', top: 110, right: 40 }}
+                      />
+                    )}
+                  </Box>
+                </>
+              ) : (
+                <Alert severity="info">No active session found</Alert>
+              )}
+            </ParentCard>
+          </Grid>
+
+          {/* ── Generate Week ── */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <ParentCard
+              id="generate-week-section"
+              title={
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h5">Generate Week</Typography>
+                  <Box
+                    sx={{
+                      ml: 'auto',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 3,
+                      border: '1px solid',
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                    }}
+                  >
+                    <Typography variant="caption">
+                      {weeks.length} Weeks • {weeks.length * 5} school days
+                    </Typography>
+                  </Box>
+                </Box>
+              }
+            >
+              {activeSessionTermId ? (
+                // paperRef anchors the hint position calculations
+                <Paper ref={paperRef} variant="outlined" sx={{ p: 2, position: 'relative' }}>
+                  <Box
+                    sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
+                  >
+                    <TextField
+                      label="No. of Weeks"
+                      type="number"
+                      size="small"
+                      sx={{ width: { xs: '100%', sm: 120 } }}
+                      value={autoGenerateConfig.numWeeks}
+                      onChange={(e) =>
+                        setAutoGenerateConfig({
+                          ...autoGenerateConfig,
+                          numWeeks: parseInt(e.target.value),
+                        })
+                      }
+                    />
+                    <TextField
+                      label="Start Date"
+                      type="date"
+                      size="small"
+                      sx={{ width: { xs: '100%', sm: 160 } }}
+                      value={autoGenerateConfig.startDate}
+                      onChange={(e) =>
+                        setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
+                      }
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                    {/* generateBtnRef targets this button exactly */}
+                    <Button
+                      ref={generateBtnRef}
+                      variant="contained"
+                      onClick={handleAutoGenerate}
+                      disabled={loading || !activeSessionTermId}
+                      size="small"
+                      sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
+                    >
+                      Generate
+                    </Button>
+                  </Box>
+
+                  {/* ── Generate hint  ── */}
+                  {sessionTerms.some((t) => t.is_subscribed === 'yes') &&
+                    weeks.length === 0 &&
+                    hintStyle && (
+                      <ArrowHint
+                        show
+                        label="Set dates &amp; click Generate ☝️"
+                        direction="up-right"
+                        mode="persistent"
+                        delay="0.3s"
+                        position={{
+                          position: 'absolute',
+                          top: hintStyle.top,
+                          left: hintStyle.left,
+                          width: hintStyle.width,
+                          zIndex: 10,
+                        }}
+                      />
+                    )}
+
+                  <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
+                    <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                          {/* <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell> */}
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Status
-                          </TableCell>
-                          {/* <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Start Date
-                          </TableCell> */}
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Action
-                          </TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                         </TableRow>
                       </TableHead>
-
                       <TableBody>
-                        {sessionTerms.map((item, i) => (
-                          <TableRow key={item.app_term_id} hover>
-                            <TableCell>{i + 1}</TableCell>
-                            <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
-                            {/* <TableCell>{item.term_name}</TableCell> */}
-                            <TableCell align="center">
-                              {item.is_subscribed === 'yes' ? (
+                        {weeks.length > 0 ? (
+                          weeks.map((item, i) => (
+                            <TableRow key={i} hover>
+                              <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
+                              <TableCell>{item.start_date || 'N/A'}</TableCell>
+                              <TableCell>{item.end_date || 'N/A'}</TableCell>
+                              <TableCell>
                                 <Chip
-                                  label={item.status === 'active' ? 'active' : 'inactive'}
+                                  label={item.status}
                                   size="small"
+                                  onClick={() => handleToggleWeekStatus(item.wk_id)}
                                   sx={{
-                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                    color: item.status === 'active' ? '#166534' : '#92400e',
-                                    fontWeight: 500,
+                                    cursor: 'pointer',
+                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                    color: item.status === 'active' ? '#166534' : '#991b1b',
                                   }}
                                 />
-                              ) : (
-                                '-'
-                              )}
-                            </TableCell>
-                            {/* <TableCell align="center">
-                              {item.start_date || (item.is_subscribed === 'yes' ? 'Not Set' : '-')}
-                            </TableCell> */}
-                            <TableCell align="center">
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleMenuOpen(e, item)}
-                              >
-                                <MoreVertIcon size={18} />
-                              </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                              <Typography color="textSecondary">
+                                No weeks generated yet for this term.
+                              </Typography>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        )}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </Paper>
-              </>
-            ) : (
-              <Alert severity="info">No active session found</Alert>
-            )}
-          </ParentCard>
+              ) : (
+                <Alert severity="info" sx={{ mt: 3 }}>
+                  No weeks generated yet. Subscribe to a term first to set the weeks
+                </Alert>
+              )}
+            </ParentCard>
+          </Grid>
         </Grid>
-
-        {/* Generate Week Column */}
-        <Grid size={{ xs: 12, md: 6 }}>
-
-          <ParentCard
-            id="generate-week-section"
-            title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h5">Generate Week</Typography>
-
-                <Box
-                  sx={{
-                    ml: 'auto',
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                  }}
-                >
-                  <Typography variant="caption">
-                    {weeks.length} Weeks • {weeks.length * 5} school days
-                  </Typography>
-                </Box>
-              </Box>
-            }
-          >
-            {activeSessionTermId ? (
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
-                  <TextField
-                    label="No. of Weeks"
-                    type="number"
-                    size="small"
-                    sx={{ width: { xs: '100%', sm: 120 } }}
-                    value={autoGenerateConfig.numWeeks}
-                    onChange={(e) =>
-                      setAutoGenerateConfig({
-                        ...autoGenerateConfig,
-                        numWeeks: parseInt(e.target.value),
-                      })
-                    }
-                  />
-                  <TextField
-                    label="Start Date"
-                    type="date"
-                    size="small"
-                    sx={{ width: { xs: '100%', sm: 160 } }}
-                    value={autoGenerateConfig.startDate}
-                    onChange={(e) =>
-                      setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
-                    }
-                    slotProps={{ inputLabel: { shrink: true } }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={handleAutoGenerate}
-                    disabled={loading || !activeSessionTermId}
-                    size="small"
-                    sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
-                  >
-                    Generate
-                  </Button>
-                </Box>
-
-                <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
-                  <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                        {/* <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell> */}
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {weeks.length > 0 ? (
-                        weeks.map((item, i) => (
-                          <TableRow key={i} hover>
-                            <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
-                            <TableCell>{item.start_date || 'N/A'}</TableCell>
-                            <TableCell>{item.end_date || 'N/A'}</TableCell>
-                            <TableCell>
-                              <Chip
-                                label={item.status}
-                                size="small"
-                                onClick={() => handleToggleWeekStatus(item.wk_id)}
-                                sx={{
-                                  cursor: 'pointer',
-                                  bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                                  color: item.status === 'active' ? '#166534' : '#991b1b',
-                                }}
-                              />
-                            </TableCell>
-                            {/* <TableCell>
-                              <IconButton
-                                size="small"
-                                color="dark"
-                                onClick={() => handleDeleteWeek(item.week_id)}
-                              >
-                                <IconDotsVertical size={16} />{' '}
-                              </IconButton>
-                            </TableCell> */}
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                            <Typography color="textSecondary">
-                              No weeks generated yet for this term.
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            ) : (
-              <Alert severity="info" sx={{ mt: 3 }}>
-                No weeks generated yet. Subscribe to a term first to set the weeks
-              </Alert>
-            )}
-
-          </ParentCard>
-
-        </Grid>
-      </Grid>
       </ParentCard>
-   
 
-      {/* <Box mt={2} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
-          Save & Continue
-        </Button>
-      </Box> */}
-
-      {/* Edit Term Name Modal */}
+      {/* ── Edit Term Name Modal ── */}
       <Dialog open={openEditModal} onClose={handleCloseEditModal} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Term Name</DialogTitle>
         <DialogContent>
-          <Box >
+          <Box>
             <TextField
               select
               fullWidth
@@ -640,7 +583,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
               value={selectedAppTermId}
               onChange={(e) => setSelectedAppTermId(e.target.value)}
               margin="normal"
-              size='small'
+              size="small"
             >
               {allLandlordTerms.map((term) => (
                 <MenuItem key={term.app_term_id} value={term.app_term_id}>
@@ -654,7 +597,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               margin="normal"
-              size='small'
+              size="small"
               required
               helperText="Input your own display name for the selected term"
             />
@@ -667,14 +610,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
             variant="contained"
             disabled={loading || !displayName.trim()}
             size="small"
-
           >
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Subscription Confirmation Dialog */}
+      {/* ── Subscription Confirmation ── */}
       <Dialog
         open={confirmSubscribe.open}
         onClose={() => setConfirmSubscribe({ open: false, term: null })}
@@ -688,16 +630,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>
-            No, Cancel
-          </Button>
+          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>No, Cancel</Button>
           <Button onClick={handleConfirmSubscribe} variant="contained" autoFocus disabled={loading}>
             Yes, Subscribe
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Status Toggle Confirmation Dialog */}
+      {/* ── Status Toggle Confirmation ── */}
       <Dialog
         open={confirmStatus.open}
         onClose={() => setConfirmStatus({ open: false, term: null })}
@@ -720,24 +660,22 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button
-
-            size="small"
-            onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
+          <Button size="small" onClick={() => setConfirmStatus({ open: false, term: null })}>
+            Cancel
+          </Button>
           <Button
             onClick={handleConfirmToggleStatus}
             variant="contained"
             color="primary"
             disabled={loading}
             size="small"
-
           >
             Confirm
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
+      {/* ── Snackbar ── */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -749,19 +687,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         </Alert>
       </Snackbar>
 
-      {/* Action Menu */}
+      {/* ── Action Menu ── */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         {selectedItem?.is_subscribed === 'no' ? (
           <MenuItem

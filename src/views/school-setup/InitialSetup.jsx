@@ -1,32 +1,100 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Stage1SchoolProfile  from './stages/Stage1SchoolProfile';
+import tenantApi from '../../api/tenant_api';
+
+import Stage1SchoolProfile from './stages/Stage1SchoolProfile';
 import Stage2ManageSessions from './stages/Stage2ManageSessions';
-import Stage3ClassArms      from './stages/Stage3ClassArms';
-import Stage4AddLearners    from './stages/Stage4AddLearners';
-import Stage5AddTeachers    from './stages/Stage5AddTeachers';
+import Stage3ClassArms from './stages/Stage3ClassArms';
+import Stage4AddLearners from './stages/Stage4AddLearners';
+import Stage5AddTeachers from './stages/Stage5AddTeachers';
 
 const InitialSetup = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+
   const stage = parseInt(searchParams.get('stage') || '1', 10);
+  const isEditMode = searchParams.get('edit') === 'true';
 
-  const goToStage = (n) => setSearchParams({ stage: n });
-  const goNext    = () => goToStage(stage + 1);
-  const goBack    = () => {
-    if (stage <= 1) navigate('/setup-welcome');
-    else goToStage(stage - 1);
+  const currentStage = isEditMode ? Math.min(stage, 5) : stage;
+
+  const goToStage = (n) => {
+    const params = new URLSearchParams();
+    params.set('stage', n.toString());
+    if (isEditMode) params.set('edit', 'true');
+    navigate(`/school-profile?${params.toString()}`);
   };
-  const goSkip   = () => navigate('/complete-setup');
-  const goFinish = () => navigate('/complete-setup');
 
-  // Stage 3 (Admin Detail) has been merged into Stage 1 (School Profile).
-  // Remaining stages shift down: old 4→3, old 5→4, old 6→5.
-  if (stage === 1) return <Stage1SchoolProfile  onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 2) return <Stage2ManageSessions onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 3) return <Stage3ClassArms      onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 4) return <Stage4AddLearners    onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 5) return <Stage5AddTeachers    onNext={goFinish} onBack={goBack} onSkip={goSkip} />;
+  const goBack = () => {
+    if (currentStage <= 1) {
+      navigate('/setup-welcome');
+    } else {
+      goToStage(currentStage - 1);
+    }
+  };
+
+  const updateStageOnBackend = async (stageNum) => {
+    try {
+      await tenantApi.post(`/school_setup/onboarding/stage/${stageNum}`);
+    } catch (err) {
+      console.error('Failed to update stage', err);
+    }
+  };
+
+  const goFinish = async () => {
+    try {
+      await tenantApi.post('/school_setup/onboarding/complete');
+      navigate('/complete-setup', { replace: true });
+    } catch (err) {
+      console.error('Failed to complete onboarding', err);
+      navigate('/complete-setup', { replace: true });
+    }
+  };
+
+  const handleSaveAndContinue = async (nextStage) => {
+    await updateStageOnBackend(currentStage);
+
+    if (nextStage) {
+      goToStage(nextStage);
+    } else {
+      goFinish();
+    }
+  };
+
+  // ==================== STAGE RENDERING ====================
+  if (currentStage === 1)
+    return (
+      <Stage1SchoolProfile
+        onNext={() => handleSaveAndContinue(2)}
+        onBack={goBack}
+        onSkip={goFinish}
+      />
+    );
+
+  if (currentStage === 2)
+    return (
+      <Stage2ManageSessions
+        onNext={() => handleSaveAndContinue(3)}
+        onBack={goBack}
+        onSkip={goFinish}
+      />
+    );
+
+  if (currentStage === 3)
+    return (
+      <Stage3ClassArms onNext={() => handleSaveAndContinue(4)} onBack={goBack} onSkip={goFinish} />
+    );
+
+  if (currentStage === 4)
+    return (
+      <Stage4AddLearners
+        onNext={() => handleSaveAndContinue(5)}
+        onBack={goBack}
+        onSkip={goFinish}
+      />
+    );
+
+  if (currentStage === 5)
+    return <Stage5AddTeachers onNext={goFinish} onBack={goBack} onSkip={goFinish} />;
 
   goFinish();
   return null;

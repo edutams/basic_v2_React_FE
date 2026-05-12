@@ -1,26 +1,26 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, useTheme } from '@mui/material';
-import { IconShieldCheck } from '@tabler/icons-react';
+import { IconShieldCheck, IconArrowLeft } from '@tabler/icons-react';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
 
 // ── Keyframes ────────────────────────────────────────────────────────────────
 const keyframes = {
   '@keyframes fadeUp': {
     from: { opacity: 0, transform: 'translateY(28px)' },
-    to:   { opacity: 1, transform: 'translateY(0)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
   },
   '@keyframes scaleIn': {
     from: { opacity: 0, transform: 'scale(0.7)' },
-    to:   { opacity: 1, transform: 'scale(1)' },
+    to: { opacity: 1, transform: 'scale(1)' },
   },
   '@keyframes ripple': {
-    '0%':   { transform: 'scale(0.85)', opacity: 0.6 },
-    '100%': { transform: 'scale(1.6)',  opacity: 0 },
+    '0%': { transform: 'scale(0.85)', opacity: 0.6 },
+    '100%': { transform: 'scale(1.6)', opacity: 0 },
   },
   '@keyframes fadeIn': {
     from: { opacity: 0 },
-    to:   { opacity: 1 },
+    to: { opacity: 1 },
   },
 };
 
@@ -34,6 +34,12 @@ const CompleteSetup = () => {
   const primary = theme.palette.primary.main;
 
   const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
+
+  const status = tenantInfo?.onboarding_status || 'pending';
+  const isApproved = status === 'approved';
+
+  const handleContinue = () => navigate('/');
+  const handleBack = () => navigate('/school-profile?stage=5&edit=true'); // or stage=1
 
   return (
     <Box
@@ -110,11 +116,42 @@ const CompleteSetup = () => {
             zIndex: 1,
           }}
         >
-          Congratulations {schoolName}!{'\n'}
-          You've successfully completed your school setup.
+          {isApproved ? `Welcome back, ${schoolName}!` : `Congratulations ${schoolName}!`}
+          <br />
+          {isApproved
+            ? 'Your school has been approved.'
+            : "You've successfully completed your school setup."}
         </Typography>
 
-        <Button
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {!isApproved && (
+            <Button
+              variant="outlined"
+              onClick={handleBack}
+              startIcon={<IconArrowLeft />}
+              sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.5)' }}
+            >
+              Review / Edit Setup
+            </Button>
+          )}
+
+          <Button
+            variant="contained"
+            onClick={handleContinue}
+            sx={{
+              bgcolor: '#fff',
+              color: 'primary.main',
+              fontWeight: 700,
+              px: 4,
+              py: 1.25,
+              borderRadius: '10px !important',
+            }}
+          >
+            {isApproved ? 'Continue to Dashboard' : 'Back to Setup'}
+          </Button>
+        </Box>
+
+        {/* <Button
           variant="contained"
           onClick={() => navigate('/')}
           sx={{
@@ -138,10 +175,27 @@ const CompleteSetup = () => {
           }}
         >
           Continue to Dashboard
-        </Button>
+        </Button> */}
       </Box>
 
-      <Box
+      <Box sx={{ flex: 1, bgcolor: '#f5f5f5', p: { xs: 4, md: 6 } }}>
+        {isApproved ? (
+          <Typography sx={{ fontSize: 18, lineHeight: 1.7 }}>
+            Your school is now fully active. You can start using all features.
+          </Typography>
+        ) : (
+          <>
+            <Typography sx={{ fontSize: 18, lineHeight: 1.7, mb: 3 }}>
+              A support agent will review your configuration to ensure everything is in order and
+              will contact you shortly.
+            </Typography>
+            <Typography sx={{ fontSize: 18, lineHeight: 1.7 }}>
+              Thank you for choosing <strong>EduTAMS</strong>.
+            </Typography>
+          </>
+        )}
+      </Box>
+      {/* <Box
         sx={{
           flex: 1,
           bgcolor: '#f5f5f5',
@@ -162,7 +216,8 @@ const CompleteSetup = () => {
             maxWidth: 360,
           }}
         >
-          A support agent will review your configuration to ensure everything is in order and will contact you shortly.
+          A support agent will review your configuration to ensure everything is in order and will
+          contact you shortly.
         </Typography>
 
         <Typography
@@ -174,9 +229,10 @@ const CompleteSetup = () => {
             maxWidth: 360,
           }}
         >
-          Thank you for choosing <strong>EduTAMS</strong>, we're excited to support your journey in digitizing schooling!
+          Thank you for choosing <strong>EduTAMS</strong>, we're excited to support your journey in
+          digitizing schooling!
         </Typography>
-      </Box>
+      </Box> */}
     </Box>
   );
 };

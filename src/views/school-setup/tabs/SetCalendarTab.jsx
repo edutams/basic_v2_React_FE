@@ -564,7 +564,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                     </Button>
                   </Box>
 
-                  {/* ── Generate hint — pinned directly below the Generate button ── */}
+                  {/* ── Generate hint  ── */}
                   {sessionTerms.some((t) => t.is_subscribed === 'yes') &&
                     weeks.length === 0 &&
                     hintStyle && (
@@ -623,6 +623,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                             py: 1,
                             boxShadow: `0 4px 16px ${primary}33`,
                             textAlign: 'center',
+                            ml: 5,
                           }}
                         >
                           <Typography

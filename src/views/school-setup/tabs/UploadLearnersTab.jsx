@@ -198,6 +198,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                 <TableRow key={item.unique_key || index}>
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {/* Toggle — temporarily removed
                       <IconButton
                         size="small"
                         color="error"
@@ -207,6 +208,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                       >
                         ✕
                       </IconButton>
+                      */}
                       <TextField
                         size="small"
                         defaultValue={`${item.programme_code} - ${item.class_code}`}

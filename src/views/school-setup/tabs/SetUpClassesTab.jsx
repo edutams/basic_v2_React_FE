@@ -242,6 +242,7 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref
                         gap: 1,
                       }}
                     >
+                      {/* Toggle active/inactive — temporarily hidden
                       <IconButton
                         size="small"
                         color={isInactive ? 'success' : 'error'}
@@ -251,6 +252,7 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref
                       >
                         {isInactive ? '✓' : '✕'}
                       </IconButton>
+                      */}
 
                       <TextField
                         size="small"

@@ -1,166 +1,182 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Stack, Paper, Tabs, Tab, CircularProgress } from '@mui/material';
-import {
-  IconSchool,
-  IconVideo,
-  IconArrowRight,
-  IconBooks,
-  IconCalendar,
-  IconUserPlus,
-  IconUsers,
-} from '@tabler/icons-react';
-import ParentCard from 'src/components/shared/ParentCard';
-import { getSetupStats } from '../../context/TenantContext/services/tenant.service';
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Button, useTheme } from '@mui/material';
+import { IconShieldCheck } from '@tabler/icons-react';
+import { TenantAuthContext } from '../../context/TenantContext/auth';
 
-import SetUpClassesTab from './tabs/SetUpClassesTab';
-import UploadLearnersTab from './tabs/UploadLearnersTab';
-import UploadTeachersTab from './tabs/UploadTeachersTab';
-import SetCalendarTab from './tabs/SetCalendarTab';
+// ── Keyframes ────────────────────────────────────────────────────────────────
+const keyframes = {
+  '@keyframes fadeUp': {
+    from: { opacity: 0, transform: 'translateY(28px)' },
+    to:   { opacity: 1, transform: 'translateY(0)' },
+  },
+  '@keyframes scaleIn': {
+    from: { opacity: 0, transform: 'scale(0.7)' },
+    to:   { opacity: 1, transform: 'scale(1)' },
+  },
+  '@keyframes ripple': {
+    '0%':   { transform: 'scale(0.85)', opacity: 0.6 },
+    '100%': { transform: 'scale(1.6)',  opacity: 0 },
+  },
+  '@keyframes fadeIn': {
+    from: { opacity: 0 },
+    to:   { opacity: 1 },
+  },
+};
 
-const StatCard = ({ count, label, loading }) => (
-  <Paper
-    sx={{
-      borderRadius: 2,
-      p: 3,
-      // py: 2,
-      width: { xs: '100%', sm: 320 },
-      bgcolor: 'background.paper',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    }}
-  >
-    <Box
-      sx={{
-        width: 48,
-        height: 48,
-        borderRadius: '50%',
-        bgcolor: 'primary.light',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <IconSchool size={22} color="#3B5BDB" />
-    </Box>
-
-    <Box sx={{ textAlign: 'center' }}>
-      {loading ? (
-        <CircularProgress size={24} />
-      ) : (
-        <>
-          <Typography fontSize={26} fontWeight={700}>
-            {count}
-          </Typography>
-          <Typography fontSize={14} color="text.secondary">
-            {label}
-          </Typography>
-        </>
-      )}
-    </Box>
-  </Paper>
-);
+const anim = (name, duration = '0.6s', delay = '0s') =>
+  `${name} ${duration} cubic-bezier(0.22,1,0.36,1) ${delay} both`;
 
 const CompleteSetup = () => {
-  const [activeTab, setActiveTab] = useState(0);
-  const [stats, setStats] = useState({ classes: 0, arms: 0, learners: 0, teachers: 0 });
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { tenantInfo } = useContext(TenantAuthContext);
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
 
-  const fetchStats = async () => {
-    try {
-      const data = await getSetupStats();
-      const statsData = data.data || data;
-      setStats({
-        classes: statsData.classes || 0,
-        arms: statsData.arms || 0,
-        learners: statsData.learners || 0,
-        teachers: statsData.teachers || 0,
-      });
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    }
-  };
-
-  useEffect(() => {
-    setLoading(true);
-    fetchStats().finally(() => setLoading(false));
-  }, []);
+  const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
 
   return (
-    <Box>
+    <Box
+      sx={{
+        ...keyframes,
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        overflow: 'hidden',
+        m: 0,
+        p: 0,
+      }}
+    >
       <Box
         sx={{
+          width: '60%',
+          flexShrink: 0,
+          bgcolor: 'primary.main',
           display: 'flex',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
           alignItems: 'center',
-          mb: 2,
+          justifyContent: 'center',
+          px: 6,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <Box>
-          <Typography fontWeight={700} fontSize={20}>
-            School Administration
-          </Typography>
-          <Typography fontSize={13} color="text.secondary">
-            Manage classes, learners, teachers and calendar
-          </Typography>
-        </Box>
+        {/* Ripple rings behind icon */}
+        {[0, 1].map((i) => (
+          <Box
+            key={i}
+            sx={{
+              position: 'absolute',
+              width: 220,
+              height: 220,
+              borderRadius: '50% !important',
+              border: '1.5px solid rgba(255,255,255,0.18)',
+              animation: `ripple 3.5s ease-out ${i * 1.4}s infinite`,
+              pointerEvents: 'none',
+            }}
+          />
+        ))}
 
         <Box
           sx={{
-            px: 2,
-            py: 1,
-            bgcolor: 'background.paper',
+            width: 120,
+            height: 120,
+            borderRadius: '50% !important',
+            bgcolor: 'rgba(255,255,255,0.15)',
+            border: '2px solid rgba(255,255,255,0.35)',
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
-            cursor: 'pointer',
-            boxShadow: '0px 6px 16px rgba(0,0,0,0.08)',
-            borderRadius: 1,
-            '&:hover': {
-              transform: 'translateY(-2px)',
-            },
+            justifyContent: 'center',
+            mb: 4,
+            animation: anim('scaleIn', '0.7s', '0.1s'),
+            position: 'relative',
+            zIndex: 1,
           }}
         >
-          <IconVideo size={20} />
-          <Typography fontSize={13} fontWeight={500}>
-            Complete your setup to proceed
-          </Typography>
-          <IconArrowRight size={16} />
+          <IconShieldCheck size={56} color="#fff" strokeWidth={1.5} />
         </Box>
+
+        <Typography
+          sx={{
+            color: '#fff',
+            fontSize: { xs: 18, md: 22 },
+            fontWeight: 800,
+            textAlign: 'center',
+            lineHeight: 1.4,
+            maxWidth: 380,
+            mb: 4,
+            animation: anim('fadeUp', '0.6s', '0.3s'),
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          Congratulations {schoolName}!{'\n'}
+          You've successfully completed your school setup.
+        </Typography>
+
+        <Button
+          variant="contained"
+          onClick={() => navigate('/')}
+          sx={{
+            bgcolor: '#fff',
+            color: 'primary.main',
+            fontWeight: 700,
+            fontSize: 14,
+            px: 4,
+            py: 1.25,
+            borderRadius: '10px !important',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            animation: anim('fadeUp', '0.6s', '0.5s'),
+            position: 'relative',
+            zIndex: 1,
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.92)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
+            },
+            transition: 'all 0.2s ease',
+          }}
+        >
+          Continue to Dashboard
+        </Button>
       </Box>
 
-      {/* STAT CARDS */}
-      <Box sx={{ p: 2, pb: 1 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mb={1}>
-          <StatCard count={stats.classes} label="Classes" loading={loading} />
-          <StatCard count={stats.arms} label="Arms" loading={loading} />
-          <StatCard count={stats.learners} label="Learners" loading={loading} />
-          <StatCard count={stats.teachers} label="Teachers" loading={loading} />
-        </Stack>
-      </Box>
+      <Box
+        sx={{
+          flex: 1,
+          bgcolor: '#f5f5f5',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          px: { xs: 4, md: 6 },
+          animation: anim('fadeIn', '0.6s', '0.4s'),
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: { xs: 16, md: 20 },
+            fontWeight: 400,
+            color: 'text.primary',
+            lineHeight: 1.7,
+            mb: 3,
+            maxWidth: 360,
+          }}
+        >
+          A support agent will review your configuration to ensure everything is in order and will contact you shortly.
+        </Typography>
 
-      {/* TABS */}
-      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-          <Tab icon={<IconCalendar size={18} />} iconPosition="start" label="Set Calendar" />
-          <Tab icon={<IconBooks size={18} />} iconPosition="start" label="Set-Up Classes" />
-          <Tab icon={<IconUserPlus size={18} />} iconPosition="start" label="Upload Learners" />
-          <Tab icon={<IconUsers size={18} />} iconPosition="start" label="Upload Teachers" />
-        </Tabs>
+        <Typography
+          sx={{
+            fontSize: { xs: 16, md: 20 },
+            fontWeight: 400,
+            color: 'text.primary',
+            lineHeight: 1.7,
+            maxWidth: 360,
+          }}
+        >
+          Thank you for choosing <strong>EduTAMS</strong>, we're excited to support your journey in digitizing schooling!
+        </Typography>
       </Box>
-
-      <ParentCard sx={{ p: 0 }}>
-        {activeTab === 0 && <SetCalendarTab onSaveAndContinue={() => {}} />}
-        {activeTab === 1 && (
-          <SetUpClassesTab onSaveAndContinue={() => {}} onClassArmsAdded={fetchStats} />
-        )}
-        {activeTab === 2 && (
-          <UploadLearnersTab onSaveAndContinue={() => {}} onLearnerAdded={fetchStats} />
-        )}
-        {activeTab === 3 && (
-          <UploadTeachersTab onSaveAndContinue={() => {}} onTeacherAdded={fetchStats} />
-        )}
-      </ParentCard>
     </Box>
   );
 };

@@ -75,6 +75,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [savingTopic, setSavingTopic] = useState(false);
+  const [savingSubtopic, setSavingSubtopic] = useState(false);
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState([]);
@@ -235,6 +237,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
   };
 
   const handleSaveTopic = async (topicData) => {
+    setSavingTopic(true);
     try {
       if (selectedTopic && selectedTopic.topic_id) {
         await landlordSchemeApi.updateTopic(selectedTopic.topic_id, topicData);
@@ -247,13 +250,17 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         notify.success('Topic added successfully');
       }
       setTopicModalOpen(false);
+      setSelectedTopic(null);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
-      notify.error('Operation failed');
+      notify.error(error.response?.data?.message || 'Failed to save topic');
+    } finally {
+      setSavingTopic(false);
     }
   };
 
   const handleSaveSubtopic = async (subtopicData) => {
+    setSavingSubtopic(true);
     try {
       if (selectedSubtopic && selectedSubtopic.sub_topic_id) {
         await landlordSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
@@ -263,9 +270,12 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         notify.success('Subtopic added successfully');
       }
       setSubtopicModalOpen(false);
+      setSelectedSubtopic(null);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
-      notify.error('Operation failed');
+      notify.error(error.response?.data?.message || 'Failed to save subtopic');
+    } finally {
+      setSavingSubtopic(false);
     }
   };
 
@@ -1100,7 +1110,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" variant="contained" fullWidth disabled={savingTopic}>
+            {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
         </Box>
@@ -1110,7 +1121,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       <ReusableModal
         open={subtopicModalOpen}
         onClose={() => setSubtopicModalOpen(false)}
-        title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}
+        title={selectedSubtopic ? `Edit Subtopic for "${selectedTopic?.topic_name || 'Topic'}"` : `Add Subtopic for "${selectedTopic?.topic_name || 'Topic'}"`}
       >
         <Box
           component="form"
@@ -1141,7 +1152,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" variant="contained" fullWidth disabled={savingSubtopic}>
+            {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
         </Box>

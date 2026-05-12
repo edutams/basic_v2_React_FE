@@ -48,6 +48,7 @@ import agentApi from '../../api/agent';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
   IconUsers,
   IconSchool,
@@ -136,6 +137,7 @@ const ActionMenuCell = ({
   handleManageReferral,
   handleManageGateway,
   handleDeleteAgent,
+  handleDeleteOrganization,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -207,6 +209,16 @@ const ActionMenuCell = ({
           }}
         >
           View School
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleDeleteOrganization(agent);
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <DeleteIcon sx={{ mr: 1, fontSize: 18 }} />
+          Delete Organization
         </MenuItem>
         {/* <MenuItem
           onClick={() => {
@@ -418,6 +430,7 @@ const Agent = () => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const handleFilterApply = (filterValues) => {
     // Map filter values to component state
@@ -636,6 +649,11 @@ const Agent = () => {
     setIsModalOpen(true);
   };
 
+  const handleDeleteOrganization = (agentData) => {
+    setSelectedAgent(agentData);
+    setDeleteConfirmOpen(true);
+  };
+
   const handleManageReferral = (agentData) => {
     setSelectedAgent(agentData);
     setActionType('manageReferral');
@@ -672,6 +690,36 @@ const Agent = () => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setAgentToDelete(null);
+  };
+
+  const handleConfirmDeleteOrganization = async () => {
+    if (!selectedAgent) return;
+    
+    try {
+      const res = await agentApi.deleteOrganization(selectedAgent.id);
+      if (res.status) {
+        notify.success('Organization deleted successfully!');
+        // Refresh the data
+        setRefreshKey((prevData) => prevData + 1);
+      } else {
+        notify.error(res.message || 'Failed to delete organization');
+      }
+    } catch (e) {
+      // Check if the error response contains a message from the backend
+      if (e.response && e.response.data && e.response.data.message) {
+        notify.error(e.response.data.message);
+      } else {
+        notify.error('Failed to delete organization');
+      }
+    } finally {
+      setDeleteConfirmOpen(false);
+      setSelectedAgent(null);
+    }
+  };
+
+  const handleCancelDeleteOrganization = () => {
+    setDeleteConfirmOpen(false);
+    setSelectedAgent(null);
   };
 
   const handleImpersonate = async (agent) => {
@@ -1453,6 +1501,7 @@ const Agent = () => {
                               handleManageReferral={handleManageReferral}
                               handleManageGateway={handleManageGateway}
                               handleDeleteAgent={handleDeleteAgent}
+                              handleDeleteOrganization={handleDeleteOrganization}
                             />
                           </TableCell>
                         </TableRow>
@@ -1558,6 +1607,26 @@ const Agent = () => {
               Cancel
             </Button>
             <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+              Yes, Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Organization Delete Confirmation */}
+        <Dialog open={deleteConfirmOpen} onClose={handleCancelDeleteOrganization} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 600 }}>Delete Organization</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to delete{' '}
+              <strong>{selectedAgent?.organizationName || 'this organization'}</strong>? This action cannot
+              be undone. This can only be done if no schools are attached to this organization.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button variant="outlined" color="inherit" onClick={handleCancelDeleteOrganization}>
+              Cancel
+            </Button>
+            <Button variant="contained" color="error" onClick={handleConfirmDeleteOrganization}>
               Yes, Delete
             </Button>
           </DialogActions>

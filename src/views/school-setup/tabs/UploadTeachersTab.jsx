@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -46,7 +46,7 @@ import {
 const HINT_SEQUENCE = ['download', 'upload', 'add'];
 const HINT_DURATION = 5000; // 5s each
 
-const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
+const UploadTeachersTab = ({ onTeacherAdded }) => {
   const theme = useTheme();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +58,6 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const [modalMode, setModalMode] = useState('create');
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
-  const [totalTeachers, setTotalTeachers] = useState(0);
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [error, setError] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
@@ -196,7 +195,6 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
       }));
       setTeachers(transformedTeachers);
       onTeacherAdded?.();
-      setTotalTeachers(response.total || 0);
     } catch (err) {
       setError(err.message || 'Failed to fetch teachers');
     } finally {

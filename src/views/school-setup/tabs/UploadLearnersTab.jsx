@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -8,7 +8,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  IconButton,
   Button,
   CircularProgress,
   Link,
@@ -18,7 +17,6 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  Add as AddIcon,
   CloudUpload as UploadIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
@@ -37,12 +35,10 @@ import UploadLearnerModal from 'src/components/tenant-components/learners/Upload
 const HINT_SEQUENCE = ['add', 'download', 'upload'];
 const HINT_DURATION = 5000; // 5s each
 
-const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
+const UploadLearnersTab = ({ onLearnerAdded }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const primary = theme.palette.primary.main;
 
-  const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,8 +48,6 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
-  const [uploadClassId, setUploadClassId] = useState(null);
-  const fileInputRef = useRef(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [notification, setNotification] = useState({
     open: false,
@@ -207,8 +201,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
     }
   };
 
-  const handleUploadClick = (classId) => {
-    setUploadClassId(classId);
+  const handleUploadClick = (_classId) => {
     setUploadModalOpen(true);
   };
 
@@ -364,7 +357,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                   >
                     {hasArms ? (
                       <>
-                        <Button size="small"
+                        <Button
                           ref={index === 0 ? addBtnRef : null}
                           variant="contained"
                           size="small"
@@ -446,7 +439,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
 
       <UploadLearnerModal
         open={uploadModalOpen}
-        onClose={() => { setUploadModalOpen(false); setUploadClassId(null); }}
+        onClose={() => setUploadModalOpen(false)}
         onUpload={handleUploadLearners}
       />
 

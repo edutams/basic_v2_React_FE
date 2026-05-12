@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import UploadLearnersTab from '../tabs/UploadLearnersTab';

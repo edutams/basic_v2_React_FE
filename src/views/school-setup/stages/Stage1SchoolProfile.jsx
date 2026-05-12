@@ -2,11 +2,9 @@ import { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Typography,
-  TextField,
   Link,
   CircularProgress,
   useTheme,
-  Divider,
   Button,
 } from '@mui/material';
 import { IconUpload, IconPhoto } from '@tabler/icons-react';

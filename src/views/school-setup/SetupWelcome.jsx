@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Link, useTheme, useMediaQuery } from '@mui/material';
 import { IconVideo, IconChevronRight, IconPower, IconArrowRight } from '@tabler/icons-react';
@@ -60,8 +60,7 @@ const SetupWelcome = () => {
   const primary = theme.palette.primary.main;
   const { startTour } = useSetupTour();
 
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // < 600px — stacked layout
-  const isTablet = useMediaQuery(theme.breakpoints.down('sm')); // tablets keep the desktop side-by-side layout
+  const isTablet = useMediaQuery(theme.breakpoints.down('sm')); // < 600px — stacked layout
 
   const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
 
@@ -112,7 +111,7 @@ const SetupWelcome = () => {
           minHeight: { xs: '100vh', sm: 'unset' },
         }}
       >
-        {!isMobile && (
+        {!isTablet && (
           <>
             <Box
               sx={{

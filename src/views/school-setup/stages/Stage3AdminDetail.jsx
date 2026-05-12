@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Link, CircularProgress } from '@mui/material';
 import { getTenantInfo } from '../../../api/tenant_api';
 import SetupShell from './SetupShell';

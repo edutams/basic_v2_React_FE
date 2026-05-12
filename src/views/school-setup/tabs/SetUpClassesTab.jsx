@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useLayoutEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   Box,
   Table,
@@ -16,8 +16,6 @@ import {
   Alert,
   useTheme,
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
-import { IconDotsVertical } from '@tabler/icons-react';
 import {
   getClassesWithDivisions,
   saveClasses,

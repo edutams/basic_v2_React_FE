@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useContext } from 'react';
 import {
   Box,
   Grid,
@@ -25,8 +25,8 @@ import {
   CircularProgress,
   useTheme,
 } from '@mui/material';
-import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
-import { Add as AddIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { IconDotsVertical } from '@tabler/icons-react';
+import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import ArrowHint from 'src/components/shared/ArrowHint';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
@@ -41,25 +41,15 @@ import {
 import {
   fetchWeeks,
   autoGenerateWeeks,
-  addWeek,
-  deleteWeek,
   toggleWeekStatus,
-  saveWeeks,
 } from '../../../api/weekApi';
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
   const theme = useTheme();
   const primary = theme.palette.primary.main;
-  const [hasChanges, setHasChanges] = useState(false);
-
-  const handleChange = () => {
-    setHasChanges(true);
-  };
-
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectAll, setSelectAll] = useState(false);
 
   // Session and session terms state
   const [currentSession, setCurrentSession] = useState(null);
@@ -194,8 +184,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
-
-  const handleOpenEditModal = () => setOpenEditModal(true);
 
   const handleCloseEditModal = () => {
     setOpenEditModal(false);
@@ -336,25 +324,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     } catch (error) {
       showSnackbar('Failed to toggle status', 'error');
     }
-  };
-
-  const handleAddWeek = async () => {
-    try {
-      const response = await addWeek(activeSessionTermId);
-      if (response.status) {
-        setWeeks(response.data);
-        loadSessionTerms(selectedSessionId);
-        refreshTenantInfo();
-      }
-    } catch (error) {
-      showSnackbar('Failed to add week', 'error');
-    }
-  };
-
-  const handleSelectAll = () => setSelectAll(!selectAll);
-
-  const handleToggleSelect = (termName) => {
-    setHasChanges(true);
   };
 
   return (

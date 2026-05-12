@@ -491,31 +491,32 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
 
         {/* Generate Week Column */}
         <Grid size={{ xs: 12, md: 6 }}>
-          {activeSessionTermId && (
-            <ParentCard
-              id="generate-week-section"
-              title={
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h5">Generate Week</Typography>
 
-                  <Box
-                    sx={{
-                      ml: 'auto',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 3,
-                      border: '1px solid',
-                      borderColor: 'primary.main',
-                      color: 'primary.main',
-                    }}
-                  >
-                    <Typography variant="caption">
-                      {weeks.length} Weeks • {weeks.length * 5} school days
-                    </Typography>
-                  </Box>
+          <ParentCard
+            id="generate-week-section"
+            title={
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h5">Generate Week</Typography>
+
+                <Box
+                  sx={{
+                    ml: 'auto',
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                  }}
+                >
+                  <Typography variant="caption">
+                    {weeks.length} Weeks • {weeks.length * 5} school days
+                  </Typography>
                 </Box>
-              }
-            >
+              </Box>
+            }
+          >
+            {activeSessionTermId ? (
               <Paper variant="outlined" sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
                   <TextField
@@ -608,8 +609,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                   </Table>
                 </TableContainer>
               </Paper>
-            </ParentCard>
-          )}
+            ) : (
+              <Alert severity="info" sx={{ mt: 3 }}>
+                No weeks generated yet. Subscribe to a term first to set the weeks
+              </Alert>
+            )}
+
+          </ParentCard>
+
         </Grid>
       </Grid>
       </ParentCard>
@@ -659,7 +666,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
             onClick={handleSaveDisplayName}
             variant="contained"
             disabled={loading || !displayName.trim()}
-                  size="small"
+            size="small"
 
           >
             {loading ? <CircularProgress size={24} /> : 'Save'}
@@ -713,16 +720,16 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button 
-          
-                  size="small"
-          onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
+          <Button
+
+            size="small"
+            onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
           <Button
             onClick={handleConfirmToggleStatus}
             variant="contained"
             color="primary"
             disabled={loading}
-                  size="small"
+            size="small"
 
           >
             Confirm

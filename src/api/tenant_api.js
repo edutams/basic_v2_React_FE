@@ -6,7 +6,7 @@ const getTenantBaseURL = () => {
     appMode === 'production'
       ? import.meta.env.VITE_API_BASE_URL_PROD
       : import.meta.env.VITE_API_BASE_URL_LOCAL;
-  return `${apiBaseUrl}/api/tenant/v1`;
+  return `${apiBaseUrl}/api/v1/tenant`;
 };
 
 const tenantApi = axios.create({ baseURL: '/' });

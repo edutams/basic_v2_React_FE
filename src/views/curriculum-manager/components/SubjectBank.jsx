@@ -30,6 +30,7 @@ import {
   Radio,
   Grid,
   FormHelperText,
+  Autocomplete,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -89,7 +90,17 @@ const SubjectBank = () => {
     unit: '',
     pass_mark: '',
     status: 'active',
+    programme_id: '',
+    curriculum_id: '',
+    subject_ids: [],
   });
+
+  // State for subject group modal
+  const [subjectGroupModalSubjects, setSubjectGroupModalSubjects] = useState([]);
+  const [loadingModalSubjects, setLoadingModalSubjects] = useState(false);
+
+  // Programme filter state for subject groups
+  const [selectedProgrammeForGroups, setSelectedProgrammeForGroups] = useState('');
 
   // Methods
   const showSnackbar = (message, severity = 'success') => {
@@ -135,16 +146,20 @@ const SubjectBank = () => {
       const response = await fetchProgrammes();
       if (response.status) {
         setProgrammesList(response.data);
+        // Set default programme for groups if none selected
+        if (response.data.length > 0 && !selectedProgrammeForGroups) {
+          setSelectedProgrammeForGroups(response.data[0].id);
+        }
       }
     } catch (error) {
       showSnackbar('Failed to fetch programmes', 'error');
     }
   };
 
-  const fetchSubjectGroupsData = async () => {
+  const fetchSubjectGroupsData = async (programmeId = selectedProgrammeForGroups) => {
     setLoadingSubjectGroups(true);
     try {
-      const response = await fetchSubjectGroups();
+      const response = await fetchSubjectGroups(programmeId);
       if (response.status) {
         setSubjectGroupsList(response.data);
       }
@@ -294,13 +309,39 @@ const SubjectBank = () => {
   };
 
   // Subject Groups methods
+  const loadSubjectsForSubjectGroup = async (curriculumId) => {
+    if (!curriculumId) {
+      setSubjectGroupModalSubjects([]);
+      return;
+    }
+
+    setLoadingModalSubjects(true);
+    try {
+      const response = await fetchSubjects(curriculumId, '');
+      if (response.status) {
+        setSubjectGroupModalSubjects(response.data);
+      }
+    } catch (error) {
+      showSnackbar('Failed to load subjects for curriculum', 'error');
+    } finally {
+      setLoadingModalSubjects(false);
+    }
+  };
+
   const handleOpenCreateSubjectGroupModal = () => {
     setSubjectGroupFormData({
       group_name: '',
       unit: '',
       pass_mark: '',
       status: 'active',
+      programme_id: selectedProgrammeForGroups || programmesList[0]?.id || '',
+      curriculum_id: selectedCurriculum || '',
+      subject_ids: [],
     });
+    setSubjectGroupModalSubjects([]);
+    if (selectedCurriculum) {
+      loadSubjectsForSubjectGroup(selectedCurriculum);
+    }
     setOpenCreateSubjectGroupModal(true);
   };
 
@@ -315,7 +356,18 @@ const SubjectBank = () => {
       unit: group.unit,
       pass_mark: group.pass_mark,
       status: group.status,
+      programme_id: group.programme_id || '',
+      curriculum_id: group.curriculum_id || '',
+      subject_ids: group.subjects?.map((s) => s.id) || [],
     });
+    
+    // Load subjects for the group's curriculum
+    if (group.curriculum_id) {
+      loadSubjectsForSubjectGroup(group.curriculum_id);
+    } else {
+      setSubjectGroupModalSubjects([]);
+    }
+    
     setOpenEditSubjectGroupModal(true);
     setSubjectGroupAnchorEl(event?.currentTarget);
     setOpenSubjectGroupMenu(false);
@@ -337,6 +389,8 @@ const SubjectBank = () => {
   };
 
   const handleCreateSubjectGroup = async () => {
+    setFieldErrors({});
+
     try {
       const response = await createSubjectGroup(subjectGroupFormData);
       if (response.status) {
@@ -347,6 +401,21 @@ const SubjectBank = () => {
         showSnackbar(response.message || 'Failed to create subject group', 'error');
       }
     } catch (error) {
+      if (error.response?.status === 422) {
+        const errors = error.response.data?.errors;
+
+        if (errors) {
+          setFieldErrors(errors);
+        }
+
+        showSnackbar(
+          error.response.data?.message || 'Validation failed',
+          'error'
+        );
+
+        return;
+      }
+
       showSnackbar('Failed to create subject group', 'error');
     }
   };
@@ -392,31 +461,47 @@ const SubjectBank = () => {
     setOpenSubjectGroupMenu(false);
   };
 
+  const handleProgrammeFilterChange = (programmeId) => {
+    setSelectedProgrammeForGroups(programmeId);
+  };
+
+  const handleCurriculumFilterChange = (curriculumId) => {
+    setSelectedCurriculum(curriculumId);
+    // Reset subjects when curriculum changes
+    setSubjects([]);
+    setSubjectSearch('');
+  };
+
   // Effects
   useEffect(() => {
     fetchCurriculumData();
     fetchProgrammesData();
-    fetchSubjectGroupsData();
   }, []);
+
+  useEffect(() => {
+    if (selectedProgrammeForGroups) {
+      fetchSubjectGroupsData();
+    }
+  }, [selectedProgrammeForGroups]);
 
   useEffect(() => {
     fetchSubjectsData();
   }, [selectedCurriculum]);
 
   useEffect(() => {
-  fetchSubjectsData(subjectSearch);
-}, [subjectSearch]);
+    fetchSubjectsData(subjectSearch);
+  }, [subjectSearch]);
   return (
     <>
-    <Alert>Select curriculum to upload subjects</Alert>
+      <Alert>Select curriculum to upload subjects</Alert>
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           gap: 3,
           width: '100%',
-          mt:2,
-          mb:2
+          mt: 2,
+          mb: 2
         }}
       >
         {/* Curriculum and Subject Panels on Same Row */}
@@ -428,11 +513,11 @@ const SubjectBank = () => {
             width: '100%',
           }}
         >
-          
+
           {/* LEFT - Curriculum Panel */}
           <Box sx={{ flex: { md: 5 }, width: '100%' }}>
             <ParentCard
-            
+
             >
               <TableContainer>
                 <Table sx={{ tableLayout: 'fixed' }}>
@@ -503,6 +588,20 @@ const SubjectBank = () => {
                     Subject Bank
                   </Typography>
                   <Box display="flex" alignItems="center" gap={2}>
+                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                      <InputLabel>Curriculum</InputLabel>
+                      <Select
+                        value={selectedCurriculum}
+                        onChange={(e) => handleCurriculumFilterChange(e.target.value)}
+                        label="Curriculum"
+                      >
+                        {curriculumData.map((curr) => (
+                          <MenuItem key={curr.id} value={curr.id}>
+                            {curr.curriculum_name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                     <TextField
                       size="small"
                       placeholder="Search subjects..."
@@ -518,7 +617,7 @@ const SubjectBank = () => {
               }
             >
               <TableContainer sx={{ maxHeight: 600 }}>
-                <Table  sx={{ tableLayout: 'fixed' }}>
+                <Table sx={{ tableLayout: 'fixed' }}>
                   <TableHead>
                     <TableRow >
                       <TableCell width="8%">S/N</TableCell>
@@ -539,23 +638,23 @@ const SubjectBank = () => {
                       </TableRow>
                     ) : subjects.length > 0 ? (
                       subjects.map((subject, i) => (
-                          <TableRow key={subject.id} hover>
-                            <TableCell>{i + 1}</TableCell>
-                            <TableCell>{subject.subject_name}</TableCell>
-                            <TableCell>{subject.subject_code}</TableCell>
-                            <TableCell>{subject.programme_name}</TableCell>
-                            <TableCell>{subject.pass_mark}</TableCell>
-                            <TableCell>{subject.unit}</TableCell>
-                            <TableCell align="center">
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleOpenEditModal(e, subject)}
-                              >
-                                <MoreVertIcon size={18} />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        <TableRow key={subject.id} hover>
+                          <TableCell>{i + 1}</TableCell>
+                          <TableCell>{subject.subject_name}</TableCell>
+                          <TableCell>{subject.subject_code}</TableCell>
+                          <TableCell>{subject.program_name}</TableCell>
+                          <TableCell>{subject.pass_mark}</TableCell>
+                          <TableCell>{subject.unit}</TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleOpenEditModal(e, subject)}
+                            >
+                              <MoreVertIcon size={18} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} align="center">
@@ -580,14 +679,45 @@ const SubjectBank = () => {
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Subject Groups
                 </Typography>
-                <Button variant="contained" size='small' onClick={handleOpenCreateSubjectGroupModal}>
-                  Create Group
-                </Button>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel>Curriculum</InputLabel>
+                    <Select
+                      value={selectedCurriculum}
+                      onChange={(e) => handleCurriculumFilterChange(e.target.value)}
+                      label="Curriculum"
+                      size="small"
+                    >
+                      {curriculumData.map((curr) => (
+                        <MenuItem key={curr.id} value={curr.id}>
+                          {curr.curriculum_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Programme</InputLabel>
+                    <Select
+                      value={selectedProgrammeForGroups}
+                      onChange={(e) => handleProgrammeFilterChange(e.target.value)}
+                      label="Programme"
+                    >
+                      {programmesList.map((prog) => (
+                        <MenuItem key={prog.id} value={prog.id}>
+                          {prog.programme_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Button variant="contained" size='small' onClick={handleOpenCreateSubjectGroupModal}>
+                    Create Group
+                  </Button>
+                </Box>
               </Box>
             }
           >
             <TableContainer sx={{ maxHeight: 600 }}>
-              <Table  sx={{ tableLayout: 'fixed' }}>
+              <Table sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow >
                     <TableCell width="8%">#</TableCell>
@@ -1017,6 +1147,336 @@ const SubjectBank = () => {
             <Button size='small' onClick={handleCloseDeleteSubjectModal}>Cancel</Button>
             <Button variant="contained" color="error" size='small' onClick={handleDeleteSubject}>
               Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Create Subject Group Modal */}
+        <Dialog open={openCreateSubjectGroupModal} onClose={handleCloseCreateSubjectGroupModal} maxWidth="sm" fullWidth>
+          <DialogTitle>Create Subject Group</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2 }}>
+              <Grid container spacing={1}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.programme_id}>
+                    <InputLabel>Programme</InputLabel>
+                    <Select
+                      value={subjectGroupFormData.programme_id}
+                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, programme_id: e.target.value })}
+                      label="Programme"
+                    >
+                      {programmesList.map((prog) => (
+                        <MenuItem key={prog.id} value={prog.id}>
+                          {prog.programme_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {fieldErrors.programme_id && (
+                      <FormHelperText>{fieldErrors.programme_id?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.curriculum_id}>
+                    <InputLabel>Curriculum</InputLabel>
+                    <Select
+                      value={subjectGroupFormData.curriculum_id}
+                      onChange={(e) => {
+                        const newCurriculumId = e.target.value;
+                        setSubjectGroupFormData({ ...subjectGroupFormData, curriculum_id: newCurriculumId, subject_ids: [] });
+                        loadSubjectsForSubjectGroup(newCurriculumId);
+                      }}
+                      label="Curriculum"
+                    >
+                      {curriculumData.map((curr) => (
+                        <MenuItem key={curr.id} value={curr.id}>
+                          {curr.curriculum_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {fieldErrors.curriculum_id && (
+                      <FormHelperText>{fieldErrors.curriculum_id?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12,md:12 }}>
+                  <TextField
+                    fullWidth
+                    label="Group Name"
+                    value={subjectGroupFormData.group_name}
+                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, group_name: e.target.value })}
+                    margin="normal"
+                    required
+                    error={!!fieldErrors.group_name}
+                    helperText={fieldErrors.group_name?.[0]}
+                    size="small"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Unit"
+                    type="number"
+                    value={subjectGroupFormData.unit}
+                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, unit: e.target.value })}
+                    margin="normal"
+                    required
+                    error={!!fieldErrors.unit}
+                    helperText={fieldErrors.unit?.[0]}
+                    size="small"
+                    slotProps={{ htmlInput: { min: 0 } }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Pass Mark"
+                    type="number"
+                    value={subjectGroupFormData.pass_mark}
+                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, pass_mark: e.target.value })}
+                    margin="normal"
+                    required
+                    error={!!fieldErrors.pass_mark}
+                    helperText={fieldErrors.pass_mark?.[0]}
+                    size="small"
+                    slotProps={{ htmlInput: { min: 0 } }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.status}>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={subjectGroupFormData.status}
+                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, status: e.target.value })}
+                      label="Status"
+                    >
+                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="inactive">Inactive</MenuItem>
+                    </Select>
+                    {fieldErrors.status && (
+                      <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  {/* Subject search & selection */}
+                  <Box sx={{ bgcolor: '#e0f2fe', p: 1.5, borderRadius: 1, mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                      Select Subjects
+                    </Typography>
+                    <Autocomplete
+                      multiple
+                      loading={loadingModalSubjects}
+                      options={subjectGroupModalSubjects}
+                      getOptionLabel={(s) =>
+                        `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}` 
+                      }
+                      value={subjectGroupFormData.subject_ids ? subjectGroupModalSubjects.filter((s) =>
+                        subjectGroupFormData.subject_ids.includes(s.id),
+                      ) : []}
+                      onChange={(_, selected) =>
+                        setSubjectGroupFormData((f) => ({ ...f, subject_ids: selected.map((s) => s.id) }))
+                      }
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      noOptionsText={
+                        !subjectGroupFormData.curriculum_id
+                          ? 'Select a curriculum first'
+                          : 'No subjects found'
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          placeholder="Search for subjects..."
+                          sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                        />
+                      )}
+                      renderTags={(selected, getTagProps) =>
+                        selected.map((s, index) => (
+                          <Chip
+                            key={s.id}
+                            label={s.subject_name}
+                            size="small"
+                            sx={{ bgcolor: '#334155', color: '#fff' }}
+                            {...getTagProps({ index })}
+                          />
+                        ))
+                      }
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button size='small' onClick={handleCloseCreateSubjectGroupModal}>Cancel</Button>
+            <Button variant="contained" size='small' onClick={handleCreateSubjectGroup}>
+              Create Group
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Subject Group Modal */}
+        <Dialog open={openEditSubjectGroupModal} onClose={handleCloseEditSubjectGroupModal} maxWidth="sm" fullWidth>
+          <DialogTitle>Edit Subject Group</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.programme_id}>
+                    <InputLabel>Programme</InputLabel>
+                    <Select
+                      value={subjectGroupFormData.programme_id}
+                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, programme_id: e.target.value })}
+                      label="Programme"
+                    >
+                      {programmesList.map((prog) => (
+                        <MenuItem key={prog.id} value={prog.id}>
+                          {prog.programme_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {fieldErrors.programme_id && (
+                      <FormHelperText>{fieldErrors.programme_id?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.curriculum_id}>
+                    <InputLabel>Curriculum</InputLabel>
+                    <Select
+                      value={subjectGroupFormData.curriculum_id}
+                      onChange={(e) => {
+                        const newCurriculumId = e.target.value;
+                        setSubjectGroupFormData({ ...subjectGroupFormData, curriculum_id: newCurriculumId, subject_ids: [] });
+                        loadSubjectsForSubjectGroup(newCurriculumId);
+                      }}
+                      label="Curriculum"
+                    >
+                      {curriculumData.map((curr) => (
+                        <MenuItem key={curr.id} value={curr.id}>
+                          {curr.curriculum_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {fieldErrors.curriculum_id && (
+                      <FormHelperText>{fieldErrors.curriculum_id?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12,md:12 }}>
+                  <TextField
+                    fullWidth
+                    label="Group Name"
+                    value={subjectGroupFormData.group_name}
+                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, group_name: e.target.value })}
+                    margin="normal"
+                    required
+                    error={!!fieldErrors.group_name}
+                    helperText={fieldErrors.group_name?.[0]}
+                    size="small"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Unit"
+                    type="number"
+                    value={subjectGroupFormData.unit}
+                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, unit: e.target.value })}
+                    margin="normal"
+                    required
+                    error={!!fieldErrors.unit}
+                    helperText={fieldErrors.unit?.[0]}
+                    size="small"
+                    slotProps={{ htmlInput: { min: 0 } }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    label="Pass Mark"
+                    type="number"
+                    value={subjectGroupFormData.pass_mark}
+                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, pass_mark: e.target.value })}
+                    margin="normal"
+                    required
+                    error={!!fieldErrors.pass_mark}
+                    helperText={fieldErrors.pass_mark?.[0]}
+                    size="small"
+                    slotProps={{ htmlInput: { min: 0 } }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.status}>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={subjectGroupFormData.status}
+                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, status: e.target.value })}
+                      label="Status"
+                    >
+                      <MenuItem value="active">Active</MenuItem>
+                      <MenuItem value="inactive">Inactive</MenuItem>
+                    </Select>
+                    {fieldErrors.status && (
+                      <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12,md:12 }}>
+                  {/* Subject search & selection */}
+                  <Box sx={{ bgcolor: '#e0f2fe', p: 1.5, borderRadius: 1, mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                      Select Subjects
+                    </Typography>
+                    <Autocomplete
+                      multiple
+                      loading={loadingModalSubjects}
+                      options={subjectGroupModalSubjects}
+                      getOptionLabel={(s) =>
+                        `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}` 
+                      }
+                      value={subjectGroupFormData.subject_ids ? subjectGroupModalSubjects.filter((s) =>
+                        subjectGroupFormData.subject_ids.includes(s.id),
+                      ) : []}
+                      onChange={(_, selected) =>
+                        setSubjectGroupFormData((f) => ({ ...f, subject_ids: selected.map((s) => s.id) }))
+                      }
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      noOptionsText={
+                        !subjectGroupFormData.curriculum_id
+                          ? 'Select a curriculum first'
+                          : 'No subjects found'
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          size="small"
+                          placeholder="Search for subjects..."
+                          sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                        />
+                      )}
+                      renderTags={(selected, getTagProps) =>
+                        selected.map((s, index) => (
+                          <Chip
+                            key={s.id}
+                            label={s.subject_name}
+                            size="small"
+                            sx={{ bgcolor: '#334155', color: '#fff' }}
+                            {...getTagProps({ index })}
+                          />
+                        ))
+                      }
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button size='small' onClick={handleCloseEditSubjectGroupModal}>Cancel</Button>
+            <Button variant="contained" size='small' onClick={handleUpdateSubjectGroup}>
+              Update Group
             </Button>
           </DialogActions>
         </Dialog>

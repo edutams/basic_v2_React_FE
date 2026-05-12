@@ -221,8 +221,8 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref
               const cellBg = isInactive
                 ? isDark ? 'action.disabledBackground' : '#e0e0e0'
                 : isHighlighted
-                ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
-                : isDark ? 'action.hover' : '#f6f7f9';
+                  ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
+                  : isDark ? 'action.hover' : '#f6f7f9';
               const className = classItem.class_code || '';
 
               return (
@@ -261,6 +261,7 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref
                         // defaultValue={classItem.class_code}
                         defaultValue={`${classItem.programme_code} - ${classItem.class_code}`}
                         onChange={handleChange}
+
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             backgroundColor: isInactive
@@ -297,6 +298,8 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref
                         disabled={isInactive}
                         value={classItem.no_of_arms || 0}
                         onChange={(e) => handleNoOfArmsChange(classItem.unique_key, e.target.value)}
+                        slotProps={{ htmlInput: { min: 0 } }}
+
                         sx={{
                           width: 70,
                           '& .MuiOutlinedInput-root': {

@@ -65,13 +65,13 @@ const MyPlan = () => {
   const fetchPlans = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/landlord/v1/edu_tier/get_my_plans');
+      const res = await api.get('/v1/landlord/edu_tier/get_my_plans');
 
       const plansData = Array.isArray(res.data?.data) ? res.data.data : [];
 
       if (plansData.length === 0) {
         try {
-          const syncRes = await api.post('/landlord/v1/edu_tier/sync_my_plans');
+          const syncRes = await api.post('/v1/landlord/edu_tier/sync_my_plans');
           setPlans(Array.isArray(syncRes.data?.data?.plans) ? syncRes.data.data.plans : []);
         } catch (syncError) {
           setPlans([]);
@@ -125,7 +125,7 @@ const MyPlan = () => {
     if (planToDeactivate) {
       try {
         const newStatus = planToDeactivate.status === 'active' ? 'inactive' : 'active';
-        await api.patch(`/landlord/v1/edu_tier/my_plans_status/${planToDeactivate.id}`, {
+        await api.patch(`/v1/landlord/edu_tier/my_plans_status/${planToDeactivate.id}`, {
           status: newStatus,
         });
 
@@ -169,7 +169,7 @@ const MyPlan = () => {
   const handleEditSave = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.put(`/landlord/v1/edu_tier/update_my_plans/${editPlan.id}`, {
+      const res = await api.put(`/v1/landlord/edu_tier/update_my_plans/${editPlan.id}`, {
         display_name: editName,
         price: parseFloat(editPrice),
       });

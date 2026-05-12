@@ -28,6 +28,8 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Grid,
+  FormHelperText
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -38,9 +40,9 @@ import {
   fetchClassSubjects,
   addOrUpdateClassSubject,
   fetchSubjectGroups,
-  createSubjectGroup,
-  updateSubjectGroup,
-  deleteSubjectGroup,
+  fetchSubjects,
+  fetchSubjectsByProgramme,
+
 } from '../../../api/tenantCurriculumApi';
 
 const ClassSubject = () => {
@@ -54,6 +56,10 @@ const ClassSubject = () => {
   const [subjectGroupsList, setSubjectGroupsList] = useState([]);
   const [loadingSubjectGroups, setLoadingSubjectGroups] = useState(false);
 
+  // State for available subjects
+  const [availableSubjectsForClass, setAvailableSubjectsForClass] = useState([]);
+  const [loadingAvailableSubjects, setLoadingAvailableSubjects] = useState(false);
+
   // Modal states for Class Subjects
   const [openAddSubjectToClassModal, setOpenAddSubjectToClassModal] = useState(false);
   const [openEditClassSubjectModal, setOpenEditClassSubjectModal] = useState(false);
@@ -65,7 +71,7 @@ const ClassSubject = () => {
     subject_id: '',
     pass_mark: '',
     unit: '',
-    status: 'active',
+    status: 'compulsory',
   });
 
   // Modal states for Subject Groups
@@ -126,27 +132,38 @@ const ClassSubject = () => {
     }
   };
 
-  const fetchSubjectGroupsData = async () => {
-    setLoadingSubjectGroups(true);
+  const fetchAvailableSubjectsForClass = async () => {
+    setLoadingAvailableSubjects(true);
     try {
-      const response = await fetchSubjectGroups();
+      let response;
+      if (program) {
+        // Fetch subjects by programme if program is selected
+        response = await fetchSubjectsByProgramme(program);
+      } else {
+        // Otherwise fetch all subjects (you might want to adjust this based on your needs)
+        response = await fetchSubjects('');
+      }
+
       if (response.status) {
-        setSubjectGroupsList(response.data);
+        setAvailableSubjectsForClass(response.data);
       }
     } catch (error) {
-      showSnackbar('Failed to fetch subject groups', 'error');
+      showSnackbar('Failed to fetch available subjects', 'error');
     } finally {
-      setLoadingSubjectGroups(false);
+      setLoadingAvailableSubjects(false);
     }
   };
+
+
 
   const handleOpenAddSubjectToClass = () => {
     setClassSubjectFormData({
       subject_id: '',
       pass_mark: '',
       unit: '',
-      status: 'active',
+      status: 'compulsory',
     });
+    fetchAvailableSubjectsForClass();
     setOpenAddSubjectToClassModal(true);
   };
 
@@ -160,8 +177,12 @@ const ClassSubject = () => {
       subject_id: subject.subject_id,
       pass_mark: subject.pass_mark,
       unit: subject.unit,
-      status: subject.status,
+      status: subject.status || 'compulsory',
     });
+    // Ensure available subjects are loaded for display
+    if (availableSubjectsForClass.length === 0) {
+      fetchAvailableSubjectsForClass();
+    }
     setOpenEditClassSubjectModal(true);
     setClassSubjectAnchorEl(event?.currentTarget);
     setOpenClassSubjectMenu(false);
@@ -175,8 +196,41 @@ const ClassSubject = () => {
   const handleAddSubjectToClass = async () => {
     setFieldErrors({});
 
+    // Debug: Log the current form data
+    console.log('Form Data:', classSubjectFormData);
+    console.log('Selected Class:', selectedClass);
+    console.log('Program:', program);
+
+    // Validate required fields before submission
+    const validationErrors = {};
+    if (!selectedClass) validationErrors.class_id = ['Please select a class'];
+    if (!program) validationErrors.programme_id = ['Please select a programme'];
+    if (!classSubjectFormData.subject_id) validationErrors.subject_id = ['Please select a subject'];
+    if (!classSubjectFormData.pass_mark) validationErrors.pass_mark = ['Pass mark is required'];
+    if (!classSubjectFormData.unit) validationErrors.unit = ['Unit is required'];
+    if (!classSubjectFormData.status) validationErrors.status = ['Status is required'];
+
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      console.log('Validation Errors:', validationErrors);
+      return;
+    }
+
     try {
-      const response = await addOrUpdateClassSubject(selectedClass, classSubjectFormData);
+      // Prepare payload with all required fields
+      const payload = {
+        class_id: selectedClass,
+        programme_id: program,
+        subject_id: classSubjectFormData.subject_id,
+        pass_mark: classSubjectFormData.pass_mark,
+        unit: classSubjectFormData.unit,
+        status: classSubjectFormData.status,
+      };
+
+      // Debug: Log the payload
+      console.log('Payload:', payload);
+
+      const response = await addOrUpdateClassSubject(payload);
 
       if (response.status) {
         showSnackbar('Subject added to class successfully', 'success');
@@ -184,7 +238,7 @@ const ClassSubject = () => {
         fetchClassSubjectsData(selectedClass);
       }
     } catch (error) {
-      console.log(error);
+      console.log('Error:', error);
 
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
@@ -210,9 +264,42 @@ const ClassSubject = () => {
 
   const handleUpdateClassSubject = async () => {
     setFieldErrors({});
+    
+    // Debug: Log the current form data
+    console.log('Edit Form Data:', classSubjectFormData);
+    console.log('Selected Class:', selectedClass);
+    console.log('Program:', program);
+    
+    // Validate required fields before submission
+    const validationErrors = {};
+    if (!selectedClass) validationErrors.class_id = ['Please select a class'];
+    if (!program) validationErrors.programme_id = ['Please select a programme'];
+    if (!classSubjectFormData.subject_id) validationErrors.subject_id = ['Please select a subject'];
+    if (!classSubjectFormData.pass_mark) validationErrors.pass_mark = ['Pass mark is required'];
+    if (!classSubjectFormData.unit) validationErrors.unit = ['Unit is required'];
+    if (!classSubjectFormData.status) validationErrors.status = ['Status is required'];
+    
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors);
+      console.log('Edit Validation Errors:', validationErrors);
+      return;
+    }
 
     try {
-      const response = await addOrUpdateClassSubject(selectedClass, selectedClassSubject.id, classSubjectFormData);
+      // Prepare payload with all required fields
+      const payload = {
+        class_id: selectedClass,
+        programme_id: program,
+        subject_id: classSubjectFormData.subject_id,
+        pass_mark: classSubjectFormData.pass_mark,
+        unit: classSubjectFormData.unit,
+        status: classSubjectFormData.status,
+      };
+      
+      // Debug: Log the payload
+      console.log('Edit Payload:', payload);
+
+      const response = await addOrUpdateClassSubject(payload);
 
       if (response.status) {
         showSnackbar('Class subject updated successfully', 'success');
@@ -220,7 +307,7 @@ const ClassSubject = () => {
         fetchClassSubjectsData(selectedClass);
       }
     } catch (error) {
-      console.log(error);
+      console.log('Edit Error:', error);
 
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
@@ -244,51 +331,9 @@ const ClassSubject = () => {
     }
   };
 
-  // Subject Groups methods
-  const handleCreateSubjectGroup = async () => {
-    try {
-      const response = await createSubjectGroup(subjectGroupFormData);
-      if (response.status) {
-        showSnackbar('Subject group created successfully', 'success');
-        setOpenCreateSubjectGroupModal(false);
-        fetchSubjectGroupsData();
-      } else {
-        showSnackbar(response.message || 'Failed to create subject group', 'error');
-      }
-    } catch (error) {
-      showSnackbar('Failed to create subject group', 'error');
-    }
-  };
 
-  const handleUpdateSubjectGroup = async () => {
-    try {
-      const response = await updateSubjectGroup(selectedSubjectGroup.id, subjectGroupFormData);
-      if (response.status) {
-        showSnackbar('Subject group updated successfully', 'success');
-        setOpenEditSubjectGroupModal(false);
-        fetchSubjectGroupsData();
-      } else {
-        showSnackbar(response.message || 'Failed to update subject group', 'error');
-      }
-    } catch (error) {
-      showSnackbar('Failed to update subject group', 'error');
-    }
-  };
 
-  const handleDeleteSubjectGroup = async () => {
-    try {
-      const response = await deleteSubjectGroup(selectedSubjectGroup.id);
-      if (response.status) {
-        showSnackbar('Subject group deleted successfully', 'success');
-        setOpenDeleteSubjectGroupModal(false);
-        fetchSubjectGroupsData();
-      } else {
-        showSnackbar(response.message || 'Failed to delete subject group', 'error');
-      }
-    } catch (error) {
-      showSnackbar('Failed to delete subject group', 'error');
-    }
-  };
+
 
   // Menu handlers
   const handleOpenEditModal = (event, subject) => {
@@ -339,8 +384,13 @@ const ClassSubject = () => {
   // Effects
   useEffect(() => {
     fetchProgrammesData();
-    fetchSubjectGroupsData();
   }, []);
+
+  useEffect(() => {
+    if (program) {
+      fetchAvailableSubjectsForClass();
+    }
+  }, [program]);
 
   useEffect(() => {
     if (program) {
@@ -503,97 +553,6 @@ const ClassSubject = () => {
         </ParentCard>
       </Box>
 
-      {/* Subject Groups Section */}
-      <Box sx={{ flex: { md: 12 }, width: '100%' }}>
-        <ParentCard
-          title={
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Subject Groups
-              </Typography>
-              <Button variant="contained" size='small' onClick={() => setOpenCreateSubjectGroupModal(true)}>
-                Create Subject Group
-              </Button>
-            </Box>
-          }
-        >
-          <TableContainer sx={{ maxHeight: 600 }}>
-            <Table stickyHeader sx={{ tableLayout: 'fixed' }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: '#eef2f7' }}>
-                  <TableCell width="8%">#</TableCell>
-                  <TableCell width="22%">Group Name</TableCell>
-                  <TableCell width="30%">Subjects</TableCell>
-                  <TableCell width="10%">Unit</TableCell>
-                  <TableCell width="12%">Pass Mark</TableCell>
-                  <TableCell width="20%">Status</TableCell>
-                  <TableCell width="8%" align="center">
-                    Action
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loadingSubjectGroups ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
-                ) : subjectGroupsList.length > 0 ? (
-                  subjectGroupsList.map((grp, i) => (
-                    <TableRow key={grp.id} hover>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell>{grp.group_name}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {grp.subjects?.map((s) => (
-                            <Chip
-                              key={s.id}
-                              label={s.subject_name}
-                              size="small"
-                              sx={{
-                                bgcolor: '#334155',
-                                color: '#fff',
-                                fontSize: '0.7rem',
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{grp.unit}</TableCell>
-                      <TableCell>{grp.pass_mark}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={grp.status === 'active' ? 'active' : 'inactive'}
-                          size="small"
-                          sx={{
-                            bgcolor: grp.status === 'active' ? '#dcfce7' : '#fee2e2',
-                            color: grp.status === 'active' ? '#166534' : '#991b1b',
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleOpenSubjectGroupMenu(e, grp)}
-                        >
-                          <MoreVertIcon size={18} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <Typography color="textSecondary">No subject groups yet</Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </ParentCard>
-      </Box>
 
       {/* Class Subject Action Menu */}
       <Menu
@@ -630,102 +589,212 @@ const ClassSubject = () => {
       </Menu>
 
       {/* Add Subject to Class Modal */}
-      <Dialog open={openAddSubjectToClassModal} onClose={handleCloseAddSubjectToClassModal} maxWidth="md" fullWidth>
+      <Dialog open={openAddSubjectToClassModal} onClose={handleCloseAddSubjectToClassModal} maxWidth="sm" fullWidth>
         <DialogTitle>Add Subject to Class</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Subject</InputLabel>
-              <Select
-                value={classSubjectFormData.subject_id}
-                onChange={(e) => setClassSubjectFormData({ ...classSubjectFormData, subject_id: e.target.value })}
-                label="Subject"
-              >
-                <MenuItem value="" disabled>Select Subject</MenuItem>
-                {/* Subjects will be populated here */}
-              </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              label="Pass Mark"
-              type="number"
-              value={classSubjectFormData.pass_mark}
-              onChange={(e) => setClassSubjectFormData({ ...classSubjectFormData, pass_mark: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.pass_mark}
-              helperText={fieldErrors.pass_mark?.[0]}
-            />
-            <TextField
-              fullWidth
-              label="Unit"
-              type="number"
-              value={classSubjectFormData.unit}
-              onChange={(e) => setClassSubjectFormData({ ...classSubjectFormData, unit: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.unit}
-              helperText={fieldErrors.unit?.[0]}
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={classSubjectFormData.status}
-                onChange={(e) => setClassSubjectFormData({ ...classSubjectFormData, status: e.target.value })}
-                label="Status"
-              >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </Select>
-            </FormControl>
+            <Grid container spacing={2}>
+
+              {/* Subject */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth size="small" error={!!fieldErrors.subject_id}>
+                  <InputLabel>Subject</InputLabel>
+                  <Select
+                    value={classSubjectFormData.subject_id}
+                    onChange={(e) =>
+                      setClassSubjectFormData({
+                        ...classSubjectFormData,
+                        subject_id: e.target.value,
+                      })
+                    }
+                    label="Subject"
+                    disabled={loadingAvailableSubjects}
+                  >
+                    <MenuItem value="" disabled>
+                      {loadingAvailableSubjects ? 'Loading subjects...' : 'Select Subject'}
+                    </MenuItem>
+                    {availableSubjectsForClass.map((s) => (
+                      <MenuItem key={s.id} value={s.id}>
+                        {s.subject_name}
+                        {s.subject_code ? ` (${s.subject_code})` : ''}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.subject_id && (
+                    <FormHelperText>{fieldErrors.subject_id?.[0]}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+
+              {/* Pass Mark */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Pass Mark"
+                  type="number"
+                  value={classSubjectFormData.pass_mark}
+                  onChange={(e) =>
+                    setClassSubjectFormData({
+                      ...classSubjectFormData,
+                      pass_mark: e.target.value,
+                    })
+                  }
+                  required
+                  error={!!fieldErrors.pass_mark}
+                  helperText={fieldErrors.pass_mark?.[0]}
+                  size="small"
+                  inputProps={{ min: 0, max: 100 }}
+                />
+              </Grid>
+
+              {/* Unit */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Unit"
+                  type="number"
+                  value={classSubjectFormData.unit}
+                  onChange={(e) =>
+                    setClassSubjectFormData({
+                      ...classSubjectFormData,
+                      unit: e.target.value,
+                    })
+                  }
+                  required
+                  error={!!fieldErrors.unit}
+                  helperText={fieldErrors.unit?.[0]}
+                  size="small"
+                  inputProps={{ min: 1 }}
+                />
+              </Grid>
+
+              {/* Status */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth size="small" error={!!fieldErrors.status}>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={classSubjectFormData.status}
+                    onChange={(e) =>
+                      setClassSubjectFormData({
+                        ...classSubjectFormData,
+                        status: e.target.value,
+                      })
+                    }
+                    label="Status"
+                  >
+                    <MenuItem value="compulsory">Compulsory</MenuItem>
+                    <MenuItem value="optional">Optional</MenuItem>
+                  </Select>
+                  {fieldErrors.status && (
+                    <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+
+            </Grid>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button size='small' onClick={handleCloseAddSubjectToClassModal}>Cancel</Button>
-          <Button variant="contained" size='small' onClick={handleAddSubjectToClass}>
-            Add Subject
+          <Button
+            variant="contained"
+            size='small'
+            onClick={handleAddSubjectToClass}
+            disabled={loadingAvailableSubjects}
+          >
+            {loadingAvailableSubjects ? <CircularProgress size={20} /> : 'Add Subject'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Edit Class Subject Modal */}
-      <Dialog open={openEditClassSubjectModal} onClose={handleCloseEditClassSubjectModal} maxWidth="md" fullWidth>
+      <Dialog open={openEditClassSubjectModal} onClose={handleCloseEditClassSubjectModal} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Class Subject</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Pass Mark"
-              type="number"
-              value={classSubjectFormData.pass_mark}
-              onChange={(e) => setClassSubjectFormData({ ...classSubjectFormData, pass_mark: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.pass_mark}
-              helperText={fieldErrors.pass_mark?.[0]}
-            />
-            <TextField
-              fullWidth
-              label="Unit"
-              type="number"
-              value={classSubjectFormData.unit}
-              onChange={(e) => setClassSubjectFormData({ ...classSubjectFormData, unit: e.target.value })}
-              margin="normal"
-              required
-              error={!!fieldErrors.unit}
-              helperText={fieldErrors.unit?.[0]}
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={classSubjectFormData.status}
-                onChange={(e) => setClassSubjectFormData({ ...classSubjectFormData, status: e.target.value })}
-                label="Status"
-              >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </Select>
-            </FormControl>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth size="small" margin="normal">
+                  <InputLabel>Subject</InputLabel>
+                  <Select
+                    value={classSubjectFormData.subject_id}
+                    disabled
+                    label="Subject"
+                  >
+                    <MenuItem value={classSubjectFormData.subject_id}>
+                      {/* Subject name will be loaded from available subjects */}
+                      {availableSubjectsForClass.find(s => s.id === classSubjectFormData.subject_id)?.subject_name || 'Selected Subject'}
+                      {availableSubjectsForClass.find(s => s.id === classSubjectFormData.subject_id)?.subject_code ? 
+                        ` (${availableSubjectsForClass.find(s => s.id === classSubjectFormData.subject_id)?.subject_code})` : ''}
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Pass Mark"
+                  type="number"
+                  value={classSubjectFormData.pass_mark}
+                  onChange={(e) =>
+                    setClassSubjectFormData({
+                      ...classSubjectFormData,
+                      pass_mark: e.target.value,
+                    })
+                  }
+                  margin="normal"
+                  required
+                  error={!!fieldErrors.pass_mark}
+                  helperText={fieldErrors.pass_mark?.[0]}
+                  size="small"
+                  inputProps={{ min: 0, max: 100 }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Unit"
+                  type="number"
+                  value={classSubjectFormData.unit}
+                  onChange={(e) =>
+                    setClassSubjectFormData({
+                      ...classSubjectFormData,
+                      unit: e.target.value,
+                    })
+                  }
+                  margin="normal"
+                  required
+                  error={!!fieldErrors.unit}
+                  helperText={fieldErrors.unit?.[0]}
+                  size="small"
+                  inputProps={{ min: 1 }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth size="small" margin="normal" error={!!fieldErrors.status}>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={classSubjectFormData.status}
+                    onChange={(e) =>
+                      setClassSubjectFormData({
+                        ...classSubjectFormData,
+                        status: e.target.value,
+                      })
+                    }
+                    label="Status"
+                  >
+                    <MenuItem value="compulsory">Compulsory</MenuItem>
+                    <MenuItem value="optional">Optional</MenuItem>
+                  </Select>
+                  {fieldErrors.status && (
+                    <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+            </Grid>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -736,57 +805,6 @@ const ClassSubject = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Create Subject Group Modal */}
-      <Dialog open={openCreateSubjectGroupModal} onClose={handleCloseCreateSubjectGroupModal} maxWidth="md" fullWidth>
-        <DialogTitle>Create Subject Group</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Group Name"
-              value={subjectGroupFormData.group_name}
-              onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, group_name: e.target.value })}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Unit"
-              type="number"
-              value={subjectGroupFormData.unit}
-              onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, unit: e.target.value })}
-              margin="normal"
-              required
-            />
-            <TextField
-              fullWidth
-              label="Pass Mark"
-              type="number"
-              value={subjectGroupFormData.pass_mark}
-              onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, pass_mark: e.target.value })}
-              margin="normal"
-              required
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={subjectGroupFormData.status}
-                onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, status: e.target.value })}
-                label="Status"
-              >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button size='small' onClick={handleCloseCreateSubjectGroupModal}>Cancel</Button>
-          <Button variant="contained" size='small' onClick={handleCreateSubjectGroup}>
-            Create Group
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Snackbar */}
       <Snackbar

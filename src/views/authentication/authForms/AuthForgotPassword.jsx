@@ -17,7 +17,7 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
 
   // Agent uses the landlord axios instance; tenant uses tenantApi (adds X-Tenant-ID header)
   const api = isAgentFlow ? agentApi : tenantApi;
-  const apiEndpoint = isAgentFlow ? '/landlord/v1/auth/forgot_password' : '/forgot_password';
+  const apiEndpoint = isAgentFlow ? '/v1/landlord/auth/forgot_password' : '/forgot_password';
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');

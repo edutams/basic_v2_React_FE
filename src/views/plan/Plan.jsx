@@ -35,6 +35,7 @@ import PlanForm from '../../components/add-plan/component/PlanForm';
 import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
 import PackageModal from '../../components/package/PackageModal';
 import ManageModule from '../../components/add-plan/component/ManageModule';
+import ManagePackagesModal from '../../components/plan/ManagePackagesModal';
 import eduTierApi from '../../api/eduTierApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
@@ -43,6 +44,7 @@ const Plan = () => {
   const [open, setOpen] = useState(false);
   const [openPackageModal, setOpenPackageModal] = useState(false);
   const [openManagePackagesModal, setOpenManagePackagesModal] = useState(false);
+  const [openManageModuleModal, setOpenManageModuleModal] = useState(false);
   const [plans, setPlans] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -178,6 +180,34 @@ const Plan = () => {
   const handleCloseManagePackages = () => {
     setOpenManagePackagesModal(false);
     setSelectedPlan(null);
+  };
+
+  const handleOpenManageModule = (plan) => {
+    handleActionClose();
+    setSelectedPlan(plan);
+    setOpenManageModuleModal(true);
+  };
+
+  const handleCloseManageModule = () => {
+    setOpenManageModuleModal(false);
+    setSelectedPlan(null);
+  };
+
+  const handleSavePlanModules = async (moduleIds) => {
+    if (selectedPlan) {
+      try {
+        await eduTierApi.savePlanModules(selectedPlan.id, moduleIds);
+        setOpenManageModuleModal(false);
+        setSnackbarMessage('Plan modules updated successfully');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        fetchData();
+      } catch (error) {
+        setSnackbarMessage('Failed to update plan modules');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    }
   };
 
   const handleSavePackageFeatures = async (features) => {
@@ -417,6 +447,7 @@ const Plan = () => {
                           <MenuItem onClick={() => handleOpenManagePackages(plan)}>
                             Manage Packages
                           </MenuItem>
+
                           <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
                             Delete Plan
                           </MenuItem>
@@ -512,7 +543,7 @@ const Plan = () => {
           <PackageModal
             open={openPackageModal}
             onClose={handleClose}
-            handleRefresh={() => {}}
+            handleRefresh={() => { }}
             selectedPackage={selectedPlan}
             actionType="update"
           />
@@ -521,21 +552,30 @@ const Plan = () => {
         <ReusableModal
           open={openManagePackagesModal}
           onClose={handleCloseManagePackages}
-          title={`Module Configuration - ${selectedPlan?.name || 'Plan'}`}
+          title={`Manage Packages - ${selectedPlan?.name || 'Plan'}`}
           size="large"
           showDivider={true}
           showCloseButton={true}
         >
-          <Box sx={{ mt: 4 }}>
-            <ManageModule
-              selectedPlan={selectedPlan}
-              currentPermissions={selectedPlan?.modules?.map((m) => m.id) || []}
-              modules={modules}
-              packages={packages}
-              onSave={handleSavePackageFeatures}
-              onCancel={handleCloseManagePackages}
-            />
-          </Box>
+          <ManagePackagesModal
+            selectedPlan={selectedPlan}
+            onClose={handleCloseManagePackages}
+          />
+        </ReusableModal>
+        <ReusableModal
+          open={openManageModuleModal}
+          onClose={handleCloseManageModule}
+          title={`Manage Modules - ${selectedPlan?.name || 'Plan'}`}
+          size="large"
+          showDivider={true}
+          showCloseButton={true}
+        >
+          <ManageModule
+            selectedPlan={selectedPlan}
+            modules={modules}
+            onSave={handleSavePlanModules}
+            onCancel={handleCloseManageModule}
+          />
         </ReusableModal>
       </ParentCard>
     </PageContainer>

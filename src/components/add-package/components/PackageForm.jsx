@@ -14,12 +14,7 @@ import { useFormik } from 'formik';
 import { packageValidationSchema } from '../validation/packageValidationSchema';
 import PropTypes from 'prop-types';
 
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
-import SupervisorAccountOutlinedIcon from '@mui/icons-material/SupervisorAccountOutlined'; // for Agent
-import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined'; // for Module
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'; // for Package
-import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'; // for Term
-import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'; // for Session
+// Unused imports removed
 
 const PackageForm = ({
   initialValues = {
@@ -28,7 +23,6 @@ const PackageForm = ({
     package_status: 'active',
     package_icon: 'fas fa-box',
     // package_code: '',
-    package_order: 0,
   },
   onSubmit,
   onCancel,
@@ -43,8 +37,7 @@ const PackageForm = ({
       package_description: initialValues.package_description || initialValues.pac_description || '',
       package_status: initialValues.package_status || initialValues.pac_status || 'active',
       package_icon: initialValues.package_icon || initialValues.pac_icon || 'fas fa-box',
-      // package_code: initialValues.package_code || initialValues.pac_code || '',
-      package_order: initialValues.package_order || 0,
+      package_code: initialValues.package_code || initialValues.pac_code || '',
     },
     validationSchema: packageValidationSchema,
     enableReinitialize: true,
@@ -103,7 +96,7 @@ const PackageForm = ({
           </FormControl>
         </Grid>
 
-        {/* <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Package Code"
             name="package_code"
@@ -115,60 +108,21 @@ const PackageForm = ({
             error={formik.touched.package_code && Boolean(formik.errors.package_code)}
             helperText={formik.touched.package_code && formik.errors.package_code}
           />
-        </Grid> */}
+        </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
-            label="Package Order"
-            name="package_order"
-            type="number"
-            value={formik.values.package_order}
+            label="Icon"
+            name="package_icon"
+            value={formik.values.package_icon}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
             variant="outlined"
-            error={formik.touched.package_order && Boolean(formik.errors.package_order)}
-            helperText={formik.touched.package_order && formik.errors.package_order}
+            error={formik.touched.package_icon && Boolean(formik.errors.package_icon)}
+            helperText={formik.touched.package_icon && formik.errors.package_icon}
+            placeholder="e.g. fas fa-box"
           />
-        </Grid>
-
-        <Grid size={{ xs: 12 }}>
-          <FormControl fullWidth variant="outlined">
-            <InputLabel>Icon</InputLabel>
-            <Select
-              name="package_icon"
-              value={formik.values.package_icon}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              label="Icon"
-              error={formik.touched.package_icon && Boolean(formik.errors.package_icon)}
-            >
-              <MenuItem value="school">
-                <SchoolOutlinedIcon sx={{ mr: 1 }} />
-                School
-              </MenuItem>
-              <MenuItem value="agent">
-                <SupervisorAccountOutlinedIcon sx={{ mr: 1 }} />
-                Agent
-              </MenuItem>
-              <MenuItem value="module">
-                <ExtensionOutlinedIcon sx={{ mr: 1 }} />
-                Module
-              </MenuItem>
-              <MenuItem value="package">
-                <Inventory2OutlinedIcon sx={{ mr: 1 }} />
-                Package
-              </MenuItem>
-              <MenuItem value="term">
-                <CalendarTodayOutlinedIcon sx={{ mr: 1 }} />
-                Term
-              </MenuItem>
-              <MenuItem value="session">
-                <ScheduleOutlinedIcon sx={{ mr: 1 }} />
-                Session
-              </MenuItem>
-            </Select>
-          </FormControl>
         </Grid>
 
         <Grid size={{ xs: 12 }}>
@@ -182,7 +136,7 @@ const PackageForm = ({
             >
               Cancel
             </Button>
-            <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
+            <Button variant="contained" type="submit">
               {isLoading ? 'Saving...' : submitText}
             </Button>
           </Box>

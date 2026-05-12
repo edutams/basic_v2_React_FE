@@ -25,10 +25,7 @@ const PackageManagement = ({
   const [manageModulesOpen, setManageModulesOpen] = useState(false);
   const [view, setView] = useState('list'); // 'list' or 'modules'
 
-  const currentPackageModules = useMemo(() => {
-    if (!currentPackage) return [];
-    return modules.filter((module) => module.packageId === currentPackage.id);
-  }, [modules, currentPackage]);
+
 
   const handlePackageAction = (action, package_ = null) => {
     switch (action) {
@@ -104,16 +101,16 @@ const PackageManagement = ({
     }
   };
 
-  const handleModuleAssignment = (package_, assignedModules, unassignedModules) => {
-    assignedModules.forEach((module) => {
-      const updatedModule = { ...module, packageId: package_.id };
-      onModuleUpdate(updatedModule, 'update');
-    });
+  const handleModuleAssignment = (package_, assignedModules) => {
+    // Format the payload for the batchUpdateModules API
+    // The backend expects an array of modules with {id, ckstatus}
+    const modulesPayload = assignedModules.map((module) => ({
+      id: module.id,
+      ckstatus: true,
+    }));
 
-    unassignedModules.forEach((module) => {
-      const updatedModule = { ...module, packageId: null };
-      onModuleUpdate(updatedModule, 'update');
-    });
+    // Call onModuleUpdate with the package ID and the formatted modules
+    onModuleUpdate({ packageId: package_.id, modules: modulesPayload }, 'batch_update');
 
     if (currentPackage && currentPackage.id === package_.id) {
       setPackageModules(assignedModules);

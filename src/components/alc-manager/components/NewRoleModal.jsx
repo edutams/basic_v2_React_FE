@@ -21,6 +21,7 @@ const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditin
             margin="dense"
             label="Role Name"
             type="text"
+            size="small"
             fullWidth
             variant="outlined"
             value={formData.roleName}
@@ -31,6 +32,7 @@ const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditin
             margin="dense"
             label="Description"
             type="text"
+            size="small"
             fullWidth
             variant="outlined"
             multiline
@@ -41,10 +43,10 @@ const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditin
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+        <Button onClick={onClose} disabled={loading} size='small'>
           Cancel
         </Button>
-        <Button onClick={onSave} variant="contained" color="primary" disabled={loading}>
+        <Button onClick={onSave} variant="contained" color="primary" disabled={loading} size='small'>
           {loading ? (
             <CircularProgress size={24} color="inherit" />
           ) : isEditing ? (

@@ -66,7 +66,7 @@ const EditModule = ({ selectedModule, onSave, onClose }) => {
           />
         </Grid>
 
-        <Grid  item size={{ xs: 12, sm: 12 }}>
+        <Grid item size={{ xs: 12, sm: 12 }}>
           <TextField
             label="Module Link/Route"
             name="mod_links"
@@ -84,11 +84,11 @@ const EditModule = ({ selectedModule, onSave, onClose }) => {
                 cursor: 'not-allowed',
               },
             }}
-            // helperText="Module link cannot be changed"
+          // helperText="Module link cannot be changed"
           />
         </Grid>
 
-        <Grid  item size={{ xs: 12, sm: 12 }}>
+        <Grid item size={{ xs: 12, sm: 12 }}>
           <TextField
             label="Module Description"
             name="mod_description"
@@ -104,7 +104,7 @@ const EditModule = ({ selectedModule, onSave, onClose }) => {
           />
         </Grid>
 
-        <Grid  item size={{ xs: 12, sm: 12 }}>
+        <Grid item size={{ xs: 12, sm: 12 }}>
           <FormControl fullWidth variant="outlined">
             <InputLabel>Status</InputLabel>
             <Select
@@ -123,13 +123,12 @@ const EditModule = ({ selectedModule, onSave, onClose }) => {
       </Grid>
 
       <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
-        <Button onClick={onClose} variant="outlined">
+        <Button onClick={onClose} variant="outlined" size='small'>
           Cancel
         </Button>
         <Button
           onClick={formik.handleSubmit}
-          variant="contained"
-          disabled={!formik.isValid || formik.isSubmitting}
+          size='small'
         >
           Update Module
         </Button>

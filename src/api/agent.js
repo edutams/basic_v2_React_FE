@@ -17,8 +17,8 @@ const agentApi = {
     const response = await api.get('/v1/landlord/organizations/get_school_chart_data', { params });
     return response.data;
   },
-  getSubOrganizations: async (id, params) => {
-    const response = await api.get(`/v1/landlord/organizations/${id}/sub-organizations`, {
+  getSubOrganizations: async (params) => {
+    const response = await api.get(`/v1/landlord/organizations/sub-organizations`, {
       params,
     });
     return response.data;

@@ -318,7 +318,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
           )}
         </Box>
         {/* Submitted / Rejected-by banner */}
-        <Box
+        {prospect.status == 'rejected' && <Box
           sx={{
             px: 3,
             py: 1.5,
@@ -358,8 +358,9 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             </Typography>
           )}
         </Box>
+        }
 
-        {prospect.rejection_reason && (
+        {prospect.status === 'rejected' && prospect.rejection_reason && (
           <Box sx={{ px: 3, pb: 2 }}>
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               <strong>Rejection reason:</strong> {prospect.rejection_reason}

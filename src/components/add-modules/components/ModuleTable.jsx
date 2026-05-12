@@ -95,11 +95,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
     fetchModules();
   }, [fetchModules]);
 
-  useEffect(() => {
-    if (modules.length > 0 && !isLoading) {
-      setModuleList(modules);
-    }
-  }, [modules, isLoading]);
+  // Removed useEffect that overwrites moduleList with modules to allow filtering to work properly
 
   const handleMenuOpen = (event, module) => {
     setAnchorEl(event.currentTarget);
@@ -142,8 +138,10 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
           break;
       }
 
-      // Refresh the module list after action
-      await fetchModules();
+      // Refresh the module list after action only if it was an API action
+      if (['activate', 'deactivate', 'delete'].includes(action)) {
+        await fetchModules();
+      }
 
       // Call the original action handler
       onModuleAction(action, module);
@@ -160,22 +158,6 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
       title={
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h5">Manage Modules</Typography>
-          {/* <Button
-            variant="contained"
-            color="primary"
-            onClick={() => onModuleAction('create')}
-            sx={{
-              minWidth: 120,
-              fontSize: { xs: '0.95rem', md: '1rem' },
-            }}
-          >
-            Add New Module
-          </Button> */}
-        </Box>
-      }
-    >
-      <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
           <Button
             variant="outlined"
             startIcon={<FilterListIcon />}
@@ -198,7 +180,9 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
             )}
           </Button>
         </Box>
-
+      }
+    >
+      <Box sx={{ p: 0 }}>
         {/* Filter Side Drawer */}
         <FilterSideDrawer
           open={filterDrawerOpen}
@@ -242,7 +226,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="body2">
                           {module.module_description || module.mod_description}
                         </Typography>
                       </TableCell>
@@ -271,10 +255,8 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                           }}
                           size="small"
                           label={(
-                            module.module_status ||
-                            module.mod_status ||
-                            'INACTIVE'
-                          ).toUpperCase()}
+                            module.module_status
+                          )}
                         />
                       </TableCell>
                       <TableCell align="center">
@@ -303,9 +285,9 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
                               ? 'Deactivate Module'
                               : 'Activate Module'}
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('delete', module)}>
+                          {/* <MenuItem onClick={() => handleAction('delete', module)}>
                             Delete Module
-                          </MenuItem>
+                          </MenuItem> */}
                         </Menu>
                       </TableCell>
                     </TableRow>

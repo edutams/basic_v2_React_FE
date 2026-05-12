@@ -17,8 +17,6 @@ import ParentCard from '../../../components/shared/ParentCard';
 import ArrowHint from '../../../components/shared/ArrowHint';
 
 
-
-// ── Admin card ────────────────────────────────────────────────────────────────
 const AdminCard = ({ admin, index }) => {
   const fields = [
     { label: 'Surname', value: admin.lastName },
@@ -108,7 +106,6 @@ const AdminCard = ({ admin, index }) => {
   );
 };
 
-// ── Main stage ────────────────────────────────────────────────────────────────
 const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
   const theme = useTheme();
@@ -126,7 +123,6 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       .then((res) => {
         const d = res.data;
 
-        // Normalise school_type (may be JSON string, array, or plain string)
         let schoolType = d.school_type;
         if (typeof schoolType === 'string') {
           try {
@@ -203,6 +199,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       onSkip={onSkip}
       onSaveAndContinue={handleSave}
       saving={saving}
+      canContinue={!!logo}
       leftVariant="dark"
       leftTitle="Set up your school profile."
       leftSubtitle="Upload your logo, confirm your school details and admin information to get started."

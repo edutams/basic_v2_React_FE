@@ -22,7 +22,7 @@ import {
 } from '../../../context/TenantContext/services/tenant.service';
 import ArrowHint from '../../../components/shared/ArrowHint';
 
-const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref) => {
+const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onReadyChange }, ref) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const primary = theme.palette.primary.main;
@@ -142,6 +142,12 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref
     setLoading(true);
     fetchClasses().finally(() => setLoading(false));
   }, []);
+
+  // Notify parent when at least one class has arms generated
+  useEffect(() => {
+    const isReady = classes.some((c) => c.arm_names?.length > 0);
+    onReadyChange?.(isReady);
+  }, [classes, onReadyChange]);
 
   const handleSaveAndContinue = async () => {
     setSaving(true);

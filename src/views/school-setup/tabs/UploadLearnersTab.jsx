@@ -35,7 +35,7 @@ import UploadLearnerModal from 'src/components/tenant-components/learners/Upload
 const HINT_SEQUENCE = ['add', 'download', 'upload'];
 const HINT_DURATION = 5000; // 5s each
 
-const UploadLearnersTab = ({ onLearnerAdded }) => {
+const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -370,7 +370,7 @@ const UploadLearnersTab = ({ onLearnerAdded }) => {
                         {index === 0 && renderHint(
                           'add',
                           addHintStyle,
-                          '👆 Click to add a learner manually',
+                          '👆 Click to add a learner manually or',
                         )}
                       </>
                     ) : (
@@ -413,7 +413,7 @@ const UploadLearnersTab = ({ onLearnerAdded }) => {
                         {index === 0 && renderHint(
                           'download',
                           downloadHintStyle,
-                          '📥 Download the template first',
+                          'Download the template first',
                           'up-left',
                         )}
 
@@ -421,7 +421,7 @@ const UploadLearnersTab = ({ onLearnerAdded }) => {
                         {index === 0 && renderHint(
                           'upload',
                           uploadHintStyle,
-                          '📤 Then upload your filled template',
+                          'Upload the filled template',
                         )}
                       </>
                     ) : (

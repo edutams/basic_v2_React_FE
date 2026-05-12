@@ -3,9 +3,10 @@ import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import SetUpClassesTab from '../tabs/SetUpClassesTab';
 
-const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
+const Stage3ClassArms = ({ onNext, onBack, onSkip }) => {
   const tabRef = useRef(null);
   const [saving, setSaving] = useState(false);
+  const [canContinue, setCanContinue] = useState(false);
 
   const handleSaveAndContinue = async () => {
     if (tabRef.current?.save) {
@@ -28,6 +29,7 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
       onSkip={onSkip}
       onSaveAndContinue={handleSaveAndContinue}
       saving={saving}
+      canContinue={canContinue}
       noPadding
       leftTitle="Create your class arms."
       leftSubtitle="Set up class arms and deactivate any class you currently do not have in your school."
@@ -63,11 +65,11 @@ const Stage4ClassArms = ({ onNext, onBack, onSkip }) => {
             flexDirection: 'column',
           }}
         >
-          <SetUpClassesTab ref={tabRef} onSaveAndContinue={onNext} />
+          <SetUpClassesTab ref={tabRef} onSaveAndContinue={onNext} onReadyChange={setCanContinue} />
         </Box>
       </Box>
     </SetupShell>
   );
 };
 
-export default Stage4ClassArms;
+export default Stage3ClassArms;

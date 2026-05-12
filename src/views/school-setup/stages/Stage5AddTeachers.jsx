@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import UploadTeachersTab from '../tabs/UploadTeachersTab';
 
-const Stage6AddTeachers = ({ onNext, onBack, onSkip }) => {
+const Stage5AddTeachers = ({ onNext, onBack, onSkip }) => {
   return (
     <SetupShell
       stage={5}
@@ -52,4 +52,4 @@ const Stage6AddTeachers = ({ onNext, onBack, onSkip }) => {
   );
 };
 
-export default Stage6AddTeachers;
+export default Stage5AddTeachers;

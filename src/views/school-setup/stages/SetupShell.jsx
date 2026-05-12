@@ -54,6 +54,7 @@ const SetupShell = ({
   onSkip,
   onSaveAndContinue,
   saving = false,
+  canContinue = true,
   backLabel,
   noPadding = false,
   leftVariant = 'light',
@@ -259,7 +260,6 @@ const SetupShell = ({
                 animation: anim('fadeIn', '0.6s', '0.4s'),
               }}
             />
-            {/* Illustration centered on inner circle */}
             <Box
               component="img"
               src={leftImage || SetupIllustration}
@@ -309,7 +309,6 @@ const SetupShell = ({
           position: 'relative',
         }}
       >
-        {/* ── TOP-RIGHT CONTROLS — matches SetupWelcome pattern ── */}
         <Box
           sx={{
             position: 'absolute',
@@ -362,7 +361,6 @@ const SetupShell = ({
             </Box>
           </Box>
 
-          {/* "How to setup" pill */}
           <Box
             sx={{
               display: 'inline-flex',
@@ -457,7 +455,8 @@ const SetupShell = ({
               variant="contained"
               endIcon={<IconChevronRight size={16} />}
               onClick={onSaveAndContinue}
-              disabled={saving}
+              disabled={saving || !canContinue}
+              title={!canContinue ? 'Complete the required action to continue' : undefined}
               sx={{
                 fontSize: 14,
                 fontWeight: 600,

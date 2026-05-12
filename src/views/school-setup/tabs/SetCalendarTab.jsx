@@ -44,7 +44,7 @@ import {
   toggleWeekStatus,
 } from '../../../api/weekApi';
 
-const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
+const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
   const theme = useTheme();
   const primary = theme.palette.primary.main;
@@ -113,6 +113,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Notify parent when stage is completable: subscribed term + weeks generated
+  useEffect(() => {
+    const isReady =
+      sessionTerms.some((t) => t.is_subscribed === 'yes') && weeks.length > 0;
+    onReadyChange?.(isReady);
+  }, [sessionTerms, weeks, onReadyChange]);
 
   const loadData = async () => {
     try {

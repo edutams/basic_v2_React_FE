@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import UploadLearnersTab from '../tabs/UploadLearnersTab';
 
-const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
+const Stage4AddLearners = ({ onNext, onBack, onSkip }) => {
+  const [canContinue, setCanContinue] = useState(false);
   return (
     <SetupShell
       stage={4}
@@ -10,6 +12,7 @@ const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}
+      canContinue={canContinue}
       noPadding
       leftTitle="Add your learners."
       leftSubtitle="Upload or manually add learners into their respective classes."
@@ -45,11 +48,11 @@ const Stage5AddLearners = ({ onNext, onBack, onSkip }) => {
             flexDirection: 'column',
           }}
         >
-          <UploadLearnersTab onSaveAndContinue={onNext} />
+          <UploadLearnersTab onLearnerAdded={() => setCanContinue(true)} />
         </Box>
       </Box>
     </SetupShell>
   );
 };
 
-export default Stage5AddLearners;
+export default Stage4AddLearners;

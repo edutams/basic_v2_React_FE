@@ -108,14 +108,12 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     onReadyChange?.(hasAny);
   }, [studentCounts, onReadyChange]);
 
-  // ── Derived state ─────────────────────────────────────────────────────────
   const filteredClasses = useMemo(() =>
     classes.filter((cls) =>
       cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cls.programme_name?.toLowerCase().includes(searchTerm.toLowerCase())
     ), [classes, searchTerm]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleAddNewLearner = (classItem) => { setSelectedClass(classItem); setModalOpen(true); };
   const handleViewLearners  = (classItem) => { setSelectedClass(classItem); setLearnerListModalOpen(true); };
   const handleUploadClick   = () => setUploadModalOpen(true);
@@ -199,7 +197,6 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
 
               return (
                 <TableRow key={item.unique_key || index}>
-                  {/* Class name */}
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }}>
                     <TextField
                       size="small"
@@ -216,7 +213,6 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                     />
                   </TableCell>
 
-                  {/* No. uploaded */}
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
                     <Typography variant="subtitle2" align="center">
                       <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
@@ -225,7 +221,6 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                     </Typography>
                   </TableCell>
 
-                  {/* Add New Learner */}
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
                     {hasArms ? (
                       <>
@@ -254,7 +249,6 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                     )}
                   </TableCell>
 
-                  {/* Download + Upload Template */}
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
                     {hasArms ? (
                       <>

@@ -25,7 +25,6 @@ import {
   CircularProgress,
   useTheme,
 } from '@mui/material';
-import { IconDotsVertical } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
 import ArrowHint from 'src/components/shared/ArrowHint';
@@ -58,7 +57,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   // Edit modal state
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [selectedTerm, setSelectedTerm] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
@@ -194,7 +192,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   const handleCloseEditModal = () => {
     setOpenEditModal(false);
-    setSelectedTerm(null);
     setDisplayName('');
   };
 

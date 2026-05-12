@@ -8,7 +8,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  IconButton,
   Button,
   CircularProgress,
   Typography,
@@ -25,27 +24,18 @@ import ArrowHint from '../../../components/shared/ArrowHint';
 const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onReadyChange }, ref) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const primary = theme.palette.primary.main;
 
   const [hasChanges, setHasChanges] = useState(false);
-  const [iconHovered, setIconHovered] = useState(null);
-  const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
-  const [notification, setNotification] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
-  // ── Hint positioning ──────────────────────────────────────────────────────
-  const generateBtnRef = useRef(null);   // ref on the first row's Generate button
-  const cellRef = useRef(null);          // ref on the cell wrapping Box (position: relative)
-  const armCellRef = useRef(null);       // ref on the first row's arm names cell
+  // ── Hint positioning 
+  const generateBtnRef = useRef(null);
+  const cellRef = useRef(null);
   const [hintStyle, setHintStyle] = useState(null);
-  const [armHintStyle, setArmHintStyle] = useState(null);
   const [showEditHint, setShowEditHint] = useState(false);
   const editHintTimerRef = useRef(null);
 
@@ -71,30 +61,6 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
     return () => ro.disconnect();
   }, [classes.length, loading]);
 
-  // ── Arm names cell hint position ─────────────────────────────────────────
-  useLayoutEffect(() => {
-    const armCell = armCellRef.current;
-    if (!armCell) return;
-
-    const calc = () => {
-      const armRect = armCell.getBoundingClientRect();
-      const armCellParent = armCell.offsetParent;
-      if (!armCellParent) return;
-      const parentRect = armCellParent.getBoundingClientRect();
-      setArmHintStyle({
-        // Centre of the arm cell, just above its top edge
-        top: armRect.top - parentRect.top - 56,
-        left: armRect.left - parentRect.left + armRect.width / 2,
-      });
-    };
-
-    calc();
-    const ro = new ResizeObserver(calc);
-    ro.observe(armCell);
-    return () => ro.disconnect();
-  }, [classes.length, loading]);
-
-  // ─────────────────────────────────────────────────────────────────────────
 
   const generateDefaultArmNames = (count) => {
     const letters = [];
@@ -283,12 +249,9 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
           <TableBody>
             {filteredClasses.map((classItem, index) => {
               const isInactive = classItem.status === 'inactive';
-              const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isInactive
                 ? isDark ? 'action.disabledBackground' : '#e0e0e0'
-                : isHighlighted
-                  ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
-                  : isDark ? 'action.hover' : '#f6f7f9';
+                : isDark ? 'action.hover' : '#f6f7f9';
 
               return (
                 <TableRow key={classItem.unique_key || index}>
@@ -316,10 +279,8 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
                     </Box>
                   </TableCell>
 
-                  {/* ── No. of Arms + Generate cell ── */}
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, verticalAlign: 'top' }}>
                     <Box
-                      // cellRef only on the first row — that's where the hint lives
                       ref={index === 0 ? cellRef : null}
                       display="flex"
                       gap={1}
@@ -348,7 +309,6 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
                       />
 
                       <Button
-                        // generateBtnRef only on the first row
                         ref={index === 0 ? generateBtnRef : null}
                         variant="contained"
                         size="small"
@@ -358,7 +318,6 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
                         Generate
                       </Button>
 
-                      {/* ── Hint: first row only, hidden once any arms exist ── */}
                       {index === 0 && showHint && hintStyle && (
                         <ArrowHint
                           show
@@ -377,80 +336,18 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
                     </Box>
                   </TableCell>
 
-                  {/* ── Arm names cell ── */}
                   <TableCell
-                    ref={index === 0 ? armCellRef : null}
                     sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, verticalAlign: 'top', position: 'relative' }}
                   >
-                    {/* Edit hint — shown for 3s after Generate is clicked, first row only */}
-                    {index === 0 && showEditHint && armHintStyle && (
-                      <Box
-                        sx={{
-                          '@keyframes fadeInHint': {
-                            from: { opacity: 0, transform: 'translateY(8px)' },
-                            to: { opacity: 1, transform: 'translateY(0)' },
-                          },
-                          '@keyframes fadeOutHint': {
-                            from: { opacity: 1 },
-                            to: { opacity: 0 },
-                          },
-                          '@keyframes bob': {
-                            '0%, 100%': { transform: 'translateX(-50%) translateY(0)' },
-                            '50%': { transform: 'translateX(-50%) translateY(-5px)' },
-                          },
-                          position: 'absolute',
-                          top: -62,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          zIndex: 20,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          pointerEvents: 'none',
-                          animation: 'fadeInHint 0.4s cubic-bezier(0.22,1,0.36,1) both, bob 2s ease-in-out 0.5s infinite',
-                        }}
-                      >
-                        {/* Bubble */}
-                        <Box
-                          sx={{
-                            bgcolor: 'background.paper',
-                            border: '2px solid',
-                            borderColor: 'primary.main',
-                            borderRadius: '12px !important',
-                            px: 1.5,
-                            py: 1,
-                            boxShadow: `0 6px 24px ${primary}22`,
-                            whiteSpace: 'nowrap',
-                            mb: 0.5,
-                          }}
-                        >
-                          <Typography
-                            sx={{ fontSize: 11, fontWeight: 700, color: 'primary.main', letterSpacing: 0.2 }}
-                          >
-                            ✏️ You can edit the arm names if you wish
-                          </Typography>
-                        </Box>
-
-                        {/* Curved arrow pointing down-left toward the arm name fields */}
-                        <svg width="44" height="40" viewBox="0 0 44 40" fill="none" style={{ alignSelf: 'flex-start', marginLeft: 8 }}>
-                          <path
-                            d="M38 4 C38 20, 20 28, 6 36"
-                            stroke={primary}
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            fill="none"
-                          />
-                          {/* Arrowhead pointing down-left */}
-                          <path
-                            d="M16 26 L6 36 L16 38"
-                            stroke={primary}
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                        </svg>
-                      </Box>
+                    {index === 0 && showEditHint && (
+                      <ArrowHint
+                        show
+                        label="✏️ You can edit the arm names if you wish"
+                        direction="down-left"
+                        mode="persistent"
+                        delay="0s"
+                        position={{ position: 'absolute', top: -70, left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}
+                      />
                     )}
 
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -490,12 +387,8 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
         </Table>
       </TableContainer>
 
-      <Box mt={2} display="flex" justifyContent="flex-end" sx={{ display: 'none' }}>
-        <Button
-          variant="contained"
-          onClick={handleSaveAndContinue}
-          disabled={!hasChanges || saving}
-        >
+      <Box mt={2} sx={{ display: 'none' }}>
+        <Button variant="contained" onClick={handleSaveAndContinue} disabled={!hasChanges || saving}>
           {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>

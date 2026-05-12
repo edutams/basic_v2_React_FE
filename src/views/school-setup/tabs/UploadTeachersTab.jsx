@@ -48,7 +48,6 @@ const HINT_DURATION = 5000; // 5s each
 
 const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const theme = useTheme();
-  const primary = theme.palette.primary.main;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);

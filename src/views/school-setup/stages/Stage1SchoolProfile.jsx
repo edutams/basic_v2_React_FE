@@ -18,17 +18,7 @@ import SetupShell from './SetupShell';
 import ParentCard from '../../../components/shared/ParentCard';
 import ArrowHint from '../../../components/shared/ArrowHint';
 
-const keyframes = {
-  '@keyframes fadeUp': {
-    from: { opacity: 0, transform: 'translateY(16px)' },
-    to: { opacity: 1, transform: 'translateY(0)' },
-  },
-  '@keyframes bounce': {
-    '0%, 100%': { transform: 'translateY(0)' },
-    '40%': { transform: 'translateY(-6px)' },
-    '60%': { transform: 'translateY(-3px)' },
-  },
-};
+
 
 // ── Admin card ────────────────────────────────────────────────────────────────
 const AdminCard = ({ admin, index }) => {

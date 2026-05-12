@@ -1,13 +1,14 @@
-import React, { useContext, useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Link, useTheme, useMediaQuery } from '@mui/material';
 import { IconVideo, IconChevronRight, IconPower, IconArrowRight } from '@tabler/icons-react';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
 import { useSetupTour } from '../../context/SetupTourContext';
 import EduTAMSLogo from '../../assets/images/logos/EduTAMS.png';
+import ArrowHint from '../../components/shared/ArrowHint';
 import SetupImage from '../../assets/images/setup/setup.png';
 
-// ── Keyframes ────────────────────────────────────────────────────────────────
+//  Keyframes ─
 const keyframes = {
   '@keyframes fadeSlideLeft': {
     from: { opacity: 0, transform: 'translateX(-40px)' },
@@ -59,9 +60,7 @@ const SetupWelcome = () => {
   const primary = theme.palette.primary.main;
   const { startTour } = useSetupTour();
 
-  // Breakpoint helpers
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // < 600px — stacked layout
-  const isTablet = useMediaQuery(theme.breakpoints.down('sm')); // tablets keep the desktop side-by-side layout
+  const isTablet = useMediaQuery(theme.breakpoints.down('sm')); // < 600px — stacked layout
 
   const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
 
@@ -92,7 +91,7 @@ const SetupWelcome = () => {
         borderRadius: '0 !important',
       }}
     >
-      {/* ── LEFT / TOP PANEL ─────────────────────────────────────────── */}
+      {/*  LEFT  TOP PANEL  */}
       <Box
         sx={{
           width: { xs: '100%', sm: '62%' },
@@ -112,8 +111,7 @@ const SetupWelcome = () => {
           minHeight: { xs: '100vh', sm: 'unset' },
         }}
       >
-        {/* Ripple rings (decorative — hidden on xs to reduce noise) */}
-        {!isMobile && (
+        {!isTablet && (
           <>
             <Box
               sx={{
@@ -232,7 +230,6 @@ const SetupWelcome = () => {
             ))}
           </Box>
 
-          {/* ── "Start Setup" button + mobile illustration row ── */}
           {isTablet && (
             <Box
               sx={{
@@ -249,7 +246,7 @@ const SetupWelcome = () => {
               <Box
                 sx={{
                   position: 'relative',
-                  width: 'calc(100% + 48px)', // bleed past the panel's px padding
+                  width: 'calc(100% + 48px)', 
                   mx: '-24px',
                   flex: 1,
                   minHeight: 200,
@@ -290,7 +287,6 @@ const SetupWelcome = () => {
                   }}
                 />
 
-                {/* Start Setup button — floats over the top of the circle */}
                 <Box
                   onClick={handleStartSetup}
                   data-tour="welcome-start"
@@ -334,7 +330,6 @@ const SetupWelcome = () => {
                   </Box>
                 </Box>
 
-                {/* Powered by — sits at the bottom of the circle on mobile */}
                 <Box
                   sx={{
                     position: 'absolute',
@@ -368,7 +363,6 @@ const SetupWelcome = () => {
           )}
         </Box>
 
-        {/* Powered-by footer — desktop only (mobile version lives inside the illustration block) */}
         <Box
           sx={{
             display: { xs: 'none', sm: 'flex' },
@@ -396,7 +390,7 @@ const SetupWelcome = () => {
         </Box>
       </Box>
 
-      {/* ── RIGHT / BOTTOM PANEL — hidden on mobile ──────────────────── */}
+      {/*  RIGHT / BOTTOM PANEL — hidden on mobile  */}
       <Box
         sx={{
           display: { xs: 'none', sm: 'block' },
@@ -441,7 +435,7 @@ const SetupWelcome = () => {
         }}
       />
 
-      {/* ── TOP-RIGHT CONTROLS ───────────────────────────────────────── */}
+      {/*  TOP-RIGHT CONTROLS ─ */}
       <Box
         sx={{
           position: 'absolute',
@@ -496,7 +490,6 @@ const SetupWelcome = () => {
           </Box>
         </Box>
 
-        {/* "How to setup" pill */}
         <Box
           sx={{
             display: 'inline-flex',
@@ -534,70 +527,17 @@ const SetupWelcome = () => {
         </Box>
       </Box>
 
-      {/* ── "Ready? Click to get started!" callout bubble ── desktop only ── */}
       {!isTablet && (
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 110,
-            right: 28,
-            zIndex: 10,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            gap: 0,
-            animation: `${anim('fadeUp', '0.7s', '1.2s')}, bounce 2.4s ease-in-out 2.2s infinite`,
-            pointerEvents: 'none',
-          }}
-        >
-          <Box
-            sx={{
-              position: 'relative',
-              bgcolor: '#fff',
-              border: '2px solid',
-              borderColor: 'primary.main',
-              borderRadius: '14px !important',
-              px: 2,
-              py: 1.25,
-              boxShadow: `0 6px 24px ${primary}22`,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'primary.main',
-                whiteSpace: 'nowrap',
-                letterSpacing: 0.2,
-              }}
-            >
-              🚀 Ready? Click to get started!
-            </Typography>
-          </Box>
-
-          <Box sx={{ mr: 4, mt: 0.5 }}>
-            <svg width="48" height="52" viewBox="0 0 48 52" fill="none">
-              <path
-                d="M8 4 C4 22, 20 36, 40 46"
-                stroke={primary}
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                fill="none"
-              />
-              <path
-                d="M30 44 L40 46 L36 36"
-                stroke={primary}
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </svg>
-          </Box>
-        </Box>
+        <ArrowHint
+          show
+          label="🚀 Ready? Click to get started!"
+          direction="down-right"
+          mode="persistent"
+          delay="1.2s"
+          position={{ position: 'absolute', bottom: 110, right: 28, zIndex: 10 }}
+        />
       )}
 
-      {/* ── "Start Setup" CTA — absolute on desktop only ── */}
       {!isTablet && (
         <Box
           onClick={handleStartSetup}

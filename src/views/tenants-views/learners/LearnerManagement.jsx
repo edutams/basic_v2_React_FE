@@ -46,7 +46,7 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import learnerApi from 'src/api/learnerApi';
 import { getClassesWithDivisions, createLearner } from 'src/context/TenantContext/services/tenant.service';
 import api from 'src/api/tenant_api';
-import AddLearnerModal from 'src/views/school-setup/tabs/AddLearnerModal';
+import AddLearnerModal from 'src/views/school-setup/components/AddLearnerModal';
 import LinkParentModal from 'src/components/tenant-components/learners/LinkParentModal';
 import ViewParentsModal from 'src/components/tenant-components/learners/ViewParentsModal';
 import UploadLearnerModal from 'src/components/tenant-components/learners/UploadLearnerModal';

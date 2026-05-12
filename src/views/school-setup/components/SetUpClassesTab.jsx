@@ -346,7 +346,7 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
                         direction="down-left"
                         mode="persistent"
                         delay="0s"
-                        position={{ position: 'absolute', top: -70, left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}
+                        position={{ position: 'absolute', top: -70, left: '40%', transform: 'translateX(-50%)', zIndex: 20 }}
                       />
                     )}
 

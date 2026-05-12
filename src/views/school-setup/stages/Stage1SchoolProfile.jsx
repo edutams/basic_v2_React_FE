@@ -7,7 +7,7 @@ import {
   CircularProgress,
   useTheme,
   Divider,
-  Button
+  Button,
 } from '@mui/material';
 import { IconUpload, IconPhoto } from '@tabler/icons-react';
 import { getTenantInfo } from '../../../api/tenant_api';
@@ -219,11 +219,19 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       leftTitle="Set up your school profile."
       leftSubtitle="Upload your logo, confirm your school details and admin information to get started."
     >
-      <Typography sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 1 }}>
+      <Typography
+        sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 1 }}
+      >
         Set Up Your School Profile
       </Typography>
       <Typography
-        sx={{ fontSize: 13, color: 'text.secondary', mb: { xs: 3, sm: 4 }, maxWidth: 480, lineHeight: 1.6 }}
+        sx={{
+          fontSize: 13,
+          color: 'text.secondary',
+          mb: { xs: 3, sm: 4 },
+          maxWidth: 480,
+          lineHeight: 1.6,
+        }}
       >
         Upload your school logo and check your school details. If the details are incorrect click{' '}
         <Link href="#" sx={{ fontWeight: 600, color: 'primary.main' }}>
@@ -238,8 +246,24 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
         </Box>
       ) : (
         <>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 3, sm: 4 }, alignItems: 'flex-start', mb: 3 }}>
-            <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' }, display: 'flex', flexDirection: 'column', alignItems: { xs: 'center', sm: 'flex-start' } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 3, sm: 4 },
+              alignItems: 'flex-start',
+              mb: 3,
+            }}
+          >
+            <Box
+              sx={{
+                flexShrink: 0,
+                width: { xs: '100%', sm: 'auto' },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: { xs: 'center', sm: 'flex-start' },
+              }}
+            >
               <Box
                 onClick={() => setLogoModalOpen(true)}
                 sx={{
@@ -270,7 +294,8 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 )}
               </Box>
 
-              <Button size='small'
+              <Button
+                size="small"
                 onClick={() => setLogoModalOpen(true)}
                 sx={{
                   mt: 1.5,
@@ -284,17 +309,42 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                   borderRadius: '8px !important',
                   py: 0.75,
                   bgcolor: '#fff',
-                  transition: 'border-color 0.2s, box-shadow 0.2s',
-                  '&:hover': { borderColor: 'primary.main' },
-                  ...(!logo && { boxShadow: `0 0 0 3px ${primary}22` }),
+                  transition: 'all 0.2s',
+
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: 'primary.main',
+
+                    '& .browse-text': {
+                      color: '#fff',
+                    },
+
+                    '& .browse-icon': {
+                      color: '#fff',
+                    },
+                  },
+
+                  ...(!logo && {
+                    boxShadow: `0 0 0 3px ${primary}22`,
+                  }),
                 }}
               >
-                <IconUpload size={15} color={logo ? '#555' : primary} />
+                <IconUpload
+                  size={15}
+                  className="browse-icon"
+                  style={{
+                    color: logo ? '#555' : primary,
+                    transition: 'color 0.2s',
+                  }}
+                />
+
                 <Typography
+                  className="browse-text"
                   sx={{
                     fontSize: 13,
                     fontWeight: 500,
                     color: logo ? 'text.primary' : 'primary.main',
+                    transition: 'color 0.2s',
                   }}
                 >
                   Browse
@@ -363,69 +413,77 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
             </Box>
 
             <Box sx={{ flex: 1, width: { xs: '100%', sm: 'auto' } }}>
-            <ParentCard>
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant='h6' sx={{ fontWeight: 700 }}>School Name:</Typography>
+              <ParentCard>
+                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      School Name:
+                    </Typography>
 
-                  <Typography variant='h6' sx={{color: 'text.secondary' }}>
-                    {tenantData?.name || 'No school name available'}
-                  </Typography>
+                    <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                      {tenantData?.name || 'No school name available'}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      Acronym:
+                    </Typography>
+
+                    <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                      {tenantData?.shortName || 'No acronym available'}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      School Type:
+                    </Typography>
+
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: 'text.secondary',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {tenantData?.schoolType || 'No school type available'}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      Address:
+                    </Typography>
+
+                    <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                      {tenantData?.address || 'No address available'}
+                    </Typography>
+                  </Box>
                 </Box>
-
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant='h6' sx={{ fontWeight: 700 }}>Acronym:</Typography>
-
-                  <Typography variant='h6' sx={{ color: 'text.secondary' }}>
-                    {tenantData?.shortName || 'No acronym available'}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant='h6' sx={{fontWeight: 700 }}>School Type:</Typography>
-
-                  <Typography
-                  variant='h6'
-                    sx={{
-                      color: 'text.secondary',
-                      textTransform: 'capitalize',
-                    }}
-                  >
-                    {tenantData?.schoolType || 'No school type available'}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant='h6' sx={{ fontWeight: 700 }}>Address:</Typography>
-
-                  <Typography variant='h6' sx={{ color: 'text.secondary' }}>
-                    {tenantData?.address || 'No address available'}
-                  </Typography>
-                </Box>
-              </Box>
-            </ParentCard>
+              </ParentCard>
             </Box>
           </Box>
 
           <Box>
-          <ParentCard>
-            <Typography sx={{ fontSize: 20, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
-              Confirm School Head / Admin Detail
-            </Typography>
-            <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3, lineHeight: 1.6 }}>
-              Confirm your school owner details. If the details are incorrect click{' '}
-              <Link href="#" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                Get Help
-              </Link>
-              .
-            </Typography>
+            <ParentCard>
+              <Typography sx={{ fontSize: 20, fontWeight: 800, color: 'text.primary', mb: 0.75 }}>
+                Confirm School Head / Admin Detail
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3, lineHeight: 1.6 }}>
+                Confirm your school owner details. If the details are incorrect click{' '}
+                <Link href="#" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                  Get Help
+                </Link>
+                .
+              </Typography>
 
-            <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
-              {admins.map((admin, i) => (
-                <AdminCard key={admin.title} admin={admin} index={i} />
-              ))}
-            </Box>
-          </ParentCard>
+              <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
+                {admins.map((admin, i) => (
+                  <AdminCard key={admin.title} admin={admin} index={i} />
+                ))}
+              </Box>
+            </ParentCard>
           </Box>
         </>
       )}

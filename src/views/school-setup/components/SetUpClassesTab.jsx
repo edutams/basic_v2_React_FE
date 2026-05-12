@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import {
   Box,
   Table,
@@ -7,10 +7,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableFooter,
-  TablePagination,
   TextField,
-  IconButton,
   Button,
   CircularProgress,
   Typography,
@@ -18,35 +15,56 @@ import {
   Alert,
   useTheme,
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
-import { IconDotsVertical } from '@tabler/icons-react';
 import {
   getClassesWithDivisions,
   saveClasses,
 } from '../../../context/TenantContext/services/tenant.service';
+import ArrowHint from '../../../components/shared/ArrowHint';
 
-const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
+const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onReadyChange }, ref) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
   const [hasChanges, setHasChanges] = useState(false);
-  const [iconHovered, setIconHovered] = useState(null);
-  const [iconClicked, setIconClicked] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classes, setClasses] = useState([]);
-  const [notification, setNotification] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+
+  // ── Hint positioning 
+  const generateBtnRef = useRef(null);
+  const cellRef = useRef(null);
+  const [hintStyle, setHintStyle] = useState(null);
+  const [showEditHint, setShowEditHint] = useState(false);
+  const editHintTimerRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const btn = generateBtnRef.current;
+    const cell = cellRef.current;
+    if (!btn || !cell) return;
+
+    const calc = () => {
+      const btnRect = btn.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      setHintStyle({
+        // Sit just below the button; anchor to button's left edge so the
+        // arrowhead (which exits top-right of the SVG) lands on the button
+        top: btnRect.bottom - cellRect.top + 4,
+        left: btnRect.left - cellRect.left - 2,
+      });
+    };
+
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(cell);
+    return () => ro.disconnect();
+  }, [classes.length, loading]);
+
 
   const generateDefaultArmNames = (count) => {
     const letters = [];
     for (let i = 0; i < count; i++) {
-      // Generate A, B, C, ... Z, AA, AB, etc.
       let letter = '';
       let num = i;
       while (num >= 0) {
@@ -91,6 +109,12 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     fetchClasses().finally(() => setLoading(false));
   }, []);
 
+  // Notify parent when at least one class has arms generated
+  useEffect(() => {
+    const isReady = classes.some((c) => c.arm_names?.length > 0);
+    onReadyChange?.(isReady);
+  }, [classes, onReadyChange]);
+
   const handleSaveAndContinue = async () => {
     setSaving(true);
     try {
@@ -107,7 +131,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
       await saveClasses(classesData);
       await fetchClasses();
       setHasChanges(false);
-
       onClassArmsAdded?.();
       setNotification({ open: true, message: 'Classes saved successfully!', severity: 'success' });
       if (onSaveAndContinue) onSaveAndContinue();
@@ -119,9 +142,11 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     }
   };
 
-  const handleChange = () => {
-    setHasChanges(true);
-  };
+  useImperativeHandle(ref, () => ({
+    save: handleSaveAndContinue,
+  }));
+
+  const handleChange = () => setHasChanges(true);
 
   const handleToggleClassStatus = (uniqueKey) => {
     setClasses((prev) =>
@@ -165,6 +190,11 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
       message: 'Class arm names generated successfully!',
       severity: 'success',
     });
+
+    // Show edit hint for 3 seconds then auto-hide
+    setShowEditHint(true);
+    if (editHintTimerRef.current) clearTimeout(editHintTimerRef.current);
+    editHintTimerRef.current = setTimeout(() => setShowEditHint(false), 3000);
   };
 
   const handleArmNameChange = (uniqueKey, armIndex, value) => {
@@ -188,19 +218,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
     });
   }, [classes, searchTerm]);
 
-  const paginatedClasses = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredClasses.slice(start, start + rowsPerPage);
-  }, [filteredClasses, page, rowsPerPage]);
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const showHint = !classes.some((c) => c.arm_names?.length > 0);
 
   if (loading) {
     return (
@@ -211,26 +229,10 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
   }
 
   return (
-    <Box>
-      {/* Search Bar */}
-      {/* <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
-        <TextField
-          placeholder="Search classes..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(0);
-          }}
-          size="small"
-          sx={{ width: 300 }}
-          InputProps={{
-            startAdornment: <SearchIcon style={{ marginRight: 8, color: '#9e9e9e' }} />,
-          }}
-        />
-      </Box> */}
-
-      <TableContainer>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
         <Table
+          stickyHeader
           sx={{
             borderCollapse: 'separate',
             borderSpacing: '12px 10px',
@@ -238,57 +240,28 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
         >
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, width: '25%' }}>Classes</TableCell>
-
-              <TableCell sx={{ fontWeight: 600, width: '25%' }}>No. of Arms</TableCell>
-
-              <TableCell sx={{ fontWeight: 600, width: '50%' }}>Class Arm Names</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>Classes</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>No. of Arms</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '50%', bgcolor: '#fff' }}>Class Arm Names</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
-            {paginatedClasses.map((classItem, index) => {
+            {filteredClasses.map((classItem, index) => {
               const isInactive = classItem.status === 'inactive';
-              const isHighlighted = iconHovered === index || iconClicked === index;
               const cellBg = isInactive
                 ? isDark ? 'action.disabledBackground' : '#e0e0e0'
-                : isHighlighted
-                ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
                 : isDark ? 'action.hover' : '#f6f7f9';
-              const className = classItem.class_code || '';
 
               return (
                 <TableRow key={classItem.unique_key || index}>
-                  <TableCell
-                    sx={{
-                      bgcolor: cellBg,
-                      borderRadius: 2,
-                      p: 1,
-                      verticalAlign: 'top',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        color={isInactive ? 'success' : 'error'}
-                        onMouseEnter={() => setIconHovered(index)}
-                        onMouseLeave={() => setIconHovered(null)}
-                        onClick={() => handleToggleClassStatus(classItem.unique_key)}
-                      >
-                        {isInactive ? '✓' : '✕'}
-                      </IconButton>
-
+                  {/* ── Class name cell ── */}
+                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, verticalAlign: 'top' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TextField
                         size="small"
                         fullWidth
                         disabled
-                        // defaultValue={classItem.class_code}
                         defaultValue={`${classItem.programme_code} - ${classItem.class_code}`}
                         onChange={handleChange}
                         sx={{
@@ -306,20 +279,15 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                     </Box>
                   </TableCell>
 
-                  <TableCell
-                    sx={{
-                      bgcolor: cellBg,
-                      borderRadius: 2,
-                      p: 1,
-                      verticalAlign: 'top',
-                    }}
-                  >
+                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, verticalAlign: 'top' }}>
                     <Box
+                      ref={index === 0 ? cellRef : null}
                       display="flex"
                       gap={1}
                       justifyContent="center"
                       alignItems="center"
                       width="100%"
+                      sx={{ position: 'relative' }}
                     >
                       <TextField
                         size="small"
@@ -327,6 +295,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                         disabled={isInactive}
                         value={classItem.no_of_arms || 0}
                         onChange={(e) => handleNoOfArmsChange(classItem.unique_key, e.target.value)}
+                        slotProps={{ htmlInput: { min: 0 } }}
                         sx={{
                           width: 70,
                           '& .MuiOutlinedInput-root': {
@@ -340,6 +309,7 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                       />
 
                       <Button
+                        ref={index === 0 ? generateBtnRef : null}
                         variant="contained"
                         size="small"
                         disabled={isInactive}
@@ -347,24 +317,40 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
                       >
                         Generate
                       </Button>
+
+                      {index === 0 && showHint && hintStyle && (
+                        <ArrowHint
+                          show
+                          label="Set no. of arms &amp; click Generate"
+                          direction="up-right"
+                          mode="persistent"
+                          delay="0.6s"
+                          position={{
+                            position: 'absolute',
+                            top: hintStyle.top,
+                            left: hintStyle.left,
+                            zIndex: 10,
+                          }}
+                        />
+                      )}
                     </Box>
                   </TableCell>
 
                   <TableCell
-                    sx={{
-                      bgcolor: cellBg,
-                      borderRadius: 2,
-                      p: 1,
-                      verticalAlign: 'top',
-                    }}
+                    sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, verticalAlign: 'top', position: 'relative' }}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        gap: 1,
-                        flexWrap: 'wrap',
-                      }}
-                    >
+                    {index === 0 && showEditHint && (
+                      <ArrowHint
+                        show
+                        label="✏️ You can edit the arm names if you wish"
+                        direction="down-left"
+                        mode="persistent"
+                        delay="0s"
+                        position={{ position: 'absolute', top: -70, left: '40%', transform: 'translateX(-50%)', zIndex: 20 }}
+                      />
+                    )}
+
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                       {classItem.arm_names && classItem.arm_names.length > 0 ? (
                         classItem.arm_names.map((armName, i) => (
                           <TextField
@@ -398,28 +384,11 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
               );
             })}
           </TableBody>
-
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[10, 20, 50]}
-                count={filteredClasses.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </TableRow>
-          </TableFooter>
         </Table>
       </TableContainer>
 
-      <Box mt={2} display="flex" justifyContent="flex-end">
-        <Button
-          variant="contained"
-          onClick={handleSaveAndContinue}
-          disabled={!hasChanges || saving}
-        >
+      <Box mt={2} sx={{ display: 'none' }}>
+        <Button variant="contained" onClick={handleSaveAndContinue} disabled={!hasChanges || saving}>
           {saving ? 'Saving...' : 'Save & Continue'}
         </Button>
       </Box>
@@ -441,6 +410,6 @@ const SetUpClassesTab = ({ onSaveAndContinue, onClassArmsAdded }) => {
       </Snackbar>
     </Box>
   );
-};
+});
 
 export default SetUpClassesTab;

@@ -66,7 +66,7 @@ const TeachingStaffTab = ({
           }}
         >
           <Tab label="Profiling" value="profiling" />
-          <Tab label="Allocation" value="allocation" />
+          {/* <Tab label="Allocation" value="allocation" /> */}
         </Tabs>
       </Box>
 
@@ -216,8 +216,8 @@ const TeachingStaffTab = ({
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {staffMember.date_of_appointment
-                            ? new Date(staffMember.date_of_appointment).toLocaleDateString(
+                          {staffMember.date_of_first_appointment
+                            ? new Date(staffMember.date_of_first_appointment).toLocaleDateString(
                               'en-US',
                               {
                                 year: 'numeric',

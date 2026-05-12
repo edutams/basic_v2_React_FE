@@ -17,7 +17,11 @@ const Package = () => {
         eduTierApi.getModules(),
       ]);
       setPackages(packagesData.data);
-      setModules(modulesData.data);
+      // Handle both simple array and paginated response
+      const modulesList = Array.isArray(modulesData.data) 
+        ? modulesData.data 
+        : (modulesData.data?.data || []);
+      setModules(modulesList);
     } catch (error) {
       notify.error('Failed to fetch packages or modules', 'Error');
     } finally {
@@ -53,7 +57,11 @@ const Package = () => {
   const handleModuleUpdate = async (moduleData, operation) => {
     setIsLoading(true);
     try {
-      if (operation === 'create' || operation === 'update') {
+      if (operation === 'batch_update') {
+        // Handle batch updates - update all modules at once
+        await eduTierApi.batchUpdateModules(moduleData.packageId, moduleData.modules);
+        notify.success('Modules updated successfully', 'Success');
+      } else if (operation === 'create' || operation === 'update') {
         await eduTierApi.saveModule(moduleData);
         notify.success(
           `Module ${operation === 'create' ? 'created' : 'updated'} successfully`,
@@ -63,7 +71,7 @@ const Package = () => {
         await eduTierApi.deleteModule(moduleData.id);
         notify.success('Module deleted successfully', 'Success');
       } else if (operation === 'status_change') {
-        // Only update the module status for tenants under this agent
+        // Only update module status for tenants under this agent
         // Do NOT update the agent-level module
         const status = moduleData.module_status;
         await eduTierApi.deactivateModuleForTenants(moduleData.id, status);

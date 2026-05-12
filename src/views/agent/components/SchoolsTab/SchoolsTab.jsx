@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Typography,
   Box,
@@ -45,6 +45,7 @@ import {
   approveProspectiveTenant,
   rejectProspectiveTenant,
   updateSchool,
+  approveSchoolOnboarding,
 } from '../../../../context/AgentContext/services/school.service';
 import agentApi from '../../../../api/agent';
 import SchoolProfileModal from '../../../../components/shared/SchoolProfileModal';
@@ -117,6 +118,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
+  const [openConfirmReject, setOpenConfirmReject] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -316,8 +318,51 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             </Typography>
           )}
         </Box>
+        {/* Submitted / Rejected-by banner */}
+        {prospect.status == 'rejected' && (
+          <Box
+            sx={{
+              px: 3,
+              py: 1.5,
+              mx: 3,
+              mb: 2,
+              bgcolor: '#EEF4FF',
+              borderLeft: '4px solid #3B82F6',
+              borderRadius: 1,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 1,
+            }}
+          >
+            <Typography variant="body2">
+              <Box component="span" sx={{ fontWeight: 700 }}>
+                Date Rejected:
+              </Box>{' '}
+              <Box component="span" sx={{ color: '#6b7280' }}>
+                {formatDate(prospect.created_at)}
+              </Box>
+            </Typography>
+            {prospect.rejected_by && prospect.rejected_at && (
+              <Typography variant="body2" sx={{ textAlign: 'right' }}>
+                <Box component="span" sx={{ fontWeight: 700 }}>
+                  Rejected by &amp; Reviewed by:
+                </Box>{' '}
+                <Box component="span" sx={{ fontWeight: 600 }}>
+                  {prospect.rejected_by?.full_name ||
+                    `${prospect.rejected_by?.fname || ''} ${prospect.rejected_by?.lname || ''}`.trim() ||
+                    '—'}
+                </Box>{' '}
+                <Box component="span" sx={{ color: '#6b7280' }}>
+                  at {formatDate(prospect.rejected_at)}
+                </Box>
+              </Typography>
+            )}
+          </Box>
+        )}
 
-        {prospect.rejection_reason && (
+        {prospect.status === 'rejected' && prospect.rejection_reason && (
           <Box sx={{ px: 3, pb: 2 }}>
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               <strong>Rejection reason:</strong> {prospect.rejection_reason}
@@ -352,43 +397,56 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         {prospect.status === 'pending' && can('landlord.school.approval') && (
           <>
             {!showRejectInput ? (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<CancelOutlinedIcon />}
-                onClick={() => setShowRejectInput(true)}
-                disabled={loading}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
-              >
-                Reject
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
+                  onClick={() => setShowRejectInput(true)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Reject
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<CheckCircleOutlineIcon />}
+                  onClick={() => onApprove(prospect.id)}
+                  disabled={loading}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    bgcolor: '#2e7d32',
+                    '&:hover': { bgcolor: '#1b5e20' },
+                  }}
+                >
+                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
+                </Button>
+              </>
             ) : (
-              <Button
-                variant="contained"
-                color="error"
-                startIcon={<CancelOutlinedIcon />}
-                onClick={() => onReject(prospect.id, rejectReason)}
-                disabled={loading}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
-              >
-                {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
-              </Button>
+              <>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  onClick={() => setShowRejectInput(false)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Cancel Rejection
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
+                  onClick={() => setOpenConfirmReject(true)}
+                  disabled={loading}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
+                </Button>
+              </>
             )}
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<CheckCircleOutlineIcon />}
-              onClick={() => onApprove(prospect.id)}
-              disabled={loading}
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                bgcolor: '#2e7d32',
-                '&:hover': { bgcolor: '#1b5e20' },
-              }}
-            >
-              {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
-            </Button>
           </>
         )}
         {prospect.status === 'pending' && !can('landlord.school.approval') && (
@@ -397,13 +455,26 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
           </Typography>
         )}
       </DialogActions>
+
+      <ConfirmationDialog
+        open={openConfirmReject}
+        onClose={() => setOpenConfirmReject(false)}
+        onConfirm={() => {
+          setOpenConfirmReject(false);
+          onReject(prospect.id, rejectReason);
+        }}
+        title="Confirm Rejection"
+        message={`Are you sure you want to reject this School Application for "${prospect.tenant_name}"?`}
+        confirmText="Yes, Reject"
+        severity="error"
+      />
     </Dialog>
   );
 };
 
 // ── Main SchoolsTab ───────────────────────────────────────────────────────────
 
-const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
+const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refreshKey }) => {
   const theme = useTheme();
   const { user } = useAuth();
   const { can } = usePermissions();
@@ -428,6 +499,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const [reviewProspect, setReviewProspect] = useState(null);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [isEditingProspective, setIsEditingProspective] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileSchool, setProfileSchool] = useState(null);
@@ -523,7 +595,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
       }
     };
     fetchAnalytics();
-  }, [analyticsRefreshKey]);
+  }, [analyticsRefreshKey, refreshKey]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -534,6 +606,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const handleApplicationStatusChange = () => {
     // Increment refresh key to trigger fresh analytics fetch
     setAnalyticsRefreshKey((prev) => prev + 1);
+    if (handleRefresh) handleRefresh();
   };
   const handleFilterReset = () => {
     setActiveFilters({});
@@ -592,8 +665,24 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     }
   };
 
+  const handleApproveOnboarding = async (school) => {
+    if (!school || school.onboarding_status === 'approved') return;
+
+    if (!window.confirm(`Approve onboarding for "${school.tenant_name}"?`)) return;
+
+    try {
+      await approveSchoolOnboarding(school.id);
+      notify('Onboarding approved successfully', 'success');
+      await fetchSchools(); // Refresh list
+    } catch (err) {
+      notify('Failed to approve onboarding', 'error');
+    }
+  };
+
   const handleEdit = (school) => {
     setSelectedSchool(school);
+    // If activeTab is 0 or 1, it's a prospective tenant
+    setIsEditingProspective(activeTab === 0 || activeTab === 1);
     setOpenEditModal(true);
   };
   const handleViewProfile = (school) => {
@@ -636,20 +725,23 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const subscribedSchools = schoolList.filter((s) => !!(s.raw || s).domains?.[0]?.domain);
 
   // Use analytics data from API instead of hardcoded calculations
-  const schoolSummary = {
-    total: analytics?.totalSchools || 0,
-    active: analytics?.activeSchools || 0,
-    inactive: analytics?.inactiveSchools || 0,
-    pending: analytics?.pendingSchools || 0,
-    rejected: analytics?.rejectedSchools || 0,
-    subscriptions: analytics?.subscriptions || subscribedSchools.length,
-    primary:
-      analytics?.primarySchools ||
-      subscribedSchools.filter((s) => getSchoolType(s).includes('primary')).length,
-    secondary:
-      analytics?.secondarySchools ||
-      subscribedSchools.filter((s) => getSchoolType(s).includes('secondary')).length,
-  };
+  const schoolSummary = useMemo(
+    () => ({
+      total: analytics?.totalSchools || 0,
+      active: analytics?.activeSchools || 0,
+      inactive: analytics?.inactiveSchools || 0,
+      pending: analytics?.pendingSchools || 0,
+      rejected: analytics?.rejectedSchools || 0,
+      subscriptions: analytics?.subscriptions || subscribedSchools.length,
+      primary:
+        analytics?.primarySchools ||
+        subscribedSchools.filter((s) => getSchoolType(s).includes('primary')).length,
+      secondary:
+        analytics?.secondarySchools ||
+        subscribedSchools.filter((s) => getSchoolType(s).includes('secondary')).length,
+    }),
+    [analytics, subscribedSchools],
+  );
 
   const planSeries = [40, 15, 35, 10];
   const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
@@ -1046,6 +1138,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
               schoolList={schoolList}
               schoolLoading={schoolLoading}
               onViewProfile={handleViewProfile}
+              onApproveOnboarding={handleApproveOnboarding}
               onEdit={handleEdit}
               onDeactivate={(school) => {
                 setSchoolToDeactivate(school);
@@ -1082,6 +1175,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
             onSubmit={() => {
               setOpenAddModal(false);
               fetchProspects();
+              if (handleRefresh) handleRefresh();
             }}
             onCancel={() => setOpenAddModal(false)}
             useProspective
@@ -1103,7 +1197,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
               fetchSchools();
             }}
             onCancel={() => setOpenEditModal(false)}
-            useProspective={false}
+            useProspective={isEditingProspective}
           />
         </ReusableModal>
 

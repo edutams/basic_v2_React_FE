@@ -23,7 +23,7 @@ import {
 import { IconDotsVertical } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { getSpaContact, StatusChip } from './schoolTabHelpers';
+import { getSpaContact, StatusChip, formatDate } from './schoolTabHelpers';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
@@ -39,6 +39,7 @@ const ApprovedSchoolsTab = ({
   onViewProfile,
   onEdit,
   onDeactivate,
+  onApproveOnboarding,
 }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -102,6 +103,9 @@ const ApprovedSchoolsTab = ({
               <TableCell sx={thSx}>Admin Contact</TableCell>
               <TableCell sx={thSx}>Organisation</TableCell>
               <TableCell sx={thSx}>Status</TableCell>
+              <TableCell sx={thSx}>Onboarding Status</TableCell>
+              <TableCell sx={thSx}>Completed At</TableCell>
+              <TableCell sx={thSx}>Approved By</TableCell>
               <TableCell sx={thSx} align="right">
                 Action
               </TableCell>
@@ -192,6 +196,27 @@ const ApprovedSchoolsTab = ({
                     <TableCell>
                       <StatusChip status={row.status} />
                     </TableCell>
+                    <TableCell>
+                      <StatusChip status={row.onboarding_status || 'pending'} />
+                    </TableCell>
+
+                    {/* Completed At */}
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {row.onboarding_completed_at
+                          ? formatDate(row.onboarding_completed_at)
+                          : '—'}
+                      </Typography>
+                    </TableCell>
+
+                    {/* Approved By */}
+                    <TableCell>
+                      <Typography variant="body2">
+                        {row.onboarding_approved_by?.full_name ||
+                          `${row.onboarding_approved_by?.fname || ''} ${row.onboarding_approved_by?.lname || ''}`.trim() ||
+                          '—'}
+                      </Typography>
+                    </TableCell>
                     <TableCell align="right">
                       <IconButton
                         size="small"
@@ -239,6 +264,18 @@ const ApprovedSchoolsTab = ({
         onClose={() => setAnchorEl(null)}
         PaperProps={{ sx: { borderRadius: 2, minWidth: 180 } }}
       >
+        <MenuItem
+          onClick={() => {
+            // Call your approve onboarding function
+            onApproveOnboarding(activeRow);
+            setAnchorEl(null);
+          }}
+          disabled={activeRow?.onboarding_status === 'approved'}
+        >
+          {activeRow?.onboarding_status === 'completed'
+            ? 'Approve Onboarding'
+            : 'Onboarding Not Completed'}
+        </MenuItem>
         <MenuItem
           onClick={() => {
             onViewProfile(activeRow);

@@ -21,7 +21,7 @@ const StaffModal = ({ open, onClose, onSave, isLoading, mode, initialValues }) =
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="xl" fullWidth>
       <DialogTitle sx={{ fontWeight: 700 }}>
         {mode === 'edit' ? 'Edit Teaching Staff' : 'Add New Teaching Staff'}
       </DialogTitle>

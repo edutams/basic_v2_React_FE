@@ -52,6 +52,8 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchSubjectsByClass,
+  fetchSubjects,
+  fetchCurriculums,
 } from '../../api/tenantCurriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
@@ -69,6 +71,8 @@ const SchemeOfWork = () => {
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [savingTopic, setSavingTopic] = useState(false);
+  const [savingSubtopic, setSavingSubtopic] = useState(false);
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState({});
@@ -77,9 +81,12 @@ const SchemeOfWork = () => {
   // Filter options
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [curriculums, setCurriculums] = useState([]);
   const [subjects, setSubjects] = useState([]);
 
   const [selectedTopic, setSelectedTopic] = useState(null);
+  console.log(selectedTopic,848484);
+  
   const [selectedSubtopic, setSelectedSubtopic] = useState(null);
   const [topicModalOpen, setTopicModalOpen] = useState(false);
   const [subtopicModalOpen, setSubtopicModalOpen] = useState(false);
@@ -110,6 +117,7 @@ const SchemeOfWork = () => {
   // Inline Filters
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
+  const [curriculum, setCurriculum] = useState('');
   const [subject, setSubject] = useState('');
 
   // Drawer states
@@ -155,17 +163,32 @@ const SchemeOfWork = () => {
 
   useEffect(() => {
     initData();
-  }, []);
+  }, []); // Empty dependency array means this only runs once on mount
+
+  // Fetch subjects when curriculum changes
+  useEffect(() => {
+    if (curriculum) {
+      fetchSubjects(curriculum)
+        .then((subjectsRes) => {
+          setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+        })
+        .catch((error) => {
+          console.error('Failed to fetch subjects:', error);
+        });
+    }
+  }, [curriculum]);
 
   const initData = async () => {
     try {
-      const [termsRes, progsRes] = await Promise.all([
+      const [termsRes, progsRes, curricRes] = await Promise.all([
         tenantSchemeApi.getTerms(),
         fetchProgrammes(),
+        fetchCurriculums(),
       ]);
       setTerms(termsRes);
       if (termsRes.length > 0) setActiveTerm(termsRes[0].id);
       setProgrammes(progsRes.data.map((p) => ({ value: p.id, label: p.programme_name })));
+      setCurriculums(curricRes.data.map((c) => ({ value: c.id, label: c.curriculum_name })));
     } catch (error) {
       notify.error('Failed to initialize data');
     }
@@ -196,7 +219,7 @@ const SchemeOfWork = () => {
   };
 
   const handleFetch = () => {
-    const filters = { ...activeFilters, programme, classLevel, subject };
+    const filters = { ...activeFilters, programme, classLevel, curriculum, subject };
     setActiveFilters(filters);
     fetchScheme({ subject: filters.subject, classLevel: filters.classLevel }, activeTerm);
   };
@@ -294,10 +317,10 @@ const SchemeOfWork = () => {
     }
   };
 
-  const handleModalClassChange = async (classId, setSubjects) => {
+  const handleModalClassChange = async (classId, setSubjects, curriculumId) => {
     if (!classId) return;
     try {
-      const subRes = await fetchSubjectsByClass(classId);
+      const subRes = await fetchSubjects(curriculumId);
       setSubjects(subRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
     } catch (e) {
       notify.error('Failed to load subjects');
@@ -414,8 +437,11 @@ const SchemeOfWork = () => {
     handleMenuClose();
   };
 
-  const handleAddSubtopic = (topicId) => {
-    setSelectedTopic({ topic_id: topicId });
+  const handleAddSubtopic = (topicId,selectedRow) => {
+    setSelectedTopic({ 
+      topic_id: topicId,
+      topic_name: selectedRow?.topic_name
+    }); 
     setSelectedSubtopic(null);
     setSubtopicModalOpen(true);
   };
@@ -448,6 +474,7 @@ const SchemeOfWork = () => {
   };
 
   const handleSaveTopic = async (topicData) => {
+    setSavingTopic(true);
     try {
       if (selectedTopic && selectedTopic.topic_id) {
         await tenantSchemeApi.updateTopic(selectedTopic.topic_id, topicData);
@@ -460,13 +487,17 @@ const SchemeOfWork = () => {
         notify.success('Topic added successfully');
       }
       setTopicModalOpen(false);
+      setSelectedTopic(null);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
-      notify.error('Operation failed');
+      notify.error(error.response?.data?.message || 'Failed to save topic');
+    } finally {
+      setSavingTopic(false);
     }
   };
 
   const handleSaveSubtopic = async (subtopicData) => {
+    setSavingSubtopic(true);
     try {
       if (selectedSubtopic && selectedSubtopic.sub_topic_id) {
         await tenantSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
@@ -476,9 +507,12 @@ const SchemeOfWork = () => {
         notify.success('Subtopic added successfully');
       }
       setSubtopicModalOpen(false);
+      setSelectedSubtopic(null);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
-      notify.error('Operation failed');
+      notify.error(error.response?.data?.message || 'Failed to save subtopic');
+    } finally {
+      setSavingSubtopic(false);
     }
   };
 
@@ -698,7 +732,7 @@ const SchemeOfWork = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <TextField
                 select
                 fullWidth
@@ -717,7 +751,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <TextField
                 select
                 fullWidth
@@ -736,7 +770,23 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
+              <TextField
+                select
+                fullWidth
+                label="Curriculum"
+                size="small"
+                value={curriculums.some((c) => c.value === curriculum) ? curriculum : ''}
+                onChange={(e) => setCurriculum(e.target.value)}
+              >
+                {curriculums.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <TextField
                 select
                 fullWidth
@@ -752,27 +802,16 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleFetch}
-                  sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
-                >
-                  Fetch
-                </Button>
-                {subject && classLevel && (
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => setImportConfirmOpen(true)}
-                    startIcon={<IconArrowRightSquare size={18} />}
-                    sx={{ textTransform: 'none', px: 2, borderRadius: 1.5 }}
-                  >
-                    Import
-                  </Button>
-                )}
-              </Box>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Button
+                variant="contained"
+                onClick={handleFetch}
+                disabled={!programme || !classLevel || !curriculum || !subject}
+                fullWidth
+                sx={{ height: '40px' }}
+              >
+                Fetch
+              </Button>
             </Grid>
           </Grid>
         </Box>
@@ -992,7 +1031,7 @@ const SchemeOfWork = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Card>
+        </Card>
 
       {/* Filter Drawer */}
       <FilterSideDrawer
@@ -1040,7 +1079,8 @@ const SchemeOfWork = () => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" variant="contained" fullWidth disabled={savingTopic}>
+            {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
         </Box>
@@ -1050,7 +1090,7 @@ const SchemeOfWork = () => {
       <ReusableModal
         open={subtopicModalOpen}
         onClose={() => setSubtopicModalOpen(false)}
-        title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}
+        title={selectedSubtopic ? `Edit Subtopic for "${selectedTopic?.topic_name || 'Topic'}"` : `Add Subtopic for ${selectedTopic?.topic_name}`}
       >
         <Box
           component="form"
@@ -1081,7 +1121,8 @@ const SchemeOfWork = () => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" variant="contained" fullWidth disabled={savingSubtopic}>
+            {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
         </Box>
@@ -1212,7 +1253,7 @@ const SchemeOfWork = () => {
           <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
             Edit Topic
           </MenuItem>,
-          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id)}>
+          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id,selectedRow)}>
             Add Subtopic
           </MenuItem>,
           <MenuItem

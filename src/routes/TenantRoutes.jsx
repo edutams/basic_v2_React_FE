@@ -4,6 +4,7 @@ import Loadable from '../layouts/full/shared/loadable/Loadable';
 import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
 import ParentProtectedRoute from '../components/auth/ParentProtectedRoute';
 import PermissionGate from '../components/auth/PermissionGate';
+import SetupRedirectHandler from '../context/TenantContext/SetupRedirectHandler';
 
 const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
@@ -11,6 +12,7 @@ const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')))
 const SchoolDashboardMain = Loadable(
   lazy(() => import('../views/school-dashboard/SchoolDashboard')),
 );
+const SetupWelcome = Loadable(lazy(() => import('../views/school-setup/SetupWelcome')));
 const InitialSetup = Loadable(lazy(() => import('../views/school-setup/InitialSetup')));
 const CompleteSetup = Loadable(lazy(() => import('../views/school-setup/CompleteSetup')));
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
@@ -40,14 +42,36 @@ const AccountSetting = Loadable(
   lazy(() => import('../views/pages/account-setting/AccountSetting')),
 );
 const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
-const ParentManagement = Loadable(lazy(() => import('../views/tenants-views/parents/ParentManagement')),);
-const LearnerManagement = Loadable(lazy(() => import('../views/tenants-views/learners/LearnerManagement')),);
+const ParentManagement = Loadable(
+  lazy(() => import('../views/tenants-views/parents/ParentManagement')),
+);
+const LearnerManagement = Loadable(
+  lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
+);
 const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
-const NewApplication  = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
+const NewApplication = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
 const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionStatus')));
 const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
 
 const TenantRoutes = [
+  {
+    path: '/setup-welcome',
+    element: (
+      <TenantProtectedRoute>
+        <BlankLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <SetupWelcome /> }],
+  },
+  {
+    path: '/school-profile',
+    element: (
+      <TenantProtectedRoute>
+        <BlankLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <InitialSetup /> }],
+  },
   {
     path: '/login',
     element: <BlankLayout />,
@@ -88,17 +112,25 @@ const TenantRoutes = [
     children: [{ index: true, element: <Error /> }],
   },
   {
+    path: '/complete-setup',
+    element: (
+      <TenantProtectedRoute>
+        <BlankLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <CompleteSetup /> }],
+  },
+  {
     path: '/',
     element: (
       <TenantProtectedRoute>
+        <SetupRedirectHandler />
+
         <SchoolLayout />
       </TenantProtectedRoute>
     ),
     children: [
       { index: true, element: <SchoolDashboardMain /> },
-
-      { path: 'initial-setup', element: <InitialSetup /> },
-      { path: 'complete-setup', element: <CompleteSetup /> },
 
       { path: 'acl-manager', element: <AlcManager /> },
 
@@ -123,19 +155,17 @@ const TenantRoutes = [
       { path: 'staff-setup', element: <StaffManager /> },
 
       // ── Parent routes ──
-      { path: 'dashboard',                    element: <ParentDashboard /> },
-      { path: 'admission/new-application',    element: <NewApplication /> },
-      { path: 'admission-status',             element: <AdmissionStatus /> },
-      { path: 'admission-status/:id',         element: <AdmissionStatus /> },
-      { path: 'admission-letter',             element: <AdmissionLetter /> },
-      { path: 'admission-letter/:id',         element: <AdmissionLetter /> },
+      { path: 'dashboard', element: <ParentDashboard /> },
+      { path: 'admission/new-application', element: <NewApplication /> },
+      { path: 'admission-status', element: <AdmissionStatus /> },
+      { path: 'admission-status/:id', element: <AdmissionStatus /> },
+      { path: 'admission-letter', element: <AdmissionLetter /> },
+      { path: 'admission-letter/:id', element: <AdmissionLetter /> },
 
       // Admission Application
-      { path: 'application-setup',  element: <NewApplication /> },
-      // { path: 'admission-status',   element: <NewApplication /> },  
-      // { path: 'admission-letter',   element: <NewApplication /> },   
-
-      
+      { path: 'application-setup', element: <NewApplication /> },
+      // { path: 'admission-status',   element: <NewApplication /> },
+      // { path: 'admission-letter',   element: <NewApplication /> },
     ],
   },
 ];

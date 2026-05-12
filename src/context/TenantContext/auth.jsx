@@ -66,7 +66,7 @@ export const TenantAuthProvider = ({ children }) => {
 
       setIsLoading(true);
       try {
-        const res = await api.get('/get-user');
+        const res = await api.get('/me');
         const { user: userData, permissions: perms, roles: userRoles, primary_color } = res.data;
 
         setUser(userData);
@@ -269,7 +269,8 @@ export const TenantAuthProvider = ({ children }) => {
     clearError,
     permissions,
     roles,
-    isParent: Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'parent'),
+    isParent:
+      Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'parent'),
     isImpersonated,
     impersonatorId,
     stopImpersonation,

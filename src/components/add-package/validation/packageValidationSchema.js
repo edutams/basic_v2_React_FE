@@ -8,8 +8,8 @@ export const packageValidationSchema = yup.object({
     .required('Package name is required'),
   package_description: yup
     .string()
-    .min(10, 'Package description must be at least 10 characters')
-    .max(500, 'Package description must be less than 500 characters')
+    // .min(10, 'Package description must be at least 10 characters')
+    // .max(500, 'Package description must be less than 500 characters')
     .required('Package description is required'),
   package_status: yup
     .string()
@@ -21,13 +21,12 @@ export const packageValidationSchema = yup.object({
   package_code: yup
     .string()
     .min(3, 'Package code must be at least 3 characters')
-    .max(20, 'Package code must be less than 20 characters')
-    .required('Package code is required'),
-  package_order: yup
-    .number()
-    .integer('Order must be an integer')
-    .min(0, 'Order must be at least 0')
-    .required('Order is required'),
+    .max(20, 'Package code must be less than 20 characters'),
+  // package_order: yup
+  // .number()
+  // .integer('Order must be an integer')
+  // .min(0, 'Order must be at least 0')
+  // .required('Order is required'),
 });
 
 export const createPackageValidationSchema = packageValidationSchema;

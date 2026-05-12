@@ -26,6 +26,7 @@
     "@mui/x-charts": "^8.2.0",
     "@mui/x-date-pickers": "^8.5.2",
     "@mui/x-tree-view": "^8.2.0",
+    "@reactour/tour": "^3.8.0",
     "@svgr/rollup": "^8.1.0",
     "@tabler/icons": "1.119.0",
     "@tabler/icons-react": "^2.39.0",

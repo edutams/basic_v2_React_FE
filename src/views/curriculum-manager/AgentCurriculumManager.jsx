@@ -440,7 +440,7 @@ const AgentCurriculumManager = () => {
       subject_name: '',
       subject_code: '',
       programme_id: '',
-      pass_mark:"",
+      pass_mark: "",
       unit: '',
       status: 'compulsory',
     });
@@ -662,7 +662,7 @@ const AgentCurriculumManager = () => {
                             <TableCell width="7%">Code</TableCell>
                             <TableCell width="15%">Program</TableCell>
                             <TableCell width="5%">Unit</TableCell>
-                            <TableCell width="5%">Pass</TableCell>
+                            <TableCell width="5%">Pass Mark</TableCell>
                             <TableCell width="12%">Status</TableCell>
                             <TableCell width="5%">Action</TableCell>
                           </TableRow>
@@ -1200,7 +1200,7 @@ const AgentCurriculumManager = () => {
                 />
               </Grid>
 
- {/* Passmark */}
+              {/* Passmark */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth

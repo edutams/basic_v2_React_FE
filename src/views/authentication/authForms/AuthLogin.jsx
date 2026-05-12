@@ -136,6 +136,7 @@ const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forg
               name="login"
               variant="outlined"
               fullWidth
+              size="small"
               value={formData.login}
               onChange={handleInputChange}
               error={!!formErrors.login}
@@ -150,6 +151,7 @@ const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forg
               name="password"
               type="password"
               variant="outlined"
+              size="small"
               fullWidth
               value={formData.password}
               onChange={handleInputChange}

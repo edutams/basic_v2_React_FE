@@ -70,6 +70,7 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
           fullWidth
           label="Email Address"
           value={email}
+          size="small"
           onChange={(e) => setEmail(e.target.value)}
           required
           type="email"

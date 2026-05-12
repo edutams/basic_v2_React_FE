@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
@@ -77,8 +77,9 @@ const ViewAgent = () => {
               activeSchools: analytics?.activeSchools || 0,
               pendingSchools: analytics?.pendingSchools || 0,
               rejectedSchools: analytics?.rejectedSchools || 0,
-              totalAgents: data.total_agents || 0,
-              totalSubAgents: data.totalSubAgents || 0,
+              totalAgents: analytics?.totalAgents || 0,
+              totalSubAgents: analytics?.totalSubAgents || 0,
+              subAgentLevels: analytics?.subAgentLevels || 0,
             },
             schools: (data.tenants || []).map((tenant) => ({
               school: tenant.tenant_name || 'Unknown School',
@@ -126,10 +127,10 @@ const ViewAgent = () => {
                 handle: data.organization_email || '—',
                 created_at: tenant.created_at
                   ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })
                   : '—',
               })),
             topAgents: [],
@@ -166,7 +167,7 @@ const ViewAgent = () => {
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [refreshKey]);
 
   const BCrumb = [
     { to: '/agent', title: 'Home' },
@@ -181,6 +182,17 @@ const ViewAgent = () => {
     },
   ];
   const isDark = theme.palette.mode === 'dark';
+
+  const mergedStats = useMemo(() => ({
+    ...(agentData?.stats || {}),
+    totalSchools: analytics?.totalSchools || 0,
+    activeSchools: analytics?.activeSchools || 0,
+    pendingSchools: analytics?.pendingSchools || 0,
+    rejectedSchools: analytics?.rejectedSchools || 0,
+    totalAgents: analytics?.totalAgents || 0,
+    totalSubAgents: analytics?.totalSubAgents || 0,
+    subAgentLevels: analytics?.subAgentLevels || 0,
+  }), [agentData?.stats, analytics]);
 
   return (
     <PageContainer
@@ -217,7 +229,7 @@ const ViewAgent = () => {
               </Grid>
               <Grid item size={{ xs: 12, md: 8, lg: 8 }}>
                 <StatCards
-                  stats={agentData.stats}
+                  stats={mergedStats}
                   onTransactionClick={() => setIsTransactionModalOpen(true)}
                   onSchoolClick={() => setIsSchoolModalOpen(true)}
                   onSubAgentClick={() => setIsSubAgentModalOpen(true)}
@@ -291,7 +303,7 @@ const ViewAgent = () => {
                         label="Manage Team"
                         value="4"
                       />
-                    {/* )} */}
+                      {/* )} */}
                     </TabList>
                   </Box>
 
@@ -313,11 +325,13 @@ const ViewAgent = () => {
                         schools={agentData.schools || []}
                         onAddSchool={() => setIsAddSchoolModalOpen(true)}
                         organizationId={id}
+                        handleRefresh={() => setRefreshKey((prev) => prev + 1)}
+                        refreshKey={refreshKey}
                       />
                     </TabPanel>
                     <TabPanel value="4" sx={{ p: 3 }}>
-                      <ManageTeamTab 
-                        organizationId={id} 
+                      <ManageTeamTab
+                        organizationId={id}
                         accessLevel={currentUser?.organization?.access_level}
                         isViewingProfile={!isDashboard && !isOwnProfile}
                       />
@@ -334,10 +348,10 @@ const ViewAgent = () => {
         )}
 
         {/* Modals */}
-        <TotalSchoolModal 
-          open={isSchoolModalOpen} 
-          onClose={() => setIsSchoolModalOpen(false)} 
-          stats={analytics} 
+        <TotalSchoolModal
+          open={isSchoolModalOpen}
+          onClose={() => setIsSchoolModalOpen(false)}
+          stats={analytics}
         />
         <TotalTransactionModal
           open={isTransactionModalOpen}
@@ -347,6 +361,7 @@ const ViewAgent = () => {
           open={isSubAgentModalOpen}
           onClose={() => setIsSubAgentModalOpen(false)}
           totalSubAgents={agentData?.stats?.totalSubAgents}
+          handleRefresh={() => setRefreshKey?.((prev) => prev + 1)}
         />
         <AgentModal
           open={isAddAgentModalOpen}
@@ -361,12 +376,12 @@ const ViewAgent = () => {
           selectedAgent={
             agentData
               ? {
-                  ...agentData.raw,
-                  ...agentData.leadUser,
-                  id: id,
-                  organization_logo: agentData.raw?.organization_logo,
-                  avatar: agentData.leadUser?.avatar,
-                }
+                ...agentData.raw,
+                ...agentData.leadUser,
+                id: id,
+                organization_logo: agentData.raw?.organization_logo,
+                avatar: agentData.leadUser?.avatar,
+              }
               : null
           }
         />
@@ -378,7 +393,10 @@ const ViewAgent = () => {
         >
           <RegisterSchoolForm
             actionType="create"
-            onSubmit={() => setIsAddSchoolModalOpen(false)}
+            onSubmit={() => {
+              setIsAddSchoolModalOpen(false);
+              setRefreshKey((prev) => prev + 1);
+            }}
             onCancel={() => setIsAddSchoolModalOpen(false)}
           />
         </ReusableModal>

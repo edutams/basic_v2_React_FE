@@ -45,8 +45,8 @@ const ClassStructureManager = () => {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (showSpinner = true) => {
+    if (showSpinner) setLoading(true);
     try {
       const response = await fetchClassStructures();
       if (response.status && response.data) {
@@ -157,7 +157,7 @@ const ClassStructureManager = () => {
       }));
 
       await saveClasses(classesData);
-      await loadData();
+      await loadData(false);
       setHasChanges(false);
       showSnackbar('Classes saved successfully!', 'success');
     } catch (error) {
@@ -208,6 +208,7 @@ const ClassStructureManager = () => {
           variant="contained"
           onClick={handleSaveChanges}
           disabled={!hasChanges || saving}
+          startIcon={saving ? <CircularProgress size={20} color="inherit" /> : null}
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>

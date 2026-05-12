@@ -196,3 +196,14 @@ export const updateProspectiveTenant = async (id, data) => {
     throw error.response?.data || error;
   }
 };
+
+
+export const approveSchoolOnboarding = async (tenantId) => {
+  try {
+    const res = await api.post(`/v1/landlord/${tenantId}/approve_onboarding`);
+    return res.data;
+  } catch (error) {
+    console.error('Error approving onboarding:', error);
+    throw error.response?.data || error;
+  }
+};

@@ -155,7 +155,7 @@ const AddSchoolModal = ({
       case 'update':
         return 'Edit School';
       case 'viewSchools':
-        return 'View Schools';
+        return 'View Schossols';
       case 'managePermissions':
         return 'Manage Permissions';
       default:

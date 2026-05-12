@@ -71,6 +71,8 @@ const SchemeOfWork = () => {
   const notify = useNotification();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [savingTopic, setSavingTopic] = useState(false);
+  const [savingSubtopic, setSavingSubtopic] = useState(false);
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState({});
@@ -83,6 +85,8 @@ const SchemeOfWork = () => {
   const [subjects, setSubjects] = useState([]);
 
   const [selectedTopic, setSelectedTopic] = useState(null);
+  console.log(selectedTopic,848484);
+  
   const [selectedSubtopic, setSelectedSubtopic] = useState(null);
   const [topicModalOpen, setTopicModalOpen] = useState(false);
   const [subtopicModalOpen, setSubtopicModalOpen] = useState(false);
@@ -159,7 +163,7 @@ const SchemeOfWork = () => {
 
   useEffect(() => {
     initData();
-  }, []);
+  }, []); // Empty dependency array means this only runs once on mount
 
   // Fetch subjects when curriculum changes
   useEffect(() => {
@@ -433,8 +437,11 @@ const SchemeOfWork = () => {
     handleMenuClose();
   };
 
-  const handleAddSubtopic = (topicId) => {
-    setSelectedTopic({ topic_id: topicId });
+  const handleAddSubtopic = (topicId,selectedRow) => {
+    setSelectedTopic({ 
+      topic_id: topicId,
+      topic_name: selectedRow?.topic_name
+    }); 
     setSelectedSubtopic(null);
     setSubtopicModalOpen(true);
   };
@@ -467,6 +474,7 @@ const SchemeOfWork = () => {
   };
 
   const handleSaveTopic = async (topicData) => {
+    setSavingTopic(true);
     try {
       if (selectedTopic && selectedTopic.topic_id) {
         await tenantSchemeApi.updateTopic(selectedTopic.topic_id, topicData);
@@ -479,13 +487,17 @@ const SchemeOfWork = () => {
         notify.success('Topic added successfully');
       }
       setTopicModalOpen(false);
+      setSelectedTopic(null);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
-      notify.error('Operation failed');
+      notify.error(error.response?.data?.message || 'Failed to save topic');
+    } finally {
+      setSavingTopic(false);
     }
   };
 
   const handleSaveSubtopic = async (subtopicData) => {
+    setSavingSubtopic(true);
     try {
       if (selectedSubtopic && selectedSubtopic.sub_topic_id) {
         await tenantSchemeApi.updateSubtopic(selectedSubtopic.sub_topic_id, subtopicData);
@@ -495,9 +507,12 @@ const SchemeOfWork = () => {
         notify.success('Subtopic added successfully');
       }
       setSubtopicModalOpen(false);
+      setSelectedSubtopic(null);
       fetchScheme(activeFilters, activeTerm);
     } catch (error) {
-      notify.error('Operation failed');
+      notify.error(error.response?.data?.message || 'Failed to save subtopic');
+    } finally {
+      setSavingSubtopic(false);
     }
   };
 
@@ -1064,7 +1079,8 @@ const SchemeOfWork = () => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" variant="contained" fullWidth disabled={savingTopic}>
+            {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
         </Box>
@@ -1074,7 +1090,7 @@ const SchemeOfWork = () => {
       <ReusableModal
         open={subtopicModalOpen}
         onClose={() => setSubtopicModalOpen(false)}
-        title={selectedSubtopic ? 'Edit Subtopic' : 'Add Subtopic'}
+        title={selectedSubtopic ? `Edit Subtopic for "${selectedTopic?.topic_name || 'Topic'}"` : `Add Subtopic for ${selectedTopic?.topic_name}`}
       >
         <Box
           component="form"
@@ -1105,7 +1121,8 @@ const SchemeOfWork = () => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" variant="contained" fullWidth disabled={savingSubtopic}>
+            {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
         </Box>
@@ -1236,7 +1253,7 @@ const SchemeOfWork = () => {
           <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
             Edit Topic
           </MenuItem>,
-          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id)}>
+          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id,selectedRow)}>
             Add Subtopic
           </MenuItem>,
           <MenuItem

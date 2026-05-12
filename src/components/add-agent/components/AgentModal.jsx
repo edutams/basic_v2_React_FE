@@ -75,8 +75,8 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
     stateFilter: shouldPrefillForm ? (selectedAgent?.state_id || selectedAgent?.stateFilter || '') : '',
     lga: shouldPrefillForm ? (selectedAgent?.lga_id || selectedAgent?.lga || selectedAgent?.state_lga_id || '') : '',
     primaryColor: shouldPrefillForm ? (selectedAgent?.primaryColor || selectedAgent?.primary_color || '') : '',
-    fname: shouldPrefillForm ? (selectedAgent?.fname || '') : '',
-    lname: shouldPrefillForm ? (selectedAgent?.lname || '') : '',
+    fname: shouldPrefillForm ? (selectedAgent?.fname || selectedAgent?.first_name || '') : '',
+    lname: shouldPrefillForm ? (selectedAgent?.lname || selectedAgent?.last_name || '') : '',
     mname: shouldPrefillForm ? (selectedAgent?.mname || '') : '',
     email: shouldPrefillForm ? (selectedAgent?.email || '') : '',
     phone: shouldPrefillForm ? (selectedAgent?.phone || '') : '',
@@ -85,6 +85,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
   }), [shouldPrefillForm, selectedAgent]);
 
   const [loading, setLoading] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
 
   const formik = useFormik({
     initialValues,
@@ -93,6 +94,8 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
     onSubmit: (values) => {
       if (actionType === 'update') {
         handleUpdate(values);
+      } else if (actionType === 'addTeamMember') {
+        handleAddTeamMember(values);
       } else {
         handleSaveClick(values);
       }
@@ -227,10 +230,102 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
     onClose();
   }, [resetForm, onClose]);
 
+  const handleDeleteOrganization = useCallback(async () => {
+    setDeleteConfirmOpen(false);
+    try {
+      const response = await agentApi.deleteOrganization(selectedAgent?.id || selectedAgent?.s_n);
+      if (response.status) {
+        handleRefresh(response.data);
+        notify.success('Organization deleted successfully!');
+        onClose();
+      } else {
+        notify.error('Failed to delete organization');
+      }
+    } catch (error) {
+      console.error('Delete organization failed:', error);
+      notify.error('Failed to delete organization');
+    }
+  }, [selectedAgent, handleRefresh, notify, onClose]);
+
+  const handleAddTeamMember = useCallback(async (values) => {
+    setLoading(true);
+    try {
+      const payload = {
+        ...values,
+        organization_id: selectedAgent?.id || selectedAgent?.s_n
+      };
+      const response = await agentApi.addTeamMember(payload);
+      if (response.status) {
+        handleRefresh(response.data);
+        notify.success('Team member added successfully!');
+        resetForm();
+        onClose();
+      } else {
+        notify.error('Failed to add team member');
+      }
+    } catch (error) {
+      console.error('Add team member failed:', error);
+      notify.error('Failed to add team member');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedAgent, handleRefresh, notify, resetForm, onClose]);
+
   const renderContent = () => {
     switch (actionType) {
       case 'viewSchools':
         return <SchoolsView selectedAgent={selectedAgent} />;
+      
+      case 'deleteOrganization':
+        return (
+          <Box p={3}>
+            <Typography variant="h6" gutterBottom>
+              Delete Organization
+            </Typography>
+            <Typography variant="body1" color="textSecondary" gutterBottom>
+              Are you sure you want to delete this organization?
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+              <Button
+                variant="outlined"
+                onClick={() => setDeleteConfirmOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteOrganization}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+                Delete Organization
+              </Button>
+            </Box>
+          </Box>
+        );
+      
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this organization?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleDeleteOrganization}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       case 'managePermissions':
         return (

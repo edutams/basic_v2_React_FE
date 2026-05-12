@@ -9,6 +9,7 @@ import {
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
 import agentApi from '../../../api/agent';
 import { IMaskInput } from 'react-imask';
+import { useNotification } from '../../../hooks/useNotification';
 
 const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   const { onChange, ...other } = props;
@@ -26,9 +27,10 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
 
 
 
-const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = false }) => {
+const ManageTeamTab = ({  accessLevel = 1, isViewingProfile = false }) => {
     const theme = useTheme();
     const isLevelOne = accessLevel === 1;
+    const notify = useNotification();
 
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -48,14 +50,14 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
     const [permissionSearch, setPermissionSearch] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [editMemberData, setEditMemberData] = useState({
-        first_name: '',
-        last_name: '',
+        fname: '',
+        lname: '',
         email: '',
         phone: '',
     });
     const [formData, setFormData] = useState({
-        first_name: '',
-        last_name: '',
+        fname: '',
+        lname: '',
         email: '',
         phone: '',
     });
@@ -67,7 +69,6 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
       .join('')
       .toUpperCase();
     const fetchTeamMembers = async () => {
-        if (!organizationId) return;
         setLoading(true);
         try {
             const res = await agentApi.getTeamMembers();
@@ -81,14 +82,14 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
 
     useEffect(() => {
         fetchTeamMembers();
-    }, [organizationId]);
+    }, []);
 
     const handleOpenAddModal = async () => {
         setNewPermissions([]);
         setOpenAddModal(true);
         if (availablePermissions.length === 0) {
             try {
-                const permRes = await agentApi.getLeadPermissions(organizationId);
+                const permRes = await agentApi.getLeadPermissions();
                 if (permRes.status) {
                     setAvailablePermissions(permRes.data || []);
                 }
@@ -101,6 +102,8 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
     const handleActionClick = (e, member) => {
         setAnchorEl(e.currentTarget);
         setActiveMember(member);
+        console.log(member,444);
+        
     };
 
     const handleOpenManagePermission = async () => {
@@ -110,7 +113,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
         let perms = availablePermissions;
         if (perms.length === 0) {
             try {
-                const permRes = await agentApi.getLeadPermissions(organizationId);
+                const permRes = await agentApi.getLeadPermissions();
                 if (permRes.status) {
                     perms = permRes.data || [];
                     setAvailablePermissions(perms);
@@ -130,10 +133,10 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
     const handleOpenEdit = () => {
         setAnchorEl(null);
         if (activeMember) {
-            const nameParts = (activeMember.name || '').split(' ');
+            // const nameParts = (activeMember.name || '').split(' ');
             setEditMemberData({
-                first_name: nameParts[0] || '',
-                last_name: nameParts.slice(1).join(' ') || '',
+                fname: activeMember.fname || '',
+                lname: activeMember.lname || '',
                 email: activeMember.email || '',
                 phone: activeMember.phone || '',
             });
@@ -142,22 +145,28 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
     };
 
     const handleEditMember = async () => {
-        if (!editMemberData.first_name || !editMemberData.last_name || !editMemberData.email || !editMemberData.phone) {
-            alert('Please fill in all details');
+        if (!editMemberData.fname || !editMemberData.lname || !editMemberData.email || !editMemberData.phone) {
+            notify.error('Please fill in all details');
             return;
         }
         setSubmitting(true);
         try {
-            const res = await agentApi.updateTeamMember(organizationId, activeMember.id, editMemberData);
+            const res = await agentApi.updateTeamMember( activeMember.id, editMemberData);
             if (res.status) {
                 fetchTeamMembers();
                 setOpenEditModal(false);
+                notify.success('Team member updated successfully!');
             } else {
-                alert(res.message || 'Error updating member');
+                notify.error(res.message || 'Error updating member');
             }
         } catch (e) {
             console.error(e);
-            alert('Failed to update team member');
+            // Check if the error response contains a message from the backend
+            if (e.response && e.response.data && e.response.data.message) {
+                notify.error(e.response.data.message);
+            } else {
+                notify.error('Failed to update team member');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -166,17 +175,23 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
     const handleRemoveMember = async () => {
         setSubmitting(true);
         try {
-            const res = await agentApi.removeTeamMember(organizationId, activeMember.id);
+            const res = await agentApi.removeTeamMember( activeMember.id);
             if (res.status) {
                 fetchTeamMembers();
                 setOpenRemoveConfirm(false);
                 setActiveMember(null);
+                notify.success('Team member removed successfully!');
             } else {
-                alert(res.message || 'Error removing member');
+                notify.error(res.message || 'Error removing member');
             }
         } catch (e) {
             console.error(e);
-            alert('Failed to remove member');
+            // Check if the error response contains a message from the backend
+            if (e.response && e.response.data && e.response.data.message) {
+                notify.error(e.response.data.message);
+            } else {
+                notify.error('Failed to remove member');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -187,16 +202,21 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
         setSubmitting(true);
         try {
             const payload = { permissions: editPermissions };
-            const res = await agentApi.syncTeamMemberPermissions(organizationId, activeMember.id, payload);
+            const res = await agentApi.syncTeamMemberPermissions( activeMember.id, payload);
             if (res.status) {
                 fetchTeamMembers();
                 setOpenPermissionModal(false);
             } else {
-                alert(res.message || 'Error updating permissions');
+                notify.error(res.message || 'Error updating permissions');
             }
         } catch (e) {
             console.error(e);
-            alert('Failed to update permissions');
+            // Check if the error response contains a message from the backend
+            if (e.response && e.response.data && e.response.data.message) {
+                notify.error(e.response.data.message);
+            } else {
+                notify.error('Failed to update permissions');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -204,7 +224,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
 
     const handleAddMember = async () => {
         if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
-            alert('Please fill in all details');
+            notify.error('Please fill in all details');
             return;
         }
         setSubmitting(true);
@@ -216,12 +236,18 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                 setOpenAddModal(false);
                 setFormData({ first_name: '', last_name: '', email: '', phone: '' });
                 setNewPermissions([]);
+                notify.success('Team member added successfully!');
             } else {
-                alert(res.message || 'Error adding member');
+                notify.error(res.message || 'Error adding member');
             }
         } catch (e) {
             console.error(e);
-            alert('Failed to add team member');
+            // Check if the error response contains a message from the backend
+            if (e.response && e.response.data && e.response.data.message) {
+                notify.error(e.response.data.message);
+            } else {
+                notify.error('Failed to add team member');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -501,8 +527,8 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                 <DialogContent>
                     <Stack spacing={2} sx={{ mt: 1 }}>
                         <Stack direction="row" spacing={2}>
-                            <TextField fullWidth size="small" label="First Name" value={editMemberData.first_name} onChange={e => setEditMemberData({ ...editMemberData, first_name: e.target.value })} />
-                            <TextField fullWidth size="small" label="Last Name" value={editMemberData.last_name} onChange={e => setEditMemberData({ ...editMemberData, last_name: e.target.value })} />
+                            <TextField fullWidth size="small" label="First Name" value={editMemberData.fname} onChange={e => setEditMemberData({ ...editMemberData, fname: e.target.value })} />
+                            <TextField fullWidth size="small" label="Last Name" value={editMemberData.lname} onChange={e => setEditMemberData({ ...editMemberData, lname: e.target.value })} />
                         </Stack>
                         <TextField fullWidth size="small" label="Email Address" type="email" value={editMemberData.email} onChange={e => setEditMemberData({ ...editMemberData, email: e.target.value })} />
                         <TextField fullWidth size="small" label="Phone Number" value={editMemberData.phone}
@@ -515,7 +541,7 @@ const ManageTeamTab = ({ organizationId, accessLevel = 1, isViewingProfile = fal
                 <DialogActions sx={{ p: 2 }}>
                     <Button onClick={() => setOpenEditModal(false)} color="inherit" disabled={submitting}>Cancel</Button>
                     <Button variant="contained" color="primary" onClick={handleEditMember} disabled={submitting}>
-                        {submitting ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
+                        {submitting ? <CircularProgress size={24} color="inherit" /> : 'Update Changes'}
                     </Button>
                 </DialogActions>
             </Dialog>

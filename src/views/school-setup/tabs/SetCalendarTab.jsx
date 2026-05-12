@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useContext } from 'react';
 import {
   Box,
   Grid,
@@ -60,9 +60,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Pagination state for Terms table — removed
-  // Pagination state for Weeks table — removed
-
   // Session and session terms state
   const [currentSession, setCurrentSession] = useState(null);
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -74,6 +71,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const [displayName, setDisplayName] = useState('');
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
+
   // Notification state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -91,6 +89,35 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   });
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
 
+  // ── Hint positioning ─────────────────────────────────────────────────────
+  const generateBtnRef = useRef(null);
+  const paperRef = useRef(null);
+  const [hintStyle, setHintStyle] = useState(null);
+
+  useLayoutEffect(() => {
+    const btn = generateBtnRef.current;
+    const paper = paperRef.current;
+    if (!btn || !paper) return;
+
+    const calc = () => {
+      const btnRect = btn.getBoundingClientRect();
+      const paperRect = paper.getBoundingClientRect();
+      setHintStyle({
+        // Position hint just below the button, aligned to its left edge
+        top: btnRect.bottom - paperRect.top + 6,
+        left: btnRect.left - paperRect.left,
+        width: btnRect.width,
+      });
+    };
+
+    calc();
+
+    // ResizeObserver catches wrapping, sidebar collapse, any layout shift
+    const ro = new ResizeObserver(calc);
+    ro.observe(paper);
+    return () => ro.disconnect();
+  }, [weeks.length, activeSessionTermId, sessionTerms.length]);
+
   // Fetch data on component mount
   useEffect(() => {
     loadData();
@@ -99,21 +126,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-
-      // Fetch Current Sessions (where is_current is yes)
       const sessionRes = await fetchCurrentSession();
       if (sessionRes.status && sessionRes.data.length > 0) {
         setSessions(sessionRes.data);
-        // Preselect the first current session
         const initialSessionId = sessionRes.data[0].id;
         setSelectedSessionId(initialSessionId);
         setCurrentSession(sessionRes.data[0]);
-
-        // Load terms for this session
         await loadSessionTerms(initialSessionId);
       }
-
-      // Fetch all landlord terms for the dropdown
       const termsRes = await fetchTerms();
       if (termsRes.status) {
         setAllLandlordTerms(termsRes.data);
@@ -130,7 +150,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       const termsRes = await fetchSessionTerms(sessionId);
       if (termsRes.status) {
         setSessionTerms(termsRes.data);
-        // Find if there's an active session term to load weeks automatically
         const activeST = termsRes.data.find((t) => t.status === 'active');
         if (activeST && activeST.session_term_id) {
           setActiveSessionTermId(activeST.session_term_id);
@@ -175,10 +194,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Handle edit term name
-  const handleOpenEditModal = () => {
-    setOpenEditModal(true);
-  };
+  const handleOpenEditModal = () => setOpenEditModal(true);
 
   const handleCloseEditModal = () => {
     setOpenEditModal(false);
@@ -191,7 +207,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       showSnackbar('Term and Display name are required', 'error');
       return;
     }
-
     try {
       setLoading(true);
       const response = await updateDisplayName(selectedAppTermId, displayName);
@@ -199,8 +214,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         showSnackbar('Display name updated successfully', 'success');
         handleCloseEditModal();
         loadSessionTerms(selectedSessionId);
-        // Trigger HolidaySection refresh
-        console.log('SetCalendarTab: Calling onUpdate callback');
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(response.message || 'Failed to update display name', 'error');
@@ -220,7 +233,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     loadSessionTerms(sessionId);
   };
 
-  // Handle subscribe click (shows confirmation)
   const handleSubscribeClick = (term) => {
     setConfirmSubscribe({ open: true, term });
   };
@@ -228,9 +240,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const handleConfirmSubscribe = async () => {
     const term = confirmSubscribe.term;
     setConfirmSubscribe({ open: false, term: null });
-
     if (!selectedSessionId || !term) return;
-
     try {
       setLoading(true);
       const response = await subscribeSessionTerm(selectedSessionId, term.app_term_id);
@@ -238,7 +248,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         showSnackbar('Subscribed successfully', 'success');
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
-        // Trigger HolidaySection refresh
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(response.message || 'Failed to subscribe', 'error');
@@ -257,16 +266,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const handleConfirmToggleStatus = async () => {
     const term = confirmStatus.term;
     setConfirmStatus({ open: false, term: null });
-
     if (!term || !term.session_term_id) return;
-
     try {
       setLoading(true);
       const response = await toggleSessionTermStatus(term.session_term_id);
-
       const isSuccess =
         response.status === true && (!response.data || response.data.status !== false);
-
       if (isSuccess) {
         showSnackbar(
           `Term ${term.status === 'active' ? 'deactivated' : 'activated'} successfully`,
@@ -274,7 +279,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         );
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
-        // Trigger HolidaySection refresh
         if (onUpdate) onUpdate();
       } else {
         const errorMessage =
@@ -282,7 +286,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           response.data?.message ||
           response.message ||
           'Failed to update status';
-
         showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
@@ -294,18 +297,16 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       setLoading(false);
     }
   };
-  // Week Logic
+
   const handleAutoGenerate = async () => {
     if (!activeSessionTermId || !autoGenerateConfig.startDate) {
       showSnackbar('Set start date first', 'error');
       return;
     }
-
     if (autoGenerateConfig.numWeeks > 15 || autoGenerateConfig.numWeeks < 1) {
       showSnackbar('Number of weeks must be between 1 and 15', 'error');
       return;
     }
-
     try {
       setLoading(true);
       const response = await autoGenerateWeeks(activeSessionTermId, {
@@ -315,9 +316,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       if (response.status) {
         setWeeks(response.data);
         showSnackbar('Weeks generated successfully', 'success');
-        // Refresh session terms to update the Start Date in the main table
         loadSessionTerms(selectedSessionId);
-        // Refresh header to show updated week count immediately
         refreshTenantInfo();
       }
     } catch (error) {
@@ -343,9 +342,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       const response = await addWeek(activeSessionTermId);
       if (response.status) {
         setWeeks(response.data);
-        // Refresh session terms to update the Start Date in the main table
         loadSessionTerms(selectedSessionId);
-        // Refresh header to show updated week count immediately
         refreshTenantInfo();
       }
     } catch (error) {
@@ -353,60 +350,27 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     }
   };
 
-  // const handleDeleteWeek = async (weekId) => {
-  //   try {
-  //     const response = await deleteWeek(activeSessionTermId, weekId);
-  //     if (response.status) {
-  //       setWeeks(response.data);
-  //       // Refresh session terms to update the Start Date if necessary
-  //       loadSessionTerms(selectedSessionId);
-  //     }
-  //   } catch (error) {
-  //     showSnackbar('Failed to delete week', 'error');
-  //   }
-  // };
-
-  const handleSelectAll = () => {
-    const newSelectAll = !selectAll;
-    setSelectAll(newSelectAll);
-  };
+  const handleSelectAll = () => setSelectAll(!selectAll);
 
   const handleToggleSelect = (termName) => {
     setHasChanges(true);
   };
 
-  // (pagination removed)
-
   return (
     <Box sx={{ p: 2 }}>
       <ParentCard>
         <Grid container spacing={3}>
-          {/* Manage Sessions Column */}
+          {/* ── Manage Sessions ── */}
           <Grid size={{ xs: 12, md: 6 }}>
             <ParentCard
               title={
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="h5">Manage Sessions</Typography>
-                  {/* <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    handleOpenEditModal();
-                  }}
-                >
-                  Edit Term Name
-                </Button> */}
                 </Box>
               }
             >
               {loading && !currentSession ? (
-                <Box
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  sx={{ minHeight: 200 }}
-                >
+                <Box display="flex" justifyContent="center" alignItems="center" sx={{ minHeight: 200 }}>
                   <CircularProgress />
                 </Box>
               ) : currentSession ? (
@@ -436,12 +400,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                             <TableRow>
                               <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                               <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                Status
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                Action
-                              </TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -476,80 +436,58 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                       </TableContainer>
                     </Paper>
 
-                    {/* Arrow hint */}
-                    <Box
-                      sx={{
-                        '@keyframes fadeUp': {
-                          from: { opacity: 0, transform: 'translateY(10px)' },
-                          to: { opacity: 1, transform: 'translateY(0)' },
-                        },
-                        '@keyframes bob': {
-                          '0%, 100%': { transform: 'translateY(0)' },
-                          '50%': { transform: 'translateY(-5px)' },
-                        },
-                        position: 'absolute',
-                        top: 110,
-                        right: 40,
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '2px',
-                        pointerEvents: 'none',
-                        animation:
-                          'fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s both, bob 2s ease-in-out 1.6s infinite',
-                      }}
-                    >
-                      {/* Label bubble */}
+                    {/* Subscribe hint */}
+                    {!sessionTerms.some((t) => t.is_subscribed === 'yes') && (
                       <Box
                         sx={{
-                          bgcolor: 'background.paper',
-                          border: '2px solid',
-                          borderColor: 'primary.main',
-                          borderRadius: '12px',
-                          px: 1.5,
-                          py: 1,
-                          boxShadow: `0 4px 16px ${primary}33`,
+                          '@keyframes fadeUp': {
+                            from: { opacity: 0, transform: 'translateY(10px)' },
+                            to: { opacity: 1, transform: 'translateY(0)' },
+                          },
+                          '@keyframes bob': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                          },
+                          position: 'absolute',
+                          top: 110,
+                          right: 40,
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '2px',
+                          pointerEvents: 'none',
+                          animation:
+                            'fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s both, bob 2s ease-in-out 1.6s infinite',
                         }}
                       >
-                        <Typography
+                        <Box
                           sx={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: 'primary.main',
-                            whiteSpace: 'nowrap',
-                            letterSpacing: 0.2,
+                            bgcolor: 'background.paper',
+                            border: '2px solid',
+                            borderColor: 'primary.main',
+                            borderRadius: '12px',
+                            px: 1.5,
+                            py: 1,
+                            boxShadow: `0 4px 16px ${primary}33`,
                           }}
                         >
-                          Click ⋮ to subscribe
-                        </Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: 'primary.main',
+                              whiteSpace: 'nowrap',
+                              letterSpacing: 0.2,
+                            }}
+                          >
+                            Click ⋮ to subscribe
+                          </Typography>
+                        </Box>
+                        <svg width="36" height="44" viewBox="0 0 36 44" fill="none" style={{ marginTop: 4 }}>
+                          <path d="M4 40 C4 20, 28 20, 28 4" stroke={primary} strokeWidth="2" strokeLinecap="round" fill="none" />
+                          <path d="M20 6 L28 4 L30 12" stroke={primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                        </svg>
                       </Box>
-
-                      {/* Arrow: curves right and UP toward the ⋮ button */}
-                      <svg
-                        width="36"
-                        height="44"
-                        viewBox="0 0 36 44"
-                        fill="none"
-                        style={{ marginTop: 4 }}
-                      >
-                        {/* Curve from bottom-left to top-right */}
-                        <path
-                          d="M4 40 C4 20, 28 20, 28 4"
-                          stroke={primary}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          fill="none"
-                        />
-                        {/* Arrowhead pointing UP */}
-                        <path
-                          d="M20 6 L28 4 L30 12"
-                          stroke={primary}
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="none"
-                        />
-                      </svg>
-                    </Box>
+                    )}
                   </Box>
                 </>
               ) : (
@@ -558,14 +496,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
             </ParentCard>
           </Grid>
 
-          {/* Generate Week Column */}
+          {/* ── Generate Week ── */}
           <Grid size={{ xs: 12, md: 6 }}>
             <ParentCard
               id="generate-week-section"
               title={
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="h5">Generate Week</Typography>
-
                   <Box
                     sx={{
                       ml: 'auto',
@@ -585,7 +522,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
               }
             >
               {activeSessionTermId ? (
-                <Paper variant="outlined" sx={{ p: 2 }}>
+                // paperRef anchors the hint position calculations
+                <Paper ref={paperRef} variant="outlined" sx={{ p: 2, position: 'relative' }}>
                   <Box
                     sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
                   >
@@ -613,7 +551,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                       }
                       slotProps={{ inputLabel: { shrink: true } }}
                     />
+                    {/* generateBtnRef targets this button exactly */}
                     <Button
+                      ref={generateBtnRef}
                       variant="contained"
                       onClick={handleAutoGenerate}
                       disabled={loading || !activeSessionTermId}
@@ -624,6 +564,82 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                     </Button>
                   </Box>
 
+                  {/* ── Generate hint — pinned directly below the Generate button ── */}
+                  {sessionTerms.some((t) => t.is_subscribed === 'yes') &&
+                    weeks.length === 0 &&
+                    hintStyle && (
+                      <Box
+                        sx={{
+                          '@keyframes fadeUp': {
+                            from: { opacity: 0, transform: 'translateY(10px)' },
+                            to: { opacity: 1, transform: 'translateY(0)' },
+                          },
+                          '@keyframes bob': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                          },
+                          position: 'absolute',
+                          top: hintStyle.top,
+                          left: hintStyle.left,
+                          width: hintStyle.width,
+                          zIndex: 10,
+                          pointerEvents: 'none',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          animation:
+                            'fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s both, bob 2.4s ease-in-out 1.2s infinite',
+                        }}
+                      >
+                        {/* Arrow — curves up toward the Generate button */}
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                          {/* Curve: starts bottom-center, swings left, ends top-right */}
+                          <path
+                            d="M20 38 C6 30, 6 16, 28 4"
+                            stroke={primary}
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            fill="none"
+                          />
+                          {/* Arrowhead pointing up-right */}
+                          <path
+                            d="M18 4 L28 4 L28 14"
+                            stroke={primary}
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </svg>
+
+                        {/* Bubble */}
+                        <Box
+                          sx={{
+                            bgcolor: 'background.paper',
+                            border: '2px solid',
+                            borderColor: 'primary.main',
+                            borderRadius: '12px',
+                            px: 1.5,
+                            py: 1,
+                            boxShadow: `0 4px 16px ${primary}33`,
+                            textAlign: 'center',
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: 'primary.main',
+                              whiteSpace: 'nowrap',
+                              letterSpacing: 0.2,
+                            }}
+                          >
+                            Set dates &amp; click Generate ☝️
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+
                   <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
                     <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
                       <TableHead>
@@ -632,10 +648,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                           <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                          {/* <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell> */}
                         </TableRow>
                       </TableHead>
-
                       <TableBody>
                         {weeks.length > 0 ? (
                           weeks.map((item, i) => (
@@ -655,15 +669,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                                   }}
                                 />
                               </TableCell>
-                              {/* <TableCell>
-                              <IconButton
-                                size="small"
-                                color="dark"
-                                onClick={() => handleDeleteWeek(item.week_id)}
-                              >
-                                <IconDotsVertical size={16} />{' '}
-                              </IconButton>
-                            </TableCell> */}
                             </TableRow>
                           ))
                         ) : (
@@ -689,13 +694,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         </Grid>
       </ParentCard>
 
-      {/* <Box mt={2} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
-          Save & Continue
-        </Button>
-      </Box> */}
-
-      {/* Edit Term Name Modal */}
+      {/* ── Edit Term Name Modal ── */}
       <Dialog open={openEditModal} onClose={handleCloseEditModal} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Term Name</DialogTitle>
         <DialogContent>
@@ -740,7 +739,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Subscription Confirmation Dialog */}
+      {/* ── Subscription Confirmation ── */}
       <Dialog
         open={confirmSubscribe.open}
         onClose={() => setConfirmSubscribe({ open: false, term: null })}
@@ -754,16 +753,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>
-            No, Cancel
-          </Button>
+          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>No, Cancel</Button>
           <Button onClick={handleConfirmSubscribe} variant="contained" autoFocus disabled={loading}>
             Yes, Subscribe
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Status Toggle Confirmation Dialog */}
+      {/* ── Status Toggle Confirmation ── */}
       <Dialog
         open={confirmStatus.open}
         onClose={() => setConfirmStatus({ open: false, term: null })}
@@ -801,7 +798,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
+      {/* ── Snackbar ── */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -813,19 +810,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
         </Alert>
       </Snackbar>
 
-      {/* Action Menu */}
+      {/* ── Action Menu ── */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         {selectedItem?.is_subscribed === 'no' ? (
           <MenuItem

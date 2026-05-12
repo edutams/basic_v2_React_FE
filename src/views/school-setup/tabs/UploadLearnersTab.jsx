@@ -130,9 +130,16 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
     return () => ro.disconnect();
   }, [loading, classes.length]);
 
-  // Start the sequence once data is loaded and first row exists
+  // Start the sequence only when no learners have been uploaded yet
   useEffect(() => {
     if (loading || classes.length === 0) return;
+
+    const hasAnyLearners = Object.values(studentCounts).some((count) => count > 0);
+    if (hasAnyLearners) {
+      clearTimeout(hintTimerRef.current);
+      setActiveHint(null);
+      return;
+    }
 
     let step = 0;
 
@@ -150,7 +157,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
     hintTimerRef.current = setTimeout(next, 600);
 
     return () => clearTimeout(hintTimerRef.current);
-  }, [loading, classes.length]);
+  }, [loading, classes.length, studentCounts]);
 
   // ── Hint renderer ─────────────────────────────────────────────────────────
   const renderHint = (key, hintStyle, label, arrowDir = 'up') => {
@@ -384,6 +391,8 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                 ? isDark ? 'rgba(211,47,47,0.15)' : '#fbe4e4'
                 : isDark ? 'action.hover' : '#f6f7f9';
 
+              const hasArms = Array.isArray(item.class_arms) && item.class_arms.length > 0;
+
               return (
                 <TableRow key={item.unique_key || index}>
                   {/* ── Class name ── */}
@@ -421,21 +430,28 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                     sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
                     align="center"
                   >
-                    <Button size="small"
-                      ref={index === 0 ? addBtnRef : null}
-                      variant="contained"
-                      size="small"
-                      // startIcon={<AddIcon />} 
-                      onClick={() => handleAddNewLearner(item)}
-                    >
-                      Add New Learner
-                    </Button>
+                    {hasArms ? (
+                      <>
+                        <Button size="small"
+                          ref={index === 0 ? addBtnRef : null}
+                          variant="contained"
+                          size="small"
+                          onClick={() => handleAddNewLearner(item)}
+                        >
+                          Add New Learner
+                        </Button>
 
-                    {/* Hint 1 — Add Learner */}
-                    {index === 0 && renderHint(
-                      'add',
-                      addHintStyle,
-                      '👆 Click to add a learner manually',
+                        {/* Hint 1 — Add Learner */}
+                        {index === 0 && renderHint(
+                          'add',
+                          addHintStyle,
+                          '👆 Click to add a learner manually',
+                        )}
+                      </>
+                    ) : (
+                      <Typography sx={{ fontSize: 11, color: 'text.disabled', fontStyle: 'italic' }}>
+                        No class arms yet
+                      </Typography>
                     )}
                   </TableCell>
 
@@ -445,40 +461,48 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                     sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
                     align="center"
                   >
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                      <Button
-                        ref={index === 0 ? downloadBtnRef : null}
-                        variant="outlined"
-                        size="small"
-                        startIcon={<DownloadIcon />}
-                        onClick={() => handleDownloadTemplate(item.programme_class_id)}
-                      >
-                        Download Template
-                      </Button>
-                      <Button
-                        ref={index === 0 ? uploadBtnRef : null}
-                        variant="contained"
-                        size="small"
-                        startIcon={<UploadIcon />}
-                        onClick={() => handleUploadClick(item.id)}
-                      >
-                        Upload Template
-                      </Button>
-                    </Box>
+                    {hasArms ? (
+                      <>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          <Button
+                            ref={index === 0 ? downloadBtnRef : null}
+                            variant="outlined"
+                            size="small"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => handleDownloadTemplate(item.programme_class_id)}
+                          >
+                            Download Template
+                          </Button>
+                          <Button
+                            ref={index === 0 ? uploadBtnRef : null}
+                            variant="contained"
+                            size="small"
+                            startIcon={<UploadIcon />}
+                            onClick={() => handleUploadClick(item.id)}
+                          >
+                            Upload Template
+                          </Button>
+                        </Box>
 
-                    {/* Hint 2 — Download Template */}
-                    {index === 0 && renderHint(
-                      'download',
-                      downloadHintStyle,
-                      '📥 Download the template first',
-                      'up-left',
-                    )}
+                        {/* Hint 2 — Download Template */}
+                        {index === 0 && renderHint(
+                          'download',
+                          downloadHintStyle,
+                          '📥 Download the template first',
+                          'up-left',
+                        )}
 
-                    {/* Hint 3 — Upload Template */}
-                    {index === 0 && renderHint(
-                      'upload',
-                      uploadHintStyle,
-                      '📤 Then upload your filled template',
+                        {/* Hint 3 — Upload Template */}
+                        {index === 0 && renderHint(
+                          'upload',
+                          uploadHintStyle,
+                          '📤 Then upload your filled template',
+                        )}
+                      </>
+                    ) : (
+                      <Typography sx={{ fontSize: 11, color: 'text.disabled', fontStyle: 'italic' }}>
+                        Generate class arms first to enable upload
+                      </Typography>
                     )}
                   </TableCell>
                 </TableRow>

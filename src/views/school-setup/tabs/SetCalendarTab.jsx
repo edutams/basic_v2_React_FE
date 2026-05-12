@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Grid,
@@ -10,8 +10,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TableFooter,
-  TablePagination,
   Paper,
   Chip,
   IconButton,
@@ -59,13 +57,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Pagination state for Terms table
-  const [termsPage, setTermsPage] = useState(0);
-  const [termsRowsPerPage, setTermsRowsPerPage] = useState(5);
-
-  // Pagination state for Weeks table
-  const [weeksPage, setWeeksPage] = useState(0);
-  const [weeksRowsPerPage, setWeeksRowsPerPage] = useState(5);
+  // Pagination state for Terms table — removed
+  // Pagination state for Weeks table — removed
 
   // Session and session terms state
   const [currentSession, setCurrentSession] = useState(null);
@@ -379,39 +372,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
     setHasChanges(true);
   };
 
-  // Paginate terms data
-  const paginatedTerms = useMemo(() => {
-    const start = termsPage * termsRowsPerPage;
-    return sessionTerms.slice(start, start + termsRowsPerPage);
-  }, [sessionTerms, termsPage, termsRowsPerPage]);
-
-  // Paginate weeks data
-  const paginatedWeeks = useMemo(() => {
-    const start = weeksPage * weeksRowsPerPage;
-    return weeks.slice(start, start + weeksRowsPerPage);
-  }, [weeks, weeksPage, weeksRowsPerPage]);
-
-  const handleTermsPageChange = (event, newPage) => {
-    setTermsPage(newPage);
-  };
-
-  const handleTermsRowsPerPageChange = (event) => {
-    setTermsRowsPerPage(parseInt(event.target.value, 10));
-    setTermsPage(0);
-  };
-
-  const handleWeeksPageChange = (event, newPage) => {
-    setWeeksPage(newPage);
-  };
-
-  const handleWeeksRowsPerPageChange = (event) => {
-    setWeeksRowsPerPage(parseInt(event.target.value, 10));
-    setWeeksPage(0);
-  };
+  // (pagination removed)
 
   return (
     <Box sx={{ p: 2 }}>
-      <Grid container spacing={3}>
+      <ParentCard>
+   <Grid container spacing={3}>
         {/* Manage Sessions Column */}
         <Grid size={{ xs: 12, md: 6 }}>
           <ParentCard
@@ -465,13 +431,13 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                         <TableRow>
                           <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell>
+                          {/* <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell> */}
                           <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                             Status
                           </TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                          {/* <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                             Start Date
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                             Action
                           </TableCell>
@@ -479,11 +445,11 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                       </TableHead>
 
                       <TableBody>
-                        {paginatedTerms.map((item, i) => (
+                        {sessionTerms.map((item, i) => (
                           <TableRow key={item.app_term_id} hover>
-                            <TableCell>{i + 1 + termsPage * termsRowsPerPage}</TableCell>
+                            <TableCell>{i + 1}</TableCell>
                             <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
-                            <TableCell>{item.term_name}</TableCell>
+                            {/* <TableCell>{item.term_name}</TableCell> */}
                             <TableCell align="center">
                               {item.is_subscribed === 'yes' ? (
                                 <Chip
@@ -499,9 +465,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                                 '-'
                               )}
                             </TableCell>
-                            <TableCell align="center">
+                            {/* <TableCell align="center">
                               {item.start_date || (item.is_subscribed === 'yes' ? 'Not Set' : '-')}
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell align="center">
                               <IconButton
                                 size="small"
@@ -513,19 +479,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                           </TableRow>
                         ))}
                       </TableBody>
-
-                      <TableFooter>
-                        <TableRow>
-                          <TablePagination
-                            rowsPerPageOptions={[5, 10, 25]}
-                            count={sessionTerms.length}
-                            rowsPerPage={termsRowsPerPage}
-                            page={termsPage}
-                            onPageChange={handleTermsPageChange}
-                            onRowsPerPageChange={handleTermsRowsPerPageChange}
-                          />
-                        </TableRow>
-                      </TableFooter>
                     </Table>
                   </TableContainer>
                 </Paper>
@@ -565,12 +518,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           >
             {activeSessionTermId ? (
               <Paper variant="outlined" sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
                   <TextField
                     label="No. of Weeks"
                     type="number"
                     size="small"
-                    sx={{ width: 120 }}
+                    sx={{ width: { xs: '100%', sm: 120 } }}
                     value={autoGenerateConfig.numWeeks}
                     onChange={(e) =>
                       setAutoGenerateConfig({
@@ -583,28 +536,26 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                     label="Start Date"
                     type="date"
                     size="small"
-                    sx={{ width: 160 }}
+                    sx={{ width: { xs: '100%', sm: 160 } }}
                     value={autoGenerateConfig.startDate}
                     onChange={(e) =>
                       setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
                     }
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                   />
                   <Button
                     variant="contained"
                     onClick={handleAutoGenerate}
                     disabled={loading || !activeSessionTermId}
                     size="small"
+                    sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
                   >
                     Generate
                   </Button>
-                  {/* <IconButton color="primary" onClick={handleAddWeek} disabled={!activeSessionTermId}>
-                    <AddIcon />
-                  </IconButton> */}
                 </Box>
 
-                <TableContainer>
-                  <Table sx={{ whiteSpace: 'nowrap' }}>
+                <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
+                  <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
@@ -617,7 +568,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
 
                     <TableBody>
                       {weeks.length > 0 ? (
-                        paginatedWeeks.map((item, i) => (
+                        weeks.map((item, i) => (
                           <TableRow key={i} hover>
                             <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
                             <TableCell>{item.start_date || 'N/A'}</TableCell>
@@ -655,19 +606,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                         </TableRow>
                       )}
                     </TableBody>
-
-                    <TableFooter>
-                      <TableRow>
-                        <TablePagination
-                          rowsPerPageOptions={[5, 10, 25]}
-                          count={weeks.length}
-                          rowsPerPage={weeksRowsPerPage}
-                          page={weeksPage}
-                          onPageChange={handleWeeksPageChange}
-                          onRowsPerPageChange={handleWeeksRowsPerPageChange}
-                        />
-                      </TableRow>
-                    </TableFooter>
                   </Table>
                 </TableContainer>
               </Paper>
@@ -681,6 +619,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
 
         </Grid>
       </Grid>
+      </ParentCard>
+   
 
       {/* <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>

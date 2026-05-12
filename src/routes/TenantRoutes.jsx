@@ -11,6 +11,7 @@ const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')))
 const SchoolDashboardMain = Loadable(
   lazy(() => import('../views/school-dashboard/SchoolDashboard')),
 );
+const SetupWelcome = Loadable(lazy(() => import('../views/school-setup/SetupWelcome')));
 const InitialSetup = Loadable(lazy(() => import('../views/school-setup/InitialSetup')));
 const CompleteSetup = Loadable(lazy(() => import('../views/school-setup/CompleteSetup')));
 const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
@@ -48,6 +49,24 @@ const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/Ad
 const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
 
 const TenantRoutes = [
+  {
+    path: '/setup-welcome',
+    element: (
+      <TenantProtectedRoute>
+          <BlankLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <SetupWelcome /> }],
+  },
+  {
+    path: '/school-profile',
+    element: (
+      <TenantProtectedRoute>
+          <BlankLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <InitialSetup /> }],
+  },
   {
     path: '/login',
     element: <BlankLayout />,
@@ -88,6 +107,15 @@ const TenantRoutes = [
     children: [{ index: true, element: <Error /> }],
   },
   {
+    path: '/complete-setup', 
+    element: (
+      <TenantProtectedRoute>
+          <BlankLayout />
+      </TenantProtectedRoute>
+    ),
+    children: [{ index: true, element: <CompleteSetup /> }],
+  },
+  {
     path: '/',
     element: (
       <TenantProtectedRoute>
@@ -96,9 +124,6 @@ const TenantRoutes = [
     ),
     children: [
       { index: true, element: <SchoolDashboardMain /> },
-
-      { path: 'initial-setup', element: <InitialSetup /> },
-      { path: 'complete-setup', element: <CompleteSetup /> },
 
       { path: 'acl-manager', element: <AlcManager /> },
 

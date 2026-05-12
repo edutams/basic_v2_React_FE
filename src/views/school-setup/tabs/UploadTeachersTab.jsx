@@ -7,11 +7,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   TextField,
   IconButton,
   Button,
-  Paper,
   Menu,
   MenuItem,
   Typography,
@@ -308,15 +306,19 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      {/* Toolbar */}
       <Box
         sx={{
-          mb: 3,
+          px: 2,
+          pt: 2,
+          pb: 1,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 2,
+          flexShrink: 0,
         }}
       >
         <TextField
@@ -324,47 +326,38 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
           value={searchTerm}
           onChange={handleSearch}
           size="small"
-          sx={{ width: 300 }}
+          sx={{ width: 260 }}
           InputProps={{
             startAdornment: <SearchIcon style={{ marginRight: 8, color: theme.palette.text.disabled }} />,
           }}
         />
-
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadTemplate}
-          >
+          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
             Download Template
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<UploadIcon />}
-            onClick={() => setUploadModalOpen(true)}
-          >
+          <Button variant="outlined" size="small" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
             Upload
           </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
+          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
             Add New Teacher
           </Button>
         </Box>
       </Box>
 
-      <Paper variant="outlined">
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>#</TableCell>
-                {columns.map((column) => (
-                  <TableCell key={column.id} sx={{ fontWeight: 600 }}>
-                    {column.label}
-                  </TableCell>
-                ))}
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
+      {/* Scrollable table */}
+      <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ bgcolor: '#fff' }}>#</TableCell>
+              {columns.map((column) => (
+                <TableCell key={column.id} sx={{ fontWeight: 600, bgcolor: '#fff' }}>
+                  {column.label}
+                </TableCell>
+              ))}
+              <TableCell align="center" sx={{ bgcolor: '#fff' }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
 
             <TableBody>
               {teachersLoading ? (
@@ -410,32 +403,23 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {error || 'No teachers found'}
-                    </Typography>
+                  <TableCell colSpan={9} sx={{ py: 3, border: 0 }}>
+                    <Alert
+                      severity="info"
+                      sx={{
+                        borderRadius: '8px !important',
+                        justifyContent: 'center',
+                        '& .MuiAlert-message': { textAlign: 'center' },
+                      }}
+                    >
+                      {error || 'No teachers added yet. Use the buttons above to add or upload teachers.'}
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={totalTeachers}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-
-      <Box mt={3} display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={onSaveAndContinue}>
-          Save
-        </Button>
-      </Box>
+        </Table>
+      </TableContainer>
 
       <AddTeacherModal
         open={modalOpen}

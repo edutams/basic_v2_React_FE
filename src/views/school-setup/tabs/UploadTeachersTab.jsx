@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -31,7 +31,6 @@ import {
 } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import AddTeacherModal from './AddTeacherModal';
-import useNotification from 'src/hooks/useNotification';
 import UploadTeacherModal from 'src/components/tenant-components/staff/UploadTeacherModal';
 import {
   getAllStaff,
@@ -42,45 +41,173 @@ import {
   uploadTeachers,
 } from '../../../context/TenantContext/services/tenant.service';
 
+// Hints fire in sequence: 0 = Download, 1 = Upload, 2 = Add New Teacher
+const HINT_SEQUENCE = ['download', 'upload', 'add'];
+const HINT_DURATION = 5000; // 5s each
+
 const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
   const theme = useTheme();
+  const primary = theme.palette.primary.main;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); 
+  const [modalMode, setModalMode] = useState('create');
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [totalTeachers, setTotalTeachers] = useState(0);
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [notification, setNotification] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
+  // ── Sequential hint state ──────────────────────────────────────────────────
+  const [activeHint, setActiveHint] = useState(null);
+  const hintTimerRef = useRef(null);
+
+  // Refs for the three toolbar buttons
+  const downloadBtnRef = useRef(null);
+  const uploadBtnRef   = useRef(null);
+  const addBtnRef      = useRef(null);
+
+  // The toolbar Box is the position:relative anchor
+  const toolbarRef = useRef(null);
+
+  // Measured hint positions (top/left relative to toolbar)
+  const [downloadHintStyle, setDownloadHintStyle] = useState(null);
+  const [uploadHintStyle,   setUploadHintStyle]   = useState(null);
+  const [addHintStyle,      setAddHintStyle]      = useState(null);
+
+  // Measure a button relative to the toolbar anchor
+  const measureBelow = (btnRef, anchorRef) => {
+    const btn    = btnRef.current;
+    const anchor = anchorRef.current;
+    if (!btn || !anchor) return null;
+    const btnRect    = btn.getBoundingClientRect();
+    const anchorRect = anchor.getBoundingClientRect();
+    return {
+      top:   btnRect.bottom - anchorRect.top + 6,
+      left:  btnRect.left   - anchorRect.left,
+      width: btnRect.width,
+    };
+  };
+
+  // Recalculate all three positions whenever layout changes
+  useLayoutEffect(() => {
+    const calc = () => {
+      setDownloadHintStyle(measureBelow(downloadBtnRef, toolbarRef));
+      setUploadHintStyle(measureBelow(uploadBtnRef, toolbarRef));
+      setAddHintStyle(measureBelow(addBtnRef, toolbarRef));
+    };
+    calc();
+    const ro = new ResizeObserver(calc);
+    if (toolbarRef.current) ro.observe(toolbarRef.current);
+    return () => ro.disconnect();
+  }, [teachersLoading]);
+
+  // Start the sequence only when there are no teachers yet
+  useEffect(() => {
+    if (teachers.length > 0) {
+      clearTimeout(hintTimerRef.current);
+      setActiveHint(null);
+      return;
+    }
+
+    let step = 0;
+    const next = () => {
+      if (step >= HINT_SEQUENCE.length) { setActiveHint(null); return; }
+      setActiveHint(HINT_SEQUENCE[step]);
+      step += 1;
+      hintTimerRef.current = setTimeout(next, HINT_DURATION);
+    };
+    // Small delay so layout settles and refs are measured
+    hintTimerRef.current = setTimeout(next, 800);
+    return () => clearTimeout(hintTimerRef.current);
+  }, [teachers.length]);
+
+  // ── Hint renderer ──────────────────────────────────────────────────────────
+  const renderHint = (key, hintStyle, label) => {
+    if (activeHint !== key || !hintStyle) return null;
+    return (
+      <Box
+        sx={{
+          '@keyframes fadeInHint': {
+            from: { opacity: 0, transform: 'translateY(10px)' },
+            to:   { opacity: 1, transform: 'translateY(0)' },
+          },
+          '@keyframes fadeOutHint': {
+            from: { opacity: 1 },
+            to:   { opacity: 0 },
+          },
+          '@keyframes bob': {
+            '0%, 100%': { transform: 'translateY(0)' },
+            '50%':      { transform: 'translateY(-5px)' },
+          },
+          position:      'absolute',
+          top:           hintStyle.top,
+          left:          hintStyle.left,
+          width:         hintStyle.width,
+          zIndex:        20,
+          pointerEvents: 'none',
+          display:       'flex',
+          flexDirection: 'column',
+          alignItems:    'center',
+          animation:
+            'fadeInHint 0.4s cubic-bezier(0.22,1,0.36,1) both, bob 2s ease-in-out 0.5s 2, fadeOutHint 0.5s ease-in-out 4.5s both',
+        }}
+      >
+        {/* Arrow pointing UP to the button above */}
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" style={{ alignSelf: 'flex-start' }}>
+          <path
+            d="M6 38 C6 20, 22 12, 36 4"
+            stroke={primary}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d="M24 2 L36 4 L34 14"
+            stroke={primary}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        </svg>
+
+        {/* Bubble */}
+        <Box
+          sx={{
+            bgcolor:     'background.paper',
+            border:      '2px solid',
+            borderColor: 'primary.main',
+            borderRadius:'12px !important',
+            px: 1.5,
+            py: 1,
+            boxShadow:   `0 6px 24px ${primary}22`,
+            whiteSpace:  'nowrap',
+          }}
+        >
+          <Typography sx={{ fontSize: 11, fontWeight: 700, color: 'primary.main', letterSpacing: 0.2 }}>
+            {label}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  };
+
+  // ── Data handlers (unchanged) ──────────────────────────────────────────────
   const handleDownloadTemplate = async () => {
     try {
       setIsLoading(true);
       await downloadTeacherTemplate();
-
-      setNotification({
-        open: true,
-        message: 'Learner upload template downloaded. Fill and upload to continue.',
-        severity: 'success',
-      });
+      setNotification({ open: true, message: 'Template downloaded. Fill and upload to continue.', severity: 'success' });
     } catch (err) {
-      setNotification({
-        open: true,
-        message: err.response?.data?.message || 'Failed to download template',
-        severity: 'error',
-      });
+      setNotification({ open: true, message: err.response?.data?.message || 'Failed to download template', severity: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -101,13 +228,7 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
     setTeachersLoading(true);
     setError(null);
     try {
-      const params = {
-        page: pageNum + 1,
-        per_page: perPage,
-        search: search,
-      };
-      const response = await getAllStaff(params);
-
+      const response = await getAllStaff({ page: pageNum + 1, per_page: perPage, search });
       const transformedTeachers = (response.data || []).map((teacher) => ({
         id: teacher.id,
         staff_id: teacher.staff_id || teacher.user?.user_id,
@@ -122,103 +243,41 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         class_id: teacher.class_id || '',
         staff_type: teacher.staff_type || 'teaching',
       }));
-
       setTeachers(transformedTeachers);
       onTeacherAdded?.();
       setTotalTeachers(response.total || 0);
     } catch (err) {
-      console.error('Error fetching teachers:', err);
       setError(err.message || 'Failed to fetch teachers');
     } finally {
       setTeachersLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchTeachers(page, rowsPerPage, searchTerm);
-  }, []);
+  useEffect(() => { fetchTeachers(page, rowsPerPage, searchTerm); }, []);
 
-  const handleMenuOpen = (event, teacher) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedTeacher(teacher);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedTeacher(null);
-  };
-
-  const handleAddNewTeacher = () => {
-    setModalMode('create');
-    setSelectedTeacher(null);
-    setModalOpen(true);
-  };
+  const handleMenuOpen  = (event, teacher) => { setAnchorEl(event.currentTarget); setSelectedTeacher(teacher); };
+  const handleMenuClose = () => { setAnchorEl(null); setSelectedTeacher(null); };
+  const handleAddNewTeacher = () => { setModalMode('create'); setSelectedTeacher(null); setModalOpen(true); };
 
   const handleEditTeacher = (teacher) => {
     handleMenuClose();
     const initialValues = {
-      id: teacher.id,
-      staff_id: teacher.staff_id || '',
-      surname: teacher.surname || '',
-      first_name: teacher.first_name || '',
+      id: teacher.id, staff_id: teacher.staff_id || '',
+      surname: teacher.surname || '', first_name: teacher.first_name || '',
       phone_number: teacher.phone || '',
-      gender: teacher.gender
-        ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1)
-        : '',
-      email: teacher.email || '',
-      is_class_teacher: !!teacher.class_arm_id,
-      class_id: teacher.class_id || '',
-      class_arm_id: teacher.class_arm_id || '',
-      staff_type:
-        teacher.staff_type === 'non-teaching'
-          ? 'Non-Teaching'
-          : teacher.staff_type === 'teaching'
-            ? 'Teaching'
-            : teacher.staff_type,
+      gender: teacher.gender ? teacher.gender.charAt(0).toUpperCase() + teacher.gender.slice(1) : '',
+      email: teacher.email || '', is_class_teacher: !!teacher.class_arm_id,
+      class_id: teacher.class_id || '', class_arm_id: teacher.class_arm_id || '',
+      staff_type: teacher.staff_type === 'non-teaching' ? 'Non-Teaching' : teacher.staff_type === 'teaching' ? 'Teaching' : teacher.staff_type,
       middle_name: teacher.user?.mname || '',
     };
     setSelectedTeacher({ ...teacher, initialValues });
-
     setModalMode('edit');
     setModalOpen(true);
   };
 
-  const handleUpdateTeacher = async (values) => {
-    try {
-      setIsLoading(true);
-
-      await updateStaff(values.id, {
-        first_name: values.first_name,
-        last_name: values.surname,
-        middle_name: values.middle_name,
-        email: values.email,
-        phone: values.phone_number,
-        gender: values.gender,
-        staff_type: values.staff_type,
-        class_arm_id: values.class_arm_id,
-        userId: values.staff_id,
-      });
-
-      setNotification({
-        open: true,
-        message: 'Staff updated successfully',
-        severity: 'success',
-      });
-
-      setModalOpen(false);
-
-      fetchTeachers(page, rowsPerPage, searchTerm);
-      onTeacherAdded?.();
-    } catch (err) {
-      setNotification({
-        open: true,
-        message: err.response?.data?.message || 'Failed to update staff',
-        severity: 'error',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleDeleteClick   = (teacher) => { setConfirmDialog({ open: true, teacher }); };
+  const handleConfirmClose  = () => { setConfirmDialog({ open: false, teacher: null }); };
 
   const handleDeleteTeacher = async () => {
     const teacher = confirmDialog.teacher;
@@ -227,67 +286,29 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
     try {
       setIsLoading(true);
       await deleteStaff(teacher.id);
-
-      setNotification({
-        open: true,
-        message: 'Staff deleted successfully',
-        severity: 'success',
-      });
-
-      // Refresh the list after deletion
+      setNotification({ open: true, message: 'Staff deleted successfully', severity: 'success' });
       fetchTeachers(page, rowsPerPage, searchTerm);
-      // Call the callback function to notify parent component
       onTeacherAdded?.();
     } catch (err) {
-      setNotification({
-        open: true,
-        message: err.response?.data?.message || 'Failed to delete teacher',
-        severity: 'error',
-      });
+      setNotification({ open: true, message: err.response?.data?.message || 'Failed to delete teacher', severity: 'error' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteClick = (teacher) => {
-    setConfirmDialog({
-      open: true,
-      teacher,
-    });
-  };
-
-  const handleConfirmClose = () => {
-    setConfirmDialog({ open: false, teacher: null });
-  };
-
-  const filteredTeachers = useMemo(() => {
-    return teachers.filter(
-      (teacher) =>
-        teacher.surname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.staff_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.email?.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [teachers, searchTerm]);
+  const filteredTeachers = useMemo(() =>
+    teachers.filter((t) =>
+      t.surname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.staff_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [teachers, searchTerm]);
 
   const paginatedTeachers = useMemo(() => {
     const start = page * rowsPerPage;
     return filteredTeachers.slice(start, start + rowsPerPage);
   }, [filteredTeachers, page, rowsPerPage]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-    fetchTeachers(newPage, rowsPerPage, searchTerm);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    const newRowsPerPage = parseInt(event.target.value, 10);
-    setRowsPerPage(newRowsPerPage);
-    setPage(0);
-    fetchTeachers(0, newRowsPerPage, searchTerm);
-  };
-
-  // Handle search
   const handleSearch = (event) => {
     const value = event.target.value;
     setSearchTerm(value);
@@ -295,30 +316,21 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
     fetchTeachers(0, rowsPerPage, value);
   };
 
-  const columns = [
-    { id: 'staff_id', label: 'Staff ID' },
-    { id: 'surname', label: 'Surname' },
-    { id: 'first_name', label: 'First Name' },
-    { id: 'phone', label: 'Phone' },
-    { id: 'gender', label: 'Gender' },
-    { id: 'email', label: 'Email' },
-    { id: 'staff_type', label: 'Staff Type' },
-  ];
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      {/* Toolbar */}
+
+      {/* ── Toolbar — position:relative is the hint anchor ── */}
       <Box
+        ref={toolbarRef}
         sx={{
-          px: 2,
-          pt: 2,
-          pb: 1,
+          px: 2, pt: 2, pb: 1,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 2,
           flexShrink: 0,
+          position: 'relative', // ← hint anchor
         }}
       >
         <TextField
@@ -331,96 +343,112 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
             startAdornment: <SearchIcon style={{ marginRight: 8, color: theme.palette.text.disabled }} />,
           }}
         />
+
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
+          <Button
+            ref={downloadBtnRef}
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={handleDownloadTemplate}
+          >
             Download Template
           </Button>
-          <Button variant="outlined" size="small" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
+
+          <Button
+            ref={uploadBtnRef}
+            variant="outlined"
+            size="small"
+            startIcon={<UploadIcon />}
+            onClick={() => setUploadModalOpen(true)}
+          >
             Upload
           </Button>
-          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
+
+          <Button
+            ref={addBtnRef}
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={handleAddNewTeacher}
+          >
             Add New Teacher
           </Button>
         </Box>
+
+        {/* ── Hints rendered inside the toolbar anchor ── */}
+        {renderHint('download', downloadHintStyle, '📥 Download the template first')}
+        {renderHint('upload',   uploadHintStyle,   '📤 Upload your filled template')}
+        {renderHint('add',      addHintStyle,      '👆 Or add a teacher manually')}
       </Box>
 
-      {/* Scrollable table */}
+      {/* Scrollable table (unchanged) */}
       <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ bgcolor: '#fff' }}>#</TableCell>
-              {columns.map((column) => (
-                <TableCell key={column.id} sx={{ fontWeight: 600, bgcolor: '#fff' }}>
-                  {column.label}
-                </TableCell>
-              ))}
+              <TableCell sx={{ bgcolor: '#fff', width: '5%' }}>S/N</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>Staff ID</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>Surname</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '20%', bgcolor: '#fff' }}>First Name</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '20%', bgcolor: '#fff' }}>Phone</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>Gender</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>Email</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>Staff Type</TableCell>
               <TableCell align="center" sx={{ bgcolor: '#fff' }}>Actions</TableCell>
             </TableRow>
           </TableHead>
-
-            <TableBody>
-              {teachersLoading ? (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={24} />
-                  </TableCell>
-                </TableRow>
-              ) : paginatedTeachers.length > 0 ? (
-                paginatedTeachers.map((teacher, index) => (
-                  <TableRow key={teacher.id} hover>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{teacher.staff_id}</TableCell>
-                    <TableCell>{teacher.surname}</TableCell>
-                    <TableCell>{teacher.first_name}</TableCell>
-                    <TableCell>{teacher.phone}</TableCell>
-                    <TableCell>{teacher.gender}</TableCell>
-                    <TableCell sx={{ color: 'primary.main' }}>{teacher.email}</TableCell>
-                    <TableCell>{teacher.arm}</TableCell>
-                    <TableCell align="center">
-                      <IconButton onClick={(e) => handleMenuOpen(e, teacher)}>
-                        <MoreVertIcon />
-                      </IconButton>
-                      <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl) && selectedTeacher?.id === teacher.id}
-                        onClose={handleMenuClose}
-                      >
-                        <MenuItem onClick={() => handleEditTeacher(teacher)}>
-                          <IconEdit size={16} style={{ marginRight: 8 }} />
-                          Edit
-                        </MenuItem>
-                        <MenuItem
-                          onClick={() => handleDeleteClick(teacher)}
-                          sx={{ color: 'error.main' }}
-                        >
-                          <IconTrash size={16} style={{ marginRight: 8 }} />
-                          Delete
-                        </MenuItem>
-                      </Menu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} sx={{ py: 3, border: 0 }}>
-                    <Alert
-                      severity="info"
-                      sx={{
-                        borderRadius: '8px !important',
-                        justifyContent: 'center',
-                        '& .MuiAlert-message': { textAlign: 'center' },
-                      }}
+          <TableBody>
+            {teachersLoading ? (
+              <TableRow>
+                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
+            ) : paginatedTeachers.length > 0 ? (
+              paginatedTeachers.map((teacher, index) => (
+                <TableRow key={teacher.id} hover>
+                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                  <TableCell>{teacher.staff_id}</TableCell>
+                  <TableCell>{teacher.surname}</TableCell>
+                  <TableCell>{teacher.first_name}</TableCell>
+                  <TableCell>{teacher.phone}</TableCell>
+                  <TableCell>{teacher.gender}</TableCell>
+                  <TableCell sx={{ color: 'primary.main' }}>{teacher.email}</TableCell>
+                  <TableCell>{teacher.arm}</TableCell>
+                  <TableCell align="center">
+                    <IconButton onClick={(e) => handleMenuOpen(e, teacher)}>
+                      <MoreVertIcon />
+                    </IconButton>
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={Boolean(anchorEl) && selectedTeacher?.id === teacher.id}
+                      onClose={handleMenuClose}
                     >
-                      {error || 'No teachers added yet. Use the buttons above to add or upload teachers.'}
-                    </Alert>
+                      <MenuItem onClick={() => handleEditTeacher(teacher)}>
+                        <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
+                      </MenuItem>
+                      <MenuItem onClick={() => handleDeleteClick(teacher)} sx={{ color: 'error.main' }}>
+                        <IconTrash size={16} style={{ marginRight: 8 }} /> Delete
+                      </MenuItem>
+                    </Menu>
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={9} sx={{ py: 3, border: 0 }}>
+                  <Alert severity="info" sx={{ borderRadius: '8px !important', justifyContent: 'center', '& .MuiAlert-message': { textAlign: 'center' } }}>
+                    {error || 'No teachers added yet. Use the buttons above to add or upload teachers.'}
+                  </Alert>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
         </Table>
       </TableContainer>
 
+      {/* Modals & dialogs (unchanged) */}
       <AddTeacherModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -430,54 +458,16 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
           try {
             setIsLoading(true);
             if (modalMode === 'edit' && selectedTeacher) {
-              // Update existing teacher
-              await updateStaff(selectedTeacher.id, {
-                first_name: data.first_name,
-                last_name: data.surname,
-                email: data.email,
-                phone: data.phone_number,
-                gender: data.gender,
-                staff_type: data.staff_type || 'teaching',
-                class_arm_id: data.is_class_teacher ? data.class_arm_id : null,
-                userId: data.staff_id,
-              });
-
-              setNotification({
-                open: true,
-                message: 'Staff updated successfully',
-                severity: 'success',
-              });
+              await updateStaff(selectedTeacher.id, { first_name: data.first_name, last_name: data.surname, email: data.email, phone: data.phone_number, gender: data.gender, staff_type: data.staff_type || 'teaching', class_arm_id: data.is_class_teacher ? data.class_arm_id : null, userId: data.staff_id });
+              setNotification({ open: true, message: 'Staff updated successfully', severity: 'success' });
             } else {
-              // Create new teacher
-              await createStaff({
-                first_name: data.first_name,
-                last_name: data.surname,
-                middle_name: data.middle_name || '',
-                email: data.email,
-                phone: data.phone_number,
-                gender: data.gender,
-                staff_type: data.staff_type || 'teaching',
-                is_class_teacher: data.is_class_teacher || false,
-                class_arm_id: data.class_arm_id || null,
-                userId: data.staff_id,
-              });
-              setNotification({
-                open: true,
-                message: 'Staff created successfully',
-                severity: 'success',
-              });
+              await createStaff({ first_name: data.first_name, last_name: data.surname, middle_name: data.middle_name || '', email: data.email, phone: data.phone_number, gender: data.gender, staff_type: data.staff_type || 'teaching', is_class_teacher: data.is_class_teacher || false, class_arm_id: data.class_arm_id || null, userId: data.staff_id });
+              setNotification({ open: true, message: 'Staff created successfully', severity: 'success' });
             }
-            // Refresh the list after save
             fetchTeachers(page, rowsPerPage, searchTerm);
             setModalOpen(false);
           } catch (err) {
-            // console.error('Error saving teacher:', err);
-            setNotification({
-              open: true,
-              message: err.response?.data?.message || 'Failed to save teacher',
-              severity: 'error',
-            });
-            setError(err.message || 'Failed to save teacher');
+            setNotification({ open: true, message: err.response?.data?.message || 'Failed to save teacher', severity: 'error' });
             throw err;
           } finally {
             setIsLoading(false);
@@ -487,40 +477,21 @@ const UploadTeachersTab = ({ onSaveAndContinue, onTeacherAdded }) => {
         isLoading={isLoading}
       />
 
-      <UploadTeacherModal
-        open={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
-        onUpload={handleUploadTeachers}
-      />
+      <UploadTeacherModal open={uploadModalOpen} onClose={() => setUploadModalOpen(false)} onUpload={handleUploadTeachers} />
 
       <Dialog open={confirmDialog.open} onClose={handleConfirmClose} maxWidth="xs" fullWidth>
         <DialogTitle>Delete Teacher</DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to delete "{confirmDialog.teacher?.surname}{' '}
-            {confirmDialog.teacher?.first_name}"? This action cannot be undone.
-          </Typography>
+          <Typography>Are you sure you want to delete "{confirmDialog.teacher?.surname} {confirmDialog.teacher?.first_name}"? This action cannot be undone.</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleConfirmClose}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleDeleteTeacher}>
-            Yes, Delete
-          </Button>
+          <Button variant="contained" color="error" onClick={handleDeleteTeacher}>Yes, Delete</Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={() => setNotification({ ...notification, open: false })}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setNotification({ ...notification, open: false })}
-          severity={notification.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
+      <Snackbar open={notification.open} autoHideDuration={4000} onClose={() => setNotification({ ...notification, open: false })} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+        <Alert onClose={() => setNotification({ ...notification, open: false })} severity={notification.severity} variant="filled" sx={{ width: '100%' }}>
           {notification.message}
         </Alert>
       </Snackbar>

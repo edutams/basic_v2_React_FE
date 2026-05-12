@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import {
   Box,
   Table,
@@ -32,9 +32,15 @@ import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
 import UploadLearnerModal from 'src/components/tenant-components/learners/UploadLearnerModal';
 
+// Hints fire in sequence: 0 = Add Learner, 1 = Download Template, 2 = Upload Template
+const HINT_SEQUENCE = ['add', 'download', 'upload'];
+const HINT_DURATION = 5000; // 5s each
+
 const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const primary = theme.palette.primary.main;
+
   const [hasChanges, setHasChanges] = useState(false);
   const [iconHovered, setIconHovered] = useState(null);
   const [iconClicked, setIconClicked] = useState(null);
@@ -54,6 +60,190 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
     severity: 'success',
   });
 
+  // ── Sequential hint state ─────────────────────────────────────────────────
+  // activeHint: null | 'add' | 'download' | 'upload'
+  const [activeHint, setActiveHint] = useState(null);
+  const hintTimerRef = useRef(null);
+
+  // Refs for the three first-row buttons
+  const addBtnRef      = useRef(null);
+  const downloadBtnRef = useRef(null);
+  const uploadBtnRef   = useRef(null);
+
+  // Refs for the cells those buttons sit in (position: relative anchors)
+  const addCellRef      = useRef(null);
+  const downloadCellRef = useRef(null);
+  // upload is in the same TableCell as download — we measure the button
+  // against the same downloadCellRef but track it separately
+
+  // Measured positions for each hint
+  const [addHintStyle,      setAddHintStyle]      = useState(null);
+  const [downloadHintStyle, setDownloadHintStyle] = useState(null);
+  const [uploadHintStyle,   setUploadHintStyle]   = useState(null);
+
+  // Generic measure helper: positions hint just below a button, anchored to its left edge
+  const measureBelow = (btnRef, cellRef) => {
+    const btn  = btnRef.current;
+    const cell = cellRef.current;
+    if (!btn || !cell) return null;
+    const btnRect  = btn.getBoundingClientRect();
+    const cellRect = cell.getBoundingClientRect();
+    return {
+      top:  btnRect.bottom - cellRect.top + 6,
+      left: btnRect.left   - cellRect.left,
+      width: btnRect.width,
+    };
+  };
+
+  // Recalculate add + download positions whenever layout changes
+  useLayoutEffect(() => {
+    const calc = () => {
+      setAddHintStyle(measureBelow(addBtnRef, addCellRef));
+      setDownloadHintStyle(measureBelow(downloadBtnRef, downloadCellRef));
+    };
+    calc();
+    const ro = new ResizeObserver(calc);
+    if (addCellRef.current)      ro.observe(addCellRef.current);
+    if (downloadCellRef.current) ro.observe(downloadCellRef.current);
+    return () => ro.disconnect();
+  }, [loading, classes.length]);
+
+  // Recalculate upload hint separately — same cell as download but different button
+  useLayoutEffect(() => {
+    const btn  = uploadBtnRef.current;
+    const cell = downloadCellRef.current; // upload lives inside the download cell
+    if (!btn || !cell) return;
+
+    const calcUpload = () => {
+      const btnRect  = btn.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      setUploadHintStyle({
+        top:   btnRect.bottom - cellRect.top + 6,
+        left:  btnRect.left   - cellRect.left,
+        width: btnRect.width,
+      });
+    };
+
+    calcUpload();
+    const ro = new ResizeObserver(calcUpload);
+    ro.observe(cell);
+    return () => ro.disconnect();
+  }, [loading, classes.length]);
+
+  // Start the sequence once data is loaded and first row exists
+  useEffect(() => {
+    if (loading || classes.length === 0) return;
+
+    let step = 0;
+
+    const next = () => {
+      if (step >= HINT_SEQUENCE.length) {
+        setActiveHint(null);
+        return;
+      }
+      setActiveHint(HINT_SEQUENCE[step]);
+      step += 1;
+      hintTimerRef.current = setTimeout(next, HINT_DURATION);
+    };
+
+    // Small delay so the layout has settled and refs are measured
+    hintTimerRef.current = setTimeout(next, 600);
+
+    return () => clearTimeout(hintTimerRef.current);
+  }, [loading, classes.length]);
+
+  // ── Hint renderer ─────────────────────────────────────────────────────────
+  const renderHint = (key, hintStyle, label, arrowDir = 'up') => {
+    if (activeHint !== key || !hintStyle) return null;
+
+    // Arrow paths: 'up' = curves up from bottom, 'up-left' = curves up-left
+    const curvePath =
+      arrowDir === 'up-left'
+        ? 'M38 38 C38 20, 20 12, 4 4'
+        : 'M6 38 C6 20, 22 12, 36 4';
+
+    const arrowHead =
+      arrowDir === 'up-left'
+        ? 'M14 6 L4 4 L6 14'
+        : 'M24 2 L36 4 L34 14';
+
+    return (
+      <Box
+        sx={{
+          '@keyframes fadeInHint': {
+            from: { opacity: 0, transform: 'translateY(10px)' },
+            to:   { opacity: 1, transform: 'translateY(0)' },
+          },
+          '@keyframes fadeOutHint': {
+            from: { opacity: 1 },
+            to:   { opacity: 0 },
+          },
+          '@keyframes bob': {
+            '0%, 100%': { transform: 'translateY(0)' },
+            '50%':      { transform: 'translateY(-5px)' },
+          },
+          position:      'absolute',
+          top:           hintStyle.top,
+          left:          hintStyle.left,
+          width:         hintStyle.width,
+          zIndex:        20,
+          pointerEvents: 'none',
+          display:       'flex',
+          flexDirection: 'column',
+          alignItems:    'center',
+          animation:
+            'fadeInHint 0.4s cubic-bezier(0.22,1,0.36,1) both, bob 2s ease-in-out 0.5s 2, fadeOutHint 0.5s ease-in-out 4.5s both',
+        }}
+      >
+        {/* Curved arrow pointing up to the button */}
+        <svg
+          width="44"
+          height="44"
+          viewBox="0 0 44 44"
+          fill="none"
+          style={{ alignSelf: 'flex-start' }}
+        >
+          <path
+            d={curvePath}
+            stroke={primary}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d={arrowHead}
+            stroke={primary}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
+        </svg>
+
+        {/* Bubble */}
+        <Box
+          sx={{
+            bgcolor:     'background.paper',
+            border:      '2px solid',
+            borderColor: 'primary.main',
+            borderRadius:'12px !important',
+            px: 1.5,
+            py: 1,
+            boxShadow:   `0 6px 24px ${primary}22`,
+            whiteSpace:  'nowrap',
+          }}
+        >
+          <Typography
+            sx={{ fontSize: 11, fontWeight: 700, color: 'primary.main', letterSpacing: 0.2 }}
+          >
+            {label}
+          </Typography>
+        </Box>
+      </Box>
+    );
+  };
+
+  // ── Data handlers ─────────────────────────────────────────────────────────
   const handleAddNewLearner = (classItem) => {
     setSelectedClass(classItem);
     setModalOpen(true);
@@ -102,7 +292,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
         params: { programme_class_id: programmeClassId },
         responseType: 'blob',
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url  = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `learner_upload_template_${programmeClassId}.xlsx`);
@@ -181,9 +371,9 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>Classes</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>No. Uploaded</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>No. Uploaded</TableCell>
               <TableCell sx={{ fontWeight: 600, width: '20%', bgcolor: '#fff' }}>Upload Using Forms</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '40%', bgcolor: '#fff' }}>Upload Using Excel File</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '45%', bgcolor: '#fff' }}>Upload Using Excel File</TableCell>
             </TableRow>
           </TableHead>
 
@@ -196,19 +386,9 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
 
               return (
                 <TableRow key={item.unique_key || index}>
+                  {/* ── Class name ── */}
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {/* Toggle — temporarily removed
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onMouseEnter={() => setIconHovered(index)}
-                        onMouseLeave={() => setIconHovered(null)}
-                        onClick={() => setIconClicked(iconClicked === index ? null : index)}
-                      >
-                        ✕
-                      </IconButton>
-                      */}
                       <TextField
                         size="small"
                         defaultValue={`${item.programme_code} - ${item.class_code}`}
@@ -226,6 +406,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                     </Box>
                   </TableCell>
 
+                  {/* ── No. uploaded ── */}
                   <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
                     <Typography variant="subtitle2" align="center">
                       <Link sx={{ cursor: 'pointer' }} onClick={() => handleViewLearners(item)}>
@@ -234,20 +415,39 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                     </Typography>
                   </TableCell>
 
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
-                    <Button
+                  {/* ── Add New Learner (form) ── */}
+                  <TableCell
+                    ref={index === 0 ? addCellRef : null}
+                    sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
+                    align="center"
+                  >
+                    <Button size="small"
+                      ref={index === 0 ? addBtnRef : null}
                       variant="contained"
                       size="small"
-                      startIcon={<AddIcon />}
+                      // startIcon={<AddIcon />} 
                       onClick={() => handleAddNewLearner(item)}
                     >
                       Add New Learner
                     </Button>
+
+                    {/* Hint 1 — Add Learner */}
+                    {index === 0 && renderHint(
+                      'add',
+                      addHintStyle,
+                      '👆 Click to add a learner manually',
+                    )}
                   </TableCell>
 
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }} align="center">
+                  {/* ── Download + Upload Template ── */}
+                  <TableCell
+                    ref={index === 0 ? downloadCellRef : null}
+                    sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
+                    align="center"
+                  >
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                       <Button
+                        ref={index === 0 ? downloadBtnRef : null}
                         variant="outlined"
                         size="small"
                         startIcon={<DownloadIcon />}
@@ -256,6 +456,7 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                         Download Template
                       </Button>
                       <Button
+                        ref={index === 0 ? uploadBtnRef : null}
                         variant="contained"
                         size="small"
                         startIcon={<UploadIcon />}
@@ -264,6 +465,21 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
                         Upload Template
                       </Button>
                     </Box>
+
+                    {/* Hint 2 — Download Template */}
+                    {index === 0 && renderHint(
+                      'download',
+                      downloadHintStyle,
+                      '📥 Download the template first',
+                      'up-left',
+                    )}
+
+                    {/* Hint 3 — Upload Template */}
+                    {index === 0 && renderHint(
+                      'upload',
+                      uploadHintStyle,
+                      '📤 Then upload your filled template',
+                    )}
                   </TableCell>
                 </TableRow>
               );

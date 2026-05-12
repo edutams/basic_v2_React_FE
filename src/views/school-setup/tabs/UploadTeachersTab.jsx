@@ -46,7 +46,7 @@ import {
 const HINT_SEQUENCE = ['download', 'upload', 'add'];
 const HINT_DURATION = 5000; // 5s each
 
-const UploadTeachersTab = ({ onTeacherAdded }) => {
+const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
   const theme = useTheme();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,6 +127,11 @@ const UploadTeachersTab = ({ onTeacherAdded }) => {
     hintTimerRef.current = setTimeout(next, 800);
     return () => clearTimeout(hintTimerRef.current);
   }, [teachers.length]);
+
+  // Notify parent when at least one teacher exists
+  useEffect(() => {
+    onReadyChange?.(teachers.length > 0);
+  }, [teachers.length, onReadyChange]);
 
   // ── Hint renderer ──────────────────────────────────────────────────────────
   // Replaced by <ArrowHint> component — thin wrapper kept for call-site compat

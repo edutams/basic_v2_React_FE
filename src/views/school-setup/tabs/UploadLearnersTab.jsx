@@ -275,6 +275,12 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     fetchData();
   }, []);
 
+  // Notify parent when any learner exists
+  useEffect(() => {
+    const hasAny = Object.values(studentCounts).some((c) => c > 0);
+    onReadyChange?.(hasAny);
+  }, [studentCounts, onReadyChange]);
+
   const handleViewLearners = (classItem) => {
     setSelectedClass(classItem);
     setLearnerListModalOpen(true);

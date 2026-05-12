@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import SetupShell from './SetupShell';
 import UploadTeachersTab from '../tabs/UploadTeachersTab';
 
 const Stage5AddTeachers = ({ onNext, onBack, onSkip }) => {
+  const [canContinue, setCanContinue] = useState(false);
   return (
     <SetupShell
       stage={5}
@@ -10,6 +12,7 @@ const Stage5AddTeachers = ({ onNext, onBack, onSkip }) => {
       onBack={onBack}
       onSkip={onSkip}
       onSaveAndContinue={onNext}
+      canContinue={canContinue}
       noPadding
       leftTitle="Add your teachers."
       leftSubtitle="Onboard your teaching and non-teaching staff to your school portal."
@@ -45,7 +48,7 @@ const Stage5AddTeachers = ({ onNext, onBack, onSkip }) => {
             flexDirection: 'column',
           }}
         >
-          <UploadTeachersTab onSaveAndContinue={onNext} />
+          <UploadTeachersTab onReadyChange={setCanContinue} />
         </Box>
       </Box>
     </SetupShell>

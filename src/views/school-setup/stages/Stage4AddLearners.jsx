@@ -48,7 +48,7 @@ const Stage4AddLearners = ({ onNext, onBack, onSkip }) => {
             flexDirection: 'column',
           }}
         >
-          <UploadLearnersTab onLearnerAdded={() => setCanContinue(true)} />
+          <UploadLearnersTab onLearnerAdded={() => {}} onReadyChange={setCanContinue} />
         </Box>
       </Box>
     </SetupShell>

@@ -73,6 +73,12 @@ const eduTierApi = {
     const response = await api.post('/v1/landlord/edu_tier/modules/store_module', data);
     return response.data;
   },
+  batchUpdateModules: async (packageId, modules) => {
+    const response = await api.post(`/v1/landlord/edu_tier/modules/${packageId}/batch_update`, {
+      modules: modules
+    });
+    return response.data;
+  },
   deleteModule: async (id) => {
     const response = await api.delete(`/v1/landlord/edu_tier/modules/delete_module/${id}`);
     return response.data;

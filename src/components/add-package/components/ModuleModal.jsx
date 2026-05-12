@@ -102,11 +102,12 @@ const ModuleModal = ({
               <Button variant="outlined" onClick={onClose}>
                 Cancel
               </Button>
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="success"
                 onClick={() => handleStatusChange('active')}
                 disabled={isLoading}
+                size='small'
               >
                 {isLoading ? 'Activating...' : 'Activate'}
               </Button>
@@ -127,8 +128,8 @@ const ModuleModal = ({
               <Button variant="outlined" onClick={onClose}>
                 Cancel
               </Button>
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="warning"
                 onClick={() => handleStatusChange('inactive')}
                 disabled={isLoading}

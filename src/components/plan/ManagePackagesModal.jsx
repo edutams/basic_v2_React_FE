@@ -48,13 +48,13 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
               // Check if mod.plans is an array and contains the selected plan
               // The backend now filters plans to only include the current one if it exists
               const hasPlan = Array.isArray(mod.plans) && mod.plans.length > 0;
-              
+
               flatModules.push({
                 ...mod,
                 ckmstatus: hasPlan,
                 sub_modules: undefined, // Clear to avoid circularity if needed
               });
-              
+
               if (mod.sub_modules && mod.sub_modules.length > 0) {
                 processModules(mod.sub_modules);
               }
@@ -259,15 +259,16 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
       <Divider sx={{ my: 4 }} />
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, pb: 1 }}>
-        <Button onClick={onClose} variant="outlined" color="inherit" sx={{ textTransform: 'none' }}>
+        <Button onClick={onClose}>
           Cancel
         </Button>
+
         <Button
           onClick={handleSave}
           variant="contained"
-          startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+          startIcon={saving && <CircularProgress size={20} color="inherit" />}
           disabled={saving}
-          sx={{ textTransform: 'none', px: 4 }}
+          size='small'
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>

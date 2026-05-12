@@ -167,7 +167,7 @@ const ModuleManagement = ({
               onClick={onAttachModule}
               size="small"
             >
-              Attach Module
+              Manage Module
             </Button>
           )}
         </Box>
@@ -189,6 +189,7 @@ const ModuleManagement = ({
               },
             }}
             sx={{ flexGrow: 1 }}
+            size="small"
           />
         </Box>
 

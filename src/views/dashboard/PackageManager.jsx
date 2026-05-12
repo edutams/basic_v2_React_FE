@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 // import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
@@ -91,6 +91,39 @@ const EduTier = () => {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+
+  const availableTabs = useMemo(() => {
+    const tabs = [];
+    if (can('landlord.plan.manager')) {
+      tabs.push({
+        id: 'modules',
+        label: 'Modules',
+        icon: <IconUserCircle size="22" />,
+        component: <ModulesTab />,
+      });
+      tabs.push({
+        id: 'packages',
+        label: 'Packages',
+        icon: <IconBell size="22" />,
+        component: <PackageTab />,
+      });
+      tabs.push({
+        id: 'plan',
+        label: 'Plan',
+        icon: <IconArticle size="22" />,
+        component: <PlanTab />,
+      });
+    }
+    if (can('landlord.plan.my_plan')) {
+      tabs.push({
+        id: 'my_plan',
+        label: 'My Plan',
+        icon: <IconChecklist size="22" />,
+        component: <MyPlanTab />,
+      });
+    }
+    return tabs;
+  }, [can]);
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
@@ -572,56 +605,24 @@ const EduTier = () => {
                 variant="scrollable"
                 aria-label="basic tabs example"
               >
-                {can('landlord.plan.manager') && [
+                {availableTabs.map((tab, idx) => (
                   <Tab
-                    key="modules"
+                    key={tab.id}
                     iconPosition="start"
-                    icon={<IconUserCircle size="22" />}
-                    label="Modules"
-                    {...a11yProps(0)}
-                  />,
-                  <Tab
-                    key="packages"
-                    iconPosition="start"
-                    icon={<IconBell size="22" />}
-                    label="Packages"
-                    {...a11yProps(1)}
-                  />,
-                  <Tab
-                    key="plan"
-                    iconPosition="start"
-                    icon={<IconArticle size="22" />}
-                    label="Plan"
-                    {...a11yProps(2)}
+                    icon={tab.icon}
+                    label={tab.label}
+                    {...a11yProps(idx)}
                   />
-                ]}
-
-                {can('landlord.plan.my_plan') && (
-                  <Tab
-                    iconPosition="start"
-                    icon={<IconChecklist size="22" />}
-                    label="My Plan"
-                    {...a11yProps(3)}
-                  />
-                )}
+                ))}
               </Tabs>
             </Box>
             <Divider />
             <CardContent>
-              <TabPanel value={value} index={0}>
-                <ModulesTab />
-              </TabPanel>
-              <TabPanel value={value} index={1}>
-                <PackageTab />
-              </TabPanel>
-              <TabPanel value={value} index={2}>
-                <PlanTab />
-              </TabPanel>
-              {can('landlord.plan.my_plan') && (
-                <TabPanel value={value} index={3}>
-                  <MyPlanTab />
+              {availableTabs.map((tab, idx) => (
+                <TabPanel key={tab.id} value={value} index={idx}>
+                  {tab.component}
                 </TabPanel>
-              )}
+              ))}
             </CardContent>
           </BlankCard>
         </Grid>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -26,6 +26,7 @@ import {
 import { IconSearch } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
 import agentApi from 'src/api/agent';
+import { AuthContext } from 'src/context/AgentContext/auth';
 
 const TotalSubAgentModal = ({ open, onClose, orgId }) => {
   const theme = useTheme();
@@ -39,15 +40,29 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [level, setLevel] = useState('');
+  const [levelInput, setLevelInput] = useState('');
+
+  const { user } = useContext(AuthContext);
+  const userLevel = parseInt(user?.organization?.access_level || 1);
+
+  // Dynamic levels based on logged in organization level
+  const levelOptions = useMemo(() => {
+    const options = [];
+    for (let i = userLevel + 1; i <= 5; i++) {
+      options.push({ value: i.toString(), label: `Level ${i}` });
+    }
+    return options;
+  }, [userLevel]);
 
   useEffect(() => {
-    if (open && orgId) {
-      fetchOrganizations();
-    }
+    // if (open && orgId) {
+    fetchOrganizations();
+    // }
   }, [open, orgId, page, search, level]);
 
   const handleSearch = () => {
     setSearch(searchInput);
+    setLevel(levelInput);
     setPage(0);
   };
 
@@ -64,13 +79,13 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
         page: page + 1,
         search,
       };
-      
+
       // Add level parameter if it's set
       if (level) {
         params.access_level = level;
       }
-      
-      const res = await agentApi.getSubOrganizations(orgId, params);
+
+      const res = await agentApi.getSubOrganizations(params);
       if (res.status) {
         setData(res.data.data || []);
         setTotalRows(res.data.total || 0);
@@ -113,19 +128,20 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Level</InputLabel>
           <Select
-            value={level}
+            value={levelInput}
             label="Level"
-            onChange={(e) => setLevel(e.target.value)}
+            onChange={(e) => setLevelInput(e.target.value)}
           >
             <MenuItem value="">All Levels</MenuItem>
-            <MenuItem value="2">Level 2</MenuItem>
-            <MenuItem value="3">Level 3</MenuItem>
-            <MenuItem value="4">Level 4</MenuItem>
-            <MenuItem value="5">Level 5</MenuItem>
+            {levelOptions.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
-        <Button 
-          variant="contained" 
+        <Button
+          variant="contained"
           size="small"
           onClick={handleSearch}
           sx={{ height: 40 }}
@@ -161,8 +177,8 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar 
-                        src={org.organization_logo} 
+                      <Avatar
+                        src={org.organization_logo}
                         sx={{ width: 36, height: 36, fontSize: '14px', bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}
                       >
                         {org.organization_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}

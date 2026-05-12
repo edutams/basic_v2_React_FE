@@ -39,28 +39,32 @@ const agentApi = {
     const response = await api.post(`/v1/landlord/organizations/team`, data);
     return response.data;
   },
-  updateTeamMember: async (orgId, memberId, data) => {
+  updateTeamMember: async (memberId, data) => {
     const response = await api.put(
-      `/v1/landlord/organizations/team/${orgId}/member/${memberId}`,
+      `/v1/landlord/organizations/team/member/${memberId}`,
       data,
     );
     return response.data;
   },
-  removeTeamMember: async (orgId, memberId) => {
+  removeTeamMember: async (memberId) => {
     const response = await api.delete(
-      `/v1/landlord/organizations/team/${orgId}/member/${memberId}`,
+      `/v1/landlord/organizations/team/member/${memberId}`,
     );
     return response.data;
   },
-  syncTeamMemberPermissions: async (orgId, memberId, data) => {
+  syncTeamMemberPermissions: async (memberId, data) => {
     const response = await api.post(
-      `/v1/landlord/organizations/team/${orgId}/member/${memberId}/permissions`,
+      `/v1/landlord/organizations/team/member/${memberId}/permissions`,
       data,
     );
     return response.data;
   },
-  getLeadPermissions: async (id) => {
-    const response = await api.get(`/v1/landlord/organizations/${id}/lead-permissions`);
+  getLeadPermissions: async () => {
+    const response = await api.get(`/v1/landlord/organizations/lead-permissions`);
+    return response.data;
+  },
+  deleteOrganization: async (id) => {
+    const response = await api.delete(`/v1/landlord/organizations/${id}`);
     return response.data;
   },
   impersonateAgent: async (id) => {
@@ -69,6 +73,14 @@ const agentApi = {
   },
   impersonateTenant: async (id) => {
     const response = await api.post(`/v1/landlord/impersonation/tenant/${id}`);
+    return response.data;
+  },
+  getSchools: async (orgId) => {
+    const response = await api.get(`/v1/landlord/organizations/${orgId}/schools`);
+    return response.data;
+  },
+  deleteOrganization: async (orgId) => {
+    const response = await api.delete(`/v1/landlord/organizations/${orgId}`);
     return response.data;
   },
 };

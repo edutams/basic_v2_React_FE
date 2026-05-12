@@ -177,6 +177,7 @@ const SubjectBank = () => {
       programme_id: '',
       pass_mark: '',
       unit: '',
+      status: "",
       curriculum_id: selectedCurriculum,
     });
     setOpenAddSubjectModal(true);
@@ -194,11 +195,10 @@ const SubjectBank = () => {
       programme_id: subject.programme_id,
       pass_mark: subject.pass_mark,
       unit: subject.unit,
-      status: subject.status || '',
+      status: subject.prog_subject_status || 'compulsory',
       curriculum_id: selectedCurriculum,
     });
     setOpenEditSubjectModal(true);
-    setSubjectAnchorEl(event?.currentTarget);
     setOpenSubjectMenu(false);
   };
 
@@ -360,14 +360,14 @@ const SubjectBank = () => {
       curriculum_id: group.curriculum_id || '',
       subject_ids: group.subjects?.map((s) => s.id) || [],
     });
-    
+
     // Load subjects for the group's curriculum
     if (group.curriculum_id) {
       loadSubjectsForSubjectGroup(group.curriculum_id);
     } else {
       setSubjectGroupModalSubjects([]);
     }
-    
+
     setOpenEditSubjectGroupModal(true);
     setSubjectGroupAnchorEl(event?.currentTarget);
     setOpenSubjectGroupMenu(false);
@@ -450,10 +450,10 @@ const SubjectBank = () => {
     }
   };
 
-  const handleOpenSubjectGroupMenu = (event, group) => {
-    setSelectedSubjectGroup(group);
-    setSubjectGroupAnchorEl(event.currentTarget);
-    setOpenSubjectGroupMenu(true);
+  const handleOpenSubjectMenu = (event, subject) => {
+    setSelectedSubject(subject);
+    setSubjectAnchorEl(event.currentTarget);
+    setOpenSubjectMenu(true);
   };
 
   const handleCloseSubjectGroupMenu = () => {
@@ -583,39 +583,53 @@ const SubjectBank = () => {
           <Box sx={{ flex: { md: 7 }, width: '100%' }}>
             <ParentCard
               title={
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    Subject Bank
-                  </Typography>
-                  <Box display="flex" alignItems="center" gap={2}>
-                    <FormControl size="small" sx={{ minWidth: 200 }}>
-                      <InputLabel>Curriculum</InputLabel>
-                      <Select
-                        value={selectedCurriculum}
-                        onChange={(e) => handleCurriculumFilterChange(e.target.value)}
-                        label="Curriculum"
-                      >
-                        {curriculumData.map((curr) => (
-                          <MenuItem key={curr.id} value={curr.id}>
-                            {curr.curriculum_name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <TextField
-                      size="small"
-                      placeholder="Search subjects..."
-                      value={subjectSearch}
-                      onChange={(e) => setSubjectSearch(e.target.value)}
-                      sx={{ width: 200 }}
-                    />
-                    <Button variant="contained" size='small' onClick={handleOpenAddSubjectModal}>
-                      Add Subject
-                    </Button>
-                  </Box>
-                </Box>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Subject Bank
+                </Typography>
               }
             >
+              {/* Search and Action Controls Below Title */}
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Curriculum</InputLabel>
+                    <Select
+                      value={selectedCurriculum}
+                      onChange={(e) => handleCurriculumFilterChange(e.target.value)}
+                      label="Curriculum"
+                      disabled
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(0, 0, 0, 0.23)',
+                        },
+                        '& .Mui-disabled .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(0, 0, 0, 0.23)',
+                        },
+                        '& .MuiSelect-icon': {
+                          display: 'none',
+                        },
+                      }}
+                    >
+                      {curriculumData.map((curr) => (
+                        <MenuItem key={curr.id} value={curr.id}>
+                          {curr.curriculum_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    size="small"
+                    placeholder="Search subjects..."
+                    value={subjectSearch}
+                    onChange={(e) => setSubjectSearch(e.target.value)}
+                    sx={{ width: 200 }}
+                  />
+                </Box>
+                <Button variant="contained" size='small' onClick={handleOpenAddSubjectModal}>
+                  Add Subject
+                </Button>
+              </Box>
+              
               <TableContainer sx={{ maxHeight: 600 }}>
                 <Table sx={{ tableLayout: 'fixed' }}>
                   <TableHead>
@@ -648,7 +662,7 @@ const SubjectBank = () => {
                           <TableCell align="center">
                             <IconButton
                               size="small"
-                              onClick={(e) => handleOpenEditModal(e, subject)}
+                              onClick={(e) => handleOpenSubjectMenu(e, subject)}
                             >
                               <MoreVertIcon size={18} />
                             </IconButton>
@@ -687,6 +701,18 @@ const SubjectBank = () => {
                       onChange={(e) => handleCurriculumFilterChange(e.target.value)}
                       label="Curriculum"
                       size="small"
+                      disabled
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(0, 0, 0, 0.23)',
+                        },
+                        '& .Mui-disabled .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(0, 0, 0, 0.23)',
+                        },
+                        '& .MuiSelect-icon': {
+                          display: 'none',
+                        },
+                      }}
                     >
                       {curriculumData.map((curr) => (
                         <MenuItem key={curr.id} value={curr.id}>
@@ -1199,7 +1225,7 @@ const SubjectBank = () => {
                     )}
                   </FormControl>
                 </Grid>
-                <Grid size={{ xs: 12,md:12 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                   <TextField
                     fullWidth
                     label="Group Name"
@@ -1269,7 +1295,7 @@ const SubjectBank = () => {
                       loading={loadingModalSubjects}
                       options={subjectGroupModalSubjects}
                       getOptionLabel={(s) =>
-                        `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}` 
+                        `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}`
                       }
                       value={subjectGroupFormData.subject_ids ? subjectGroupModalSubjects.filter((s) =>
                         subjectGroupFormData.subject_ids.includes(s.id),
@@ -1364,7 +1390,7 @@ const SubjectBank = () => {
                     )}
                   </FormControl>
                 </Grid>
-                <Grid size={{ xs: 12,md:12 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                   <TextField
                     fullWidth
                     label="Group Name"
@@ -1423,7 +1449,7 @@ const SubjectBank = () => {
                     )}
                   </FormControl>
                 </Grid>
-                <Grid size={{ xs: 12,md:12 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                   {/* Subject search & selection */}
                   <Box sx={{ bgcolor: '#e0f2fe', p: 1.5, borderRadius: 1, mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
@@ -1434,7 +1460,7 @@ const SubjectBank = () => {
                       loading={loadingModalSubjects}
                       options={subjectGroupModalSubjects}
                       getOptionLabel={(s) =>
-                        `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}` 
+                        `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}`
                       }
                       value={subjectGroupFormData.subject_ids ? subjectGroupModalSubjects.filter((s) =>
                         subjectGroupFormData.subject_ids.includes(s.id),

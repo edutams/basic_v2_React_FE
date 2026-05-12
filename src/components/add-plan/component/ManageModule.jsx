@@ -13,7 +13,7 @@ import {
   Avatar,
   CircularProgress,
 } from '@mui/material';
-import { 
+import {
   IconSearch,
   IconCircleCheck,
   IconCircleDashed,
@@ -97,9 +97,9 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
   const filteredModules = useMemo(() => {
     const query = searchQuery.toLowerCase();
     const allModules = modules || [];
-    
+
     if (!query) return currentCategoryModules;
-    
+
     return allModules.filter(m => {
       const name = (m.module_name || m.mod_name || m.label || '').toLowerCase();
       const desc = (m.module_description || m.mod_description || m.description || '').toLowerCase();
@@ -125,7 +125,7 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
   const handleSelectAll = (moduleList) => {
     const listIds = moduleList.map(m => String(m.id));
     const allSelected = listIds.every(id => selectedModules.includes(id));
-    
+
     if (allSelected) {
       setSelectedModules(prev => prev.filter(id => !listIds.includes(id)));
     } else {
@@ -151,9 +151,9 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
   };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
+    <Box sx={{
+      display: 'flex',
+      flexDirection: 'column',
       height: '90vh',
       bgcolor: '#f8fafc',
       borderRadius: '24px',
@@ -190,167 +190,15 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
         {/* Main Content Grid */}
         <Grid container spacing={3}>
           {/* Sidebar */}
-          <Grid item xs={12} md={3}>
-            <Paper 
-              variant="outlined"
-              sx={{ 
-                p: 1.5,
-                borderRadius: '12px',
-                bgcolor: 'white',
-                position: 'sticky',
-                top: 0,
-              }}
-            >
-              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', px: 1, mb: 1.5, display: 'block', letterSpacing: 1 }}>
-                MODULE SUITES
-              </Typography>
-              <List sx={{ p: 0 }}>
-                {categories.map((cat, idx) => {
-                  const total = moduleCategories[cat].length;
-                  const count = getModuleCount(moduleCategories[cat]);
-                  const isActive = activeTab === idx;
-                  
-                  return (
-                    <ListItem
-                      key={cat}
-                      disablePadding
-                      onClick={() => setActiveTab(idx)}
-                      sx={{
-                        mb: 0.5,
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        bgcolor: isActive ? alpha('#5D87FF', 0.1) : 'transparent',
-                        color: isActive ? 'primary.main' : 'text.primary',
-                        '&:hover': { bgcolor: alpha('#5D87FF', 0.05) }
-                      }}
-                    >
-                      <ListItemText 
-                        primary={cat}
-                        primaryTypographyProps={{ 
-                          variant: 'body2', 
-                          fontWeight: isActive ? 'bold' : 'medium' 
-                        }}
-                        sx={{ px: 1 }}
-                      />
-                      <Typography variant="caption" sx={{ pr: 1, fontWeight: 'bold' }}>
-                        {count}/{total}
-                      </Typography>
-                    </ListItem>
-                  );
-                })}
-              </List>
-            </Paper>
-          </Grid>
+
 
           {/* Module Grid */}
-          <Grid item xs={12} md={9}>
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
-              <SearchInput>
-                <IconSearch size={18} color="#94a3b8" />
-                <input 
-                  placeholder="Search modules..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ 
-                    border: 'none', 
-                    background: 'transparent', 
-                    outline: 'none', 
-                    marginLeft: '8px',
-                    width: '100%',
-                    fontSize: '14px'
-                  }}
-                />
-              </SearchInput>
-              <Button 
-                size="small"
-                variant="outlined" 
-                onClick={() => handleSelectAll(allCurrentModules)}
-                sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
-              >
-                {getModuleCount(allCurrentModules) === allCurrentModules.length ? 'Deselect Suite' : 'Select Suite'}
-              </Button>
-            </Box>
 
-            <Grid container spacing={1.5}>
-              {filteredModules.map((module) => {
-                const isSelected = selectedModules.includes(String(module.id));
-                const name = module.module_name || module.mod_name || module.label || 'Unnamed Module';
-                const description = module.module_description || module.mod_description || module.description || 'No description available';
-                const status = module.module_status || module.mod_status || 'active';
-
-                return (
-                  <Grid item xs={12} sm={6} key={module.id}>
-                    <Paper
-                      variant="outlined"
-                      onClick={() => status === 'active' && handleModuleChange(module.id, !isSelected)}
-                      sx={{
-                        p: 2,
-                        borderRadius: '12px',
-                        cursor: status === 'active' ? 'pointer' : 'default',
-                        borderColor: isSelected ? 'primary.main' : 'divider',
-                        bgcolor: isSelected ? alpha('#5D87FF', 0.02) : 'white',
-                        opacity: status === 'active' ? 1 : 0.6,
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 1.5,
-                        transition: 'all 0.2s',
-                        '&:hover': status === 'active' ? {
-                          borderColor: isSelected ? 'primary.main' : alpha('#5D87FF', 0.5),
-                        } : {}
-                      }}
-                    >
-                      <Box sx={{ mt: 0.2 }}>
-                        {isSelected ? (
-                          <IconCircleCheck size={20} color="#5D87FF" />
-                        ) : (
-                          <IconCircleDashed size={20} color="#cbd5e1" />
-                        )}
-                      </Box>
-
-                      <Box>
-                        <Typography variant="body2" fontWeight="bold">
-                          {name}
-                          {searchQuery && (
-                            <Chip 
-                              label={getCategoryName(module)} 
-                              size="small" 
-                              sx={{ ml: 1, height: 16, fontSize: '10px' }} 
-                            />
-                          )}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'block' }}>
-                          {description}
-                        </Typography>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                );
-              })}
-
-              {filteredModules.length === 0 && (modules || []).length > 0 && (
-                <Box sx={{ width: '100%', py: 8, textAlign: 'center' }}>
-                  <IconFocus2 size={48} color="#cbd5e1" />
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
-                    No modules found matching your search.
-                  </Typography>
-                </Box>
-              )}
-
-              {(modules || []).length === 0 && (
-                <Box sx={{ width: '100%', py: 8, textAlign: 'center' }}>
-                  <CircularProgress size={32} sx={{ mb: 2 }} />
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Loading modules...
-                  </Typography>
-                </Box>
-              )}
-            </Grid>
-          </Grid>
         </Grid>
       </Box>
 
       {/* Persistent Action Bar */}
-      <Box 
+      <Box
         sx={{
           bgcolor: 'white',
           borderTop: '1px solid',
@@ -369,21 +217,21 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button 
-              onClick={onCancel} 
+            <Button
+              onClick={onCancel}
               sx={{ textTransform: 'none', fontWeight: 'bold' }}
             >
               Cancel
             </Button>
-            <Button 
-              variant="contained" 
-              onClick={handleSave} 
+            <Button
+              variant="contained"
+              onClick={handleSave}
               disabled={!hasChanges || isSaving}
               startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : null}
-              sx={{ 
-                px: 4, 
-                borderRadius: '8px', 
-                fontWeight: 'bold', 
+              sx={{
+                px: 4,
+                borderRadius: '8px',
+                fontWeight: 'bold',
                 textTransform: 'none',
                 boxShadow: 'none',
                 '&:hover': { boxShadow: 'none' }

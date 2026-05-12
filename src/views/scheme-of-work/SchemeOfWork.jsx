@@ -52,6 +52,8 @@ import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchSubjectsByClass,
+  fetchSubjects,
+  fetchCurriculums,
 } from '../../api/tenantCurriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
@@ -77,6 +79,7 @@ const SchemeOfWork = () => {
   // Filter options
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [curriculums, setCurriculums] = useState([]);
   const [subjects, setSubjects] = useState([]);
 
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -110,6 +113,7 @@ const SchemeOfWork = () => {
   // Inline Filters
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
+  const [curriculum, setCurriculum] = useState('');
   const [subject, setSubject] = useState('');
 
   // Drawer states
@@ -157,15 +161,30 @@ const SchemeOfWork = () => {
     initData();
   }, []);
 
+  // Fetch subjects when curriculum changes
+  useEffect(() => {
+    if (curriculum) {
+      fetchSubjects(curriculum)
+        .then((subjectsRes) => {
+          setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+        })
+        .catch((error) => {
+          console.error('Failed to fetch subjects:', error);
+        });
+    }
+  }, [curriculum]);
+
   const initData = async () => {
     try {
-      const [termsRes, progsRes] = await Promise.all([
+      const [termsRes, progsRes, curricRes] = await Promise.all([
         tenantSchemeApi.getTerms(),
         fetchProgrammes(),
+        fetchCurriculums(),
       ]);
       setTerms(termsRes);
       if (termsRes.length > 0) setActiveTerm(termsRes[0].id);
       setProgrammes(progsRes.data.map((p) => ({ value: p.id, label: p.programme_name })));
+      setCurriculums(curricRes.data.map((c) => ({ value: c.id, label: c.curriculum_name })));
     } catch (error) {
       notify.error('Failed to initialize data');
     }
@@ -196,7 +215,7 @@ const SchemeOfWork = () => {
   };
 
   const handleFetch = () => {
-    const filters = { ...activeFilters, programme, classLevel, subject };
+    const filters = { ...activeFilters, programme, classLevel, curriculum, subject };
     setActiveFilters(filters);
     fetchScheme({ subject: filters.subject, classLevel: filters.classLevel }, activeTerm);
   };
@@ -294,10 +313,10 @@ const SchemeOfWork = () => {
     }
   };
 
-  const handleModalClassChange = async (classId, setSubjects) => {
+  const handleModalClassChange = async (classId, setSubjects, curriculumId) => {
     if (!classId) return;
     try {
-      const subRes = await fetchSubjectsByClass(classId);
+      const subRes = await fetchSubjects(curriculumId);
       setSubjects(subRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
     } catch (e) {
       notify.error('Failed to load subjects');
@@ -698,7 +717,7 @@ const SchemeOfWork = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <TextField
                 select
                 fullWidth
@@ -717,7 +736,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <TextField
                 select
                 fullWidth
@@ -736,7 +755,23 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
+              <TextField
+                select
+                fullWidth
+                label="Curriculum"
+                size="small"
+                value={curriculums.some((c) => c.value === curriculum) ? curriculum : ''}
+                onChange={(e) => setCurriculum(e.target.value)}
+              >
+                {curriculums.map((c) => (
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <TextField
                 select
                 fullWidth
@@ -752,27 +787,16 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleFetch}
-                  sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
-                >
-                  Fetch
-                </Button>
-                {subject && classLevel && (
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => setImportConfirmOpen(true)}
-                    startIcon={<IconArrowRightSquare size={18} />}
-                    sx={{ textTransform: 'none', px: 2, borderRadius: 1.5 }}
-                  >
-                    Import
-                  </Button>
-                )}
-              </Box>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Button
+                variant="contained"
+                onClick={handleFetch}
+                disabled={!programme || !classLevel || !curriculum || !subject}
+                fullWidth
+                sx={{ height: '40px' }}
+              >
+                Fetch
+              </Button>
             </Grid>
           </Grid>
         </Box>
@@ -992,7 +1016,7 @@ const SchemeOfWork = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Card>
+        </Card>
 
       {/* Filter Drawer */}
       <FilterSideDrawer

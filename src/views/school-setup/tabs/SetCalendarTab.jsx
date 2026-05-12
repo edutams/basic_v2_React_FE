@@ -23,6 +23,7 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
 import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { Add as AddIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -47,6 +48,8 @@ import {
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
   const [hasChanges, setHasChanges] = useState(false);
 
   const handleChange = () => {
@@ -377,14 +380,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
   return (
     <Box sx={{ p: 2 }}>
       <ParentCard>
-   <Grid container spacing={3}>
-        {/* Manage Sessions Column */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <ParentCard
-            title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h5">Manage Sessions</Typography>
-                <Button
+        <Grid container spacing={3}>
+          {/* Manage Sessions Column */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <ParentCard
+              title={
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h5">Manage Sessions</Typography>
+                  {/* <Button
                   variant="contained"
                   size="small"
                   startIcon={<AddIcon />}
@@ -393,199 +396,266 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                   }}
                 >
                   Edit Term Name
-                </Button>
-              </Box>
-            }
-          >
-            {loading && !currentSession ? (
-              <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                sx={{ minHeight: 200 }}
-              >
-                <CircularProgress />
-              </Box>
-            ) : currentSession ? (
-              <>
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    select
-                    fullWidth
-                    label="Select Session"
-                    value={selectedSessionId}
-                    onChange={handleSessionChange}
-                    size="small"
-                  >
-                    {sessions.map((session) => (
-                      <MenuItem key={session.id} value={session.id}>
-                        {session.sesname}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                </Button> */}
                 </Box>
-                <Paper variant="outlined">
-                  <TableContainer>
-                    <Table sx={{ whiteSpace: 'nowrap' }}>
+              }
+            >
+              {loading && !currentSession ? (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  sx={{ minHeight: 200 }}
+                >
+                  <CircularProgress />
+                </Box>
+              ) : currentSession ? (
+                <>
+                  <Box sx={{ mb: 2 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Select Session"
+                      value={selectedSessionId}
+                      onChange={handleSessionChange}
+                      size="small"
+                    >
+                      {sessions.map((session) => (
+                        <MenuItem key={session.id} value={session.id}>
+                          {session.sesname}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+
+                  <Box sx={{ position: 'relative' }}>
+                    <Paper variant="outlined">
+                      <TableContainer>
+                        <Table sx={{ whiteSpace: 'nowrap' }}>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
+                              <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                                Status
+                              </TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                                Action
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {sessionTerms.map((item, i) => (
+                              <TableRow key={item.app_term_id} hover>
+                                <TableCell>{i + 1}</TableCell>
+                                <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
+                                <TableCell align="center">
+                                  {item.is_subscribed === 'yes' ? (
+                                    <Chip
+                                      label={item.status === 'active' ? 'active' : 'inactive'}
+                                      size="small"
+                                      sx={{
+                                        bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
+                                        color: item.status === 'active' ? '#166534' : '#92400e',
+                                        fontWeight: 500,
+                                      }}
+                                    />
+                                  ) : (
+                                    '-'
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <IconButton size="small" onClick={(e) => handleMenuOpen(e, item)}>
+                                    <MoreVertIcon size={18} />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Paper>
+
+                    {/* Arrow hint */}
+                    <Box
+                      sx={{
+                        '@keyframes fadeUp': {
+                          from: { opacity: 0, transform: 'translateY(10px)' },
+                          to: { opacity: 1, transform: 'translateY(0)' },
+                        },
+                        '@keyframes bob': {
+                          '0%, 100%': { transform: 'translateY(0)' },
+                          '50%': { transform: 'translateY(-5px)' },
+                        },
+                        position: 'absolute',
+                        top: 110,
+                        right: 40,
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '2px',
+                        pointerEvents: 'none',
+                        animation:
+                          'fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s both, bob 2s ease-in-out 1.6s infinite',
+                      }}
+                    >
+                      {/* Label bubble */}
+                      <Box
+                        sx={{
+                          bgcolor: 'background.paper',
+                          border: '2px solid',
+                          borderColor: 'primary.main',
+                          borderRadius: '12px',
+                          px: 1.5,
+                          py: 1,
+                          boxShadow: `0 4px 16px ${primary}33`,
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: 'primary.main',
+                            whiteSpace: 'nowrap',
+                            letterSpacing: 0.2,
+                          }}
+                        >
+                          Click ⋮ to subscribe
+                        </Typography>
+                      </Box>
+
+                      {/* Arrow: curves right and UP toward the ⋮ button */}
+                      <svg
+                        width="36"
+                        height="44"
+                        viewBox="0 0 36 44"
+                        fill="none"
+                        style={{ marginTop: 4 }}
+                      >
+                        {/* Curve from bottom-left to top-right */}
+                        <path
+                          d="M4 40 C4 20, 28 20, 28 4"
+                          stroke={primary}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          fill="none"
+                        />
+                        {/* Arrowhead pointing UP */}
+                        <path
+                          d="M20 6 L28 4 L30 12"
+                          stroke={primary}
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"
+                        />
+                      </svg>
+                    </Box>
+                  </Box>
+                </>
+              ) : (
+                <Alert severity="info">No active session found</Alert>
+              )}
+            </ParentCard>
+          </Grid>
+
+          {/* Generate Week Column */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <ParentCard
+              id="generate-week-section"
+              title={
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h5">Generate Week</Typography>
+
+                  <Box
+                    sx={{
+                      ml: 'auto',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 3,
+                      border: '1px solid',
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                    }}
+                  >
+                    <Typography variant="caption">
+                      {weeks.length} Weeks • {weeks.length * 5} school days
+                    </Typography>
+                  </Box>
+                </Box>
+              }
+            >
+              {activeSessionTermId ? (
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Box
+                    sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
+                  >
+                    <TextField
+                      label="No. of Weeks"
+                      type="number"
+                      size="small"
+                      sx={{ width: { xs: '100%', sm: 120 } }}
+                      value={autoGenerateConfig.numWeeks}
+                      onChange={(e) =>
+                        setAutoGenerateConfig({
+                          ...autoGenerateConfig,
+                          numWeeks: parseInt(e.target.value),
+                        })
+                      }
+                    />
+                    <TextField
+                      label="Start Date"
+                      type="date"
+                      size="small"
+                      sx={{ width: { xs: '100%', sm: 160 } }}
+                      value={autoGenerateConfig.startDate}
+                      onChange={(e) =>
+                        setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
+                      }
+                      slotProps={{ inputLabel: { shrink: true } }}
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={handleAutoGenerate}
+                      disabled={loading || !activeSessionTermId}
+                      size="small"
+                      sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
+                    >
+                      Generate
+                    </Button>
+                  </Box>
+
+                  <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
+                    <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                          {/* <TableCell sx={{ fontWeight: 'bold' }}>Actual Term</TableCell> */}
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Status
-                          </TableCell>
-                          {/* <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Start Date
-                          </TableCell> */}
-                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                            Action
-                          </TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                          {/* <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell> */}
                         </TableRow>
                       </TableHead>
 
                       <TableBody>
-                        {sessionTerms.map((item, i) => (
-                          <TableRow key={item.app_term_id} hover>
-                            <TableCell>{i + 1}</TableCell>
-                            <TableCell sx={{ fontWeight: 500 }}>{item.display_name}</TableCell>
-                            {/* <TableCell>{item.term_name}</TableCell> */}
-                            <TableCell align="center">
-                              {item.is_subscribed === 'yes' ? (
+                        {weeks.length > 0 ? (
+                          weeks.map((item, i) => (
+                            <TableRow key={i} hover>
+                              <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
+                              <TableCell>{item.start_date || 'N/A'}</TableCell>
+                              <TableCell>{item.end_date || 'N/A'}</TableCell>
+                              <TableCell>
                                 <Chip
-                                  label={item.status === 'active' ? 'active' : 'inactive'}
+                                  label={item.status}
                                   size="small"
+                                  onClick={() => handleToggleWeekStatus(item.wk_id)}
                                   sx={{
-                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fef3c7',
-                                    color: item.status === 'active' ? '#166534' : '#92400e',
-                                    fontWeight: 500,
+                                    cursor: 'pointer',
+                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                    color: item.status === 'active' ? '#166534' : '#991b1b',
                                   }}
                                 />
-                              ) : (
-                                '-'
-                              )}
-                            </TableCell>
-                            {/* <TableCell align="center">
-                              {item.start_date || (item.is_subscribed === 'yes' ? 'Not Set' : '-')}
-                            </TableCell> */}
-                            <TableCell align="center">
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleMenuOpen(e, item)}
-                              >
-                                <MoreVertIcon size={18} />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-              </>
-            ) : (
-              <Alert severity="info">No active session found</Alert>
-            )}
-          </ParentCard>
-        </Grid>
-
-        {/* Generate Week Column */}
-        <Grid size={{ xs: 12, md: 6 }}>
-
-          <ParentCard
-            id="generate-week-section"
-            title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="h5">Generate Week</Typography>
-
-                <Box
-                  sx={{
-                    ml: 'auto',
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                  }}
-                >
-                  <Typography variant="caption">
-                    {weeks.length} Weeks • {weeks.length * 5} school days
-                  </Typography>
-                </Box>
-              </Box>
-            }
-          >
-            {activeSessionTermId ? (
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
-                  <TextField
-                    label="No. of Weeks"
-                    type="number"
-                    size="small"
-                    sx={{ width: { xs: '100%', sm: 120 } }}
-                    value={autoGenerateConfig.numWeeks}
-                    onChange={(e) =>
-                      setAutoGenerateConfig({
-                        ...autoGenerateConfig,
-                        numWeeks: parseInt(e.target.value),
-                      })
-                    }
-                  />
-                  <TextField
-                    label="Start Date"
-                    type="date"
-                    size="small"
-                    sx={{ width: { xs: '100%', sm: 160 } }}
-                    value={autoGenerateConfig.startDate}
-                    onChange={(e) =>
-                      setAutoGenerateConfig({ ...autoGenerateConfig, startDate: e.target.value })
-                    }
-                    slotProps={{ inputLabel: { shrink: true } }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={handleAutoGenerate}
-                    disabled={loading || !activeSessionTermId}
-                    size="small"
-                    sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}
-                  >
-                    Generate
-                  </Button>
-                </Box>
-
-                <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>
-                  <Table stickyHeader sx={{ whiteSpace: 'nowrap' }}>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Week</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                        {/* <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell> */}
-                      </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {weeks.length > 0 ? (
-                        weeks.map((item, i) => (
-                          <TableRow key={i} hover>
-                            <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
-                            <TableCell>{item.start_date || 'N/A'}</TableCell>
-                            <TableCell>{item.end_date || 'N/A'}</TableCell>
-                            <TableCell>
-                              <Chip
-                                label={item.status}
-                                size="small"
-                                onClick={() => handleToggleWeekStatus(item.wk_id)}
-                                sx={{
-                                  cursor: 'pointer',
-                                  bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                                  color: item.status === 'active' ? '#166534' : '#991b1b',
-                                }}
-                              />
-                            </TableCell>
-                            {/* <TableCell>
+                              </TableCell>
+                              {/* <TableCell>
                               <IconButton
                                 size="small"
                                 color="dark"
@@ -594,33 +664,30 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                                 <IconDotsVertical size={16} />{' '}
                               </IconButton>
                             </TableCell> */}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                              <Typography color="textSecondary">
+                                No weeks generated yet for this term.
+                              </Typography>
+                            </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                            <Typography color="textSecondary">
-                              No weeks generated yet for this term.
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            ) : (
-              <Alert severity="info" sx={{ mt: 3 }}>
-                No weeks generated yet. Subscribe to a term first to set the weeks
-              </Alert>
-            )}
-
-          </ParentCard>
-
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              ) : (
+                <Alert severity="info" sx={{ mt: 3 }}>
+                  No weeks generated yet. Subscribe to a term first to set the weeks
+                </Alert>
+              )}
+            </ParentCard>
+          </Grid>
         </Grid>
-      </Grid>
       </ParentCard>
-   
 
       {/* <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" onClick={onSaveAndContinue} disabled={!hasChanges}>
@@ -632,7 +699,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
       <Dialog open={openEditModal} onClose={handleCloseEditModal} maxWidth="sm" fullWidth>
         <DialogTitle>Edit Term Name</DialogTitle>
         <DialogContent>
-          <Box >
+          <Box>
             <TextField
               select
               fullWidth
@@ -640,7 +707,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
               value={selectedAppTermId}
               onChange={(e) => setSelectedAppTermId(e.target.value)}
               margin="normal"
-              size='small'
+              size="small"
             >
               {allLandlordTerms.map((term) => (
                 <MenuItem key={term.app_term_id} value={term.app_term_id}>
@@ -654,7 +721,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               margin="normal"
-              size='small'
+              size="small"
               required
               helperText="Input your own display name for the selected term"
             />
@@ -667,7 +734,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
             variant="contained"
             disabled={loading || !displayName.trim()}
             size="small"
-
           >
             {loading ? <CircularProgress size={24} /> : 'Save'}
           </Button>
@@ -720,17 +786,15 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button
-
-            size="small"
-            onClick={() => setConfirmStatus({ open: false, term: null })}>Cancel</Button>
+          <Button size="small" onClick={() => setConfirmStatus({ open: false, term: null })}>
+            Cancel
+          </Button>
           <Button
             onClick={handleConfirmToggleStatus}
             variant="contained"
             color="primary"
             disabled={loading}
             size="small"
-
           >
             Confirm
           </Button>

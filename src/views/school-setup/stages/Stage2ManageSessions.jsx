@@ -3,8 +3,24 @@ import { Box, Typography } from '@mui/material';
 import SetCalendarTab from '../tabs/SetCalendarTab';
 import SetupShell from './SetupShell';
 import Stage2Image from '../../../assets/images/setup/setup2.png';
+import { useTheme } from '@mui/material';
+
+// const keyframes = {
+//   '@keyframes fadeUp': {
+//     from: { opacity: 0, transform: 'translateY(16px)' },
+//     to: { opacity: 1, transform: 'translateY(0)' },
+//   },
+//   '@keyframes bounce': {
+//     '0%, 100%': { transform: 'translateY(0)' },
+//     '40%': { transform: 'translateY(-6px)' },
+//     '60%': { transform: 'translateY(-3px)' },
+//   },
+// };
 
 const Stage2ManageSessions = ({ onNext, onBack, onSkip }) => {
+  const theme = useTheme();
+  const primary = theme.palette.primary.main;
+
   return (
     <SetupShell
       stage={2}
@@ -22,9 +38,10 @@ const Stage2ManageSessions = ({ onNext, onBack, onSkip }) => {
           <Typography sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
             Manage Sessions
           </Typography>
-          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 1 }}>
             Select the session and subscribe
           </Typography>
+
         </Box>
 
         <Box sx={{ flex: 1, minHeight: 0, overflow: { xs: 'visible', sm: 'hidden' } }}>

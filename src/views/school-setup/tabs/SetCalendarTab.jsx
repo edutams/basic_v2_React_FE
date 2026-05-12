@@ -28,6 +28,7 @@ import {
 import { IconDotsVertical, IconPlus } from '@tabler/icons-react';
 import { Add as AddIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
+import ArrowHint from 'src/components/shared/ArrowHint';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import {
   fetchCurrentSession,
@@ -438,55 +439,14 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
 
                     {/* Subscribe hint */}
                     {!sessionTerms.some((t) => t.is_subscribed === 'yes') && (
-                      <Box
-                        sx={{
-                          '@keyframes fadeUp': {
-                            from: { opacity: 0, transform: 'translateY(10px)' },
-                            to: { opacity: 1, transform: 'translateY(0)' },
-                          },
-                          '@keyframes bob': {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-5px)' },
-                          },
-                          position: 'absolute',
-                          top: 110,
-                          right: 40,
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '2px',
-                          pointerEvents: 'none',
-                          animation:
-                            'fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.8s both, bob 2s ease-in-out 1.6s infinite',
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            bgcolor: 'background.paper',
-                            border: '2px solid',
-                            borderColor: 'primary.main',
-                            borderRadius: '12px',
-                            px: 1.5,
-                            py: 1,
-                            boxShadow: `0 4px 16px ${primary}33`,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: 'primary.main',
-                              whiteSpace: 'nowrap',
-                              letterSpacing: 0.2,
-                            }}
-                          >
-                            Click ⋮ to subscribe
-                          </Typography>
-                        </Box>
-                        <svg width="36" height="44" viewBox="0 0 36 44" fill="none" style={{ marginTop: 4 }}>
-                          <path d="M4 40 C4 20, 28 20, 28 4" stroke={primary} strokeWidth="2" strokeLinecap="round" fill="none" />
-                          <path d="M20 6 L28 4 L30 12" stroke={primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                        </svg>
-                      </Box>
+                      <ArrowHint
+                        show
+                        label="Click ⋮ to subscribe"
+                        direction="up-right"
+                        mode="persistent"
+                        delay="0.8s"
+                        position={{ position: 'absolute', top: 110, right: 40 }}
+                      />
                     )}
                   </Box>
                 </>
@@ -568,77 +528,20 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate }) => {
                   {sessionTerms.some((t) => t.is_subscribed === 'yes') &&
                     weeks.length === 0 &&
                     hintStyle && (
-                      <Box
-                        sx={{
-                          '@keyframes fadeUp': {
-                            from: { opacity: 0, transform: 'translateY(10px)' },
-                            to: { opacity: 1, transform: 'translateY(0)' },
-                          },
-                          '@keyframes bob': {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-5px)' },
-                          },
+                      <ArrowHint
+                        show
+                        label="Set dates &amp; click Generate ☝️"
+                        direction="up-right"
+                        mode="persistent"
+                        delay="0.3s"
+                        position={{
                           position: 'absolute',
                           top: hintStyle.top,
                           left: hintStyle.left,
                           width: hintStyle.width,
                           zIndex: 10,
-                          pointerEvents: 'none',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          animation:
-                            'fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.3s both, bob 2.4s ease-in-out 1.2s infinite',
                         }}
-                      >
-                        {/* Arrow — curves up toward the Generate button */}
-                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                          {/* Curve: starts bottom-center, swings left, ends top-right */}
-                          <path
-                            d="M20 38 C6 30, 6 16, 28 4"
-                            stroke={primary}
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            fill="none"
-                          />
-                          {/* Arrowhead pointing up-right */}
-                          <path
-                            d="M18 4 L28 4 L28 14"
-                            stroke={primary}
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                        </svg>
-
-                        {/* Bubble */}
-                        <Box
-                          sx={{
-                            bgcolor: 'background.paper',
-                            border: '2px solid',
-                            borderColor: 'primary.main',
-                            borderRadius: '12px',
-                            px: 1.5,
-                            py: 1,
-                            boxShadow: `0 4px 16px ${primary}33`,
-                            textAlign: 'center',
-                            ml: 5,
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontSize: 11,
-                              fontWeight: 700,
-                              color: 'primary.main',
-                              whiteSpace: 'nowrap',
-                              letterSpacing: 0.2,
-                            }}
-                          >
-                            Set dates &amp; click Generate ☝️
-                          </Typography>
-                        </Box>
-                      </Box>
+                      />
                     )}
 
                   <TableContainer sx={{ maxHeight: 320, overflowY: 'auto' }}>

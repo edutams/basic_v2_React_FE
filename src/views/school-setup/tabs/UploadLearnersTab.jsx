@@ -22,6 +22,7 @@ import {
   CloudUpload as UploadIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
+import ArrowHint from '../../../components/shared/ArrowHint';
 import {
   getClassesWithDivisions,
   createLearner,
@@ -160,93 +161,24 @@ const UploadLearnersTab = ({ onSaveAndContinue, onLearnerAdded }) => {
   }, [loading, classes.length, studentCounts]);
 
   // ── Hint renderer ─────────────────────────────────────────────────────────
+  // Replaced by <ArrowHint> component — renderHint kept as thin wrapper for backward compat
   const renderHint = (key, hintStyle, label, arrowDir = 'up') => {
     if (activeHint !== key || !hintStyle) return null;
-
-    // Arrow paths: 'up' = curves up from bottom, 'up-left' = curves up-left
-    const curvePath =
-      arrowDir === 'up-left'
-        ? 'M38 38 C38 20, 20 12, 4 4'
-        : 'M6 38 C6 20, 22 12, 36 4';
-
-    const arrowHead =
-      arrowDir === 'up-left'
-        ? 'M14 6 L4 4 L6 14'
-        : 'M24 2 L36 4 L34 14';
-
     return (
-      <Box
-        sx={{
-          '@keyframes fadeInHint': {
-            from: { opacity: 0, transform: 'translateY(10px)' },
-            to:   { opacity: 1, transform: 'translateY(0)' },
-          },
-          '@keyframes fadeOutHint': {
-            from: { opacity: 1 },
-            to:   { opacity: 0 },
-          },
-          '@keyframes bob': {
-            '0%, 100%': { transform: 'translateY(0)' },
-            '50%':      { transform: 'translateY(-5px)' },
-          },
-          position:      'absolute',
-          top:           hintStyle.top,
-          left:          hintStyle.left,
-          width:         hintStyle.width,
-          zIndex:        20,
-          pointerEvents: 'none',
-          display:       'flex',
-          flexDirection: 'column',
-          alignItems:    'center',
-          animation:
-            'fadeInHint 0.4s cubic-bezier(0.22,1,0.36,1) both, bob 2s ease-in-out 0.5s 2, fadeOutHint 0.5s ease-in-out 4.5s both',
+      <ArrowHint
+        show
+        label={label}
+        direction={arrowDir === 'up-left' ? 'up-left' : 'up-right'}
+        mode="timed"
+        delay="0s"
+        position={{
+          position: 'absolute',
+          top: hintStyle.top,
+          left: hintStyle.left,
+          width: hintStyle.width,
+          zIndex: 20,
         }}
-      >
-        {/* Curved arrow pointing up to the button */}
-        <svg
-          width="44"
-          height="44"
-          viewBox="0 0 44 44"
-          fill="none"
-          style={{ alignSelf: 'flex-start' }}
-        >
-          <path
-            d={curvePath}
-            stroke={primary}
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            fill="none"
-          />
-          <path
-            d={arrowHead}
-            stroke={primary}
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </svg>
-
-        {/* Bubble */}
-        <Box
-          sx={{
-            bgcolor:     'background.paper',
-            border:      '2px solid',
-            borderColor: 'primary.main',
-            borderRadius:'12px !important',
-            px: 1.5,
-            py: 1,
-            boxShadow:   `0 6px 24px ${primary}22`,
-            whiteSpace:  'nowrap',
-          }}
-        >
-          <Typography
-            sx={{ fontSize: 11, fontWeight: 700, color: 'primary.main', letterSpacing: 0.2 }}
-          >
-            {label}
-          </Typography>
-        </Box>
-      </Box>
+      />
     );
   };
 

@@ -16,8 +16,8 @@ import { TenantAuthContext } from '../../../context/TenantContext/auth';
 import UploadLogoModal from '../../../components/tenant-components/school/UploadLogoModal';
 import SetupShell from './SetupShell';
 import ParentCard from '../../../components/shared/ParentCard';
+import ArrowHint from '../../../components/shared/ArrowHint';
 
-// ── Keyframes ────────────────────────────────────────────────────────────────
 const keyframes = {
   '@keyframes fadeUp': {
     from: { opacity: 0, transform: 'translateY(16px)' },
@@ -298,6 +298,7 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 size="small"
                 onClick={() => setLogoModalOpen(true)}
                 sx={{
+                   width: '100%',
                   mt: 1.5,
                   display: 'flex',
                   alignItems: 'center',
@@ -351,64 +352,15 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
                 </Typography>
               </Button>
 
-              {/* Arrow hint — only when no logo */}
               {!logo && (
-                <Box
-                  sx={{
-                    ...keyframes,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    width: 160,
-                    mt: 0.5,
-                    pointerEvents: 'none',
-                    animation: `fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both, bounce 2.4s ease-in-out 1.6s infinite`,
-                  }}
-                >
-                  <Box sx={{ mb: 0.5, ml: 4 }}>
-                    <svg width="48" height="52" viewBox="0 0 48 52" fill="none">
-                      <path
-                        d="M8 48 C12 30, 28 16, 40 6"
-                        stroke={primary}
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                      <path
-                        d="M30 8 L40 6 L38 16"
-                        stroke={primary}
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
-                      />
-                    </svg>
-                  </Box>
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      bgcolor: '#fff',
-                      border: '2px solid',
-                      borderColor: 'primary.main',
-                      borderRadius: '14px !important',
-                      px: 2,
-                      py: 1.25,
-                      boxShadow: `0 6px 24px ${primary}22`,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: 'primary.main',
-                        whiteSpace: 'nowrap',
-                        letterSpacing: 0.2,
-                      }}
-                    >
-                      👆 Click here to upload logo
-                    </Typography>
-                  </Box>
-                </Box>
+                <ArrowHint
+                  show
+                  label="👆 Click here to upload logo"
+                  direction="up-right"
+                  mode="persistent"
+                  delay="0.6s"
+                  sx={{ width: 160, mt: 0.5 }}
+                />
               )}
             </Box>
 

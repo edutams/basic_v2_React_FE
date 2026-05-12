@@ -22,6 +22,7 @@ import {
   getClassesWithDivisions,
   saveClasses,
 } from '../../../context/TenantContext/services/tenant.service';
+import ArrowHint from '../../../components/shared/ArrowHint';
 
 const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref) => {
   const theme = useTheme();
@@ -355,75 +356,19 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded }, ref
 
                       {/* ── Hint: first row only, hidden once any arms exist ── */}
                       {index === 0 && showHint && hintStyle && (
-                        <Box
-                          sx={{
-                            '@keyframes fadeUp': {
-                              from: { opacity: 0, transform: 'translateY(16px)' },
-                              to: { opacity: 1, transform: 'translateY(0)' },
-                            },
-                            '@keyframes bob': {
-                              '0%, 100%': { transform: 'translateY(0)' },
-                              '40%': { transform: 'translateY(-6px)' },
-                              '60%': { transform: 'translateY(-3px)' },
-                            },
+                        <ArrowHint
+                          show
+                          label="Set no. of arms &amp; click Generate"
+                          direction="up-right"
+                          mode="persistent"
+                          delay="0.6s"
+                          position={{
                             position: 'absolute',
                             top: hintStyle.top,
                             left: hintStyle.left,
-                            // no translateX — left is already anchored to button's left edge
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            pointerEvents: 'none',
                             zIndex: 10,
-                            animation:
-                              'fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.6s both, bob 2.4s ease-in-out 1.6s infinite',
                           }}
-                        >
-                          {/* Curved arrow — starts bottom-left, arrowhead points up-right into Generate button */}
-                          <svg width="44" height="44" viewBox="0 0 44 44" fill="none" style={{ alignSelf: 'flex-start' }}>
-                            <path
-                              d="M6 42 C6 24, 22 14, 38 4"
-                              stroke={primary}
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              fill="none"
-                            />
-                            {/* Arrowhead pointing up-right */}
-                            <path
-                              d="M26 2 L38 4 L36 16"
-                              stroke={primary}
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              fill="none"
-                            />
-                          </svg>
-
-                          {/* Bubble */}
-                          <Box
-                            sx={{
-                              bgcolor: 'background.paper',
-                              border: '2px solid',
-                              borderColor: 'primary.main',
-                              borderRadius: '12px !important',
-                              px: 1.5,
-                              py: 1,
-                              boxShadow: `0 6px 24px ${primary}22`,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            <Typography
-                              sx={{
-                                fontSize: 11,
-                                fontWeight: 700,
-                                color: 'primary.main',
-                                letterSpacing: 0.2,
-                              }}
-                            >
-                              Set no. of arms &amp; click Generate
-                            </Typography>
-                          </Box>
-                        </Box>
+                        />
                       )}
                     </Box>
                   </TableCell>

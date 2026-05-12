@@ -1,257 +1,171 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  FormControlLabel,
   Typography,
   Checkbox,
+  FormControlLabel,
   Button,
   CircularProgress,
   Alert,
   TextField,
 } from '@mui/material';
-import ReusableModal from '../../shared/ReusableModal';
-import ConfirmationDialog from '../../shared/ConfirmationDialog';
-import eduTierApi from 'src/api/eduTierApi';
-import PropTypes from 'prop-types';
 import SearchIcon from '@mui/icons-material/Search';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-
-const categoryMap = {
-  1: 'Dashboard',
-  2: 'Setup',
-  3: 'Academics Management',
-  4: 'Class Management',
-  5: 'Subscriptions',
-};
-
-const getCategoryName = (module) => {
-  return categoryMap[module.packageId] || `Package ${module.packageId}`;
-};
+import ReusableModal from '../../shared/ReusableModal';
+import eduTierApi from 'src/api/eduTierApi';
 
 const ManageModulesModal = ({
   open,
   onClose,
   currentPackage,
   onModuleAssignment,
-  isLoading: propLoading = false,
-  error = null,
 }) => {
-  const [allModules, setAllModules] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [selectedModules, setSelectedModules] = useState([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  const [moduleAssignments, setModuleAssignments] = useState({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [fetchError, setFetchError] = useState(null);
+  const [error, setError] = useState('');
 
-  // Fetch modules for the specific package when modal opens or when package changes
   useEffect(() => {
-    if (open && currentPackage?.id) {
-      setAllModules([]); // Clear previous modules
-      fetchPackageModules(currentPackage.id);
-    } else if (!open) {
-      setAllModules([]); // Clear when closed
-      setModuleAssignments({});
-    }
-  }, [open, currentPackage?.id]);
+    console.log(currentPackage?.id, 65555);
 
-  const fetchPackageModules = async (packageId) => {
-    setLoading(true);
-    setFetchError(null);
-    try {
-      const res = await eduTierApi.getPackageModules(packageId);
-      setAllModules(res?.data || res || []);
-    } catch (err) {
-      console.error('Failed to fetch package modules:', err);
-      setFetchError('Failed to load modules');
-    } finally {
-      setLoading(false);
-    }
+    if (!open || !currentPackage?.id) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        const res = await eduTierApi.getPackageModules(currentPackage.id);
+        const allModules = res?.data || [];
+
+        setModules(allModules);
+        setSelectedModules(
+          allModules
+            .filter((m) => m.ckstatus || m.packages?.some(p => p.id === currentPackage.id))
+            .map((m) => m.id)
+        );
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load modules');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [open, currentPackage]);
+
+  const handleToggle = (id) => {
+    setSelectedModules((prev) =>
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id]
+    );
   };
 
-  // Since API returns only modules for the package, use allModules directly
-  const packageModulesOnly = allModules;
+  const handleSave = () => {
+    const assignedModules = modules.filter((m) =>
+      selectedModules.includes(m.id)
+    );
 
-  // Initialize selections when modal opens
-  useEffect(() => {
-    if (open && currentPackage && packageModulesOnly.length > 0) {
-      const assignments = {};
-      packageModulesOnly.forEach((module) => {
-        assignments[module.id] = true;
-      });
-      setModuleAssignments(assignments);
-    }
-  }, [open, currentPackage, packageModulesOnly]);
-
-  const handleToggleModule = (moduleId, checked) => {
-    setModuleAssignments((prev) => ({
-      ...prev,
-      [moduleId]: checked,
-    }));
-  };
-
-  const handleSaveClick = () => {
-    setConfirmDialogOpen(true);
-  };
-
-  const handleConfirmSave = () => {
-    const assignedModules = packageModulesOnly.filter((module) => moduleAssignments[module.id]);
-    const unassignedModules = packageModulesOnly.filter((module) => !moduleAssignments[module.id]);
-
-    onModuleAssignment(currentPackage, assignedModules, unassignedModules);
-
-    setConfirmDialogOpen(false);
+    onModuleAssignment(currentPackage, assignedModules);
     onClose();
   };
 
-  const getAssignedCount = useMemo(() => {
-    return Object.values(moduleAssignments).filter(Boolean).length;
-  }, [moduleAssignments]);
-
   const filteredModules = useMemo(() => {
-    return packageModulesOnly.filter((module) => {
-      const name = (module.module_name || module.mod_name || '').toLowerCase();
-      return name.includes(searchQuery.toLowerCase());
-    });
-  }, [packageModulesOnly, searchQuery]);
-
-  const isLoading = loading || propLoading;
+    return modules
+      .filter((module) =>
+        (module.module_name || module.mod_name || '')
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      )
+      .sort((a, b) => {
+        const nameA = (a.module_name || a.mod_name || '').toLowerCase();
+        const nameB = (b.module_name || b.mod_name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+  }, [modules, search]);
 
   return (
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={
-        <>
-          Manage{' '}
-          <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-            {currentPackage?.package_name || currentPackage?.pac_name || 'Package'}
-          </Box>{' '}
-          modules
-        </>
-      }
+      title={`Manage ${currentPackage?.package_name || 'Package'
+        } Modules`}
       size="large"
-      disableEnforceFocus
-      disableAutoFocus
-      aria-labelledby="manage-modules-modal"
     >
-      <Box sx={{ maxHeight: '80vh', overflowY: 'auto' }}>
-        <Box
-          sx={{
-            mb: 3,
-            p: 2,
-            bgcolor: 'info.light',
-            borderRadius: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {/* Info */}
+        <Typography variant="body2" color="text.secondary">
+          {selectedModules.length} of {modules.length} modules selected
+        </Typography>
+
+        {/* Search */}
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search modules..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: 'gray' }} />,
           }}
-        >
-          <InfoOutlinedIcon color="info" />
-          <Typography variant="body2" color="textSecondary">
-            Select modules to assign to this package. Currently {getAssignedCount} of{' '}
-            {packageModulesOnly.length} modules are assigned.
-          </Typography>
-        </Box>
+        />
 
-        <Box sx={{ mb: 2 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search modules..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: <SearchIcon color="action" />,
-            }}
-          />
-        </Box>
+        {/* Error */}
+        {error && <Alert severity="error">{error}</Alert>}
 
-        {(error || fetchError) && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error || fetchError}
-          </Alert>
-        )}
-
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        {/* Loading */}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />
-          </Box>
-        ) : filteredModules.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="textSecondary">
-              {searchQuery ? 'No modules match your search.' : 'No modules available to assign.'}
-            </Typography>
           </Box>
         ) : (
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 2,
-              p: 2,
-              backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f9f9f9'),
-              borderRadius: 2,
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: '1fr 1fr',
+                md: '1fr 1fr 1fr',
+              },
+              gap: 1,
+              maxHeight: 400,
+              overflowY: 'auto',
             }}
           >
-            {filteredModules.map((module) => {
-              const name = module.module_name || module.mod_name;
-              const status = module.module_status || module.mod_status || '';
-
-              return (
-                <FormControlLabel
-                  key={module.id}
-                  control={
-                    <Checkbox
-                      checked={moduleAssignments[module.id] || false}
-                      onChange={(e) => handleToggleModule(module.id, e.target.checked)}
-                      disabled={status === 'inactive'}
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" noWrap sx={{ fontSize: '0.8rem' }}>
-                      {name}
-                    </Typography>
-                  }
-                />
-              );
-            })}
+            {filteredModules.map((module) => (
+              <FormControlLabel
+                key={module.id}
+                control={
+                  <Checkbox
+                    checked={selectedModules.includes(module.id)}
+                    onChange={() => handleToggle(module.id)}
+                  />
+                }
+                label={module.module_name || module.mod_name}
+              />
+            ))}
           </Box>
         )}
 
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button variant="outlined" onClick={onClose} disabled={isLoading}>
+        {/* Actions */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Button variant="outlined" onClick={onClose}>
             Cancel
           </Button>
+
           <Button
             variant="contained"
-            onClick={handleSaveClick}
-            disabled={isLoading || getAssignedCount === packageModulesOnly.length}
+            onClick={handleSave}
+            disabled={loading}
           >
-            {isLoading ? 'Saving...' : 'Save Changes'}
+            Save
           </Button>
         </Box>
       </Box>
-
-      <ConfirmationDialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={handleConfirmSave}
-        title="Confirm Assignment"
-        message="Are you sure you want to save these module assignments?"
-        confirmText="Save"
-        cancelText="Cancel"
-      />
     </ReusableModal>
   );
 };
 
-ManageModulesModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  currentPackage: PropTypes.object,
-  onModuleAssignment: PropTypes.func.isRequired,
-  isLoading: PropTypes.bool,
-  error: PropTypes.string,
-};
-
-export default React.memo(ManageModulesModal);
+export default ManageModulesModal;

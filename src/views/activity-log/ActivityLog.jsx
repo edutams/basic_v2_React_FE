@@ -225,7 +225,7 @@ const ActivityLog = () => {
                           <TableCell>
                             <Typography variant="body1">
                               <a href="#" className="text-success">
-                                {log.causer?.org_name || 'System'}
+                                {log.causer?.full_name || 'System'}
                               </a>{' '}
                               {log.description}
                             </Typography>
@@ -289,8 +289,8 @@ const ActivityLog = () => {
         </DialogTitle>
         <DialogContent dividers>
           {selectedLog &&
-          selectedLog.properties &&
-          Object.keys(selectedLog.properties).length > 0 ? (
+            selectedLog.properties &&
+            Object.keys(selectedLog.properties).length > 0 ? (
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
                 <TableHead>

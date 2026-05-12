@@ -1,12 +1,7 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Link } from '@mui/material';
-import {
-  IconVideo,
-  IconChevronRight,
-  IconPower,
-  IconArrowLeft,
-} from '@tabler/icons-react';
+import { IconVideo, IconChevronRight, IconPower, IconArrowLeft } from '@tabler/icons-react';
 import { TenantAuthContext } from '../../../context/TenantContext/auth';
 import SetupIllustration from '../../../assets/images/setup/setup.png';
 
@@ -14,24 +9,24 @@ import SetupIllustration from '../../../assets/images/setup/setup.png';
 const keyframes = {
   '@keyframes fadeSlideLeft': {
     from: { opacity: 0, transform: 'translateX(-32px)' },
-    to:   { opacity: 1, transform: 'translateX(0)' },
+    to: { opacity: 1, transform: 'translateX(0)' },
   },
   '@keyframes fadeUp': {
     from: { opacity: 0, transform: 'translateY(20px)' },
-    to:   { opacity: 1, transform: 'translateY(0)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
   },
   '@keyframes fadeIn': {
     from: { opacity: 0 },
-    to:   { opacity: 1 },
+    to: { opacity: 1 },
   },
   '@keyframes floatUp': {
     from: { opacity: 0, transform: 'translateY(40px)' },
-    to:   { opacity: 1, transform: 'translateY(0)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
   },
   '@keyframes bounce': {
     '0%, 100%': { transform: 'translateY(0)' },
-    '40%':      { transform: 'translateY(-6px)' },
-    '60%':      { transform: 'translateY(-3px)' },
+    '40%': { transform: 'translateY(-6px)' },
+    '60%': { transform: 'translateY(-3px)' },
   },
 };
 
@@ -59,10 +54,11 @@ const SetupShell = ({
   onSkip,
   onSaveAndContinue,
   saving = false,
+  canContinue = true,
   backLabel,
   noPadding = false,
-  leftVariant = 'light', 
-  leftImage,             
+  leftVariant = 'light',
+  leftImage,
   leftTitle = 'Build a smarter school experience in minutes.',
   leftSubtitle = 'From lesson planning to student engagement—everything in one place. Teach better. Manage easier.',
 }) => {
@@ -148,9 +144,14 @@ const SetupShell = ({
                 width: i + 1 === stage ? 20 : 8,
                 height: 8,
                 borderRadius: '4px !important',
-                bgcolor: i + 1 === stage
-                  ? (leftVariant === 'dark' ? '#fff' : 'primary.main')
-                  : (leftVariant === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.15)'),
+                bgcolor:
+                  i + 1 === stage
+                    ? leftVariant === 'dark'
+                      ? '#fff'
+                      : 'primary.main'
+                    : leftVariant === 'dark'
+                      ? 'rgba(255,255,255,0.35)'
+                      : 'rgba(0,0,0,0.15)',
                 transition: 'all 0.3s ease',
               }}
             />
@@ -159,19 +160,21 @@ const SetupShell = ({
 
         {/* Two concentric semicircles + illustration */}
         {leftVariant === 'light' && (
-          <Box sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            pointerEvents: 'none',
-          }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              pointerEvents: 'none',
+            }}
+          >
             {/* Outer semicircle */}
-            <Box
+            {/* <Box
               sx={{
                 position: 'absolute',
                 bottom: 0,
@@ -181,7 +184,70 @@ const SetupShell = ({
                 bgcolor: 'primary.light',
                 animation: anim('fadeIn', '0.6s', '0.3s'),
               }}
+            /> */}
+
+            <Box
+              sx={(theme) => {
+                const primary = theme.palette.primary.main;
+
+                return {
+                  position: 'absolute',
+                  bottom: 0,
+                  width: '92%',
+                  paddingBottom: '46%',
+                  borderRadius: '50% 50% 0 0 / 100% 100% 0 0 !important',
+                  bgcolor: 'primary.light',
+
+                  // inner glow ring layer
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: 'inherit',
+
+                    // border: `2px solid ${primary}`,
+                    boxShadow: `0 0 20px ${primary}66, 0 0 40px ${primary}33`,
+
+                    animation: 'ringPulse 2.8s ease-in-out infinite',
+                  },
+
+                  // outer expanding ring
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: 'inherit',
+
+                    border: `2px solid ${primary}`,
+                    opacity: 0,
+                    transform: 'scale(1)',
+
+                    animation: 'ringWave 2.8s ease-out infinite',
+                  },
+
+                  '@keyframes ringPulse': {
+                    '0%, 100%': {
+                      boxShadow: `0 0 10px ${primary}55, 0 0 25px ${primary}33`,
+                    },
+                    '50%': {
+                      boxShadow: `0 0 25px ${primary}99, 0 0 60px ${primary}55`,
+                    },
+                  },
+
+                  '@keyframes ringWave': {
+                    '0%': {
+                      transform: 'scale(1)',
+                      opacity: 0.6,
+                    },
+                    '100%': {
+                      transform: 'scale(1.25)',
+                      opacity: 0,
+                    },
+                  },
+                };
+              }}
             />
+
             {/* Inner semicircle  */}
             <Box
               sx={{
@@ -194,7 +260,6 @@ const SetupShell = ({
                 animation: anim('fadeIn', '0.6s', '0.4s'),
               }}
             />
-            {/* Illustration centered on inner circle */}
             <Box
               component="img"
               src={leftImage || SetupIllustration}
@@ -244,7 +309,6 @@ const SetupShell = ({
           position: 'relative',
         }}
       >
-        {/* ── TOP-RIGHT CONTROLS — matches SetupWelcome pattern ── */}
         <Box
           sx={{
             position: 'absolute',
@@ -297,7 +361,6 @@ const SetupShell = ({
             </Box>
           </Box>
 
-          {/* "How to setup" pill */}
           <Box
             sx={{
               display: 'inline-flex',
@@ -310,7 +373,10 @@ const SetupShell = ({
               boxShadow: '0px 3px 14px rgba(0,0,0,0.1)',
               cursor: 'pointer',
               transition: 'all 0.2s',
-              '&:hover': { boxShadow: '0px 6px 20px rgba(0,0,0,0.12)', transform: 'translateY(-1px)' },
+              '&:hover': {
+                boxShadow: '0px 6px 20px rgba(0,0,0,0.12)',
+                transform: 'translateY(-1px)',
+              },
             }}
           >
             <Box
@@ -327,7 +393,12 @@ const SetupShell = ({
               <IconVideo size={13} color="#fff" />
             </Box>
             <Typography
-              sx={{ fontSize: { xs: 11, sm: 13 }, fontWeight: 500, color: 'text.primary', whiteSpace: 'nowrap' }}
+              sx={{
+                fontSize: { xs: 11, sm: 13 },
+                fontWeight: 500,
+                color: 'text.primary',
+                whiteSpace: 'nowrap',
+              }}
             >
               How to setup your Profile
             </Typography>
@@ -384,7 +455,8 @@ const SetupShell = ({
               variant="contained"
               endIcon={<IconChevronRight size={16} />}
               onClick={onSaveAndContinue}
-              disabled={saving}
+              disabled={saving || !canContinue}
+              title={!canContinue ? 'Complete the required action to continue' : undefined}
               sx={{
                 fontSize: 14,
                 fontWeight: 600,

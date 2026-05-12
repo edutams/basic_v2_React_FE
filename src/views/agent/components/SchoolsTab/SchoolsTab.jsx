@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Typography,
   Box,
@@ -153,7 +153,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         }}
       >
         <Typography variant="subtitle1" fontWeight={700}>
-          Review Apwwplication
+          Review Application
         </Typography>
         <StatusChip status={prospect.status} />
       </Box>
@@ -318,7 +318,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
           )}
         </Box>
         {/* Submitted / Rejected-by banner */}
-        <Box
+        {prospect.status == 'rejected' && <Box
           sx={{
             px: 3,
             py: 1.5,
@@ -358,8 +358,9 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             </Typography>
           )}
         </Box>
+        }
 
-        {prospect.rejection_reason && (
+        {prospect.status === 'rejected' && prospect.rejection_reason && (
           <Box sx={{ px: 3, pb: 2 }}>
             <Alert severity="error" sx={{ borderRadius: 2 }}>
               <strong>Rejection reason:</strong> {prospect.rejection_reason}
@@ -475,7 +476,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
 // ── Main SchoolsTab ───────────────────────────────────────────────────────────
 
-const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
+const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refreshKey }) => {
   const theme = useTheme();
   const { user } = useAuth();
   const { can } = usePermissions();
@@ -596,7 +597,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
       }
     };
     fetchAnalytics();
-  }, [analyticsRefreshKey]);
+  }, [analyticsRefreshKey, refreshKey]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -607,6 +608,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const handleApplicationStatusChange = () => {
     // Increment refresh key to trigger fresh analytics fetch
     setAnalyticsRefreshKey((prev) => prev + 1);
+    if (handleRefresh) handleRefresh();
   };
   const handleFilterReset = () => {
     setActiveFilters({});
@@ -711,7 +713,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
   const subscribedSchools = schoolList.filter((s) => !!(s.raw || s).domains?.[0]?.domain);
 
   // Use analytics data from API instead of hardcoded calculations
-  const schoolSummary = {
+  const schoolSummary = useMemo(() => ({
     total: analytics?.totalSchools || 0,
     active: analytics?.activeSchools || 0,
     inactive: analytics?.inactiveSchools || 0,
@@ -724,7 +726,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
     secondary:
       analytics?.secondarySchools ||
       subscribedSchools.filter((s) => getSchoolType(s).includes('secondary')).length,
-  };
+  }), [analytics, subscribedSchools]);
 
   const planSeries = [40, 15, 35, 10];
   const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
@@ -1157,6 +1159,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null }) => {
             onSubmit={() => {
               setOpenAddModal(false);
               fetchProspects();
+              if (handleRefresh) handleRefresh();
             }}
             onCancel={() => setOpenAddModal(false)}
             useProspective

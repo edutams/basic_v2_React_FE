@@ -101,7 +101,7 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey }) => {
     fetchFilteredChartData(pendingYear, agent);
   };
 
-  const overviewCategories = chartData?.months || ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const overviewCategories = chartData?.months || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const overviewSeries = chartData?.overview || Array(12).fill(0);
 
   const agentCategories = (chartData?.agentPerformance || []).map((a) => a.name);
@@ -190,7 +190,7 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey }) => {
         <Grid size={{ xs: 12, sm: 3 }}>
           <TopCard
             label="Rejected Schools"
-            value={stats?.rejected ?? 0}
+            value={stats?.rejected ?? stats?.rejectedSchools ?? 0}
             valueColor="#e11d48"
             iconBg={isDark ? '#2e0d1a' : '#ffe4e6'}
             icon={IconBuildingCommunity}
@@ -217,7 +217,7 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey }) => {
             '& .MuiTabs-indicator': { display: 'none' },
           }}
         >
-          <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconChartBar size={16} /><span>Overvieeeew</span></Stack>} value="1" />
+          <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconChartBar size={16} /><span>Overview</span></Stack>} value="1" />
           <Tab label={<Stack direction="row" spacing={1} alignItems="center"><IconSchool size={16} /><span>Agent Performance</span></Stack>} value="2" />
         </Tabs>
 

@@ -119,41 +119,43 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">All Packages</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => onPackageAction('create')}
-          >
-            Add New Package
-          </Button>
+          <Box display="flex" gap={2} alignItems="center">
+            <Button
+              variant="outlined"
+              startIcon={<FilterListIcon />}
+              onClick={() => setFilterDrawerOpen(true)}
+              size="small"
+
+            >
+              Show Filters
+              {activeFilterCount > 0 && (
+                <Chip
+                  label={activeFilterCount}
+                  size="small"
+                  color="primary"
+                  sx={{
+                    ml: 1,
+                    height: 20,
+                    minWidth: 20,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              )}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => onPackageAction('create')}
+              size="small"
+
+            >
+              Add New Package
+            </Button>
+          </Box>
         </Box>
       }
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<FilterListIcon />}
-            onClick={() => setFilterDrawerOpen(true)}
-            sx={{ minWidth: 140 }}
-          >
-            Show Filters
-            {activeFilterCount > 0 && (
-              <Chip
-                label={activeFilterCount}
-                size="small"
-                color="primary"
-                sx={{
-                  ml: 1,
-                  height: 20,
-                  minWidth: 20,
-                  fontSize: '0.75rem',
-                }}
-              />
-            )}
-          </Button>
-        </Box>
-
         {/* Filter Side Drawer */}
         <FilterSideDrawer
           open={filterDrawerOpen}
@@ -201,7 +203,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography variant="body2">
                           {pkg.package_description || pkg.pac_description}
                         </Typography>
                       </TableCell>
@@ -219,7 +221,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
                             borderRadius: '8px',
                           }}
                           size="small"
-                          label={(pkg.package_status || pkg.pac_status || 'INACTIVE').toUpperCase()}
+                          label={pkg.package_status}
                         />
                       </TableCell>
                       <TableCell align="center">

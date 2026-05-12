@@ -194,3 +194,9 @@ export const importSelectedCurriculums = async (importData) => {
   const response = await api.post('/curriculum/import-agent-curriculum', importData);
   return response.data;
 };
+
+// Fetch session terms
+export const fetchSessionTerms = async () => {
+  const response = await api.get('/curriculum/get-subscribed-session-terms');
+  return response.data;
+};

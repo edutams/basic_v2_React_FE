@@ -2,9 +2,9 @@ import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Stage1SchoolProfile  from './stages/Stage1SchoolProfile';
 import Stage2ManageSessions from './stages/Stage2ManageSessions';
-import Stage4ClassArms      from './stages/Stage4ClassArms';
-import Stage5AddLearners    from './stages/Stage5AddLearners';
-import Stage6AddTeachers    from './stages/Stage6AddTeachers';
+import Stage3ClassArms      from './stages/Stage3ClassArms';
+import Stage4AddLearners    from './stages/Stage4AddLearners';
+import Stage5AddTeachers    from './stages/Stage5AddTeachers';
 
 const InitialSetup = () => {
   const navigate = useNavigate();
@@ -24,9 +24,9 @@ const InitialSetup = () => {
   // Remaining stages shift down: old 4→3, old 5→4, old 6→5.
   if (stage === 1) return <Stage1SchoolProfile  onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
   if (stage === 2) return <Stage2ManageSessions onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 3) return <Stage4ClassArms      onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 4) return <Stage5AddLearners    onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
-  if (stage === 5) return <Stage6AddTeachers    onNext={goFinish} onBack={goBack} onSkip={goSkip} />;
+  if (stage === 3) return <Stage3ClassArms      onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
+  if (stage === 4) return <Stage4AddLearners    onNext={goNext}   onBack={goBack} onSkip={goSkip} />;
+  if (stage === 5) return <Stage5AddTeachers    onNext={goFinish} onBack={goBack} onSkip={goSkip} />;
 
   goFinish();
   return null;

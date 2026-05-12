@@ -31,7 +31,7 @@ import ViewRoleModal from './ViewRoleModal';
 import PermissionRolesModal from './PermissionRolesModal';
 import PermissionOrganizationsModal from './PermissionOrganizationsModal';
 
-const AssignmentManagement = () => {
+const PermissionBased = () => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -333,4 +333,4 @@ const AssignmentManagement = () => {
   );
 };
 
-export default AssignmentManagement;
+export default PermissionBased;

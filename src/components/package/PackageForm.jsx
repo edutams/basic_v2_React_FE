@@ -45,7 +45,7 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
     <Box component="form" onSubmit={formik.handleSubmit}>
       <Grid container spacing={3}>
         {/* Package Name */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }} >
           <TextField
             label="Package Name"
             name="package_name"
@@ -57,11 +57,13 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
             error={formik.touched.package_name && Boolean(formik.errors.package_name)}
             helperText={formik.touched.package_name && formik.errors.package_name}
             required
+            size="small"
+
           />
         </Grid>
 
         {/* Package Type */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }} >
           <FormControl fullWidth variant="outlined">
             <InputLabel>Package Type</InputLabel>
             <Select
@@ -70,6 +72,8 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Package Type"
+              size="small"
+
               error={formik.touched.package_type && Boolean(formik.errors.package_type)}
             >
               <MenuItem value="Monthly">Monthly</MenuItem>
@@ -80,7 +84,7 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
         </Grid>
 
         {/* Package Description */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }} >
           <TextField
             label="Package Description"
             name="package_description"
@@ -94,11 +98,13 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
             error={formik.touched.package_description && Boolean(formik.errors.package_description)}
             helperText={formik.touched.package_description && formik.errors.package_description}
             required
+            size="small"
+
           />
         </Grid>
 
         {/* Price */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }} >
           <TextField
             label="Price"
             name="price"
@@ -114,11 +120,13 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
             error={formik.touched.price && Boolean(formik.errors.price)}
             helperText={formik.touched.price && formik.errors.price}
             required
+            size="small"
+
           />
         </Grid>
 
         {/* Status */}
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth variant="outlined">
             <InputLabel>Status</InputLabel>
             <Select
@@ -128,6 +136,8 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
               onBlur={formik.handleBlur}
               label="Status"
               error={formik.touched.status && Boolean(formik.errors.status)}
+              size="small"
+
             >
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
@@ -136,11 +146,11 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
         </Grid>
 
         {/* Features */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Typography variant="h6" gutterBottom>
             Package Features
           </Typography>
-          
+
           {/* Add Feature Input */}
           <Box sx={{ mb: 2 }}>
             <TextField
@@ -160,6 +170,8 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
                 ),
               }}
               placeholder="Enter a feature and press Enter or click +"
+              size="small"
+
             />
           </Box>
 
@@ -185,20 +197,22 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
         </Grid>
 
         {/* Action Buttons */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
             <Button
               onClick={onCancel}
               sx={{ mr: 1 }}
               color="inherit"
               type="button"
+              size="small"
+
             >
               Cancel
             </Button>
             <Button
               variant="contained"
               type="submit"
-              disabled={formik.isSubmitting}
+              size="small"
               sx={{
                 bgcolor: '#1976d2',
                 '&:hover': { bgcolor: '#1565c0' },

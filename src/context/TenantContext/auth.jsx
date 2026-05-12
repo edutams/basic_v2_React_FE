@@ -4,6 +4,7 @@ import authApi from '../../api/auth';
 import { PermissionProvider } from './permissions';
 import { validateTenantDomain } from './services/tenant.service';
 import { CustomizerContext } from '../CustomizerContext';
+import tenantApi from '../../api/tenant_api';
 
 export const TenantAuthContext = createContext(undefined);
 
@@ -48,6 +49,18 @@ export const TenantAuthProvider = ({ children }) => {
     }
   };
 
+  const fetchTenantOnboardingInfo = async () => {
+    try {
+      const res = await tenantApi.get('/school_setup/get_current_tenant');
+      const freshData = res.data?.data;
+      if (freshData) {
+        setTenantInfo((prev) => ({ ...prev, ...freshData }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch tenant onboarding info', err);
+    }
+  };
+
   useEffect(() => {
     const restoreUser = async () => {
       const token = localStorage.getItem('tenant_access_token');
@@ -78,6 +91,8 @@ export const TenantAuthProvider = ({ children }) => {
         if (primary_color) {
           setPrimaryColor(primary_color);
         }
+
+        await fetchTenantOnboardingInfo();
       } catch (err) {
         localStorage.removeItem('tenant_access_token');
         localStorage.removeItem('isImpersonating');
@@ -117,11 +132,28 @@ export const TenantAuthProvider = ({ children }) => {
     return () => window.removeEventListener('tenant_auth:expired', handleAuthExpired);
   }, []);
 
+  // const refreshTenantInfo = async () => {
+  //   const hostname = window.location.hostname;
+  //   const data = await validateTenantDomain(hostname);
+  //   if (data && data.status !== false) {
+  //     setTenantInfo(data);
+  //   }
+  // };
+
   const refreshTenantInfo = async () => {
-    const hostname = window.location.hostname;
-    const data = await validateTenantDomain(hostname);
-    if (data && data.status !== false) {
-      setTenantInfo(data);
+    try {
+      const res = await tenantApi.get('/school_setup/get_current_tenant');
+      const freshData = res.data?.data;
+      if (freshData) {
+        setTenantInfo((prev) => ({ ...prev, ...freshData }));
+      }
+    } catch (err) {
+      // fallback to domain validation for public info
+      const hostname = window.location.hostname;
+      const data = await validateTenantDomain(hostname);
+      if (data && data.status !== false) {
+        setTenantInfo(data);
+      }
     }
   };
 
@@ -154,6 +186,8 @@ export const TenantAuthProvider = ({ children }) => {
       if (primary_color) {
         setPrimaryColor(primary_color);
       }
+
+      await fetchTenantOnboardingInfo();
 
       return { success: true, user: { ...userData, roles: roles || [] } };
     } catch (err) {

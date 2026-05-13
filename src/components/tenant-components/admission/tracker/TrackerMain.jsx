@@ -73,6 +73,11 @@ const FormSubmittedCard = ({ submittedDate, onViewDetails }) => (
   </Paper>
 );
 
+FormSubmittedCard.propTypes = {
+  submittedDate: PropTypes.string,
+  onViewDetails: PropTypes.func,
+};
+
 // ── Current Stage card ────────────────────────────────────────────────────────
 const CurrentStageCard = ({
   stageTitle,
@@ -193,7 +198,7 @@ const CurrentStageCard = ({
         fullWidth
         sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
       >
-        Start Entrance Exam
+        Start {stageTitle}
       </Button>
       <Button
         variant="outlined"
@@ -206,6 +211,15 @@ const CurrentStageCard = ({
     </Box>
   </Paper>
 );
+
+CurrentStageCard.propTypes = {
+  stageTitle: PropTypes.string.isRequired,
+  stageDescription: PropTypes.string,
+  requirementStatus: PropTypes.string,
+  timeLimit: PropTypes.string,
+  onStart: PropTypes.func,
+  onPractice: PropTypes.func,
+};
 
 // ── Next Step card ────────────────────────────────────────────────────────────
 const NextStepCard = ({ title, description, actionLabel, actionDisabled, onAction }) => (
@@ -270,21 +284,29 @@ const NextStepCard = ({ title, description, actionLabel, actionDisabled, onActio
   </Paper>
 );
 
+NextStepCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  actionLabel: PropTypes.string,
+  actionDisabled: PropTypes.bool,
+  onAction: PropTypes.func,
+};
+
 // ── Main export ───────────────────────────────────────────────────────────────
 const TrackerMain = ({
   submittedDate,
-  onViewDetails,
+  onViewDetails = () => {},
   stageTitle,
   stageDescription,
   requirementStatus,
   timeLimit,
-  onStart,
-  onPractice,
+  onStart = () => {},
+  onPractice = () => {},
   nextTitle,
   nextDescription,
   nextActionLabel,
-  nextActionDisabled,
-  onNextAction,
+  nextActionDisabled = false,
+  onNextAction = () => {},
 }) => (
   <Box>
     <FormSubmittedCard submittedDate={submittedDate} onViewDetails={onViewDetails} />
@@ -307,19 +329,19 @@ const TrackerMain = ({
 );
 
 TrackerMain.propTypes = {
-  submittedDate:      PropTypes.string,
-  onViewDetails:      PropTypes.func,
-  stageTitle:         PropTypes.string.isRequired,
-  stageDescription:   PropTypes.string,
-  requirementStatus:  PropTypes.string,
-  timeLimit:          PropTypes.string,
-  onStart:            PropTypes.func,
-  onPractice:         PropTypes.func,
-  nextTitle:          PropTypes.string.isRequired,
-  nextDescription:    PropTypes.string,
-  nextActionLabel:    PropTypes.string,
+  submittedDate: PropTypes.string,
+  onViewDetails: PropTypes.func,
+  stageTitle: PropTypes.string.isRequired,
+  stageDescription: PropTypes.string,
+  requirementStatus: PropTypes.string,
+  timeLimit: PropTypes.string,
+  onStart: PropTypes.func,
+  onPractice: PropTypes.func,
+  nextTitle: PropTypes.string.isRequired,
+  nextDescription: PropTypes.string,
+  nextActionLabel: PropTypes.string,
   nextActionDisabled: PropTypes.bool,
-  onNextAction:       PropTypes.func,
+  onNextAction: PropTypes.func,
 };
 
 export default TrackerMain;

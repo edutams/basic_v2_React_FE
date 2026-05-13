@@ -24,6 +24,7 @@ const ApplicationTracker = () => {
 
   return (
     <PageContainer title="Application Tracker" description="Track your admission application">
+
       {/* Page header */}
       <Box
         display="flex"
@@ -56,44 +57,36 @@ const ApplicationTracker = () => {
       />
 
       {/* Main content + sidebar */}
-      <Grid container spacing={3} alignItems="flex-start">
-        <Grid size={{ xs: 12 }}>
-          <Paper
-            sx={{
-              p: 3,
-              bgcolor: '#e5e8f86a',
-            }}
-          >
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 8 }}>
-                <TrackerMain
-                  submittedDate="Sept 12, 2024"
-                  onViewDetails={() =>
-                    navigate('/admission/new-application', {
-                      state: { wardData, academicData, selectedBatch },
-                    })
-                  }
-                  stageTitle="Entrance Exam"
-                  stageDescription="Your child is required to take the online aptitude test as part of the admission process."
-                  requirementStatus="Ready to Begin"
-                  timeLimit="45 Minutes"
-                  onStart={() => {}}
-                  onPractice={() => {}}
-                  nextTitle="Admission Decision"
-                  nextDescription="Requires completion of Entrance Exam."
-                  nextActionLabel="Pay Acceptance Fee"
-                  nextActionDisabled
-                  onNextAction={() => {}}
-                />
-              </Grid>
+      <Paper sx={{ p: 3, bgcolor: '#e5e8f86a' }}>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <TrackerMain
+              submittedDate="Sept 12, 2024"
+              onViewDetails={() =>
+                navigate('/admission/new-application', {
+                  state: { wardData, academicData, selectedBatch },
+                })
+              }
+              stageTitle="Entrance Exam"
+              stageDescription="Your child is required to take the online aptitude test as part of the admission process."
+              requirementStatus="Ready to Begin"
+              timeLimit="45 Minutes"
+              onStart={() => {}}
+              onPractice={() => {}}
+              nextTitle="Admission Decision"
+              nextDescription="Requires completion of Entrance Exam."
+              nextActionLabel="Pay Acceptance Fee"
+              nextActionDisabled
+              onNextAction={() => {}}
+            />
+          </Grid>
 
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TrackerSidebar />
-              </Grid>
-            </Grid>
-          </Paper>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TrackerSidebar />
+          </Grid>
         </Grid>
-      </Grid>
+      </Paper>
+
     </PageContainer>
   );
 };

@@ -1,4 +1,4 @@
-import { Box, Grid, Avatar, Typography } from '@mui/material';
+import { Box, Avatar, Typography } from '@mui/material';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
@@ -40,7 +40,6 @@ const ProgressTracker = ({ currentStage }) => (
             position: 'relative',
           }}
         >
-          {/* Left connector */}
           {i > 0 && (
             <Box
               sx={{
@@ -54,7 +53,6 @@ const ProgressTracker = ({ currentStage }) => (
               }}
             />
           )}
-          {/* Right connector */}
           {i < STAGES.length - 1 && (
             <Box
               sx={{
@@ -69,7 +67,6 @@ const ProgressTracker = ({ currentStage }) => (
             />
           )}
 
-          {/* Circle */}
           <Box
             sx={{
               width: { xs: 28, sm: 32 },
@@ -99,7 +96,6 @@ const ProgressTracker = ({ currentStage }) => (
             )}
           </Box>
 
-          {/* Stage label */}
           <Typography
             variant="caption"
             textAlign="center"
@@ -111,7 +107,6 @@ const ProgressTracker = ({ currentStage }) => (
             {stage.label}
           </Typography>
 
-          {/* Sub-label */}
           <Typography
             variant="caption"
             textAlign="center"
@@ -120,7 +115,8 @@ const ProgressTracker = ({ currentStage }) => (
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: 0.3,
-              color: active ? 'warning.main' : stage.subColor,
+              // color: active ? 'warning.main' : stage.subColor,
+              color: 'success.dark',
             }}
           >
             {stage.sub}
@@ -131,47 +127,62 @@ const ProgressTracker = ({ currentStage }) => (
   </Box>
 );
 
-const TrackerHeader = ({ name, intendingClass, gender, address, photo, currentStage }) => (
- <Box
-  sx={{
-    display: 'flex',
-    flexDirection: { xs: 'column', md: 'row' },
-    alignItems: { xs: 'flex-start', md: 'center' },
-    gap: { xs: 2, md: 3 },
-    background: 'linear-gradient(90deg, #FFF9ED 0%, #FFEFEC 100%)',
-    borderRadius: 3,
-    p: { xs: 2, sm: 3 },
-    width: '100%',
-    boxSizing: 'border-box',
-    mb: 3,
-  }}
->
-  {/* Avatar + info */}
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-    <Avatar
-      src={photo}
+const TrackerHeader = ({
+  name,
+  intendingClass,
+  gender,
+  address,
+  photo,
+  currentStage = 1,
+}) => (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: { xs: 'column', md: 'row' },
+      alignItems: { xs: 'flex-start', md: 'center' },
+      gap: { xs: 2, md: 3 },
+      background: 'linear-gradient(90deg, #FFF9ED 0%, #FFEFEC 100%)',
+      borderRadius: 3,
+      p: { xs: 2, sm: 3 },
+      width: '100%',
+      boxSizing: 'border-box',
+      mb: 3,
+    }}
+  >
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+      <Avatar
+        src={photo}
+        sx={{
+          width: { xs: 64, sm: 100 },
+          height: { xs: 64, sm: 100 },
+          border: '3px solid',
+          borderColor: 'primary.light',
+          flexShrink: 0,
+        }}
+      />
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="subtitle1" fontWeight={800} noWrap>{name}</Typography>
+        <Typography variant="body2" color="success.dark" fontWeight={600}>
+          Intending Class : {intendingClass}
+        </Typography>
+        <Typography variant="body2" fontWeight={500}>Gender : {gender}</Typography>
+        <Typography variant="caption" color="warning.dark">Parent Address:</Typography>
+        <Typography variant="caption" color="text.secondary" display="block">{address}</Typography>
+      </Box>
+    </Box>
+
+    <Box
       sx={{
-        width: { xs: 64, sm: 100 },
-        height: { xs: 64, sm: 100 },
-        border: '3px solid',
-        borderColor: 'primary.light',
+        ml: { xs: 0, md: 'auto' },
         flexShrink: 0,
+        width: { xs: '100%', md: '55%' },
+        overflow: 'hidden',
+        minWidth: 0,
       }}
-    />
-    <Box sx={{ minWidth: 0 }}>
-      <Typography variant="subtitle1" fontWeight={800} noWrap>{name}</Typography>
-      <Typography variant="body2" color="success.dark" fontWeight={600}>Intending Class : {intendingClass}</Typography>
-      <Typography variant="body2" fontWeight={500}>Gender : {gender}</Typography>
-      <Typography variant="caption" color="warning.dark">Parent Address:</Typography>
-      <Typography variant="caption" color="text.secondary" display="block">{address}</Typography>
+    >
+      <ProgressTracker currentStage={currentStage} />
     </Box>
   </Box>
-
-  {/* Progress tracker */}
-  <Box sx={{ ml: 'auto', flexShrink: 0, width: { xs: '100%', md: '55%' } }}>
-    <ProgressTracker currentStage={currentStage} />
-  </Box>
-</Box>
 );
 
 TrackerHeader.propTypes = {
@@ -181,10 +192,6 @@ TrackerHeader.propTypes = {
   address: PropTypes.string,
   photo: PropTypes.string,
   currentStage: PropTypes.number,
-};
-
-TrackerHeader.defaultProps = {
-  currentStage: 1,
 };
 
 export default TrackerHeader;

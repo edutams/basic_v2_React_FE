@@ -52,6 +52,7 @@ import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
 import UploadStaffModal from './components/UploadStaffModal';
+import dayjs from 'dayjs';
 
 const BCrumb = [
   {
@@ -224,6 +225,10 @@ const StaffManager = () => {
 
   const handleEditStaff = () => {
     if (selectedStaff) {
+      console.log('Selected Staff Data:', selectedStaff);
+      console.log('Class Teacher:', selectedStaff.class_teacher);
+      console.log('Subject Teacher:', selectedStaff.subject_teacher);
+      
       setFormData({
         staff_id: selectedStaff.staff_id || '',
         surname: selectedStaff.user?.lname || '',
@@ -231,16 +236,18 @@ const StaffManager = () => {
         phone_number: selectedStaff.user?.phone || '',
         gender: selectedStaff.user?.sex || '',
         email: selectedStaff.user?.email || '',
-        date_of_appointment: selectedStaff.date_of_appointment || null,
+        date_of_appointment: selectedStaff.date_of_first_appointment ? dayjs(selectedStaff.date_of_first_appointment) : null,
         status: selectedStaff.status || 'active',
         role: activeTab === 'non-teaching' ? selectedStaff.role || '' : undefined,
         // Allocation fields from class_teacher
         class_session_term_id: selectedStaff.class_teacher?.session_term_id || '',
         class_programme_id: selectedStaff.class_teacher?.class_arm?.programme_class?.programme_id || '',
+        class_id: selectedStaff.class_teacher?.class_arm?.programme_class?.class_id || '',
         class_arm_id: selectedStaff.class_teacher?.class_arm_id || '',
         // Allocation fields from subject_teacher
         subject_session_term_id: selectedStaff.subject_teacher?.session_term_id || '',
-        subject_programme_id: selectedStaff.subject_teacher?.class_arm?.programme_class?.programme_id || '',
+        subject_programme_id: selectedStaff.subject_teacher?.subject?.programme_subject?.[0]?.programme_id || '',
+        subject_class_id: selectedStaff.subject_teacher?.class_arm?.programme_class?.class_id || '',
         subject_class_arm_id: selectedStaff.subject_teacher?.class_arm_id || '',
         subject_curriculum_id: selectedStaff.subject_teacher?.subject?.curriculum_id || '',
         subject_id: selectedStaff.subject_teacher?.subject_id || '',
@@ -273,15 +280,17 @@ const StaffManager = () => {
         userId: values.staff_id,
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: activeTab === 'teaching' ? 'teaching' : 'non-teaching',
-        date_of_appointment: values.date_of_appointment
+        date_of_first_appointment: values.date_of_appointment
           ? values.date_of_appointment.format('YYYY-MM-DD')
           : null,
         status: values.status,
         class_session_term_id: values.class_session_term_id,
         class_programme_id: values.class_programme_id,
+        class_id: values.class_id,
         class_arm_id: values.class_arm_id,
         subject_session_term_id: values.subject_session_term_id,
         subject_programme_id: values.subject_programme_id,
+        subject_class_id: values.subject_class_id,
         subject_curriculum_id: values.subject_curriculum_id,
         subject_id: values.subject_id,
         subject_class_arm_id: values.subject_class_arm_id,
@@ -319,7 +328,7 @@ const StaffManager = () => {
         userId: values.staff_id,
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: selectedStaff.staff_type,
-        date_of_appointment: values.date_of_appointment
+        date_of_first_appointment: values.date_of_appointment
           ? values.date_of_appointment.format('YYYY-MM-DD')
           : null,
         status: values.status,
@@ -329,6 +338,7 @@ const StaffManager = () => {
         class_arm_id: values.class_arm_id,
         subject_session_term_id: values.subject_session_term_id,
         subject_programme_id: values.subject_programme_id,
+        subject_class_id: values.subject_class_id,
         subject_class_arm_id: values.subject_class_arm_id,
         subject_curriculum_id: values.subject_curriculum_id,
         subject_id: values.subject_id,
@@ -391,26 +401,30 @@ const StaffManager = () => {
     {
       title: 'Total Staff',
       value: stats.total,
-      icon: <IconUsers size={24} color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconUsers size={24} />,
+      bgColor: 'primary.light',
+      iconColor: 'primary.main',
     },
     {
       title: 'Teaching Staff',
       value: stats.teaching,
-      icon: <IconUserCheck size={24} color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconUserCheck size={24} />,
+      bgColor: 'success.light',
+      iconColor: 'success.main',
     },
     {
       title: 'Non-Teaching Staff',
       value: stats.nonTeaching,
-      icon: <IconUserX size={24} color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconUserX size={24} />,
+      bgColor: 'info.light',
+      iconColor: 'info.main',
     },
     {
       title: 'On Leave',
       value: stats.onLeave,
-      icon: <IconCalendarOff size={24} color="#39b65a" />,
-      bgColor: '#eaf7ee',
+      icon: <IconCalendarOff size={24} />,
+      bgColor: 'warning.light',
+      iconColor: 'warning.main',
     },
   ];
 
@@ -444,6 +458,7 @@ const StaffManager = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    color: stat.iconColor,
                   }}
                 >
                   {stat.icon}

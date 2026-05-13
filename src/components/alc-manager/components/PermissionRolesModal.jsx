@@ -47,11 +47,13 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     if (open && permissionId) {
       setPage(0);
       setSearch('');
+      setSearchInput('');
       setError(null);
     }
   }, [open, permissionId]);
@@ -59,7 +61,7 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
   useEffect(() => {
     if (!open || !permissionId) return;
     fetchRoles();
-  }, [open, permissionId, page, search]);
+  }, [open, permissionId, page, search, rowsPerPage]);
 
   const fetchRoles = async () => {
     setLoading(true);
@@ -67,6 +69,7 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
     try {
       const res = await aclApi.getPermissionRoles(permissionId, {
         page: page + 1,
+        per_page: rowsPerPage,
         search,
       });
 
@@ -87,9 +90,21 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
   const handleClose = () => {
     setRoles([]);
     setSearch('');
+    setSearchInput('');
     setPage(0);
     setError(null);
     onClose();
+  };
+
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   // Colour-code role chips the same way the rest of the app does
@@ -128,24 +143,43 @@ const PermissionRolesModal = ({ open, onClose, permissionId }) => {
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2 }}>
-        <TextField
-          placeholder="Search by role name"
-          value={search}
-          size="small"
-          fullWidth
-          sx={{ mb: 2 }}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+          <TextField
+            placeholder="Search by role name"
+            value={searchInput}
+            size="small"
+            fullWidth
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button 
+            variant="contained" 
+            onClick={handleSearch}
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
+            Search
+          </Button>
+          {search && (
+            <Button 
+              variant="outlined" 
+              onClick={() => {
+                setSearch('');
+                setSearchInput('');
+                setPage(0);
+              }}
+              sx={{ minWidth: 'auto', px: 2 }}
+            >
+              Clear
+            </Button>
+          )}
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>

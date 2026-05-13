@@ -140,10 +140,10 @@ const SchoolsView = ({ selectedAgent }) => {
 
   return (
     <Box>
-      <Typography variant="h6" mb={3}>
+      {/* <Typography variant="h6" mb={3}>
         Schools managed by{' '}
         {selectedAgent?.organizationName || selectedAgent?.agentDetails}
-      </Typography>
+      </Typography> */}
 
       {/* Search Section */}
       <Box

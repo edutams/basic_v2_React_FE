@@ -474,7 +474,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
 // ── Main SchoolsTab ───────────────────────────────────────────────────────────
 
-const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refreshKey }) => {
+const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refreshKey, isViewingProfile = false, isDashboard = false }) => {
   const theme = useTheme();
   const { user } = useAuth();
   const { can } = usePermissions();
@@ -755,7 +755,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
         {/* ── Analytics Cards ── */}
-        {can('landlord.school.analytics') && (
+        {can('landlord.school.analytics') && user?.organization?.access_level !== 1 && !isViewingProfile && !isDashboard && (
           <Box
             sx={{
               display: 'grid',
@@ -1172,6 +1172,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
         >
           <RegisterSchoolForm
             actionType="create"
+            organizationId={organizationId}
             onSubmit={() => {
               setOpenAddModal(false);
               fetchProspects();
@@ -1190,6 +1191,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
         >
           <RegisterSchoolForm
             actionType="update"
+            organizationId={organizationId}
             selectedSchool={selectedSchool}
             onSubmit={() => {
               setOpenEditModal(false);

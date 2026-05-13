@@ -105,6 +105,7 @@ const ClassStructureTable = ({
           <Button
             variant="contained"
             size="small"
+            disabled={!structure.no_of_arms || structure.no_of_arms === 0 || structure.no_of_arms === '0'}
             onClick={() => onGenerateArms && onGenerateArms(structure.id)}
           >
             Generate
@@ -144,8 +145,18 @@ const ClassStructureTable = ({
 
   return (
     <>
-      <TableContainer component={Paper} variant="outlined">
-        <Table>
+      <TableContainer 
+        component={Paper} 
+        variant="outlined"
+        sx={{ 
+          maxHeight: 600, 
+          overflow: 'auto',
+          '& .MuiTable-root': {
+            minWidth: 650
+          }
+        }}
+      >
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold', width: '60px' }}>S/N</TableCell>

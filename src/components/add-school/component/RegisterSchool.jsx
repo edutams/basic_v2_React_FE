@@ -201,6 +201,7 @@ const RegisterSchoolForm = ({
   onSubmit,
   onCancel,
   useProspective = false,
+  organizationId,
 }) => {
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
@@ -424,7 +425,11 @@ useEffect(() => {
         school_divisions: formData.school_divisions,
         session_id: formData.session_id,
         administrator_info,
+        organization_id: organizationId,
       };
+
+      console.log('RegisterSchool - organizationId prop:', organizationId);
+      console.log('RegisterSchool - base payload:', base);
 
       let res;
       if (actionType === 'update') {
@@ -434,14 +439,17 @@ useEffect(() => {
           sidecolor: formData.sidecolor,
           bodycolor: formData.bodycolor,
         };
+        console.log('RegisterSchool - update payload:', payload);
         if (useProspective) {
           res = await updateProspectiveTenant(selectedSchool.id, payload);
         } else {
           res = await updateSchool(selectedSchool.id, payload);
         }
       } else if (useProspective) {
+        console.log('RegisterSchool - create prospective payload:', base);
         res = await createProspectiveTenant(base);
       } else {
+        console.log('RegisterSchool - create school payload:', base);
         res = await createSchool(base);
       }
 
@@ -750,6 +758,7 @@ RegisterSchoolForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   useProspective: PropTypes.bool,
+  organizationId: PropTypes.string,
 };
 
 export default RegisterSchoolForm;

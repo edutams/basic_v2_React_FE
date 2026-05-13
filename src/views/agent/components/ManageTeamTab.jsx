@@ -122,11 +122,14 @@ const ManageTeamTab = ({  accessLevel = 1, isViewingProfile = false }) => {
                 console.error('Failed to fetch permissions', e);
             }
         }
-        // activeMember.permissions are human-readable labels from backend, map to values
-        const currentVals = (activeMember?.permissions || [])
-            .map(r => perms.find(p => p.label === r || p.value === r)?.value)
-            .filter(Boolean);
-        setEditPermissions(currentVals);
+        
+        // Get current permissions - include both direct and role-based permissions
+        // but only allow modification of direct permissions
+        const currentDirectPermissions = (activeMember?.direct_permissions || []);
+        const currentRolePermissions = (activeMember?.role_permissions || []);
+        
+        // Set editPermissions to only include direct permissions (modifiable ones)
+        setEditPermissions(currentDirectPermissions);
         setOpenPermissionModal(true);
     };
 
@@ -463,7 +466,7 @@ const ManageTeamTab = ({  accessLevel = 1, isViewingProfile = false }) => {
             </Dialog>
 
             {/* Manage Permissions Modal */}
-            <Dialog open={openPermissionModal} onClose={() => setOpenPermissionModal(false)} maxWidth="sm" fullWidth>
+            <Dialog open={openPermissionModal} onClose={() => setOpenPermissionModal(false)} maxWidth="md" fullWidth>
                 <DialogTitle sx={{ fontWeight: 700 }}>Manage Permissions</DialogTitle>
                 <Divider />
                 <DialogContent>
@@ -482,24 +485,63 @@ const ManageTeamTab = ({  accessLevel = 1, isViewingProfile = false }) => {
                                 .filter(perm => perm.label.toLowerCase().includes(permissionSearch.toLowerCase()))
                                 .map((perm) => {
                                     const isChecked = editPermissions.indexOf(perm.value) > -1;
+                                    // Check if this permission is from a role for the current member
+                                    const memberPermission = activeMember?.permissions?.find(p => p.value === perm.value);
+                                    const isFromRole = memberPermission?.source === 'role' || memberPermission?.from_role === true;
+                                    const isDisabled = isFromRole;
+                                    
                                     return (
-                                        <MenuItem key={perm.value} onClick={() => {
-                                            setEditPermissions(prev => 
-                                                isChecked 
-                                                    ? prev.filter(v => v !== perm.value) 
-                                                    : [...prev, perm.value]
-                                            );
-                                        }} sx={{ alignItems: 'flex-start', py: 1 }}>
-                                            <Checkbox checked={isChecked} size="small" sx={{ mt: 0.2, mr: 0.5, p: 0.5 }} />
-                                            <Box>
+                                        <MenuItem 
+                                            key={perm.value} 
+                                            onClick={() => {
+                                                if (!isDisabled) {
+                                                    setEditPermissions(prev => 
+                                                        isChecked 
+                                                            ? prev.filter(v => v !== perm.value) 
+                                                            : [...prev, perm.value]
+                                                    );
+                                                }
+                                            }} 
+                                            sx={{ 
+                                                alignItems: 'flex-start', 
+                                                py: 1,
+                                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                               
+                                            }}
+                                        >
+                                            <Checkbox 
+                                                checked={isChecked} 
+                                                disabled={isDisabled}
+                                                size="small" 
+                                                sx={{ mt: 0.2, mr: 0.5, p: 0.5 }} 
+                                            />
+                                            <Box sx={{ flex: 1 }}>
                                                 {perm.description && (
                                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.3, mb: 0.2 }}>
                                                         {perm.description}
                                                     </Typography>
                                                 )}
-                                                <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
-                                                    {perm.label}
-                                                </Typography>
+                                                <Stack direction="row" alignItems="center" spacing={1}>
+                                                    <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+                                                        {perm.label}
+                                                    </Typography>
+                                                    {isFromRole && (
+                                                        <Chip 
+                                                            size="small" 
+                                                            label="From Role" 
+                                                            sx={{ 
+                                                                
+                                                                fontSize: '10px',
+                                                                height: 18
+                                                            }} 
+                                                        />
+                                                    )}
+                                                </Stack>
+                                                {isFromRole && (
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.3, mt: 0.2, fontStyle: 'italic' }}>
+                                                        This permission is inherited from the user's role and cannot be removed individually.
+                                                    </Typography>
+                                                )}
                                             </Box>
                                         </MenuItem>
                                     );

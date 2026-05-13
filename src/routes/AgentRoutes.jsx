@@ -20,6 +20,7 @@ const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')
 
 const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
 const ViewAgent = Loadable(lazy(() => import('../views/agent/ViewAgent')));
+const AgentDashboard = Loadable(lazy(() => import('../views/agent/AgentDashboard')));
 const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
 const CalendarManagement = Loadable(lazy(() => import('../views/calendar/CalendarManagement')));
 const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
@@ -85,7 +86,7 @@ const CENTRAL_DOMAIN =
 const DashboardRouteWrapper = () => {
   const { user } = useAuth();
   if (user && user.organization.access_level > 1 && user.organization.access_level <= 5) {
-    return <ViewAgent />;
+    return <AgentDashboard />;
   }
   if (user && user.organization.access_level === 1) {
     return <AnalyticalDashboard />;

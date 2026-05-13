@@ -54,9 +54,7 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
           phone_number: initialValues?.phone_number || '',
           gender: initialValues?.gender || '',
           email: initialValues?.email || '',
-          date_of_appointment: initialValues?.date_of_appointment
-            ? dayjs(initialValues.date_of_appointment)
-            : null,
+          date_of_appointment: initialValues?.date_of_appointment || null,
           status: initialValues?.status || 'active',
           // Allocation fields
           class_session_term_id: initialValues?.class_session_term_id || '',
@@ -65,6 +63,7 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
           class_arm_id: initialValues?.class_arm_id || '',
           subject_session_term_id: initialValues?.subject_session_term_id || '',
           subject_programme_id: initialValues?.subject_programme_id || '',
+          subject_class_id: initialValues?.subject_class_id || '',
           subject_class_arm_id: initialValues?.subject_class_arm_id || '',
           subject_curriculum_id: initialValues?.subject_curriculum_id || '',
           subject_id: initialValues?.subject_id || '',
@@ -194,7 +193,6 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
                       >
                         <MenuItem value="active">Active</MenuItem>
                         <MenuItem value="inactive">Inactive</MenuItem>
-                        <MenuItem value="leave">On Leave</MenuItem>
                       </TextField>
                     </Grid>
                   </Grid>

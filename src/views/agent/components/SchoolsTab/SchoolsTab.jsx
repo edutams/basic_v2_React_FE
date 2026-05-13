@@ -755,7 +755,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
         {/* ── Analytics Cards ── */}
-        {can('landlord.school.analytics') && user?.organization?.access_level !== 1 && !isViewingProfile && !isDashboard && (
+        {can('landlord.school.analytics') && user?.organization?.access_level == 1 && !isViewingProfile && !isDashboard && (
           <Box
             sx={{
               display: 'grid',

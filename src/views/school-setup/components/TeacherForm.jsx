@@ -77,7 +77,8 @@ const TeacherForm = ({
                   }
                 });
               }
-              if (cls.id && cls.class_name) {
+              const hasArms = Array.isArray(cls.class_arms) && cls.class_arms.length > 0;
+              if (cls.id && cls.class_name && hasArms) {
                 const uniqueId = `${programme.id || 'prog'}-${cls.id}`;
                 allClasses.push({
                   id: uniqueId,
@@ -89,7 +90,7 @@ const TeacherForm = ({
                   display_name: `${programme.programme_code || ''} - ${
                     cls.class_code || cls.class_name
                   }`,
-                  class_arms: cls.class_arms || [],
+                  class_arms: cls.class_arms,
                 });
               }
             });

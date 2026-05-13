@@ -175,6 +175,16 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
   };
 
   const handleGenerateArms = (uniqueKey) => {
+    const target = classes.find((cls) => cls.unique_key === uniqueKey);
+    if (!target || !target.no_of_arms || target.no_of_arms < 1) {
+      setNotification({
+        open: true,
+        message: 'At least one arm must be set before generating.',
+        severity: 'warning',
+      });
+      return;
+    }
+
     setClasses((prev) =>
       prev.map((cls) => {
         if (cls.unique_key === uniqueKey) {

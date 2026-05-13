@@ -47,9 +47,10 @@ const ActionMenuCell = ({
   handleManageReferral,
   handleManageGateway,
   handleDeleteAgent,
+  isViewingProfile = false,
 }) => {
   const [anchor, setAnchor] = useState(null);
-  
+
   const handleClick = (event) => {
     setAnchor(event.currentTarget);
   };
@@ -71,84 +72,67 @@ const ActionMenuCell = ({
         onClose={handleClose}
         PaperProps={{ sx: { borderRadius: '8px', minWidth: 160 } }}
       >
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate(`/agent/view/${agent.id}`);
-          }}
-        >
-          View Profile
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            handleImpersonate(agent);
-          }}
-        >
-          Login As Agent
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            handleUpdateAgent(agent, 'update');
-          }}
-        >
-          Update Agent Info
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            handleViewSchools(agent, 'view');
-          }}
-        >
-          View School
-        </MenuItem>
-        {/* <MenuItem
-          onClick={() => {
-            handleClose();
-            handleManagePermissions(agent);
-          }}
-        >
-          Manage Permission
-        </MenuItem> */}
-        {/* <MenuItem
-          onClick={() => {
-            handleClose();
-            handleSetCommission(agent);
-          }}
-        >
-          Update Commission
-        </MenuItem> */}
-        {/* <MenuItem
-          onClick={() => {
-            handleClose();
-            handleManageReferral(agent);
-          }}
-        >
-          Manage Referral
-        </MenuItem> */}
-        {/* <MenuItem
-          onClick={() => {
-            handleClose();
-            handleManageGateway(agent);
-          }}
-        >
-          Manage Payment Gateway
-        </MenuItem> */}
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            handleDeleteAgent(agent);
-          }}
-        >
-          Delete Agent
-        </MenuItem>
+        {isViewingProfile ? (
+          // When viewing profile, only show "Login As Agent"
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              handleImpersonate(agent);
+            }}
+          >
+            Login As Agent
+          </MenuItem>
+        ) : (
+          // When not viewing profile, show all menu items
+          <>
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                navigate(`/agent/view/${agent.id}`);
+              }}
+            >
+              View Profile
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                handleImpersonate(agent);
+              }}
+            >
+              Login As Agent
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                handleUpdateAgent(agent, 'update');
+              }}
+            >
+              Update Agent Info
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                handleViewSchools(agent, 'view');
+              }}
+            >
+              View School
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                handleDeleteAgent(agent);
+              }}
+            >
+              Delete Agent
+            </MenuItem>
+          </>
+        )}
       </Menu>
     </>
   );
 };
 
-const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfile = false }) => {
+const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfile = false, organizationId = null }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -276,7 +260,16 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
           page: page + 1,
           per_page: rowsPerPage,
         };
-        const response = await agentApi.getAll(params);
+
+        let response;
+        if (isViewingProfile && organizationId) {
+          // When viewing a specific organization's profile, get only its sub-organizations
+          params.parent_id = organizationId;
+          response = await agentApi.getSubOrganizations(params);
+        } else {
+          // When on the main organizations page, get all organizations
+          response = await agentApi.getAll(params);
+        }
 
         // Handle Laravel Paginator structure
         const paginator = response.status === true ? response.data : response;
@@ -299,9 +292,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
             sub_agents_count: agent.sub_organizations_count || 0,
             access_level: agent.access_level,
             primaryColor: agent.primary_color || null,
-            status: agent.status
-              ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
-              : 'Inactive',
+            status: agent.status,
             lga: agent.lga_id || agent.state_lga_id,
             state_name: agent.state_lga?.state?.state_name || agent.state_name,
             state_id: agent.state_lga?.state_id || agent.state_id,
@@ -318,7 +309,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
       }
     };
     fetchData();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, isViewingProfile, organizationId]);
 
   // Handle search button click
   const handleSearch = () => {
@@ -335,7 +326,16 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
           page: 1,
           per_page: rowsPerPage,
         };
-        const response = await agentApi.getAll(params);
+
+        let response;
+        if (isViewingProfile && organizationId) {
+          // When viewing a specific organization's profile, get only its sub-organizations
+          params.parent_id = organizationId;
+          response = await agentApi.getSubOrganizations(params);
+        } else {
+          // When on the main organizations page, get all organizations
+          response = await agentApi.getAll(params);
+        }
 
         // Handle Laravel Paginator structure
         const paginator = response.status === true ? response.data : response;
@@ -379,7 +379,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
     fetchData();
   };
 
-  
+
   return (
     <Box>
       {/* Header */}
@@ -399,16 +399,18 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
           >
             <IconUsers size={16} />
           </Box>
-          <Typography variant="h5">List of Organization</Typography>
+          <Typography variant="h5">
+            {isViewingProfile ? 'Sub Organizations' : 'List of Organization'}
+          </Typography>
         </Stack>
-        {(isDashboard && accessLevel === 1) || (accessLevel === 1 && isViewingProfile) ? null : (
+        {!isViewingProfile && (
           <Button
             variant="contained"
             startIcon={<IconUsers size={16} />}
             onClick={onAddAgent}
             sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
           >
-            Add New Agent
+            Add New Organization
           </Button>
         )}
       </Stack>
@@ -488,7 +490,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                 <Typography variant="h6">Access Level</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h6">Sub Agent</Typography>
+                <Typography variant="h6">Sub Org.</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="h6">Total School</Typography>
@@ -522,11 +524,11 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                 const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                 const adminInitials = fullName
                   ? fullName
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((w) => w[0])
-                      .join('')
-                      .toUpperCase()
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((w) => w[0])
+                    .join('')
+                    .toUpperCase()
                   : 'NA';
                 const level = Number(agent.access_level);
                 const colorMap = {
@@ -688,15 +690,15 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                       <Chip
                         sx={{
                           bgcolor:
-                            agent.status === 'Active'
+                            agent.status == 'active'
                               ? '#dcfee6'
-                              : agent.status === 'Inactive'
+                              : agent.status == 'inactive'
                                 ? '#ffe4e6'
                                 : '#f3f4f6',
                           color:
-                            agent.status === 'Active'
+                            agent.status == 'active'
                               ? '#16a34a'
-                              : agent.status === 'Inactive'
+                              : agent.status == 'inactive'
                                 ? '#e11d48'
                                 : '#4b5563',
                           borderRadius: '6px',
@@ -731,6 +733,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                         handleManageReferral={handleManageReferral}
                         handleManageGateway={handleManageGateway}
                         handleDeleteAgent={handleDeleteAgent}
+                        isViewingProfile={isViewingProfile}
                       />
                     </TableCell>
                   </TableRow>
@@ -770,7 +773,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => {}}
+        handleRefresh={() => { }}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />

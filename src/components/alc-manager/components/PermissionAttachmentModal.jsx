@@ -89,10 +89,10 @@ const PermissionAttachmentModal = ({
 
       return exists
         ? prev.filter(
-            (p) =>
-              String(p.id) !== String(permission.id) &&
-              p.name !== permission.name,
-          )
+          (p) =>
+            String(p.id) !== String(permission.id) &&
+            p.name !== permission.name,
+        )
         : [...prev, permission];
     });
   };
@@ -169,6 +169,7 @@ const PermissionAttachmentModal = ({
                 </InputAdornment>
               ),
             }}
+            size="small"
           />
 
           <Typography

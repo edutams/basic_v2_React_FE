@@ -76,7 +76,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
   useEffect(() => {
     if (!open || !roleId) return;
     fetchData();
-  }, [open, roleId, page, search]);
+  }, [open, roleId, page, search, rowsPerPage]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -84,6 +84,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
     try {
       const res = await aclApi.getRoleOrganizations(roleId, {
         page: page + 1,
+        per_page: rowsPerPage,
         search,
       });
 

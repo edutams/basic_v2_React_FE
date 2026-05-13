@@ -53,7 +53,7 @@ const getModalConfig = (actionType) => {
   return configs[actionType] || configs.create;
 };
 
-const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 'create' }) => {
+const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, parentId, actionType = 'create' }) => {
   const notify = useNotification();
 
   const { user } = useAuth();
@@ -184,6 +184,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, actionType = 
         phone: values.phone,
         organization_logo: values.organizationLogo,
         admin_avatar: values.adminAvatar,
+        parent_id: parentId,
       };
 
       const response = await agentApi.createAgent(payload);

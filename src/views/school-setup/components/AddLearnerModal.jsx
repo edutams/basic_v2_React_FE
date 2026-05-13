@@ -256,6 +256,7 @@ const AddLearnerModal = ({
                 label="Date of Birth"
                 value={formik.values.date_of_birth}
                 onChange={(val) => formik.setFieldValue('date_of_birth', val)}
+                maxDate={dayjs().subtract(1, 'day')}
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </Box>

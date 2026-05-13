@@ -12,48 +12,62 @@ const FormSubmittedCard = ({ submittedDate, onViewDetails }) => (
     variant="outlined"
     sx={{
       borderRadius: 3,
-      p: 2.5,
+      p: { xs: 2, sm: 2.5 },
       mb: 2,
       display: 'flex',
-      alignItems: 'center',
+      flexDirection: { xs: 'column', sm: 'row' },
+      alignItems: { xs: 'flex-start', sm: 'center' },
       gap: 2,
       borderLeft: '4px solid',
       borderLeftColor: 'success.dark',
     }}
   >
-    <Box
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+      <Box
+        sx={{
+          width: 48,
+          height: 48,
+          borderRadius: 2,
+          bgcolor: 'success.light',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <CheckCircleIcon sx={{ color: 'success.dark', fontSize: 28 }} />
+      </Box>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          variant="caption"
+          color="success.dark"
+          fontWeight={700}
+          sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+        >
+          Form Submitted
+        </Typography>
+        <Typography variant="body2" fontWeight={600}>
+          Application form has been reviewed and validated.
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Submitted on {submittedDate}
+        </Typography>
+      </Box>
+    </Box>
+
+    <Button
+      variant="outlined"
+      size="small"
+      onClick={onViewDetails}
       sx={{
-        width: 48,
-        height: 48,
+        fontWeight: 600,
         borderRadius: 2,
-        bgcolor: 'success.light',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         flexShrink: 0,
+        whiteSpace: 'nowrap',
+        alignSelf: { xs: 'flex-end', sm: 'center' },
       }}
     >
-      <CheckCircleIcon sx={{ color: 'success.dark', fontSize: 28 }} />
-    </Box>
-
-    <Box sx={{ flex: 1 }}>
-      <Typography
-        variant="caption"
-        color="success.dark"
-        fontWeight={700}
-        sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
-      >
-        Form Submitted
-      </Typography>
-      <Typography variant="body2" fontWeight={600}>
-        Application form has been reviewed <br /> and validated.
-      </Typography>
-      <Typography variant="caption" color="text.secondary">
-        Submitted on {submittedDate}
-      </Typography>
-    </Box>
-
-    <Button variant="outlined" size="small" onClick={onViewDetails}>
       View Form Details
     </Button>
   </Paper>
@@ -68,7 +82,8 @@ const CurrentStageCard = ({
   onStart,
   onPractice,
 }) => (
-  <Paper variant="outlined" sx={{ borderRadius: 3, p: 2.5, mb: 2, bgcolor: '#F7F9FF' }}>
+  <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2, bgcolor: '#F7F9FF' }}>
+    {/* Header row */}
     <Box display="flex" alignItems="center" gap={1} mb={1}>
       <Box
         sx={{
@@ -84,7 +99,8 @@ const CurrentStageCard = ({
       >
         <CalendarIcon sx={{ color: 'primary.main', fontSize: 22 }} />
       </Box>
-      <Box sx={{ flex: 1 }}>
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           variant="caption"
           color="text.secondary"
@@ -93,10 +109,16 @@ const CurrentStageCard = ({
         >
           Current Stage
         </Typography>
-        <Typography variant="h3" fontWeight={800} lineHeight={1.2}>
+        <Typography
+          variant="h5"
+          fontWeight={800}
+          lineHeight={1.2}
+          sx={{ fontSize: { xs: '1.1rem', sm: '1.5rem' } }}
+        >
           {stageTitle}
         </Typography>
       </Box>
+
       <Chip
         label="ACTIVE NOW"
         size="small"
@@ -104,36 +126,35 @@ const CurrentStageCard = ({
           bgcolor: 'primary.main',
           color: '#fff',
           fontWeight: 700,
-          fontSize: 11,
+          fontSize: { xs: 10, sm: 11 },
           borderRadius: 2,
           height: 28,
+          flexShrink: 0,
         }}
       />
     </Box>
 
     <Typography
-      variant="body1"
+      variant="body2"
       color="text.secondary"
-      sx={{
-        pl: 7,
-        mb: 2,
-        lineHeight: 1.6,
-      }}
+      sx={{ pl: { xs: 0, sm: 7 }, mb: 2, lineHeight: 1.6 }}
     >
       {stageDescription}
     </Typography>
 
+    {/* Status row */}
     <Paper
       variant="outlined"
       sx={{
         borderRadius: 2,
         bgcolor: 'info.light',
-        px: 2.5,
-        py: 2,
+        px: { xs: 2, sm: 2.5 },
+        py: { xs: 1.5, sm: 2 },
         mb: 2,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        gap: 1,
       }}
     >
       <Box>
@@ -164,63 +185,84 @@ const CurrentStageCard = ({
       </Box>
     </Paper>
 
-    <Box display="flex" gap={1.5}>
+    {/* Action buttons */}
+    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1.5}>
       <Button
         variant="contained"
         onClick={onStart}
-        sx={{
-          flex: 1,
-          py: 1.5,
-        }}
+        fullWidth
+        sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
       >
         Start Entrance Exam
       </Button>
-      <Button variant="outlined" onClick={onPractice} sx={{ flex: 1, py: 1.5 }}>
+      <Button
+        variant="outlined"
+        onClick={onPractice}
+        fullWidth
+        sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
+      >
         Practice Test
       </Button>
     </Box>
   </Paper>
 );
 
+// ── Next Step card ────────────────────────────────────────────────────────────
 const NextStepCard = ({ title, description, actionLabel, actionDisabled, onAction }) => (
-  <Paper variant="outlined" sx={{ borderRadius: 3, p: 2.5 }}>
-    <Box display="flex" alignItems="center" gap={2}>
-      <Box
-        sx={{
-          width: 44,
-          height: 44,
-          borderRadius: 2,
-          bgcolor: 'grey.100',
-          border: '1px solid',
-          borderColor: 'grey.300',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <LockedIcon sx={{ color: 'grey.500', fontSize: 22 }} />
-      </Box>
-      <Box sx={{ flex: 1 }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          fontWeight={600}
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+  <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 } }}>
+    <Box
+      display="flex"
+      flexDirection={{ xs: 'column', sm: 'row' }}
+      alignItems={{ xs: 'flex-start', sm: 'center' }}
+      gap={2}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+        <Box
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 2,
+            bgcolor: 'grey.100',
+            border: '1px solid',
+            borderColor: 'grey.300',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
         >
-          Next Step
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={700}>
-          {title}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          {description}
-        </Typography>
+          <LockedIcon sx={{ color: 'grey.500', fontSize: 22 }} />
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontWeight={600}
+            sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+          >
+            Next Step
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={700}>
+            {title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+        </Box>
       </Box>
+
       <Button
         variant="contained"
         disabled={actionDisabled}
         onClick={onAction}
+        sx={{
+          fontWeight: 700,
+          borderRadius: 2,
+          flexShrink: 0,
+          alignSelf: { xs: 'flex-end', sm: 'center' },
+          whiteSpace: 'nowrap',
+        }}
       >
         {actionLabel}
       </Button>
@@ -228,6 +270,7 @@ const NextStepCard = ({ title, description, actionLabel, actionDisabled, onActio
   </Paper>
 );
 
+// ── Main export ───────────────────────────────────────────────────────────────
 const TrackerMain = ({
   submittedDate,
   onViewDetails,
@@ -264,19 +307,19 @@ const TrackerMain = ({
 );
 
 TrackerMain.propTypes = {
-  submittedDate: PropTypes.string,
-  onViewDetails: PropTypes.func,
-  stageTitle: PropTypes.string.isRequired,
-  stageDescription: PropTypes.string,
-  requirementStatus: PropTypes.string,
-  timeLimit: PropTypes.string,
-  onStart: PropTypes.func,
-  onPractice: PropTypes.func,
-  nextTitle: PropTypes.string.isRequired,
-  nextDescription: PropTypes.string,
-  nextActionLabel: PropTypes.string,
+  submittedDate:      PropTypes.string,
+  onViewDetails:      PropTypes.func,
+  stageTitle:         PropTypes.string.isRequired,
+  stageDescription:   PropTypes.string,
+  requirementStatus:  PropTypes.string,
+  timeLimit:          PropTypes.string,
+  onStart:            PropTypes.func,
+  onPractice:         PropTypes.func,
+  nextTitle:          PropTypes.string.isRequired,
+  nextDescription:    PropTypes.string,
+  nextActionLabel:    PropTypes.string,
   nextActionDisabled: PropTypes.bool,
-  onNextAction: PropTypes.func,
+  onNextAction:       PropTypes.func,
 };
 
 export default TrackerMain;

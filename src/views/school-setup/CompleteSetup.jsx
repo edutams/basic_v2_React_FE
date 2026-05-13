@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, useTheme } from '@mui/material';
-import { IconShieldCheck, IconArrowLeft } from '@tabler/icons-react';
+import { IconShieldCheck, IconArrowLeft, IconLogout } from '@tabler/icons-react';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
 
 // ── Keyframes ────────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ const anim = (name, duration = '0.6s', delay = '0s') =>
 
 const CompleteSetup = () => {
   const navigate = useNavigate();
-  const { tenantInfo, refreshTenantInfo } = useContext(TenantAuthContext);
+  const { tenantInfo, refreshTenantInfo, logout } = useContext(TenantAuthContext);
   const theme = useTheme();
   const primary = theme.palette.primary.main;
 
@@ -37,6 +37,10 @@ const CompleteSetup = () => {
   const isApproved = status === 'approved';
 
   const schoolName = tenantInfo?.tenant_name || tenantInfo?.name || 'Your School';
+
+  useEffect(() => {
+    refreshTenantInfo();
+  }, []); // ← runs once on mount
 
   // Poll every 15s while waiting for approval
   // SetupRedirectHandler will auto-navigate to '/' once approved
@@ -46,8 +50,21 @@ const CompleteSetup = () => {
     return () => clearInterval(interval);
   }, [isApproved, refreshTenantInfo]);
 
-  const handleContinue = () => navigate('/');
-  const handleBack = () => navigate('/school-profile?stage=5&edit=true'); // or stage=1
+  // Once tenantInfo updates to 'approved', SetupRedirectHandler
+  // will see hasSeenWelcome is not set → navigate to /complete-setup
+  // which they're already on → so the page just re-renders showing
+  // "Welcome! Continue to Dashboard"
+
+  const handleContinue = () => {
+    navigate('/');
+  };
+
+  const handleBack = () => navigate('/school-profile?stage=1&edit=true'); // or stage=1
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <Box
@@ -159,31 +176,24 @@ const CompleteSetup = () => {
           </Button>
         </Box>
 
-        {/* <Button
-          variant="contained"
-          onClick={() => navigate('/')}
+        <Button
+          onClick={handleLogout}
+          startIcon={<IconLogout size={16} />}
           sx={{
-            bgcolor: '#fff',
-            color: 'primary.main',
-            fontWeight: 700,
-            fontSize: 14,
-            px: 4,
-            py: 1.25,
-            borderRadius: '10px !important',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-            animation: anim('fadeUp', '0.6s', '0.5s'),
+            mt: 3,
+            color: 'rgba(41, 99, 110, 0.7)',
+            fontSize: 13,
+            textTransform: 'none',
+            '&:hover': {
+              color: '#fff',
+              bgcolor: 'rgba(255,255,255,0.1)',
+            },
             position: 'relative',
             zIndex: 1,
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.92)',
-              transform: 'translateY(-2px)',
-              boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
-            },
-            transition: 'all 0.2s ease',
           }}
         >
-          Continue to Dashboard
-        </Button> */}
+          Log out
+        </Button>
       </Box>
 
       <Box sx={{ flex: 1, bgcolor: '#f5f5f5', p: { xs: 4, md: 6 } }}>
@@ -203,44 +213,6 @@ const CompleteSetup = () => {
           </>
         )}
       </Box>
-      {/* <Box
-        sx={{
-          flex: 1,
-          bgcolor: '#f5f5f5',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          px: { xs: 4, md: 6 },
-          animation: anim('fadeIn', '0.6s', '0.4s'),
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: { xs: 16, md: 20 },
-            fontWeight: 400,
-            color: 'text.primary',
-            lineHeight: 1.7,
-            mb: 3,
-            maxWidth: 360,
-          }}
-        >
-          A support agent will review your configuration to ensure everything is in order and will
-          contact you shortly.
-        </Typography>
-
-        <Typography
-          sx={{
-            fontSize: { xs: 16, md: 20 },
-            fontWeight: 400,
-            color: 'text.primary',
-            lineHeight: 1.7,
-            maxWidth: 360,
-          }}
-        >
-          Thank you for choosing <strong>EduTAMS</strong>, we're excited to support your journey in
-          digitizing schooling!
-        </Typography>
-      </Box> */}
     </Box>
   );
 };

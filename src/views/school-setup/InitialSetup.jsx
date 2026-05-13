@@ -7,10 +7,12 @@ import Stage2ManageSessions from './stages/Stage2ManageSessions';
 import Stage3ClassArms from './stages/Stage3ClassArms';
 import Stage4AddLearners from './stages/Stage4AddLearners';
 import Stage5AddTeachers from './stages/Stage5AddTeachers';
+import useTenantAuth from '../../hooks/useTenantAuth';
 
 const InitialSetup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { refreshTenantInfo } = useTenantAuth();
 
   const stage = parseInt(searchParams.get('stage') || '1', 10);
   const isEditMode = searchParams.get('edit') === 'true';
@@ -41,8 +43,15 @@ const InitialSetup = () => {
   };
 
   const goFinish = async () => {
+    // If in edit mode, just go back to complete-setup without re-calling the API
+    if (isEditMode) {
+      navigate('/complete-setup', { replace: true });
+      return;
+    }
+
     try {
       await tenantApi.post('/school_setup/onboarding/complete');
+      await refreshTenantInfo();
       navigate('/complete-setup', { replace: true });
     } catch (err) {
       console.error('Failed to complete onboarding', err);

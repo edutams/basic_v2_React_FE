@@ -342,7 +342,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           try {
             setIsLoading(true);
             if (modalMode === 'edit' && selectedTeacher) {
-              await updateStaff(selectedTeacher.id, { first_name: data.first_name, last_name: data.surname, email: data.email, phone: data.phone_number, gender: data.gender, staff_type: data.staff_type || 'teaching', class_arm_id: data.is_class_teacher ? data.class_arm_id : null, userId: data.staff_id });
+              await updateStaff(selectedTeacher.user_id, { first_name: data.first_name, last_name: data.surname, email: data.email, phone: data.phone_number, gender: data.gender, staff_type: data.staff_type || 'teaching', class_arm_id: data.is_class_teacher ? data.class_arm_id : null, userId: data.staff_id });
               setNotification({ open: true, message: 'Staff updated successfully', severity: 'success' });
             } else {
               await createStaff({ first_name: data.first_name, last_name: data.surname, middle_name: data.middle_name || '', email: data.email, phone: data.phone_number, gender: data.gender, staff_type: data.staff_type || 'teaching', is_class_teacher: data.is_class_teacher || false, class_arm_id: data.class_arm_id || null, userId: data.staff_id });

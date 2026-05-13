@@ -180,7 +180,7 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, 
       {/* Total Sub Agents */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
         <StatCard
-          title="Total Sub Agents"
+          title="Total Sub Organizations"
           value={stats.totalSubAgents}
           valueColor="#f59e0b"
           valueBg="#fef3c7"

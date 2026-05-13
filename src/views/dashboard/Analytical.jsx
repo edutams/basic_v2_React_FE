@@ -224,7 +224,7 @@ export default function Dashboard() {
         ),
       }),
       columnHelper.accessor('sub_agents_count', {
-        header: () => 'Sub Agent',
+        header: () => 'Sub Org.',
         cell: (info) => (
           <Box
             sx={{
@@ -295,15 +295,15 @@ export default function Dashboard() {
           <Chip
             sx={{
               bgcolor:
-                info.getValue() === 'Active'
+                info.getValue() === 'active'
                   ? '#dcfee6'
-                  : info.getValue() === 'Inactive'
+                  : info.getValue() === 'inactive'
                     ? '#ffe4e6'
                     : '#f3f4f6',
               color:
-                info.getValue() === 'Active'
+                info.getValue() === 'active'
                   ? '#16a34a'
-                  : info.getValue() === 'Inactive'
+                  : info.getValue() === 'inactive'
                     ? '#e11d48'
                     : '#4b5563',
               borderRadius: '6px',

@@ -407,9 +407,7 @@ const Agent = () => {
             sub_agents_count: agent.sub_organizations_count || 0,
             access_level: agent.access_level,
             primaryColor: agent.primary_color || null,
-            status: agent.status
-              ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
-              : 'Inactive',
+            status: agent.status,
             lga: agent.lga_id || agent.state_lga_id,
             state_name: agent.state_lga?.state?.state_name || agent.state_name,
             state_id: agent.state_lga?.state_id || agent.state_id,
@@ -694,7 +692,7 @@ const Agent = () => {
 
   const handleConfirmDeleteOrganization = async () => {
     if (!selectedAgent) return;
-    
+
     try {
       const res = await agentApi.deleteOrganization(selectedAgent.id);
       if (res.status) {
@@ -866,7 +864,7 @@ const Agent = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant="h6" color="text.primary">
-                Approved 
+                Approved
               </Typography>
               <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
                 {analytics.activeSchools ?? 0}
@@ -1165,7 +1163,7 @@ const Agent = () => {
                   onClick={() => setIsRegisterModalOpen(true)}
                   sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
                 >
-                  Add New Agent
+                  Add New Organization
                 </Button>
               </Stack>
             }
@@ -1233,7 +1231,7 @@ const Agent = () => {
                       <Typography variant="h6">Access Level</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="h6">Sub Agent</Typography>
+                      <Typography variant="h6">Sub Organization</Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="h6">Total School</Typography>
@@ -1267,11 +1265,11 @@ const Agent = () => {
                       const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                       const adminInitials = fullName
                         ? fullName
-                            .split(' ')
-                            .slice(0, 2)
-                            .map((w) => w[0])
-                            .join('')
-                            .toUpperCase()
+                          .split(' ')
+                          .slice(0, 2)
+                          .map((w) => w[0])
+                          .join('')
+                          .toUpperCase()
                         : 'NA';
                       const level = Number(agent.access_level);
                       const colorMap = {
@@ -1469,15 +1467,15 @@ const Agent = () => {
                               <Chip
                                 sx={{
                                   bgcolor:
-                                    agent.status === 'Active'
+                                    agent.status == 'active'
                                       ? '#dcfee6'
-                                      : agent.status === 'Inactive'
+                                      : agent.status == 'inactive'
                                         ? '#ffe4e6'
                                         : '#f3f4f6',
                                   color:
-                                    agent.status === 'Active'
+                                    agent.status === 'active'
                                       ? '#16a34a'
-                                      : agent.status === 'Inactive'
+                                      : agent.status == 'inactive'
                                         ? '#e11d48'
                                         : '#4b5563',
                                   borderRadius: '6px',
@@ -1632,9 +1630,9 @@ const Agent = () => {
           </DialogActions>
         </Dialog>
 
-        <TotalSchoolModal 
-          open={isSchoolModalOpen} 
-          onClose={() => setIsSchoolModalOpen(false)} 
+        <TotalSchoolModal
+          open={isSchoolModalOpen}
+          onClose={() => setIsSchoolModalOpen(false)}
           stats={analytics}
         />
         <TotalTransactionModal

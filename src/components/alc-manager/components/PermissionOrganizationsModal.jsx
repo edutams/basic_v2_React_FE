@@ -60,11 +60,13 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     if (open && permissionId) {
       setPage(0);
       setSearch('');
+      setSearchInput('');
       setError(null);
     }
   }, [open, permissionId]);
@@ -72,7 +74,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
   useEffect(() => {
     if (!open || !permissionId) return;
     fetchData();
-  }, [open, permissionId, page, search]);
+  }, [open, permissionId, page, search, rowsPerPage]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -80,6 +82,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
     try {
       const res = await aclApi.getPermissionOrganizations(permissionId, {
         page: page + 1,
+        per_page: rowsPerPage,
         search,
       });
 
@@ -100,9 +103,21 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
   const handleClose = () => {
     setUsers([]);
     setSearch('');
+    setSearchInput('');
     setPage(0);
     setError(null);
     onClose();
+  };
+
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const getInitials = (name = '') =>
@@ -127,7 +142,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AgentsIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
           <Typography variant="h6" component="span">
-            Agents with this Permission
+            Organization with this Permission
           </Typography>
           {totalRows > 0 && !loading && (
             <Chip
@@ -144,24 +159,43 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
       </DialogTitle>
 
       <DialogContent dividers sx={{ p: 2 }}>
-        <TextField
-          placeholder="Search by name or email"
-          value={search}
-          size="small"
-          fullWidth
-          sx={{ mb: 2 }}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+          <TextField
+            placeholder="Search by name or email"
+            value={searchInput}
+            size="small"
+            fullWidth
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button 
+            variant="contained" 
+            onClick={handleSearch}
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
+            Search
+          </Button>
+          {search && (
+            <Button 
+              variant="outlined" 
+              onClick={() => {
+                setSearch('');
+                setSearchInput('');
+                setPage(0);
+              }}
+              sx={{ minWidth: 'auto', px: 2 }}
+            >
+              Clear
+            </Button>
+          )}
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -174,7 +208,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '35%' }}>Agent Name</TableCell>
+                <TableCell sx={{ width: '35%' }}>Organization Name</TableCell>
                 <TableCell sx={{ width: '25%' }}>Organization</TableCell>
                 <TableCell sx={{ width: '20%' }}>Email</TableCell>
                 <TableCell sx={{ width: '15%' }} align="center">

@@ -261,37 +261,37 @@ const AddLearnerModal = ({
               />
             </Box>
 
-            {/* Class dropdown — only shown when classId is not pre-supplied */}
-            {!classId && (
-              <Box sx={{ flex: '1 1 45%' }}>
-                <FormControl fullWidth>
-                  <InputLabel>Class</InputLabel>
-                  <Select value={formik.values.class_id} onChange={handleClassChange} label="Class">
-                    <MenuItem value="">Select Class</MenuItem>
-                    {allClasses.map((cls) => (
-                      <MenuItem key={cls.id} value={cls.id}>{cls.label}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            )}
+            <Box sx={{ flex: '1 1 45%' }}>
+              <FormControl fullWidth>
+                <InputLabel>Arm</InputLabel>
+                <Select name="class_arm_id" value={formik.values.class_arm_id}
+                  onChange={formik.handleChange} label="Arm"
+                  disabled={!formik.values.class_id}>
+                  <MenuItem value="">Select Arm</MenuItem>
+                  {classArms.map((arm) => (
+                    <MenuItem key={arm.id} value={arm.id}>
+                      {arm.display_name || arm.arm_names || `Arm ${arm.id}`}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
           </Box>
 
-          <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>Arm</InputLabel>
-              <Select name="class_arm_id" value={formik.values.class_arm_id}
-                onChange={formik.handleChange} label="Arm"
-                disabled={!formik.values.class_id}>
-                <MenuItem value="">Select Arm</MenuItem>
-                {classArms.map((arm) => (
-                  <MenuItem key={arm.id} value={arm.id}>
-                    {arm.display_name || arm.arm_names || `Arm ${arm.id}`}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+          {/* Class dropdown — only shown when classId is not pre-supplied */}
+          {!classId && (
+            <Box sx={{ mb: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>Class</InputLabel>
+                <Select value={formik.values.class_id} onChange={handleClassChange} label="Class">
+                  <MenuItem value="">Select Class</MenuItem>
+                  {allClasses.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>{cls.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          )}
 
           {showLinkParents && (
           <>

@@ -318,7 +318,9 @@ const NewApplication = () => {
             selectedBatch={selectedBatch}
             onBack={handleBack}
             onSubmit={() => {
-              handleNext();
+              navigate('/application-tracker', {
+                state: { wardData, academicData, selectedBatch },
+              });
             }}
             isLoading={isLoading}
           />

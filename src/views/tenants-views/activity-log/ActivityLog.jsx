@@ -10,14 +10,23 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Chip,
+  TextField,
+  InputAdornment,
+  Button,
+  CircularProgress,
+  Alert,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from '@mui/material';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import BlankCard from 'src/components/shared/BlankCard';
-import dayjs from 'dayjs';
 import tenantApi from 'src/api/tenant_api';
-import { CircularProgress, Alert, TablePagination } from '@mui/material';
+import { IconSearch, IconEye, IconX } from '@tabler/icons-react';
 
 const BCrumb = [
   {
@@ -36,20 +45,32 @@ const ActivityLog = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [selectedLog, setSelectedLog] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
 
-  // Statistics
-  const [statistics, setStatistics] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  const fetchLogs = async (currentPage, limit) => {
+  const fetchLogs = async (
+    currentPage,
+    limit,
+    searchQuery = search,
+    from = dateFrom,
+    to = dateTo,
+  ) => {
     setLoading(true);
     try {
-      const response = await tenantApi.get(
-        `/activity-logs?page=${currentPage + 1}&per_page=${limit}`,
-      );
-      const data = response.data;
-      setLogs(data.data || []);
-      setTotal(data.meta?.total || 0);
+      const params = new URLSearchParams({
+        page: currentPage + 1,
+        limit,
+        search: searchQuery,
+      });
+      if (from) params.append('date_from', from);
+      if (to) params.append('date_to', to);
+
+      const response = await tenantApi.get(`/activity-logs?${params.toString()}`);
+      setLogs(response.data.data);
+      setTotal(response.data.total);
       setError(null);
     } catch (err) {
       setError('Failed to fetch activity logs');
@@ -59,27 +80,28 @@ const ActivityLog = () => {
     }
   };
 
-  const fetchStatistics = async () => {
-    setStatsLoading(true);
-    try {
-      const response = await tenantApi.get('/activity-logs/statistics');
-      if (response.data.status === 'success') {
-        setStatistics(response.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch statistics', err);
-    } finally {
-      setStatsLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchLogs(page, rowsPerPage);
   }, [page, rowsPerPage]);
 
-  useEffect(() => {
-    fetchStatistics();
-  }, []);
+  const handleSearch = () => {
+    if (page === 0) {
+      fetchLogs(0, rowsPerPage, search, dateFrom, dateTo);
+    } else {
+      setPage(0);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setDateFrom('');
+    setDateTo('');
+    if (page === 0) {
+      fetchLogs(0, rowsPerPage, '', '', '');
+    } else {
+      setPage(0);
+    }
+  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -90,77 +112,70 @@ const ActivityLog = () => {
     setPage(0);
   };
 
+  const handleOpenModal = (log) => {
+    setSelectedLog(log);
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedLog(null);
+  };
+
   return (
     <PageContainer title="Activity Log" description="View system activity logs">
       <Breadcrumb title="Activity Log" items={BCrumb} />
-
-      {/* Stats Cards */}
-      {/* <Box
-        sx={{
-          display: 'flex',
-          gap: 2,
-          mb: 3,
-          flexWrap: 'wrap',
-          justifyContent: { xs: 'center', sm: 'flex-start' },
-        }}
-      >
-        <>
-          {
-            <Box
-              sx={{
-                flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 200px' },
-                minWidth: 0,
-                maxWidth: { xs: '100%', sm: '250px' },
-              }}
-            >
-              <BlankCard>
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary">
-                    Total Activities
-                  </Typography>
-                  <Typography variant="h3" fontWeight={600}>
-                    {0}
-                  </Typography>
-                </CardContent>
-              </BlankCard>
-            </Box>
-          }
-          {
-            <Box
-              sx={{
-                flex: { xs: '1 1 100%', sm: '1 1 45%', md: '1 1 300px' },
-                minWidth: 0,
-                maxWidth: { xs: '100%', sm: '350px' },
-              }}
-            >
-              <BlankCard>
-                <CardContent>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Activities by Log Name
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {statistics.by_log_name?.slice(0, 5).map((item, index) => (
-                      <Chip
-                        key={index}
-                        label={`${item.log_name || 'default'}: ${item.count}`}
-                        color="primary"
-                        variant="outlined"
-                        size="small"
-                      />
-                    ))}
-                  </Box>
-                </CardContent>
-              </BlankCard>
-            </Box>
-          }
-        </>
-      </Box> */}
-
       <BlankCard>
         <CardContent>
-          <Typography variant="h5" fontWeight={600} mb={3}>
+          <Typography variant="h5" mb={3}>
             System Activity Logs
           </Typography>
+          <Box display="flex" gap={2} mb={3} alignItems="center" flexWrap="wrap">
+            <TextField
+              size="small"
+              placeholder="Search logs..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSearch();
+              }}
+              sx={{ width: '250px' }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size="18" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              size="small"
+              label="Date From"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: '160px' }}
+            />
+            <TextField
+              size="small"
+              label="Date To"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: dateFrom || undefined }}
+              sx={{ width: '160px' }}
+            />
+            <Button variant="contained" color="primary" onClick={handleSearch}>
+              Search
+            </Button>
+            {(search || dateFrom || dateTo) && (
+              <Button variant="outlined" color="secondary" onClick={handleClearFilters}>
+                Clear
+              </Button>
+            )}
+          </Box>
 
           {loading ? (
             <Box display="flex" justifyContent="center" py={5}>
@@ -175,16 +190,16 @@ const ActivityLog = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell>
-                        <Typography variant="h6">Description</Typography>
+                        <Typography variant="h6">S/N</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="h6">Subject</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="h6">Causer</Typography>
+                        <Typography variant="h6">Activity</Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="h6">Date</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="h6">Action</Typography>
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -196,32 +211,35 @@ const ActivityLog = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      logs.map((log) => (
+                      logs.map((log, idx) => (
                         <TableRow key={log.id}>
                           <TableCell>
-                            <Typography variant="body1">{log.description}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={log.subject_type || 'System'}
-                              size="small"
-                              color="primary"
-                              variant="outlined"
-                            />
+                            <Typography variant="body1">{idx + 1 + page * rowsPerPage}</Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body1">
-                              {log.causer?.name ||
-                                (log.causer?.fname && log.causer?.lname
-                                  ? log.causer.fname + ' ' + log.causer.lname
-                                  : null) ||
-                                'System'}
+                              <a href="#" className="text-success">
+                                {log.causer?.fname && log.causer?.lname
+                                  ? `${log.causer.fname} ${log.causer.lname}`
+                                  : log.causer?.name || 'System'}
+                              </a>{' '}
+                              {log.description}
                             </Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" color="textSecondary">
-                              {dayjs(log.created_at).format('MMM D, YYYY HH:mm')}
+                              {log.my_updated_at}
                             </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<IconEye size={18} />}
+                              onClick={() => handleOpenModal(log)}
+                            >
+                              View Details
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))
@@ -230,7 +248,7 @@ const ActivityLog = () => {
                 </Table>
               </TableContainer>
               <TablePagination
-                rowsPerPageOptions={[5, 10, 20, 50]}
+                rowsPerPageOptions={[10, 20, 50]}
                 component="div"
                 count={total}
                 rowsPerPage={rowsPerPage}
@@ -242,6 +260,116 @@ const ActivityLog = () => {
           )}
         </CardContent>
       </BlankCard>
+
+      {/* Details Modal */}
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          Activity Details
+          <IconButton onClick={handleCloseModal}>
+            <IconX size={20} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedLog && (
+            <Box>
+              <Box mb={2}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Basic Information
+                </Typography>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600, width: '150px' }}>Description</TableCell>
+                      <TableCell>{selectedLog.description}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Log Name</TableCell>
+                      <TableCell>{selectedLog.log_name || 'default'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Subject Type</TableCell>
+                      <TableCell>{selectedLog.subject_type || 'N/A'}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Causer</TableCell>
+                      <TableCell>
+                        {selectedLog.causer?.fname && selectedLog.causer?.lname
+                          ? `${selectedLog.causer.fname} ${selectedLog.causer.lname}`
+                          : selectedLog.causer?.name || 'System'}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                      <TableCell>{selectedLog.my_updated_at}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Box>
+
+              {selectedLog.properties && Object.keys(selectedLog.properties).length > 0 && (
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Additional Properties
+                  </Typography>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>
+                            <Typography variant="subtitle2">Property</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2">Value</Typography>
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(selectedLog.properties).map(([key, value]) => (
+                          <TableRow key={key}>
+                            <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              {key}
+                            </TableCell>
+                            <TableCell>
+                              {typeof value === 'object' && value !== null ? (
+                                <pre
+                                  style={{
+                                    margin: 0,
+                                    fontFamily: 'monospace',
+                                    fontSize: '12px',
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                  }}
+                                >
+                                  {JSON.stringify(value, null, 2)}
+                                </pre>
+                              ) : (
+                                String(value)
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              )}
+
+              {(!selectedLog.properties || Object.keys(selectedLog.properties).length === 0) && (
+                <Typography color="text.secondary" fontStyle="italic">
+                  No additional properties available for this activity.
+                </Typography>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
-import { useParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 import PageContainer from '../../components/container/PageContainer';
 import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
@@ -18,52 +18,43 @@ import TotalSubAgentModal from './components/TotalSubAgentModal';
 import AgentModal from '../../components/add-agent/components/AgentModal';
 import ReusableModal from '../../components/shared/ReusableModal';
 import RegisterSchoolForm from '../../components/add-school/component/RegisterSchool';
-
 import { AuthContext } from '../../context/AgentContext/auth';
 
 import agentApi from '../../api/agent';
 import SchoolsTab from './components/SchoolsTab/SchoolsTab';
 
-const ViewAgent = () => {
-  const { id } = useParams();
-
+const AgentDashboard = () => {
+  const { user: currentUser } = useAuth();
+  const id = currentUser?.organization?.id || currentUser?.organization_id;
   const [value, setValue] = useState('1');
-
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [isSubAgentModalOpen, setIsSubAgentModalOpen] = useState(false);
   const [isAddAgentModalOpen, setIsAddAgentModalOpen] = useState(false);
   const [isAddSchoolModalOpen, setIsAddSchoolModalOpen] = useState(false);
-  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const theme = useTheme();
+  const { user } = useContext(AuthContext);
+
+  const isOwnProfile = true;
+  const isDashboard = true;
 
   const [agentData, setAgentData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
-  const [accessLevel, setAccessLevel] = useState(null);
-
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
-  const { user } = useContext(AuthContext);
   // Analytics state for TotalSchoolModal
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
-  const isDashboard = false;
-
   useEffect(() => {
     const fetchAgentDetails = async () => {
       setIsLoading(true);
-
       try {
         const detailsResponse = await agentApi.getDetails(id);
 
         if (detailsResponse.status === true && detailsResponse.data) {
           const data = detailsResponse.data;
-
-          // SET ACCESS LEVEL
-          setAccessLevel(data.access_level);
 
           const mappedData = {
             profile: {
@@ -77,48 +68,33 @@ const ViewAgent = () => {
               image: data.image || '/assets/images/profile/user-1.jpg',
               primaryColor: data.primary_color || null,
             },
-
             stats: {
               totalTransaction: data.total_transaction_value || 0,
               transactionCount: data.transaction_count || 0,
-              totalSchools: data.stats?.totalSchools || 0,
-              activeSchools: data.stats?.activeSchools || 0,
-              pendingSchools: data.stats?.pendingSchools || 0,
-              rejectedSchools: data.stats?.rejectedSchools || 0,
-              totalAgents: data.stats?.totalSubAgents || 0,
-              totalSubAgents: data.stats?.totalSubAgents || 0,
-              subAgentLevels: data.stats?.subAgentLevels || 0,
+              totalSchools: analytics?.totalSchools || 0,
+              activeSchools: analytics?.activeSchools || 0,
+              pendingSchools: analytics?.pendingSchools || 0,
+              rejectedSchools: analytics?.rejectedSchools || 0,
+              totalAgents: analytics?.totalAgents || 0,
+              totalSubAgents: analytics?.totalSubAgents || 0,
+              subAgentLevels: analytics?.subAgentLevels || 0,
             },
-
             schools: (data.tenants || []).map((tenant) => ({
               school: tenant.tenant_name || 'Unknown School',
-
               contact:
-                tenant.administrator_info?.school_spa?.admin_phone ||
-                tenant.admin_phone ||
-                'N/A',
-
+                tenant.administrator_info?.school_spa?.admin_phone || tenant.admin_phone || 'N/A',
               email:
-                tenant.administrator_info?.school_spa?.admin_email ||
-                tenant.tenant_email ||
-                'N/A',
-
+                tenant.administrator_info?.school_spa?.admin_email || tenant.tenant_email || 'N/A',
               agent: data.organization_name,
               agentContact: data.organization_phone,
               agentEmail: data.organization_email,
-
               plan: tenant.plan?.name || 'Basic',
-
               population: tenant.population || 0,
-
               status: tenant.status
-                ? tenant.status.charAt(0).toUpperCase() +
-                tenant.status.slice(1)
+                ? tenant.status.charAt(0).toUpperCase() + tenant.status.slice(1)
                 : 'Active',
             })),
-
             team: data.users || [],
-
             revenueData: [
               { month: 'Jan', revenue: 120000 },
               { month: 'Feb', revenue: 85000 },
@@ -133,53 +109,33 @@ const ViewAgent = () => {
               { month: 'Nov', revenue: 340000 },
               { month: 'Dec', revenue: 410000 },
             ],
-
             loginActivities: [],
-
             planDistribution: [
               { label: 'Basic', value: 50 },
               { label: 'Basic +', value: 35 },
               { label: 'Basic ++', value: 15 },
             ],
-
             recentOnboarding: (data.tenants || [])
               .slice()
-              .sort(
-                (a, b) =>
-                  new Date(b.created_at) - new Date(a.created_at)
-              )
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
               .slice(0, 5)
               .map((tenant) => ({
                 school: tenant.tenant_name || 'Unknown School',
-
                 agent: data.organization_name || '—',
-
                 handle: data.organization_email || '—',
-
                 created_at: tenant.created_at
-                  ? new Date(tenant.created_at).toLocaleDateString(
-                    'en-GB',
-                    {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    }
-                  )
+                  ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })
                   : '—',
               })),
-
             topAgents: [],
-
             topRevenueSchools: [],
-
             raw: data,
-
-            leadUser:
-              (data.users || []).find(
-                (u) => u.is_lead === 'yes'
-              ) || null,
+            leadUser: (data.users || []).find((u) => u.is_lead === 'yes') || null,
           };
-
           setAgentData(mappedData);
         }
       } catch (error) {
@@ -200,7 +156,7 @@ const ViewAgent = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await agentApi.getAnalyticsByOrgId(id);
+        const res = await agentApi.getAnalytics();
         if (res.status) setAnalytics(res.data);
       } catch (e) {
         console.error('Failed to fetch analytics', e);
@@ -210,6 +166,12 @@ const ViewAgent = () => {
     };
     fetchAnalytics();
   }, [refreshKey]);
+
+  const BCrumb = [
+    { to: '/agent', title: 'Home' },
+    { title: 'Dashboard' },
+  ];
+  const isDark = theme.palette.mode === 'dark';
 
   const mergedStats = useMemo(() => ({
     ...(agentData?.stats || {}),
@@ -221,51 +183,39 @@ const ViewAgent = () => {
     totalSubAgents: analytics?.totalSubAgents || 0,
     subAgentLevels: analytics?.subAgentLevels || 0,
   }), [agentData?.stats, analytics]);
-  const BCrumb = [
-    { to: '/agent', title: 'Home' },
-    { to: '/agent/organization', title: 'Organization' },
-    { title: 'View Profile' },
-  ];
 
   return (
     <PageContainer
-      title="View Organization Profile"
-      description="Detailed organization profile view"
+      title="Organization Dashboard"
+      description="Detailed organization dashboard view"
     >
       <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
-        <Breadcrumb title="View Profile" items={BCrumb} />
+        <Breadcrumb
+          title="Dashboard"
+          items={BCrumb}
+        />
 
         {isLoading ? (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            minHeight="400px"
-          >
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
             <CircularProgress />
           </Box>
         ) : agentData ? (
           <>
             <Grid container spacing={3} alignItems="stretch" sx={{ mt: 1 }}>
-              <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+              <Grid item size={{ xs: 12, md: 4, lg: 4 }}>
                 <ProfileHeader
                   profile={agentData.profile}
                   onManageSchools={() => setValue('3')}
                   onManageAgent={() => setValue('2')}
                 />
               </Grid>
-
-              <Grid size={{ xs: 12, md: 8, lg: 8 }}>
+              <Grid item size={{ xs: 12, md: 8, lg: 8 }}>
                 <StatCards
-                  stats={agentData.stats}
-                  onTransactionClick={() =>
-                    setIsTransactionModalOpen(true)
-                  }
+                  stats={mergedStats}
+                  onTransactionClick={() => setIsTransactionModalOpen(true)}
                   onSchoolClick={() => setIsSchoolModalOpen(true)}
-                  onSubAgentClick={() =>
-                    setIsSubAgentModalOpen(true)
-                  }
-                  accessLevel={accessLevel}
+                  onSubAgentClick={() => setIsSubAgentModalOpen(true)}
+                  accessLevel={user?.organization?.access_level}
                 />
               </Grid>
             </Grid>
@@ -276,9 +226,7 @@ const ViewAgent = () => {
                   bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
                   borderRadius: '12px',
                   overflow: 'hidden',
-                  border: isDark
-                    ? '1px solid #333'
-                    : '1px solid #E2E8F0',
+                  border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
                 }}
               >
@@ -293,9 +241,24 @@ const ViewAgent = () => {
                   >
                     <TabList
                       onChange={(_, newValue) => setValue(newValue)}
+                      aria-label="agent tabs"
                       variant="scrollable"
                       scrollButtons="auto"
                       allowScrollButtonsMobile
+                      sx={{
+                        '& .MuiTabs-indicator': {
+                          height: 3,
+                          borderRadius: '4px 4px 0 0',
+                          bgcolor: 'primary.main',
+                        },
+                        '& .MuiTab-root': {
+                          minHeight: 56,
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: isDark ? '#aaa' : '#64748B',
+                          textTransform: 'none',
+                        },
+                      }}
                     >
                       <Tab
                         icon={<IconLayoutDashboard size={18} />}
@@ -303,21 +266,18 @@ const ViewAgent = () => {
                         label="Overview"
                         value="1"
                       />
-
                       <Tab
                         icon={<IconUsers size={18} />}
                         iconPosition="start"
                         label="Sub Organizations"
                         value="2"
                       />
-
                       <Tab
                         icon={<IconSchool size={18} />}
                         iconPosition="start"
                         label="Schools"
                         value="3"
                       />
-
                       <Tab
                         icon={<IconUsers size={18} />}
                         iconPosition="start"
@@ -331,40 +291,31 @@ const ViewAgent = () => {
                     <TabPanel value="1" sx={{ p: 0 }}>
                       <OverviewTab data={agentData} />
                     </TabPanel>
-
                     <TabPanel value="2" sx={{ p: 3 }}>
                       <TeamTab
                         team={agentData.team || []}
-                        onAddAgent={() =>
-                          setIsAddAgentModalOpen(true)
-                        }
+                        onAddAgent={() => setIsAddAgentModalOpen(true)}
                         isDashboard={isDashboard}
-                        accessLevel={accessLevel}
-                        isViewingProfile
-                        organizationId={id}
+                        accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={false}
                       />
                     </TabPanel>
-
                     <TabPanel value="3" sx={{ p: 3 }}>
                       <SchoolsTab
                         schools={agentData.schools || []}
-                        onAddSchool={() =>
-                          setIsAddSchoolModalOpen(true)
-                        }
+                        onAddSchool={() => setIsAddSchoolModalOpen(true)}
                         organizationId={id}
-                        handleRefresh={() =>
-                          setRefreshKey((prev) => prev + 1)
-                        }
+                        handleRefresh={() => setRefreshKey((prev) => prev + 1)}
                         refreshKey={refreshKey}
-                        isViewingProfile={true}
+                        isViewingProfile={false}
+                        isDashboard={true}
                       />
                     </TabPanel>
-
                     <TabPanel value="4" sx={{ p: 3 }}>
                       <ManageTeamTab
                         organizationId={id}
-                        accessLevel={accessLevel}
-                        isViewingProfile
+                        accessLevel={currentUser?.organization?.access_level}
+                        isViewingProfile={false}
                       />
                     </TabPanel>
                   </Box>
@@ -374,45 +325,35 @@ const ViewAgent = () => {
           </>
         ) : (
           <Box p={3} textAlign="center">
-            <Typography variant="h6">
-              Failed to load organization data.
-            </Typography>
+            <Typography variant="h6">Failed to load organization data.</Typography>
           </Box>
         )}
 
+        {/* Modals */}
         <TotalSchoolModal
           open={isSchoolModalOpen}
           onClose={() => setIsSchoolModalOpen(false)}
-          stats={agentData?.stats}
+          stats={analytics}
         />
-
         <TotalTransactionModal
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
         />
-
         <TotalSubAgentModal
           open={isSubAgentModalOpen}
           onClose={() => setIsSubAgentModalOpen(false)}
           totalSubAgents={agentData?.stats?.totalSubAgents}
-          handleRefresh={() =>
-            setRefreshKey((prev) => prev + 1)
-          }
+          handleRefresh={() => setRefreshKey?.((prev) => prev + 1)}
         />
-
         <AgentModal
           open={isAddAgentModalOpen}
           onClose={() => setIsAddAgentModalOpen(false)}
-          handleRefresh={() => setRefreshKey((prev) => prev + 1)}
-          parentId={id}
+          handleRefresh={() => setRefreshKey?.((prev) => prev + 1)}
         />
-
         <AgentModal
           open={isUpdateModalOpen}
           onClose={() => setIsUpdateModalOpen(false)}
-          handleRefresh={() =>
-            setRefreshKey((prev) => prev + 1)
-          }
+          handleRefresh={() => setRefreshKey((prev) => prev + 1)}
           actionType="update"
           selectedAgent={
             agentData
@@ -420,14 +361,12 @@ const ViewAgent = () => {
                 ...agentData.raw,
                 ...agentData.leadUser,
                 id: id,
-                organization_logo:
-                  agentData.raw?.organization_logo,
+                organization_logo: agentData.raw?.organization_logo,
                 avatar: agentData.leadUser?.avatar,
               }
               : null
           }
         />
-
         <ReusableModal
           open={isAddSchoolModalOpen}
           onClose={() => setIsAddSchoolModalOpen(false)}
@@ -436,12 +375,12 @@ const ViewAgent = () => {
         >
           <RegisterSchoolForm
             actionType="create"
+            organizationId={id}
             onSubmit={() => {
               setIsAddSchoolModalOpen(false);
               setRefreshKey((prev) => prev + 1);
             }}
             onCancel={() => setIsAddSchoolModalOpen(false)}
-            organizationId={id}
           />
         </ReusableModal>
       </Box>
@@ -449,4 +388,4 @@ const ViewAgent = () => {
   );
 };
 
-export default ViewAgent;
+export default AgentDashboard;

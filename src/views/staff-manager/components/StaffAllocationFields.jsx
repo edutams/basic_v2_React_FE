@@ -8,7 +8,9 @@ import {
 } from '@mui/material';
 import {
   fetchProgrammes,
+  fetchClassesByProgramme,
   fetchClassArmsByProgramme,
+  fetchClassArmsByClass,
   fetchCurriculums,
   fetchSubjects,
   fetchSessionTerms,
@@ -17,12 +19,22 @@ import useNotification from '../../../hooks/useNotification';
 
 const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading }) => {
   const notify = useNotification();
+  
   const [programmes, setProgrammes] = useState([]);
   const [sessionTerms, setSessionTerms] = useState([]);
   const [curriculums, setCurriculums] = useState([]);
-  const [classes, setClasses] = useState([]);
+  
+  // Separate states for class allocation
+  const [classClasses, setClassClasses] = useState([]);
+  const [classArms, setClassArms] = useState([]);
+  
+  // Separate states for subject allocation
+  const [subjectClasses, setSubjectClasses] = useState([]);
+  const [subjectClassArms, setSubjectClassArms] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Flag to track initial load
 
   useEffect(() => {
     const loadInitialOptions = async () => {
@@ -46,51 +58,147 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
     loadInitialOptions();
   }, []);
 
-  // Handle initial loads for edit mode
+  // Separate effect to handle initial data loading for edit mode ONLY
   useEffect(() => {
-    const fetchInitialDependencies = async () => {
+    const loadEditModeData = async () => {
+      // Only run on initial load, not on user interactions
+      if (!isInitialLoad || loadingOptions || programmes.length === 0) return;
+      
+      console.log('Loading edit mode data for staff allocation');
+      
+      // Load class allocation data if values exist
       if (values.class_programme_id) {
         try {
-          const res = await fetchClassArmsByProgramme(values.class_programme_id);
-          setClasses(res.data || res || []);
-        } catch (error) { }
+          const classRes = await fetchClassesByProgramme(values.class_programme_id);
+          const classes = classRes.data || classRes || [];
+          setClassClasses(classes);
+          
+          if (values.class_id) {
+            const armRes = await fetchClassArmsByClass(values.class_id);
+            const allArms = armRes.data || armRes || [];
+            setClassArms(allArms);
+          }
+        } catch (error) {
+          console.error('Failed to load class allocation data:', error);
+        }
       }
+      
+      // Load subject allocation data if values exist
+      if (values.subject_programme_id) {
+        try {
+          const classRes = await fetchClassesByProgramme(values.subject_programme_id);
+          const classes = classRes.data || classRes || [];
+          setSubjectClasses(classes);
+          
+          if (values.subject_class_id) {
+            const armRes = await fetchClassArmsByClass(values.subject_class_id);
+            const allArms = armRes.data || armRes || [];
+            setSubjectClassArms(allArms);
+          }
+        } catch (error) {
+          console.error('Failed to load subject allocation data:', error);
+        }
+      }
+      
+      // Load subjects if curriculum is selected
       if (values.subject_curriculum_id) {
         try {
           const res = await fetchSubjects(values.subject_curriculum_id);
-          setSubjects(res.data || res || []);
-        } catch (error) { }
+          const subjects = res.data || res || [];
+          setSubjects(subjects);
+        } catch (error) {
+          console.error('Failed to load subjects:', error);
+        }
       }
-      // Also load classes for subject programme if it exists
-      if (values.subject_programme_id && values.subject_programme_id !== values.class_programme_id) {
-        try {
-          const res = await fetchClassArmsByProgramme(values.subject_programme_id);
-          // We could maintain separate state for subject classes, but for now use the same classes state
-          if (!classes.length) {
-            setClasses(res.data || res || []);
-          }
-        } catch (error) { }
-      }
+      
+      // Mark initial load as complete
+      setIsInitialLoad(false);
     };
-    fetchInitialDependencies();
-  }, [values.class_programme_id, values.subject_curriculum_id, values.subject_programme_id]);
+    
+    loadEditModeData();
+  }, [
+    isInitialLoad,
+    loadingOptions,
+    programmes.length,
+    values.class_programme_id,
+    values.class_id,
+    values.subject_programme_id,
+    values.subject_class_id,
+    values.subject_curriculum_id
+  ]);
 
-  const handleProgrammeChange = async (programmeId) => {
+  // Class allocation handlers
+  const handleClassProgrammeChange = async (programmeId) => {
+    setIsInitialLoad(false); // Prevent useEffect from running
     setFieldValue('class_programme_id', programmeId);
+    setFieldValue('class_id', '');
     setFieldValue('class_arm_id', '');
+    setClassClasses([]);
+    setClassArms([]);
+    
     if (programmeId) {
       try {
-        const res = await fetchClassArmsByProgramme(programmeId);
-        setClasses(res.data || res || []);
+        const res = await fetchClassesByProgramme(programmeId);
+        setClassClasses(res.data || res || []);
       } catch (error) {
         notify.error('Failed to load classes');
       }
-    } else {
-      setClasses([]);
+    }
+  };
+
+  const handleClassChange = async (classId) => {
+    setIsInitialLoad(false); // Prevent useEffect from running
+    setFieldValue('class_id', classId);
+    setFieldValue('class_arm_id', '');
+    setClassArms([]);
+    
+    if (classId) {
+      try {
+        const res = await fetchClassArmsByClass(classId);
+        setClassArms(res.data || res || []);
+      } catch (error) {
+        notify.error('Failed to load class arms');
+      }
+    }
+  };
+
+  // Subject allocation handlers
+  const handleSubjectProgrammeChange = async (programmeId) => {
+    setIsInitialLoad(false); // Prevent useEffect from running
+    setFieldValue('subject_programme_id', programmeId);
+    setFieldValue('subject_class_id', '');
+    setFieldValue('subject_class_arm_id', '');
+    setSubjectClasses([]);
+    setSubjectClassArms([]);
+    
+    if (programmeId) {
+      try {
+        const res = await fetchClassesByProgramme(programmeId);
+        setSubjectClasses(res.data || res || []);
+      } catch (error) {
+        notify.error('Failed to load classes');
+      }
+    }
+  };
+
+  const handleSubjectClassChange = async (classId) => {
+    setIsInitialLoad(false); // Prevent useEffect from running
+    setFieldValue('subject_class_id', classId);
+    setFieldValue('subject_class_arm_id', '');
+    setSubjectClassArms([]);
+    
+    if (classId) {
+      try {
+        const res = await fetchClassArmsByClass(classId);
+        setSubjectClassArms(res.data || res || []);
+      } catch (error) {
+        notify.error('Failed to load class arms');
+      }
     }
   };
 
   const handleCurriculumChange = async (curriculumId) => {
+    setIsInitialLoad(false); // Prevent useEffect from running
     setFieldValue('subject_curriculum_id', curriculumId);
     setFieldValue('subject_id', '');
     if (curriculumId) {
@@ -102,21 +210,6 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
       }
     } else {
       setSubjects([]);
-    }
-  };
-
-  const handleSubjectProgrammeChange = async (programmeId) => {
-    setFieldValue('subject_programme_id', programmeId);
-    setFieldValue('subject_class_arm_id', '');
-    if (programmeId) {
-      try {
-        const res = await fetchClassArmsByProgramme(programmeId);
-        setClasses(res.data || res || []);
-      } catch (error) {
-        notify.error('Failed to load classes');
-      }
-    } else {
-      setClasses([]);
     }
   };
 
@@ -156,7 +249,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
             label="Programme"
             name="class_programme_id"
             value={values.class_programme_id}
-            onChange={(e) => handleProgrammeChange(e.target.value)}
+            onChange={(e) => handleClassProgrammeChange(e.target.value)}
             disabled={loadingOptions || isLoading}
           >
             <MenuItem value="">Select Programme</MenuItem>
@@ -172,15 +265,33 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
             fullWidth
             select
             label="Class"
-            name="class_arm_id"
-            value={values.class_arm_id}
-            onChange={handleChange}
+            name="class_id"
+            value={values.class_id}
+            onChange={(e) => handleClassChange(e.target.value)}
             disabled={!values.class_programme_id || isLoading}
           >
             <MenuItem value="">Select Class</MenuItem>
-            {classes.map((c) => (
+            {classClasses.map((c) => (
               <MenuItem key={c.id} value={c.id}>
-                {c.programme_class.class.class_code} - {c.arm_names}
+                {c.class_code}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <TextField
+            fullWidth
+            select
+            label="Class Arm"
+            name="class_arm_id"
+            value={values.class_arm_id}
+            onChange={handleChange}
+            disabled={!values.class_id || isLoading}
+          >
+            <MenuItem value="">Select Class Arm</MenuItem>
+            {classArms.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.programme_class?.class?.class_code || 'N/A'} - {c.arm_names}
               </MenuItem>
             ))}
           </TextField>
@@ -235,16 +346,34 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading 
           <TextField
             fullWidth
             select
+            label="Class"
+            name="subject_class_id"
+            value={values.subject_class_id}
+            onChange={(e) => handleSubjectClassChange(e.target.value)}
+            disabled={!values.subject_programme_id || isLoading}
+          >
+            <MenuItem value="">Select Class</MenuItem>
+            {subjectClasses.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.class_code}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <TextField
+            fullWidth
+            select
             label="Class Arm"
             name="subject_class_arm_id"
             value={values.subject_class_arm_id}
             onChange={handleChange}
-            disabled={!values.subject_programme_id || isLoading}
+            disabled={!values.subject_class_id || isLoading}
           >
-            <MenuItem value="">Select Class</MenuItem>
-            {classes.map((c) => (
+            <MenuItem value="">Select Class Arm</MenuItem>
+            {subjectClassArms.map((c) => (
               <MenuItem key={c.id} value={c.id}>
-                {c.programme_class.class.class_code} - {c.arm_names}
+                {c.programme_class?.class?.class_code || 'N/A'} - {c.arm_names}
               </MenuItem>
             ))}
           </TextField>

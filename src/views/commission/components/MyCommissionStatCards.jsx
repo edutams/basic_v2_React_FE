@@ -217,7 +217,7 @@ const MyCommissionStatCards = () => {
             }}
           >
             <Typography variant="h6" fontWeight={600}>
-              Total Sub Agents
+              Total Sub Orgs
             </Typography>
 
             <Box

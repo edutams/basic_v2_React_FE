@@ -20,14 +20,16 @@ import {
   Avatar,
   Link,
 } from '@mui/material';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { IconDotsVertical, IconEdit } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
 
-const PendingApprovalsTab = ({
-  prospectList,
-  prospectLoading,
+const SetupApprovals = ({
+  schoolList,
+  schoolLoading,
   page,
   setPage,
   rowsPerPage,
@@ -36,6 +38,7 @@ const PendingApprovalsTab = ({
   activeFilters,
   onReview,
   onEdit,
+  onApproveOnboarding,
 }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -50,7 +53,7 @@ const PendingApprovalsTab = ({
     py: 1.5,
   };
 
-  const pendingProspects = prospectList.filter((p) => p.status === 'pending');
+  const setupList = (schoolList || []).filter((s) => s.onboarding_status !== 'approved');
 
   const filter = (arr) => {
     let result = arr;
@@ -80,9 +83,9 @@ const PendingApprovalsTab = ({
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const filtered = filter(pendingProspects);
+  const filtered = filter(setupList);
 
-  if (prospectLoading) {
+  if (schoolLoading) {
     return (
       <Box display="flex" justifyContent="center" py={8}>
         <CircularProgress />
@@ -102,6 +105,9 @@ const PendingApprovalsTab = ({
               <TableCell sx={thSx}>Organisation</TableCell>
               <TableCell sx={thSx}>Submitted</TableCell>
               <TableCell sx={thSx}>Status</TableCell>
+              <TableCell sx={thSx}>Onboarding Status</TableCell>
+              <TableCell sx={thSx}>Completed At</TableCell>
+              <TableCell sx={thSx}>Approved By</TableCell>
               <TableCell sx={thSx} align="right">
                 Action
               </TableCell>
@@ -199,6 +205,23 @@ const PendingApprovalsTab = ({
                     <TableCell>
                       <StatusChip status={row.status} />
                     </TableCell>
+                    <TableCell>
+                      <StatusChip status={row.onboarding_status || 'pending'} />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {row.onboarding_completed_at
+                          ? formatDate(row.onboarding_completed_at)
+                          : '—'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {row.onboarding_approved_by?.full_name ||
+                          `${row.onboarding_approved_by?.fname || ''} ${row.onboarding_approved_by?.lname || ''}`.trim() ||
+                          '—'}
+                      </Typography>
+                    </TableCell>
                     <TableCell align="right">
                       <IconButton
                         size="small"
@@ -215,7 +238,7 @@ const PendingApprovalsTab = ({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                   <Typography color="text.secondary">No pending applications.</Typography>
                 </TableCell>
               </TableRow>
@@ -247,12 +270,23 @@ const PendingApprovalsTab = ({
       >
         <MenuItem
           onClick={() => {
-            onReview(activeRow);
+            onApproveOnboarding(activeRow);
             setAnchorEl(null);
           }}
+          disabled={activeRow?.onboarding_status !== 'completed'}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color: activeRow?.onboarding_status === 'completed' ? '#16a34a' : undefined,
+          }}
         >
-          Review Application
+          <TaskAltIcon fontSize="small" />
+          {activeRow?.onboarding_status === 'completed'
+            ? 'Approve Onboarding'
+            : 'Onboarding Not Completed'}
         </MenuItem>
+
         <MenuItem
           onClick={() => {
             onEdit(activeRow);
@@ -260,7 +294,7 @@ const PendingApprovalsTab = ({
           }}
           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
-          <IconEdit size={16} />
+          <EditOutlinedIcon fontSize="small" sx={{ color: '#6b7280' }} />
           Edit
         </MenuItem>
       </Menu>
@@ -268,4 +302,4 @@ const PendingApprovalsTab = ({
   );
 };
 
-export default PendingApprovalsTab;
+export default SetupApprovals;

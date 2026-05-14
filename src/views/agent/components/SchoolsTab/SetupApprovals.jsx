@@ -238,7 +238,7 @@ const SetupApprovals = ({
             ) : (
               <TableRow>
                 <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                  <Typography color="text.secondary">No pending applications.</Typography>
+                  <Typography color="text.secondary">No onboarding applications.</Typography>
                 </TableCell>
               </TableRow>
             )}

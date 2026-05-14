@@ -53,6 +53,7 @@ const SubjectBank = () => {
   const [subjects, setSubjects] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [programmesList, setProgrammesList] = useState([]);
+  const [loadingProgrammes, setLoadingProgrammes] = useState(false);
   const [subjectSearch, setSubjectSearch] = useState('');
   const [openAddSubjectModal, setOpenAddSubjectModal] = useState(false);
   const [openEditSubjectModal, setOpenEditSubjectModal] = useState(false);
@@ -72,9 +73,18 @@ const SubjectBank = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Loading states for buttons
+  const [loadingCreateSubject, setLoadingCreateSubject] = useState(false);
+  const [loadingUpdateSubject, setLoadingUpdateSubject] = useState(false);
+  const [loadingDeleteSubject, setLoadingDeleteSubject] = useState(false);
+  const [loadingCreateGroup, setLoadingCreateGroup] = useState(false);
+  const [loadingUpdateGroup, setLoadingUpdateGroup] = useState(false);
+  const [loadingDeleteGroup, setLoadingDeleteGroup] = useState(false);
+
   // Curriculum state
   const [curriculumData, setCurriculumData] = useState([]);
   const [selectedCurriculum, setSelectedCurriculum] = useState('');
+  const [loadingCurriculums, setLoadingCurriculums] = useState(false);
 
   // Subject Groups state
   const [subjectGroupsList, setSubjectGroupsList] = useState([]);
@@ -108,6 +118,7 @@ const SubjectBank = () => {
   };
 
   const fetchCurriculumData = async () => {
+    setLoadingCurriculums(true);
     try {
       const response = await fetchCurriculums();
       if (response.status) {
@@ -119,6 +130,8 @@ const SubjectBank = () => {
       }
     } catch (error) {
       showSnackbar('Failed to fetch curriculums', 'error');
+    } finally {
+      setLoadingCurriculums(false);
     }
   };
 
@@ -142,6 +155,7 @@ const SubjectBank = () => {
   };
 
   const fetchProgrammesData = async () => {
+    setLoadingProgrammes(true);
     try {
       const response = await fetchProgrammes();
       if (response.status) {
@@ -153,6 +167,8 @@ const SubjectBank = () => {
       }
     } catch (error) {
       showSnackbar('Failed to fetch programmes', 'error');
+    } finally {
+      setLoadingProgrammes(false);
     }
   };
 
@@ -219,6 +235,7 @@ const SubjectBank = () => {
 
   const handleCreateSubject = async () => {
     setFieldErrors({});
+    setLoadingCreateSubject(true);
 
     try {
       const response = await createSubjectRecord(subjectFormData);
@@ -249,11 +266,14 @@ const SubjectBank = () => {
         error.response?.data?.message || 'Failed to create subject',
         'error'
       );
+    } finally {
+      setLoadingCreateSubject(false);
     }
   };
 
   const handleUpdateSubject = async () => {
     setFieldErrors({});
+    setLoadingUpdateSubject(true);
 
     try {
       const response = await updateSubjectRecord(selectedSubject.id, subjectFormData);
@@ -285,10 +305,13 @@ const SubjectBank = () => {
         error.response?.data?.message || 'Failed to update subject',
         'error'
       );
+    } finally {
+      setLoadingUpdateSubject(false);
     }
   };
 
   const handleDeleteSubject = async () => {
+    setLoadingDeleteSubject(true);
     try {
       const response = await deleteSubjectRecord(selectedSubject.id);
       if (response.status) {
@@ -296,10 +319,21 @@ const SubjectBank = () => {
         handleCloseDeleteSubjectModal();
         fetchSubjectsData();
       } else {
-        showSnackbar(response.message || 'Failed to delete subject', 'error');
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to delete subject';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to delete subject', 'error');
+      // Handle API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to delete subject';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to delete subject', 'error');
+      }
+    } finally {
+      setLoadingDeleteSubject(false);
     }
   };
 
@@ -390,6 +424,7 @@ const SubjectBank = () => {
 
   const handleCreateSubjectGroup = async () => {
     setFieldErrors({});
+    setLoadingCreateGroup(true);
 
     try {
       const response = await createSubjectGroup(subjectGroupFormData);
@@ -398,7 +433,9 @@ const SubjectBank = () => {
         handleCloseCreateSubjectGroupModal();
         fetchSubjectGroupsData();
       } else {
-        showSnackbar(response.message || 'Failed to create subject group', 'error');
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to create subject group';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
       if (error.response?.status === 422) {
@@ -416,11 +453,21 @@ const SubjectBank = () => {
         return;
       }
 
-      showSnackbar('Failed to create subject group', 'error');
+      // Handle other API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to create subject group';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to create subject group', 'error');
+      }
+    } finally {
+      setLoadingCreateGroup(false);
     }
   };
 
   const handleUpdateSubjectGroup = async () => {
+    setLoadingUpdateGroup(true);
     try {
       const response = await updateSubjectGroup(selectedSubjectGroup.id, subjectGroupFormData);
       if (response.status) {
@@ -428,14 +475,26 @@ const SubjectBank = () => {
         handleCloseEditSubjectGroupModal();
         fetchSubjectGroupsData();
       } else {
-        showSnackbar(response.message || 'Failed to update subject group', 'error');
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to update subject group';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to update subject group', 'error');
+      // Handle API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to update subject group';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to update subject group', 'error');
+      }
+    } finally {
+      setLoadingUpdateGroup(false);
     }
   };
 
   const handleDeleteSubjectGroup = async () => {
+    setLoadingDeleteGroup(true);
     try {
       const response = await deleteSubjectGroup(selectedSubjectGroup.id);
       if (response.status) {
@@ -443,10 +502,21 @@ const SubjectBank = () => {
         handleCloseDeleteSubjectGroupModal();
         fetchSubjectGroupsData();
       } else {
-        showSnackbar(response.message || 'Failed to delete subject group', 'error');
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to delete subject group';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to delete subject group', 'error');
+      // Handle API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to delete subject group';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to delete subject group', 'error');
+      }
+    } finally {
+      setLoadingDeleteGroup(false);
     }
   };
 
@@ -531,7 +601,13 @@ const SubjectBank = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {curriculumData.length > 0 ? (
+                    {loadingCurriculums ? (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          <CircularProgress size={24} />
+                        </TableCell>
+                      </TableRow>
+                    ) : curriculumData.length > 0 ? (
                       curriculumData.map((item, i) => (
                         <TableRow key={item.id} hover>
                           <TableCell>
@@ -901,7 +977,11 @@ const SubjectBank = () => {
                         })
                       }
                       label="Program"
+                      disabled={loadingProgrammes}
                     >
+                      <MenuItem value="" disabled>
+                        {loadingProgrammes ? 'Loading programmes...' : 'Select Program'}
+                      </MenuItem>
                       {programmesList.map((prog) => (
                         <MenuItem key={prog.id} value={prog.id}>
                           {prog.programme_name}
@@ -989,6 +1069,7 @@ const SubjectBank = () => {
             <Button
               size="small"
               onClick={handleCloseAddSubjectModal}
+              disabled={loadingCreateSubject}
             >
               Cancel
             </Button>
@@ -997,8 +1078,10 @@ const SubjectBank = () => {
               variant="contained"
               size="small"
               onClick={handleCreateSubject}
+              disabled={loadingCreateSubject}
+              startIcon={loadingCreateSubject ? <CircularProgress size={16} /> : null}
             >
-              Add Subject
+              {loadingCreateSubject ? 'Adding...' : 'Add Subject'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1148,6 +1231,7 @@ const SubjectBank = () => {
             <Button
               size="small"
               onClick={handleCloseEditSubjectModal}
+              disabled={loadingUpdateSubject}
             >
               Cancel
             </Button>
@@ -1155,8 +1239,10 @@ const SubjectBank = () => {
               variant="contained"
               size="small"
               onClick={handleUpdateSubject}
+              disabled={loadingUpdateSubject}
+              startIcon={loadingUpdateSubject ? <CircularProgress size={16} /> : null}
             >
-              Update Subject
+              {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1170,9 +1256,16 @@ const SubjectBank = () => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={handleCloseDeleteSubjectModal}>Cancel</Button>
-            <Button variant="contained" color="error" size='small' onClick={handleDeleteSubject}>
-              Delete
+            <Button size='small' onClick={handleCloseDeleteSubjectModal} disabled={loadingDeleteSubject}>Cancel</Button>
+            <Button 
+              variant="contained" 
+              color="error" 
+              size='small' 
+              onClick={handleDeleteSubject}
+              disabled={loadingDeleteSubject}
+              startIcon={loadingDeleteSubject ? <CircularProgress size={16} /> : null}
+            >
+              {loadingDeleteSubject ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1335,9 +1428,15 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={handleCloseCreateSubjectGroupModal}>Cancel</Button>
-            <Button variant="contained" size='small' onClick={handleCreateSubjectGroup}>
-              Create Group
+            <Button size='small' onClick={handleCloseCreateSubjectGroupModal} disabled={loadingCreateGroup}>Cancel</Button>
+            <Button 
+              variant="contained" 
+              size='small' 
+              onClick={handleCreateSubjectGroup}
+              disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2}
+              startIcon={loadingCreateGroup ? <CircularProgress size={16} /> : null}
+            >
+              {loadingCreateGroup ? 'Creating...' : 'Create Group'}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1500,9 +1599,15 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={handleCloseEditSubjectGroupModal}>Cancel</Button>
-            <Button variant="contained" size='small' onClick={handleUpdateSubjectGroup}>
-              Update Group
+            <Button size='small' onClick={handleCloseEditSubjectGroupModal} disabled={loadingUpdateGroup}>Cancel</Button>
+            <Button 
+              variant="contained" 
+              size='small' 
+              onClick={handleUpdateSubjectGroup}
+              disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2}
+              startIcon={loadingUpdateGroup ? <CircularProgress size={16} /> : null}
+            >
+              {loadingUpdateGroup ? 'Updating...' : 'Update Group'}
             </Button>
           </DialogActions>
         </Dialog>

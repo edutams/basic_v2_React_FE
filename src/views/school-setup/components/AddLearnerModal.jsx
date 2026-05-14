@@ -215,7 +215,7 @@ const AddLearnerModal = ({
 
           <Box sx={{ mb: 3 }}>
             <TextField
-              label="Learner ID"
+              label="Admission Number"
               name="learner_id"
               value={formik.values.learner_id}
               onChange={formik.handleChange}
@@ -225,7 +225,7 @@ const AddLearnerModal = ({
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
             <Box sx={{ flex: '1 1 45%' }}>
-              <TextField label="Last Name" name="last_name" value={formik.values.last_name}
+              <TextField label="Surname" name="last_name" value={formik.values.last_name}
                 onChange={formik.handleChange} fullWidth />
             </Box>
             <Box sx={{ flex: '1 1 45%' }}>
@@ -236,7 +236,7 @@ const AddLearnerModal = ({
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
             <Box sx={{ flex: '1 1 45%' }}>
-              <TextField label="Middle Name" name="middle_name" value={formik.values.middle_name}
+              <TextField label="Other Name" name="middle_name" value={formik.values.middle_name}
                 onChange={formik.handleChange} fullWidth />
             </Box>
             <Box sx={{ flex: '1 1 45%' }}>

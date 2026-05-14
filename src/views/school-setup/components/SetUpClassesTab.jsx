@@ -385,7 +385,7 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
                         ))
                       ) : (
                         <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-                          Click Generate to create arms
+                         Set class arms, generate, then edit names if needed.
                         </Typography>
                       )}
                     </Box>

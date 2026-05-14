@@ -135,7 +135,7 @@ const ClassStructureTable = ({
             ))
           ) : (
             <Typography variant="body2" color="text.info" sx={{ p: 1 }}>
-              Click Generate to create arms
+              Set the number of class arms, generate them, then edit the names if needed.
             </Typography>
           )}
         </Box>

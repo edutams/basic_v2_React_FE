@@ -139,7 +139,7 @@ const ApprovedSchoolsTab = ({
                         </Avatar>
                         <Box>
                           <Typography variant="subtitle2" fontWeight={700}>
-                            {row.tenant_name || row.institutionName}
+                            {row.tenant_name}
                           </Typography>
                           {row.domains?.[0]?.domain ? (
                             <Link

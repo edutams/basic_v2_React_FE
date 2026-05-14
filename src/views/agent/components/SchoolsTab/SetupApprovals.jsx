@@ -26,6 +26,7 @@ import { IconDotsVertical, IconEdit } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
+import { usePermissions } from '../../../../context/AgentContext/permissions';
 
 const SetupApprovals = ({
   schoolList,
@@ -40,6 +41,8 @@ const SetupApprovals = ({
   onEdit,
   onApproveOnboarding,
 }) => {
+  const { can } = usePermissions();
+
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -117,11 +120,7 @@ const SetupApprovals = ({
             {paginate(filtered).length > 0 ? (
               paginate(filtered).map((row, i) => {
                 const spa = getSpaContact(row);
-                const agent = row.agent;
-                const domainHost = agent?.organization_domain
-                  ? `${row.tenant_short_name}.${agent.organization_domain}`
-                  : row.tenant_short_name || '';
-                const prospectiveUrl = domainHost ? `https://${domainHost}` : null;
+                const agent = row.agent || row.organization;
 
                 return (
                   <TableRow key={row.id} hover sx={{ '&:hover': { bgcolor: '#fafafa' } }}>
@@ -142,16 +141,16 @@ const SetupApprovals = ({
                           <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3 }}>
                             {row.tenant_name}
                           </Typography>
-                          {prospectiveUrl ? (
+                          {row.domains?.[0]?.domain ? (
                             <Link
-                              href={prospectiveUrl}
+                              href={`https://${row.domains[0].domain}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               variant="caption"
                               color="text.secondary"
                               underline="hover"
                             >
-                              {domainHost}
+                              {row.domains[0].domain}
                             </Link>
                           ) : (
                             <Typography variant="caption" color="text.secondary">
@@ -281,13 +280,17 @@ const SetupApprovals = ({
             color: activeRow?.onboarding_status === 'completed' ? '#16a34a' : undefined,
           }}
         >
-          <TaskAltIcon fontSize="small" />
-          {activeRow?.onboarding_status === 'completed'
-            ? 'Approve Onboarding'
-            : 'Onboarding Not Completed'}
+          {can('landlord.approve_tenants_onboarding') && (
+            <>
+              <TaskAltIcon fontSize="small" />
+              {activeRow?.onboarding_status === 'completed'
+                ? 'Approve Onboarding'
+                : 'Onboarding Not Completed'}
+            </>
+          )}
         </MenuItem>
 
-        <MenuItem
+        {/* <MenuItem
           onClick={() => {
             onEdit(activeRow);
             setAnchorEl(null);
@@ -296,7 +299,7 @@ const SetupApprovals = ({
         >
           <EditOutlinedIcon fontSize="small" sx={{ color: '#6b7280' }} />
           Edit
-        </MenuItem>
+        </MenuItem> */}
       </Menu>
     </>
   );

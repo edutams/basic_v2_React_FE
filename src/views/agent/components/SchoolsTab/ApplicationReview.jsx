@@ -26,6 +26,7 @@ import { IconDotsVertical, IconEye, IconEdit } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
+import { usePermissions } from '../../../../context/AgentContext/permissions';
 
 const ApplicationReview = ({
   prospectList,
@@ -39,6 +40,8 @@ const ApplicationReview = ({
   onReview,
   onEdit,
 }) => {
+  const { can } = usePermissions();
+
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);

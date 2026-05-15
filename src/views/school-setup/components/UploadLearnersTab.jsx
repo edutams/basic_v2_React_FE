@@ -42,7 +42,11 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
   const [learnerListModalOpen, setLearnerListModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   // ── Sequential hints: add → download → upload, 5s each ───────────────────
   const [activeHint, setActiveHint] = useState(null);
@@ -52,11 +56,17 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     if (loading) return;
 
     const hasAny = Object.values(studentCounts).some((c) => c > 0);
-    if (hasAny) { setActiveHint(null); return; }
+    if (hasAny) {
+      setActiveHint(null);
+      return;
+    }
 
     let step = 0;
     const next = () => {
-      if (step >= HINTS.length) { setActiveHint(null); return; }
+      if (step >= HINTS.length) {
+        setActiveHint(null);
+        return;
+      }
       setActiveHint(HINTS[step]);
       step += 1;
       hintTimerRef.current = setTimeout(next, 5000);
@@ -91,7 +101,9 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         });
         setClasses(flatClasses);
         const countsObj = {};
-        (countsData || []).forEach((item) => { countsObj[item.class_id] = item.count; });
+        (countsData || []).forEach((item) => {
+          countsObj[item.class_id] = item.count;
+        });
         setStudentCounts(countsObj);
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -108,15 +120,25 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     onReadyChange?.(hasAny);
   }, [studentCounts, onReadyChange]);
 
-  const filteredClasses = useMemo(() =>
-    classes.filter((cls) =>
-      cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cls.programme_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [classes, searchTerm]);
+  const filteredClasses = useMemo(
+    () =>
+      classes.filter(
+        (cls) =>
+          cls.class_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          cls.programme_name?.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
+    [classes, searchTerm],
+  );
 
-  const handleAddNewLearner = (classItem) => { setSelectedClass(classItem); setModalOpen(true); };
-  const handleViewLearners  = (classItem) => { setSelectedClass(classItem); setLearnerListModalOpen(true); };
-  const handleUploadClick   = () => setUploadModalOpen(true);
+  const handleAddNewLearner = (classItem) => {
+    setSelectedClass(classItem);
+    setModalOpen(true);
+  };
+  const handleViewLearners = (classItem) => {
+    setSelectedClass(classItem);
+    setLearnerListModalOpen(true);
+  };
+  const handleUploadClick = () => setUploadModalOpen(true);
 
   const handleSaveLearner = async (data) => {
     try {
@@ -125,14 +147,24 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         setNotification({ open: true, message: response.message, severity: 'success' });
         const countsData = await getStudentCountByClass();
         const countsObj = {};
-        (countsData || []).forEach((item) => { countsObj[item.class_id] = item.count; });
+        (countsData || []).forEach((item) => {
+          countsObj[item.class_id] = item.count;
+        });
         setStudentCounts(countsObj);
         onLearnerAdded?.();
       } else {
-        setNotification({ open: true, message: response?.message || 'Something went wrong', severity: 'error' });
+        setNotification({
+          open: true,
+          message: response?.message || 'Something went wrong',
+          severity: 'error',
+        });
       }
     } catch (error) {
-      setNotification({ open: true, message: error?.message || 'Failed to save learner', severity: 'error' });
+      setNotification({
+        open: true,
+        message: error?.message || 'Failed to save learner',
+        severity: 'error',
+      });
     }
   };
 
@@ -143,7 +175,9 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     if (!response.data.status) throw new Error(response.data.message || 'Upload failed');
     const countsData = await getStudentCountByClass();
     const countsObj = {};
-    (countsData || []).forEach((item) => { countsObj[item.class_id] = item.count; });
+    (countsData || []).forEach((item) => {
+      countsObj[item.class_id] = item.count;
+    });
     setStudentCounts(countsObj);
     onLearnerAdded?.();
     return response.data.message || 'Upload complete';
@@ -155,7 +189,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
         params: { programme_class_id: programmeClassId },
         responseType: 'blob',
       });
-      const url  = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `learner_upload_template_${programmeClassId}.xlsx`);
@@ -163,7 +197,11 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      setNotification({ open: true, message: 'Template downloaded successfully', severity: 'success' });
+      setNotification({
+        open: true,
+        message: 'Template downloaded successfully',
+        severity: 'success',
+      });
     } catch {
       setNotification({ open: true, message: 'Failed to download template', severity: 'error' });
     }
@@ -181,12 +219,32 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
         <Table stickyHeader sx={{ borderCollapse: 'separate', borderSpacing: '12px 10px' }}>
-          <TableHead>
+          <TableHead
+            sx={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 20,
+
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                backgroundColor: '#fff',
+                zIndex: -1,
+              },
+            }}
+          >
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: '25%', bgcolor: '#fff' }}>Classes</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>No. Uploaded</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '20%', bgcolor: '#fff' }}>Upload Using Forms</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '45%', bgcolor: '#fff' }}>Upload Using Excel File</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>
+                No. Uploaded
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '20%', bgcolor: '#fff' }}>
+                Upload Using Forms
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '45%', bgcolor: '#fff' }}>
+                Upload Using Excel File
+              </TableCell>
             </TableRow>
           </TableHead>
 
@@ -222,7 +280,10 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                   </TableCell>
 
                   {hasArms ? (
-                    <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
+                    <TableCell
+                      sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
+                      align="center"
+                    >
                       <Button
                         variant="contained"
                         size="small"
@@ -237,7 +298,14 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                           direction="up-right"
                           mode="persistent"
                           delay="0s"
-                          position={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 20, mt: 0.5 }}
+                          position={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 20,
+                            mt: 0.5,
+                          }}
                         />
                       )}
                     </TableCell>
@@ -247,14 +315,24 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                       sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }}
                       align="center"
                     >
-                      <Typography sx={{ fontSize: 11, color: 'error.main', fontStyle: 'italic', fontWeight: 500 }}>
-                        Generate class arms first to enable adding or uploading learners
+                      <Typography
+                        sx={{
+                          fontSize: 11,
+                          color: 'error.main',
+                          fontStyle: 'italic',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Go back to generate class arms first to enable adding or uploading learners
                       </Typography>
                     </TableCell>
                   )}
 
                   {hasArms && (
-                    <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
+                    <TableCell
+                      sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
+                      align="center"
+                    >
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                         <Button
                           variant="outlined"
@@ -280,7 +358,13 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                           direction="up-left"
                           mode="persistent"
                           delay="0s"
-                          position={{ position: 'absolute', top: '100%', left: 0, zIndex: 20, mt: 0.5 }}
+                          position={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            zIndex: 20,
+                            mt: 0.5,
+                          }}
                         />
                       )}
                       {index === 0 && activeHint === 'upload' && (
@@ -290,7 +374,13 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                           direction="up-right"
                           mode="persistent"
                           delay="0s"
-                          position={{ position: 'absolute', top: '100%', right: 0, zIndex: 20, mt: 0.5 }}
+                          position={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            zIndex: 20,
+                            mt: 0.5,
+                          }}
                         />
                       )}
                     </TableCell>

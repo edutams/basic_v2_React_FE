@@ -125,9 +125,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     return () => ro.disconnect();
   }, [sessionTerms.length]);
 
-  // Fetch data on component mount
   useEffect(() => {
     loadData();
+    refreshTenantInfo();
   }, []);
 
   // Notify parent when stage is completable: subscribed term + weeks generated

@@ -56,6 +56,7 @@ export const TenantAuthProvider = ({ children }) => {
       if (freshData) {
         setTenantInfo((prev) => ({ ...prev, ...freshData }));
       }
+      await refreshTenantInfo();
     } catch (err) {
       console.error('Failed to fetch tenant onboarding info', err);
     }
@@ -143,8 +144,8 @@ export const TenantAuthProvider = ({ children }) => {
   const refreshTenantInfo = async () => {
     try {
       const res = await tenantApi.get('/school_setup/get_academic_info');
-      const { academic_session, academic_term, academic_week } = res.data;
-      setTenantInfo((prev) => ({ ...prev, academic_session, academic_term, academic_week }));
+      const { academic_session, academic_term, academic_week, logo_url } = res.data;
+      setTenantInfo((prev) => ({ ...prev, academic_session, academic_term, academic_week, logo_url }));
     } catch (err) {
       console.error('Failed to refresh academic info', err);
     }

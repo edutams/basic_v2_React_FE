@@ -37,11 +37,7 @@ import {
   fetchTerms,
   toggleSessionTermStatus,
 } from '../../../api/sessionTermApi';
-import {
-  fetchWeeks,
-  autoGenerateWeeks,
-  toggleWeekStatus,
-} from '../../../api/weekApi';
+import { fetchWeeks, autoGenerateWeeks, toggleWeekStatus } from '../../../api/weekApi';
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
@@ -81,8 +77,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   // ── Hint positioning ─────────────────────────────────────────────────────
   const generateBtnRef = useRef(null);
   const paperRef = useRef(null);
-  const actionBtnRef = useRef(null);       // ref on first row's ⋮ button
-  const tableWrapRef = useRef(null);       // ref on the Box wrapping the table
+  const actionBtnRef = useRef(null); // ref on first row's ⋮ button
+  const tableWrapRef = useRef(null); // ref on the Box wrapping the table
   const [hintStyle, setHintStyle] = useState(null);
   const [actionHintStyle, setActionHintStyle] = useState(null);
 
@@ -136,8 +132,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
 
   // Notify parent when stage is completable: subscribed term + weeks generated
   useEffect(() => {
-    const isReady =
-      sessionTerms.some((t) => t.is_subscribed === 'yes') && weeks.length > 0;
+    const isReady = sessionTerms.some((t) => t.is_subscribed === 'yes') && weeks.length > 0;
     onReadyChange?.(isReady);
   }, [sessionTerms, weeks, onReadyChange]);
 
@@ -353,7 +348,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box display="flex" justifyContent="space-between" alignItems="center">
       <ParentCard>
         <Grid container spacing={3}>
           {/* ── Manage Sessions ── */}
@@ -366,7 +361,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
               }
             >
               {loading && !currentSession ? (
-                <Box display="flex" justifyContent="center" alignItems="center" sx={{ minHeight: 200 }}>
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  sx={{ minHeight: 200 }}
+                >
                   <CircularProgress />
                 </Box>
               ) : currentSession ? (
@@ -396,8 +396,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                             <TableRow>
                               <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
                               <TableCell sx={{ fontWeight: 'bold' }}>Display Name</TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                                Status
+                              </TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                                Action
+                              </TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -661,7 +665,9 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>No, Cancel</Button>
+          <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>
+            No, Cancel
+          </Button>
           <Button onClick={handleConfirmSubscribe} variant="contained" autoFocus disabled={loading}>
             Yes, Subscribe
           </Button>

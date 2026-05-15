@@ -23,11 +23,20 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  LinearProgress,
+  Grid,
+  Card,
+  CardContent,
 } from '@mui/material';
 import { IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import ParentCard from 'src/components/shared/ParentCard';
 import { fetchCurrentSession, fetchSessionTerms } from '../../../api/sessionTermApi';
-import { fetchHolidays, createHolidays, deleteHoliday } from '../../../api/holidayApi';
+import {
+  fetchHolidays,
+  createHolidays,
+  deleteHoliday,
+  fetchHolidayStatistics,
+} from '../../../api/holidayApi';
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
@@ -51,6 +60,7 @@ const HolidaySection = ({ refreshKey }) => {
 
   // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
+  const [statistics, setStatistics] = useState(null);
 
   // Row action menu
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -119,6 +129,7 @@ const HolidaySection = ({ refreshKey }) => {
   useEffect(() => {
     if (!selectedTermId) return;
     loadHolidays(selectedTermId);
+    loadHolidayStatistics(selectedTermId);
   }, [selectedTermId]);
 
   const loadHolidays = async (termId) => {
@@ -132,6 +143,18 @@ const HolidaySection = ({ refreshKey }) => {
       showSnackbar('Failed to load holidays', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadHolidayStatistics = async (termId) => {
+    try {
+      const res = await fetchHolidayStatistics(termId);
+
+      if (res.status) {
+        setStatistics(res.data);
+      }
+    } catch {
+      showSnackbar('Failed to load holiday statistics', 'error');
     }
   };
 
@@ -192,6 +215,7 @@ const HolidaySection = ({ refreshKey }) => {
         showSnackbar('Holidays created successfully');
         handleCloseModal();
         loadHolidays(selectedTermId);
+        loadHolidayStatistics(selectedTermId);
       } else {
         // Map field-level errors from API onto rows
         if (res.errors) {
@@ -246,6 +270,7 @@ const HolidaySection = ({ refreshKey }) => {
       if (res.status) {
         showSnackbar('Holiday deleted');
         loadHolidays(selectedTermId);
+        loadHolidayStatistics(selectedTermId);
       } else {
         showSnackbar(res.message || 'Failed to delete', 'error');
       }
@@ -263,6 +288,95 @@ const HolidaySection = ({ refreshKey }) => {
 
   return (
     <>
+      {statistics && (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, 1fr)',
+              sm: 'repeat(4, 1fr)',
+              md: 'repeat(7, 1fr)',
+            },
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            overflow: 'hidden',
+            mb: 3,
+          }}
+        >
+          {[
+            {
+              label: 'Total School Days',
+              value: statistics.total_school_days,
+              color: 'text.primary',
+            },
+            { label: 'Holiday Count', value: statistics.holiday_count, color: 'text.primary' },
+            {
+              label: 'Days Allocated',
+              value: statistics.holiday_days_allocated,
+              color: 'warning.main',
+            },
+            { label: 'Days Used', value: statistics.holiday_days_used, color: 'error.main' },
+            { label: 'Upcoming Days', value: statistics.upcoming_holiday_days, color: 'info.main' },
+            {
+              label: 'Teaching Days Left',
+              value: statistics.remaining_school_days,
+              color: 'success.main',
+            },
+          ].map((stat, i, arr) => (
+            <Box
+              key={stat.label}
+              sx={{
+                p: 2,
+                borderRight: '1px solid',
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" display="block">
+                {stat.label}
+              </Typography>
+              <Typography variant="h5" fontWeight={700} color={stat.color}>
+                {stat.value}
+              </Typography>
+            </Box>
+          ))}
+
+          {/* Utilization */}
+          <Box
+            sx={{
+              p: 2,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              gridColumn: { xs: '1 / -1', md: 'auto' },
+            }}
+          >
+            <Box display="flex" justifyContent="space-between">
+              <Typography variant="caption" color="text.secondary">
+                Holiday Utilization
+              </Typography>
+              <Typography variant="caption" fontWeight={700}>
+                {statistics.holiday_percentage}%
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(statistics.holiday_percentage, 100)}
+              color={
+                statistics.holiday_percentage > 80
+                  ? 'error'
+                  : statistics.holiday_percentage > 50
+                    ? 'warning'
+                    : 'primary'
+              }
+              sx={{ height: 6, borderRadius: 4, my: 1 }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {statistics.holiday_days_allocated} of {statistics.total_school_days} days allocated
+            </Typography>
+          </Box>
+        </Box>
+      )}
       <ParentCard
         title={
           <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -272,8 +386,7 @@ const HolidaySection = ({ refreshKey }) => {
               startIcon={<IconPlus size={16} />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
-                  size="small"
-
+              size="small"
             >
               Create Holiday
             </Button>
@@ -338,7 +451,9 @@ const HolidaySection = ({ refreshKey }) => {
                   {paginatedHolidays.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                        <Typography color="textSecondary">No holidays found for this term.</Typography>
+                        <Typography color="textSecondary">
+                          No holidays found for this term.
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -349,10 +464,7 @@ const HolidaySection = ({ refreshKey }) => {
                         <TableCell>{h.start_date}</TableCell>
                         <TableCell>{h.end_date}</TableCell>
                         <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleMenuOpen(e, h.id)}
-                          >
+                          <IconButton size="small" onClick={(e) => handleMenuOpen(e, h.id)}>
                             <IconDotsVertical size={16} />
                           </IconButton>
                           <Menu
@@ -400,7 +512,8 @@ const HolidaySection = ({ refreshKey }) => {
       {/* Create Holiday Modal */}
       <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
         <DialogTitle>
-          Create Holiday{sessionLabel && selectedTermLabel ? ` for ${sessionLabel} - ${selectedTermLabel}` : ''}
+          Create Holiday
+          {sessionLabel && selectedTermLabel ? ` for ${sessionLabel} - ${selectedTermLabel}` : ''}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -465,12 +578,10 @@ const HolidaySection = ({ refreshKey }) => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button 
-                size="small"
-           onClick={handleCloseModal}>Cancel</Button>
-          <Button  
-                  size="small"
-          variant="contained" onClick={handleSaveHolidays} disabled={saving}>
+          <Button size="small" onClick={handleCloseModal}>
+            Cancel
+          </Button>
+          <Button size="small" variant="contained" onClick={handleSaveHolidays} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Create Holiday'}
           </Button>
         </DialogActions>

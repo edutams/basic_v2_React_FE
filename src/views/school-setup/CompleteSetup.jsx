@@ -172,7 +172,7 @@ const CompleteSetup = () => {
               borderRadius: '10px !important',
             }}
           >
-            {isApproved ? 'Continue to Dashboard' : 'Back to Setup'}
+            {isApproved ? 'Continue to Dashboard' : 'Waiting for Approval'}
           </Button>
         </Box>
 

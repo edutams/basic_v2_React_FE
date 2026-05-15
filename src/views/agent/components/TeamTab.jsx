@@ -132,7 +132,13 @@ const ActionMenuCell = ({
   );
 };
 
-const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfile = false, organizationId = null }) => {
+const TeamTab = ({
+  onAddAgent,
+  isDashboard = false,
+  accessLevel,
+  isViewingProfile = false,
+  organizationId = null,
+}) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -172,7 +178,6 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
   const handleConfirmDelete = () => {
     if (agentToDelete) {
       // Add delete logic here if needed
-      console.log('Deleting agent:', agentToDelete.id);
       setDeleteDialogOpen(false);
       setAgentToDelete(null);
     }
@@ -186,7 +191,6 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
   const confirmImpersonate = async (agent) => {
     try {
       // Add impersonation logic here if needed
-      console.log('Impersonating agent:', agent.id);
     } catch (error) {
       console.error('Impersonation failed', error);
     }
@@ -379,7 +383,6 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
     fetchData();
   };
 
-
   return (
     <Box>
       {/* Header */}
@@ -448,11 +451,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
         <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Status</InputLabel>
-            <Select
-              value={status}
-              label="Status"
-              onChange={(e) => setStatus(e.target.value)}
-            >
+            <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value)}>
               <MenuItem value="">All</MenuItem>
               <MenuItem value="Active">Active</MenuItem>
               <MenuItem value="Inactive">Inactive</MenuItem>
@@ -524,11 +523,11 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                 const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                 const adminInitials = fullName
                   ? fullName
-                    .split(' ')
-                    .slice(0, 2)
-                    .map((w) => w[0])
-                    .join('')
-                    .toUpperCase()
+                      .split(' ')
+                      .slice(0, 2)
+                      .map((w) => w[0])
+                      .join('')
+                      .toUpperCase()
                   : 'NA';
                 const level = Number(agent.access_level);
                 const colorMap = {
@@ -559,7 +558,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                             flexShrink: 0,
                           }}
                         >
-                          {!(agent.imgsrc) && initials}
+                          {!agent.imgsrc && initials}
                         </Avatar>
                         <Box>
                           <Typography
@@ -574,8 +573,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                             color="textSecondary"
                             sx={{ display: 'block', lineHeight: 1.4 }}
                           >
-                            {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'}{' '}
-                            Region
+                            {agent.phoneNumber || 'N/A'} | {agent.state_name || 'N/A'} Region
                           </Typography>
                           <Typography
                             variant="caption"
@@ -676,11 +674,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
                           </Typography>
                         </Box>
                         <Box sx={{ bgcolor: 'primary.main', px: 1.5, py: 0.5 }}>
-                          <Typography
-                            variant="caption"
-                            fontWeight="700"
-                            sx={{ color: '#fff' }}
-                          >
+                          <Typography variant="caption" fontWeight="700" sx={{ color: '#fff' }}>
                             {agent.tenants_count ?? 0}
                           </Typography>
                         </Box>
@@ -741,11 +735,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
               })
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={10}
-                  align="center"
-                  sx={{ py: 6, color: 'text.secondary' }}
-                >
+                <TableCell colSpan={10} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                   No organizations found
                 </TableCell>
               </TableRow>
@@ -773,7 +763,7 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => { }}
+        handleRefresh={() => {}}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />
@@ -783,8 +773,8 @@ const TeamTab = ({ onAddAgent, isDashboard = false, accessLevel, isViewingProfil
         <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Are you sure you want to delete{' '}
-            {agentToDelete?.organizationName || 'this agent'}? This action cannot be undone.
+            Are you sure you want to delete {agentToDelete?.organizationName || 'this agent'}? This
+            action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>

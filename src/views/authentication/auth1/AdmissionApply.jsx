@@ -28,7 +28,6 @@ const AdmissionApply = () => {
   const recaptchaRef = useRef(null);
 
   const handleSubmit = async (values) => {
-    console.log('[AdmissionApply] handleSubmit called', values);
     if (!captchaToken) {
       setError('Please complete the reCAPTCHA verification.');
       return;
@@ -44,7 +43,6 @@ const AdmissionApply = () => {
     setError('');
     setLoading(true);
     try {
-      console.log('[AdmissionApply] calling admissionParentSignup...');
       await guardianApi.admissionParentSignup(values);
       recaptchaRef.current?.reset();
       setCaptchaToken(null);
@@ -134,7 +132,6 @@ const AdmissionApply = () => {
               }}
             />
           </Box>
-          
         </Grid>
 
         {/* ── Right panel ── */}

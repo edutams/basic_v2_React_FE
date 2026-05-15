@@ -193,7 +193,7 @@ const SubjectBank = () => {
       programme_id: '',
       pass_mark: '',
       unit: '',
-      status: "",
+      status: '',
       curriculum_id: selectedCurriculum,
     });
     setOpenAddSubjectModal(true);
@@ -246,7 +246,6 @@ const SubjectBank = () => {
         fetchSubjectsData();
       }
     } catch (error) {
-
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
 
@@ -254,18 +253,12 @@ const SubjectBank = () => {
           setFieldErrors(errors);
         }
 
-        showSnackbar(
-          error.response.data?.message || 'Validation failed',
-          'error'
-        );
+        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
 
         return;
       }
 
-      showSnackbar(
-        error.response?.data?.message || 'Failed to create subject',
-        'error'
-      );
+      showSnackbar(error.response?.data?.message || 'Failed to create subject', 'error');
     } finally {
       setLoadingCreateSubject(false);
     }
@@ -284,8 +277,6 @@ const SubjectBank = () => {
         fetchSubjectsData();
       }
     } catch (error) {
-      console.log(error);
-
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
 
@@ -293,18 +284,12 @@ const SubjectBank = () => {
           setFieldErrors(errors);
         }
 
-        showSnackbar(
-          error.response.data?.message || 'Validation failed',
-          'error'
-        );
+        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
 
         return;
       }
 
-      showSnackbar(
-        error.response?.data?.message || 'Failed to update subject',
-        'error'
-      );
+      showSnackbar(error.response?.data?.message || 'Failed to update subject', 'error');
     } finally {
       setLoadingUpdateSubject(false);
     }
@@ -445,10 +430,7 @@ const SubjectBank = () => {
           setFieldErrors(errors);
         }
 
-        showSnackbar(
-          error.response.data?.message || 'Validation failed',
-          'error'
-        );
+        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
 
         return;
       }
@@ -456,7 +438,8 @@ const SubjectBank = () => {
       // Handle other API error responses
       if (error.response?.data) {
         const errorData = error.response.data;
-        const errorMessage = errorData.error || errorData.message || 'Failed to create subject group';
+        const errorMessage =
+          errorData.error || errorData.message || 'Failed to create subject group';
         showSnackbar(errorMessage, 'error');
       } else {
         showSnackbar('Failed to create subject group', 'error');
@@ -483,7 +466,8 @@ const SubjectBank = () => {
       // Handle API error responses
       if (error.response?.data) {
         const errorData = error.response.data;
-        const errorMessage = errorData.error || errorData.message || 'Failed to update subject group';
+        const errorMessage =
+          errorData.error || errorData.message || 'Failed to update subject group';
         showSnackbar(errorMessage, 'error');
       } else {
         showSnackbar('Failed to update subject group', 'error');
@@ -510,7 +494,8 @@ const SubjectBank = () => {
       // Handle API error responses
       if (error.response?.data) {
         const errorData = error.response.data;
-        const errorMessage = errorData.error || errorData.message || 'Failed to delete subject group';
+        const errorMessage =
+          errorData.error || errorData.message || 'Failed to delete subject group';
         showSnackbar(errorMessage, 'error');
       } else {
         showSnackbar('Failed to delete subject group', 'error');
@@ -571,7 +556,7 @@ const SubjectBank = () => {
           gap: 3,
           width: '100%',
           mt: 2,
-          mb: 2
+          mb: 2,
         }}
       >
         {/* Curriculum and Subject Panels on Same Row */}
@@ -583,16 +568,13 @@ const SubjectBank = () => {
             width: '100%',
           }}
         >
-
           {/* LEFT - Curriculum Panel */}
           <Box sx={{ flex: { md: 5 }, width: '100%' }}>
-            <ParentCard
-
-            >
+            <ParentCard>
               <TableContainer>
                 <Table sx={{ tableLayout: 'fixed' }}>
                   <TableHead>
-                    <TableRow >
+                    <TableRow>
                       <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
                       <TableCell sx={{ fontWeight: 'bold', width: '60%' }}>
                         Curriculum Name
@@ -665,7 +647,16 @@ const SubjectBank = () => {
               }
             >
               {/* Search and Action Controls Below Title */}
-              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+              <Box
+                sx={{
+                  mb: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                }}
+              >
                 <Box display="flex" alignItems="center" gap={2}>
                   <FormControl size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>Curriculum</InputLabel>
@@ -701,22 +692,43 @@ const SubjectBank = () => {
                     sx={{ width: 200 }}
                   />
                 </Box>
-                <Button variant="contained" size='small' onClick={handleOpenAddSubjectModal}>
+                <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal}>
                   Add Subject
                 </Button>
               </Box>
-              
+
               <TableContainer sx={{ maxHeight: 600 }}>
                 <Table sx={{ tableLayout: 'fixed' }}>
                   <TableHead>
-                    <TableRow >
-                      <TableCell width="8%">S/N</TableCell>
-                      <TableCell width="25%">Subject</TableCell>
-                      <TableCell width="18%">Subject Code</TableCell>
-                      <TableCell width="18%">Program</TableCell>
-                      <TableCell width="12%">Passmark</TableCell>
-                      <TableCell width="10%">Unit</TableCell>
-                      <TableCell width="9%" />
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell
+                        sx={{ fontWeight: 700, width: '5%', py: 1.5, whiteSpace: 'nowrap' }}
+                      >
+                        S/N
+                      </TableCell>
+
+                      <TableCell sx={{ fontWeight: 700, width: '25%', py: 1.5 }}>Subject</TableCell>
+
+                      <TableCell sx={{ fontWeight: 700, width: '15%', py: 1.5 }}>
+                        Subject Code
+                      </TableCell>
+
+                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>Program</TableCell>
+
+                      <TableCell
+                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
+                      >
+                        Pass Mark
+                      </TableCell>
+
+                      <TableCell sx={{ fontWeight: 700, width: '10%', py: 1.5 }}>Unit</TableCell>
+
+                      <TableCell
+                        align="center"
+                        sx={{ fontWeight: 700, width: '15%', py: 1.5, whiteSpace: 'nowrap' }}
+                      >
+                        Actions
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -749,7 +761,9 @@ const SubjectBank = () => {
                       <TableRow>
                         <TableCell colSpan={7} align="center">
                           <Typography color="textSecondary">
-                            {selectedCurriculum ? 'No subjects found for this curriculum' : 'Please select a curriculum to view subjects'}
+                            {selectedCurriculum
+                              ? 'No subjects found for this curriculum'
+                              : 'Please select a curriculum to view subjects'}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -811,7 +825,11 @@ const SubjectBank = () => {
                       ))}
                     </Select>
                   </FormControl>
-                  <Button variant="contained" size='small' onClick={handleOpenCreateSubjectGroupModal}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleOpenCreateSubjectGroupModal}
+                  >
                     Create Group
                   </Button>
                 </Box>
@@ -821,7 +839,7 @@ const SubjectBank = () => {
             <TableContainer sx={{ maxHeight: 600 }}>
               <Table sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
-                  <TableRow >
+                  <TableRow>
                     <TableCell width="8%">#</TableCell>
                     <TableCell width="22%">Group Name</TableCell>
                     <TableCell width="30%">Subjects</TableCell>
@@ -927,7 +945,6 @@ const SubjectBank = () => {
           <DialogContent>
             <Box sx={{ pt: 1 }}>
               <Grid container spacing={2}>
-
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
@@ -1009,13 +1026,9 @@ const SubjectBank = () => {
                       label="Status"
                       name="status"
                     >
-                      <MenuItem value="compulsory">
-                        Compulsory
-                      </MenuItem>
+                      <MenuItem value="compulsory">Compulsory</MenuItem>
 
-                      <MenuItem value="optional">
-                        Optional
-                      </MenuItem>
+                      <MenuItem value="optional">Optional</MenuItem>
                     </Select>
                     {fieldErrors.status && (
                       <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
@@ -1060,7 +1073,6 @@ const SubjectBank = () => {
                     size="small"
                   />
                 </Grid>
-
               </Grid>
             </Box>
           </DialogContent>
@@ -1097,7 +1109,6 @@ const SubjectBank = () => {
           <DialogContent>
             <Box sx={{ pt: 1 }}>
               <Grid container spacing={2}>
-
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
@@ -1173,12 +1184,8 @@ const SubjectBank = () => {
                       label="Status"
                       name="status"
                     >
-                      <MenuItem value="compulsory">
-                        Compulsory
-                      </MenuItem>
-                      <MenuItem value="optional">
-                        Optional
-                      </MenuItem>
+                      <MenuItem value="compulsory">Compulsory</MenuItem>
+                      <MenuItem value="optional">Optional</MenuItem>
                     </Select>
                     {fieldErrors.status && (
                       <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
@@ -1223,7 +1230,6 @@ const SubjectBank = () => {
                     size="small"
                   />
                 </Grid>
-
               </Grid>
             </Box>
           </DialogContent>
@@ -1248,19 +1254,31 @@ const SubjectBank = () => {
         </Dialog>
 
         {/* Delete Subject Modal */}
-        <Dialog open={openDeleteSubjectModal} onClose={handleCloseDeleteSubjectModal} maxWidth="sm" fullWidth>
+        <Dialog
+          open={openDeleteSubjectModal}
+          onClose={handleCloseDeleteSubjectModal}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>Delete Subject</DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot be undone.
+              Are you sure you want to delete "{selectedSubject?.subject_name}"? This action cannot
+              be undone.
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={handleCloseDeleteSubjectModal} disabled={loadingDeleteSubject}>Cancel</Button>
-            <Button 
-              variant="contained" 
-              color="error" 
-              size='small' 
+            <Button
+              size="small"
+              onClick={handleCloseDeleteSubjectModal}
+              disabled={loadingDeleteSubject}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
               onClick={handleDeleteSubject}
               disabled={loadingDeleteSubject}
               startIcon={loadingDeleteSubject ? <CircularProgress size={16} /> : null}
@@ -1271,17 +1289,32 @@ const SubjectBank = () => {
         </Dialog>
 
         {/* Create Subject Group Modal */}
-        <Dialog open={openCreateSubjectGroupModal} onClose={handleCloseCreateSubjectGroupModal} maxWidth="sm" fullWidth>
+        <Dialog
+          open={openCreateSubjectGroupModal}
+          onClose={handleCloseCreateSubjectGroupModal}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>Create Subject Group</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
               <Grid container spacing={1}>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.programme_id}>
+                  <FormControl
+                    fullWidth
+                    margin="normal"
+                    size="small"
+                    error={!!fieldErrors.programme_id}
+                  >
                     <InputLabel>Programme</InputLabel>
                     <Select
                       value={subjectGroupFormData.programme_id}
-                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, programme_id: e.target.value })}
+                      onChange={(e) =>
+                        setSubjectGroupFormData({
+                          ...subjectGroupFormData,
+                          programme_id: e.target.value,
+                        })
+                      }
                       label="Programme"
                     >
                       {programmesList.map((prog) => (
@@ -1296,13 +1329,22 @@ const SubjectBank = () => {
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.curriculum_id}>
+                  <FormControl
+                    fullWidth
+                    margin="normal"
+                    size="small"
+                    error={!!fieldErrors.curriculum_id}
+                  >
                     <InputLabel>Curriculum</InputLabel>
                     <Select
                       value={subjectGroupFormData.curriculum_id}
                       onChange={(e) => {
                         const newCurriculumId = e.target.value;
-                        setSubjectGroupFormData({ ...subjectGroupFormData, curriculum_id: newCurriculumId, subject_ids: [] });
+                        setSubjectGroupFormData({
+                          ...subjectGroupFormData,
+                          curriculum_id: newCurriculumId,
+                          subject_ids: [],
+                        });
                         loadSubjectsForSubjectGroup(newCurriculumId);
                       }}
                       label="Curriculum"
@@ -1323,7 +1365,12 @@ const SubjectBank = () => {
                     fullWidth
                     label="Group Name"
                     value={subjectGroupFormData.group_name}
-                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, group_name: e.target.value })}
+                    onChange={(e) =>
+                      setSubjectGroupFormData({
+                        ...subjectGroupFormData,
+                        group_name: e.target.value,
+                      })
+                    }
                     margin="normal"
                     required
                     error={!!fieldErrors.group_name}
@@ -1337,7 +1384,9 @@ const SubjectBank = () => {
                     label="Unit"
                     type="number"
                     value={subjectGroupFormData.unit}
-                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, unit: e.target.value })}
+                    onChange={(e) =>
+                      setSubjectGroupFormData({ ...subjectGroupFormData, unit: e.target.value })
+                    }
                     margin="normal"
                     required
                     error={!!fieldErrors.unit}
@@ -1352,7 +1401,12 @@ const SubjectBank = () => {
                     label="Pass Mark"
                     type="number"
                     value={subjectGroupFormData.pass_mark}
-                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, pass_mark: e.target.value })}
+                    onChange={(e) =>
+                      setSubjectGroupFormData({
+                        ...subjectGroupFormData,
+                        pass_mark: e.target.value,
+                      })
+                    }
                     margin="normal"
                     required
                     error={!!fieldErrors.pass_mark}
@@ -1366,7 +1420,9 @@ const SubjectBank = () => {
                     <InputLabel>Status</InputLabel>
                     <Select
                       value={subjectGroupFormData.status}
-                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, status: e.target.value })}
+                      onChange={(e) =>
+                        setSubjectGroupFormData({ ...subjectGroupFormData, status: e.target.value })
+                      }
                       label="Status"
                     >
                       <MenuItem value="active">Active</MenuItem>
@@ -1390,11 +1446,18 @@ const SubjectBank = () => {
                       getOptionLabel={(s) =>
                         `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}`
                       }
-                      value={subjectGroupFormData.subject_ids ? subjectGroupModalSubjects.filter((s) =>
-                        subjectGroupFormData.subject_ids.includes(s.id),
-                      ) : []}
+                      value={
+                        subjectGroupFormData.subject_ids
+                          ? subjectGroupModalSubjects.filter((s) =>
+                              subjectGroupFormData.subject_ids.includes(s.id),
+                            )
+                          : []
+                      }
                       onChange={(_, selected) =>
-                        setSubjectGroupFormData((f) => ({ ...f, subject_ids: selected.map((s) => s.id) }))
+                        setSubjectGroupFormData((f) => ({
+                          ...f,
+                          subject_ids: selected.map((s) => s.id),
+                        }))
                       }
                       isOptionEqualToValue={(option, value) => option.id === value.id}
                       noOptionsText={
@@ -1428,10 +1491,16 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={handleCloseCreateSubjectGroupModal} disabled={loadingCreateGroup}>Cancel</Button>
-            <Button 
-              variant="contained" 
-              size='small' 
+            <Button
+              size="small"
+              onClick={handleCloseCreateSubjectGroupModal}
+              disabled={loadingCreateGroup}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
               onClick={handleCreateSubjectGroup}
               disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2}
               startIcon={loadingCreateGroup ? <CircularProgress size={16} /> : null}
@@ -1442,17 +1511,32 @@ const SubjectBank = () => {
         </Dialog>
 
         {/* Edit Subject Group Modal */}
-        <Dialog open={openEditSubjectGroupModal} onClose={handleCloseEditSubjectGroupModal} maxWidth="sm" fullWidth>
+        <Dialog
+          open={openEditSubjectGroupModal}
+          onClose={handleCloseEditSubjectGroupModal}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>Edit Subject Group</DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.programme_id}>
+                  <FormControl
+                    fullWidth
+                    margin="normal"
+                    size="small"
+                    error={!!fieldErrors.programme_id}
+                  >
                     <InputLabel>Programme</InputLabel>
                     <Select
                       value={subjectGroupFormData.programme_id}
-                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, programme_id: e.target.value })}
+                      onChange={(e) =>
+                        setSubjectGroupFormData({
+                          ...subjectGroupFormData,
+                          programme_id: e.target.value,
+                        })
+                      }
                       label="Programme"
                     >
                       {programmesList.map((prog) => (
@@ -1467,13 +1551,22 @@ const SubjectBank = () => {
                   </FormControl>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <FormControl fullWidth margin="normal" size="small" error={!!fieldErrors.curriculum_id}>
+                  <FormControl
+                    fullWidth
+                    margin="normal"
+                    size="small"
+                    error={!!fieldErrors.curriculum_id}
+                  >
                     <InputLabel>Curriculum</InputLabel>
                     <Select
                       value={subjectGroupFormData.curriculum_id}
                       onChange={(e) => {
                         const newCurriculumId = e.target.value;
-                        setSubjectGroupFormData({ ...subjectGroupFormData, curriculum_id: newCurriculumId, subject_ids: [] });
+                        setSubjectGroupFormData({
+                          ...subjectGroupFormData,
+                          curriculum_id: newCurriculumId,
+                          subject_ids: [],
+                        });
                         loadSubjectsForSubjectGroup(newCurriculumId);
                       }}
                       label="Curriculum"
@@ -1494,7 +1587,12 @@ const SubjectBank = () => {
                     fullWidth
                     label="Group Name"
                     value={subjectGroupFormData.group_name}
-                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, group_name: e.target.value })}
+                    onChange={(e) =>
+                      setSubjectGroupFormData({
+                        ...subjectGroupFormData,
+                        group_name: e.target.value,
+                      })
+                    }
                     margin="normal"
                     required
                     error={!!fieldErrors.group_name}
@@ -1508,7 +1606,9 @@ const SubjectBank = () => {
                     label="Unit"
                     type="number"
                     value={subjectGroupFormData.unit}
-                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, unit: e.target.value })}
+                    onChange={(e) =>
+                      setSubjectGroupFormData({ ...subjectGroupFormData, unit: e.target.value })
+                    }
                     margin="normal"
                     required
                     error={!!fieldErrors.unit}
@@ -1523,7 +1623,12 @@ const SubjectBank = () => {
                     label="Pass Mark"
                     type="number"
                     value={subjectGroupFormData.pass_mark}
-                    onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, pass_mark: e.target.value })}
+                    onChange={(e) =>
+                      setSubjectGroupFormData({
+                        ...subjectGroupFormData,
+                        pass_mark: e.target.value,
+                      })
+                    }
                     margin="normal"
                     required
                     error={!!fieldErrors.pass_mark}
@@ -1537,7 +1642,9 @@ const SubjectBank = () => {
                     <InputLabel>Status</InputLabel>
                     <Select
                       value={subjectGroupFormData.status}
-                      onChange={(e) => setSubjectGroupFormData({ ...subjectGroupFormData, status: e.target.value })}
+                      onChange={(e) =>
+                        setSubjectGroupFormData({ ...subjectGroupFormData, status: e.target.value })
+                      }
                       label="Status"
                     >
                       <MenuItem value="active">Active</MenuItem>
@@ -1561,11 +1668,18 @@ const SubjectBank = () => {
                       getOptionLabel={(s) =>
                         `${s.subject_name}${s.subject_code ? ` (${s.subject_code})` : ''}`
                       }
-                      value={subjectGroupFormData.subject_ids ? subjectGroupModalSubjects.filter((s) =>
-                        subjectGroupFormData.subject_ids.includes(s.id),
-                      ) : []}
+                      value={
+                        subjectGroupFormData.subject_ids
+                          ? subjectGroupModalSubjects.filter((s) =>
+                              subjectGroupFormData.subject_ids.includes(s.id),
+                            )
+                          : []
+                      }
                       onChange={(_, selected) =>
-                        setSubjectGroupFormData((f) => ({ ...f, subject_ids: selected.map((s) => s.id) }))
+                        setSubjectGroupFormData((f) => ({
+                          ...f,
+                          subject_ids: selected.map((s) => s.id),
+                        }))
                       }
                       isOptionEqualToValue={(option, value) => option.id === value.id}
                       noOptionsText={
@@ -1599,10 +1713,16 @@ const SubjectBank = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={handleCloseEditSubjectGroupModal} disabled={loadingUpdateGroup}>Cancel</Button>
-            <Button 
-              variant="contained" 
-              size='small' 
+            <Button
+              size="small"
+              onClick={handleCloseEditSubjectGroupModal}
+              disabled={loadingUpdateGroup}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
               onClick={handleUpdateSubjectGroup}
               disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2}
               startIcon={loadingUpdateGroup ? <CircularProgress size={16} /> : null}

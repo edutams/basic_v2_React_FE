@@ -27,7 +27,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
       {...other}
       mask="00000000000"
       definitions={{
-        '0': /[0-9]/,
+        0: /[0-9]/,
       }}
       inputRef={ref}
       onAccept={(value) => onChange({ target: { name: props.name, value } })}
@@ -71,53 +71,62 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
     fetchInitialLgas();
   }, [fetchInitialLgas]);
 
-  const handleStateChange = useCallback(async (event) => {
-    const newStateId = event.target.value;
-    formik.setFieldValue('stateFilter', newStateId);
-    formik.setFieldValue('lga', '');
-    setLgas([]);
+  const handleStateChange = useCallback(
+    async (event) => {
+      const newStateId = event.target.value;
+      formik.setFieldValue('stateFilter', newStateId);
+      formik.setFieldValue('lga', '');
+      setLgas([]);
 
-    if (newStateId) {
-      setLoadingLgas(true);
-      try {
-        const lgas = await locationApi.getLgas(newStateId);
-        setLgas(lgas);
-      } catch (error) {
-        console.error('Failed to fetch LGAs', error);
-      } finally {
-        setLoadingLgas(false);
+      if (newStateId) {
+        setLoadingLgas(true);
+        try {
+          const lgas = await locationApi.getLgas(newStateId);
+          setLgas(lgas);
+        } catch (error) {
+          console.error('Failed to fetch LGAs', error);
+        } finally {
+          setLoadingLgas(false);
+        }
       }
-    }
-  }, [formik]);
+    },
+    [formik],
+  );
 
-  const themeColorMap = useMemo(() => ({
-    primary: '#1976d2',
-    secondary: '#9c27b0',
-    success: '#2e7d32',
-    error: '#d32f2f',
-    warning: '#ed6c02',
-  }), []);
+  const themeColorMap = useMemo(
+    () => ({
+      primary: '#1976d2',
+      secondary: '#9c27b0',
+      success: '#2e7d32',
+      error: '#d32f2f',
+      warning: '#ed6c02',
+    }),
+    [],
+  );
 
-  const handleColorChange = useCallback((e) => {
-    let value = e.target.value.trim();
+  const handleColorChange = useCallback(
+    (e) => {
+      let value = e.target.value.trim();
 
-    if (themeColorMap[value.toLowerCase()]) {
-      formik.setFieldValue('primaryColor', themeColorMap[value.toLowerCase()]);
-      return;
-    }
+      if (themeColorMap[value.toLowerCase()]) {
+        formik.setFieldValue('primaryColor', themeColorMap[value.toLowerCase()]);
+        return;
+      }
 
-    if (/^[0-9a-fA-F]{3,6}$/.test(value)) {
-      formik.setFieldValue('primaryColor', `#${value}`);
-      return;
-    }
+      if (/^[0-9a-fA-F]{3,6}$/.test(value)) {
+        formik.setFieldValue('primaryColor', `#${value}`);
+        return;
+      }
 
-    if (/^#[0-9a-fA-F]{3,6}$/.test(value)) {
-      formik.setFieldValue('primaryColor', value);
-      return;
-    }
+      if (/^#[0-9a-fA-F]{3,6}$/.test(value)) {
+        formik.setFieldValue('primaryColor', value);
+        return;
+      }
 
-    formik.setFieldValue('primaryColor', value.toLowerCase());
-  }, [formik, themeColorMap]);
+      formik.setFieldValue('primaryColor', value.toLowerCase());
+    },
+    [formik, themeColorMap],
+  );
 
   const colorPreviewStyle = useMemo(() => {
     const color = formik.values.primaryColor;
@@ -159,8 +168,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
             onChange={(val) => formik.setFieldValue('organizationLogo', val)}
             error={formik.touched.organizationLogo && Boolean(formik.errors.organizationLogo)}
             helperText={formik.touched.organizationLogo && formik.errors.organizationLogo}
-                defaultImage={'https://cdn-icons-png.flaticon.com/512/171/171917.png'}
-
+            defaultImage={'https://cdn-icons-png.flaticon.com/512/171/171917.png'}
           />
         </Grid>
 
@@ -192,7 +200,9 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                   value={formik.values.organizationDomain}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.organizationDomain && Boolean(formik.errors.organizationDomain)}
+                  error={
+                    formik.touched.organizationDomain && Boolean(formik.errors.organizationDomain)
+                  }
                   helperText={formik.touched.organizationDomain && formik.errors.organizationDomain}
                 />
               </Grid>
@@ -283,7 +293,13 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                 {loadingLgas && (
                   <CircularProgress
                     size={16}
-                    sx={{ position: 'absolute', right: 36, top: '50%', mt: '-8px', pointerEvents: 'none' }}
+                    sx={{
+                      position: 'absolute',
+                      right: 36,
+                      top: '50%',
+                      mt: '-8px',
+                      pointerEvents: 'none',
+                    }}
                   />
                 )}
                 {formik.touched.lga && formik.errors.lga && (
@@ -307,11 +323,11 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <Box
-                              onClick={() => setColorPickerOpen(true)}
-                              sx={colorPreviewStyle}
-                            />
-                            <Typography variant="body2" sx={{ ml: 0.5, color: 'text.secondary', fontFamily: 'monospace' }}>
+                            <Box onClick={() => setColorPickerOpen(true)} sx={colorPreviewStyle} />
+                            <Typography
+                              variant="body2"
+                              sx={{ ml: 0.5, color: 'text.secondary', fontFamily: 'monospace' }}
+                            >
                               #
                             </Typography>
                           </InputAdornment>
@@ -364,7 +380,12 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
       </Grid>
 
       <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-        <Typography variant="h6" fontWeight="600" color="primary" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Typography
+          variant="h6"
+          fontWeight="600"
+          color="primary"
+          sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}
+        >
           Admin Information
         </Typography>
       </Grid>
@@ -387,6 +408,20 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
           <Grid container spacing={1}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
+                key="lname"
+                label="Admin Surname Name"
+                fullWidth
+                name="lname"
+                value={formik.values.lname}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.lname && Boolean(formik.errors.lname)}
+                helperText={formik.touched.lname && formik.errors.lname}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
                 key="fname"
                 label="Admin First Name"
                 fullWidth
@@ -398,23 +433,11 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                 helperText={formik.touched.fname && formik.errors.fname}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                key="lname"
-                label="Admin Last Name"
-                fullWidth
-                name="lname"
-                value={formik.values.lname}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.lname && Boolean(formik.errors.lname)}
-                helperText={formik.touched.lname && formik.errors.lname}
-              />
-            </Grid>
+
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 key="mname"
-                label="Admin Middle Name"
+                label="Admin Other Name"
                 fullWidth
                 name="mname"
                 value={formik.values.mname}

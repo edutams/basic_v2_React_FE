@@ -29,7 +29,7 @@ import {
   Snackbar,
   Alert,
   Grid,
-  FormHelperText
+  FormHelperText,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
@@ -42,7 +42,6 @@ import {
   fetchSubjectGroups,
   fetchSubjects,
   fetchSubjectsByProgramme,
-
 } from '../../../api/tenantCurriculumApi';
 
 const ClassSubject = () => {
@@ -166,8 +165,6 @@ const ClassSubject = () => {
     }
   };
 
-
-
   const handleOpenAddSubjectToClass = () => {
     setClassSubjectFormData({
       subject_id: '',
@@ -209,11 +206,6 @@ const ClassSubject = () => {
     setFieldErrors({});
     setLoadingAddSubject(true);
 
-    // Debug: Log the current form data
-    console.log('Form Data:', classSubjectFormData);
-    console.log('Selected Class:', selectedClass);
-    console.log('Program:', program);
-
     // Validate required fields before submission
     const validationErrors = {};
     if (!selectedClass) validationErrors.class_id = ['Please select a class'];
@@ -225,7 +217,6 @@ const ClassSubject = () => {
 
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
-      console.log('Validation Errors:', validationErrors);
       setLoadingAddSubject(false);
       return;
     }
@@ -240,9 +231,6 @@ const ClassSubject = () => {
         unit: classSubjectFormData.unit,
         status: classSubjectFormData.status,
       };
-
-      // Debug: Log the payload
-      console.log('Payload:', payload);
 
       const response = await addOrUpdateClassSubject(payload);
 
@@ -256,8 +244,6 @@ const ClassSubject = () => {
         showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      console.log('Error:', error);
-
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
 
@@ -265,10 +251,7 @@ const ClassSubject = () => {
           setFieldErrors(errors);
         }
 
-        showSnackbar(
-          error.response.data?.message || 'Validation failed',
-          'error'
-        );
+        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
 
         return;
       }
@@ -276,7 +259,8 @@ const ClassSubject = () => {
       // Handle other API error responses
       if (error.response?.data) {
         const errorData = error.response.data;
-        const errorMessage = errorData.error || errorData.message || 'Failed to add subject to class';
+        const errorMessage =
+          errorData.error || errorData.message || 'Failed to add subject to class';
         showSnackbar(errorMessage, 'error');
       } else {
         showSnackbar('Failed to add subject to class', 'error');
@@ -289,12 +273,7 @@ const ClassSubject = () => {
   const handleUpdateClassSubject = async () => {
     setFieldErrors({});
     setLoadingUpdateSubject(true);
-    
-    // Debug: Log the current form data
-    console.log('Edit Form Data:', classSubjectFormData);
-    console.log('Selected Class:', selectedClass);
-    console.log('Program:', program);
-    
+
     // Validate required fields before submission
     const validationErrors = {};
     if (!selectedClass) validationErrors.class_id = ['Please select a class'];
@@ -303,10 +282,9 @@ const ClassSubject = () => {
     if (!classSubjectFormData.pass_mark) validationErrors.pass_mark = ['Pass mark is required'];
     if (!classSubjectFormData.unit) validationErrors.unit = ['Unit is required'];
     if (!classSubjectFormData.status) validationErrors.status = ['Status is required'];
-    
+
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
-      console.log('Edit Validation Errors:', validationErrors);
       setLoadingUpdateSubject(false);
       return;
     }
@@ -321,9 +299,6 @@ const ClassSubject = () => {
         unit: classSubjectFormData.unit,
         status: classSubjectFormData.status,
       };
-      
-      // Debug: Log the payload
-      console.log('Edit Payload:', payload);
 
       const response = await addOrUpdateClassSubject(payload);
 
@@ -337,8 +312,6 @@ const ClassSubject = () => {
         showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      console.log('Edit Error:', error);
-
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
 
@@ -346,10 +319,7 @@ const ClassSubject = () => {
           setFieldErrors(errors);
         }
 
-        showSnackbar(
-          error.response.data?.message || 'Validation failed',
-          'error'
-        );
+        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
 
         return;
       }
@@ -357,7 +327,8 @@ const ClassSubject = () => {
       // Handle other API error responses
       if (error.response?.data) {
         const errorData = error.response.data;
-        const errorMessage = errorData.error || errorData.message || 'Failed to update class subject';
+        const errorMessage =
+          errorData.error || errorData.message || 'Failed to update class subject';
         showSnackbar(errorMessage, 'error');
       } else {
         showSnackbar('Failed to update class subject', 'error');
@@ -366,10 +337,6 @@ const ClassSubject = () => {
       setLoadingUpdateSubject(false);
     }
   };
-
-
-
-
 
   // Menu handlers
   const handleOpenEditModal = (event, subject) => {
@@ -530,7 +497,7 @@ const ClassSubject = () => {
               </Typography>
               <Button
                 variant="contained"
-                size='small'
+                size="small"
                 disabled={!selectedClass}
                 onClick={handleOpenAddSubjectToClass}
               >
@@ -546,9 +513,7 @@ const ClassSubject = () => {
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>S/N</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>Subject</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>
-                      Passmark
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Passmark</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Unit</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 'bold', width: '10%' }} align="center">
@@ -581,10 +546,7 @@ const ClassSubject = () => {
                           />
                         </TableCell>
                         <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleOpenEditModal(e, subject)}
-                          >
+                          <IconButton size="small" onClick={(e) => handleOpenEditModal(e, subject)}>
                             <MoreVertIcon size={18} />
                           </IconButton>
                         </TableCell>
@@ -594,7 +556,9 @@ const ClassSubject = () => {
                     <TableRow>
                       <TableCell colSpan={6} align="center">
                         <Typography color="textSecondary">
-                          {selectedClass ? 'No subjects assigned to this class' : 'Select a class to view subjects'}
+                          {selectedClass
+                            ? 'No subjects assigned to this class'
+                            : 'Select a class to view subjects'}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -605,7 +569,6 @@ const ClassSubject = () => {
           </Paper>
         </ParentCard>
       </Box>
-
 
       {/* Class Subject Action Menu */}
       <Menu
@@ -642,12 +605,16 @@ const ClassSubject = () => {
       </Menu>
 
       {/* Add Subject to Class Modal */}
-      <Dialog open={openAddSubjectToClassModal} onClose={handleCloseAddSubjectToClassModal} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openAddSubjectToClassModal}
+        onClose={handleCloseAddSubjectToClassModal}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Add Subject to Class</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Grid container spacing={2}>
-
               {/* Subject */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth size="small" error={!!fieldErrors.subject_id}>
@@ -738,31 +705,43 @@ const ClassSubject = () => {
                     <MenuItem value="compulsory">Compulsory</MenuItem>
                     <MenuItem value="optional">Optional</MenuItem>
                   </Select>
-                  {fieldErrors.status && (
-                    <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
-                  )}
+                  {fieldErrors.status && <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>}
                 </FormControl>
               </Grid>
-
             </Grid>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseAddSubjectToClassModal} disabled={loadingAddSubject}>Cancel</Button>
+          <Button
+            size="small"
+            onClick={handleCloseAddSubjectToClassModal}
+            disabled={loadingAddSubject}
+          >
+            Cancel
+          </Button>
           <Button
             variant="contained"
-            size='small'
+            size="small"
             onClick={handleAddSubjectToClass}
             disabled={loadingAddSubject || loadingAvailableSubjects}
             startIcon={loadingAddSubject ? <CircularProgress size={16} /> : null}
           >
-            {loadingAddSubject ? 'Adding...' : loadingAvailableSubjects ? 'Loading...' : 'Add Subject'}
+            {loadingAddSubject
+              ? 'Adding...'
+              : loadingAvailableSubjects
+                ? 'Loading...'
+                : 'Add Subject'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Edit Class Subject Modal */}
-      <Dialog open={openEditClassSubjectModal} onClose={handleCloseEditClassSubjectModal} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openEditClassSubjectModal}
+        onClose={handleCloseEditClassSubjectModal}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit Class Subject</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
@@ -770,16 +749,17 @@ const ClassSubject = () => {
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth size="small" margin="normal">
                   <InputLabel>Subject</InputLabel>
-                  <Select
-                    value={classSubjectFormData.subject_id}
-                    disabled
-                    label="Subject"
-                  >
+                  <Select value={classSubjectFormData.subject_id} disabled label="Subject">
                     <MenuItem value={classSubjectFormData.subject_id}>
                       {/* Subject name will be loaded from available subjects */}
-                      {availableSubjectsForClass.find(s => s.id === classSubjectFormData.subject_id)?.subject_name || 'Selected Subject'}
-                      {availableSubjectsForClass.find(s => s.id === classSubjectFormData.subject_id)?.subject_code ? 
-                        ` (${availableSubjectsForClass.find(s => s.id === classSubjectFormData.subject_id)?.subject_code})` : ''}
+                      {availableSubjectsForClass.find(
+                        (s) => s.id === classSubjectFormData.subject_id,
+                      )?.subject_name || 'Selected Subject'}
+                      {availableSubjectsForClass.find(
+                        (s) => s.id === classSubjectFormData.subject_id,
+                      )?.subject_code
+                        ? ` (${availableSubjectsForClass.find((s) => s.id === classSubjectFormData.subject_id)?.subject_code})`
+                        : ''}
                     </MenuItem>
                   </Select>
                 </FormControl>
@@ -843,19 +823,23 @@ const ClassSubject = () => {
                     <MenuItem value="compulsory">Compulsory</MenuItem>
                     <MenuItem value="optional">Optional</MenuItem>
                   </Select>
-                  {fieldErrors.status && (
-                    <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>
-                  )}
+                  {fieldErrors.status && <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>}
                 </FormControl>
               </Grid>
             </Grid>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseEditClassSubjectModal} disabled={loadingUpdateSubject}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            size='small' 
+          <Button
+            size="small"
+            onClick={handleCloseEditClassSubjectModal}
+            disabled={loadingUpdateSubject}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
             onClick={handleUpdateClassSubject}
             disabled={loadingUpdateSubject}
             startIcon={loadingUpdateSubject ? <CircularProgress size={16} /> : null}
@@ -864,7 +848,6 @@ const ClassSubject = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
 
       {/* Snackbar */}
       <Snackbar

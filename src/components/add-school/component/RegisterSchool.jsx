@@ -150,9 +150,9 @@ const fromSelected = (s) => {
 const PersonFields = ({ section, formData, errors, onPersonChange, readOnly = false }) => (
   <Grid container spacing={2}>
     {[
+      { key: 'last_name', label: 'Surname Name', md: 6 },
       { key: 'first_name', label: 'First Name', md: 6 },
-      { key: 'last_name', label: 'Last Name', md: 6 },
-      { key: 'middle_name', label: 'Middle Name (optional)', md: 6 },
+      { key: 'middle_name', label: 'Other Name (optional)', md: 6 },
       { key: 'phone', label: 'Phone', md: 6, masked: true },
       { key: 'email', label: 'Email', md: 6 },
     ].map(({ key, label, md, masked }) => (
@@ -246,21 +246,21 @@ const RegisterSchoolForm = ({
   //       console.error('Failed to fetch current session:', error);
   //     });
   // }, []);
-// Fetch current session on mount
-useEffect(() => {
-  getCurrentSessionAndAbove()
-    .then((res) => {
-      const session = res.data || res;
-      setCurrentSession(session);
-      // Only prefill if user hasn't selected anything yet
-      if (!formData.session_id && session?.id) {
-        setFormData((prev) => ({ ...prev, session_id: session.id }));
-      }
-    })
-    .catch((error) => {
-      console.error('Failed to fetch current session:', error);
-    });
-}, []);
+  // Fetch current session on mount
+  useEffect(() => {
+    getCurrentSessionAndAbove()
+      .then((res) => {
+        const session = res.data || res;
+        setCurrentSession(session);
+        // Only prefill if user hasn't selected anything yet
+        if (!formData.session_id && session?.id) {
+          setFormData((prev) => ({ ...prev, session_id: session.id }));
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to fetch current session:', error);
+      });
+  }, []);
   useEffect(() => {
     if (formData.state_id) {
       getLgasByState(formData.state_id)
@@ -428,9 +428,6 @@ useEffect(() => {
         organization_id: organizationId,
       };
 
-      console.log('RegisterSchool - organizationId prop:', organizationId);
-      console.log('RegisterSchool - base payload:', base);
-
       let res;
       if (actionType === 'update') {
         const payload = {
@@ -439,17 +436,14 @@ useEffect(() => {
           sidecolor: formData.sidecolor,
           bodycolor: formData.bodycolor,
         };
-        console.log('RegisterSchool - update payload:', payload);
         if (useProspective) {
           res = await updateProspectiveTenant(selectedSchool.id, payload);
         } else {
           res = await updateSchool(selectedSchool.id, payload);
         }
       } else if (useProspective) {
-        console.log('RegisterSchool - create prospective payload:', base);
         res = await createProspectiveTenant(base);
       } else {
-        console.log('RegisterSchool - create school payload:', base);
         res = await createSchool(base);
       }
 
@@ -498,17 +492,19 @@ useEffect(() => {
           <FormControl fullWidth error={Boolean(errors.session_id)}>
             <InputLabel>Session</InputLabel>
             <Select
-  name="session_id"
-  value={formData.session_id}
-  label="Session"
-  onChange={handleChange}>
-  <MenuItem value="">-- Select Session --</MenuItem>
-  {currentSession && currentSession.map((session) => (
-    <MenuItem key={session.id} value={session.id}>
-      {session.sesname} {session.is_current === 'yes' && '(Current)'}
-    </MenuItem>
-  ))}
-</Select>
+              name="session_id"
+              value={formData.session_id}
+              label="Session"
+              onChange={handleChange}
+            >
+              <MenuItem value="">-- Select Session --</MenuItem>
+              {currentSession &&
+                currentSession.map((session) => (
+                  <MenuItem key={session.id} value={session.id}>
+                    {session.sesname} {session.is_current === 'yes' && '(Current)'}
+                  </MenuItem>
+                ))}
+            </Select>
             {errors.session_id && <FormHelperText>{errors.session_id}</FormHelperText>}
           </FormControl>
         </Grid>

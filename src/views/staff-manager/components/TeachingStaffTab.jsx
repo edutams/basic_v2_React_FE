@@ -19,7 +19,6 @@ import {
   ButtonGroup,
   TablePagination,
   Avatar,
-
 } from '@mui/material';
 import {
   IconSearch,
@@ -84,12 +83,23 @@ const TeachingStaffTab = ({
               gap: 2,
             }}
           >
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                width: { xs: '100%', sm: 'auto' },
+              }}
+            >
               <TextField
                 size="small"
                 placeholder="Search staff..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{
+                  width: { xs: '100%', sm: 300 },
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -97,7 +107,6 @@ const TeachingStaffTab = ({
                     </InputAdornment>
                   ),
                 }}
-                sx={{ minWidth: 300 }}
               />
 
               <TextField
@@ -105,7 +114,9 @@ const TeachingStaffTab = ({
                 size="small"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
+                sx={{
+                  width: { xs: '100%', sm: 150 },
+                }}
                 SelectProps={{ native: true }}
               >
                 <option value="all">All Status</option>
@@ -115,18 +126,32 @@ const TeachingStaffTab = ({
               </TextField>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                flexWrap: 'wrap',
+                width: { xs: '100%', sm: 'auto' },
+              }}
+            >
               <Button
+                fullWidth={{ xs: true, sm: false }}
                 variant="contained"
                 startIcon={<IconPlus size={18} />}
                 onClick={handleAddStaff}
               >
                 Add Single Staff
               </Button>
-              <ButtonGroup variant="outlined">
-                <Button startIcon={<IconPlus size={18} />} sx={{ textTransform: 'none' }} onClick={handleUploadStaff}>
+
+              <ButtonGroup variant="outlined" fullWidth={{ xs: true, sm: false }}>
+                <Button
+                  startIcon={<IconPlus size={18} />}
+                  sx={{ textTransform: 'none' }}
+                  onClick={handleUploadStaff}
+                >
                   Upload Excel
                 </Button>
+
                 <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
                   <IconChevronDown size={16} />
                 </Button>
@@ -201,15 +226,11 @@ const TeachingStaffTab = ({
                           >
                             {/* {!(staffMember.user.avatar || agent.admin_avatar) && initials} */}
                           </Avatar>
-                          <Typography variant="body2">
-                            {staffMember.user?.fname} {staffMember.user?.lname}
-                          </Typography>
+                          <Typography variant="body2">{staffMember.user?.full_name}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">
-                          {staffMember.user?.email || 'N/A'}
-                        </Typography>
+                        <Typography variant="body2">{staffMember.user?.email || 'N/A'}</Typography>
                         <Typography variant="caption" color="textSecondary">
                           {staffMember.user?.phone || 'N/A'}
                         </Typography>
@@ -218,29 +239,26 @@ const TeachingStaffTab = ({
                         <Typography variant="body2">
                           {staffMember.date_of_first_appointment
                             ? new Date(staffMember.date_of_first_appointment).toLocaleDateString(
-                              'en-US',
-                              {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              },
-                            )
+                                'en-US',
+                                {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                },
+                              )
                             : 'N/A'}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={staffMember.status || 'active'}
-                          color={getStatusColor(staffMember.status)}
+                          label={staffMember.staff_status}
+                          color={getStatusColor(staffMember.staff_status)}
                           size="small"
                           sx={{ textTransform: 'lowercase' }}
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleMenuOpen(e, staffMember)}
-                        >
+                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>
                           <IconDotsVertical size={18} />
                         </IconButton>
                       </TableCell>

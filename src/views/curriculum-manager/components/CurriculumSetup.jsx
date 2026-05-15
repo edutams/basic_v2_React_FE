@@ -79,7 +79,7 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
                   alignItems: 'center',
                   p: 1,
                   bgcolor: 'background.default',
-                  borderRadius: 1
+                  borderRadius: 1,
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 500 }}>
@@ -119,7 +119,7 @@ const CurriculumSetup = () => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openImportModal, setOpenImportModal] = useState(false);
-  
+
   // Loading states for buttons
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
@@ -339,8 +339,6 @@ const CurriculumSetup = () => {
         fetchCurriculumsData();
       }
     } catch (error) {
-      console.log(error);
-
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
 
@@ -348,18 +346,12 @@ const CurriculumSetup = () => {
           setFieldErrors(errors);
         }
 
-        showSnackbar(
-          error.response.data?.message || 'Validation failed',
-          'error'
-        );
+        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
 
         return;
       }
 
-      showSnackbar(
-        error.response?.data?.message || 'Failed to create curriculum',
-        'error'
-      );
+      showSnackbar(error.response?.data?.message || 'Failed to create curriculum', 'error');
     } finally {
       setLoadingCreate(false);
     }
@@ -378,8 +370,6 @@ const CurriculumSetup = () => {
         fetchCurriculumsData();
       }
     } catch (error) {
-      console.log(error);
-
       if (error.response?.status === 422) {
         const errors = error.response.data?.errors;
 
@@ -387,18 +377,12 @@ const CurriculumSetup = () => {
           setFieldErrors(errors);
         }
 
-        showSnackbar(
-          error.response.data?.message || 'Validation failed',
-          'error'
-        );
+        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
 
         return;
       }
 
-      showSnackbar(
-        error.response?.data?.message || 'Failed to update curriculum',
-        'error'
-      );
+      showSnackbar(error.response?.data?.message || 'Failed to update curriculum', 'error');
     } finally {
       setLoadingUpdate(false);
     }
@@ -440,7 +424,6 @@ const CurriculumSetup = () => {
     setOpenImportModal(false);
   };
 
-
   const handleOpenMenu = (event, curriculum) => {
     setSelectedCurriculum(curriculum);
     setCurriculumAnchorEl(event.currentTarget);
@@ -474,14 +457,14 @@ const CurriculumSetup = () => {
     try {
       const response = await fetchCurriculumSubjects(curriculumId);
       if (response.status) {
-        setCurriculumSubjects(prev => ({
+        setCurriculumSubjects((prev) => ({
           ...prev,
-          [curriculumId]: response.data
+          [curriculumId]: response.data,
         }));
         // Initialize selected subjects for this curriculum
-        setSelectedSubjects(prev => ({
+        setSelectedSubjects((prev) => ({
           ...prev,
-          [curriculumId]: []
+          [curriculumId]: [],
         }));
       }
     } catch (error) {
@@ -492,10 +475,10 @@ const CurriculumSetup = () => {
   };
 
   const handleCurriculumSelect = (curriculumId, checked) => {
-    setSelectedCurriculums(prev => {
+    setSelectedCurriculums((prev) => {
       const newSelection = checked
         ? [...prev, curriculumId]
-        : prev.filter(id => id !== curriculumId);
+        : prev.filter((id) => id !== curriculumId);
 
       // Load subjects if curriculum is selected
       if (checked && !curriculumSubjects[curriculumId]) {
@@ -508,10 +491,10 @@ const CurriculumSetup = () => {
 
   const handleSelectAllCurriculums = (checked) => {
     if (checked) {
-      const allIds = agentCurriculums.map(c => c.id);
+      const allIds = agentCurriculums.map((c) => c.id);
       setSelectedCurriculums(allIds);
       // Load subjects for all curriculums
-      allIds.forEach(id => {
+      allIds.forEach((id) => {
         if (!curriculumSubjects[id]) {
           loadCurriculumSubjects(id);
         }
@@ -541,9 +524,9 @@ const CurriculumSetup = () => {
 
   const handleConfirmImport = async () => {
     setLoadingImport(true);
-    const importData = selectedCurriculums.map(curriculumId => ({
+    const importData = selectedCurriculums.map((curriculumId) => ({
       curriculum_id: curriculumId,
-      subject_ids: (curriculumSubjects[curriculumId] || []).map(s => s.id)
+      subject_ids: (curriculumSubjects[curriculumId] || []).map((s) => s.id),
     }));
 
     try {
@@ -595,12 +578,18 @@ const CurriculumSetup = () => {
         }}
       >
         {/* LEFT - Curriculum Table */}
-        <Box sx={{ flex: { md: 6 }, width: '100%' }}>
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
           <ParentCard
             title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                flexWrap="wrap"
+                gap={1}
+              >
                 <Typography variant="h5">Curriculum</Typography>
-                <Box display="flex" gap={1}>
+                <Box display="flex" gap={1} flexWrap="wrap">
                   <Button variant="outlined" onClick={handleOpenImportModal} size="small">
                     Import
                   </Button>
@@ -611,20 +600,24 @@ const CurriculumSetup = () => {
               </Box>
             }
           >
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
               <TableContainer>
-                <Table sx={{ tableLayout: 'fixed' }}>
+                <Table sx={{ tableLayout: 'fixed', minWidth: 400 }}>
                   <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', width: '8%' }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell
+                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
+                      >
+                        S/N
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '37%', py: 1.5 }}>
                         Curriculum Name
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '25%' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '17%' }}>
+                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
                         Imported
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 'bold', width: '25%' }}>
+                      <TableCell align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
                         Actions
                       </TableCell>
                     </TableRow>
@@ -681,7 +674,9 @@ const CurriculumSetup = () => {
                                 selectedCurriculum?.id === item.id ? 'curriculum-menu' : undefined
                               }
                               aria-haspopup="true"
-                              aria-expanded={selectedCurriculum?.id === item.id ? 'true' : undefined}
+                              aria-expanded={
+                                selectedCurriculum?.id === item.id ? 'true' : undefined
+                              }
                             >
                               <MoreVertIcon />
                             </IconButton>
@@ -703,21 +698,28 @@ const CurriculumSetup = () => {
         </Box>
 
         {/* RIGHT - Assign to Classes */}
-        <Box sx={{ flex: { md: 6 }, width: '100%' }}>
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
           <ParentCard
             title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="flex-start"
+                flexWrap="wrap"
+                gap={1}
+              >
                 <Typography variant="h5">Assign to Classes</Typography>
-                <Box display="flex" gap={1}>
+                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
                   <Select
                     size="small"
                     value={selectedSession}
                     onChange={(e) => handleSessionChange(e.target.value)}
                     displayEmpty
                     disabled={loadingSessions}
+                    sx={{ minWidth: 130 }}
                   >
                     <MenuItem value="" disabled>
-                      {loadingSessions ? 'Loading sessions...' : 'Select Session'}
+                      {loadingSessions ? 'Loading...' : 'Select Session'}
                     </MenuItem>
                     {sessions.map((session) => (
                       <MenuItem key={session.id} value={session.id}>
@@ -731,9 +733,10 @@ const CurriculumSetup = () => {
                     onChange={(e) => setSelectedTerm(e.target.value)}
                     displayEmpty
                     disabled={loadingTerms}
+                    sx={{ minWidth: 120 }}
                   >
                     <MenuItem value="" disabled>
-                      {loadingTerms ? 'Loading terms...' : 'Select Term'}
+                      {loadingTerms ? 'Loading...' : 'Select Term'}
                     </MenuItem>
                     {terms.map((term) => (
                       <MenuItem key={term.id} value={term.id}>
@@ -753,14 +756,18 @@ const CurriculumSetup = () => {
               </Box>
             }
           >
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
               <TableContainer>
-                <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
+                <Table sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
                   <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>Class</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell
+                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
+                      >
+                        S/N
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '40%', py: 1.5 }}>Class</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '50%', py: 1.5 }}>
                         Curriculum Name
                       </TableCell>
                     </TableRow>
@@ -793,9 +800,7 @@ const CurriculumSetup = () => {
                             <Select
                               size="small"
                               value={item.assigned_curriculum_id || ''}
-                              onChange={(e) =>
-                                handleClassCurriculumChange(item.id, e.target.value)
-                              }
+                              onChange={(e) => handleClassCurriculumChange(item.id, e.target.value)}
                               displayEmpty
                               sx={{
                                 bgcolor: '#f8fafc',
@@ -864,12 +869,12 @@ const CurriculumSetup = () => {
               value={formData.curriculum_name}
               onChange={(e) => setFormData({ ...formData, curriculum_name: e.target.value })}
               margin="normal"
-              size='small'
+              size="small"
               required
               error={!!fieldErrors.curriculum_name}
               helperText={fieldErrors.curriculum_name?.[0]}
             />
-            <FormControl fullWidth margin="normal" size='small'>
+            <FormControl fullWidth margin="normal" size="small">
               <InputLabel>Status</InputLabel>
               <Select
                 value={formData.status}
@@ -883,10 +888,12 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseCreateModal} disabled={loadingCreate}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            size='small' 
+          <Button size="small" onClick={handleCloseCreateModal} disabled={loadingCreate}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
             onClick={handleCreateCurriculum}
             disabled={loadingCreate}
             startIcon={loadingCreate ? <CircularProgress size={16} /> : null}
@@ -908,11 +915,11 @@ const CurriculumSetup = () => {
               onChange={(e) => setFormData({ ...formData, curriculum_name: e.target.value })}
               margin="normal"
               required
-              size='small'
+              size="small"
               error={!!fieldErrors.curriculum_name}
               helperText={fieldErrors.curriculum_name?.[0]}
             />
-            <FormControl fullWidth margin="normal" size='small'>
+            <FormControl fullWidth margin="normal" size="small">
               <InputLabel>Status</InputLabel>
               <Select
                 value={formData.status}
@@ -926,10 +933,12 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseEditModal} disabled={loadingUpdate}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            size='small' 
+          <Button size="small" onClick={handleCloseEditModal} disabled={loadingUpdate}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
             onClick={handleUpdateCurriculum}
             disabled={loadingUpdate}
             startIcon={loadingUpdate ? <CircularProgress size={16} /> : null}
@@ -944,15 +953,18 @@ const CurriculumSetup = () => {
         <DialogTitle>Delete Curriculum</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete "{selectedCurriculum?.name}"? This action cannot be undone.
+            Are you sure you want to delete "{selectedCurriculum?.name}"? This action cannot be
+            undone.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseDeleteModal} disabled={loadingDelete}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            color="error" 
-            size='small' 
+          <Button size="small" onClick={handleCloseDeleteModal} disabled={loadingDelete}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
             onClick={handleDeleteCurriculum}
             disabled={loadingDelete}
             startIcon={loadingDelete ? <CircularProgress size={16} /> : null}
@@ -963,26 +975,19 @@ const CurriculumSetup = () => {
       </Dialog>
 
       {/* Import Curriculum Modal */}
-      <Dialog
-        open={openImportModal}
-        onClose={handleCloseImportModal}
-        maxWidth="lg"
-        fullWidth
-      >
-        <DialogTitle>
-          Import Curriculum
-        </DialogTitle>
+      <Dialog open={openImportModal} onClose={handleCloseImportModal} maxWidth="lg" fullWidth>
+        <DialogTitle>Import Curriculum</DialogTitle>
 
-        <DialogContent sx={{ p: 1 }}>
+        <DialogContent sx={{ p: { xs: 1, md: 2 } }}>
           <Box
             sx={{
               display: 'grid',
               gridTemplateColumns: {
                 xs: '1fr',
-                md: '380px 1fr',
+                md: '320px 1fr',
               },
               gap: 2,
-              minHeight: 500,
+              minHeight: { xs: 'auto', md: 500 },
             }}
           >
             {/* LEFT PANEL */}
@@ -1018,43 +1023,30 @@ const CurriculumSetup = () => {
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
-                      <TableRow>
-                        <TableCell padding="checkbox">
-
+                      <TableRow sx={{ bgcolor: 'grey.100' }}>
+                        <TableCell padding="checkbox" sx={{ py: 1.5 }}>
                           <Checkbox
                             size="small"
                             checked={
                               agentCurriculums.length > 0 &&
-                              selectedCurriculums.length ===
-                              agentCurriculums.length
+                              selectedCurriculums.length === agentCurriculums.length
                             }
                             indeterminate={
                               selectedCurriculums.length > 0 &&
-                              selectedCurriculums.length <
-                              agentCurriculums.length
+                              selectedCurriculums.length < agentCurriculums.length
                             }
-                            onChange={(e) =>
-                              handleSelectAllCurriculums(e.target.checked)
-                            }
+                            onChange={(e) => handleSelectAllCurriculums(e.target.checked)}
                           />
                         </TableCell>
 
-                        <TableCell>
-                          <Typography fontWeight={600}>
-                            Curriculum Name
-                          </Typography>
-                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Curriculum Name</TableCell>
                       </TableRow>
                     </TableHead>
 
                     <TableBody>
                       {loadingAgentCurriculums ? (
                         <TableRow>
-                          <TableCell
-                            colSpan={2}
-                            align="center"
-                            sx={{ py: 6 }}
-                          >
+                          <TableCell colSpan={2} align="center" sx={{ py: 6 }}>
                             <CircularProgress size={24} />
                           </TableCell>
                         </TableRow>
@@ -1063,9 +1055,7 @@ const CurriculumSetup = () => {
                           <TableRow
                             key={curriculum.id}
                             hover
-                            selected={selectedCurriculums.includes(
-                              curriculum.id
-                            )}
+                            selected={selectedCurriculums.includes(curriculum.id)}
                             // onClick={() =>
                             //   handleCurriculumSelect(
                             //     curriculum.id,
@@ -1079,35 +1069,22 @@ const CurriculumSetup = () => {
                             <TableCell padding="checkbox">
                               <Checkbox
                                 size="small"
-                                checked={selectedCurriculums.includes(
-                                  curriculum.id
-                                )}
+                                checked={selectedCurriculums.includes(curriculum.id)}
                                 onChange={(e) =>
-                                  handleCurriculumSelect(
-                                    curriculum.id,
-                                    e.target.checked
-                                  )
+                                  handleCurriculumSelect(curriculum.id, e.target.checked)
                                 }
                               />
                             </TableCell>
 
                             <TableCell>
-                              <Typography variant="body2">
-                                {curriculum.curriculum_name}
-                              </Typography>
+                              <Typography variant="body2">{curriculum.curriculum_name}</Typography>
                             </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell
-                            colSpan={2}
-                            align="center"
-                            sx={{ py: 6 }}
-                          >
-                            <Typography color="text.secondary">
-                              No curriculums available
-                            </Typography>
+                          <TableCell colSpan={2} align="center" sx={{ py: 6 }}>
+                            <Typography color="text.secondary">No curriculums available</Typography>
                           </TableCell>
                         </TableRow>
                       )}
@@ -1125,6 +1102,7 @@ const CurriculumSetup = () => {
                 flexDirection: 'column',
                 overflow: 'hidden',
                 borderRadius: 2,
+                maxHeight: { xs: 400, md: 'none' },
               }}
             >
               {/* Header */}
@@ -1172,12 +1150,9 @@ const CurriculumSetup = () => {
                 ) : (
                   <Box display="flex" flexDirection="column" gap={2}>
                     {selectedCurriculums.map((curriculumId) => {
-                      const curriculum = agentCurriculums.find(
-                        (c) => c.id === curriculumId
-                      );
+                      const curriculum = agentCurriculums.find((c) => c.id === curriculumId);
 
-                      const subjects =
-                        curriculumSubjects[curriculumId] || [];
+                      const subjects = curriculumSubjects[curriculumId] || [];
 
                       return (
                         <SubjectBox
@@ -1219,7 +1194,12 @@ const CurriculumSetup = () => {
       </Dialog>
 
       {/* Import Confirmation Modal */}
-      <Dialog open={openImportConfirmModal} onClose={() => setOpenImportConfirmModal(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openImportConfirmModal}
+        onClose={() => setOpenImportConfirmModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Confirm Import</DialogTitle>
         <DialogContent>
           <Typography>
@@ -1230,8 +1210,8 @@ const CurriculumSetup = () => {
               This action will import:
             </Typography>
             <Box sx={{ ml: 2 }}>
-              {selectedCurriculums.map(curriculumId => {
-                const curriculum = agentCurriculums.find(c => c.id === curriculumId);
+              {selectedCurriculums.map((curriculumId) => {
+                const curriculum = agentCurriculums.find((c) => c.id === curriculumId);
                 const subjectCount = (curriculumSubjects[curriculumId] || []).length;
                 return (
                   <Box key={curriculumId} sx={{ mb: 1 }}>
@@ -1267,7 +1247,12 @@ const CurriculumSetup = () => {
       </Dialog>
 
       {/* View Schemes Modal */}
-      <Dialog open={Boolean(viewSchemesSubject)} onClose={handleCloseViewSchemes} maxWidth="sm" fullWidth>
+      <Dialog
+        open={Boolean(viewSchemesSubject)}
+        onClose={handleCloseViewSchemes}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           Schemes of Work
           <Typography variant="caption" display="block" color="text.secondary">
@@ -1280,7 +1265,8 @@ const CurriculumSetup = () => {
               {viewSchemesSubject.schemes.map((scheme, index) => (
                 <Paper key={scheme.id || index} variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold">
-                    {scheme.term?.term_name || `Term ${scheme.term_id}`} - {scheme.week?.week_name || `Week ${scheme.week_id}`}
+                    {scheme.term?.term_name || `Term ${scheme.term_id}`} -{' '}
+                    {scheme.week?.week_name || `Week ${scheme.week_id}`}
                   </Typography>
                   {scheme.learning_objective && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -1289,9 +1275,11 @@ const CurriculumSetup = () => {
                   )}
                   {scheme.topics && scheme.topics.length > 0 && (
                     <Box mt={1}>
-                      <Typography variant="body2" fontWeight="bold">Topics:</Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        Topics:
+                      </Typography>
                       <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        {scheme.topics.map(topic => (
+                        {scheme.topics.map((topic) => (
                           <li key={topic.id}>
                             <Typography variant="body2" color="text.secondary">
                               {topic.topic_name}

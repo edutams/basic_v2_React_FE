@@ -26,7 +26,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
       {...other}
       mask="00000000000"
       definitions={{
-        '0': /[0-9]/,
+        0: /[0-9]/,
       }}
       inputRef={ref}
       onAccept={(value) => onChange({ target: { name: props.name, value } })}
@@ -49,8 +49,8 @@ const validationSchema = Yup.object({
       id: Yup.number().nullable(),
       programme_id: Yup.string(),
       class_id: Yup.string(),
-      class_arm_id: Yup.string()
-    })
+      class_arm_id: Yup.string(),
+    }),
   ),
   subjectAllocations: Yup.array().of(
     Yup.object().shape({
@@ -59,27 +59,23 @@ const validationSchema = Yup.object({
       class_id: Yup.string(),
       class_arm_id: Yup.string(),
       curriculum_id: Yup.string(),
-      subject_id: Yup.string()
-    })
-  )
+      subject_id: Yup.string(),
+    }),
+  ),
 });
 
 const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
-  console.log('=== STAFF FORM DEBUG ===');
-  console.log('Initial values received:', initialValues);
-  console.log('Mode:', mode);
-  console.log('Class allocations in initial values:', initialValues?.classAllocations);
-  console.log('Subject allocations in initial values:', initialValues?.subjectAllocations);
   const validateAllocations = (values) => {
     const errors = {};
-    
+
     // Validate class allocations
     if (values.classAllocations && values.classAllocations.length > 0) {
       const classAllocationErrors = [];
       values.classAllocations.forEach((allocation, index) => {
         const allocationErrors = {};
-        const hasAnyValue = allocation.programme_id || allocation.class_id || allocation.class_arm_id;
-        
+        const hasAnyValue =
+          allocation.programme_id || allocation.class_id || allocation.class_arm_id;
+
         if (hasAnyValue) {
           if (!allocation.programme_id) {
             allocationErrors.programme_id = 'Programme is required';
@@ -91,25 +87,29 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
             allocationErrors.class_arm_id = 'Class Arm is required';
           }
         }
-        
+
         if (Object.keys(allocationErrors).length > 0) {
           classAllocationErrors[index] = allocationErrors;
         }
       });
-      
+
       if (classAllocationErrors.length > 0) {
         errors.classAllocations = classAllocationErrors;
       }
     }
-    
+
     // Validate subject allocations
     if (values.subjectAllocations && values.subjectAllocations.length > 0) {
       const subjectAllocationErrors = [];
       values.subjectAllocations.forEach((allocation, index) => {
         const allocationErrors = {};
-        const hasAnyValue = allocation.programme_id || allocation.class_id || 
-                           allocation.class_arm_id || allocation.curriculum_id || allocation.subject_id;
-        
+        const hasAnyValue =
+          allocation.programme_id ||
+          allocation.class_id ||
+          allocation.class_arm_id ||
+          allocation.curriculum_id ||
+          allocation.subject_id;
+
         if (hasAnyValue) {
           if (!allocation.programme_id) {
             allocationErrors.programme_id = 'Programme is required';
@@ -127,27 +127,22 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
             allocationErrors.subject_id = 'Subject is required';
           }
         }
-        
+
         if (Object.keys(allocationErrors).length > 0) {
           subjectAllocationErrors[index] = allocationErrors;
         }
       });
-      
+
       if (subjectAllocationErrors.length > 0) {
         errors.subjectAllocations = subjectAllocationErrors;
       }
     }
-    
+
     return errors;
   };
 
   const handleFormSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      console.log('Form values before transformation:', {
-        classAllocations: values.classAllocations,
-        subjectAllocations: values.subjectAllocations
-      });
-
       // Transform the form data to match backend expectations
       const transformedValues = {
         ...values,
@@ -159,36 +154,30 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
         userId: values.staff_id,
         gender: values.gender,
         email: values.email,
-        date_of_first_appointment: values.date_of_appointment ? 
-          (typeof values.date_of_appointment === 'string' ? values.date_of_appointment : values.date_of_appointment.format('YYYY-MM-DD')) : 
-          null,
+        date_of_first_appointment: values.date_of_appointment
+          ? typeof values.date_of_appointment === 'string'
+            ? values.date_of_appointment
+            : values.date_of_appointment.format('YYYY-MM-DD')
+          : null,
         status: values.status,
         staff_type: 'teaching', // Since this is for teaching staff
 
         // Include allocation data with IDs - send all allocations, let backend handle empty ones
         classAllocations: values.classAllocations || [],
-        subjectAllocations: values.subjectAllocations || []
+        subjectAllocations: values.subjectAllocations || [],
       };
 
-      console.log('Transformed payload:', transformedValues);
-      console.log('Allocation data being sent:', {
-        classAllocations: transformedValues.classAllocations,
-        subjectAllocations: transformedValues.subjectAllocations
-      });
-      console.log('Class allocation IDs:', transformedValues.classAllocations.map(a => a.id));
-      console.log('Subject allocation IDs:', transformedValues.subjectAllocations.map(a => a.id));
-      
       await onSubmit(transformedValues);
     } catch (error) {
       setSubmitting(false);
-      
+
       // Handle backend validation errors
       if (error.response && error.response.data && error.response.data.errors) {
         const backendErrors = error.response.data.errors;
         const formattedErrors = {};
-        
+
         // Convert backend errors to formik format
-        Object.keys(backendErrors).forEach(key => {
+        Object.keys(backendErrors).forEach((key) => {
           if (key.includes('classAllocations.')) {
             const match = key.match(/classAllocations\.(\d+)\.(.+)/);
             if (match) {
@@ -228,7 +217,7 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
             }
           }
         });
-        
+
         setErrors(formattedErrors);
       }
     }
@@ -246,28 +235,32 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
           date_of_appointment: initialValues?.date_of_appointment || null,
           status: initialValues?.status || 'active',
           // Allocation fields - now arrays
-          classAllocations: initialValues?.classAllocations || [{ 
-            id: null, // No ID for new records
-            session_term_id: '', 
-            programme_id: '', 
-            class_id: '', 
-            class_arm_id: '' 
-          }],
-          subjectAllocations: initialValues?.subjectAllocations || [{ 
-            id: null, // No ID for new records
-            session_term_id: '', 
-            programme_id: '', 
-            class_id: '', 
-            class_arm_id: '', 
-            curriculum_id: '', 
-            subject_id: '' 
-          }],
+          classAllocations: initialValues?.classAllocations || [
+            {
+              id: null, // No ID for new records
+              session_term_id: '',
+              programme_id: '',
+              class_id: '',
+              class_arm_id: '',
+            },
+          ],
+          subjectAllocations: initialValues?.subjectAllocations || [
+            {
+              id: null, // No ID for new records
+              session_term_id: '',
+              programme_id: '',
+              class_id: '',
+              class_arm_id: '',
+              curriculum_id: '',
+              subject_id: '',
+            },
+          ],
         }}
         validationSchema={validationSchema}
         onSubmit={handleFormSubmit}
         validate={(values) => {
           const errors = {};
-          
+
           // First run Yup validation for basic fields
           try {
             validationSchema.validateSync(values, { abortEarly: false });
@@ -278,11 +271,11 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
               }
             });
           }
-          
+
           // Then run custom allocation validation
           const allocationErrors = validateAllocations(values);
           Object.assign(errors, allocationErrors);
-          
+
           return errors;
         }}
         enableReinitialize
@@ -292,7 +285,7 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
             <Box sx={{ mt: 2 }}>
               <Grid container spacing={4}>
                 {/* Left Side: Staff Detail */}
-                <Grid size={{ xs: 12, md: 5.5 }} >
+                <Grid size={{ xs: 12, md: 5.5 }}>
                   <Typography variant="h6" fontWeight={700} sx={{ mb: 3, color: 'primary.main' }}>
                     Staff Detail
                   </Typography>
@@ -393,7 +386,7 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
                         slotProps={{ textField: { fullWidth: true } }}
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 6 }} >
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         fullWidth
                         select
@@ -415,12 +408,16 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
 
                 {/* Center Divider */}
                 <Grid size={{ xs: 12, md: 1 }} sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ display: { xs: 'none', md: 'block' } }}
+                  />
                   <Divider sx={{ display: { xs: 'block', md: 'none' }, width: '100%', my: 2 }} />
                 </Grid>
 
                 {/* Right Side: Allocation */}
-                <Grid size={{ xs: 12, md: 5.5 }} >
+                <Grid size={{ xs: 12, md: 5.5 }}>
                   <div id="classAllocations-section" data-field="classAllocations">
                     <StaffAllocationFields
                       values={values}
@@ -437,14 +434,16 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
             </Box>
 
             {/* Action Buttons */}
-            <Box sx={{ 
-              mt: 4, 
-              pt: 3, 
-              borderTop: '1px solid #e0e0e0',
-              display: 'flex', 
-              justifyContent: 'flex-end', 
-              gap: 2 
-            }}>
+            <Box
+              sx={{
+                mt: 4,
+                pt: 3,
+                borderTop: '1px solid #e0e0e0',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 2,
+              }}
+            >
               <Button
                 color="inherit"
                 onClick={onCancel}
@@ -460,7 +459,7 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
                 startIcon={isLoading ? <CircularProgress size={16} /> : null}
                 sx={{ textTransform: 'none', minWidth: 100 }}
               >
-                {isLoading ? 'Saving...' : (mode === 'edit' ? 'Update Staff' : 'Save Staff')}
+                {isLoading ? 'Saving...' : mode === 'edit' ? 'Update Staff' : 'Save Staff'}
               </Button>
             </Box>
           </Form>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -34,11 +34,25 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Icon,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon, CloudUpload as UploadIcon,
-  Download as DownloadIcon } from '@mui/icons-material';
-import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+  CloudUpload as UploadIcon,
+  Download as DownloadIcon,
+} from '@mui/icons-material';
+import {
+  IconUsers,
+  IconUserCheck,
+  IconUserHeart,
+  IconUser,
+  IconEdit,
+  IconLink,
+  IconSquareToggle,
+  IconTrash,
+} from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
 import LinkIcon from '@mui/icons-material/Link';
@@ -50,11 +64,20 @@ import UploadParentModal from 'src/components/tenant-components/parents/UploadPa
 import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
 import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsModal';
 import StatCard from 'src/components/shared/StatCard';
+import { useNavigate } from 'react-router-dom';
+import { TenantAuthContext } from '../../../context/TenantContext/auth';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Parent Management' }];
 
 const ParentManagement = () => {
   const notify = useNotification();
+
+  const navigate = useNavigate();
+
+  const { impersonateParent } = useContext(TenantAuthContext);
+
+  const [impersonateGuardianConfirmOpen, setImpersonateGuardianConfirmOpen] = useState(false);
+  const [guardianToImpersonate, setGuardianToImpersonate] = useState(null);
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -107,6 +130,29 @@ const ParentManagement = () => {
       setLoading(false);
     }
   }, [page, rowsPerPage, search, classId]);
+
+  const confirmImpersonateGuardian = (row) => {
+    setGuardianToImpersonate(row);
+    setImpersonateGuardianConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmedImpersonateGuardian = async () => {
+    if (!guardianToImpersonate) return;
+
+    // Guardian PK is row.user_id (UUID string)
+    const result = await impersonateParent(guardianToImpersonate?.user?.id);
+    if (result.success) {
+      notify.success(
+        `Now logged in as ${guardianToImpersonate.user?.fname} ${guardianToImpersonate.user?.lname}`,
+      );
+      navigate('/dashboard');
+    } else {
+      notify.error(result.error);
+    }
+    setImpersonateGuardianConfirmOpen(false);
+    setGuardianToImpersonate(null);
+  };
 
   const fetchStats = useCallback(async () => {
     try {
@@ -272,7 +318,7 @@ const ParentManagement = () => {
             count={stats.total}
             label="Total Parents"
             icon={FamilyRestroomIcon}
-             color="primary"
+            color="primary"
             loading={statsLoading}
           />
           <StatCard
@@ -294,16 +340,44 @@ const ParentManagement = () => {
 
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
             <Typography variant="h5">Parents & Guardians</Typography>
-            <Box display="flex" gap={1}>
-              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
+
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+                flexWrap: 'wrap',
+                width: { xs: '100%', md: 'auto' },
+              }}
+            >
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                fullWidth={false}
+                onClick={handleDownloadTemplate}
+              >
                 Download Template
               </Button>
-              <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
+
+              <Button
+                variant="outlined"
+                startIcon={<UploadIcon />}
+                fullWidth={false}
+                onClick={() => setUploadModalOpen(true)}
+              >
                 Upload Template
               </Button>
-              <Button variant="contained" color="primary" onClick={handleOpenAdd}>
+
+              <Button variant="contained" color="primary" fullWidth={false} onClick={handleOpenAdd}>
                 Add Single Parent
               </Button>
             </Box>
@@ -388,7 +462,9 @@ const ParentManagement = () => {
 
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
-                          {row.user ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}` : '—'}
+                          {row.user
+                            ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}`
+                            : '—'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {relationshipLabel(row.relationship)}
@@ -458,15 +534,27 @@ const ParentManagement = () => {
                           open={Boolean(anchorEl) && selectedRow?.user_id === row.user_id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={() => handleOpenEdit(row)}>Edit</MenuItem>
-                          <MenuItem onClick={() => handleOpenLinkWard(row)}>Link Ward</MenuItem>
+                          <MenuItem onClick={() => confirmImpersonateGuardian(row)}>
+                            <IconUser size={18} style={{ marginRight: 8 }} />
+                            Login As Parent
+                          </MenuItem>
+                          <MenuItem onClick={() => handleOpenEdit(row)}>
+                            <IconEdit size={18} style={{ marginRight: 8 }} />
+                            Edit
+                          </MenuItem>
+                          <MenuItem onClick={() => handleOpenLinkWard(row)}>
+                            <IconLink size={18} style={{ marginRight: 8 }} />
+                            Link Ward
+                          </MenuItem>
                           <MenuItem onClick={() => handleToggleStatus(row)}>
+                            <IconSquareToggle size={18} style={{ marginRight: 8 }} />
                             {row.status === 'active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
                           <MenuItem
                             onClick={() => handleOpenDelete(row)}
                             sx={{ color: 'error.main' }}
                           >
+                            <IconTrash size={18} style={{ marginRight: 8 }} />
                             Delete
                           </MenuItem>
                         </Menu>
@@ -530,7 +618,12 @@ const ParentManagement = () => {
       /> */}
 
       {/* Confirm Delete — inline like ClassStructureTable */}
-      <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Delete Parent</DialogTitle>
         <DialogContent>
           <Typography>
@@ -539,7 +632,8 @@ const ParentManagement = () => {
               {parentToDelete?.user
                 ? `${parentToDelete.user.fname} ${parentToDelete.user.lname}`
                 : 'this parent'}
-            </strong>? This action cannot be undone.
+            </strong>
+            ? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -578,6 +672,46 @@ const ParentManagement = () => {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={impersonateGuardianConfirmOpen}
+        onClose={() => {
+          setImpersonateGuardianConfirmOpen(false);
+          setGuardianToImpersonate(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Login as Parent</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to login as{' '}
+            <strong>
+              {guardianToImpersonate?.user?.fname} {guardianToImpersonate?.user?.lname}
+            </strong>
+            ? You can return to your account at any time.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={() => {
+              setImpersonateGuardianConfirmOpen(false);
+              setGuardianToImpersonate(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmedImpersonateGuardian}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
+          >
+            Yes, Login As
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <UploadParentModal
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
@@ -588,7 +722,10 @@ const ParentManagement = () => {
         open={linkWardModalOpen}
         onClose={() => setLinkWardModalOpen(false)}
         parent={wardParent}
-        onSaved={() => { fetchParents(); fetchStats(); }}
+        onSaved={() => {
+          fetchParents();
+          fetchStats();
+        }}
       />
 
       <ViewWardsModal

@@ -13,12 +13,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ReusableModal from '../../shared/ReusableModal';
 import eduTierApi from 'src/api/eduTierApi';
 
-const ManageModulesModal = ({
-  open,
-  onClose,
-  currentPackage,
-  onModuleAssignment,
-}) => {
+const ManageModulesModal = ({ open, onClose, currentPackage, onModuleAssignment }) => {
   const [modules, setModules] = useState([]);
   const [selectedModules, setSelectedModules] = useState([]);
   const [search, setSearch] = useState('');
@@ -26,8 +21,6 @@ const ManageModulesModal = ({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    console.log(currentPackage?.id, 65555);
-
     if (!open || !currentPackage?.id) return;
 
     const fetchData = async () => {
@@ -41,8 +34,8 @@ const ManageModulesModal = ({
         setModules(allModules);
         setSelectedModules(
           allModules
-            .filter((m) => m.ckstatus || m.packages?.some(p => p.id === currentPackage.id))
-            .map((m) => m.id)
+            .filter((m) => m.ckstatus || m.packages?.some((p) => p.id === currentPackage.id))
+            .map((m) => m.id),
         );
       } catch (err) {
         console.error(err);
@@ -57,16 +50,12 @@ const ManageModulesModal = ({
 
   const handleToggle = (id) => {
     setSelectedModules((prev) =>
-      prev.includes(id)
-        ? prev.filter((item) => item !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
   const handleSave = () => {
-    const assignedModules = modules.filter((m) =>
-      selectedModules.includes(m.id)
-    );
+    const assignedModules = modules.filter((m) => selectedModules.includes(m.id));
 
     onModuleAssignment(currentPackage, assignedModules);
     onClose();
@@ -75,9 +64,7 @@ const ManageModulesModal = ({
   const filteredModules = useMemo(() => {
     return modules
       .filter((module) =>
-        (module.module_name || module.mod_name || '')
-          .toLowerCase()
-          .includes(search.toLowerCase())
+        (module.module_name || module.mod_name || '').toLowerCase().includes(search.toLowerCase()),
       )
       .sort((a, b) => {
         const nameA = (a.module_name || a.mod_name || '').toLowerCase();
@@ -90,8 +77,7 @@ const ManageModulesModal = ({
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={`Manage ${currentPackage?.package_name || 'Package'
-        } Modules`}
+      title={`Manage ${currentPackage?.package_name || 'Package'} Modules`}
       size="large"
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -155,11 +141,7 @@ const ManageModulesModal = ({
             Cancel
           </Button>
 
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={loading}
-          >
+          <Button variant="contained" onClick={handleSave} disabled={loading}>
             Save
           </Button>
         </Box>

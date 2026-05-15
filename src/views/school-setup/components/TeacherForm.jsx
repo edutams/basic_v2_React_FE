@@ -27,7 +27,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
     <IMaskInput
       {...other}
       mask="00000000000"
-      definitions={{ '0': /[0-9]/ }}
+      definitions={{ 0: /[0-9]/ }}
       inputRef={ref}
       onAccept={(value) => onChange({ target: { name: props.name, value } })}
       overwrite
@@ -100,7 +100,6 @@ const TeacherForm = ({
         setClasses(allClasses);
       } catch (error) {
         console.error('Failed to fetch data:', error);
-
       }
     };
     fetchData();
@@ -113,17 +112,9 @@ const TeacherForm = ({
         return;
       }
 
-      // console.log('[TeacherForm] Selected class ID:', selectedClassId);
-      // console.log(
-      //   '[TeacherForm] Available classes:',
-      //   classes.map((c) => ({ id: c.id, name: c.name, armsCount: c.class_arms?.length })),
-      // );
-
       const classItem = classes.find((c) => c.id === selectedClassId);
-      // console.log('[TeacherForm] Found class item:', classItem);
 
       if (classItem && classItem.class_arms && classItem.class_arms.length > 0) {
-        console.log('[TeacherForm] Using cached arms:', classItem.class_arms);
         setClassArms(classItem.class_arms);
         return;
       }
@@ -307,7 +298,6 @@ const TeacherForm = ({
                     formik.setFieldValue('staff_type', '');
                   }
                 }}
-               
               />
             }
             label="No"
@@ -399,7 +389,7 @@ const TeacherForm = ({
           Cancel
         </Button>
         {/* disabled={isLoading || !formik.isValid} */}
-        <Button variant="contained" type="submit" >
+        <Button variant="contained" type="submit">
           {isLoading ? 'Saving...' : submitText}
         </Button>
       </Box>

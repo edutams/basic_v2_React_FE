@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import { useNotification } from '../../../hooks/useNotification';
-
+import { IconEdit, IconTrash, IconUser } from '@tabler/icons-react';
 import {
   Box,
   Typography,
@@ -37,19 +37,29 @@ import {
   DialogActions,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon,  Add as AddIcon,  CloudUpload as UploadIcon,
-  Download as DownloadIcon  } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+  Add as AddIcon,
+  CloudUpload as UploadIcon,
+  Download as DownloadIcon,
+} from '@mui/icons-material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import learnerApi from 'src/api/learnerApi';
-import { getClassesWithDivisions, createLearner } from 'src/context/TenantContext/services/tenant.service';
+import {
+  getClassesWithDivisions,
+  createLearner,
+} from 'src/context/TenantContext/services/tenant.service';
 import api from 'src/api/tenant_api';
 import AddLearnerModal from 'src/views/school-setup/components/AddLearnerModal';
 import LinkParentModal from 'src/components/tenant-components/learners/LinkParentModal';
 import ViewParentsModal from 'src/components/tenant-components/learners/ViewParentsModal';
 import UploadLearnerModal from 'src/components/tenant-components/learners/UploadLearnerModal';
+import { TenantAuthContext } from '../../../context/TenantContext/auth';
+import { useNavigate } from 'react-router-dom';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
@@ -100,6 +110,13 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
 const LearnerManagement = () => {
   const notify = useNotification();
 
+  const navigate = useNavigate();
+
+  const { impersonateStudent } = useContext(TenantAuthContext);
+
+  const [impersonateStudentConfirmOpen, setImpersonateStudentConfirmOpen] = useState(false);
+  const [studentToImpersonate, setStudentToImpersonate] = useState(null);
+
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -116,16 +133,22 @@ const LearnerManagement = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const [addLearnerOpen, setAddLearnerOpen]       = useState(false);
+  const [addLearnerOpen, setAddLearnerOpen] = useState(false);
   const [addLearnerLoading, setAddLearnerLoading] = useState(false);
 
-  const [editLearnerOpen, setEditLearnerOpen]   = useState(false);
-  const [learnerToEdit, setLearnerToEdit]       = useState(null);
-  const [editLoading, setEditLoading]           = useState(false);
-  const [editValues, setEditValues]             = useState({ first_name: '', last_name: '', middle_name: '', gender: '', date_of_birth: '' });
+  const [editLearnerOpen, setEditLearnerOpen] = useState(false);
+  const [learnerToEdit, setLearnerToEdit] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editValues, setEditValues] = useState({
+    first_name: '',
+    last_name: '',
+    middle_name: '',
+    gender: '',
+    date_of_birth: '',
+  });
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [learnerToDelete, setLearnerToDelete]   = useState(null);
+  const [learnerToDelete, setLearnerToDelete] = useState(null);
 
   const [linkParentOpen, setLinkParentOpen] = useState(false);
   const [linkParentLearner, setLinkParentLearner] = useState(null);
@@ -155,6 +178,29 @@ const LearnerManagement = () => {
       setLoading(false);
     }
   }, [page, rowsPerPage, search, classId]);
+
+  const confirmImpersonateStudent = (row) => {
+    setStudentToImpersonate(row);
+    setImpersonateStudentConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmedImpersonateStudent = async () => {
+    if (!studentToImpersonate) return;
+
+    // Student PK is row.id (integer)
+    const result = await impersonateStudent(studentToImpersonate?.users?.id);
+    if (result.success) {
+      notify.success(
+        `Now logged in as ${studentToImpersonate.users?.fname} ${studentToImpersonate.users?.lname}`,
+      );
+      navigate('/dashboard');
+    } else {
+      notify.error(result.error);
+    }
+    setImpersonateStudentConfirmOpen(false);
+    setStudentToImpersonate(null);
+  };
 
   const fetchStats = useCallback(async () => {
     try {
@@ -209,14 +255,14 @@ const LearnerManagement = () => {
   const handleOpenEdit = (row) => {
     setLearnerToEdit(row);
     setEditValues({
-      first_name:    row.users?.fname ?? '',
-      last_name:     row.users?.lname ?? '',
-      middle_name:   row.users?.mname ?? '',
-      gender:        row.users?.sex ?? '',
+      first_name: row.users?.fname ?? '',
+      last_name: row.users?.lname ?? '',
+      middle_name: row.users?.mname ?? '',
+      gender: row.users?.sex ?? '',
       date_of_birth: row.users?.dob ?? '',
-      learner_id:    row.users?.user_id ?? '',
-      class_id:      row.class_arm?.programme_class?.class_id ?? '',
-      class_arm_id:  row.class_arm_id ?? '',
+      learner_id: row.users?.user_id ?? '',
+      class_id: row.class_arm?.programme_class?.class_id ?? '',
+      class_arm_id: row.class_arm_id ?? '',
     });
     setEditLearnerOpen(true);
     handleMenuClose();
@@ -226,15 +272,17 @@ const LearnerManagement = () => {
     try {
       setEditLoading(true);
       await learnerApi.update(learnerToEdit.users.id, {
-        first_name:    values.first_name,
-        last_name:     values.last_name,
-        middle_name:   values.middle_name,
-        gender:        values.gender,
+        first_name: values.first_name,
+        last_name: values.last_name,
+        middle_name: values.middle_name,
+        gender: values.gender,
         date_of_birth: values.date_of_birth,
       });
       // update class arm if changed
       if (values.class_arm_id && values.class_arm_id !== learnerToEdit.class_arm_id) {
-        await learnerApi.updateRegistration(learnerToEdit.id, { class_arm_id: values.class_arm_id });
+        await learnerApi.updateRegistration(learnerToEdit.id, {
+          class_arm_id: values.class_arm_id,
+        });
       }
       notify.success('Learner updated successfully');
       setEditLearnerOpen(false);
@@ -368,16 +416,52 @@ const LearnerManagement = () => {
 
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
             <Typography variant="h5">Learners</Typography>
-            <Box display="flex" gap={1}>
-              <Button variant="outlined"  startIcon={<DownloadIcon />} onClick={() => { setDownloadClassId(''); setDownloadDialogOpen(true); }}>
+
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+                flexWrap: 'wrap',
+                width: { xs: '100%', md: 'auto' },
+              }}
+            >
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                fullWidth={false}
+                onClick={() => {
+                  setDownloadClassId('');
+                  setDownloadDialogOpen(true);
+                }}
+              >
                 Download Template
               </Button>
-              <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => setUploadLearnerOpen(true)}>
+
+              <Button
+                variant="outlined"
+                startIcon={<UploadIcon />}
+                fullWidth={false}
+                onClick={() => setUploadLearnerOpen(true)}
+              >
                 Upload Template
               </Button>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddLearnerOpen(true)}>
+
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                fullWidth={false}
+                onClick={() => setAddLearnerOpen(true)}
+              >
                 Add Learner
               </Button>
             </Box>
@@ -514,11 +598,28 @@ const LearnerManagement = () => {
                           open={Boolean(anchorEl) && selectedRow?.id === row.id}
                           onClose={handleMenuClose}
                         >
-                          <MenuItem onClick={() => { setLinkParentLearner(selectedRow); setLinkParentOpen(true); handleMenuClose(); }}>
+                          <MenuItem onClick={() => confirmImpersonateStudent(row)}>
+                            <IconUser size={18} style={{ marginRight: 8 }} />
+                            Login As Student
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => {
+                              setLinkParentLearner(selectedRow);
+                              setLinkParentOpen(true);
+                              handleMenuClose();
+                            }}
+                          >
                             Link Parent
                           </MenuItem>
-                          <MenuItem onClick={() => handleOpenEdit(row)}>Edit</MenuItem>
-                          <MenuItem onClick={() => handleOpenDelete(row)} sx={{ color: 'error.main' }}>
+                          <MenuItem onClick={() => handleOpenEdit(row)}>
+                            <IconEdit size={18} style={{ marginRight: 8 }} />
+                            Edit
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() => handleOpenDelete(row)}
+                            sx={{ color: 'error.main' }}
+                          >
+                            <IconTrash size={18} style={{ marginRight: 8 }} />
                             Delete
                           </MenuItem>
                         </Menu>
@@ -581,7 +682,12 @@ const LearnerManagement = () => {
       />
 
       {/* Download Template  */}
-      <Dialog open={downloadDialogOpen} onClose={() => setDownloadDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={downloadDialogOpen}
+        onClose={() => setDownloadDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Download Learner Template</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -589,11 +695,19 @@ const LearnerManagement = () => {
           </Typography>
           <FormControl fullWidth>
             <InputLabel>Class</InputLabel>
-            <Select value={downloadClassId} label="Class" onChange={(e) => setDownloadClassId(e.target.value)}>
+            <Select
+              value={downloadClassId}
+              label="Class"
+              onChange={(e) => setDownloadClassId(e.target.value)}
+            >
               <MenuItem value="">Select Class</MenuItem>
-              {classes.filter((c) => c.programme_class_id).map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>{cls.label}</MenuItem>
-              ))}
+              {classes
+                .filter((c) => c.programme_class_id)
+                .map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>
+                    {cls.label}
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
         </DialogContent>
@@ -605,11 +719,54 @@ const LearnerManagement = () => {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={impersonateStudentConfirmOpen}
+        onClose={() => {
+          setImpersonateStudentConfirmOpen(false);
+          setStudentToImpersonate(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Login as Student</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to login as{' '}
+            <strong>
+              {studentToImpersonate?.users?.fname} {studentToImpersonate?.users?.lname}
+            </strong>
+            ? You can return to your account at any time.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={() => {
+              setImpersonateStudentConfirmOpen(false);
+              setStudentToImpersonate(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmedImpersonateStudent}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
+          >
+            Yes, Login As
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <LinkParentModal
         open={linkParentOpen}
         onClose={() => setLinkParentOpen(false)}
         learner={linkParentLearner}
-        onSaved={() => { fetchLearners(); fetchStats(); }}
+        onSaved={() => {
+          fetchLearners();
+          fetchStats();
+        }}
       />
 
       <ViewParentsModal
@@ -620,7 +777,10 @@ const LearnerManagement = () => {
 
       <AddLearnerModal
         open={editLearnerOpen}
-        onClose={() => { setEditLearnerOpen(false); setLearnerToEdit(null); }}
+        onClose={() => {
+          setEditLearnerOpen(false);
+          setLearnerToEdit(null);
+        }}
         onSave={handleConfirmEdit}
         isLoading={editLoading}
         isEdit
@@ -628,7 +788,12 @@ const LearnerManagement = () => {
       />
 
       {/* Delete Learner */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Delete Learner</DialogTitle>
         <DialogContent>
           <Typography>
@@ -637,7 +802,8 @@ const LearnerManagement = () => {
               {learnerToDelete?.users
                 ? `${learnerToDelete.users.fname} ${learnerToDelete.users.lname}`
                 : 'this learner'}
-            </strong>? This action cannot be undone.
+            </strong>
+            ? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>

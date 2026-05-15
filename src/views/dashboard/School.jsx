@@ -61,8 +61,7 @@ import {
   getProspectiveTenants,
   approveProspectiveTenant,
   rejectProspectiveTenant,
-    deleteProspectiveTenant,
-  
+  deleteProspectiveTenant,
 } from '../../context/AgentContext/services/school.service';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
@@ -502,7 +501,11 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
   const agent = row.agent;
 
   const sanitize = (str) =>
-    str?.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9.-]/g, '');
+    str
+      ?.toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9.-]/g, '');
 
   const domainHost = agent?.organization_domain
     ? `${sanitize(row.tenant_short_name)}.${sanitize(agent.organization_domain)}`
@@ -663,9 +666,7 @@ const SchoolDashboard = () => {
   const fetchSchools = useCallback(async () => {
     setLoading(true);
     try {
-      // console.log('Fetching schools from API...');
       const data = await getSchools();
-      // console.log('Schools fetched successfully:', data);
       setSchoolList(
         (data || []).map((t) => {
           // Parse school_divisions if it's a JSON string
@@ -685,9 +686,7 @@ const SchoolDashboard = () => {
           return {
             id: t.id,
             institutionName: t.tenant_name,
-            schoolUrl: t.domains?.[0]?.domain
-              ? `https://${t.domains[0].domain}`
-              : '',
+            schoolUrl: t.domains?.[0]?.domain ? `https://${t.domains[0].domain}` : '',
             agent: t.organization?.organization_name || '',
             agentEmail: t.organization?.organization_email || '',
             agentImage: t.organization?.organization_logo || '',
@@ -698,20 +697,22 @@ const SchoolDashboard = () => {
             contactPhone: t.administrator_info?.school_spa?.admin_phone || '',
             contactImage: t.administrator_info?.school_spa?.admin_image || '',
             status: t.status,
-            // school_type 
+            // school_type
             schoolType: (() => {
               try {
                 const raw = t.school_type;
                 if (!raw) return [];
                 if (Array.isArray(raw)) return raw.map((v) => String(v).toLowerCase());
                 const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed.map((v) => String(v).toLowerCase()) : [String(parsed).toLowerCase()];
+                return Array.isArray(parsed)
+                  ? parsed.map((v) => String(v).toLowerCase())
+                  : [String(parsed).toLowerCase()];
               } catch {
                 return t.school_type ? [String(t.school_type).toLowerCase()] : [];
               }
             })(),
-            // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription 
-            subscribed: !!(t.domains?.[0]?.domain),
+            // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription
+            subscribed: !!t.domains?.[0]?.domain,
             approvedAt: t.approved_at,
             approvedBy: t.approved_by?.full_name,
             schoolDivisions: Array.isArray(schoolDivisions)
@@ -775,7 +776,7 @@ const SchoolDashboard = () => {
     try {
       // Refresh school analytics
       await fetchSchools();
-      // Refresh prospect analytics  
+      // Refresh prospect analytics
       await fetchProspects();
     } catch (error) {
       console.error('Failed to refresh analytics:', error);
@@ -886,7 +887,7 @@ const SchoolDashboard = () => {
     active: schoolList.filter((s) => s.status === 'active').length,
     inactive: schoolList.filter((s) => s.status === 'inactive').length,
     pending: pendingProspects.length,
-    // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription 
+    // subscribed = school has been approved (has a domain provisioned) will ingrtate with subscription data later to determine active subscription
     subscriptions: subscribedSchools.length,
     // Primary/Secondary based on school_type field, only for subscribed schools
     primary: subscribedSchools.filter((s) => s.schoolType?.includes('primary')).length,
@@ -1581,7 +1582,10 @@ const SchoolDashboard = () => {
 
       <ConfirmationDialog
         open={openDeleteDialog}
-        onClose={() => { setOpenDeleteDialog(false); setSchoolToDelete(null); }}
+        onClose={() => {
+          setOpenDeleteDialog(false);
+          setSchoolToDelete(null);
+        }}
         onConfirm={handleConfirmDeleteProspect}
         title="Delete Application"
         message={`Are you sure you want to delete the application for "${schoolToDelete?.tenant_name || schoolToDelete?.institutionName}"? This is irreversible.`}

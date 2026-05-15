@@ -32,8 +32,8 @@ import Search from '../../../full/vertical/header/Search';
 import Language from '../../../full/vertical/header/Language';
 import Notifications from '../../../full/vertical/header/Notification';
 import Profile from '../../../full/vertical/header/Profile';
+import { TenantAuthContext } from '../../../../context/TenantContext/auth';
 // import SchoolNavigation from './SchoolNavigation';
-import { TenantAuthContext } from 'src/context/TenantContext/auth';
 
 const SchoolHeader = () => {
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down('lg'));

@@ -223,36 +223,105 @@ const StaffManager = () => {
     setAddModalOpen(true);
   };
 
-  const handleEditStaff = () => {
+  const handleEditStaff = async () => {
     if (selectedStaff) {
-      console.log('Selected Staff Data:', selectedStaff);
-      console.log('Class Teacher:', selectedStaff.class_teacher);
-      console.log('Subject Teacher:', selectedStaff.subject_teacher);
+      console.log('=== EDIT STAFF DEBUG ===');
+      console.log('Selected Staff Data from list:', selectedStaff);
       
-      setFormData({
-        staff_id: selectedStaff.staff_id || '',
-        surname: selectedStaff.user?.lname || '',
-        first_name: selectedStaff.user?.fname || '',
-        phone_number: selectedStaff.user?.phone || '',
-        gender: selectedStaff.user?.sex || '',
-        email: selectedStaff.user?.email || '',
-        date_of_appointment: selectedStaff.date_of_first_appointment ? dayjs(selectedStaff.date_of_first_appointment) : null,
-        status: selectedStaff.status || 'active',
-        role: activeTab === 'non-teaching' ? selectedStaff.role || '' : undefined,
-        // Allocation fields from class_teacher
-        class_session_term_id: selectedStaff.class_teacher?.session_term_id || '',
-        class_programme_id: selectedStaff.class_teacher?.class_arm?.programme_class?.programme_id || '',
-        class_id: selectedStaff.class_teacher?.class_arm?.programme_class?.class_id || '',
-        class_arm_id: selectedStaff.class_teacher?.class_arm_id || '',
-        // Allocation fields from subject_teacher
-        subject_session_term_id: selectedStaff.subject_teacher?.session_term_id || '',
-        subject_programme_id: selectedStaff.subject_teacher?.subject?.programme_subject?.[0]?.programme_id || '',
-        subject_class_id: selectedStaff.subject_teacher?.class_arm?.programme_class?.class_id || '',
-        subject_class_arm_id: selectedStaff.subject_teacher?.class_arm_id || '',
-        subject_curriculum_id: selectedStaff.subject_teacher?.subject?.curriculum_id || '',
-        subject_id: selectedStaff.subject_teacher?.subject_id || '',
-      });
-      setEditModalOpen(true);
+      try {
+        // Fetch the individual staff data with all relationships
+        // console.log('Fetching individual staff data for ID:', selectedStaff.user_id);
+        const staffResponse = await staffApi.getSingle(selectedStaff.user_id);
+        // console.log('Individual staff response:', staffResponse);
+        
+        const staffData = staffResponse.data;
+        // console.log('Individual staff data:', staffData);
+        // console.log('Class Teachers:', staffData.classTeachers);
+        // console.log('Subject Teachers:', staffData.subjectTeachers);
+        
+        // Transform class teachers to classAllocations array
+        const classAllocations = staffData.classAllocations || (staffData.classTeachers && staffData.classTeachers.length > 0
+          ? staffData.classTeachers.map(classTeacher => {
+              // console.log('Processing class teacher:', classTeacher);
+              return {
+                session_term_id: classTeacher.session_term_id || '',
+                programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: classTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: classTeacher.class_arm_id || '',
+              };
+            })
+          : [{ 
+              session_term_id: '', 
+              programme_id: '', 
+              class_id: '', 
+              class_arm_id: '' 
+            }]);
+
+        // Transform subject teachers to subjectAllocations array
+        const subjectAllocations = staffData.subjectAllocations || (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
+          ? staffData.subjectTeachers.map(subjectTeacher => {
+              // console.log('Processing subject teacher:', subjectTeacher);
+              return {
+                session_term_id: subjectTeacher.session_term_id || '',
+                programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: subjectTeacher.class_arm_id || '',
+                curriculum_id: subjectTeacher.subject?.curriculum_id || '',
+                subject_id: subjectTeacher.subject_id || '',
+              };
+            })
+          : [{ 
+              session_term_id: '', 
+              programme_id: '', 
+              class_id: '', 
+              class_arm_id: '', 
+              curriculum_id: '', 
+              subject_id: '' 
+            }]);
+        
+        // console.log('Transformed class allocations:', classAllocations);
+        // console.log('Transformed subject allocations:', subjectAllocations);
+        
+        const formDataForEdit = {
+          staff_id: staffData.staff_id || '',
+          surname: staffData.surname || '',
+          first_name: staffData.first_name || '',
+          phone_number: staffData.phone_number || '',
+          gender: staffData.gender || '',
+          email: staffData.email || '',
+          date_of_appointment: staffData.date_of_appointment ? dayjs(staffData.date_of_appointment) : null,
+          status: staffData.status || 'active',
+          role: activeTab === 'non-teaching' ? staffData.role || '' : undefined,
+          
+          // New allocation arrays
+          classAllocations: classAllocations,
+          subjectAllocations: subjectAllocations,
+          
+          // Legacy allocation fields (for backward compatibility)
+          class_session_term_id: selectedStaff.class_teacher?.session_term_id || '',
+          class_programme_id: selectedStaff.class_teacher?.class_arm?.programme_class?.programme_id || '',
+          class_id: selectedStaff.class_teacher?.class_arm?.programme_class?.class_id || '',
+          class_arm_id: selectedStaff.class_teacher?.class_arm_id || '',
+          // Allocation fields from subject_teacher
+          subject_session_term_id: selectedStaff.subject_teacher?.session_term_id || '',
+          subject_programme_id: selectedStaff.subject_teacher?.subject?.programme_subject?.[0]?.programme_id || '',
+          subject_class_id: selectedStaff.subject_teacher?.class_arm?.programme_class?.class_id || '',
+          subject_class_arm_id: selectedStaff.subject_teacher?.class_arm_id || '',
+          subject_curriculum_id: selectedStaff.subject_teacher?.subject?.curriculum_id || '',
+          subject_id: selectedStaff.subject_teacher?.subject_id || '',
+        };
+        
+        // console.log('Final form data for edit:', formDataForEdit);
+        // console.log('Class allocations being passed to form:', formDataForEdit.classAllocations);
+        // console.log('Subject allocations being passed to form:', formDataForEdit.subjectAllocations);
+        
+        setFormData(formDataForEdit);
+        setEditModalOpen(true);
+        
+      } catch (error) {
+        console.error('Error fetching individual staff data:', error);
+        notify.error('Failed to load staff details for editing');
+      }
     }
     handleMenuClose();
   };
@@ -270,20 +339,28 @@ const StaffManager = () => {
   const handleSaveStaff = async (values) => {
     setModalLoading(true);
     try {
-      // Map form values to API format
+      // console.log('Values received in handleSaveStaff:', values);
+      
+      // Map form values to API format - include allocation arrays
       const apiData = {
         first_name: values.first_name,
         last_name: values.surname,
-        middle_name: '',
+        middle_name: values.middle_name || '',
         email: values.email,
         phone: values.phone_number,
         userId: values.staff_id,
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: activeTab === 'teaching' ? 'teaching' : 'non-teaching',
-        date_of_first_appointment: values.date_of_appointment
-          ? values.date_of_appointment.format('YYYY-MM-DD')
+        date_of_first_appointment: values.date_of_first_appointment
+          ? (typeof values.date_of_first_appointment === 'string' ? values.date_of_first_appointment : values.date_of_first_appointment.format('YYYY-MM-DD'))
           : null,
         status: values.status,
+        
+        // Include new bulk allocation arrays
+        classAllocations: values.classAllocations || [],
+        subjectAllocations: values.subjectAllocations || [],
+        
+        // Legacy single allocation fields for backward compatibility
         class_session_term_id: values.class_session_term_id,
         class_programme_id: values.class_programme_id,
         class_id: values.class_id,
@@ -295,12 +372,13 @@ const StaffManager = () => {
         subject_id: values.subject_id,
         subject_class_arm_id: values.subject_class_arm_id,
       };
-      // return console.log(apiData, 53553)
 
       // Add role for non-teaching staff
       if (activeTab === 'non-teaching') {
         apiData.role = values.role;
       }
+
+      // console.log('API Data being sent:', apiData);
 
       const response = await staffApi.create(apiData);
       if (response.status) {
@@ -318,20 +396,28 @@ const StaffManager = () => {
   const handleUpdateStaff = async (values) => {
     setModalLoading(true);
     try {
-      // Map form values to API format
+      // console.log('Values received in handleUpdateStaff:', values);
+      
+      // Map form values to API format - include allocation arrays
       const apiData = {
         first_name: values.first_name,
         last_name: values.surname,
-        middle_name: '',
+        middle_name: values.middle_name || '',
         email: values.email,
         phone: values.phone_number,
         userId: values.staff_id,
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: selectedStaff.staff_type,
         date_of_first_appointment: values.date_of_appointment
-          ? values.date_of_appointment.format('YYYY-MM-DD')
+          ? (typeof values.date_of_first_appointment === 'string' ? values.date_of_first_appointment : values.date_of_appointment.format('YYYY-MM-DD'))
           : null,
         status: values.status,
+        
+        // Include new bulk allocation arrays
+        classAllocations: values.classAllocations || [],
+        subjectAllocations: values.subjectAllocations || [],
+        
+        // Legacy single allocation fields for backward compatibility
         class_session_term_id: values.class_session_term_id,
         class_programme_id: values.class_programme_id,
         class_id: values.class_id,
@@ -348,6 +434,8 @@ const StaffManager = () => {
       if (activeTab === 'non-teaching') {
         apiData.role = values.role;
       }
+
+      // console.log('API Data being sent for update:', apiData);
 
       const response = await staffApi.update(selectedStaff.user_id, apiData);
       if (response.status) {

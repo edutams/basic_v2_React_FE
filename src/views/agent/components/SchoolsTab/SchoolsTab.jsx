@@ -386,6 +386,11 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
       <Divider />
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        {prospect.status === 'pending' && !can('landlord.school.approval') && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            Only Level 1 organizations can approve or reject applications
+          </Typography>
+        )}
         <Button
           onClick={onClose}
           color="inherit"
@@ -448,11 +453,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               </>
             )}
           </>
-        )}
-        {prospect.status === 'pending' && !can('landlord.school.approval') && (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            Only Level 1 organizations can approve or reject applications
-          </Typography>
         )}
       </DialogActions>
 

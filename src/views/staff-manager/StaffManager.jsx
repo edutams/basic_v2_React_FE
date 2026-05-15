@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useContext } from 'react';
 import {
   Box,
   Typography,
@@ -36,6 +37,7 @@ import {
   IconPlus,
   IconDotsVertical,
   IconEdit,
+  IconUser,
   IconTrash,
   IconEye,
   IconChevronDown,
@@ -53,6 +55,8 @@ import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
 import UploadStaffModal from './components/UploadStaffModal';
 import dayjs from 'dayjs';
+import { TenantAuthContext } from '../../context/TenantContext/auth';
+import { useNavigate } from 'react-router-dom';
 
 const BCrumb = [
   {
@@ -63,6 +67,8 @@ const BCrumb = [
 ];
 
 const StaffManager = () => {
+  const { impersonateStaff } = useContext(TenantAuthContext);
+
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
   const [staff, setStaff] = useState([]);
@@ -75,6 +81,10 @@ const StaffManager = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
 
+  const navigate = useNavigate();
+
+  const [impersonateConfirmOpen, setImpersonateConfirmOpen] = useState(false);
+  const [staffToImpersonate, setStaffToImpersonate] = useState(null);
   // Stats
   const [stats, setStats] = useState({
     total: 0,
@@ -112,6 +122,29 @@ const StaffManager = () => {
   useEffect(() => {
     fetchStaff();
   }, [activeTab, page, rowsPerPage, searchQuery, statusFilter]);
+
+  const confirmImpersonateStaff = (staffMember) => {
+    // console.log('Staff member object:', staffMember);
+    setStaffToImpersonate(staffMember);
+    setImpersonateConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmedImpersonateStaff = async () => {
+    if (!staffToImpersonate) return;
+    const result = await impersonateStaff(staffToImpersonate?.user?.id);
+    if (result.success) {
+      notify.success(
+        `Now logged in as ${staffToImpersonate.user?.fname} ${staffToImpersonate.user?.lname}`,
+      );
+      // Navigate to the staff dashboard or reload — adjust route as needed
+      navigate('/dashboard');
+    } else {
+      notify.error(result.error);
+    }
+    setImpersonateConfirmOpen(false);
+    setStaffToImpersonate(null);
+  };
 
   const fetchStaff = async () => {
     setLoading(true);
@@ -183,7 +216,10 @@ const StaffManager = () => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      const filename = activeTab === 'teaching' ? 'teaching_staff_template.xlsx' : 'non_teaching_staff_template.xlsx';
+      const filename =
+        activeTab === 'teaching'
+          ? 'teaching_staff_template.xlsx'
+          : 'non_teaching_staff_template.xlsx';
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
@@ -227,61 +263,69 @@ const StaffManager = () => {
     if (selectedStaff) {
       console.log('=== EDIT STAFF DEBUG ===');
       console.log('Selected Staff Data from list:', selectedStaff);
-      
+
       try {
         // Fetch the individual staff data with all relationships
         // console.log('Fetching individual staff data for ID:', selectedStaff.user_id);
         const staffResponse = await staffApi.getSingle(selectedStaff.user_id);
         // console.log('Individual staff response:', staffResponse);
-        
+
         const staffData = staffResponse.data;
         // console.log('Individual staff data:', staffData);
         // console.log('Class Teachers:', staffData.classTeachers);
         // console.log('Subject Teachers:', staffData.subjectTeachers);
-        
+
         // Transform class teachers to classAllocations array
-        const classAllocations = staffData.classAllocations || (staffData.classTeachers && staffData.classTeachers.length > 0
-          ? staffData.classTeachers.map(classTeacher => {
-              // console.log('Processing class teacher:', classTeacher);
-              return {
-                session_term_id: classTeacher.session_term_id || '',
-                programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
-                class_id: classTeacher.classArm?.programmeClass?.class_id || '',
-                class_arm_id: classTeacher.class_arm_id || '',
-              };
-            })
-          : [{ 
-              session_term_id: '', 
-              programme_id: '', 
-              class_id: '', 
-              class_arm_id: '' 
-            }]);
+        const classAllocations =
+          staffData.classAllocations ||
+          (staffData.classTeachers && staffData.classTeachers.length > 0
+            ? staffData.classTeachers.map((classTeacher) => {
+                // console.log('Processing class teacher:', classTeacher);
+                return {
+                  session_term_id: classTeacher.session_term_id || '',
+                  programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
+                  class_id: classTeacher.classArm?.programmeClass?.class_id || '',
+                  class_arm_id: classTeacher.class_arm_id || '',
+                };
+              })
+            : [
+                {
+                  session_term_id: '',
+                  programme_id: '',
+                  class_id: '',
+                  class_arm_id: '',
+                },
+              ]);
 
         // Transform subject teachers to subjectAllocations array
-        const subjectAllocations = staffData.subjectAllocations || (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
-          ? staffData.subjectTeachers.map(subjectTeacher => {
-              // console.log('Processing subject teacher:', subjectTeacher);
-              return {
-                session_term_id: subjectTeacher.session_term_id || '',
-                programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
-                class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
-                class_arm_id: subjectTeacher.class_arm_id || '',
-                curriculum_id: subjectTeacher.subject?.curriculum_id || '',
-                subject_id: subjectTeacher.subject_id || '',
-              };
-            })
-          : [{ 
-              session_term_id: '', 
-              programme_id: '', 
-              class_id: '', 
-              class_arm_id: '', 
-              curriculum_id: '', 
-              subject_id: '' 
-            }]);
-        
+        const subjectAllocations =
+          staffData.subjectAllocations ||
+          (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
+            ? staffData.subjectTeachers.map((subjectTeacher) => {
+                // console.log('Processing subject teacher:', subjectTeacher);
+                return {
+                  session_term_id: subjectTeacher.session_term_id || '',
+                  programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
+                  class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
+                  class_arm_id: subjectTeacher.class_arm_id || '',
+                  curriculum_id: subjectTeacher.subject?.curriculum_id || '',
+                  subject_id: subjectTeacher.subject_id || '',
+                };
+              })
+            : [
+                {
+                  session_term_id: '',
+                  programme_id: '',
+                  class_id: '',
+                  class_arm_id: '',
+                  curriculum_id: '',
+                  subject_id: '',
+                },
+              ]);
+
         // console.log('Transformed class allocations:', classAllocations);
         // console.log('Transformed subject allocations:', subjectAllocations);
-        
+
         const formDataForEdit = {
           staff_id: staffData.staff_id || '',
           surname: staffData.surname || '',
@@ -289,35 +333,39 @@ const StaffManager = () => {
           phone_number: staffData.phone_number || '',
           gender: staffData.gender || '',
           email: staffData.email || '',
-          date_of_appointment: staffData.date_of_appointment ? dayjs(staffData.date_of_appointment) : null,
+          date_of_appointment: staffData.date_of_appointment
+            ? dayjs(staffData.date_of_appointment)
+            : null,
           status: staffData.status || 'active',
           role: activeTab === 'non-teaching' ? staffData.role || '' : undefined,
-          
+
           // New allocation arrays
           classAllocations: classAllocations,
           subjectAllocations: subjectAllocations,
-          
+
           // Legacy allocation fields (for backward compatibility)
           class_session_term_id: selectedStaff.class_teacher?.session_term_id || '',
-          class_programme_id: selectedStaff.class_teacher?.class_arm?.programme_class?.programme_id || '',
+          class_programme_id:
+            selectedStaff.class_teacher?.class_arm?.programme_class?.programme_id || '',
           class_id: selectedStaff.class_teacher?.class_arm?.programme_class?.class_id || '',
           class_arm_id: selectedStaff.class_teacher?.class_arm_id || '',
           // Allocation fields from subject_teacher
           subject_session_term_id: selectedStaff.subject_teacher?.session_term_id || '',
-          subject_programme_id: selectedStaff.subject_teacher?.subject?.programme_subject?.[0]?.programme_id || '',
-          subject_class_id: selectedStaff.subject_teacher?.class_arm?.programme_class?.class_id || '',
+          subject_programme_id:
+            selectedStaff.subject_teacher?.subject?.programme_subject?.[0]?.programme_id || '',
+          subject_class_id:
+            selectedStaff.subject_teacher?.class_arm?.programme_class?.class_id || '',
           subject_class_arm_id: selectedStaff.subject_teacher?.class_arm_id || '',
           subject_curriculum_id: selectedStaff.subject_teacher?.subject?.curriculum_id || '',
           subject_id: selectedStaff.subject_teacher?.subject_id || '',
         };
-        
+
         // console.log('Final form data for edit:', formDataForEdit);
         // console.log('Class allocations being passed to form:', formDataForEdit.classAllocations);
         // console.log('Subject allocations being passed to form:', formDataForEdit.subjectAllocations);
-        
+
         setFormData(formDataForEdit);
         setEditModalOpen(true);
-        
       } catch (error) {
         console.error('Error fetching individual staff data:', error);
         notify.error('Failed to load staff details for editing');
@@ -340,7 +388,7 @@ const StaffManager = () => {
     setModalLoading(true);
     try {
       // console.log('Values received in handleSaveStaff:', values);
-      
+
       // Map form values to API format - include allocation arrays
       const apiData = {
         first_name: values.first_name,
@@ -352,14 +400,16 @@ const StaffManager = () => {
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: activeTab === 'teaching' ? 'teaching' : 'non-teaching',
         date_of_first_appointment: values.date_of_first_appointment
-          ? (typeof values.date_of_first_appointment === 'string' ? values.date_of_first_appointment : values.date_of_first_appointment.format('YYYY-MM-DD'))
+          ? typeof values.date_of_first_appointment === 'string'
+            ? values.date_of_first_appointment
+            : values.date_of_first_appointment.format('YYYY-MM-DD')
           : null,
         status: values.status,
-        
+
         // Include new bulk allocation arrays
         classAllocations: values.classAllocations || [],
         subjectAllocations: values.subjectAllocations || [],
-        
+
         // Legacy single allocation fields for backward compatibility
         class_session_term_id: values.class_session_term_id,
         class_programme_id: values.class_programme_id,
@@ -397,7 +447,7 @@ const StaffManager = () => {
     setModalLoading(true);
     try {
       // console.log('Values received in handleUpdateStaff:', values);
-      
+
       // Map form values to API format - include allocation arrays
       const apiData = {
         first_name: values.first_name,
@@ -409,14 +459,16 @@ const StaffManager = () => {
         gender: values.gender?.toLowerCase() || 'male',
         staff_type: selectedStaff.staff_type,
         date_of_first_appointment: values.date_of_appointment
-          ? (typeof values.date_of_first_appointment === 'string' ? values.date_of_first_appointment : values.date_of_appointment.format('YYYY-MM-DD'))
+          ? typeof values.date_of_first_appointment === 'string'
+            ? values.date_of_first_appointment
+            : values.date_of_appointment.format('YYYY-MM-DD')
           : null,
         status: values.status,
-        
+
         // Include new bulk allocation arrays
         classAllocations: values.classAllocations || [],
         subjectAllocations: values.subjectAllocations || [],
-        
+
         // Legacy single allocation fields for backward compatibility
         class_session_term_id: values.class_session_term_id,
         class_programme_id: values.class_programme_id,
@@ -650,6 +702,10 @@ const StaffManager = () => {
           <IconEye size={18} style={{ marginRight: 8 }} />
           View Details
         </MenuItem> */}
+        <MenuItem onClick={() => confirmImpersonateStaff(selectedStaff)}>
+          <IconUser size={18} style={{ marginRight: 8 }} />
+          Login As Staff
+        </MenuItem>
         <MenuItem onClick={handleEditStaff}>
           <IconEdit size={18} style={{ marginRight: 8 }} />
           Edit
@@ -811,6 +867,47 @@ const StaffManager = () => {
             sx={{ textTransform: 'none' }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={impersonateConfirmOpen}
+        onClose={() => {
+          setImpersonateConfirmOpen(false);
+          setStaffToImpersonate(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Login as Staff</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to login as{' '}
+            <strong>
+              {staffToImpersonate?.user?.fname} {staffToImpersonate?.user?.lname}
+            </strong>
+            ? You can return to your account at any time.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={() => {
+              setImpersonateConfirmOpen(false);
+              setStaffToImpersonate(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            onClick={handleConfirmedImpersonateStaff}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}
+          >
+            Yes, Login As
           </Button>
         </DialogActions>
       </Dialog>

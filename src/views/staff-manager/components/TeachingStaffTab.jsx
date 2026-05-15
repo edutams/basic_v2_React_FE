@@ -226,9 +226,7 @@ const TeachingStaffTab = ({
                           >
                             {/* {!(staffMember.user.avatar || agent.admin_avatar) && initials} */}
                           </Avatar>
-                          <Typography variant="body2">
-                            {staffMember.user?.fname} {staffMember.user?.lname}
-                          </Typography>
+                          <Typography variant="body2">{staffMember.user?.full_name}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
@@ -253,8 +251,8 @@ const TeachingStaffTab = ({
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={staffMember.status || 'active'}
-                          color={getStatusColor(staffMember.status)}
+                          label={staffMember.staff_status}
+                          color={getStatusColor(staffMember.staff_status)}
                           size="small"
                           sx={{ textTransform: 'lowercase' }}
                         />

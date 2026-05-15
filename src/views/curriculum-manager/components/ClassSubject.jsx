@@ -48,8 +48,10 @@ import {
 const ClassSubject = () => {
   // Internal state
   const [programmesList, setProgrammesList] = useState([]);
+  const [loadingProgrammes, setLoadingProgrammes] = useState(false);
   const [program, setProgram] = useState('');
   const [classesForProgram, setClassesForProgram] = useState([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
   const [classSubjects, setClassSubjects] = useState([]);
   const [loadingClassSubjects, setLoadingClassSubjects] = useState(false);
@@ -91,12 +93,17 @@ const ClassSubject = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Loading states for buttons
+  const [loadingAddSubject, setLoadingAddSubject] = useState(false);
+  const [loadingUpdateSubject, setLoadingUpdateSubject] = useState(false);
+
   // Methods
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
 
   const fetchProgrammesData = async () => {
+    setLoadingProgrammes(true);
     try {
       const response = await fetchProgrammes();
       if (response.status) {
@@ -104,10 +111,13 @@ const ClassSubject = () => {
       }
     } catch (error) {
       showSnackbar('Failed to fetch programmes', 'error');
+    } finally {
+      setLoadingProgrammes(false);
     }
   };
 
   const fetchClassesData = async (programmeId) => {
+    setLoadingClasses(true);
     try {
       const response = await fetchClassesByProgramme(programmeId);
       if (response.status) {
@@ -115,6 +125,8 @@ const ClassSubject = () => {
       }
     } catch (error) {
       showSnackbar('Failed to fetch classes', 'error');
+    } finally {
+      setLoadingClasses(false);
     }
   };
 
@@ -195,6 +207,7 @@ const ClassSubject = () => {
 
   const handleAddSubjectToClass = async () => {
     setFieldErrors({});
+    setLoadingAddSubject(true);
 
     // Debug: Log the current form data
     console.log('Form Data:', classSubjectFormData);
@@ -213,6 +226,7 @@ const ClassSubject = () => {
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
       console.log('Validation Errors:', validationErrors);
+      setLoadingAddSubject(false);
       return;
     }
 
@@ -236,6 +250,10 @@ const ClassSubject = () => {
         showSnackbar('Subject added to class successfully', 'success');
         handleCloseAddSubjectToClassModal();
         fetchClassSubjectsData(selectedClass);
+      } else {
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to add subject to class';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
       console.log('Error:', error);
@@ -255,15 +273,22 @@ const ClassSubject = () => {
         return;
       }
 
-      showSnackbar(
-        error.response?.data?.message || 'Failed to add subject to class',
-        'error'
-      );
+      // Handle other API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to add subject to class';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to add subject to class', 'error');
+      }
+    } finally {
+      setLoadingAddSubject(false);
     }
   };
 
   const handleUpdateClassSubject = async () => {
     setFieldErrors({});
+    setLoadingUpdateSubject(true);
     
     // Debug: Log the current form data
     console.log('Edit Form Data:', classSubjectFormData);
@@ -282,6 +307,7 @@ const ClassSubject = () => {
     if (Object.keys(validationErrors).length > 0) {
       setFieldErrors(validationErrors);
       console.log('Edit Validation Errors:', validationErrors);
+      setLoadingUpdateSubject(false);
       return;
     }
 
@@ -305,6 +331,10 @@ const ClassSubject = () => {
         showSnackbar('Class subject updated successfully', 'success');
         handleCloseEditClassSubjectModal();
         fetchClassSubjectsData(selectedClass);
+      } else {
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to update class subject';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
       console.log('Edit Error:', error);
@@ -324,10 +354,16 @@ const ClassSubject = () => {
         return;
       }
 
-      showSnackbar(
-        error.response?.data?.message || 'Failed to update class subject',
-        'error'
-      );
+      // Handle other API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to update class subject';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to update class subject', 'error');
+      }
+    } finally {
+      setLoadingUpdateSubject(false);
     }
   };
 
@@ -422,9 +458,10 @@ const ClassSubject = () => {
               onChange={(e) => setProgram(e.target.value)}
               displayEmpty
               fullWidth
+              disabled={loadingProgrammes}
             >
               <MenuItem value="" disabled>
-                Select Program
+                {loadingProgrammes ? 'Loading programmes...' : 'Select Program'}
               </MenuItem>
               {programmesList.map((prog) => (
                 <MenuItem key={prog.id} value={prog.id}>
@@ -438,31 +475,47 @@ const ClassSubject = () => {
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Classes
             </Typography>
-            <RadioGroup
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(Number(e.target.value))}
-            >
-              {classesForProgram.map((cls) => (
-                <Box
-                  key={cls.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    px: 1,
-                    py: 0.8,
-                    borderRadius: 2,
-                    bgcolor: selectedClass === cls.id ? '#eef2ff' : 'transparent',
-                  }}
-                >
-                  <FormControlLabel
-                    value={cls.id}
-                    control={<Radio size="small" />}
-                    label={cls.class_name}
-                    sx={{ width: '100%' }}
-                  />
-                </Box>
-              ))}
-            </RadioGroup>
+            {loadingClasses ? (
+              <Box display="flex" justifyContent="center" py={3}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <RadioGroup
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(Number(e.target.value))}
+              >
+                {classesForProgram.length > 0 ? (
+                  classesForProgram.map((cls) => (
+                    <Box
+                      key={cls.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        px: 1,
+                        py: 0.8,
+                        borderRadius: 2,
+                        bgcolor: selectedClass === cls.id ? '#eef2ff' : 'transparent',
+                      }}
+                    >
+                      <FormControlLabel
+                        value={cls.id}
+                        control={<Radio size="small" />}
+                        label={cls.class_name}
+                        sx={{ width: '100%' }}
+                      />
+                    </Box>
+                  ))
+                ) : program ? (
+                  <Typography color="textSecondary" align="center" py={2}>
+                    No classes found for this programme
+                  </Typography>
+                ) : (
+                  <Typography color="textSecondary" align="center" py={2}>
+                    Select a programme to view classes
+                  </Typography>
+                )}
+              </RadioGroup>
+            )}
           </Box>
         </ParentCard>
       </Box>
@@ -695,14 +748,15 @@ const ClassSubject = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseAddSubjectToClassModal}>Cancel</Button>
+          <Button size='small' onClick={handleCloseAddSubjectToClassModal} disabled={loadingAddSubject}>Cancel</Button>
           <Button
             variant="contained"
             size='small'
             onClick={handleAddSubjectToClass}
-            disabled={loadingAvailableSubjects}
+            disabled={loadingAddSubject || loadingAvailableSubjects}
+            startIcon={loadingAddSubject ? <CircularProgress size={16} /> : null}
           >
-            {loadingAvailableSubjects ? <CircularProgress size={20} /> : 'Add Subject'}
+            {loadingAddSubject ? 'Adding...' : loadingAvailableSubjects ? 'Loading...' : 'Add Subject'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -798,9 +852,15 @@ const ClassSubject = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseEditClassSubjectModal}>Cancel</Button>
-          <Button variant="contained" size='small' onClick={handleUpdateClassSubject}>
-            Update Subject
+          <Button size='small' onClick={handleCloseEditClassSubjectModal} disabled={loadingUpdateSubject}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            size='small' 
+            onClick={handleUpdateClassSubject}
+            disabled={loadingUpdateSubject}
+            startIcon={loadingUpdateSubject ? <CircularProgress size={16} /> : null}
+          >
+            {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
           </Button>
         </DialogActions>
       </Dialog>

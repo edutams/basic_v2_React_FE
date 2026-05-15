@@ -221,82 +221,80 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                     </Typography>
                   </TableCell>
 
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
-                    {hasArms ? (
-                      <>
+                  {hasArms ? (
+                    <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleAddNewLearner(item)}
+                      >
+                        Add New Learner
+                      </Button>
+                      {index === 0 && activeHint === 'add' && (
+                        <ArrowHint
+                          show
+                          label="👆 Click to add a learner manually"
+                          direction="up-right"
+                          mode="persistent"
+                          delay="0s"
+                          position={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 20, mt: 0.5 }}
+                        />
+                      )}
+                    </TableCell>
+                  ) : (
+                    <TableCell
+                      colSpan={2}
+                      sx={{ bgcolor: cellBg, borderRadius: 2, p: 1 }}
+                      align="center"
+                    >
+                      <Typography sx={{ fontSize: 11, color: 'error.main', fontStyle: 'italic', fontWeight: 500 }}>
+                        Generate class arms first to enable adding or uploading learners
+                      </Typography>
+                    </TableCell>
+                  )}
+
+                  {hasArms && (
+                    <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<DownloadIcon />}
+                          onClick={() => handleDownloadTemplate(item.programme_class_id)}
+                        >
+                          Download Template
+                        </Button>
                         <Button
                           variant="contained"
                           size="small"
-                          onClick={() => handleAddNewLearner(item)}
+                          startIcon={<UploadIcon />}
+                          onClick={handleUploadClick}
                         >
-                          Add New Learner
+                          Upload Template
                         </Button>
-                        {index === 0 && activeHint === 'add' && (
-                          <ArrowHint
-                            show
-                            label="👆 Click to add a learner manually"
-                            direction="up-right"
-                            mode="persistent"
-                            delay="0s"
-                            position={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', zIndex: 20, mt: 0.5 }}
-                          />
-                        )}
-                      </>
-                    ) : (
-                      <Typography sx={{ fontSize: 11, color: 'text.disabled', fontStyle: 'italic' }}>
-                        No class arms yet
-                      </Typography>
-                    )}
-                  </TableCell>
-
-                  <TableCell sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }} align="center">
-                    {hasArms ? (
-                      <>
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => handleDownloadTemplate(item.programme_class_id)}
-                          >
-                            Download Template
-                          </Button>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            startIcon={<UploadIcon />}
-                            onClick={handleUploadClick}
-                          >
-                            Upload Template
-                          </Button>
-                        </Box>
-                        {index === 0 && activeHint === 'download' && (
-                          <ArrowHint
-                            show
-                            label="Download the template first"
-                            direction="up-left"
-                            mode="persistent"
-                            delay="0s"
-                            position={{ position: 'absolute', top: '100%', left: 0, zIndex: 20, mt: 0.5 }}
-                          />
-                        )}
-                        {index === 0 && activeHint === 'upload' && (
-                          <ArrowHint
-                            show
-                            label="upload your filled template"
-                            direction="up-right"
-                            mode="persistent"
-                            delay="0s"
-                            position={{ position: 'absolute', top: '100%', right: 0, zIndex: 20, mt: 0.5 }}
-                          />
-                        )}
-                      </>
-                    ) : (
-                      <Typography sx={{ fontSize: 11, color: 'text.disabled', fontStyle: 'italic' }}>
-                        Generate class arms first to enable upload
-                      </Typography>
-                    )}
-                  </TableCell>
+                      </Box>
+                      {index === 0 && activeHint === 'download' && (
+                        <ArrowHint
+                          show
+                          label="Download the template first"
+                          direction="up-left"
+                          mode="persistent"
+                          delay="0s"
+                          position={{ position: 'absolute', top: '100%', left: 0, zIndex: 20, mt: 0.5 }}
+                        />
+                      )}
+                      {index === 0 && activeHint === 'upload' && (
+                        <ArrowHint
+                          show
+                          label="upload your filled template"
+                          direction="up-right"
+                          mode="persistent"
+                          delay="0s"
+                          position={{ position: 'absolute', top: '100%', right: 0, zIndex: 20, mt: 0.5 }}
+                        />
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}

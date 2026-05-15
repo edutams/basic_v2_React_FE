@@ -146,9 +146,11 @@ const ParentDashboard = () => {
               />
             </Box>
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
-              {PROSPECTIVE_WARDS.map((ward) => (
-                <ProspectiveWardCard key={ward.id} ward={ward} onViewDetails={handleViewProspectiveWard} />
-              ))}
+              <Stack spacing={1.5}>
+                {PROSPECTIVE_WARDS.map((ward) => (
+                  <ProspectiveWardCard key={ward.id} ward={ward} onViewDetails={handleViewProspectiveWard} />
+                ))}
+              </Stack>
             </Box>
           </Paper>
         </Grid>

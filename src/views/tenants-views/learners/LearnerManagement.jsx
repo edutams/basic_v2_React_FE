@@ -440,7 +440,7 @@ const LearnerManagement = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>S/N</TableCell>
-                  <TableCell>Learner ID</TableCell>
+                  <TableCell>Admission Number</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Class / Arm</TableCell>
                   <TableCell align="center">Parent</TableCell>

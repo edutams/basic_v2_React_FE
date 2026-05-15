@@ -13,7 +13,7 @@ const ADMISSION_STEPS = ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
 const AdmissionSteps = ({ currentStep }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1.5, mb: 1 }}>
     {ADMISSION_STEPS.map((step, i) => {
-      const done   = i < currentStep;
+      const done = i < currentStep;
       const active = i === currentStep;
       return (
         <React.Fragment key={step}>
@@ -65,7 +65,13 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
   const isAdmitted = ward.status === 'Admitted';
 
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', mb: 1.5 }}>
+    <Paper variant="outlined" sx={{
+      borderRadius: 2, overflow: 'hidden', mb: 1.5, cursor: 'pointer',
+      transition: 'background 0.15s',
+      '&:hover': { bgcolor: 'action.hover' }
+    }}
+      onClick={() => onViewDetails?.(ward)}
+    >
       {/* Header row — clickable */}
       <Box
         sx={{
@@ -73,11 +79,8 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
           alignItems: 'center',
           gap: 1.5,
           p: 1.5,
-          cursor: 'pointer',
-          transition: 'background 0.15s',
-          '&:hover': { bgcolor: 'action.hover' },
+
         }}
-        onClick={() => onViewDetails?.(ward)}
       >
         <Avatar sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 700 }}>
           {ward.initials}

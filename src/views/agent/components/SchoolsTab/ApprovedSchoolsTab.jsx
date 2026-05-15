@@ -20,6 +20,10 @@ import {
   Avatar,
   Link,
 } from '@mui/material';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { IconDotsVertical } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -82,7 +86,8 @@ const ApprovedSchoolsTab = ({
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const filtered = filter(schoolList);
+  const approvedList = (schoolList || []).filter((s) => s.onboarding_status === 'approved');
+  const filtered = filter(approvedList);
 
   if (schoolLoading) {
     return (
@@ -134,7 +139,7 @@ const ApprovedSchoolsTab = ({
                         </Avatar>
                         <Box>
                           <Typography variant="subtitle2" fontWeight={700}>
-                            {row.tenant_name || row.institutionName}
+                            {row.tenant_name}
                           </Typography>
                           {row.domains?.[0]?.domain ? (
                             <Link
@@ -266,39 +271,50 @@ const ApprovedSchoolsTab = ({
       >
         <MenuItem
           onClick={() => {
-            // Call your approve onboarding function
-            onApproveOnboarding(activeRow);
-            setAnchorEl(null);
-          }}
-          disabled={activeRow?.onboarding_status === 'approved'}
-        >
-          {activeRow?.onboarding_status === 'completed'
-            ? 'Approve Onboarding'
-            : 'Onboarding Not Completed'}
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
             onViewProfile(activeRow);
             setAnchorEl(null);
           }}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
-          View School Profile
+          <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#6b7280' }} />
+          View Profile
         </MenuItem>
+
         <MenuItem
           onClick={() => {
             onEdit(activeRow);
             setAnchorEl(null);
           }}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
         >
+          <EditOutlinedIcon fontSize="small" sx={{ color: '#6b7280' }} />
           Edit School
         </MenuItem>
+
         <MenuItem
           onClick={() => {
             onDeactivate(activeRow);
             setAnchorEl(null);
           }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color:
+              String(activeRow?.status || '').toLowerCase() === 'active' ? '#dc2626' : '#16a34a',
+          }}
         >
-          {String(activeRow?.status || '').toLowerCase() === 'active' ? 'Deactivate' : 'Activate'}
+          {String(activeRow?.status || '').toLowerCase() === 'active' ? (
+            <>
+              <BlockOutlinedIcon fontSize="small" />
+              Deactivate
+            </>
+          ) : (
+            <>
+              <CheckCircleOutlineIcon fontSize="small" />
+              Activate
+            </>
+          )}
         </MenuItem>
       </Menu>
     </>

@@ -397,8 +397,11 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     setTopicModalOpen(true);
   };
 
-  const handleAddSubtopic = (topicId) => {
-    setSelectedTopic({ topic_id: topicId });
+  const handleAddSubtopic = (topicId,selectedRow) => {
+    setSelectedTopic({ 
+      topic_id: topicId,
+      topic_name: selectedRow?.topic_name
+    }); 
     setSelectedSubtopic(null);
     handleMenuClose();
     setSubtopicModalOpen(true);
@@ -406,7 +409,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
 
   const handleEditSubtopic = (row) => {
     setSelectedSubtopic(row);
-    setSelectedTopic({ topic_id: row.topic_id });
+    setSelectedTopic({ 
+      topic_id: topicId,
+      topic_name: selectedRow?.topic_name
+    }); 
     handleMenuClose();
     setSubtopicModalOpen(true);
   };
@@ -1121,7 +1127,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       <ReusableModal
         open={subtopicModalOpen}
         onClose={() => setSubtopicModalOpen(false)}
-        title={selectedSubtopic ? `Edit Subtopic for "${selectedTopic?.topic_name || 'Topic'}"` : `Add Subtopic for "${selectedTopic?.topic_name || 'Topic'}"`}
+        title={selectedSubtopic ? `Edit Subtopic for ${selectedTopic?.topic_name || 'Topic'}` : `Add Subtopic for ${selectedTopic?.topic_name}`}
       >
         <Box
           component="form"
@@ -1284,7 +1290,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
             Edit Topic
           </MenuItem>,
-          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id)}>
+          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id,selectedRow)}>
             Add Subtopic
           </MenuItem>,
           <MenuItem
@@ -1296,7 +1302,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </MenuItem>,
         ]}
         {menuType === 'subtopic' && [
-          <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow)}>
+          <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow,selectedRow)}>
             Edit Subtopic
           </MenuItem>,
           <MenuItem key="add-lo" onClick={() => handleAddObjective(selectedRow)}>

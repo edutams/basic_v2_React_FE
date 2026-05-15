@@ -15,12 +15,118 @@ import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import PropTypes from 'prop-types';
 import { wardValidationSchema } from './validation/wardValidationSchema';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const NIGERIA_STATES = [
-  { name: 'Abia',        lgas: ['Aba North','Aba South','Arochukwu','Bende','Ikwuano','Isiala Ngwa North','Isiala Ngwa South','Isuikwuato','Obi Ngwa','Ohafia','Osisioma','Ugwunagbo','Ukwa East','Ukwa West','Umuahia North','Umuahia South','Umu Nneochi'] },
-  { name: 'Adamawa',     lgas: ['Demsa','Fufure','Ganye','Gombi','Hong','Jada','Lamurde','Madagali','Maiha','Mayo Belwa','Michika','Mubi North','Mubi South','Numan','Shelleng','Song','Toungo','Yola North','Yola South'] },
-  { name: 'Akwa Ibom',   lgas: ['Abak','Eastern Obolo','Eket','Esit Eket','Essien Udim','Etim Ekpo','Etinan','Ibeno','Ibesikpo Asutan','Ibiono-Ibom','Ika','Ikono','Ikot Abasi','Ikot Ekpene','Ini','Itu','Mbo','Mkpat-Enin','Nsit-Atai','Nsit-Ibom','Nsit-Ubium','Obot Akara','Okobo','Onna','Oron','Oruk Anam','Udung-Uko','Ukanafun','Uruan','Urue-Offong/Oruko','Uyo'] },
-  { name: 'Anambra',     lgas: ['Aguata','Anambra East','Anambra West','Anaocha','Awka North','Awka South','Ayamelum','Dunukofia','Ekwusigo','Idemili North','Idemili South','Ihiala','Njikoka','Nnewi North','Nnewi South','Ogbaru','Onitsha North','Onitsha South','Orumba North','Orumba South','Oyi'] },
+  {
+    name: 'Abia',
+    lgas: [
+      'Aba North',
+      'Aba South',
+      'Arochukwu',
+      'Bende',
+      'Ikwuano',
+      'Isiala Ngwa North',
+      'Isiala Ngwa South',
+      'Isuikwuato',
+      'Obi Ngwa',
+      'Ohafia',
+      'Osisioma',
+      'Ugwunagbo',
+      'Ukwa East',
+      'Ukwa West',
+      'Umuahia North',
+      'Umuahia South',
+      'Umu Nneochi',
+    ],
+  },
+  {
+    name: 'Adamawa',
+    lgas: [
+      'Demsa',
+      'Fufure',
+      'Ganye',
+      'Gombi',
+      'Hong',
+      'Jada',
+      'Lamurde',
+      'Madagali',
+      'Maiha',
+      'Mayo Belwa',
+      'Michika',
+      'Mubi North',
+      'Mubi South',
+      'Numan',
+      'Shelleng',
+      'Song',
+      'Toungo',
+      'Yola North',
+      'Yola South',
+    ],
+  },
+  {
+    name: 'Akwa Ibom',
+    lgas: [
+      'Abak',
+      'Eastern Obolo',
+      'Eket',
+      'Esit Eket',
+      'Essien Udim',
+      'Etim Ekpo',
+      'Etinan',
+      'Ibeno',
+      'Ibesikpo Asutan',
+      'Ibiono-Ibom',
+      'Ika',
+      'Ikono',
+      'Ikot Abasi',
+      'Ikot Ekpene',
+      'Ini',
+      'Itu',
+      'Mbo',
+      'Mkpat-Enin',
+      'Nsit-Atai',
+      'Nsit-Ibom',
+      'Nsit-Ubium',
+      'Obot Akara',
+      'Okobo',
+      'Onna',
+      'Oron',
+      'Oruk Anam',
+      'Udung-Uko',
+      'Ukanafun',
+      'Uruan',
+      'Urue-Offong/Oruko',
+      'Uyo',
+    ],
+  },
+  {
+    name: 'Anambra',
+    lgas: [
+      'Aguata',
+      'Anambra East',
+      'Anambra West',
+      'Anaocha',
+      'Awka North',
+      'Awka South',
+      'Ayamelum',
+      'Dunukofia',
+      'Ekwusigo',
+      'Idemili North',
+      'Idemili South',
+      'Ihiala',
+      'Njikoka',
+      'Nnewi North',
+      'Nnewi South',
+      'Ogbaru',
+      'Onitsha North',
+      'Onitsha South',
+      'Orumba North',
+      'Orumba South',
+      'Oyi',
+    ],
+  },
 ];
 
 const EMPTY_FORM = {
@@ -64,7 +170,6 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
       </Typography>
 
       <Grid container spacing={2}>
-
         <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Surname"
@@ -103,17 +208,21 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField
+          <DatePicker
             label="Date of Birth"
-            name="dob"
-            type="date"
-            value={formik.values.dob}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            fullWidth
-            slotProps={{ inputLabel: { shrink: true } }}
-            error={formik.touched.dob && Boolean(formik.errors.dob)}
-            helperText={formik.touched.dob && formik.errors.dob}
+            value={formik.values.dob ? dayjs(formik.values.dob) : null}
+            onChange={(val) => {
+              formik.setFieldValue('dob', val ? val.format('YYYY-MM-DD') : '');
+            }}
+            maxDate={dayjs().subtract(1, 'day')}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                onBlur: formik.handleBlur,
+                error: formik.touched.dob && Boolean(formik.errors.dob),
+                helperText: formik.touched.dob && formik.errors.dob,
+              },
+            }}
           />
         </Grid>
 
@@ -147,7 +256,9 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
               label="State of Origin"
             >
               {NIGERIA_STATES.map((s) => (
-                <MenuItem key={s.name} value={s.name}>{s.name}</MenuItem>
+                <MenuItem key={s.name} value={s.name}>
+                  {s.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -168,7 +279,9 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
               label="LGA of Origin"
             >
               {lgas.map((l) => (
-                <MenuItem key={l} value={l}>{l}</MenuItem>
+                <MenuItem key={l} value={l}>
+                  {l}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -188,7 +301,6 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
             helperText={formik.touched.home_address && formik.errors.home_address}
           />
         </Grid>
-
       </Grid>
 
       <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>

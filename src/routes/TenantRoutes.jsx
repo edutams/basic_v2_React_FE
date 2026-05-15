@@ -38,9 +38,7 @@ const AlcManager = Loadable(
 const ActivityLog = Loadable(lazy(() => import('../views/tenants-views/activity-log/ActivityLog')));
 
 const CalendarPage = Loadable(lazy(() => import('../views/school-setup/CalendarPage')));
-const AccountSetting = Loadable(
-  lazy(() => import('../views/pages/account-setting/AccountSetting')),
-);
+const AccountSetting = Loadable(lazy(() => import('../views/pages/tenant-pages/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
 const ParentManagement = Loadable(
   lazy(() => import('../views/tenants-views/parents/ParentManagement')),
@@ -48,10 +46,12 @@ const ParentManagement = Loadable(
 const LearnerManagement = Loadable(
   lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
 );
-const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
 const NewApplication = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
 const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionStatus')));
 const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
+const ApplicationTracker = Loadable(
+  lazy(() => import('../views/parent-dashboard/ApplicationTracker')),
+);
 
 const TenantRoutes = [
   {
@@ -154,16 +154,20 @@ const TenantRoutes = [
       { path: 'parent-management', element: <ParentManagement /> },
       { path: 'learner-management', element: <LearnerManagement /> },
       { path: 'calendar', element: <CalendarPage /> },
-      { path: 'profile', element: <AccountSetting /> },
+      { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: 'staff-setup', element: <StaffManager /> },
 
-      // ── Parent routes ──
-      { path: 'dashboard', element: <ParentDashboard /> },
+      // ── Dashboard route (handles both school and parent dashboards) ──
+      { path: 'dashboard', element: <SchoolDashboardMain /> },
+      
+      // ── Parent-specific routes ──
       { path: 'admission/new-application', element: <NewApplication /> },
       { path: 'admission-status', element: <AdmissionStatus /> },
       { path: 'admission-status/:id', element: <AdmissionStatus /> },
       { path: 'admission-letter', element: <AdmissionLetter /> },
       { path: 'admission-letter/:id', element: <AdmissionLetter /> },
+      { path: 'application-tracker', element: <ApplicationTracker /> },
+      { path: 'application-tracker/:id', element: <ApplicationTracker /> },
 
       // Admission Application
       { path: 'application-setup', element: <NewApplication /> },

@@ -709,15 +709,38 @@ const SubjectBank = () => {
               <TableContainer sx={{ maxHeight: 600 }}>
                 <Table sx={{ tableLayout: 'fixed' }}>
                   <TableHead>
-                    <TableRow >
-                      <TableCell width="8%">S/N</TableCell>
-                      <TableCell width="25%">Subject</TableCell>
-                      <TableCell width="18%">Subject Code</TableCell>
-                      <TableCell width="18%">Program</TableCell>
-                      <TableCell width="12%">Passmark</TableCell>
-                      <TableCell width="10%">Unit</TableCell>
-                      <TableCell width="9%" />
-                    </TableRow>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+  <TableCell sx={{ fontWeight: 700, width: '5%', py: 1.5, whiteSpace: 'nowrap' }}>
+    S/N
+  </TableCell>
+
+  <TableCell sx={{ fontWeight: 700, width: '25%', py: 1.5 }}>
+    Subject
+  </TableCell>
+
+  <TableCell sx={{ fontWeight: 700, width: '15%', py: 1.5 }}>
+    Subject Code
+  </TableCell>
+
+  <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
+    Program
+  </TableCell>
+
+  <TableCell sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}>
+    Pass Mark
+  </TableCell>
+
+  <TableCell sx={{ fontWeight: 700, width: '10%', py: 1.5 }}>
+    Unit
+  </TableCell>
+
+  <TableCell
+    align="center"
+    sx={{ fontWeight: 700, width: '15%', py: 1.5, whiteSpace: 'nowrap' }}
+  >
+    Actions
+  </TableCell>
+</TableRow>
                   </TableHead>
                   <TableBody>
                     {loadingSubjects ? (

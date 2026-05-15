@@ -1161,7 +1161,22 @@ const Agent = () => {
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => setIsRegisterModalOpen(true)}
-                  sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    '&:hover': { bgcolor: 'primary.dark' },
+
+                    fontSize: {
+                      xs: '0.75rem',
+                      sm: '0.875rem',
+                    },
+
+                    px: {
+                      xs: 1.5,
+                      sm: 2,
+                    },
+
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   Add New Organization
                 </Button>
@@ -1265,11 +1280,11 @@ const Agent = () => {
                       const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                       const adminInitials = fullName
                         ? fullName
-                          .split(' ')
-                          .slice(0, 2)
-                          .map((w) => w[0])
-                          .join('')
-                          .toUpperCase()
+                            .split(' ')
+                            .slice(0, 2)
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
                         : 'NA';
                       const level = Number(agent.access_level);
                       const colorMap = {
@@ -1308,7 +1323,7 @@ const Agent = () => {
                                     flexShrink: 0,
                                   }}
                                 >
-                                  {!(agent.imgsrc) && initials}
+                                  {!agent.imgsrc && initials}
                                 </Avatar>
                                 <Box>
                                   <Typography
@@ -1611,13 +1626,19 @@ const Agent = () => {
         </Dialog>
 
         {/* Organization Delete Confirmation */}
-        <Dialog open={deleteConfirmOpen} onClose={handleCancelDeleteOrganization} maxWidth="xs" fullWidth>
+        <Dialog
+          open={deleteConfirmOpen}
+          onClose={handleCancelDeleteOrganization}
+          maxWidth="xs"
+          fullWidth
+        >
           <DialogTitle sx={{ fontWeight: 600 }}>Delete Organization</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete{' '}
-              <strong>{selectedAgent?.organizationName || 'this organization'}</strong>? This action cannot
-              be undone. This can only be done if no schools are attached to this organization.
+              <strong>{selectedAgent?.organizationName || 'this organization'}</strong>? This action
+              cannot be undone. This can only be done if no schools are attached to this
+              organization.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>

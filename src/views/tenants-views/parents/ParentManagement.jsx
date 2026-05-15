@@ -36,8 +36,12 @@ import {
   DialogActions,
 } from '@mui/material';
 
-import { Search as SearchIcon, MoreVert as MoreVertIcon, CloudUpload as UploadIcon,
-  Download as DownloadIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  MoreVert as MoreVertIcon,
+  CloudUpload as UploadIcon,
+  Download as DownloadIcon,
+} from '@mui/icons-material';
 import { IconUsers, IconUserCheck, IconUserHeart } from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
@@ -272,7 +276,7 @@ const ParentManagement = () => {
             count={stats.total}
             label="Total Parents"
             icon={FamilyRestroomIcon}
-             color="primary"
+            color="primary"
             loading={statsLoading}
           />
           <StatCard
@@ -294,16 +298,44 @@ const ParentManagement = () => {
 
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
             <Typography variant="h5">Parents & Guardians</Typography>
-            <Box display="flex" gap={1}>
-              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
+
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+                flexWrap: 'wrap',
+                width: { xs: '100%', md: 'auto' },
+              }}
+            >
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                fullWidth={false}
+                onClick={handleDownloadTemplate}
+              >
                 Download Template
               </Button>
-              <Button variant="outlined" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
+
+              <Button
+                variant="outlined"
+                startIcon={<UploadIcon />}
+                fullWidth={false}
+                onClick={() => setUploadModalOpen(true)}
+              >
                 Upload Template
               </Button>
-              <Button variant="contained" color="primary" onClick={handleOpenAdd}>
+
+              <Button variant="contained" color="primary" fullWidth={false} onClick={handleOpenAdd}>
                 Add Single Parent
               </Button>
             </Box>
@@ -388,7 +420,9 @@ const ParentManagement = () => {
 
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
-                          {row.user ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}` : '—'}
+                          {row.user
+                            ? `${row.title ? row.title + ' ' : ''}${row.user.fname} ${row.user.lname}`
+                            : '—'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {relationshipLabel(row.relationship)}
@@ -530,7 +564,12 @@ const ParentManagement = () => {
       /> */}
 
       {/* Confirm Delete — inline like ClassStructureTable */}
-      <Dialog open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Delete Parent</DialogTitle>
         <DialogContent>
           <Typography>
@@ -539,7 +578,8 @@ const ParentManagement = () => {
               {parentToDelete?.user
                 ? `${parentToDelete.user.fname} ${parentToDelete.user.lname}`
                 : 'this parent'}
-            </strong>? This action cannot be undone.
+            </strong>
+            ? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -588,7 +628,10 @@ const ParentManagement = () => {
         open={linkWardModalOpen}
         onClose={() => setLinkWardModalOpen(false)}
         parent={wardParent}
-        onSaved={() => { fetchParents(); fetchStats(); }}
+        onSaved={() => {
+          fetchParents();
+          fetchStats();
+        }}
       />
 
       <ViewWardsModal

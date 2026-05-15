@@ -257,7 +257,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       if (response.status) {
         showSnackbar('Subscribed successfully', 'success');
         loadSessionTerms(selectedSessionId);
-        refreshTenantInfo();
+        await refreshTenantInfo();
         if (onUpdate) onUpdate();
       } else {
         showSnackbar(response.message || 'Failed to subscribe', 'error');
@@ -288,7 +288,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           'success',
         );
         loadSessionTerms(selectedSessionId);
-        refreshTenantInfo();
+        await refreshTenantInfo();
         if (onUpdate) onUpdate();
       } else {
         const errorMessage =

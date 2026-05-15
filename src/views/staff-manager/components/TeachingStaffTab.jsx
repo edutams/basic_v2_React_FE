@@ -19,7 +19,6 @@ import {
   ButtonGroup,
   TablePagination,
   Avatar,
-
 } from '@mui/material';
 import {
   IconSearch,
@@ -124,7 +123,11 @@ const TeachingStaffTab = ({
                 Add Single Staff
               </Button>
               <ButtonGroup variant="outlined">
-                <Button startIcon={<IconPlus size={18} />} sx={{ textTransform: 'none' }} onClick={handleUploadStaff}>
+                <Button
+                  startIcon={<IconPlus size={18} />}
+                  sx={{ textTransform: 'none' }}
+                  onClick={handleUploadStaff}
+                >
                   Upload Excel
                 </Button>
                 <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
@@ -201,15 +204,11 @@ const TeachingStaffTab = ({
                           >
                             {/* {!(staffMember.user.avatar || agent.admin_avatar) && initials} */}
                           </Avatar>
-                          <Typography variant="body2">
-                            {staffMember.user?.fname} {staffMember.user?.lname}
-                          </Typography>
+                          <Typography variant="body2">{staffMember.user?.full_name}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">
-                          {staffMember.user?.email || 'N/A'}
-                        </Typography>
+                        <Typography variant="body2">{staffMember.user?.email || 'N/A'}</Typography>
                         <Typography variant="caption" color="textSecondary">
                           {staffMember.user?.phone || 'N/A'}
                         </Typography>
@@ -218,29 +217,26 @@ const TeachingStaffTab = ({
                         <Typography variant="body2">
                           {staffMember.date_of_first_appointment
                             ? new Date(staffMember.date_of_first_appointment).toLocaleDateString(
-                              'en-US',
-                              {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              },
-                            )
+                                'en-US',
+                                {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                },
+                              )
                             : 'N/A'}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={staffMember.status || 'active'}
-                          color={getStatusColor(staffMember.status)}
+                          label={staffMember.staff_status}
+                          color={getStatusColor(staffMember.staff_status)}
                           size="small"
                           sx={{ textTransform: 'lowercase' }}
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleMenuOpen(e, staffMember)}
-                        >
+                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>
                           <IconDotsVertical size={18} />
                         </IconButton>
                       </TableCell>

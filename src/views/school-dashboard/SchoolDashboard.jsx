@@ -1,76 +1,70 @@
-import React from 'react';
-import { Grid, Box } from '@mui/material';
+import { useContext } from 'react';
 import PageContainer from '../../components/container/PageContainer';
-// import School-specific widgets/components here as you build them
+import { TenantAuthContext } from '../../context/TenantContext/auth';
+import ParentDashboard from '../parent-dashboard/ParentDashboard';
+import PageUnderDevelopment from '../../components/shared/PageUnderDevelopment';
 
 export default function SchoolDashboard() {
+  const { user } = useContext(TenantAuthContext);
+
+  /**
+   * User Types
+   * 1 = Staff
+   * 2 = Learner
+   * 3 = Parent
+   */
+  const isStaff = user?.user_type_id === 1;
+  const isLearner = user?.user_type_id === 2;
+  const isParent = user?.user_type_id === 3;
+
+  /**
+   * Dashboard Title
+   */
+  const dashboardTitle = isParent
+    ? 'Parent Dashboard'
+    : isStaff
+    ? 'Staff Dashboard'
+    : isLearner
+    ? 'Student Dashboard'
+    : 'Dashboard';
+
+  /**
+   * Dashboard Description
+   */
+  const dashboardDescription = isParent
+    ? 'Parent portal'
+    : isStaff
+    ? 'Staff portal'
+    : isLearner
+    ? 'Student portal'
+    : 'Dashboard';
+
   return (
-    <PageContainer title="School Dashboard" description="This is the School Dashboard">
-      <Box mt={3}>
-        <Grid container spacing={3}>
-          {/* ------------------------- row 1 ------------------------- */}
-          <Grid item xs={12} lg={6}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                {/* <SchoolWelcomeCard /> */}
-                <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-                  Welcome to the School Dashboard!
-                </Box>
-              </Grid>
-              <Grid item xs={12} lg={6} sm={6}>
-                {/* <SchoolStatsCard /> */}
-                <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-                  School Stats
-                </Box>
-              </Grid>
-              <Grid item xs={12} lg={6} sm={6}>
-                {/* <SchoolNotificationsCard /> */}
-                <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-                  Notifications
-                </Box>
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid item xs={12} lg={6}>
-            {/* <SchoolOverview /> */}
-            <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-              School Overview
-            </Box>
-          </Grid>
-          {/* ------------------------- row 2 ------------------------- */}
-          <Grid item xs={12} lg={4}>
-            {/* <SchoolAttendanceCard /> */}
-            <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-              Attendance
-            </Box>
-          </Grid>
-          <Grid item xs={12} lg={8}>
-            {/* <SchoolPerformance /> */}
-            <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-              Performance
-            </Box>
-          </Grid>
-          {/* ------------------------- row 3 ------------------------- */}
-          <Grid item xs={12} lg={4}>
-            {/* <SchoolBlogCard /> */}
-            <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-              Blog
-            </Box>
-          </Grid>
-          <Grid item xs={12} lg={4}>
-            {/* <SchoolWeeklyStats /> */}
-            <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-              Weekly Stats
-            </Box>
-          </Grid>
-          <Grid item xs={12} lg={4}>
-            {/* <SchoolDailyActivities /> */}
-            <Box p={3} bgcolor="background.paper" borderRadius={2} boxShadow={1}>
-              Daily Activities
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
+    <PageContainer
+      title={dashboardTitle}
+      description={dashboardDescription}
+    >
+      {isParent ? (
+        <ParentDashboard />
+      ) : isStaff ? (
+        <PageUnderDevelopment
+          title="Staff Dashboard Under Development"
+          subtitle="We're building a comprehensive staff management portal. Check back soon!"
+          showImage={false}
+        />
+      ) : isLearner ? (
+        <PageUnderDevelopment
+          title="Student Dashboard Under Development"
+          subtitle="We're creating an interactive learning portal for students. Check back soon!"
+          showImage={false}
+        />
+      ) : (
+        <PageUnderDevelopment
+          title="Dashboard Under Development"
+          subtitle="We're working on creating the perfect dashboard experience. Check back soon!"
+          showImage={false}
+        />
+      )}
     </PageContainer>
   );
 }

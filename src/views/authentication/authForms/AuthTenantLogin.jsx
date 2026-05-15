@@ -36,7 +36,7 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount }) => {
   const successMessage = location.state?.message;
   const notify = useNotification();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

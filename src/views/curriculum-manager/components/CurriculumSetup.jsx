@@ -119,6 +119,11 @@ const CurriculumSetup = () => {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openImportModal, setOpenImportModal] = useState(false);
+  
+  // Loading states for buttons
+  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [loadingUpdate, setLoadingUpdate] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
   // Assign to Classes state
   const [classData, setClassData] = useState([]);
@@ -147,6 +152,10 @@ const CurriculumSetup = () => {
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [fieldErrors, setFieldErrors] = useState({});
+
+  // Loading states for sessions and terms
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [loadingTerms, setLoadingTerms] = useState(false);
 
   // Methods
   const showSnackbar = (message, severity = 'success') => {
@@ -194,6 +203,7 @@ const CurriculumSetup = () => {
 
   // Sessions and Terms functions
   const loadSessionsAndTerms = async () => {
+    setLoadingSessions(true);
     try {
       const sessionsRes = await fetchSessions();
 
@@ -205,6 +215,7 @@ const CurriculumSetup = () => {
           setSelectedSession(currentSession.id);
 
           // Load terms for the initial session
+          setLoadingTerms(true);
           const termsRes = await fetchTerms(currentSession.id);
           if (termsRes.status) {
             setTerms(termsRes.data);
@@ -212,15 +223,19 @@ const CurriculumSetup = () => {
               setSelectedTerm(termsRes.data[0].id);
             }
           }
+          setLoadingTerms(false);
         }
       }
     } catch (error) {
       showSnackbar('Failed to load sessions and terms', 'error');
+    } finally {
+      setLoadingSessions(false);
     }
   };
 
   const handleSessionChange = async (sessionId) => {
     setSelectedSession(sessionId);
+    setLoadingTerms(true);
     try {
       const termsRes = await fetchTerms(sessionId);
       if (termsRes.status) {
@@ -233,6 +248,8 @@ const CurriculumSetup = () => {
       }
     } catch (error) {
       showSnackbar('Failed to load terms for selected session', 'error');
+    } finally {
+      setLoadingTerms(false);
     }
   };
 
@@ -281,10 +298,19 @@ const CurriculumSetup = () => {
       if (response.status) {
         showSnackbar('Assignments saved successfully', 'success');
       } else {
-        showSnackbar(response.message || 'Failed to save assignments', 'error');
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to save assignments';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to save assignments', 'error');
+      // Handle API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to save assignments';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to save assignments', 'error');
+      }
     } finally {
       setLoadingSave(false);
     }
@@ -302,6 +328,7 @@ const CurriculumSetup = () => {
 
   const handleCreateCurriculum = async () => {
     setFieldErrors({});
+    setLoadingCreate(true);
 
     try {
       const response = await createCurriculum(formData);
@@ -333,11 +360,14 @@ const CurriculumSetup = () => {
         error.response?.data?.message || 'Failed to create curriculum',
         'error'
       );
+    } finally {
+      setLoadingCreate(false);
     }
   };
 
   const handleUpdateCurriculum = async () => {
     setFieldErrors({});
+    setLoadingUpdate(true);
 
     try {
       const response = await updateCurriculum(selectedCurriculum.id, formData);
@@ -369,10 +399,13 @@ const CurriculumSetup = () => {
         error.response?.data?.message || 'Failed to update curriculum',
         'error'
       );
+    } finally {
+      setLoadingUpdate(false);
     }
   };
 
   const handleDeleteCurriculum = async () => {
+    setLoadingDelete(true);
     try {
       const response = await deleteCurriculum(selectedCurriculum.id);
       if (response.status) {
@@ -380,10 +413,21 @@ const CurriculumSetup = () => {
         handleCloseDeleteModal();
         fetchCurriculumsData();
       } else {
-        showSnackbar(response.message || 'Failed to delete curriculum', 'error');
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to delete curriculum';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to delete curriculum', 'error');
+      // Handle API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to delete curriculum';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to delete curriculum', 'error');
+      }
+    } finally {
+      setLoadingDelete(false);
     }
   };
 
@@ -510,10 +554,19 @@ const CurriculumSetup = () => {
         handleCloseImportModal();
         fetchCurriculumsData();
       } else {
-        showSnackbar(response.message || 'Failed to import curriculums', 'error');
+        // Display the detailed error message from the backend
+        const errorMessage = response.error || response.message || 'Failed to import curriculums';
+        showSnackbar(errorMessage, 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to import curriculums', 'error');
+      // Handle API error responses
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        const errorMessage = errorData.error || errorData.message || 'Failed to import curriculums';
+        showSnackbar(errorMessage, 'error');
+      } else {
+        showSnackbar('Failed to import curriculums', 'error');
+      }
     } finally {
       setLoadingImport(false);
     }
@@ -661,9 +714,10 @@ const CurriculumSetup = () => {
                     value={selectedSession}
                     onChange={(e) => handleSessionChange(e.target.value)}
                     displayEmpty
+                    disabled={loadingSessions}
                   >
                     <MenuItem value="" disabled>
-                      Select Session
+                      {loadingSessions ? 'Loading sessions...' : 'Select Session'}
                     </MenuItem>
                     {sessions.map((session) => (
                       <MenuItem key={session.id} value={session.id}>
@@ -676,9 +730,10 @@ const CurriculumSetup = () => {
                     value={selectedTerm}
                     onChange={(e) => setSelectedTerm(e.target.value)}
                     displayEmpty
+                    disabled={loadingTerms}
                   >
                     <MenuItem value="" disabled>
-                      Select Term
+                      {loadingTerms ? 'Loading terms...' : 'Select Term'}
                     </MenuItem>
                     {terms.map((term) => (
                       <MenuItem key={term.id} value={term.id}>
@@ -828,9 +883,15 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseCreateModal}>Cancel</Button>
-          <Button variant="contained" size='small' onClick={handleCreateCurriculum}>
-            Create
+          <Button size='small' onClick={handleCloseCreateModal} disabled={loadingCreate}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            size='small' 
+            onClick={handleCreateCurriculum}
+            disabled={loadingCreate}
+            startIcon={loadingCreate ? <CircularProgress size={16} /> : null}
+          >
+            {loadingCreate ? 'Creating...' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -865,9 +926,15 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseEditModal}>Cancel</Button>
-          <Button variant="contained" size='small' onClick={handleUpdateCurriculum}>
-            Update
+          <Button size='small' onClick={handleCloseEditModal} disabled={loadingUpdate}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            size='small' 
+            onClick={handleUpdateCurriculum}
+            disabled={loadingUpdate}
+            startIcon={loadingUpdate ? <CircularProgress size={16} /> : null}
+          >
+            {loadingUpdate ? 'Updating...' : 'Update'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -881,9 +948,16 @@ const CurriculumSetup = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button size='small' onClick={handleCloseDeleteModal}>Cancel</Button>
-          <Button variant="contained" color="error" size='small' onClick={handleDeleteCurriculum}>
-            Delete
+          <Button size='small' onClick={handleCloseDeleteModal} disabled={loadingDelete}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            color="error" 
+            size='small' 
+            onClick={handleDeleteCurriculum}
+            disabled={loadingDelete}
+            startIcon={loadingDelete ? <CircularProgress size={16} /> : null}
+          >
+            {loadingDelete ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

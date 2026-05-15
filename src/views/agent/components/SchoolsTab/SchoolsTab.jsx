@@ -63,8 +63,8 @@ import {
   StatusChip,
 } from './schoolTabHelpers';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import AllApplicationsTab from './AllApplicationsTab';
-import PendingApprovalsTab from './PendingApprovalsTab';
+import ApplicationReview from './ApplicationReview';
+import SetupApprovals from './SetupApprovals';
 import ApprovedSchoolsTab from './ApprovedSchoolsTab';
 import { usePermissions } from '../../../../context/AgentContext/permissions';
 
@@ -474,7 +474,14 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
 // ── Main SchoolsTab ───────────────────────────────────────────────────────────
 
-const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refreshKey, isViewingProfile = false, isDashboard = false }) => {
+const SchoolsTab = ({
+  onAddSchool,
+  organizationId = null,
+  handleRefresh,
+  refreshKey,
+  isViewingProfile = false,
+  isDashboard = false,
+}) => {
   const theme = useTheme();
   const { user } = useAuth();
   const { can } = usePermissions();
@@ -705,6 +712,9 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
   // ── Derived / summary ─────────────────────────────────────────────────────
 
   const pendingProspects = prospectList.filter((p) => p.status === 'pending');
+
+  const setupPendingCount = schoolList.filter((s) => s.onboarding_status !== 'approved').length;
+
   const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
 
   const getSchoolType = (s) => {
@@ -755,230 +765,235 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box>
         {/* ── Analytics Cards ── */}
-        {can('landlord.school.analytics') && user?.organization?.access_level == 1 && !isViewingProfile && !isDashboard && (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
-              gap: 2,
-              mb: 3,
-            }}
-          >
-            {/* Total Schools */}
-            <Paper
+        {can('landlord.school.analytics') &&
+          user?.organization?.access_level == 1 &&
+          !isViewingProfile &&
+          !isDashboard && (
+            <Box
               sx={{
-                p: 3,
-                borderRadius: 2,
-                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+                gap: 2,
+                mb: 3,
               }}
             >
-              <Box
+              {/* Total Schools */}
+              <Paper
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
+                  p: 3,
+                  borderRadius: 2,
+                  border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
                 }}
               >
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Total Schools
-                </Typography>
-                <Tooltip title="View breakdown">
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Total Schools
+                  </Typography>
+                  <Tooltip title="View breakdown">
+                    <IconButton
+                      size="small"
+                      onClick={() => setOpenTotalSchoolModal(true)}
+                      sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+                    >
+                      <IconChartBar size={18} color="#fff" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Box
+                  sx={{
+                    bgcolor: '#E6F7F1',
+                    borderRadius: 1,
+                    px: 2,
+                    py: 0.75,
+                    display: 'inline-flex',
+                    mb: 3,
+                  }}
+                >
+                  <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#2CA87F' }}>
+                    {schoolSummary.total}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Approved
+                    </Typography>
+                    <Typography fontWeight={600}>{schoolSummary.active}</Typography>
+                  </Box>
+                  <Divider orientation="vertical" flexItem />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Pending
+                    </Typography>
+                    <Typography fontWeight={600}>{schoolSummary.pending}</Typography>
+                  </Box>
+                  <Divider orientation="vertical" flexItem />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Rejected
+                    </Typography>
+                    <Typography fontWeight={600}>{schoolSummary.rejected}</Typography>
+                  </Box>
+                </Box>
+              </Paper>
+
+              {/* Subscriptions */}
+              <Paper
+                sx={{
+                  p: 3,
+                  borderRadius: 2,
+                  border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Subscriptions
+                  </Typography>
                   <IconButton
                     size="small"
-                    onClick={() => setOpenTotalSchoolModal(true)}
                     sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
                   >
                     <IconChartBar size={18} color="#fff" />
                   </IconButton>
-                </Tooltip>
-              </Box>
-              <Box
-                sx={{
-                  bgcolor: '#E6F7F1',
-                  borderRadius: 1,
-                  px: 2,
-                  py: 0.75,
-                  display: 'inline-flex',
-                  mb: 3,
-                }}
-              >
-                <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#2CA87F' }}>
-                  {schoolSummary.total}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Approved
-                  </Typography>
-                  <Typography fontWeight={600}>{schoolSummary.active}</Typography>
                 </Box>
-                <Divider orientation="vertical" flexItem />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pending
-                  </Typography>
-                  <Typography fontWeight={600}>{schoolSummary.pending}</Typography>
-                </Box>
-                <Divider orientation="vertical" flexItem />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Rejected
-                  </Typography>
-                  <Typography fontWeight={600}>{schoolSummary.rejected}</Typography>
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Subscriptions */}
-            <Paper
-              sx={{
-                p: 3,
-                borderRadius: 2,
-                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Subscriptions
-                </Typography>
-                <IconButton
-                  size="small"
-                  sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+                <Box
+                  sx={{
+                    bgcolor: '#EEF2FF',
+                    borderRadius: 1,
+                    px: 2,
+                    py: 0.75,
+                    display: 'inline-flex',
+                    mb: 3,
+                  }}
                 >
-                  <IconChartBar size={18} color="#fff" />
-                </IconButton>
-              </Box>
-              <Box
-                sx={{
-                  bgcolor: '#EEF2FF',
-                  borderRadius: 1,
-                  px: 2,
-                  py: 0.75,
-                  display: 'inline-flex',
-                  mb: 3,
-                }}
-              >
-                <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#4A3AFF' }}>
-                  {schoolSummary.subscriptions}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Primary
+                  <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#4A3AFF' }}>
+                    {schoolSummary.subscriptions}
                   </Typography>
-                  <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
                 </Box>
-                <Divider orientation="vertical" flexItem />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Secondary
-                  </Typography>
-                  <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
-                </Box>
-              </Box>
-            </Paper>
-
-            {/* Login Activities */}
-            <Paper
-              sx={{
-                borderRadius: 2,
-                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
-              }}
-            >
-              <Box
-                sx={{
-                  p: 2,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Login Activities
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => setOpenLoginModal(true)}
-                  sx={{ bgcolor: '#3d3d3d', borderRadius: 1, '&:hover': { bgcolor: '#111' } }}
-                >
-                  <IconChartBar size={18} color="#fff" />
-                </IconButton>
-              </Box>
-              <Box sx={{ px: 2, pb: 2 }}>
-                {[
-                  ['Teacher', 0],
-                  ['SPA', 0],
-                  ['Student', 0],
-                  ['Parent', 0],
-                ].map(([label, val]) => (
-                  <Box
-                    key={label}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      py: 0.5,
-                      borderBottom: '1px solid #f3f4f6',
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      {label}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Primary
                     </Typography>
-                    <Typography variant="body2" fontWeight={600} color="error.main">
-                      {val}
-                    </Typography>
+                    <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
                   </Box>
-                ))}
-              </Box>
-            </Paper>
+                  <Divider orientation="vertical" flexItem />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Secondary
+                    </Typography>
+                    <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
+                  </Box>
+                </Box>
+              </Paper>
 
-            {/* Plan Distribution */}
-            <Paper
-              sx={{
-                borderRadius: 2,
-                border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
-              }}
-            >
-              <Box
+              {/* Login Activities */}
+              <Paper
                 sx={{
-                  p: 2,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  borderRadius: 2,
+                  border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
                 }}
               >
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Plan Distribution
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => setOpenPlanModal(true)}
-                  sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+                <Box
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
                 >
-                  <IconChartBar size={18} color="#fff" />
-                </IconButton>
-              </Box>
-              <Box sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-                <ReusablePieChart
-                  series={planSeries}
-                  colors={planColors}
-                  labels={planLabels}
-                  height={170}
-                  hideCard
-                />
-              </Box>
-            </Paper>
-          </Box>
-        )}
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Login Activities
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setOpenLoginModal(true)}
+                    sx={{ bgcolor: '#3d3d3d', borderRadius: 1, '&:hover': { bgcolor: '#111' } }}
+                  >
+                    <IconChartBar size={18} color="#fff" />
+                  </IconButton>
+                </Box>
+                <Box sx={{ px: 2, pb: 2 }}>
+                  {[
+                    ['Teacher', 0],
+                    ['SPA', 0],
+                    ['Student', 0],
+                    ['Parent', 0],
+                  ].map(([label, val]) => (
+                    <Box
+                      key={label}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        py: 0.5,
+                        borderBottom: '1px solid #f3f4f6',
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        {label}
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} color="error.main">
+                        {val}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Paper>
+
+              {/* Plan Distribution */}
+              <Paper
+                sx={{
+                  borderRadius: 2,
+                  border: theme.palette.mode === 'dark' ? '1px solid #333' : '1px solid #f0f0f0',
+                }}
+              >
+                <Box
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Plan Distribution
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setOpenPlanModal(true)}
+                    sx={{ bgcolor: '#5C5C5C', borderRadius: 1, '&:hover': { bgcolor: '#333' } }}
+                  >
+                    <IconChartBar size={18} color="#fff" />
+                  </IconButton>
+                </Box>
+                <Box
+                  sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}
+                >
+                  <ReusablePieChart
+                    series={planSeries}
+                    colors={planColors}
+                    labels={planLabels}
+                    height={170}
+                    hideCard
+                  />
+                </Box>
+              </Paper>
+            </Box>
+          )}
         {/* ── List header ── */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box display="flex" alignItems="center" gap={1}>
@@ -997,7 +1012,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
               <IconGridDots size={16} />
             </Box>
             <Typography variant="h5" fontWeight={700}>
-              List Of School
+              List Of Schools
             </Typography>
           </Box>
         </Box>
@@ -1020,15 +1035,15 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
               },
             }}
           >
-            <Tab label="All Applications" />
+            <Tab label="Applications Review" />
             <Tab
               label={
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <span>Pending Approvals</span>
-                  {pendingProspects.length > 0 && (
+                  <span>Setup Approvals</span>
+                  {setupPendingCount > 0 && (
                     <Chip
                       size="small"
-                      label={pendingProspects.length}
+                      label={setupPendingCount}
                       sx={{
                         bgcolor: '#fef3c7',
                         color: '#d97706',
@@ -1109,7 +1124,7 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
 
           {/* Tab panels */}
           {activeTab === 0 && (
-            <AllApplicationsTab
+            <ApplicationReview
               {...sharedTabProps}
               prospectList={prospectList}
               prospectLoading={prospectLoading}
@@ -1121,15 +1136,17 @@ const SchoolsTab = ({ onAddSchool, organizationId = null, handleRefresh, refresh
             />
           )}
           {activeTab === 1 && (
-            <PendingApprovalsTab
+            <SetupApprovals
               {...sharedTabProps}
-              prospectList={prospectList}
+              schoolList={schoolList}
+              schoolLoading={schoolLoading}
               prospectLoading={prospectLoading}
               onReview={(row) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
               }}
               onEdit={handleEdit}
+              onApproveOnboarding={handleApproveOnboarding}
             />
           )}
           {activeTab === 2 && (

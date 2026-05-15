@@ -46,7 +46,6 @@ const ParentManagement = Loadable(
 const LearnerManagement = Loadable(
   lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
 );
-const ParentDashboard = Loadable(lazy(() => import('../views/parent-dashboard/ParentDashboard')));
 const NewApplication = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
 const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionStatus')));
 const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
@@ -158,8 +157,10 @@ const TenantRoutes = [
       { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: 'staff-setup', element: <StaffManager /> },
 
-      // ── Parent routes ──
-      { path: 'dashboard', element: <ParentDashboard /> },
+      // ── Dashboard route (handles both school and parent dashboards) ──
+      { path: 'dashboard', element: <SchoolDashboardMain /> },
+      
+      // ── Parent-specific routes ──
       { path: 'admission/new-application', element: <NewApplication /> },
       { path: 'admission-status', element: <AdmissionStatus /> },
       { path: 'admission-status/:id', element: <AdmissionStatus /> },

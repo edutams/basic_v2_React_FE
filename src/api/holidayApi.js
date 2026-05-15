@@ -17,3 +17,9 @@ export const deleteHoliday = async (holidayId) => {
   const response = await api.delete(`/curriculum/holidays/${holidayId}`);
   return response.data;
 };
+
+export const fetchHolidayStatistics = async (sessionTermId) => {
+  const response = await api.get(`/curriculum/holidays/${sessionTermId}/statistics`);
+
+  return response.data;
+};

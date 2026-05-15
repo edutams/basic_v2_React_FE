@@ -1161,7 +1161,22 @@ const Agent = () => {
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => setIsRegisterModalOpen(true)}
-                  sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+                  sx={{
+                    bgcolor: 'primary.main',
+                    '&:hover': { bgcolor: 'primary.dark' },
+
+                    fontSize: {
+                      xs: '0.75rem',
+                      sm: '0.875rem',
+                    },
+
+                    px: {
+                      xs: 1.5,
+                      sm: 2,
+                    },
+
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   Add New Organization
                 </Button>

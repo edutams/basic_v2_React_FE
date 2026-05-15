@@ -150,9 +150,9 @@ const fromSelected = (s) => {
 const PersonFields = ({ section, formData, errors, onPersonChange, readOnly = false }) => (
   <Grid container spacing={2}>
     {[
+      { key: 'last_name', label: 'Surname Name', md: 6 },
       { key: 'first_name', label: 'First Name', md: 6 },
-      { key: 'last_name', label: 'Last Name', md: 6 },
-      { key: 'middle_name', label: 'Middle Name (optional)', md: 6 },
+      { key: 'middle_name', label: 'Other Name (optional)', md: 6 },
       { key: 'phone', label: 'Phone', md: 6, masked: true },
       { key: 'email', label: 'Email', md: 6 },
     ].map(({ key, label, md, masked }) => (

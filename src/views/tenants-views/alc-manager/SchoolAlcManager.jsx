@@ -266,8 +266,20 @@ const SchoolAlcManager = () => {
     <PageContainer title="Acl Manager" description="Access Control List Management for School">
       <Breadcrumb title="ACL Manager" items={BCrumb} />
 
-      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={(e, newValue) => setActiveTab(newValue)}>
+      <Box sx={{ 
+        mb: 2, 
+        borderBottom: 1, 
+        borderColor: 'divider',
+        overflowX: 'auto',
+          '& .MuiTabs-root': {
+            minWidth: '300px',
+          },
+        }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          variant="scrollable"
+          >
           <Tab label="Role Management" value="Role Management" />
           <Tab label="Permission Assignment" value="Permission Assignment" />
           <Tab label="Access Analysis" value="Access Analysis" />

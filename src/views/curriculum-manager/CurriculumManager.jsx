@@ -5,11 +5,7 @@ import ParentCard from '../../components/shared/ParentCard';
 import CurriculumSetup from './components/CurriculumSetup';
 import SubjectBank from './components/SubjectBank';
 import ClassSubject from './components/ClassSubject';
-import {
-  Box,
-  Tabs,
-  Tab,
-} from '@mui/material';
+import { Box, Tabs, Tab } from '@mui/material';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -33,8 +29,22 @@ const CurriculumManager = () => {
       <Breadcrumb title="Curriculum Manager" items={BCrumb} />
       <Box>
         {/* TABS */}
-        <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tab} onChange={handleTabChange}>
+        <Box
+          sx={{
+            mb: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+             overflowX: 'auto',
+          '& .MuiTabs-root': {
+            minWidth: '300px',
+          },
+          }}
+        >
+          <Tabs 
+           value={tab} 
+           onChange={handleTabChange}
+           variant="scrollable"
+           >
             <Tab label="Curriculum Setup" />
             <Tab label="Subject Bank" />
             <Tab label="Class Subject" />
@@ -61,4 +71,3 @@ const CurriculumManager = () => {
 };
 
 export default CurriculumManager;
-

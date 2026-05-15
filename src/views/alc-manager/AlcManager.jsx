@@ -269,7 +269,7 @@ const AlcManager = () => {
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
           variant="scrollable"
-          scrollButtons="auto"
+          // scrollButtons="auto"
         >
           <Tab label="Role Management" value="Role Management" />
           <Tab label="Permission Assignment" value="Assignment Management" />

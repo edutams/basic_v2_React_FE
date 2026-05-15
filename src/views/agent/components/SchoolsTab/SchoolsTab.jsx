@@ -1026,6 +1026,8 @@ const SchoolsTab = ({
               setPage(0);
               setNameValue('');
             }}
+            variant="scrollable"
+            scrollButtons="auto"
             sx={{
               '& .MuiTab-root': {
                 textTransform: 'none',

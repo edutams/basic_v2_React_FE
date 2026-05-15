@@ -240,18 +240,11 @@ export const TenantAuthProvider = ({ children }) => {
 
   const refreshTenantInfo = async () => {
     try {
-      const res = await tenantApi.get('/school_setup/get_current_tenant');
-      const freshData = res.data?.data;
-      if (freshData) {
-        setTenantInfo((prev) => ({ ...prev, ...freshData }));
-      }
+      const res = await tenantApi.get('/school_setup/get_academic_info');
+      const { academic_session, academic_term, academic_week } = res.data;
+      setTenantInfo((prev) => ({ ...prev, academic_session, academic_term, academic_week }));
     } catch (err) {
-      // fallback to domain validation for public info
-      const hostname = window.location.hostname;
-      const data = await validateTenantDomain(hostname);
-      if (data && data.status !== false) {
-        setTenantInfo(data);
-      }
+      console.error('Failed to refresh academic info', err);
     }
   };
 

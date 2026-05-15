@@ -83,12 +83,23 @@ const TeachingStaffTab = ({
               gap: 2,
             }}
           >
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                width: { xs: '100%', sm: 'auto' },
+              }}
+            >
               <TextField
                 size="small"
                 placeholder="Search staff..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{
+                  width: { xs: '100%', sm: 300 },
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -96,7 +107,6 @@ const TeachingStaffTab = ({
                     </InputAdornment>
                   ),
                 }}
-                sx={{ minWidth: 300 }}
               />
 
               <TextField
@@ -104,7 +114,9 @@ const TeachingStaffTab = ({
                 size="small"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                sx={{ minWidth: 150 }}
+                sx={{
+                  width: { xs: '100%', sm: 150 },
+                }}
                 SelectProps={{ native: true }}
               >
                 <option value="all">All Status</option>
@@ -114,15 +126,24 @@ const TeachingStaffTab = ({
               </TextField>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                flexWrap: 'wrap',
+                width: { xs: '100%', sm: 'auto' },
+              }}
+            >
               <Button
+                fullWidth={{ xs: true, sm: false }}
                 variant="contained"
                 startIcon={<IconPlus size={18} />}
                 onClick={handleAddStaff}
               >
                 Add Single Staff
               </Button>
-              <ButtonGroup variant="outlined">
+
+              <ButtonGroup variant="outlined" fullWidth={{ xs: true, sm: false }}>
                 <Button
                   startIcon={<IconPlus size={18} />}
                   sx={{ textTransform: 'none' }}
@@ -130,6 +151,7 @@ const TeachingStaffTab = ({
                 >
                   Upload Excel
                 </Button>
+
                 <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
                   <IconChevronDown size={16} />
                 </Button>

@@ -21,7 +21,7 @@ const Stage2ManageSessions = ({ onNext, onBack, onSkip }) => {
       leftSubtitle="Select the academic session and subscribe to get your school calendar running."
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', height: { xs: 'auto', sm: '100%' } }}>
-        <Box sx={{ px: { xs: 2, sm: 3, md: '60px' }, pt: { xs: '80px', sm: '85px', md: '90px' }, pb: 1, flexShrink: 0 }}>
+        <Box sx={{ px: 2, pt: { xs: '80px', sm: '85px', md: '90px' }, pb: 1, flexShrink: 0 }}>
           <Typography sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 0.5 }}>
             Manage Sessions
           </Typography>
@@ -30,7 +30,7 @@ const Stage2ManageSessions = ({ onNext, onBack, onSkip }) => {
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1, minHeight: 0, overflow: { xs: 'visible', sm: 'hidden' } }}>
+        <Box sx={{ px: 2, flex: 1, minHeight: 0, overflow: { xs: 'visible', sm: 'hidden' } }}>
           <SetCalendarTab onSaveAndContinue={onNext} onReadyChange={setCanContinue} />
         </Box>
       </Box>

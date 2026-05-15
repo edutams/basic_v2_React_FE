@@ -595,12 +595,12 @@ const CurriculumSetup = () => {
         }}
       >
         {/* LEFT - Curriculum Table */}
-        <Box sx={{ flex: { md: 6 }, width: '100%' }}>
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
           <ParentCard
             title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
                 <Typography variant="h5">Curriculum</Typography>
-                <Box display="flex" gap={1}>
+                <Box display="flex" gap={1} flexWrap="wrap">
                   <Button variant="outlined" onClick={handleOpenImportModal} size="small">
                     Import
                   </Button>
@@ -611,22 +611,16 @@ const CurriculumSetup = () => {
               </Box>
             }
           >
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
               <TableContainer>
-                <Table sx={{ tableLayout: 'fixed' }}>
+                <Table sx={{ tableLayout: 'fixed', minWidth: 400 }}>
                   <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', width: '8%' }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
-                        Curriculum Name
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '25%' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '17%' }}>
-                        Imported
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 'bold', width: '25%' }}>
-                        Actions
-                      </TableCell>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}>S/N</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '37%', py: 1.5 }}>Curriculum Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>Imported</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -703,21 +697,22 @@ const CurriculumSetup = () => {
         </Box>
 
         {/* RIGHT - Assign to Classes */}
-        <Box sx={{ flex: { md: 6 }, width: '100%' }}>
+        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
           <ParentCard
             title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
                 <Typography variant="h5">Assign to Classes</Typography>
-                <Box display="flex" gap={1}>
+                <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
                   <Select
                     size="small"
                     value={selectedSession}
                     onChange={(e) => handleSessionChange(e.target.value)}
                     displayEmpty
                     disabled={loadingSessions}
+                    sx={{ minWidth: 130 }}
                   >
                     <MenuItem value="" disabled>
-                      {loadingSessions ? 'Loading sessions...' : 'Select Session'}
+                      {loadingSessions ? 'Loading...' : 'Select Session'}
                     </MenuItem>
                     {sessions.map((session) => (
                       <MenuItem key={session.id} value={session.id}>
@@ -731,9 +726,10 @@ const CurriculumSetup = () => {
                     onChange={(e) => setSelectedTerm(e.target.value)}
                     displayEmpty
                     disabled={loadingTerms}
+                    sx={{ minWidth: 120 }}
                   >
                     <MenuItem value="" disabled>
-                      {loadingTerms ? 'Loading terms...' : 'Select Term'}
+                      {loadingTerms ? 'Loading...' : 'Select Term'}
                     </MenuItem>
                     {terms.map((term) => (
                       <MenuItem key={term.id} value={term.id}>
@@ -753,16 +749,14 @@ const CurriculumSetup = () => {
               </Box>
             }
           >
-            <Paper variant="outlined">
+            <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
               <TableContainer>
-                <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
+                <Table sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
                   <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>S/N</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>Class</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
-                        Curriculum Name
-                      </TableCell>
+                    <TableRow sx={{ bgcolor: 'grey.100' }}>
+                      <TableCell sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}>S/N</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '40%', py: 1.5 }}>Class</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '50%', py: 1.5 }}>Curriculum Name</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -973,16 +967,16 @@ const CurriculumSetup = () => {
           Import Curriculum
         </DialogTitle>
 
-        <DialogContent sx={{ p: 1 }}>
+        <DialogContent sx={{ p: { xs: 1, md: 2 } }}>
           <Box
             sx={{
               display: 'grid',
               gridTemplateColumns: {
                 xs: '1fr',
-                md: '380px 1fr',
+                md: '320px 1fr',
               },
               gap: 2,
-              minHeight: 500,
+              minHeight: { xs: 'auto', md: 500 },
             }}
           >
             {/* LEFT PANEL */}
@@ -1018,9 +1012,8 @@ const CurriculumSetup = () => {
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
-                      <TableRow>
-                        <TableCell padding="checkbox">
-
+                      <TableRow sx={{ bgcolor: 'grey.100' }}>
+                        <TableCell padding="checkbox" sx={{ py: 1.5 }}>
                           <Checkbox
                             size="small"
                             checked={
@@ -1039,10 +1032,8 @@ const CurriculumSetup = () => {
                           />
                         </TableCell>
 
-                        <TableCell>
-                          <Typography fontWeight={600}>
-                            Curriculum Name
-                          </Typography>
+                        <TableCell sx={{ fontWeight: 700, py: 1.5 }}>
+                          Curriculum Name
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -1125,6 +1116,7 @@ const CurriculumSetup = () => {
                 flexDirection: 'column',
                 overflow: 'hidden',
                 borderRadius: 2,
+                maxHeight: { xs: 400, md: 'none' },
               }}
             >
               {/* Header */}

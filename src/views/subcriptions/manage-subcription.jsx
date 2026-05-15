@@ -275,8 +275,8 @@ const ManageSubscriptionList = () => {
           </Box>
 
           <Paper variant="outlined">
-            <TableContainer>
-              <Table sx={{ tableLayout: 'fixed' }}>
+            <TableContainer sx={{ overflowX: 'auto' }}>
+              <Table sx={{ tableLayout: 'fixed', minWidth: 900 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ width: '5%' }}>#</TableCell>

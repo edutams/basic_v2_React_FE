@@ -368,6 +368,8 @@ export const TenantAuthProvider = ({ children }) => {
       setImpersonatorId(null);
       setIsAuthenticated(true);
 
+      window.location.reload();
+
       return { success: true };
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to stop impersonation';

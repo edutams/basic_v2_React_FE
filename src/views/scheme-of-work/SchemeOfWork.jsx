@@ -85,8 +85,7 @@ const SchemeOfWork = () => {
   const [subjects, setSubjects] = useState([]);
 
   const [selectedTopic, setSelectedTopic] = useState(null);
-  console.log(selectedTopic,848484);
-  
+
   const [selectedSubtopic, setSelectedSubtopic] = useState(null);
   const [topicModalOpen, setTopicModalOpen] = useState(false);
   const [subtopicModalOpen, setSubtopicModalOpen] = useState(false);
@@ -437,11 +436,11 @@ const SchemeOfWork = () => {
     handleMenuClose();
   };
 
-  const handleAddSubtopic = (topicId,selectedRow) => {
-    setSelectedTopic({ 
+  const handleAddSubtopic = (topicId, selectedRow) => {
+    setSelectedTopic({
       topic_id: topicId,
-      topic_name: selectedRow?.topic_name
-    }); 
+      topic_name: selectedRow?.topic_name,
+    });
     setSelectedSubtopic(null);
     setSubtopicModalOpen(true);
   };
@@ -1031,7 +1030,7 @@ const SchemeOfWork = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        </Card>
+      </Card>
 
       {/* Filter Drawer */}
       <FilterSideDrawer
@@ -1090,7 +1089,11 @@ const SchemeOfWork = () => {
       <ReusableModal
         open={subtopicModalOpen}
         onClose={() => setSubtopicModalOpen(false)}
-        title={selectedSubtopic ? `Edit Subtopic for "${selectedTopic?.topic_name || 'Topic'}"` : `Add Subtopic for ${selectedTopic?.topic_name}`}
+        title={
+          selectedSubtopic
+            ? `Edit Subtopic for "${selectedTopic?.topic_name || 'Topic'}"`
+            : `Add Subtopic for ${selectedTopic?.topic_name}`
+        }
       >
         <Box
           component="form"
@@ -1253,7 +1256,10 @@ const SchemeOfWork = () => {
           <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
             Edit Topic
           </MenuItem>,
-          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id,selectedRow)}>
+          <MenuItem
+            key="add-sub"
+            onClick={() => handleAddSubtopic(selectedRow.topic_id, selectedRow)}
+          >
             Add Subtopic
           </MenuItem>,
           <MenuItem

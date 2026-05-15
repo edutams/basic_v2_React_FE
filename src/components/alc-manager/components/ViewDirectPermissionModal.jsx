@@ -16,14 +16,11 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
   const [loading, setLoading] = useState(false);
   const [directPermissions, setDirectPermissions] = useState([]);
   const [rolePermissions, setRolePermissions] = useState([]);
-  
 
   useEffect(() => {
-  console.log(currentUser,9599559);
-
-    // if (open && currentUser) {
-    //   fetchPermissions();
-    // }
+    if (open) {
+      fetchPermissions();
+    }
   }, [open, currentUser]);
 
   const fetchPermissions = async () => {
@@ -186,7 +183,8 @@ const ViewDirectPermissionModal = ({ open, onClose, currentUser }) => {
               }}
             >
               <Typography variant="body2" fontWeight={600}>
-                Total Permissions: {(directPermissions?.length || 0) + (rolePermissions?.length || 0)} (
+                Total Permissions:{' '}
+                {(directPermissions?.length || 0) + (rolePermissions?.length || 0)} (
                 {directPermissions?.length || 0} direct + {rolePermissions?.length || 0} from roles)
               </Typography>
             </Box>

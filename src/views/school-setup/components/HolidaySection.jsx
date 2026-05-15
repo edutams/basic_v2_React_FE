@@ -82,7 +82,6 @@ const HolidaySection = ({ refreshKey }) => {
 
   // Load sessions on mount and when refreshKey changes
   useEffect(() => {
-    console.log('HolidaySection: refreshKey changed to:', refreshKey);
     const loadSessions = async () => {
       try {
         setLoading(true);

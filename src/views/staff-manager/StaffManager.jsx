@@ -124,7 +124,6 @@ const StaffManager = () => {
   }, [activeTab, page, rowsPerPage, searchQuery, statusFilter]);
 
   const confirmImpersonateStaff = (staffMember) => {
-    // console.log('Staff member object:', staffMember);
     setStaffToImpersonate(staffMember);
     setImpersonateConfirmOpen(true);
     handleMenuClose();
@@ -261,26 +260,16 @@ const StaffManager = () => {
 
   const handleEditStaff = async () => {
     if (selectedStaff) {
-      console.log('=== EDIT STAFF DEBUG ===');
-      console.log('Selected Staff Data from list:', selectedStaff);
-
       try {
         // Fetch the individual staff data with all relationships
-        // console.log('Fetching individual staff data for ID:', selectedStaff.user_id);
         const staffResponse = await staffApi.getSingle(selectedStaff.user_id);
-        // console.log('Individual staff response:', staffResponse);
 
         const staffData = staffResponse.data;
-        // console.log('Individual staff data:', staffData);
-        // console.log('Class Teachers:', staffData.classTeachers);
-        // console.log('Subject Teachers:', staffData.subjectTeachers);
-
         // Transform class teachers to classAllocations array
         const classAllocations =
           staffData.classAllocations ||
           (staffData.classTeachers && staffData.classTeachers.length > 0
             ? staffData.classTeachers.map((classTeacher) => {
-                // console.log('Processing class teacher:', classTeacher);
                 return {
                   session_term_id: classTeacher.session_term_id || '',
                   programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
@@ -302,7 +291,6 @@ const StaffManager = () => {
           staffData.subjectAllocations ||
           (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
             ? staffData.subjectTeachers.map((subjectTeacher) => {
-                // console.log('Processing subject teacher:', subjectTeacher);
                 return {
                   session_term_id: subjectTeacher.session_term_id || '',
                   programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
@@ -322,9 +310,6 @@ const StaffManager = () => {
                   subject_id: '',
                 },
               ]);
-
-        // console.log('Transformed class allocations:', classAllocations);
-        // console.log('Transformed subject allocations:', subjectAllocations);
 
         const formDataForEdit = {
           staff_id: staffData.staff_id || '',
@@ -360,10 +345,6 @@ const StaffManager = () => {
           subject_id: selectedStaff.subject_teacher?.subject_id || '',
         };
 
-        // console.log('Final form data for edit:', formDataForEdit);
-        // console.log('Class allocations being passed to form:', formDataForEdit.classAllocations);
-        // console.log('Subject allocations being passed to form:', formDataForEdit.subjectAllocations);
-
         setFormData(formDataForEdit);
         setEditModalOpen(true);
       } catch (error) {
@@ -387,8 +368,6 @@ const StaffManager = () => {
   const handleSaveStaff = async (values) => {
     setModalLoading(true);
     try {
-      // console.log('Values received in handleSaveStaff:', values);
-
       // Map form values to API format - include allocation arrays
       const apiData = {
         first_name: values.first_name,
@@ -428,8 +407,6 @@ const StaffManager = () => {
         apiData.role = values.role;
       }
 
-      // console.log('API Data being sent:', apiData);
-
       const response = await staffApi.create(apiData);
       if (response.status) {
         notify.success('Staff added successfully');
@@ -446,8 +423,6 @@ const StaffManager = () => {
   const handleUpdateStaff = async (values) => {
     setModalLoading(true);
     try {
-      // console.log('Values received in handleUpdateStaff:', values);
-
       // Map form values to API format - include allocation arrays
       const apiData = {
         first_name: values.first_name,
@@ -486,8 +461,6 @@ const StaffManager = () => {
       if (activeTab === 'non-teaching') {
         apiData.role = values.role;
       }
-
-      // console.log('API Data being sent for update:', apiData);
 
       const response = await staffApi.update(selectedStaff.user_id, apiData);
       if (response.status) {

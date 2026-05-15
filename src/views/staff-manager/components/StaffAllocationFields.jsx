@@ -21,22 +21,30 @@ import {
 } from '../../../api/tenantCurriculumApi';
 import useNotification from '../../../hooks/useNotification';
 
-const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading, errors, touched, mode }) => {
+const StaffAllocationFields = ({
+  values,
+  handleChange,
+  setFieldValue,
+  isLoading,
+  errors,
+  touched,
+  mode,
+}) => {
   const notify = useNotification();
-  
+
   const [programmes, setProgrammes] = useState([]);
   const [sessionTerms, setSessionTerms] = useState([]);
   const [curriculums, setCurriculums] = useState([]);
-  
+
   // Separate states for class allocation
   const [classClasses, setClassClasses] = useState({});
   const [classArms, setClassArms] = useState({});
-  
+
   // Separate states for subject allocation
   const [subjectClasses, setSubjectClasses] = useState({});
   const [subjectClassArms, setSubjectClassArms] = useState({});
   const [subjects, setSubjects] = useState({});
-  
+
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true); // Flag to track initial load
 
@@ -48,22 +56,26 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
   // Initialize arrays if they don't exist
   useEffect(() => {
     if (!Array.isArray(values.classAllocations)) {
-      setFieldValue('classAllocations', [{ 
-        session_term_id: '', 
-        programme_id: '', 
-        class_id: '', 
-        class_arm_id: '' 
-      }]);
+      setFieldValue('classAllocations', [
+        {
+          session_term_id: '',
+          programme_id: '',
+          class_id: '',
+          class_arm_id: '',
+        },
+      ]);
     }
     if (!Array.isArray(values.subjectAllocations)) {
-      setFieldValue('subjectAllocations', [{ 
-        session_term_id: '', 
-        programme_id: '', 
-        class_id: '', 
-        class_arm_id: '', 
-        curriculum_id: '', 
-        subject_id: '' 
-      }]);
+      setFieldValue('subjectAllocations', [
+        {
+          session_term_id: '',
+          programme_id: '',
+          class_id: '',
+          class_arm_id: '',
+          curriculum_id: '',
+          subject_id: '',
+        },
+      ]);
     }
   }, []);
 
@@ -125,36 +137,26 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     const loadEditModeData = async () => {
       // Only run on initial load, not on user interactions
       if (!isInitialLoad || loadingOptions || programmes.length === 0) return;
-      
-      console.log('=== LOADING EDIT MODE DATA ===');
-      console.log('Class allocations to load:', classAllocations);
-      console.log('Subject allocations to load:', subjectAllocations);
-      console.log('Mode:', mode);
-      console.log('Programmes available:', programmes.length);
-      
+
       try {
         // Load class allocation data if values exist
         if (classAllocations.length > 0) {
           for (let i = 0; i < classAllocations.length; i++) {
             const allocation = classAllocations[i];
-            console.log(`Loading class allocation ${i}:`, allocation);
-            
+
             // Load classes for this programme
             if (allocation.programme_id) {
               try {
-                console.log(`Fetching classes for programme ${allocation.programme_id}`);
                 const classRes = await fetchClassesByProgramme(allocation.programme_id);
                 const classes = classRes.data || classRes || [];
-                console.log(`Loaded ${classes.length} classes for programme ${allocation.programme_id}:`, classes);
-                setClassClasses(prev => ({ ...prev, [i]: classes }));
-                
+                setClassClasses((prev) => ({ ...prev, [i]: classes }));
+
                 // Load class arms for this class
                 if (allocation.class_id) {
-                  console.log(`Fetching class arms for class ${allocation.class_id}`);
                   const armRes = await fetchClassArmsByClass(allocation.class_id);
                   const allArms = armRes.data || armRes || [];
-                  console.log(`Loaded ${allArms.length} class arms for class ${allocation.class_id}:`, allArms);
-                  setClassArms(prev => ({ ...prev, [i]: allArms }));
+
+                  setClassArms((prev) => ({ ...prev, [i]: allArms }));
                 }
               } catch (error) {
                 console.error(`Failed to load class allocation data for index ${i}:`, error);
@@ -162,56 +164,46 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
             }
           }
         }
-        
+
         // Load subject allocation data if values exist
         if (subjectAllocations.length > 0) {
           for (let i = 0; i < subjectAllocations.length; i++) {
             const allocation = subjectAllocations[i];
-            console.log(`Loading subject allocation ${i}:`, allocation);
-            
+
             // Load classes for this programme
             if (allocation.programme_id) {
               try {
-                console.log(`Fetching classes for programme ${allocation.programme_id}`);
                 const classRes = await fetchClassesByProgramme(allocation.programme_id);
                 const classes = classRes.data || classRes || [];
-                console.log(`Loaded ${classes.length} classes for programme ${allocation.programme_id}:`, classes);
-                setSubjectClasses(prev => ({ ...prev, [i]: classes }));
-                
+
+                setSubjectClasses((prev) => ({ ...prev, [i]: classes }));
+
                 // Load class arms for this class
                 if (allocation.class_id) {
-                  console.log(`Fetching class arms for class ${allocation.class_id}`);
                   const armRes = await fetchClassArmsByClass(allocation.class_id);
                   const allArms = armRes.data || armRes || [];
-                  console.log(`Loaded ${allArms.length} class arms for class ${allocation.class_id}:`, allArms);
-                  setSubjectClassArms(prev => ({ ...prev, [i]: allArms }));
+                  setSubjectClassArms((prev) => ({ ...prev, [i]: allArms }));
                 }
               } catch (error) {
-                console.error(`Failed to load subject allocation class data for index ${i}:`, error);
+                console.error(
+                  `Failed to load subject allocation class data for index ${i}:`,
+                  error,
+                );
               }
             }
-            
+
             // Load subjects if curriculum is selected
             if (allocation.curriculum_id) {
               try {
-                console.log(`Fetching subjects for curriculum ${allocation.curriculum_id}`);
                 const res = await fetchSubjects(allocation.curriculum_id);
                 const subjectList = res.data || res || [];
-                console.log(`Loaded ${subjectList.length} subjects for curriculum ${allocation.curriculum_id}:`, subjectList);
-                setSubjects(prev => ({ ...prev, [i]: subjectList }));
+                setSubjects((prev) => ({ ...prev, [i]: subjectList }));
               } catch (error) {
                 console.error(`Failed to load subjects for index ${i}:`, error);
               }
             }
           }
         }
-        
-        console.log('=== EDIT MODE DATA LOADING COMPLETE ===');
-        console.log('Final class classes state:', classClasses);
-        console.log('Final class arms state:', classArms);
-        console.log('Final subject classes state:', subjectClasses);
-        console.log('Final subject class arms state:', subjectClassArms);
-        console.log('Final subjects state:', subjects);
       } catch (error) {
         console.error('Error in loadEditModeData:', error);
       } finally {
@@ -219,7 +211,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
         setIsInitialLoad(false);
       }
     };
-    
+
     loadEditModeData();
   }, [
     isInitialLoad,
@@ -238,18 +230,18 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
       ...newAllocations[index],
       programme_id: programmeId,
       class_id: '',
-      class_arm_id: ''
+      class_arm_id: '',
     };
     setFieldValue('classAllocations', newAllocations);
-    
+
     // Clear dependent states
-    setClassClasses(prev => ({ ...prev, [index]: [] }));
-    setClassArms(prev => ({ ...prev, [index]: [] }));
-    
+    setClassClasses((prev) => ({ ...prev, [index]: [] }));
+    setClassArms((prev) => ({ ...prev, [index]: [] }));
+
     if (programmeId) {
       try {
         const res = await fetchClassesByProgramme(programmeId);
-        setClassClasses(prev => ({ ...prev, [index]: res.data || res || [] }));
+        setClassClasses((prev) => ({ ...prev, [index]: res.data || res || [] }));
       } catch (error) {
         notify.error('Failed to load classes');
       }
@@ -262,17 +254,17 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     newAllocations[index] = {
       ...newAllocations[index],
       class_id: classId,
-      class_arm_id: ''
+      class_arm_id: '',
     };
     setFieldValue('classAllocations', newAllocations);
-    
+
     // Clear dependent states
-    setClassArms(prev => ({ ...prev, [index]: [] }));
-    
+    setClassArms((prev) => ({ ...prev, [index]: [] }));
+
     if (classId) {
       try {
         const res = await fetchClassArmsByClass(classId);
-        setClassArms(prev => ({ ...prev, [index]: res.data || res || [] }));
+        setClassArms((prev) => ({ ...prev, [index]: res.data || res || [] }));
       } catch (error) {
         notify.error('Failed to load class arms');
       }
@@ -283,19 +275,22 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     const newAllocations = [...classAllocations];
     newAllocations[index] = {
       ...newAllocations[index],
-      [field]: value
+      [field]: value,
     };
     setFieldValue('classAllocations', newAllocations);
   };
 
   const addClassAllocation = () => {
-    const newAllocations = [...classAllocations, { 
-      id: null, // No ID for new records
-      session_term_id: '', 
-      programme_id: '', 
-      class_id: '', 
-      class_arm_id: '' 
-    }];
+    const newAllocations = [
+      ...classAllocations,
+      {
+        id: null, // No ID for new records
+        session_term_id: '',
+        programme_id: '',
+        class_id: '',
+        class_arm_id: '',
+      },
+    ];
     setFieldValue('classAllocations', newAllocations);
   };
 
@@ -303,14 +298,14 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     if (classAllocations.length > 1) {
       const newAllocations = classAllocations.filter((_, i) => i !== index);
       setFieldValue('classAllocations', newAllocations);
-      
+
       // Clean up states
-      setClassClasses(prev => {
+      setClassClasses((prev) => {
         const newState = { ...prev };
         delete newState[index];
         return newState;
       });
-      setClassArms(prev => {
+      setClassArms((prev) => {
         const newState = { ...prev };
         delete newState[index];
         return newState;
@@ -326,18 +321,18 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
       ...newAllocations[index],
       programme_id: programmeId,
       class_id: '',
-      class_arm_id: ''
+      class_arm_id: '',
     };
     setFieldValue('subjectAllocations', newAllocations);
-    
+
     // Clear dependent states
-    setSubjectClasses(prev => ({ ...prev, [index]: [] }));
-    setSubjectClassArms(prev => ({ ...prev, [index]: [] }));
-    
+    setSubjectClasses((prev) => ({ ...prev, [index]: [] }));
+    setSubjectClassArms((prev) => ({ ...prev, [index]: [] }));
+
     if (programmeId) {
       try {
         const res = await fetchClassesByProgramme(programmeId);
-        setSubjectClasses(prev => ({ ...prev, [index]: res.data || res || [] }));
+        setSubjectClasses((prev) => ({ ...prev, [index]: res.data || res || [] }));
       } catch (error) {
         notify.error('Failed to load classes');
       }
@@ -350,17 +345,17 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     newAllocations[index] = {
       ...newAllocations[index],
       class_id: classId,
-      class_arm_id: ''
+      class_arm_id: '',
     };
     setFieldValue('subjectAllocations', newAllocations);
-    
+
     // Clear dependent states
-    setSubjectClassArms(prev => ({ ...prev, [index]: [] }));
-    
+    setSubjectClassArms((prev) => ({ ...prev, [index]: [] }));
+
     if (classId) {
       try {
         const res = await fetchClassArmsByClass(classId);
-        setSubjectClassArms(prev => ({ ...prev, [index]: res.data || res || [] }));
+        setSubjectClassArms((prev) => ({ ...prev, [index]: res.data || res || [] }));
       } catch (error) {
         notify.error('Failed to load class arms');
       }
@@ -373,19 +368,19 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     newAllocations[index] = {
       ...newAllocations[index],
       curriculum_id: curriculumId,
-      subject_id: ''
+      subject_id: '',
     };
     setFieldValue('subjectAllocations', newAllocations);
-    
+
     if (curriculumId) {
       try {
         const res = await fetchSubjects(curriculumId);
-        setSubjects(prev => ({ ...prev, [index]: res.data || res || [] }));
+        setSubjects((prev) => ({ ...prev, [index]: res.data || res || [] }));
       } catch (error) {
         notify.error('Failed to load subjects');
       }
     } else {
-      setSubjects(prev => ({ ...prev, [index]: [] }));
+      setSubjects((prev) => ({ ...prev, [index]: [] }));
     }
   };
 
@@ -393,21 +388,24 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     const newAllocations = [...subjectAllocations];
     newAllocations[index] = {
       ...newAllocations[index],
-      [field]: value
+      [field]: value,
     };
     setFieldValue('subjectAllocations', newAllocations);
   };
 
   const addSubjectAllocation = () => {
-    const newAllocations = [...subjectAllocations, { 
-      id: null, // No ID for new records
-      session_term_id: '', 
-      programme_id: '', 
-      class_id: '', 
-      class_arm_id: '', 
-      curriculum_id: '', 
-      subject_id: '' 
-    }];
+    const newAllocations = [
+      ...subjectAllocations,
+      {
+        id: null, // No ID for new records
+        session_term_id: '',
+        programme_id: '',
+        class_id: '',
+        class_arm_id: '',
+        curriculum_id: '',
+        subject_id: '',
+      },
+    ];
     setFieldValue('subjectAllocations', newAllocations);
   };
 
@@ -415,19 +413,19 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
     if (subjectAllocations.length > 1) {
       const newAllocations = subjectAllocations.filter((_, i) => i !== index);
       setFieldValue('subjectAllocations', newAllocations);
-      
+
       // Clean up states
-      setSubjectClasses(prev => {
+      setSubjectClasses((prev) => {
         const newState = { ...prev };
         delete newState[index];
         return newState;
       });
-      setSubjectClassArms(prev => {
+      setSubjectClassArms((prev) => {
         const newState = { ...prev };
         delete newState[index];
         return newState;
       });
-      setSubjects(prev => {
+      setSubjects((prev) => {
         const newState = { ...prev };
         delete newState[index];
         return newState;
@@ -443,7 +441,9 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
 
       {/* 1. Class Allocation */}
       <Box sx={{ mb: 4 }} id="classAllocations-section">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}
+        >
           <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.secondary' }}>
             1. Class Allocation
           </Typography>
@@ -457,10 +457,12 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
             Add More
           </Button>
         </Box>
-        
+
         {classAllocations.map((allocation, index) => (
           <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            >
               <Typography variant="body2" fontWeight={600}>
                 Class Assignment {index + 1}
               </Typography>
@@ -475,7 +477,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
                 </IconButton>
               )}
             </Box>
-            
+
             <Grid container spacing={2}>
               {/* <Grid size={{ xs: 12 }}>
                 <TextField
@@ -544,7 +546,9 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
                   label="Class Arm"
                   name={`classAllocations[${index}].class_arm_id`}
                   value={allocation.class_arm_id}
-                  onChange={(e) => handleClassAllocationChange(index, 'class_arm_id', e.target.value)}
+                  onChange={(e) =>
+                    handleClassAllocationChange(index, 'class_arm_id', e.target.value)
+                  }
                   disabled={!allocation.class_id || isLoading}
                   required
                   error={Boolean(getFieldError(`classAllocations.${index}.class_arm_id`))}
@@ -568,7 +572,9 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
 
       {/* 2. Subject Allocation */}
       <Box id="subjectAllocations-section">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}
+        >
           <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'text.secondary' }}>
             2. Subject Allocation
           </Typography>
@@ -582,10 +588,12 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
             Add More
           </Button>
         </Box>
-        
+
         {subjectAllocations.map((allocation, index) => (
           <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+            >
               <Typography variant="body2" fontWeight={600}>
                 Subject Assignment {index + 1}
               </Typography>
@@ -600,7 +608,7 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
                 </IconButton>
               )}
             </Box>
-            
+
             <Grid container spacing={2}>
               {/* <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
@@ -669,7 +677,9 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
                   label="Class Arm"
                   name={`subjectAllocations[${index}].class_arm_id`}
                   value={allocation.class_arm_id}
-                  onChange={(e) => handleSubjectAllocationChange(index, 'class_arm_id', e.target.value)}
+                  onChange={(e) =>
+                    handleSubjectAllocationChange(index, 'class_arm_id', e.target.value)
+                  }
                   disabled={!allocation.class_id || isLoading}
                   required
                   error={Boolean(getFieldError(`subjectAllocations.${index}.class_arm_id`))}
@@ -711,7 +721,9 @@ const StaffAllocationFields = ({ values, handleChange, setFieldValue, isLoading,
                   label="Subject"
                   name={`subjectAllocations[${index}].subject_id`}
                   value={allocation.subject_id}
-                  onChange={(e) => handleSubjectAllocationChange(index, 'subject_id', e.target.value)}
+                  onChange={(e) =>
+                    handleSubjectAllocationChange(index, 'subject_id', e.target.value)
+                  }
                   disabled={!allocation.curriculum_id || isLoading}
                   required
                   error={Boolean(getFieldError(`subjectAllocations.${index}.subject_id`))}

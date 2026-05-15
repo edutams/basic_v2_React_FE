@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import { useNotification } from '../../../hooks/useNotification';
-
+import { IconEdit, IconTrash, IconUser } from '@tabler/icons-react';
 import {
   Box,
   Typography,
@@ -58,6 +58,8 @@ import AddLearnerModal from 'src/views/school-setup/components/AddLearnerModal';
 import LinkParentModal from 'src/components/tenant-components/learners/LinkParentModal';
 import ViewParentsModal from 'src/components/tenant-components/learners/ViewParentsModal';
 import UploadLearnerModal from 'src/components/tenant-components/learners/UploadLearnerModal';
+import { TenantAuthContext } from '../../../context/TenantContext/auth';
+import { useNavigate } from 'react-router-dom';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
@@ -107,6 +109,13 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
 
 const LearnerManagement = () => {
   const notify = useNotification();
+
+  const navigate = useNavigate();
+
+  const { impersonateStudent } = useContext(TenantAuthContext);
+
+  const [impersonateStudentConfirmOpen, setImpersonateStudentConfirmOpen] = useState(false);
+  const [studentToImpersonate, setStudentToImpersonate] = useState(null);
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -169,6 +178,29 @@ const LearnerManagement = () => {
       setLoading(false);
     }
   }, [page, rowsPerPage, search, classId]);
+
+  const confirmImpersonateStudent = (row) => {
+    setStudentToImpersonate(row);
+    setImpersonateStudentConfirmOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmedImpersonateStudent = async () => {
+    if (!studentToImpersonate) return;
+
+    // Student PK is row.id (integer)
+    const result = await impersonateStudent(studentToImpersonate?.users?.id);
+    if (result.success) {
+      notify.success(
+        `Now logged in as ${studentToImpersonate.users?.fname} ${studentToImpersonate.users?.lname}`,
+      );
+      navigate('/dashboard');
+    } else {
+      notify.error(result.error);
+    }
+    setImpersonateStudentConfirmOpen(false);
+    setStudentToImpersonate(null);
+  };
 
   const fetchStats = useCallback(async () => {
     try {
@@ -566,6 +598,10 @@ const LearnerManagement = () => {
                           open={Boolean(anchorEl) && selectedRow?.id === row.id}
                           onClose={handleMenuClose}
                         >
+                          <MenuItem onClick={() => confirmImpersonateStudent(row)}>
+                            <IconUser size={18} style={{ marginRight: 8 }} />
+                            Login As Student
+                          </MenuItem>
                           <MenuItem
                             onClick={() => {
                               setLinkParentLearner(selectedRow);
@@ -575,11 +611,15 @@ const LearnerManagement = () => {
                           >
                             Link Parent
                           </MenuItem>
-                          <MenuItem onClick={() => handleOpenEdit(row)}>Edit</MenuItem>
+                          <MenuItem onClick={() => handleOpenEdit(row)}>
+                            <IconEdit size={18} style={{ marginRight: 8 }} />
+                            Edit
+                          </MenuItem>
                           <MenuItem
                             onClick={() => handleOpenDelete(row)}
                             sx={{ color: 'error.main' }}
                           >
+                            <IconTrash size={18} style={{ marginRight: 8 }} />
                             Delete
                           </MenuItem>
                         </Menu>
@@ -675,6 +715,46 @@ const LearnerManagement = () => {
           <Button onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
             Download
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={impersonateStudentConfirmOpen}
+        onClose={() => {
+          setImpersonateStudentConfirmOpen(false);
+          setStudentToImpersonate(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Login as Student</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to login as{' '}
+            <strong>
+              {studentToImpersonate?.users?.fname} {studentToImpersonate?.users?.lname}
+            </strong>
+            ? You can return to your account at any time.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={() => {
+              setImpersonateStudentConfirmOpen(false);
+              setStudentToImpersonate(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmedImpersonateStudent}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
+          >
+            Yes, Login As
           </Button>
         </DialogActions>
       </Dialog>

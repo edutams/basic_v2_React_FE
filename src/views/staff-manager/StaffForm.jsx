@@ -6,6 +6,8 @@ import {
   MenuItem,
   Typography,
   Divider,
+  Button,
+  CircularProgress,
 } from '@mui/material';
 import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
@@ -41,9 +43,196 @@ const validationSchema = Yup.object({
   email: Yup.string().email('Invalid email').required('Email is required'),
   date_of_appointment: Yup.date().nullable(),
   status: Yup.string().required('Status is required'),
+  // Simplified allocation validation without cyclic dependencies
+  classAllocations: Yup.array().of(
+    Yup.object().shape({
+      id: Yup.number().nullable(),
+      programme_id: Yup.string(),
+      class_id: Yup.string(),
+      class_arm_id: Yup.string()
+    })
+  ),
+  subjectAllocations: Yup.array().of(
+    Yup.object().shape({
+      id: Yup.number().nullable(),
+      programme_id: Yup.string(),
+      class_id: Yup.string(),
+      class_arm_id: Yup.string(),
+      curriculum_id: Yup.string(),
+      subject_id: Yup.string()
+    })
+  )
 });
 
-const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
+const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
+  console.log('=== STAFF FORM DEBUG ===');
+  console.log('Initial values received:', initialValues);
+  console.log('Mode:', mode);
+  console.log('Class allocations in initial values:', initialValues?.classAllocations);
+  console.log('Subject allocations in initial values:', initialValues?.subjectAllocations);
+  const validateAllocations = (values) => {
+    const errors = {};
+    
+    // Validate class allocations
+    if (values.classAllocations && values.classAllocations.length > 0) {
+      const classAllocationErrors = [];
+      values.classAllocations.forEach((allocation, index) => {
+        const allocationErrors = {};
+        const hasAnyValue = allocation.programme_id || allocation.class_id || allocation.class_arm_id;
+        
+        if (hasAnyValue) {
+          if (!allocation.programme_id) {
+            allocationErrors.programme_id = 'Programme is required';
+          }
+          if (!allocation.class_id) {
+            allocationErrors.class_id = 'Class is required';
+          }
+          if (!allocation.class_arm_id) {
+            allocationErrors.class_arm_id = 'Class Arm is required';
+          }
+        }
+        
+        if (Object.keys(allocationErrors).length > 0) {
+          classAllocationErrors[index] = allocationErrors;
+        }
+      });
+      
+      if (classAllocationErrors.length > 0) {
+        errors.classAllocations = classAllocationErrors;
+      }
+    }
+    
+    // Validate subject allocations
+    if (values.subjectAllocations && values.subjectAllocations.length > 0) {
+      const subjectAllocationErrors = [];
+      values.subjectAllocations.forEach((allocation, index) => {
+        const allocationErrors = {};
+        const hasAnyValue = allocation.programme_id || allocation.class_id || 
+                           allocation.class_arm_id || allocation.curriculum_id || allocation.subject_id;
+        
+        if (hasAnyValue) {
+          if (!allocation.programme_id) {
+            allocationErrors.programme_id = 'Programme is required';
+          }
+          if (!allocation.class_id) {
+            allocationErrors.class_id = 'Class is required';
+          }
+          if (!allocation.class_arm_id) {
+            allocationErrors.class_arm_id = 'Class Arm is required';
+          }
+          if (!allocation.curriculum_id) {
+            allocationErrors.curriculum_id = 'Curriculum is required';
+          }
+          if (!allocation.subject_id) {
+            allocationErrors.subject_id = 'Subject is required';
+          }
+        }
+        
+        if (Object.keys(allocationErrors).length > 0) {
+          subjectAllocationErrors[index] = allocationErrors;
+        }
+      });
+      
+      if (subjectAllocationErrors.length > 0) {
+        errors.subjectAllocations = subjectAllocationErrors;
+      }
+    }
+    
+    return errors;
+  };
+
+  const handleFormSubmit = async (values, { setSubmitting, setErrors }) => {
+    try {
+      console.log('Form values before transformation:', {
+        classAllocations: values.classAllocations,
+        subjectAllocations: values.subjectAllocations
+      });
+
+      // Transform the form data to match backend expectations
+      const transformedValues = {
+        ...values,
+        // Map form field names to backend field names
+        first_name: values.first_name,
+        last_name: values.surname, // Note: surname maps to last_name
+        middle_name: values.middle_name || '',
+        phone: values.phone_number,
+        userId: values.staff_id,
+        gender: values.gender,
+        email: values.email,
+        date_of_first_appointment: values.date_of_appointment ? 
+          (typeof values.date_of_appointment === 'string' ? values.date_of_appointment : values.date_of_appointment.format('YYYY-MM-DD')) : 
+          null,
+        status: values.status,
+        staff_type: 'teaching', // Since this is for teaching staff
+
+        // Include allocation data with IDs - send all allocations, let backend handle empty ones
+        classAllocations: values.classAllocations || [],
+        subjectAllocations: values.subjectAllocations || []
+      };
+
+      console.log('Transformed payload:', transformedValues);
+      console.log('Allocation data being sent:', {
+        classAllocations: transformedValues.classAllocations,
+        subjectAllocations: transformedValues.subjectAllocations
+      });
+      console.log('Class allocation IDs:', transformedValues.classAllocations.map(a => a.id));
+      console.log('Subject allocation IDs:', transformedValues.subjectAllocations.map(a => a.id));
+      
+      await onSubmit(transformedValues);
+    } catch (error) {
+      setSubmitting(false);
+      
+      // Handle backend validation errors
+      if (error.response && error.response.data && error.response.data.errors) {
+        const backendErrors = error.response.data.errors;
+        const formattedErrors = {};
+        
+        // Convert backend errors to formik format
+        Object.keys(backendErrors).forEach(key => {
+          if (key.includes('classAllocations.')) {
+            const match = key.match(/classAllocations\.(\d+)\.(.+)/);
+            if (match) {
+              const index = parseInt(match[1]);
+              const field = match[2];
+              if (!formattedErrors.classAllocations) {
+                formattedErrors.classAllocations = [];
+              }
+              if (!formattedErrors.classAllocations[index]) {
+                formattedErrors.classAllocations[index] = {};
+              }
+              formattedErrors.classAllocations[index][field] = backendErrors[key][0];
+            }
+          } else if (key.includes('subjectAllocations.')) {
+            const match = key.match(/subjectAllocations\.(\d+)\.(.+)/);
+            if (match) {
+              const index = parseInt(match[1]);
+              const field = match[2];
+              if (!formattedErrors.subjectAllocations) {
+                formattedErrors.subjectAllocations = [];
+              }
+              if (!formattedErrors.subjectAllocations[index]) {
+                formattedErrors.subjectAllocations[index] = {};
+              }
+              formattedErrors.subjectAllocations[index][field] = backendErrors[key][0];
+            }
+          } else {
+            // Map backend field names back to form field names
+            if (key === 'last_name') {
+              formattedErrors.surname = backendErrors[key][0];
+            } else if (key === 'phone') {
+              formattedErrors.phone_number = backendErrors[key][0];
+            } else if (key === 'userId') {
+              formattedErrors.staff_id = backendErrors[key][0];
+            } else {
+              formattedErrors[key] = backendErrors[key][0];
+            }
+          }
+        });
+        
+        setErrors(formattedErrors);
+      }
+    }
+  };
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Formik
@@ -56,20 +245,46 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
           email: initialValues?.email || '',
           date_of_appointment: initialValues?.date_of_appointment || null,
           status: initialValues?.status || 'active',
-          // Allocation fields
-          class_session_term_id: initialValues?.class_session_term_id || '',
-          class_programme_id: initialValues?.class_programme_id || '',
-          class_id: initialValues?.class_id || '',
-          class_arm_id: initialValues?.class_arm_id || '',
-          subject_session_term_id: initialValues?.subject_session_term_id || '',
-          subject_programme_id: initialValues?.subject_programme_id || '',
-          subject_class_id: initialValues?.subject_class_id || '',
-          subject_class_arm_id: initialValues?.subject_class_arm_id || '',
-          subject_curriculum_id: initialValues?.subject_curriculum_id || '',
-          subject_id: initialValues?.subject_id || '',
+          // Allocation fields - now arrays
+          classAllocations: initialValues?.classAllocations || [{ 
+            id: null, // No ID for new records
+            session_term_id: '', 
+            programme_id: '', 
+            class_id: '', 
+            class_arm_id: '' 
+          }],
+          subjectAllocations: initialValues?.subjectAllocations || [{ 
+            id: null, // No ID for new records
+            session_term_id: '', 
+            programme_id: '', 
+            class_id: '', 
+            class_arm_id: '', 
+            curriculum_id: '', 
+            subject_id: '' 
+          }],
         }}
         validationSchema={validationSchema}
-        onSubmit={onSubmit}
+        onSubmit={handleFormSubmit}
+        validate={(values) => {
+          const errors = {};
+          
+          // First run Yup validation for basic fields
+          try {
+            validationSchema.validateSync(values, { abortEarly: false });
+          } catch (error) {
+            error.inner.forEach((err) => {
+              if (err.path && !err.path.includes('Allocations')) {
+                errors[err.path] = err.message;
+              }
+            });
+          }
+          
+          // Then run custom allocation validation
+          const allocationErrors = validateAllocations(values);
+          Object.assign(errors, allocationErrors);
+          
+          return errors;
+        }}
         enableReinitialize
       >
         {({ values, errors, touched, handleChange, handleBlur, setFieldValue, submitForm }) => (
@@ -206,24 +421,48 @@ const StaffForm = ({ initialValues, onSubmit, isLoading }) => {
 
                 {/* Right Side: Allocation */}
                 <Grid size={{ xs: 12, md: 5.5 }} >
-                  <StaffAllocationFields
-                    values={values}
-                    handleChange={handleChange}
-                    setFieldValue={setFieldValue}
-                    isLoading={isLoading}
-                  />
+                  <div id="classAllocations-section" data-field="classAllocations">
+                    <StaffAllocationFields
+                      values={values}
+                      handleChange={handleChange}
+                      setFieldValue={setFieldValue}
+                      isLoading={isLoading}
+                      errors={errors}
+                      touched={touched}
+                      mode={mode}
+                    />
+                  </div>
                 </Grid>
               </Grid>
             </Box>
 
-            {/* Hidden submit button */}
-            <button
-              type="submit"
-              style={{ display: 'none' }}
-              ref={(ref) => {
-                if (ref) window.staffFormSubmit = submitForm;
-              }}
-            />
+            {/* Action Buttons */}
+            <Box sx={{ 
+              mt: 4, 
+              pt: 3, 
+              borderTop: '1px solid #e0e0e0',
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              gap: 2 
+            }}>
+              <Button
+                color="inherit"
+                onClick={onCancel}
+                disabled={isLoading}
+                sx={{ textTransform: 'none', minWidth: 100 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isLoading}
+                startIcon={isLoading ? <CircularProgress size={16} /> : null}
+                sx={{ textTransform: 'none', minWidth: 100 }}
+              >
+                {isLoading ? 'Saving...' : (mode === 'edit' ? 'Update Staff' : 'Save Staff')}
+              </Button>
+            </Box>
           </Form>
         )}
       </Formik>

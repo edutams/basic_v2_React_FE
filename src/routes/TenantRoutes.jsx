@@ -40,6 +40,9 @@ const ActivityLog = Loadable(lazy(() => import('../views/tenants-views/activity-
 const CalendarPage = Loadable(lazy(() => import('../views/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('../views/pages/tenant-pages/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
+const PageUnderDevelopment = Loadable(
+  lazy(() => import('../components/shared/PageUnderDevelopment')),
+);
 const ParentManagement = Loadable(
   lazy(() => import('../views/tenants-views/parents/ParentManagement')),
 );
@@ -156,6 +159,8 @@ const TenantRoutes = [
       { path: 'calendar', element: <CalendarPage /> },
       { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: 'staff-setup', element: <StaffManager /> },
+
+      { path: 'admission-setup', element: <PageUnderDevelopment title="Admission Setup Under Development" subtitle="The Admission Setup module is currently under development. Check back soon!" /> },
 
       // ── Dashboard route (handles both school and parent dashboards) ──
       { path: 'dashboard', element: <SchoolDashboardMain /> },

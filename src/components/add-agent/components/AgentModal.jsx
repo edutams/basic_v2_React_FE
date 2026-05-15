@@ -53,12 +53,18 @@ const getModalConfig = (actionType) => {
   return configs[actionType] || configs.create;
 };
 
-const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, parentId, actionType = 'create' }) => {
+const AgentModal = ({
+  open,
+  onClose,
+  handleRefresh,
+  selectedAgent,
+  parentId,
+  actionType = 'create',
+}) => {
   const notify = useNotification();
 
   const { user } = useAuth();
-  // console.log(user,9999);
-  
+
   const accessLevel = user?.organization.access_level ?? 1;
   const canSelectColor = accessLevel < 2;
   const canEditDomain = accessLevel === 1;
@@ -66,23 +72,55 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, parentId, act
   const shouldPrefillForm = actionType === 'update' || actionType === 'changeColorScheme';
   const modalConfig = getModalConfig(actionType);
 
-  const initialValues = useMemo(() => ({
-    organizationName: shouldPrefillForm ? (selectedAgent?.organizationName || selectedAgent?.organization_name || selectedAgent?.name || '') : '',
-    organizationDomain: shouldPrefillForm ? (selectedAgent?.organizationDomain || selectedAgent?.organization_domain || '') : '',
-    contactDetails: shouldPrefillForm ? (selectedAgent?.contactDetails || selectedAgent?.organization_email || selectedAgent?.email || '') : '',
-    agentPhone: shouldPrefillForm ? (selectedAgent?.phoneNumber || selectedAgent?.agentPhone || selectedAgent?.organization_phone || selectedAgent?.phone || '') : '',
-    contactAddress: shouldPrefillForm ? (selectedAgent?.contactAddress || selectedAgent?.organization_address || selectedAgent?.address || '') : '',
-    stateFilter: shouldPrefillForm ? (selectedAgent?.state_id || selectedAgent?.stateFilter || '') : '',
-    lga: shouldPrefillForm ? (selectedAgent?.lga_id || selectedAgent?.lga || selectedAgent?.state_lga_id || '') : '',
-    primaryColor: shouldPrefillForm ? (selectedAgent?.primaryColor || selectedAgent?.primary_color || '') : '',
-    fname: shouldPrefillForm ? (selectedAgent?.fname || selectedAgent?.first_name || '') : '',
-    lname: shouldPrefillForm ? (selectedAgent?.lname || selectedAgent?.last_name || '') : '',
-    mname: shouldPrefillForm ? (selectedAgent?.mname || '') : '',
-    email: shouldPrefillForm ? (selectedAgent?.email || '') : '',
-    phone: shouldPrefillForm ? (selectedAgent?.phone || '') : '',
-    organizationLogo: shouldPrefillForm ? (selectedAgent?.organization_logo || '') : '',
-    adminAvatar: shouldPrefillForm ? (selectedAgent?.avatar || '') : '',
-  }), [shouldPrefillForm, selectedAgent]);
+  const initialValues = useMemo(
+    () => ({
+      organizationName: shouldPrefillForm
+        ? selectedAgent?.organizationName ||
+          selectedAgent?.organization_name ||
+          selectedAgent?.name ||
+          ''
+        : '',
+      organizationDomain: shouldPrefillForm
+        ? selectedAgent?.organizationDomain || selectedAgent?.organization_domain || ''
+        : '',
+      contactDetails: shouldPrefillForm
+        ? selectedAgent?.contactDetails ||
+          selectedAgent?.organization_email ||
+          selectedAgent?.email ||
+          ''
+        : '',
+      agentPhone: shouldPrefillForm
+        ? selectedAgent?.phoneNumber ||
+          selectedAgent?.agentPhone ||
+          selectedAgent?.organization_phone ||
+          selectedAgent?.phone ||
+          ''
+        : '',
+      contactAddress: shouldPrefillForm
+        ? selectedAgent?.contactAddress ||
+          selectedAgent?.organization_address ||
+          selectedAgent?.address ||
+          ''
+        : '',
+      stateFilter: shouldPrefillForm
+        ? selectedAgent?.state_id || selectedAgent?.stateFilter || ''
+        : '',
+      lga: shouldPrefillForm
+        ? selectedAgent?.lga_id || selectedAgent?.lga || selectedAgent?.state_lga_id || ''
+        : '',
+      primaryColor: shouldPrefillForm
+        ? selectedAgent?.primaryColor || selectedAgent?.primary_color || ''
+        : '',
+      fname: shouldPrefillForm ? selectedAgent?.fname || selectedAgent?.first_name || '' : '',
+      lname: shouldPrefillForm ? selectedAgent?.lname || selectedAgent?.last_name || '' : '',
+      mname: shouldPrefillForm ? selectedAgent?.mname || '' : '',
+      email: shouldPrefillForm ? selectedAgent?.email || '' : '',
+      phone: shouldPrefillForm ? selectedAgent?.phone || '' : '',
+      organizationLogo: shouldPrefillForm ? selectedAgent?.organization_logo || '' : '',
+      adminAvatar: shouldPrefillForm ? selectedAgent?.avatar || '' : '',
+    }),
+    [shouldPrefillForm, selectedAgent],
+  );
 
   const [loading, setLoading] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
@@ -106,125 +144,141 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, parentId, act
     formik.resetForm();
   };
 
-  const handleUpdate = useCallback(async (values) => {
-    setLoading(true);
-    try {
-      const payload = {
-        organization_name: values.organizationName,
-        organization_domain: values.organizationDomain,
-        organization_email: values.contactDetails,
-        organization_phone: values.agentPhone,
-        organization_address: values.contactAddress,
-        state_lga_id: values.lga,
-        access_level: selectedAgent?.access_level,
-        primary_color: values.primaryColor || null,
-        status: (selectedAgent?.status === 'Active' || selectedAgent?.status === 'active') ? 'active' : 'inactive',
-        mname: values.mname,
-        email: values.email,
-        phone: values.phone,
-        fname: values.fname,
-        lname: values.lname,
-        organization_logo: values.organizationLogo,
-        admin_avatar: values.adminAvatar,
-      };
+  const handleUpdate = useCallback(
+    async (values) => {
+      setLoading(true);
+      try {
+        const payload = {
+          organization_name: values.organizationName,
+          organization_domain: values.organizationDomain,
+          organization_email: values.contactDetails,
+          organization_phone: values.agentPhone,
+          organization_address: values.contactAddress,
+          state_lga_id: values.lga,
+          access_level: selectedAgent?.access_level,
+          primary_color: values.primaryColor || null,
+          status:
+            selectedAgent?.status === 'Active' || selectedAgent?.status === 'active'
+              ? 'active'
+              : 'inactive',
+          mname: values.mname,
+          email: values.email,
+          phone: values.phone,
+          fname: values.fname,
+          lname: values.lname,
+          organization_logo: values.organizationLogo,
+          admin_avatar: values.adminAvatar,
+        };
 
-      const agentId = selectedAgent?.id || selectedAgent?.s_n;
-      const response = await agentApi.update(agentId, payload);
+        const agentId = selectedAgent?.id || selectedAgent?.s_n;
+        const response = await agentApi.update(agentId, payload);
 
-      if (response.status === true) {
-        handleRefresh(response.data);
-        notify.success('Organization updated successfully!');
-        resetForm();
-        onClose();
-      } else {
-        console.error('Update returned invalid response', response);
-        notify.error('Failed to update organization.');
+        if (response.status === true) {
+          handleRefresh(response.data);
+          notify.success('Organization updated successfully!');
+          resetForm();
+          onClose();
+        } else {
+          console.error('Update returned invalid response', response);
+          notify.error('Failed to update organization.');
+        }
+      } catch (error) {
+        console.error('Agent update failed:', error);
+        if (error.response && error.response.status === 422) {
+          const backendErrors = error.response.data.errors;
+          const mappedErrors = {};
+
+          if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
+          if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
+          if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
+          if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
+          if (backendErrors.state_lga_id) mappedErrors.lga = backendErrors.state_lga_id[0];
+          if (backendErrors.fname) mappedErrors.fname = backendErrors.fname[0];
+          if (backendErrors.lname) mappedErrors.lname = backendErrors.lname[0];
+          if (backendErrors.mname) mappedErrors.mname = backendErrors.mname[0];
+          if (backendErrors.email) mappedErrors.email = backendErrors.email[0];
+          if (backendErrors.phone) mappedErrors.phone = backendErrors.phone[0];
+          if (backendErrors.organization_logo)
+            mappedErrors.organizationLogo = backendErrors.organization_logo[0];
+          if (backendErrors.admin_avatar) mappedErrors.adminAvatar = backendErrors.admin_avatar[0];
+
+          formik.setErrors(mappedErrors);
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Agent update failed:', error);
-      if (error.response && error.response.status === 422) {
-        const backendErrors = error.response.data.errors;
-        const mappedErrors = {};
+    },
+    [selectedAgent, handleRefresh, notify, resetForm, onClose, formik],
+  );
 
-        if (backendErrors.org_name) mappedErrors.organizationName = backendErrors.org_name[0];
-        if (backendErrors.email) mappedErrors.contactDetails = backendErrors.email[0];
-        if (backendErrors.phone) mappedErrors.agentPhone = backendErrors.phone[0];
-        if (backendErrors.address) mappedErrors.contactAddress = backendErrors.address[0];
-        if (backendErrors.state_lga_id) mappedErrors.lga = backendErrors.state_lga_id[0];
-        if (backendErrors.fname) mappedErrors.fname = backendErrors.fname[0];
-        if (backendErrors.lname) mappedErrors.lname = backendErrors.lname[0];
-        if (backendErrors.mname) mappedErrors.mname = backendErrors.mname[0];
-        if (backendErrors.email) mappedErrors.email = backendErrors.email[0];
-        if (backendErrors.phone) mappedErrors.phone = backendErrors.phone[0];
-        if (backendErrors.organization_logo) mappedErrors.organizationLogo = backendErrors.organization_logo[0];
-        if (backendErrors.admin_avatar) mappedErrors.adminAvatar = backendErrors.admin_avatar[0];
+  const handleSaveClick = useCallback(
+    async (values) => {
+      setLoading(true);
+      try {
+        const payload = {
+          organization_name: values.organizationName,
+          organization_domain: values.organizationDomain,
+          organization_email: values.contactDetails,
+          organization_phone: values.agentPhone,
+          organization_address: values.contactAddress,
+          state_lga_id: values.lga,
+          primary_color: values.primaryColor || null,
+          fname: values.fname,
+          lname: values.lname,
+          mname: values.mname,
+          email: values.email,
+          phone: values.phone,
+          organization_logo: values.organizationLogo,
+          admin_avatar: values.adminAvatar,
+          parent_id: parentId,
+        };
 
-        formik.setErrors(mappedErrors);
+        const response = await agentApi.createAgent(payload);
+
+        if (response.status === true) {
+          const newAgent = response.data;
+          handleRefresh(newAgent);
+          notify.success('Organization created successfully!');
+          resetForm();
+          onClose();
+        } else {
+          console.error('Failed to create agent:', response.data?.message);
+          notify.error(response?.data?.message || 'Failed to create agent');
+        }
+      } catch (error) {
+        console.error('Error creating agent:', error);
+        if (error.response && error.response.status === 422) {
+          const backendErrors = error.response.data.errors;
+          const mappedErrors = {};
+
+          if (backendErrors.organization_name)
+            mappedErrors.organizationName = backendErrors.organization_name[0];
+          if (backendErrors.organization_domain)
+            mappedErrors.organizationDomain = backendErrors.organization_domain[0];
+          if (backendErrors.organization_email)
+            mappedErrors.contactDetails = backendErrors.organization_email[0];
+          if (backendErrors.organization_phone)
+            mappedErrors.agentPhone = backendErrors.organization_phone[0];
+          if (backendErrors.organization_address)
+            mappedErrors.contactAddress = backendErrors.organization_address[0];
+          if (backendErrors.state_lga_id) mappedErrors.lga = backendErrors.state_lga_id[0];
+          if (backendErrors.fname) mappedErrors.fname = backendErrors.fname[0];
+          if (backendErrors.lname) mappedErrors.lname = backendErrors.lname[0];
+          if (backendErrors.mname) mappedErrors.mname = backendErrors.mname[0];
+          if (backendErrors.email) mappedErrors.email = backendErrors.email[0];
+          if (backendErrors.phone) mappedErrors.phone = backendErrors.phone[0];
+          if (backendErrors.organization_logo)
+            mappedErrors.organizationLogo = backendErrors.organization_logo[0];
+          if (backendErrors.admin_avatar) mappedErrors.adminAvatar = backendErrors.admin_avatar[0];
+
+          formik.setErrors(mappedErrors);
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedAgent, handleRefresh, notify, resetForm, onClose, formik]);
-
-  const handleSaveClick = useCallback(async (values) => {
-    setLoading(true);
-    try {
-      const payload = {
-        organization_name: values.organizationName,
-        organization_domain: values.organizationDomain,
-        organization_email: values.contactDetails,
-        organization_phone: values.agentPhone,
-        organization_address: values.contactAddress,
-        state_lga_id: values.lga,
-        primary_color: values.primaryColor || null,
-        fname: values.fname,
-        lname: values.lname,
-        mname: values.mname,
-        email: values.email,
-        phone: values.phone,
-        organization_logo: values.organizationLogo,
-        admin_avatar: values.adminAvatar,
-        parent_id: parentId,
-      };
-
-      const response = await agentApi.createAgent(payload);
-
-      if (response.status === true) {
-        const newAgent = response.data;
-        handleRefresh(newAgent);
-        notify.success('Organization created successfully!');
-        resetForm();
-        onClose();
-      } else {
-        console.error('Failed to create agent:', response.data?.message);
-        notify.error(response?.data?.message || 'Failed to create agent');
-      }
-    } catch (error) {
-      console.error('Error creating agent:', error);
-      if (error.response && error.response.status === 422) {
-        const backendErrors = error.response.data.errors;
-        const mappedErrors = {};
-
-        if (backendErrors.organization_name) mappedErrors.organizationName = backendErrors.organization_name[0];
-        if (backendErrors.organization_domain) mappedErrors.organizationDomain = backendErrors.organization_domain[0];
-        if (backendErrors.organization_email) mappedErrors.contactDetails = backendErrors.organization_email[0];
-        if (backendErrors.organization_phone) mappedErrors.agentPhone = backendErrors.organization_phone[0];
-        if (backendErrors.organization_address) mappedErrors.contactAddress = backendErrors.organization_address[0];
-        if (backendErrors.state_lga_id) mappedErrors.lga = backendErrors.state_lga_id[0];
-        if (backendErrors.fname) mappedErrors.fname = backendErrors.fname[0];
-        if (backendErrors.lname) mappedErrors.lname = backendErrors.lname[0];
-        if (backendErrors.mname) mappedErrors.mname = backendErrors.mname[0];
-        if (backendErrors.email) mappedErrors.email = backendErrors.email[0];
-        if (backendErrors.phone) mappedErrors.phone = backendErrors.phone[0];
-        if (backendErrors.organization_logo) mappedErrors.organizationLogo = backendErrors.organization_logo[0];
-        if (backendErrors.admin_avatar) mappedErrors.adminAvatar = backendErrors.admin_avatar[0];
-
-        formik.setErrors(mappedErrors);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [handleRefresh, notify, resetForm, onClose, formik]);
+    },
+    [handleRefresh, notify, resetForm, onClose, formik],
+  );
 
   const handleClose = useCallback(() => {
     resetForm();
@@ -248,35 +302,38 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, parentId, act
     }
   }, [selectedAgent, handleRefresh, notify, onClose]);
 
-  const handleAddTeamMember = useCallback(async (values) => {
-    setLoading(true);
-    try {
-      const payload = {
-        ...values,
-        organization_id: selectedAgent?.id || selectedAgent?.s_n
-      };
-      const response = await agentApi.addTeamMember(payload);
-      if (response.status) {
-        handleRefresh(response.data);
-        notify.success('Team member added successfully!');
-        resetForm();
-        onClose();
-      } else {
+  const handleAddTeamMember = useCallback(
+    async (values) => {
+      setLoading(true);
+      try {
+        const payload = {
+          ...values,
+          organization_id: selectedAgent?.id || selectedAgent?.s_n,
+        };
+        const response = await agentApi.addTeamMember(payload);
+        if (response.status) {
+          handleRefresh(response.data);
+          notify.success('Team member added successfully!');
+          resetForm();
+          onClose();
+        } else {
+          notify.error('Failed to add team member');
+        }
+      } catch (error) {
+        console.error('Add team member failed:', error);
         notify.error('Failed to add team member');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Add team member failed:', error);
-      notify.error('Failed to add team member');
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedAgent, handleRefresh, notify, resetForm, onClose]);
+    },
+    [selectedAgent, handleRefresh, notify, resetForm, onClose],
+  );
 
   const renderContent = () => {
     switch (actionType) {
       case 'viewSchools':
         return <SchoolsView selectedAgent={selectedAgent} />;
-      
+
       case 'deleteOrganization':
         return (
           <Box p={3}>
@@ -287,10 +344,7 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, parentId, act
               Are you sure you want to delete this organization?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-              <Button
-                variant="outlined"
-                onClick={() => setDeleteConfirmOpen(false)}
-              >
+              <Button variant="outlined" onClick={() => setDeleteConfirmOpen(false)}>
                 Cancel
               </Button>
               <Button
@@ -305,28 +359,19 @@ const AgentModal = ({ open, onClose, handleRefresh, selectedAgent, parentId, act
             </Box>
           </Box>
         );
-      
-      <Dialog
-        open={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-      >
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete this organization?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleDeleteOrganization}
-            color="error"
-            variant="contained"
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+        <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
+          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogContent>
+            <Typography>Are you sure you want to delete this organization?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+            <Button onClick={handleDeleteOrganization} color="error" variant="contained">
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>;
 
       case 'managePermissions':
         return (

@@ -11,6 +11,10 @@ import {
   Button,
   Typography,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -28,17 +32,18 @@ import Search from '../../../full/vertical/header/Search';
 import Language from '../../../full/vertical/header/Language';
 import Notifications from '../../../full/vertical/header/Notification';
 import Profile from '../../../full/vertical/header/Profile';
+import { TenantAuthContext } from '../../../../context/TenantContext/auth';
 // import SchoolNavigation from './SchoolNavigation';
-import { TenantAuthContext } from 'src/context/TenantContext/auth';
 
 const SchoolHeader = () => {
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down('lg'));
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const [isVisible, setIsVisible] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { activeMode, setActiveMode, isLayout, isMobileSidebar, setIsMobileSidebar } =
     useContext(CustomizerContext);
-  const { isImpersonated, stopImpersonation, tenantInfo } = useContext(TenantAuthContext);
+  const { isImpersonating, stopImpersonation, tenantInfo } = useContext(TenantAuthContext);
   const TopbarHeight = config.topbarHeight;
 
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || null;
@@ -152,28 +157,43 @@ const SchoolHeader = () => {
         ) : null}
         {lgUp ? <SchoolNavigation /> : null}
 
-        {isImpersonated && (
+        {isImpersonating && (
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              bgcolor: 'warning.light',
-              px: 2,
+              // bgcolor: 'warning.main',
+              bgcolor: '#593196',
+              color: '#ffffff',
+              px: { xs: 1, sm: 2 },
               py: 0.5,
               borderRadius: 1,
-              ml: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: { xs: 0.5, sm: 1 },
+              ml: { xs: 1, sm: 2 },
+              maxWidth: { xs: '160px', sm: 'none' },
+              overflow: 'hidden',
             }}
           >
-            <IconArrowLeft size={18} sx={{ mr: 1, color: 'warning.main' }} />
-            <Button
-              color="inherit"
-              onClick={stopImpersonation}
+            <Typography
+              variant="body2"
               sx={{
-                color: 'warning.main',
-                fontWeight: 600,
-                textTransform: 'none',
-                p: 0,
-                minWidth: 'auto',
+                display: { xs: 'none', sm: 'block' },
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Logged in as
+            </Typography>
+
+            <Button
+              size="small"
+              variant="outlined"
+              color="inherit"
+              onClick={() => setConfirmOpen(true)}
+              sx={{
+                whiteSpace: 'nowrap',
+                fontSize: { xs: '10px', sm: '13px' },
+                px: { xs: 0.75, sm: 1.5 },
+                minWidth: 'unset',
               }}
             >
               {lgUp ? 'Return to my account' : 'Exit'}
@@ -181,6 +201,31 @@ const SchoolHeader = () => {
           </Box>
         )}
 
+        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ fontWeight: 600 }}>Return to your account?</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary">
+              You are currently impersonating{' '}
+              <strong>{tenantInfo?.tenant_name || tenantInfo?.school_name || 'this school'}</strong>
+              . Returning will restore your admin session.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+            <Button variant="outlined" color="inherit" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setConfirmOpen(false);
+                stopImpersonation();
+              }}
+              sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}
+            >
+              Yes, return to my account
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Box flexGrow={1} />
         <Stack direction="row" gap={1} alignItems="center">
           <IconButton color="inherit">

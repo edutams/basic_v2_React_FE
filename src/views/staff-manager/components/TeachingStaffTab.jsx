@@ -140,7 +140,7 @@ const TeachingStaffTab = ({
                 startIcon={<IconPlus size={18} />}
                 onClick={handleAddStaff}
               >
-                Add Single Staff
+                Add Teaching Staff
               </Button>
 
               <ButtonGroup variant="outlined" fullWidth={{ xs: true, sm: false }}>
@@ -149,7 +149,7 @@ const TeachingStaffTab = ({
                   sx={{ textTransform: 'none' }}
                   onClick={handleUploadStaff}
                 >
-                  Upload Excel
+                  Multiple Teachers Upload
                 </Button>
 
                 <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>

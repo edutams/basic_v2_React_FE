@@ -91,7 +91,7 @@ const NonTeachingStaffTab = ({
 
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button variant="contained" startIcon={<IconPlus size={18} />} onClick={handleAddStaff}>
-            Add Single Staff
+            Add Non-Teaching Staff
           </Button>
           <ButtonGroup variant="outlined">
             <Button
@@ -99,7 +99,7 @@ const NonTeachingStaffTab = ({
               sx={{ textTransform: 'none' }}
               onClick={handleUploadStaff}
             >
-              Upload Excel
+              Multiple Teachers Upload
             </Button>
             <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
               <IconChevronDown size={16} />

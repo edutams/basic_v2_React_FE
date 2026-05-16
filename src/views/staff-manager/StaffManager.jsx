@@ -703,7 +703,7 @@ const StaffManager = () => {
         </MenuItem>
         <MenuItem onClick={handleUploadStaff}>
           <IconUpload size={18} style={{ marginRight: 8 }} />
-          Upload Staff
+          Upload Filled Template
         </MenuItem>
       </Menu>
 

@@ -59,6 +59,8 @@ const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/
 const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
 const Error = Loadable(lazy(() => import('../views/authentication/Error')));
 
+const Analytics_ = Loadable(lazy(() => import('../views/analytics_/index')));
+
 const appMode = import.meta.env.MODE;
 const CENTRAL_DOMAIN =
   appMode === 'production'
@@ -112,7 +114,7 @@ const AgentRoutes = [
     children: [
       { index: true, element: <DashboardRouteWrapper /> },
       { path: 'dashboard', element: <DashboardRouteWrapper /> },
-      // { path: 'dashboard/school', element: <SchoolDashboard /> },
+      { path: 'analytics_', element: <Analytics_ /> },
       { path: 'acl_manager', element: <AlcManager /> },
       { path: 'organization', element: <Agent /> },
       { path: 'view/:id', element: <ViewAgent /> },

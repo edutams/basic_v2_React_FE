@@ -131,7 +131,6 @@ const TenantRoutes = [
     element: (
       <TenantProtectedRoute>
         <SetupRedirectHandler />
-
         <SchoolLayout />
       </TenantProtectedRoute>
     ),
@@ -160,11 +159,19 @@ const TenantRoutes = [
       { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: 'staff-setup', element: <StaffManager /> },
 
-      { path: 'admission-setup', element: <PageUnderDevelopment title="Admission Setup Under Development" subtitle="The Admission Setup module is currently under development. Check back soon!" /> },
+      {
+        path: 'admission-setup',
+        element: (
+          <PageUnderDevelopment
+            title="Admission Setup Under Development"
+            subtitle="The Admission Setup module is currently under development. Check back soon!"
+          />
+        ),
+      },
 
       // ── Dashboard route (handles both school and parent dashboards) ──
       { path: 'dashboard', element: <SchoolDashboardMain /> },
-      
+
       // ── Parent-specific routes ──
       { path: 'admission/new-application', element: <NewApplication /> },
       { path: 'admission-status', element: <AdmissionStatus /> },

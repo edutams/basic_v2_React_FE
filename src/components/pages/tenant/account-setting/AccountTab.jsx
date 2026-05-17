@@ -16,16 +16,15 @@ import { useTenantAuth } from '../../../../hooks/useTenantAuth';
 import { useNotification } from '../../../../hooks/useNotification';
 
 const AccountTab = () => {
-  const { user, updateAgentProfile, changePassword } = useTenantAuth();
+  const { user, updateUser, changePassword } = useTenantAuth();
 
   const [formData, setFormData] = useState({
-    name: '',
+    fname: '',
+    lname: '',
     email: '',
     phone: '',
     address: '',
-    image: '',
-    org_name: '',
-    org_title: '',
+    avatar: '',
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -43,7 +42,7 @@ const AccountTab = () => {
   const hostname = window.location.hostname;
   const centralHost = import.meta.env.VITE_API_BASE_URL
     ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
-    : 'basic_v2.test';
+    : 'basic_v2_be.test';
 
   const isTenantSubdomain =
     hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
@@ -52,13 +51,13 @@ const AccountTab = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user?.full_name || '',
+        id: user?.id,
+        fname: user?.fname,
+        lname: user?.lname,
         email: user?.email || '',
         phone: user?.phone || '',
-        address: user?.organization?.organization_address || '',
-        image: user?.image || '',
-        org_name: user?.org_name || '',
-        org_title: user?.org_title || '',
+        address: user?.address || 'Not set',
+        avatar: user?.avatar || '',
       });
     }
   }, [user]);
@@ -92,25 +91,27 @@ const AccountTab = () => {
 
     const payload = new FormData();
 
-    ['full_name', 'email', 'phone', 'address', 'org_name', 'org_title'].forEach((key) => {
-      payload.append(key, formData[key]);
-    });
+    payload.append('fname', formData.fname);
+    payload.append('lname', formData.lname);
+    payload.append('email', formData.email);
+    payload.append('phone', formData.phone);
+    payload.append('address', formData.address);
 
     if (imageFile) {
-      payload.append('image', imageFile);
+      payload.append('avatar', imageFile);
     }
 
     if (formData.reset_image) {
       payload.append('reset_image', true);
     }
+
     try {
-      const result = await updateAgentProfile(payload, true);
-      if (result.success) {
-        notify.success(result.message || 'Profile updated successfully!', 'Success');
-        setImageFile(null);
-      } else {
-        notify.error(result.error || 'Update failed', 'Authentication Error');
-      }
+      const result = await updateUser(payload, true);
+
+      notify.success(result.message || 'Profile updated successfully!', 'Success');
+
+      setImageFile(null);
+      setFormData((prev) => ({ ...prev, reset_image: false }));
     } catch (err) {
       notify.error(err.response?.data?.error || 'Update failed', 'Authentication Error');
     } finally {
@@ -124,18 +125,15 @@ const AccountTab = () => {
 
     try {
       const result = await changePassword(passwordData);
-      if (result.success) {
-        notify.success(result.message || 'Password changed successfully!', 'Success');
-        setPasswordData({
-          current_password: '',
-          password: '',
-          password_confirmation: '',
-        });
-      } else {
-        notify.error(result.error || 'Failed to change password', 'Error');
-      }
+      notify.success(result.message);
+
+      setPasswordData({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+      });
     } catch (err) {
-      notify.error(err.response?.data?.error || 'Failed to change password', 'Error');
+      notify.error(err.response?.data?.message || 'Failed to change password', 'Error');
     } finally {
       setIsPasswordLoading(false);
     }
@@ -157,7 +155,7 @@ const AccountTab = () => {
               <Box textAlign="center" display="flex" justifyContent="center">
                 <Box>
                   <Avatar
-                    src={imageFile ? URL.createObjectURL(imageFile) : user?.image}
+                    src={imageFile ? URL.createObjectURL(imageFile) : user?.avatar}
                     alt={user?.name}
                     sx={{ width: 100, height: 100, margin: '0 auto' }}
                   />
@@ -182,14 +180,24 @@ const AccountTab = () => {
                 </Box>
               </Box>
               <Box>
-                <CustomFormLabel htmlFor="name">Name</CustomFormLabel>
+                <CustomFormLabel htmlFor="fname">First Name</CustomFormLabel>
                 <CustomTextField
-                  id="name"
-                  name="name"
-                  value={formData.full_name || formData.name}
+                  id="fname"
+                  name="fname"
+                  value={formData.fname}
                   onChange={handleProfileChange}
                   fullWidth
-                  disabled={isTenantSubdomain}
+                  disabled={!isTenantSubdomain}
+                />
+
+                <CustomFormLabel htmlFor="lname">Last Name</CustomFormLabel>
+                <CustomTextField
+                  id="lname"
+                  name="lname"
+                  value={formData.lname}
+                  onChange={handleProfileChange}
+                  fullWidth
+                  disabled={!isTenantSubdomain}
                 />
               </Box>
               <Box>
@@ -211,31 +219,20 @@ const AccountTab = () => {
                   value={formData.phone}
                   onChange={handleProfileChange}
                   fullWidth
-                  disabled={isTenantSubdomain}
+                  disabled={!isTenantSubdomain}
                 />
               </Box>
-              {/* <Box>
+              <Box>
                 <CustomFormLabel htmlFor="address">Address</CustomFormLabel>
                 <CustomTextField
                   id="address"
                   name="address"
-                  value={formData.address}
+                  value={formData.address === null ? '' : formData.address}
                   onChange={handleProfileChange}
                   fullWidth
-                  disabled={isTenantSubdomain}
+                  disabled={!isTenantSubdomain}
                 />
               </Box>
-              <Box>
-                <CustomFormLabel htmlFor="org_name">Organization Name</CustomFormLabel>
-                <CustomTextField
-                  id="org_name"
-                  name="org_name"
-                  value={formData.org_name}
-                  onChange={handleProfileChange}
-                  fullWidth
-                  disabled={isTenantSubdomain}
-                />
-              </Box> */}
               <Stack direction="row" spacing={2} mt={3}>
                 <Box>
                   <Button

@@ -19,11 +19,12 @@ const AccountTab = () => {
   const { user, updateAgentProfile, changePassword } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: '',
+    fname: '',
+    lname: '',
     email: '',
     phone: '',
     address: '',
-    image: '',
+    avatar: '',
     org_name: '',
     org_title: '',
   });
@@ -43,7 +44,7 @@ const AccountTab = () => {
   const hostname = window.location.hostname;
   const centralHost = import.meta.env.VITE_API_BASE_URL
     ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
-    : 'basic_v2.test';
+    : 'basic_v2_be.test';
 
   const isTenantSubdomain =
     hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
@@ -52,13 +53,15 @@ const AccountTab = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user?.full_name || '',
+        id: user?.id,
+        fname: user?.fname,
+        lname: user?.lname,
         email: user?.email || '',
         phone: user?.phone || '',
-        address: user?.organization?.organization_address || '',
-        image: user?.image || '',
-        org_name: user?.org_name || '',
-        org_title: user?.org_title || '',
+        address: user?.address,
+        avatar: user?.avatar || '',
+        // org_name: user?.org_name || '',
+        // org_title: user?.org_title || '',
       });
     }
   }, [user]);
@@ -92,25 +95,29 @@ const AccountTab = () => {
 
     const payload = new FormData();
 
-    ['full_name', 'email', 'phone', 'address', 'org_name', 'org_title'].forEach((key) => {
-      payload.append(key, formData[key]);
-    });
+    payload.append('fname', formData.fname);
+    payload.append('lname', formData.lname);
+    payload.append('email', formData.email);
+    payload.append('phone', formData.phone);
+    payload.append('address', formData.address);
+    // payload.append('org_name', formData.org_name);
+    // payload.append('org_title', formData.org_title);
 
     if (imageFile) {
-      payload.append('image', imageFile);
+      payload.append('avatar', imageFile);
     }
 
     if (formData.reset_image) {
       payload.append('reset_image', true);
     }
+
     try {
       const result = await updateAgentProfile(payload, true);
-      if (result.success) {
-        notify.success(result.message || 'Profile updated successfully!', 'Success');
-        setImageFile(null);
-      } else {
-        notify.error(result.error || 'Update failed', 'Authentication Error');
-      }
+
+      notify.success(result.message || 'Profile updated successfully!', 'Success');
+
+      setImageFile(null);
+      setFormData((prev) => ({ ...prev, reset_image: false }));
     } catch (err) {
       notify.error(err.response?.data?.error || 'Update failed', 'Authentication Error');
     } finally {
@@ -120,22 +127,21 @@ const AccountTab = () => {
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+
     setIsPasswordLoading(true);
 
     try {
       const result = await changePassword(passwordData);
-      if (result.success) {
-        notify.success(result.message || 'Password changed successfully!', 'Success');
-        setPasswordData({
-          current_password: '',
-          password: '',
-          password_confirmation: '',
-        });
-      } else {
-        notify.error(result.error || 'Failed to change password', 'Error');
-      }
+
+      notify.success(result.message);
+
+      setPasswordData({
+        current_password: '',
+        password: '',
+        password_confirmation: '',
+      });
     } catch (err) {
-      notify.error(err.response?.data?.error || 'Failed to change password', 'Error');
+      notify.error(err.response?.data?.message || 'Failed to change password', 'Error');
     } finally {
       setIsPasswordLoading(false);
     }
@@ -157,7 +163,7 @@ const AccountTab = () => {
               <Box textAlign="center" display="flex" justifyContent="center">
                 <Box>
                   <Avatar
-                    src={imageFile ? URL.createObjectURL(imageFile) : user?.image}
+                    src={imageFile ? URL.createObjectURL(imageFile) : user?.avatar}
                     alt={user?.name}
                     sx={{ width: 100, height: 100, margin: '0 auto' }}
                   />
@@ -186,11 +192,21 @@ const AccountTab = () => {
                 </Box>
               </Box>
               <Box>
-                <CustomFormLabel htmlFor="name">Name</CustomFormLabel>
+                <CustomFormLabel htmlFor="fname">First Name</CustomFormLabel>
                 <CustomTextField
-                  id="name"
-                  name="name"
-                  value={formData.full_name || formData.name}
+                  id="fname"
+                  name="fname"
+                  value={formData.fname}
+                  onChange={handleProfileChange}
+                  fullWidth
+                  disabled={isTenantSubdomain}
+                />
+
+                <CustomFormLabel htmlFor="lname">Last Name</CustomFormLabel>
+                <CustomTextField
+                  id="lname"
+                  name="lname"
+                  value={formData.lname}
                   onChange={handleProfileChange}
                   fullWidth
                   disabled={isTenantSubdomain}
@@ -204,7 +220,7 @@ const AccountTab = () => {
                   value={formData.email}
                   onChange={handleProfileChange}
                   fullWidth
-                  disabled={isTenantSubdomain}
+                  disabled={!isTenantSubdomain}
                 />
               </Box>
               <Box>

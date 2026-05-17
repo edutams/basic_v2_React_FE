@@ -243,7 +243,13 @@ export const TenantAuthProvider = ({ children }) => {
     try {
       const res = await tenantApi.get('/school_setup/get_academic_info');
       const { academic_session, academic_term, academic_week, logo_url } = res.data;
-      setTenantInfo((prev) => ({ ...prev, academic_session, academic_term, academic_week, logo_url }));
+      setTenantInfo((prev) => ({
+        ...prev,
+        academic_session,
+        academic_term,
+        academic_week,
+        logo_url,
+      }));
     } catch (err) {
       console.error('Failed to refresh academic info', err);
     }
@@ -318,13 +324,13 @@ export const TenantAuthProvider = ({ children }) => {
 
   const clearError = () => setError(null);
 
-  const updateAgentProfile = async (data, isMultipart = false) => {
+  const updateUser = async (data, isMultipart = false) => {
     setError(null);
     try {
-      const res = await api.put('/update-user', data, {
+      const res = await api.post('/update_user', data, {
         headers: isMultipart ? { 'Content-Type': 'multipart/form-data' } : undefined,
       });
-      const userData = res.data?.data || res.data;
+      const userData = res.data?.data;
       setUser(userData);
       return { success: true, user: userData };
     } catch (err) {
@@ -336,14 +342,9 @@ export const TenantAuthProvider = ({ children }) => {
 
   const changePassword = async (passwordData) => {
     setError(null);
-    try {
-      await api.put('/change-password', passwordData);
-      return { success: true };
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Password change failed';
-      setError(msg);
-      return { success: false, error: msg };
-    }
+    const res = await api.put('/change_password', passwordData);
+
+    return res.data;
   };
 
   const stopImpersonation = async () => {
@@ -388,7 +389,7 @@ export const TenantAuthProvider = ({ children }) => {
     error,
     login,
     logout,
-    updateAgentProfile,
+    updateUser,
     changePassword,
     clearError,
     permissions,

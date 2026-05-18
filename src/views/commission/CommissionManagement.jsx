@@ -204,13 +204,7 @@ const CommissionManagement = () => {
                 onClick={() =>
                   handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
                 }
-                sx={{
-                  bgcolor: '#3949ab',
-                  textTransform: 'none',
-                  borderRadius: '8px',
-                  width: { xs: '100%', sm: 'auto' },
-                  '&:hover': { bgcolor: '#303f9f' },
-                }}
+                
               >
                 <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
                   {value === '3' ? 'My Commission by Subscription' : 'My Commission by Transaction'}

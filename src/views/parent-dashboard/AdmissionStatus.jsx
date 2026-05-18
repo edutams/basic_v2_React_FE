@@ -24,7 +24,7 @@ const STEPS = ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
 const AdmissionStepper = ({ currentStep }) => (
   <Box sx={{ display: 'flex', alignItems: 'center' }}>
     {STEPS.map((step, i) => {
-      const done   = i < currentStep;
+      const done = i < currentStep;
       const active = i === currentStep;
       return (
         <React.Fragment key={step}>
@@ -41,8 +41,8 @@ const AdmissionStepper = ({ currentStep }) => (
               {done
                 ? <CheckCircleIcon sx={{ color: '#fff', fontSize: 18 }} />
                 : active
-                ? <SchoolIcon sx={{ color: '#fff', fontSize: 16 }} />
-                : <PendingIcon sx={{ color: 'grey.400', fontSize: 16 }} />}
+                  ? <SchoolIcon sx={{ color: '#fff', fontSize: 16 }} />
+                  : <PendingIcon sx={{ color: 'grey.400', fontSize: 16 }} />}
             </Box>
             <Typography
               variant="caption"
@@ -64,12 +64,12 @@ const AdmissionStepper = ({ currentStep }) => (
 
 // ── Timeline ──────────────────────────────────────────────────────────────────
 const TIMELINE_ICON_MAP = {
-  submitted: { icon: DescriptionIcon,    bg: '#1565C0', isMui: true  },
-  reviewed:  { icon: IconClipboardCheck, bg: '#2E7D32', isMui: false },
-  exam:      { icon: IconTrophy,         bg: '#6A1B9A', isMui: false },
-  decision:  { icon: IconSearch,         bg: '#E65100', isMui: false },
-  fee:       { icon: CreditCardIcon,     bg: '#9E9E9E', isMui: true  },
-  pending:   { icon: IconClock,          bg: '#BDBDBD', isMui: false },
+  submitted: { icon: DescriptionIcon, bg: '#1565C0', isMui: true },
+  reviewed: { icon: IconClipboardCheck, bg: '#2E7D32', isMui: false },
+  exam: { icon: IconTrophy, bg: '#6A1B9A', isMui: false },
+  decision: { icon: IconSearch, bg: '#E65100', isMui: false },
+  fee: { icon: CreditCardIcon, bg: '#9E9E9E', isMui: true },
+  pending: { icon: IconClock, bg: '#BDBDBD', isMui: false },
 };
 
 const TimelineEvent = ({ type = 'pending', title, date, detail, isLast = false }) => {
@@ -120,10 +120,11 @@ const ActionCard = ({ amount, dueLabel, onPay, onViewLetter }) => {
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 const statusChipSx = (status) => {
-  if (status === 'Admitted')        return { bgcolor: 'success.light',  color: 'success.dark'  };
-  if (status === 'Enrolled')        return { bgcolor: 'primary.light',  color: 'primary.dark'  };
-  if (status === 'Exam Scheduled')  return { bgcolor: 'warning.light',  color: 'warning.dark'  };
-  return                                   { bgcolor: 'grey.100',       color: 'text.secondary' };
+  if (status === 'Admitted') return { bgcolor: 'success.light', color: 'success.dark' };
+  if (status === 'Enrolled') return { bgcolor: 'primary.light', color: 'primary.dark' };
+  if (status === 'Exam Scheduled') return { bgcolor: 'warning.light', color: 'warning.dark' };
+  if (status === 'Incomplete') return { bgcolor: 'error.light', color: 'error.dark' };
+  return { bgcolor: 'grey.100', color: 'text.secondary' };
 };
 
 // ── Single application card ───────────────────────────────────────────────────
@@ -131,8 +132,13 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(defaultOpen);
 
-  const hasTimeline   = app.timeline?.length > 0;
-  const hasAction     = Boolean(app.acceptanceFee);
+  const hasTimeline = app.timeline?.length > 0;
+  const hasAction = Boolean(app.acceptanceFee);
+  const isDraft = app.status === 'Incomplete' || app.isDraft;
+
+  // Map draft steps to names
+  const draftStepNames = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
+  const draftStepName = isDraft ? draftStepNames[app.draftStep ?? 0] : '';
 
   return (
     <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', mb: 2 }}>
@@ -142,7 +148,13 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
           display: 'flex', alignItems: 'center', gap: 2, p: 2,
           cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, transition: 'background 0.15s',
         }}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (isDraft) {
+            navigate(`/admission/new-application?step=${app.draftStep ?? 0}`, { state: { ward: app } });
+          } else {
+            setOpen((v) => !v);
+          }
+        }}
       >
         <Avatar sx={{ width: 44, height: 44, fontWeight: 700, flexShrink: 0 }}>
           {app.name?.[0]}
@@ -159,94 +171,121 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
             />
           </Box>
           <Typography variant="caption" color="text.secondary">
-            App #{app.applicationNo} · {app.class} · {app.session}{app.term ? ` · ${app.term}` : ''}
+            {isDraft ? 'Draft Application' : `App #${app.applicationNo}`} · {app.class} · {app.session}{app.term ? ` · ${app.term}` : ''}
+            {isDraft && ` · Stopped at: ${draftStepName}`}
           </Typography>
         </Box>
 
         {/* Mini stepper — hidden on xs */}
         <Box sx={{ display: { xs: 'none', sm: 'block' }, width: 220, flexShrink: 0 }}>
-          <AdmissionStepper currentStep={app.currentStep ?? 0} />
+          {!isDraft && <AdmissionStepper currentStep={app.currentStep ?? 0} />}
         </Box>
 
         <Box sx={{ flexShrink: 0, color: 'text.secondary' }}>
-          {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          {isDraft ? (
+            <Button
+              variant="contained"
+              size="small"
+              endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
+              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              Continue
+            </Button>
+          ) : (open ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
+          {isDraft && (
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+              <ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />
+            </Box>
+          )}
         </Box>
       </Box>
 
       {/* ── Expanded detail ── */}
-      <Collapse in={open}>
-        <Divider />
+      {!isDraft && (
+        <Collapse in={open}>
+          <Divider />
 
-        {/* Full stepper on mobile */}
-        <Box sx={{ display: { xs: 'block', sm: 'none' }, px: 2, pt: 2 }}>
-          <AdmissionStepper currentStep={app.currentStep ?? 0} />
-        </Box>
+          {/* Full stepper on mobile */}
+          <Box sx={{ display: { xs: 'block', sm: 'none' }, px: 2, pt: 2 }}>
+            <AdmissionStepper currentStep={app.currentStep ?? 0} />
+          </Box>
 
-        <Grid container spacing={2} sx={{ p: 2 }} alignItems="flex-start">
-          {/* Timeline */}
-          <Grid size={{ xs: 12, md: hasAction ? 7 : 12 }}>
-            <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Activity timeline</Typography>
-            {hasTimeline ? (
-              app.timeline.map((ev, i) => (
-                <TimelineEvent
-                  key={i} type={ev.type} title={ev.title}
-                  date={ev.date} detail={ev.detail}
-                  isLast={i === app.timeline.length - 1}
+          <Grid container spacing={2} sx={{ p: 2 }} alignItems="flex-start">
+            {/* Timeline */}
+            <Grid size={{ xs: 12, md: hasAction ? 7 : 12 }}>
+              <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Activity timeline</Typography>
+              {hasTimeline ? (
+                app.timeline.map((ev, i) => (
+                  <TimelineEvent
+                    key={i} type={ev.type} title={ev.title}
+                    date={ev.date} detail={ev.detail}
+                    isLast={i === app.timeline.length - 1}
+                  />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">No activity recorded yet.</Typography>
+              )}
+            </Grid>
+
+            {/* Action card */}
+            {hasAction && (
+              <Grid size={{ xs: 12, md: 5 }}>
+                <ActionCard
+                  amount={app.acceptanceFee}
+                  dueLabel={app.feeDue}
+                  onPay={() => { }}
+                  onViewLetter={() => navigate('/admission-letter', { state: { letter: { ...app, parentName: 'Mrs. Adaeze Okafor' } } })}
                 />
-              ))
-            ) : (
-              <Typography variant="body2" color="text.secondary">No activity recorded yet.</Typography>
+              </Grid>
             )}
           </Grid>
-
-          {/* Action card */}
-          {hasAction && (
-            <Grid size={{ xs: 12, md: 5 }}>
-              <ActionCard
-                amount={app.acceptanceFee}
-                dueLabel={app.feeDue}
-                onPay={() => {}}
-                onViewLetter={() => navigate('/admission-letter', { state: { letter: { ...app, parentName: 'Mrs. Adaeze Okafor' } } })}
-              />
-            </Grid>
-          )}
-        </Grid>
-      </Collapse>
+        </Collapse>
+      )}
     </Paper>
   );
 };
 
 // ── Mock data (multiple wards) ────────────────────────────────────────────────
 const MOCK_APPLICATIONS = [
-  // {
-  //   id: 1, name: 'Chinaza Okafor', status: 'Admitted',
-  //   applicationNo: 'A-10428', class: 'JSS 1', session: '2025/26',
-  //   currentStep: 2, acceptanceFee: 35000, feeDue: 'Acceptance fee due Sep 5',
-  //   timeline: [
-  //     { type: 'submitted', title: 'Application submitted',  date: 'Aug 12, 2025', detail: '₦5,000 paid'        },
-  //     { type: 'reviewed',  title: 'Application reviewed',   date: 'Aug 15, 2025', detail: 'Approved for exam'  },
-  //     { type: 'exam',      title: 'E-Exam completed',       date: 'Aug 24, 2025', detail: 'Score 84/100'       },
-  //     { type: 'decision',  title: 'Admission decision',     date: 'Aug 30, 2025', detail: 'Admitted to JSS 1'  },
-  //     { type: 'fee',       title: 'Acceptance fee',         date: 'Due Sep 5, 2025', detail: '₦35,000'         },
-  //     { type: 'pending',   title: 'Auto-enrollment',        date: '',             detail: 'Awaiting acceptance fee' },
-  //   ],
-  // },
-  // {
-  //   id: 2, name: 'Emeka Okafor', status: 'Exam Scheduled',
-  //   applicationNo: 'A-10431', class: 'JSS 2', session: '2025/26',
-  //   currentStep: 1, acceptanceFee: null, feeDue: null,
-  //   timeline: [
-  //     { type: 'submitted', title: 'Application submitted', date: 'Aug 14, 2025', detail: '₦5,000 paid'       },
-  //     { type: 'reviewed',  title: 'Application reviewed',  date: 'Aug 18, 2025', detail: 'Approved for exam' },
-  //     { type: 'pending',   title: 'E-Exam scheduled',      date: 'Sep 2, 2025',  detail: 'Awaiting exam'     },
-  //   ],
-  // },
+  {
+    id: 3, name: 'Tunde Okafor', status: 'Incomplete',
+    applicationNo: '—', class: 'JSS 1', session: '2025/26',
+    currentStep: 0, acceptanceFee: null, feeDue: null,
+    timeline: [],
+    isDraft: true,
+    draftStep: 2, // Means they stopped at Payment step
+    surname: 'Okafor',
+    first_name: 'Tunde',
+  },
+  {
+    id: 1, name: 'Chinaza Okafor', status: 'Admitted',
+    applicationNo: 'A-10428', class: 'JSS 1', session: '2025/26',
+    currentStep: 2, acceptanceFee: 35000, feeDue: 'Acceptance fee due Sep 5',
+    timeline: [
+      { type: 'submitted', title: 'Application submitted', date: 'Aug 12, 2025', detail: '₦5,000 paid' },
+      { type: 'reviewed', title: 'Application reviewed', date: 'Aug 15, 2025', detail: 'Approved for exam' },
+      { type: 'exam', title: 'E-Exam completed', date: 'Aug 24, 2025', detail: 'Score 84/100' },
+      { type: 'decision', title: 'Admission decision', date: 'Aug 30, 2025', detail: 'Admitted to JSS 1' },
+      { type: 'fee', title: 'Acceptance fee', date: 'Due Sep 5, 2025', detail: '₦35,000' },
+      { type: 'pending', title: 'Auto-enrollment', date: '', detail: 'Awaiting acceptance fee' },
+    ],
+  },
+  {
+    id: 2, name: 'Emeka Okafor', status: 'Exam Scheduled',
+    applicationNo: 'A-10431', class: 'JSS 2', session: '2025/26',
+    currentStep: 1, acceptanceFee: null, feeDue: null,
+    timeline: [
+      { type: 'submitted', title: 'Application submitted', date: 'Aug 14, 2025', detail: '₦5,000 paid' },
+      { type: 'reviewed', title: 'Application reviewed', date: 'Aug 18, 2025', detail: 'Approved for exam' },
+      { type: 'pending', title: 'E-Exam scheduled', date: 'Sep 2, 2025', detail: 'Awaiting exam' },
+    ],
+  },
 ];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 const AdmissionStatus = () => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
   const handleApplyAdmission = (batch) => {
@@ -259,18 +298,20 @@ const AdmissionStatus = () => {
 
   const applications = single
     ? [{
-        id:            single.id            ?? 1,
-        name:          single.name          ?? '—',
-        status:        single.status        ?? 'Applied',
-        applicationNo: single.applicationNo ?? single.regNo ?? '—',
-        class:         single.class         ?? single.tags?.[0] ?? '—',
-        session:       single.session       ?? '—',
-        term:          single.term          ?? '',
-        currentStep:   single.currentStep   ?? 0,
-        acceptanceFee: single.acceptanceFee ?? null,
-        feeDue:        single.feeDue        ?? null,
-        timeline:      single.timeline      ?? [],
-      }]
+      id: single.id ?? 1,
+      name: single.name ?? '—',
+      status: single.status ?? 'Applied',
+      applicationNo: single.applicationNo ?? single.regNo ?? '—',
+      class: single.class ?? single.tags?.[0] ?? '—',
+      session: single.session ?? '—',
+      term: single.term ?? '',
+      currentStep: single.currentStep ?? 0,
+      acceptanceFee: single.acceptanceFee ?? null,
+      feeDue: single.feeDue ?? null,
+      timeline: single.timeline ?? [],
+      isDraft: single.isDraft ?? false,
+      draftStep: single.draftStep ?? 0,
+    }]
     : MOCK_APPLICATIONS;
 
   const title = single ? `${single.name ?? 'Ward'} — Application` : 'All Applications';

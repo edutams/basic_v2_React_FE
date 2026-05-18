@@ -359,6 +359,9 @@ const ParentManagement = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
+              <Button variant="contained" color="primary" fullWidth={false} onClick={handleOpenAdd}>
+                Add Single Parent
+              </Button>
               <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}
@@ -375,10 +378,6 @@ const ParentManagement = () => {
                 onClick={() => setUploadModalOpen(true)}
               >
                 Upload Template
-              </Button>
-
-              <Button variant="contained" color="primary" fullWidth={false} onClick={handleOpenAdd}>
-                Add Single Parent
               </Button>
             </Box>
           </Box>

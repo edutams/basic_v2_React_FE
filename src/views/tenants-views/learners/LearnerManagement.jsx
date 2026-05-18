@@ -436,6 +436,14 @@ const LearnerManagement = () => {
               }}
             >
               <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                fullWidth={false}
+                onClick={() => setAddLearnerOpen(true)}
+              >
+                Add Learner
+              </Button>
+              <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}
                 fullWidth={false}
@@ -454,15 +462,6 @@ const LearnerManagement = () => {
                 onClick={() => setUploadLearnerOpen(true)}
               >
                 Upload Template
-              </Button>
-
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                fullWidth={false}
-                onClick={() => setAddLearnerOpen(true)}
-              >
-                Add Learner
               </Button>
             </Box>
           </Box>

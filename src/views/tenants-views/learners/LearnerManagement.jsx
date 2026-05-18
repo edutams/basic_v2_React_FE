@@ -438,7 +438,8 @@ const LearnerManagement = () => {
               <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}
-                fullWidth={false}
+                size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => {
                   setDownloadClassId('');
                   setDownloadDialogOpen(true);
@@ -450,7 +451,8 @@ const LearnerManagement = () => {
               <Button
                 variant="outlined"
                 startIcon={<UploadIcon />}
-                fullWidth={false}
+                size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setUploadLearnerOpen(true)}
               >
                 Upload Template
@@ -459,7 +461,8 @@ const LearnerManagement = () => {
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                fullWidth={false}
+                size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setAddLearnerOpen(true)}
               >
                 Add Learner
@@ -473,6 +476,7 @@ const LearnerManagement = () => {
           <TextField
             placeholder="Search by name, learner ID or email"
             value={search}
+            size="small"
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(0);
@@ -486,9 +490,10 @@ const LearnerManagement = () => {
                 ),
               },
             }}
+            sx={{ flex: 1, minWidth: { xs: '100%', sm: 220 } }}
           />
 
-          <FormControl sx={{ minWidth: 220 }}>
+          <FormControl size="small" sx={{ minWidth: 180, width: { xs: '100%', sm: 'auto' } }}>
             <InputLabel>Filter by Class</InputLabel>
             <Select
               value={classId}
@@ -510,8 +515,9 @@ const LearnerManagement = () => {
           {hasFilters && (
             <Button
               variant="outlined"
+              size="small"
               onClick={resetFilters}
-              sx={{ height: 'fit-content', mb: 0.5 }}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Clear Filters
             </Button>

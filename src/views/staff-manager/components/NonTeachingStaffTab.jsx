@@ -58,7 +58,7 @@ const NonTeachingStaffTab = ({
           gap: 2,
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
           <TextField
             size="small"
             placeholder="Search staff..."
@@ -71,7 +71,7 @@ const NonTeachingStaffTab = ({
                 </InputAdornment>
               ),
             }}
-            sx={{ minWidth: 300 }}
+            sx={{ minWidth: 200, flex: 1 }}
           />
 
           <TextField
@@ -79,7 +79,7 @@ const NonTeachingStaffTab = ({
             size="small"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            sx={{ minWidth: 150 }}
+            sx={{ minWidth: 130, width: { xs: '100%', sm: 'auto' } }}
             SelectProps={{ native: true }}
           >
             <option value="all">All Status</option>
@@ -89,17 +89,24 @@ const NonTeachingStaffTab = ({
           </TextField>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="contained" startIcon={<IconPlus size={18} />} onClick={handleAddStaff}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={handleAddStaff}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
             Add Non-Teaching Staff
           </Button>
-          <ButtonGroup variant="outlined">
+          <ButtonGroup variant="outlined" sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Button
               startIcon={<IconPlus size={18} />}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', flex: 1 }}
               onClick={handleUploadStaff}
+              size="small"
             >
-              Multiple Teachers Upload
+              Multiple Upload
             </Button>
             <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
               <IconChevronDown size={16} />

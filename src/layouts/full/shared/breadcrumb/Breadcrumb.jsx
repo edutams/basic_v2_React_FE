@@ -8,11 +8,10 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
   <Box
     mb={3}
     display="flex"
-    flexDirection="row"
-    alignItems="center"
+    flexDirection={{ xs: 'column', md: 'row' }}
+    alignItems={{ xs: 'flex-start', md: 'center' }}
     justifyContent="space-between"
-    flexWrap="wrap"
-    gap={2}
+    gap={1}
   >
     <Box
       sx={{
@@ -40,9 +39,10 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
         fontWeight="700"
         variant="h5"
         sx={{
-          fontSize: { xs: '1rem', md: '1.5rem' },
+          fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.5rem' },
           lineHeight: 1.2,
           textAlign: 'left',
+          wordBreak: 'break-word',
         }}
       >
         {title}
@@ -53,18 +53,23 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: { xs: 'flex-end', md: 'flex-end' },
+        alignItems: { xs: 'flex-start', md: 'flex-end' },
         minWidth: 0,
         gap: 1,
-        flexShrink: 0,
       }}
     >
       <Breadcrumbs
         separator={<NavigateNextIcon fontSize="small" />}
         aria-label="breadcrumb"
+        itemsAfterCollapse={3}
+        itemsBeforeCollapse={0}
+        maxItems={10}
         sx={{
           mb: { xs: children ? 1 : 0, md: 0 },
-          fontSize: { xs: '0.9rem', md: '1rem' },
+          fontSize: { xs: '0.75rem', md: '1rem' },
+          '& .MuiBreadcrumbs-ol': {
+            flexWrap: 'wrap',
+          },
         }}
       >
         {items &&

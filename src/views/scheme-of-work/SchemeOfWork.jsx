@@ -219,7 +219,11 @@ const SchemeOfWork = () => {
       setRows(data);
       fetchAnalytics(filters, termId);
     } catch (error) {
-      notify.error('Failed to fetch scheme of work');
+      notify.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Failed to fetch scheme of work',
+      );
     } finally {
       setLoading(false);
     }

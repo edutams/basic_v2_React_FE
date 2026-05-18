@@ -45,9 +45,9 @@ const CommissionManagement = () => {
 
   const handleMyCommissionClick = (type) => {
     if (type === 'subscription') {
-      navigate('/commission/subscription');
+      navigate('/agent/commission/subscription');
     } else if (type === 'transaction') {
-      navigate('/commission/transaction');
+      navigate('/agent/commission/transaction');
     }
   };
 
@@ -162,7 +162,14 @@ const CommissionManagement = () => {
 
         <Box sx={{ p: 3 }}>
           <Box
-            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 1,
+              mb: 3,
+            }}
           >
             {/* Dynamic Title */}
             <Typography variant="h4" fontWeight={600} sx={{ color: theme.palette.text.primary }}>
@@ -192,18 +199,19 @@ const CommissionManagement = () => {
             {(value === '3' || value === '4') && (
               <Button
                 variant="contained"
+                size="small"
                 startIcon={<IconLayoutDashboard size={18} />}
                 onClick={() =>
                   handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
                 }
-                sx={{
-                  bgcolor: '#3949ab',
-                  textTransform: 'none',
-                  borderRadius: '8px',
-                  '&:hover': { bgcolor: '#303f9f' },
-                }}
+                
               >
-                {value === '3' ? 'My Commission by Subscription' : 'My Commission by Transaction'}
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  {value === '3' ? 'My Commission by Subscription' : 'My Commission by Transaction'}
+                </Box>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                  {value === '3' ? 'My Subscription' : 'My Transaction'}
+                </Box>
               </Button>
             )}
           </Box>

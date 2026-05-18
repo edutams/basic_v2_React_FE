@@ -8,6 +8,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import { moduleValidationSchema } from '../validation/moduleValidationSchema';
@@ -129,9 +130,9 @@ const ModuleForm = ({
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <Box mt={4} display="flex" justifyContent="flex-end">
+          <Box mt={4} display="flex" justifyContent="flex-end" gap={1}>
             <Button
-              sx={{ mr: 1 }} color="inherit" 
+              color="inherit"
               onClick={onCancel}
               type="button"
               disabled={isLoading}
@@ -142,6 +143,7 @@ const ModuleForm = ({
               variant="contained"
               type="submit"
               disabled={isLoading || !formik.isValid}
+              startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}
             >
               {isLoading ? 'Saving...' : submitText}
             </Button>

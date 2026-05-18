@@ -33,6 +33,8 @@ import {
   IconEdit,
   IconDotsVertical,
 } from '@tabler/icons-react';
+import { IconFilter } from '@tabler/icons-react';
+
 import { FilterList as FilterListIcon } from '@mui/icons-material';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import {
@@ -328,7 +330,7 @@ function SessionsPanel({ isLevel1 }) {
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               variant="outlined"
-              startIcon={<FilterListIcon />}
+              startIcon={<IconFilter size={18} />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >
@@ -775,7 +777,7 @@ function TermsPanel({ isLevel1 }) {
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               variant="outlined"
-              startIcon={<FilterListIcon />}
+              startIcon={<IconFilter size={18} />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{ minWidth: 140 }}
             >

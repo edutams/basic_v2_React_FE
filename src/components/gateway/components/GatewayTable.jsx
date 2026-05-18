@@ -19,6 +19,8 @@ import {
   Alert,
 } from '@mui/material';
 import { FilterList as FilterListIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { IconFilter } from '@tabler/icons-react';
+
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ParentCard from '../../shared/ParentCard';
 import FilterSideDrawer from '../../shared/FilterSideDrawer';
@@ -134,11 +136,11 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
       <Box sx={{ p: 0, display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
         <Button
           variant="outlined"
-          startIcon={<FilterListIcon />}
+          startIcon={<IconFilter size={18} />}
           onClick={() => setFilterDrawerOpen(true)}
           sx={{ minWidth: 140 }}
         >
-          Show Filters
+          Filters
           {activeFilterCount > 0 && (
             <Chip
               label={activeFilterCount}

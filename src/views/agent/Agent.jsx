@@ -71,6 +71,7 @@ import ReusableBarChart from '../../components/shared/charts/ReusableBarChart';
 import ReusablePieChart from '../../components/shared/charts/ReusablePieChart';
 
 import ManageTeamTab from './components/ManageTeamTab';
+import { IconFilter } from '@tabler/icons-react';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -1207,7 +1208,7 @@ const Agent = () => {
                   '&:hover': { borderColor: 'primary.main', color: '#fff' },
                 }}
               >
-                Show Filters
+                Filters
                 {activeFilterCount > 0 && (
                   <Box
                     component="span"

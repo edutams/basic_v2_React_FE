@@ -507,8 +507,9 @@ const ClassSubject = () => {
           }
         >
           <Paper variant="outlined">
-            <TableContainer>
-              <Table sx={{ tableLayout: 'fixed' }}>
+            <TableContainer sx={{   maxWidth: '100%',
+    overflowX: 'auto',}}>
+              <Table sx={{  minWidth: 700, }} size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold', width: '5%' }}>S/N</TableCell>

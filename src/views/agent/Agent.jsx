@@ -1026,7 +1026,7 @@ const Agent = () => {
           <Box sx={{ px: 3, mt: 1 }}>
             {(
               analytics.loginActivities ?? [
-                { label: 'Teachers', value: 0 },
+                { label: 'Staffs', value: 0 },
                 { label: 'Agents', value: 0 },
                 { label: 'Total', value: 0 },
               ]

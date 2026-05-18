@@ -321,7 +321,7 @@ const SchoolAlcManager = () => {
                 '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
             >
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Show Filters</Box>
+              Filters
               {activeFilterCount > 0 && (
                 <Box
                   component="span"

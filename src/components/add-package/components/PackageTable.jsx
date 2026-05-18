@@ -22,8 +22,8 @@ import {
 import {
   MoreVert as MoreVertIcon,
   Add as AddIcon,
-  FilterList as FilterListIcon,
 } from '@mui/icons-material';
+import { IconFilter } from '@tabler/icons-react';
 import ParentCard from '../../shared/ParentCard';
 import FilterSideDrawer from '../../shared/FilterSideDrawer';
 import PropTypes from 'prop-types';
@@ -128,12 +128,12 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
           <Box display="flex" gap={1} flexWrap="wrap" width={{ xs: '100%', sm: 'auto' }}>
             <Button
               variant="outlined"
-              startIcon={<FilterListIcon />}
+              startIcon={<IconFilter size={18} />}
               onClick={() => setFilterDrawerOpen(true)}
               size="small"
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
-              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Show Filters</Box>
+              Filters
               {activeFilterCount > 0 && (
                 <Chip
                   label={activeFilterCount}

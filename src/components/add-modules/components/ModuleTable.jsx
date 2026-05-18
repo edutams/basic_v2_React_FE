@@ -24,6 +24,8 @@ import {
   Add as AddIcon,
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
+import { IconFilter } from '@tabler/icons-react';
+
 import ParentCard from '../../shared/ParentCard';
 import FilterSideDrawer from '../../shared/FilterSideDrawer';
 import PropTypes from 'prop-types';
@@ -166,12 +168,12 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
           <Typography variant="h5">Manage Modules</Typography>
           <Button
             variant="outlined"
-            startIcon={<FilterListIcon />}
+            startIcon={<IconFilter size={18} />}
             onClick={() => setFilterDrawerOpen(true)}
             size="small"
             sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}
           >
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Filters</Box>
+            Filters
             {activeFilterCount > 0 && (
               <Chip
                 label={activeFilterCount}

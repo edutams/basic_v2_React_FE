@@ -141,44 +141,83 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
   const draftStepName = isDraft ? draftStepNames[app.draftStep ?? 0] : '';
 
   return (
-    <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', mb: 2 }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
+        overflow: 'hidden',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       {/* ── Summary row (always visible) ── */}
       <Box
         sx={{
-          display: 'flex', alignItems: 'center', gap: 2, p: 2,
-          cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, transition: 'background 0.15s',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          p: 2,
+          cursor: 'pointer',
+          '&:hover': { bgcolor: 'action.hover' },
+          transition: 'background 0.15s',
         }}
         onClick={() => {
           if (isDraft) {
-            navigate(`/admission/new-application?step=${app.draftStep ?? 0}`, { state: { ward: app } });
+            navigate(`/admission/new-application?step=${app.draftStep ?? 0}`, {
+              state: { ward: app },
+            });
           } else {
             setOpen((v) => !v);
           }
         }}
       >
-        <Avatar sx={{ width: 44, height: 44, fontWeight: 700, flexShrink: 0 }}>
+        <Avatar
+          sx={{
+            width: 44,
+            height: 44,
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
           {app.name?.[0]}
         </Avatar>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-            <Typography variant="subtitle1" fontWeight={700} noWrap>{app.name}</Typography>
+            <Typography variant="subtitle1" fontWeight={700} noWrap>
+              {app.name}
+            </Typography>
+
             <Chip
               label={app.status}
               size="small"
-              icon={<Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'currentColor', ml: 0.75 }} />}
-              sx={{ ...statusChipSx(app.status), fontWeight: 700, fontSize: 11 }}
+              icon={
+                <Box
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    bgcolor: 'currentColor',
+                    ml: 0.75,
+                  }}
+                />
+              }
+              sx={{
+                ...statusChipSx(app.status),
+                fontWeight: 700,
+                fontSize: 11,
+              }}
             />
           </Box>
+
           <Typography variant="caption" color="text.secondary">
-            {isDraft ? 'Draft Application' : `App #${app.applicationNo}`} · {app.class} · {app.session}{app.term ? ` · ${app.term}` : ''}
+            {isDraft
+              ? 'Draft Application'
+              : `App #${app.applicationNo}`} · {app.class} · {app.session}
+            {app.term ? ` · ${app.term}` : ''}
             {isDraft && ` · Stopped at: ${draftStepName}`}
           </Typography>
-        </Box>
-
-        {/* Mini stepper — hidden on xs */}
-        <Box sx={{ display: { xs: 'none', sm: 'block' }, width: 220, flexShrink: 0 }}>
-          {!isDraft && <AdmissionStepper currentStep={app.currentStep ?? 0} />}
         </Box>
 
         <Box sx={{ flexShrink: 0, color: 'text.secondary' }}>
@@ -187,11 +226,21 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
               variant="contained"
               size="small"
               endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
-              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, display: { xs: 'none', sm: 'inline-flex' } }}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                display: { xs: 'none', sm: 'inline-flex' },
+              }}
             >
               Continue
             </Button>
-          ) : (open ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
+          ) : open ? (
+            <ExpandLessIcon />
+          ) : (
+            <ExpandMoreIcon />
+          )}
+
           {isDraft && (
             <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
               <ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />
@@ -205,36 +254,53 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
         <Collapse in={open}>
           <Divider />
 
-          {/* Full stepper on mobile */}
-          <Box sx={{ display: { xs: 'block', sm: 'none' }, px: 2, pt: 2 }}>
+          {/* Full stepper */}
+          <Box sx={{ px: 2, pt: 2 }}>
             <AdmissionStepper currentStep={app.currentStep ?? 0} />
           </Box>
 
           <Grid container spacing={2} sx={{ p: 2 }} alignItems="flex-start">
             {/* Timeline */}
-            <Grid size={{ xs: 12, md: hasAction ? 7 : 12 }}>
-              <Typography variant="subtitle2" fontWeight={700} mb={1.5}>Activity timeline</Typography>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
+                Activity timeline
+              </Typography>
+
               {hasTimeline ? (
                 app.timeline.map((ev, i) => (
                   <TimelineEvent
-                    key={i} type={ev.type} title={ev.title}
-                    date={ev.date} detail={ev.detail}
+                    key={i}
+                    type={ev.type}
+                    title={ev.title}
+                    date={ev.date}
+                    detail={ev.detail}
                     isLast={i === app.timeline.length - 1}
                   />
                 ))
               ) : (
-                <Typography variant="body2" color="text.secondary">No activity recorded yet.</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  No activity recorded yet.
+                </Typography>
               )}
             </Grid>
 
             {/* Action card */}
             {hasAction && (
-              <Grid size={{ xs: 12, md: 5 }}>
+              <Grid size={{ xs: 12 }}>
                 <ActionCard
                   amount={app.acceptanceFee}
                   dueLabel={app.feeDue}
                   onPay={() => { }}
-                  onViewLetter={() => navigate('/admission-letter', { state: { letter: { ...app, parentName: 'Mrs. Adaeze Okafor' } } })}
+                  onViewLetter={() =>
+                    navigate('/admission-letter', {
+                      state: {
+                        letter: {
+                          ...app,
+                          parentName: 'Mrs. Adaeze Okafor',
+                        },
+                      },
+                    })
+                  }
                 />
               </Grid>
             )}
@@ -388,13 +454,16 @@ const AdmissionStatus = () => {
           </Button>
         </Paper>
       ) : (
-        applications.map((app, i) => (
-          <ApplicationCard
-            key={app.id ?? i}
-            app={app}
-            defaultOpen={applications.length === 1}
-          />
-        ))
+        <Grid container spacing={3} alignItems="flex-start">
+          {applications.map((app, i) => (
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={app.id ?? i}>
+              <ApplicationCard
+                app={app}
+                defaultOpen={applications.length === 1}
+              />
+            </Grid>
+          ))}
+        </Grid>
       )}
 
       <AdmissionBatchModal

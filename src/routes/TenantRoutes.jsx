@@ -172,8 +172,8 @@ const TenantRoutes = [
         path: 'process-applications',
         element: (
           <PageUnderDevelopment
-            title="Process Applications Under Development"
-            subtitle="The Process Applications module is currently under development. Check back soon!"
+            title="Process Admission Under Development"
+            subtitle="The Process Admission module is currently under development. Check back soon!"
           />
         ),
       },

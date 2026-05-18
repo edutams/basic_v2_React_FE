@@ -35,7 +35,7 @@ const SubscriptionIndex = () => {
             textColor="primary"
             indicatorColor="primary"
           >
-            <Tab label="Manwage Subscription" id="tab-0" aria-controls="tabpanel-0" />
+            <Tab label="Manage Subscription" id="tab-0" aria-controls="tabpanel-0" />
             <Tab label="Subscription History" id="tab-1" aria-controls="tabpanel-1" />
           </Tabs>
         </Box>

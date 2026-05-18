@@ -239,16 +239,14 @@ const ManageSubscriptionList = () => {
     <>
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
             <Typography variant="h5">Manage Subcription</Typography>
             <Button
               variant="contained"
               color="primary"
+              size="small"
               onClick={handleAddClick}
-              sx={{
-                minWidth: 120,
-                fontSize: { xs: '0.95rem', md: '1rem' },
-              }}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Add New Subcription
             </Button>
@@ -260,6 +258,7 @@ const ManageSubscriptionList = () => {
             <TextField
               placeholder="Search by session term..."
               value={searchTerm}
+              size="small"
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setPage(0);
@@ -271,6 +270,7 @@ const ManageSubscriptionList = () => {
                   </InputAdornment>
                 ),
               }}
+              sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 300 } }}
             />
           </Box>
 

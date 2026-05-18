@@ -53,7 +53,6 @@ import {
   fetchClassesByProgramme,
   fetchSubjectsByClass,
   fetchSubjects,
-  fetchCurriculums,
 } from '../../api/tenantCurriculumApi';
 import useNotification from '../../hooks/useNotification';
 import ReusableModal from '../../components/shared/ReusableModal';
@@ -81,7 +80,6 @@ const SchemeOfWork = () => {
   // Filter options
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [curriculums, setCurriculums] = useState([]);
   const [subjects, setSubjects] = useState([]);
 
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -116,7 +114,6 @@ const SchemeOfWork = () => {
   // Inline Filters
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
-  const [curriculum, setCurriculum] = useState('');
   const [subject, setSubject] = useState('');
 
   // Drawer states
@@ -162,32 +159,17 @@ const SchemeOfWork = () => {
 
   useEffect(() => {
     initData();
-  }, []); // Empty dependency array means this only runs once on mount
-
-  // Fetch subjects when curriculum changes
-  useEffect(() => {
-    if (curriculum) {
-      fetchSubjects(curriculum)
-        .then((subjectsRes) => {
-          setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
-        })
-        .catch((error) => {
-          console.error('Failed to fetch subjects:', error);
-        });
-    }
-  }, [curriculum]);
+  }, []);
 
   const initData = async () => {
     try {
-      const [termsRes, progsRes, curricRes] = await Promise.all([
+      const [termsRes, progsRes] = await Promise.all([
         tenantSchemeApi.getTerms(),
         fetchProgrammes(),
-        fetchCurriculums(),
       ]);
       setTerms(termsRes);
       if (termsRes.length > 0) setActiveTerm(termsRes[0].id);
       setProgrammes(progsRes.data.map((p) => ({ value: p.id, label: p.programme_name })));
-      setCurriculums(curricRes.data.map((c) => ({ value: c.id, label: c.curriculum_name })));
     } catch (error) {
       notify.error('Failed to initialize data');
     }
@@ -218,7 +200,7 @@ const SchemeOfWork = () => {
   };
 
   const handleFetch = () => {
-    const filters = { ...activeFilters, programme, classLevel, curriculum, subject };
+    const filters = { ...activeFilters, programme, classLevel, subject };
     setActiveFilters(filters);
     fetchScheme({ subject: filters.subject, classLevel: filters.classLevel }, activeTerm);
   };
@@ -731,7 +713,7 @@ const SchemeOfWork = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 2.5 }}>
+            <Grid size={{ xs: 12, md: 3.5 }}>
               <TextField
                 select
                 fullWidth
@@ -750,7 +732,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 2.5 }}>
+            <Grid size={{ xs: 12, md: 3.5 }}>
               <TextField
                 select
                 fullWidth
@@ -769,23 +751,7 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 2.5 }}>
-              <TextField
-                select
-                fullWidth
-                label="Curriculum"
-                size="small"
-                value={curriculums.some((c) => c.value === curriculum) ? curriculum : ''}
-                onChange={(e) => setCurriculum(e.target.value)}
-              >
-                {curriculums.map((c) => (
-                  <MenuItem key={c.value} value={c.value}>
-                    {c.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 2.5 }}>
+            <Grid size={{ xs: 12, md: 3.5 }}>
               <TextField
                 select
                 fullWidth
@@ -801,11 +767,11 @@ const SchemeOfWork = () => {
                 ))}
               </TextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 2 }}>
+            <Grid size={{ xs: 12, md: 1.5 }}>
               <Button
                 variant="contained"
                 onClick={handleFetch}
-                disabled={!programme || !classLevel || !curriculum || !subject}
+                disabled={!programme || !classLevel || !subject}
                 fullWidth
                 sx={{ height: '40px' }}
               >

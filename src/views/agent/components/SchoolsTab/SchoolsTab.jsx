@@ -929,7 +929,7 @@ const SchoolsTab = ({
                 </Box>
                 <Box sx={{ px: 2, pb: 2 }}>
                   {[
-                    ['Teacher', 0],
+                    ['Staffs', 0],
                     ['SPA', 0],
                     ['Student', 0],
                     ['Parent', 0],
@@ -1042,7 +1042,7 @@ const SchoolsTab = ({
               label={
                 <Stack direction="row" spacing={1} alignItems="center">
                   <span>Setup Approvals</span>
-                  {setupPendingCount > 0 && (
+                  {/* {setupPendingCount > 0 && (
                     <Chip
                       size="small"
                       label={setupPendingCount}
@@ -1054,7 +1054,7 @@ const SchoolsTab = ({
                         fontSize: '11px',
                       }}
                     />
-                  )}
+                  )} */}
                 </Stack>
               }
             />

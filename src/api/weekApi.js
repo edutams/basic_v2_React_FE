@@ -35,3 +35,26 @@ export const saveWeeks = async (sessionTermId, weeks) => {
   const response = await api.post(`/curriculum/weeks/save/${sessionTermId}`, { weeks });
   return response.data;
 };
+
+/**
+ * Derive the calendar date range for a session term from its generated weeks.
+ * Returns { start_date, end_date } as 'YYYY-MM-DD' strings, or null if no weeks exist.
+ */
+export const fetchTermDateRange = async (sessionTermId) => {
+  const response = await api.get(`/curriculum/weeks/${sessionTermId}`);
+  const weeks = response.data?.data ?? [];
+  if (!weeks.length) return null;
+
+  const start = weeks
+    .map((w) => w.start_date)
+    .filter(Boolean)
+    .sort()[0];
+
+  const end = weeks
+    .map((w) => w.end_date)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+
+  return start && end ? { start_date: start, end_date: end } : null;
+};

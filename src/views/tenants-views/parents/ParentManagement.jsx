@@ -360,10 +360,20 @@ const ParentManagement = () => {
               }}
             >
               <Button
+                variant="contained"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+                color="primary"
+                fullWidth={false}
+                onClick={handleOpenAdd}
+              >
+                Add Single Parent
+              </Button>
+              <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}
-                fullWidth={false}
                 onClick={handleDownloadTemplate}
+                size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Download Template
               </Button>
@@ -371,14 +381,11 @@ const ParentManagement = () => {
               <Button
                 variant="outlined"
                 startIcon={<UploadIcon />}
-                fullWidth={false}
                 onClick={() => setUploadModalOpen(true)}
+                size="small"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Upload Template
-              </Button>
-
-              <Button variant="contained" color="primary" fullWidth={false} onClick={handleOpenAdd}>
-                Add Single Parent
               </Button>
             </Box>
           </Box>
@@ -389,6 +396,7 @@ const ParentManagement = () => {
           <TextField
             placeholder="Search by name, email or phone"
             value={search}
+            size="small"
             onChange={(e) => {
               setSearch(e.target.value);
               setPage(0);
@@ -402,32 +410,15 @@ const ParentManagement = () => {
                 ),
               },
             }}
+            sx={{ flex: 1, minWidth: { xs: '100%', sm: 220 } }}
           />
-
-          {/* <FormControl sx={{ minWidth: 220 }}>
-            <InputLabel>Filter by Class</InputLabel>
-            <Select
-              value={classId}
-              label="Filter by Class"
-              onChange={(e) => {
-                setClassId(e.target.value);
-                setPage(0);
-              }}
-            >
-              <MenuItem value="">All Classes</MenuItem>
-              {classes.map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>
-                  {cls.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl> */}
 
           {hasFilters && (
             <Button
               variant="outlined"
+              size="small"
               onClick={resetFilters}
-              sx={{ height: 'fit-content', mb: 0.5 }}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Clear Filters
             </Button>

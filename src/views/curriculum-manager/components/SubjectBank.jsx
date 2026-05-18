@@ -571,8 +571,14 @@ const SubjectBank = () => {
           {/* LEFT - Curriculum Panel */}
           <Box sx={{ flex: { md: 5 }, width: '100%' }}>
             <ParentCard>
-              <TableContainer>
-                <Table sx={{ tableLayout: 'fixed' }}>
+              <TableContainer
+                sx={{
+                  maxHeight: 600,
+                  overflowX: 'auto',
+                  minWidth: '100',
+                }}
+              >
+                <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
@@ -651,14 +657,20 @@ const SubjectBank = () => {
                 sx={{
                   mb: 2,
                   display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
                   justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
+                  alignItems: { xs: 'stretch', sm: 'center' },
                   gap: 2,
                 }}
               >
-                <Box display="flex" alignItems="center" gap={2}>
-                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                <Box
+                  display="flex"
+                  flexDirection={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  gap={2}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
+                  <FormControl size="small" sx={{ width: { xs: '100%', sm: '200px' } }}>
                     <InputLabel>Curriculum</InputLabel>
                     <Select
                       value={selectedCurriculum}
@@ -684,53 +696,54 @@ const SubjectBank = () => {
                       ))}
                     </Select>
                   </FormControl>
+
                   <TextField
                     size="small"
                     placeholder="Search subjects..."
                     value={subjectSearch}
                     onChange={(e) => setSubjectSearch(e.target.value)}
-                    sx={{ width: 200 }}
+                    sx={{ width: { xs: '100%', sm: 200 } }}
                   />
                 </Box>
-                <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal}>
+
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleOpenAddSubjectModal}
+                  sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
                   Add Subject
                 </Button>
               </Box>
 
-              <TableContainer sx={{ maxHeight: 600 }}>
-                <Table sx={{ tableLayout: 'fixed' }}>
+              <TableContainer
+                sx={{
+                  maxHeight: 600,
+                  overflowY: 'auto',
+                  width: '100%',
+                }}
+              >
+                <Table stickyHeader sx={{ width: '100%' }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
-                      <TableCell
-                        sx={{ fontWeight: 700, width: '5%', py: 1.5, whiteSpace: 'nowrap' }}
-                      >
-                        S/N
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5 }}>S/N</TableCell>
 
-                      <TableCell sx={{ fontWeight: 700, width: '25%', py: 1.5 }}>Subject</TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Subject</TableCell>
 
-                      <TableCell sx={{ fontWeight: 700, width: '15%', py: 1.5 }}>
-                        Subject Code
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Subject Code</TableCell>
 
-                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>Program</TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Program</TableCell>
 
-                      <TableCell
-                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
-                      >
-                        Pass Mark
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Pass Mark</TableCell>
 
-                      <TableCell sx={{ fontWeight: 700, width: '10%', py: 1.5 }}>Unit</TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5 }}>Unit</TableCell>
 
-                      <TableCell
-                        align="center"
-                        sx={{ fontWeight: 700, width: '15%', py: 1.5, whiteSpace: 'nowrap' }}
-                      >
+                      <TableCell align="center" sx={{ fontWeight: 700, py: 1.5 }}>
                         Actions
                       </TableCell>
                     </TableRow>
                   </TableHead>
+
                   <TableBody>
                     {loadingSubjects ? (
                       <TableRow>
@@ -779,18 +792,34 @@ const SubjectBank = () => {
         <Box sx={{ width: '100%' }}>
           <ParentCard
             title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2,
+                }}
+              >
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Subject Groups
                 </Typography>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <FormControl size="small" sx={{ minWidth: 150 }}>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2,
+                    width: { xs: '100%', sm: 'auto' },
+                  }}
+                >
+                  <FormControl size="small" sx={{ width: { xs: '100%', sm: 150 } }}>
                     <InputLabel>Curriculum</InputLabel>
                     <Select
                       value={selectedCurriculum}
                       onChange={(e) => handleCurriculumFilterChange(e.target.value)}
                       label="Curriculum"
-                      size="small"
                       disabled
                       sx={{
                         '& .MuiOutlinedInput-notchedOutline': {
@@ -811,7 +840,8 @@ const SubjectBank = () => {
                       ))}
                     </Select>
                   </FormControl>
-                  <FormControl size="small" sx={{ minWidth: 200 }}>
+
+                  <FormControl size="small" sx={{ width: { xs: '100%', sm: 200 } }}>
                     <InputLabel>Programme</InputLabel>
                     <Select
                       value={selectedProgrammeForGroups}
@@ -825,9 +855,11 @@ const SubjectBank = () => {
                       ))}
                     </Select>
                   </FormControl>
+
                   <Button
                     variant="contained"
                     size="small"
+                    sx={{ width: { xs: '100%', sm: 'auto' } }}
                     onClick={handleOpenCreateSubjectGroupModal}
                   >
                     Create Group
@@ -836,21 +868,33 @@ const SubjectBank = () => {
               </Box>
             }
           >
-            <TableContainer sx={{ maxHeight: 600 }}>
-              <Table sx={{ tableLayout: 'fixed' }}>
+            <TableContainer
+              sx={{
+                maxHeight: 600,
+                overflowX: 'auto',
+                width: '100%',
+              }}
+            >
+              <Table
+                sx={{
+                  tableLayout: 'fixed',
+                  minWidth: 900,
+                }}
+              >
                 <TableHead>
                   <TableRow>
-                    <TableCell width="8%">#</TableCell>
-                    <TableCell width="22%">Group Name</TableCell>
-                    <TableCell width="30%">Subjects</TableCell>
-                    <TableCell width="10%">Unit</TableCell>
-                    <TableCell width="12%">Pass Mark</TableCell>
-                    <TableCell width="20%">Status</TableCell>
-                    <TableCell width="8%" align="center">
+                    <TableCell sx={{ width: 60 }}>#</TableCell>
+                    <TableCell sx={{ width: 180 }}>Group Name</TableCell>
+                    <TableCell sx={{ width: 260 }}>Subjects</TableCell>
+                    <TableCell sx={{ width: 100 }}>Unit</TableCell>
+                    <TableCell sx={{ width: 120 }}>Pass Mark</TableCell>
+                    <TableCell sx={{ width: 140 }}>Status</TableCell>
+                    <TableCell sx={{ width: 80 }} align="center">
                       Action
                     </TableCell>
                   </TableRow>
                 </TableHead>
+
                 <TableBody>
                   {loadingSubjectGroups ? (
                     <TableRow>
@@ -862,7 +906,9 @@ const SubjectBank = () => {
                     subjectGroupsList.map((grp, i) => (
                       <TableRow key={grp.id} hover>
                         <TableCell>{i + 1}</TableCell>
+
                         <TableCell>{grp.group_name}</TableCell>
+
                         <TableCell>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                             {grp.subjects?.map((s) => (
@@ -879,8 +925,10 @@ const SubjectBank = () => {
                             ))}
                           </Box>
                         </TableCell>
+
                         <TableCell>{grp.unit}</TableCell>
                         <TableCell>{grp.pass_mark}</TableCell>
+
                         <TableCell>
                           <Chip
                             label={grp.status === 'active' ? 'active' : 'inactive'}
@@ -891,6 +939,7 @@ const SubjectBank = () => {
                             }}
                           />
                         </TableCell>
+
                         <TableCell align="center">
                           <IconButton
                             size="small"

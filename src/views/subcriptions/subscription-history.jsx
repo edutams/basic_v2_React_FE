@@ -152,6 +152,7 @@ const SubscriptionHistoryList = () => {
           <TextField
             placeholder="Search by transaction ID or description..."
             value={searchTerm}
+            size="small"
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
               startAdornment: (
@@ -160,7 +161,7 @@ const SubscriptionHistoryList = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ maxWidth: 400 }}
+            sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 360 } }}
           />
         </Box>
 

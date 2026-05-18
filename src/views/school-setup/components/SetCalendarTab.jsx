@@ -26,6 +26,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { IconTrash } from '@tabler/icons-react';
 import ParentCard from 'src/components/shared/ParentCard';
 import ArrowHint from 'src/components/shared/ArrowHint';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
@@ -37,7 +38,7 @@ import {
   fetchTerms,
   toggleSessionTermStatus,
 } from '../../../api/sessionTermApi';
-import { fetchWeeks, autoGenerateWeeks, toggleWeekStatus } from '../../../api/weekApi';
+import { fetchWeeks, autoGenerateWeeks, toggleWeekStatus, deleteWeek } from '../../../api/weekApi';
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);
@@ -73,6 +74,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
     numWeeks: 15,
   });
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
+  const [confirmDeleteWeek, setConfirmDeleteWeek] = useState(false);
 
   // ── Hint positioning ─────────────────────────────────────────────────────
   const generateBtnRef = useRef(null);
@@ -328,9 +330,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         showSnackbar('Weeks generated successfully', 'success');
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
+      } else {
+        showSnackbar(response.message || 'Failed to generate weeks', 'error');
       }
     } catch (error) {
-      showSnackbar('Failed to generate weeks', 'error');
+      const msg = error?.response?.data?.message || 'Failed to generate weeks';
+      showSnackbar(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -344,6 +349,26 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       }
     } catch (error) {
       showSnackbar('Failed to toggle status', 'error');
+    }
+  };
+
+  const handleDeleteLastWeek = async () => {
+    if (!weeks.length || !activeSessionTermId) return;
+    const lastWeek = weeks[weeks.length - 1];
+    try {
+      setLoading(true);
+      const response = await deleteWeek(activeSessionTermId, lastWeek.week_id);
+      if (response.status) {
+        setWeeks(response.data);
+        showSnackbar('Last week removed successfully', 'success');
+      } else {
+        showSnackbar(response.message || 'Failed to delete week', 'error');
+      }
+    } catch (error) {
+      const msg = error?.response?.data?.message || 'Failed to delete week';
+      showSnackbar(msg, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -560,29 +585,46 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                           <TableCell sx={{ fontWeight: 'bold' }}>Start Date</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>End Date</TableCell>
                           <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: 48 }} />
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {weeks.length > 0 ? (
-                          weeks.map((item, i) => (
-                            <TableRow key={i} hover>
-                              <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
-                              <TableCell>{item.start_date || 'N/A'}</TableCell>
-                              <TableCell>{item.end_date || 'N/A'}</TableCell>
-                              <TableCell>
-                                <Chip
-                                  label={item.status}
-                                  size="small"
-                                  onClick={() => handleToggleWeekStatus(item.wk_id)}
-                                  sx={{
-                                    cursor: 'pointer',
-                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                                    color: item.status === 'active' ? '#166534' : '#991b1b',
-                                  }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))
+                          weeks.map((item, i) => {
+                            const isLast = i === weeks.length - 1;
+                            return (
+                              <TableRow key={i} hover>
+                                <TableCell sx={{ fontWeight: 500 }}>{item.week_name}</TableCell>
+                                <TableCell>{item.start_date || 'N/A'}</TableCell>
+                                <TableCell>{item.end_date || 'N/A'}</TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={item.status}
+                                    size="small"
+                                    onClick={() => handleToggleWeekStatus(item.wk_id)}
+                                    sx={{
+                                      cursor: 'pointer',
+                                      bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                      color: item.status === 'active' ? '#166534' : '#991b1b',
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell align="center">
+                                  {isLast && (
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => setConfirmDeleteWeek(true)}
+                                      disabled={loading}
+                                      title="Remove last week"
+                                    >
+                                      <IconTrash size={15} />
+                                    </IconButton>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
                         ) : (
                           <TableRow>
                             <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
@@ -708,6 +750,34 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             size="small"
           >
             Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Delete Last Week Confirmation ── */}
+      <Dialog open={confirmDeleteWeek} onClose={() => setConfirmDeleteWeek(false)}>
+        <DialogTitle>Remove Last Week</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to remove{' '}
+            <strong>{weeks[weeks.length - 1]?.week_name}</strong>? This cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" onClick={() => setConfirmDeleteWeek(false)}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            color="error"
+            disabled={loading}
+            onClick={() => {
+              setConfirmDeleteWeek(false);
+              handleDeleteLastWeek();
+            }}
+          >
+            Yes, Remove
           </Button>
         </DialogActions>
       </Dialog>

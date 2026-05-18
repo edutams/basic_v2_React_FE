@@ -139,7 +139,7 @@ const ActivityLog = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSearch();
               }}
-              sx={{ width: '250px' }}
+              sx={{ flex: 1, minWidth: { xs: '100%', sm: 200 } }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -155,7 +155,7 @@ const ActivityLog = () => {
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               InputLabelProps={{ shrink: true }}
-              sx={{ width: '160px' }}
+              sx={{ width: { xs: '100%', sm: '160px' } }}
             />
             <TextField
               size="small"
@@ -165,13 +165,25 @@ const ActivityLog = () => {
               onChange={(e) => setDateTo(e.target.value)}
               InputLabelProps={{ shrink: true }}
               inputProps={{ min: dateFrom || undefined }}
-              sx={{ width: '160px' }}
+              sx={{ width: { xs: '100%', sm: '160px' } }}
             />
-            <Button variant="contained" color="primary" onClick={handleSearch}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={handleSearch}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+            >
               Search
             </Button>
             {(search || dateFrom || dateTo) && (
-              <Button variant="outlined" color="secondary" onClick={handleClearFilters}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                size="small"
+                onClick={handleClearFilters}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
                 Clear
               </Button>
             )}
@@ -237,9 +249,17 @@ const ActivityLog = () => {
                               variant="outlined"
                               startIcon={<IconEye size={18} />}
                               onClick={() => handleOpenModal(log)}
+                              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                             >
                               View Details
                             </Button>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenModal(log)}
+                              sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                            >
+                              <IconEye size={18} />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))

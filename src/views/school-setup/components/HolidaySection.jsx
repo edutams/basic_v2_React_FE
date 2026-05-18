@@ -25,8 +25,6 @@ import {
   CircularProgress,
   LinearProgress,
   Grid,
-  Card,
-  CardContent,
 } from '@mui/material';
 import { IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -37,6 +35,7 @@ import {
   deleteHoliday,
   fetchHolidayStatistics,
 } from '../../../api/holidayApi';
+import { fetchTermDateRange } from '../../../api/weekApi';
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
@@ -61,6 +60,9 @@ const HolidaySection = ({ refreshKey }) => {
   // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
   const [statistics, setStatistics] = useState(null);
+
+  // Calendar date range for the selected term (min/max for date inputs)
+  const [termDateRange, setTermDateRange] = useState(null); // { start_date, end_date }
 
   // Row action menu
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -129,6 +131,10 @@ const HolidaySection = ({ refreshKey }) => {
     if (!selectedTermId) return;
     loadHolidays(selectedTermId);
     loadHolidayStatistics(selectedTermId);
+    // Fetch calendar date range to constrain date pickers
+    fetchTermDateRange(selectedTermId)
+      .then((range) => setTermDateRange(range))
+      .catch(() => setTermDateRange(null));
   }, [selectedTermId]);
 
   const loadHolidays = async (termId) => {
@@ -292,50 +298,46 @@ const HolidaySection = ({ refreshKey }) => {
           sx={{
             display: 'grid',
             gridTemplateColumns: {
-              xs: 'repeat(2, 1fr)',
+              xs: 'repeat(3, 1fr)',
               sm: 'repeat(4, 1fr)',
               md: 'repeat(7, 1fr)',
             },
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2,
-            overflow: 'hidden',
+            gap: 1,
             mb: 3,
           }}
         >
           {[
-            {
-              label: 'Total School Days',
-              value: statistics.total_school_days,
-              color: 'text.primary',
-            },
+            { label: 'Total School Days', value: statistics.total_school_days, color: 'text.primary' },
             { label: 'Holiday Count', value: statistics.holiday_count, color: 'text.primary' },
-            {
-              label: 'Days Allocated',
-              value: statistics.holiday_days_allocated,
-              color: 'warning.main',
-            },
+            { label: 'Days Allocated', value: statistics.holiday_days_allocated, color: 'warning.main' },
             { label: 'Days Used', value: statistics.holiday_days_used, color: 'error.main' },
             { label: 'Upcoming Days', value: statistics.upcoming_holiday_days, color: 'info.main' },
-            {
-              label: 'Teaching Days Left',
-              value: statistics.remaining_school_days,
-              color: 'success.main',
-            },
-          ].map((stat, i, arr) => (
+            { label: 'Teaching Days Left', value: statistics.remaining_school_days, color: 'success.main' },
+          ].map((stat) => (
             <Box
               key={stat.label}
               sx={{
-                p: 2,
-                borderRight: '1px solid',
-                borderBottom: '1px solid',
+                p: { xs: 1, sm: 2 },
+                bgcolor: 'background.paper',
+                border: '1px solid',
                 borderColor: 'divider',
+                borderRadius: 2,
               }}
             >
-              <Typography variant="caption" color="text.secondary" display="block">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+                sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' }, lineHeight: 1.3 }}
+              >
                 {stat.label}
               </Typography>
-              <Typography variant="h5" fontWeight={700} color={stat.color}>
+              <Typography
+                variant="h5"
+                fontWeight={700}
+                color={stat.color}
+                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+              >
                 {stat.value}
               </Typography>
             </Box>
@@ -344,17 +346,27 @@ const HolidaySection = ({ refreshKey }) => {
           {/* Utilization */}
           <Box
             sx={{
-              p: 2,
-              borderBottom: '1px solid',
+              p: { xs: 1, sm: 2 },
+              bgcolor: 'background.paper',
+              border: '1px solid',
               borderColor: 'divider',
+              borderRadius: 2,
               gridColumn: { xs: '1 / -1', md: 'auto' },
             }}
           >
             <Box display="flex" justifyContent="space-between">
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' } }}
+              >
                 Holiday Utilization
               </Typography>
-              <Typography variant="caption" fontWeight={700}>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                sx={{ fontSize: { xs: '0.6rem', sm: '0.75rem' } }}
+              >
                 {statistics.holiday_percentage}%
               </Typography>
             </Box>
@@ -516,6 +528,16 @@ const HolidaySection = ({ refreshKey }) => {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {termDateRange ? (
+              <Alert severity="info" sx={{ py: 0.5 }}>
+                Dates must be within the term calendar:{' '}
+                <strong>{termDateRange.start_date}</strong> → <strong>{termDateRange.end_date}</strong>
+              </Alert>
+            ) : (
+              <Alert severity="warning" sx={{ py: 0.5 }}>
+                No calendar weeks found for this term. Dates will not be restricted.
+              </Alert>
+            )}
             <Box display="flex" justifyContent="flex-end">
               <Button
                 variant="outlined"
@@ -545,7 +567,13 @@ const HolidaySection = ({ refreshKey }) => {
                   onChange={(e) => handleRowChange(index, 'start_date', e.target.value)}
                   size="small"
                   sx={{ flex: 1.5, width: '100%' }}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: {
+                      min: termDateRange?.start_date,
+                      max: termDateRange?.end_date,
+                    },
+                  }}
                   error={!!errors[index]?.start_date}
                   helperText={errors[index]?.start_date}
                   required
@@ -557,7 +585,13 @@ const HolidaySection = ({ refreshKey }) => {
                   onChange={(e) => handleRowChange(index, 'end_date', e.target.value)}
                   size="small"
                   sx={{ flex: 1.5, width: '100%' }}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{
+                    inputLabel: { shrink: true },
+                    htmlInput: {
+                      min: row.start_date || termDateRange?.start_date,
+                      max: termDateRange?.end_date,
+                    },
+                  }}
                   error={!!errors[index]?.end_date}
                   helperText={errors[index]?.end_date}
                   required

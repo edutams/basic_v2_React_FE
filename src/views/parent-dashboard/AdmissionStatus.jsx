@@ -151,16 +151,16 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
         flexDirection: 'column',
       }}
     >
-      {/* ── Summary row (always visible) ── */}
+      {/* ── Always visible section ── */}
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          p: 2,
+          flexDirection: 'column',
+          flexGrow: 1,
           cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
           transition: 'background 0.15s',
+          minHeight: 160, // Ensure uniform height across uncollapsed cards
         }}
         onClick={() => {
           if (isDraft) {
@@ -172,78 +172,102 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
           }
         }}
       >
-        <Avatar
+        {/* Summary Header */}
+        <Box
           sx={{
-            width: 44,
-            height: 44,
-            fontWeight: 700,
-            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            p: 2,
+            pb: 1,
           }}
         >
-          {app.name?.[0]}
-        </Avatar>
+          <Avatar
+            sx={{
+              width: 44,
+              height: 44,
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            {app.name?.[0]}
+          </Avatar>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-            <Typography variant="subtitle1" fontWeight={700} noWrap>
-              {app.name}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+              <Typography variant="subtitle1" fontWeight={700} noWrap>
+                {app.name}
+              </Typography>
+
+              <Chip
+                label={app.status}
+                size="small"
+                icon={
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      bgcolor: 'currentColor',
+                      ml: 0.75,
+                    }}
+                  />
+                }
+                sx={{
+                  ...statusChipSx(app.status),
+                  fontWeight: 700,
+                  fontSize: 11,
+                }}
+              />
+            </Box>
+
+            <Typography variant="caption" color="text.secondary">
+              {isDraft
+                ? 'Pending Application'
+                : `App #${app.applicationNo}`} · {app.class} · {app.session}
+              {app.term ? ` · ${app.term}` : ''}
+              {/* {isDraft && ` · Stopped at: ${draftStepName}`} */}
             </Typography>
-
-            <Chip
-              label={app.status}
-              size="small"
-              icon={
-                <Box
-                  sx={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    bgcolor: 'currentColor',
-                    ml: 0.75,
-                  }}
-                />
-              }
-              sx={{
-                ...statusChipSx(app.status),
-                fontWeight: 700,
-                fontSize: 11,
-              }}
-            />
           </Box>
 
-          <Typography variant="caption" color="text.secondary">
-            {isDraft
-              ? 'Draft Application'
-              : `App #${app.applicationNo}`} · {app.class} · {app.session}
-            {app.term ? ` · ${app.term}` : ''}
-            {isDraft && ` · Stopped at: ${draftStepName}`}
-          </Typography>
+          <Box sx={{ flexShrink: 0, color: 'text.secondary' }}>
+            {!isDraft && (open ? <ExpandLessIcon /> : <ExpandMoreIcon />)}
+          </Box>
         </Box>
 
-        <Box sx={{ flexShrink: 0, color: 'text.secondary' }}>
-          {isDraft ? (
-            <Button
-              variant="contained"
-              size="small"
-              endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
-              sx={{
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-                display: { xs: 'none', sm: 'inline-flex' },
-              }}
-            >
-              Continue
-            </Button>
-          ) : open ? (
-            <ExpandLessIcon />
-          ) : (
-            <ExpandMoreIcon />
+        {/* Basic Info (always visible) */}
+        <Box sx={{ px: 2, pb: 2, pt: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+          <Box display="flex" justifyContent="space-between">
+            <Typography variant="caption" color="text.secondary">Applicant:</Typography>
+            <Typography variant="caption" fontWeight={600} noWrap sx={{ maxWidth: '65%', textAlign: 'right' }}>
+              {app.surname ? `${app.surname} ${app.first_name}` : app.name}
+            </Typography>
+          </Box>
+          {!isDraft && (
+            <Box display="flex" justifyContent="space-between">
+              <Typography variant="caption" color="text.secondary">App No:</Typography>
+              <Typography variant="caption" fontWeight={600}>{app.applicationNo}</Typography>
+            </Box>
           )}
-
+          <Box display="flex" justifyContent="space-between">
+            <Typography variant="caption" color="text.secondary">Class / Session:</Typography>
+            <Typography variant="caption" fontWeight={600}>{app.class} · {app.session}</Typography>
+          </Box>
           {isDraft && (
-            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-              <ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />
+            <Box mt={1}>
+              <Button
+                variant="contained"
+                size="small"
+                fullWidth
+                endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                Continue Application
+              </Button>
             </Box>
           )}
         </Box>

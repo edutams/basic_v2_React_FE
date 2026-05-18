@@ -230,7 +230,11 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       setRows(data);
       fetchAnalytics(filters, termId);
     } catch (error) {
-      notify.error('Failed to fetch scheme of work');
+      notify.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Failed to fetch scheme of work',
+      );
     } finally {
       setLoading(false);
     }
@@ -397,11 +401,11 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     setTopicModalOpen(true);
   };
 
-  const handleAddSubtopic = (topicId,selectedRow) => {
-    setSelectedTopic({ 
+  const handleAddSubtopic = (topicId, selectedRow) => {
+    setSelectedTopic({
       topic_id: topicId,
-      topic_name: selectedRow?.topic_name
-    }); 
+      topic_name: selectedRow?.topic_name,
+    });
     setSelectedSubtopic(null);
     handleMenuClose();
     setSubtopicModalOpen(true);
@@ -409,10 +413,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
 
   const handleEditSubtopic = (row) => {
     setSelectedSubtopic(row);
-    setSelectedTopic({ 
+    setSelectedTopic({
       topic_id: topicId,
-      topic_name: selectedRow?.topic_name
-    }); 
+      topic_name: selectedRow?.topic_name,
+    });
     handleMenuClose();
     setSubtopicModalOpen(true);
   };
@@ -1127,7 +1131,11 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       <ReusableModal
         open={subtopicModalOpen}
         onClose={() => setSubtopicModalOpen(false)}
-        title={selectedSubtopic ? `Edit Subtopic for ${selectedTopic?.topic_name || 'Topic'}` : `Add Subtopic for ${selectedTopic?.topic_name}`}
+        title={
+          selectedSubtopic
+            ? `Edit Subtopic for ${selectedTopic?.topic_name || 'Topic'}`
+            : `Add Subtopic for ${selectedTopic?.topic_name}`
+        }
       >
         <Box
           component="form"
@@ -1290,7 +1298,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
             Edit Topic
           </MenuItem>,
-          <MenuItem key="add-sub" onClick={() => handleAddSubtopic(selectedRow.topic_id,selectedRow)}>
+          <MenuItem
+            key="add-sub"
+            onClick={() => handleAddSubtopic(selectedRow.topic_id, selectedRow)}
+          >
             Add Subtopic
           </MenuItem>,
           <MenuItem
@@ -1302,7 +1313,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </MenuItem>,
         ]}
         {menuType === 'subtopic' && [
-          <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow,selectedRow)}>
+          <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow, selectedRow)}>
             Edit Subtopic
           </MenuItem>,
           <MenuItem key="add-lo" onClick={() => handleAddObjective(selectedRow)}>

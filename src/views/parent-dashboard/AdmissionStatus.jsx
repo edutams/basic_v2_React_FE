@@ -290,13 +290,22 @@ const AdmissionStatus = () => {
             {applications.length} application{applications.length !== 1 ? 's' : ''} found
           </Typography>
         </Box>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/dashboard')}
-          sx={{ color: 'text.secondary', fontWeight: 500, flexShrink: 0 }}
-        >
-          Back to dashboard
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="contained"
+            onClick={() => setBatchModalOpen(true)}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          >
+            New Application
+          </Button>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/dashboard')}
+            sx={{ color: 'text.secondary', fontWeight: 500, flexShrink: 0 }}
+          >
+            Back to dashboard
+          </Button>
+        </Box>
       </Box>
 
       {/* Application cards */}
@@ -333,9 +342,8 @@ const AdmissionStatus = () => {
           <Button
             variant="contained"
             onClick={() => setBatchModalOpen(true)}
-            sx={{ mt: 1, fontWeight: 700, borderRadius: 2, px: 4 }}
           >
-            Start New Application
+            New Application
           </Button>
         </Paper>
       ) : (

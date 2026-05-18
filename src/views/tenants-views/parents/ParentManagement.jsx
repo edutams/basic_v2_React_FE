@@ -359,6 +359,11 @@ const ParentManagement = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
+              <Button variant="contained"
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+color="primary" fullWidth={false} onClick={handleOpenAdd}>
+                Add Single Parent
+              </Button>
               <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}
@@ -377,16 +382,6 @@ const ParentManagement = () => {
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
               >
                 Upload Template
-              </Button>
-
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleOpenAdd}
-                size="small"
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-              >
-                Add Single Parent
               </Button>
             </Box>
           </Box>

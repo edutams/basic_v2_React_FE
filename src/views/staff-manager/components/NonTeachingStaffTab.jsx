@@ -106,7 +106,7 @@ const NonTeachingStaffTab = ({
               onClick={handleUploadStaff}
               size="small"
             >
-              Multiple Upload
+              Multiple Non-Teaching Staff Upload
             </Button>
             <Button size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
               <IconChevronDown size={16} />

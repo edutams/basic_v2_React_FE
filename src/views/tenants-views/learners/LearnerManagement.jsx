@@ -3,7 +3,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import { useNotification } from '../../../hooks/useNotification';
-import { IconEdit, IconTrash, IconUser } from '@tabler/icons-react';
+import { IconEdit, IconTrash, IconUser, IconUserPlus } from '@tabler/icons-react';
 import {
   Box,
   Typography,
@@ -608,6 +608,7 @@ const LearnerManagement = () => {
                               handleMenuClose();
                             }}
                           >
+                            <IconUserPlus size={18} style={{ marginRight: 8 }} />
                             Link Parent
                           </MenuItem>
                           <MenuItem onClick={() => handleOpenEdit(row)}>

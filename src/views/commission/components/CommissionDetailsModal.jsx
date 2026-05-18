@@ -8,7 +8,6 @@ import {
   Typography,
   Button,
   TextField,
-  Grid,
   Table,
   TableBody,
   TableCell,
@@ -121,64 +120,53 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
       <DialogContent sx={{ p: 3 }}>
         {/* Filters Section */}
         <Box sx={{ mt: 2, mb: 2 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2,
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-end' }}>
+            <TextField
+              type="date"
+              label="From Date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+              sx={{ flex: 1, minWidth: { xs: '100%', sm: 140 } }}
+            />
+            <TextField
+              type="date"
+              label="To Date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+              sx={{ flex: 1, minWidth: { xs: '100%', sm: 140 } }}
+            />
+            <TextField
+              label="Transaction ID"
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              size="small"
+              placeholder="Enter transaction ID"
+              sx={{ flex: 2, minWidth: { xs: '100%', sm: 180 } }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleFilter}
+              size="small"
               sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 2,
-                flex: 1,
+                bgcolor: '#3949ab',
+                textTransform: 'none',
+                borderRadius: '8px',
+                width: { xs: '100%', sm: 'auto' },
+                '&:hover': { bgcolor: '#303f9f' },
               }}
             >
-              <TextField
-                type="date"
-                label="From Date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-              <TextField
-                type="date"
-                label="To Date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-              <TextField
-                label="Transaction ID"
-                value={transactionId}
-                onChange={(e) => setTransactionId(e.target.value)}
-                size="small"
-                placeholder="Enter transaction ID"
-              />
-              <Button
-                variant="contained"
-                onClick={handleFilter}
-                sx={{
-                  bgcolor: '#3949ab',
-                  textTransform: 'none',
-                  borderRadius: '8px',
-                  '&:hover': { bgcolor: '#303f9f' },
-                }}
-              >
-                Filter
-              </Button>
-            </Box>
-
+              Filter
+            </Button>
             <Button
               variant="contained"
               startIcon={<IconDownload size={18} />}
               onClick={handleExport}
+              size="small"
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Export
             </Button>

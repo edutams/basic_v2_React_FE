@@ -240,10 +240,11 @@ const SetUpClassesTab = forwardRef(({ onSaveAndContinue, onClassArmsAdded, onRea
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
+      <TableContainer sx={{ flex: 1, overflowX: 'auto', overflowY:'auto' }}>
         <Table
           stickyHeader
           sx={{
+            minWidth: 900,
             borderCollapse: 'separate',
             borderSpacing: '12px 10px',
           }}

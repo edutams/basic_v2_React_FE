@@ -40,7 +40,7 @@ const STEPS = [
 
 // ── Stepper ───────────────────────────────────────────────────────────────────
 const StepperBar = ({ activeStep }) => {
-  const theme = useTheme(); // ✅ correct place
+  const theme = useTheme(); 
 
   const getIconColor = (active, done) =>
     active
@@ -200,6 +200,8 @@ const NewApplication = () => {
 
   const batch = location.state?.batch ?? null;
   const existingWard = location.state?.ward ?? null;
+  const searchParams = new URLSearchParams(location.search);
+  const queryStep = searchParams.get('step');
 
   // Map prospective ward data → per-step initial values
   const seedWardData = existingWard
@@ -232,20 +234,29 @@ const NewApplication = () => {
     : null;
 
   // Resume at the step where progress stopped.
-  // ward.step: 0=Applied(ward detail done), 1=E-Exam(academic done), 2=Admitted, 3=Enrolled
-  // Map to stepper index: step 0 → resume at step 1 (academic), step 1+ → resume at step 2 (payment)
-  const resumeStep = existingWard
-    ? existingWard.step >= 1 ? 2 : existingWard.step >= 0 ? 1 : 0
+  const initialStepFromWard = existingWard
+    ? existingWard.isDraft 
+      ? existingWard.draftStep ?? 0
+      : existingWard.step >= 1 ? 2 : existingWard.step >= 0 ? 1 : 0
     : 0;
+
+  const resumeStep = queryStep !== null ? parseInt(queryStep, 10) : initialStepFromWard;
 
   const [activeStep, setActiveStep]     = useState(resumeStep);
   const [wardData,   setWardData]       = useState(seedWardData);
-  const [academicData, setAcademicData] = useState(existingWard?.step >= 1 ? seedAcademicData : null);
+  const [academicData, setAcademicData] = useState((existingWard?.step >= 1 || existingWard?.draftStep >= 1) ? seedAcademicData : null);
   const [documentsData, setDocumentsData] = useState(null);
   const [isLoading,  setIsLoading]      = useState(false);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
   const [selectedBatch, setSelectedBatch] = useState(existingWard?.batch ?? batch);
+
+  React.useEffect(() => {
+    const currentQueryStep = new URLSearchParams(location.search).get('step');
+    if (currentQueryStep !== String(activeStep)) {
+      navigate(`?step=${activeStep}`, { replace: true, state: location.state });
+    }
+  }, [activeStep, location.search, navigate, location.state]);
 
   const handleNext = () => setActiveStep((s) => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => {

@@ -168,6 +168,15 @@ const TenantRoutes = [
           />
         ),
       },
+      {
+        path: 'process-applications',
+        element: (
+          <PageUnderDevelopment
+            title="Process Admission Under Development"
+            subtitle="The Process Admission module is currently under development. Check back soon!"
+          />
+        ),
+      },
 
       // ── Dashboard route (handles both school and parent dashboards) ──
       { path: 'dashboard', element: <SchoolDashboardMain /> },

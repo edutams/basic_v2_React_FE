@@ -1054,7 +1054,7 @@ const SchoolDashboard = () => {
           </Box>
           <Box sx={{ px: 2, pb: 2 }}>
             {[
-              ['Teacher', 0],
+              ['Staffs', 0],
               ['SPA', 0],
               ['Student', 0],
               ['Parent', 0],

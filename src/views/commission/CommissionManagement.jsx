@@ -45,9 +45,9 @@ const CommissionManagement = () => {
 
   const handleMyCommissionClick = (type) => {
     if (type === 'subscription') {
-      navigate('/commission/subscription');
+      navigate('/agent/commission/subscription');
     } else if (type === 'transaction') {
-      navigate('/commission/transaction');
+      navigate('/agent/commission/transaction');
     }
   };
 

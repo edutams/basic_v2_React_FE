@@ -1101,7 +1101,7 @@ const SchoolsTab = ({
                   '&:hover': { borderColor: 'primary.main' },
                 }}
               >
-                Show Filters
+                Filters
                 {activeFilterCount > 0 && (
                   <Box
                     component="span"

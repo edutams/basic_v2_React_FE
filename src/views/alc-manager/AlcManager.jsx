@@ -29,6 +29,7 @@ import {
 } from '@mui/material';
 
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { IconFilter } from '@tabler/icons-react';
 
 import ParentCard from '../../components/shared/ParentCard';
 import FilterSideDrawer from '../../components/shared/FilterSideDrawer';
@@ -319,7 +320,7 @@ const AlcManager = () => {
                 '&:hover': { borderColor: 'primary.main', color: '#fff' },
               }}
             >
-              Show Filters
+              Filters
               {activeFilterCount > 0 && (
                 <Box
                   component="span"

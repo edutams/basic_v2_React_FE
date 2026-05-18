@@ -97,7 +97,7 @@ const MyCommissionBySubscription = () => {
         >
           <Box sx={{ p: 3 }}>
             <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+              sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 2 }}
             >
               <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>
                 Subscription Commission Details
@@ -105,10 +105,12 @@ const MyCommissionBySubscription = () => {
               <Button
                 variant="contained"
                 startIcon={<IconDownload size={18} />}
+                size="small"
                 sx={{
                   bgcolor: '#3949ab',
                   textTransform: 'none',
                   borderRadius: '8px',
+                  width: { xs: '100%', sm: 'auto' },
                   '&:hover': { bgcolor: '#303f9f' },
                 }}
               >
@@ -119,7 +121,7 @@ const MyCommissionBySubscription = () => {
             {/* Filter Section */}
             <Box sx={{ mb: 3 }}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} sm={6} md={2}>
                   <TextField
                     type="date"
                     label="From"
@@ -130,7 +132,7 @@ const MyCommissionBySubscription = () => {
                     size="small"
                   />
                 </Grid>
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} sm={6} md={2}>
                   <TextField
                     type="date"
                     label="To"
@@ -155,6 +157,7 @@ const MyCommissionBySubscription = () => {
                   <Button
                     variant="contained"
                     onClick={handleFilter}
+                    fullWidth
                     sx={{
                       bgcolor: '#3949ab',
                       textTransform: 'none',

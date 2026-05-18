@@ -527,13 +527,13 @@ const HolidaySection = ({ refreshKey }) => {
               </Button>
             </Box>
             {rows.map((row, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+              <Box key={index} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'flex-start' }}>
                 <TextField
                   label="Holiday Name"
                   value={row.name}
                   onChange={(e) => handleRowChange(index, 'name', e.target.value)}
                   size="small"
-                  sx={{ flex: 2 }}
+                  sx={{ flex: 2, width: '100%' }}
                   error={!!errors[index]?.name}
                   helperText={errors[index]?.name}
                   required
@@ -544,7 +544,7 @@ const HolidaySection = ({ refreshKey }) => {
                   value={row.start_date}
                   onChange={(e) => handleRowChange(index, 'start_date', e.target.value)}
                   size="small"
-                  sx={{ flex: 1.5 }}
+                  sx={{ flex: 1.5, width: '100%' }}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={!!errors[index]?.start_date}
                   helperText={errors[index]?.start_date}
@@ -556,7 +556,7 @@ const HolidaySection = ({ refreshKey }) => {
                   value={row.end_date}
                   onChange={(e) => handleRowChange(index, 'end_date', e.target.value)}
                   size="small"
-                  sx={{ flex: 1.5 }}
+                  sx={{ flex: 1.5, width: '100%' }}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={!!errors[index]?.end_date}
                   helperText={errors[index]?.end_date}

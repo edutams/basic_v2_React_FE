@@ -18,7 +18,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from 'src/components/container/PageContainer';
 import AdmissionBatchModal from 'src/components/tenant-components/admission/AdmissionBatchModal';
 
-// ── Stepper ───────────────────────────────────────────────────────────────────
 const STEPS = ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
 
 const AdmissionStepper = ({ currentStep }) => (
@@ -62,7 +61,6 @@ const AdmissionStepper = ({ currentStep }) => (
   </Box>
 );
 
-// ── Timeline ──────────────────────────────────────────────────────────────────
 const TIMELINE_ICON_MAP = {
   submitted: { icon: DescriptionIcon, bg: '#1565C0', isMui: true },
   reviewed: { icon: IconClipboardCheck, bg: '#2E7D32', isMui: false },
@@ -92,7 +90,6 @@ const TimelineEvent = ({ type = 'pending', title, date, detail, isLast = false }
   );
 };
 
-// ── Action card ───────────────────────────────────────────────────────────────
 const ActionCard = ({ amount, dueLabel, onPay, onViewLetter }) => {
   const theme = useTheme();
   return (
@@ -118,7 +115,6 @@ const ActionCard = ({ amount, dueLabel, onPay, onViewLetter }) => {
   );
 };
 
-// ── Status helpers ────────────────────────────────────────────────────────────
 const statusChipSx = (status) => {
   if (status === 'Admitted') return { bgcolor: 'success.light', color: 'success.dark' };
   if (status === 'Enrolled') return { bgcolor: 'primary.light', color: 'primary.dark' };
@@ -127,7 +123,6 @@ const statusChipSx = (status) => {
   return { bgcolor: 'grey.100', color: 'text.secondary' };
 };
 
-// ── Single application card ───────────────────────────────────────────────────
 const ApplicationCard = ({ app, defaultOpen = false }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(defaultOpen);
@@ -151,7 +146,6 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
         flexDirection: 'column',
       }}
     >
-      {/* ── Always visible section ── */}
       <Box
         sx={{
           display: 'flex',
@@ -160,7 +154,7 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
           cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
           transition: 'background 0.15s',
-          minHeight: 160, // Ensure uniform height across uncollapsed cards
+          minHeight: 160, 
         }}
         onClick={() => {
           if (isDraft) {
@@ -250,7 +244,7 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
           </Box>
         </Box>
 
-        {/* Basic Info (always visible) */}
+        {/* Basic Info */}
         <Box sx={{ px: 2, pb: 2, pt: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
           <Box display="flex" justifyContent="space-between">
             <Typography variant="caption" color="text.secondary">Applicant:</Typography>
@@ -293,7 +287,6 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
         <Collapse in={open}>
           <Divider />
 
-          {/* Full stepper */}
           <Box sx={{ px: 2, pt: 2 }}>
             <AdmissionStepper currentStep={app.currentStep ?? 0} />
           </Box>

@@ -12,11 +12,12 @@ import {
   Chip,
   IconButton,
   InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
+const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = false }) => {
   const isEditMode = actionType === 'update';
   const [newFeature, setNewFeature] = useState('');
 
@@ -196,16 +197,15 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
           )}
         </Grid>
 
-        {/* Action Buttons */}
         <Grid size={{ xs: 12 }}>
-          <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
+          <Box mt={4} display="flex" justifyContent="flex-end" gap={2} flexWrap="wrap">
             <Button
               onClick={onCancel}
-              sx={{ mr: 1 }}
               color="inherit"
               type="button"
               size="small"
-
+              disabled={loading}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Cancel
             </Button>
@@ -213,9 +213,12 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel }) => {
               variant="contained"
               type="submit"
               size="small"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
               sx={{
                 bgcolor: '#1976d2',
                 '&:hover': { bgcolor: '#1565c0' },
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
               {isEditMode ? 'Update Package' : 'Create Package'}

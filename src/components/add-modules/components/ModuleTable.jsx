@@ -156,26 +156,28 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
   return (
     <ParentCard
       title={
-        <Box display="flex" alignItems="center" justifyContent="space-between">
+        <Box
+          display="flex"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          justifyContent="space-between"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={1}
+        >
           <Typography variant="h5">Manage Modules</Typography>
           <Button
             variant="outlined"
             startIcon={<FilterListIcon />}
             onClick={() => setFilterDrawerOpen(true)}
-            sx={{ minWidth: 140 }}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}
           >
-            Show Filters
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Filters</Box>
             {activeFilterCount > 0 && (
               <Chip
                 label={activeFilterCount}
                 size="small"
                 color="primary"
-                sx={{
-                  ml: 1,
-                  height: 20,
-                  minWidth: 20,
-                  fontSize: '0.75rem',
-                }}
+                sx={{ ml: 1, height: 20, minWidth: 20, fontSize: '0.75rem' }}
               />
             )}
           </Button>

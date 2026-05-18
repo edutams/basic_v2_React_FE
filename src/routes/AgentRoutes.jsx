@@ -97,10 +97,10 @@ const DashboardRouteWrapper = () => {
 };
 
 const AgentRoutes = [
-  // Root — renders FrontendPages on same host, or redirects externally
+  // Root — redirect to login
   {
     path: '/',
-    element: <FrontendPages />,
+    element: <Navigate to="/agent/login" replace />,
   },
 
   // Protected agent app routes — all under /agent/*

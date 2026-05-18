@@ -117,28 +117,29 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
   return (
     <ParentCard
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={1}
+        >
           <Typography variant="h5">All Packages</Typography>
-          <Box display="flex" gap={2} alignItems="center">
+          <Box display="flex" gap={1} flexWrap="wrap" width={{ xs: '100%', sm: 'auto' }}>
             <Button
               variant="outlined"
               startIcon={<FilterListIcon />}
               onClick={() => setFilterDrawerOpen(true)}
               size="small"
-
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
-              Show Filters
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Show Filters</Box>
               {activeFilterCount > 0 && (
                 <Chip
                   label={activeFilterCount}
                   size="small"
                   color="primary"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    minWidth: 20,
-                    fontSize: '0.75rem',
-                  }}
+                  sx={{ ml: 1, height: 20, minWidth: 20, fontSize: '0.75rem' }}
                 />
               )}
             </Button>
@@ -147,7 +148,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
               startIcon={<AddIcon />}
               onClick={() => onPackageAction('create')}
               size="small"
-
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
               Add New Package
             </Button>

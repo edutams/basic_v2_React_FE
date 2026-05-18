@@ -204,12 +204,27 @@ const ApplicationCard = ({ app, defaultOpen = false }) => {
                 size="small"
                 icon={
                   <Box
-                    sx={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      bgcolor: 'currentColor',
-                      ml: 0.75,
+                    sx={(theme) => {
+                      let color = theme.palette.grey[400];
+                      if (app.status === 'Admitted') color = theme.palette.success.main;
+                      if (app.status === 'Enrolled') color = theme.palette.primary.main;
+                      if (app.status === 'Exam Scheduled') color = theme.palette.warning.main;
+                      if (app.status === 'Incomplete') color = theme.palette.error.main;
+
+                      return {
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: color,
+                        ml: 0.75,
+                        boxShadow: `0 0 6px ${color}`,
+                        animation: 'pulseGlow 2s infinite',
+                        '@keyframes pulseGlow': {
+                          '0%': { opacity: 0.6, transform: 'scale(0.85)' },
+                          '50%': { opacity: 1, transform: 'scale(1.15)', boxShadow: `0 0 10px ${color}` },
+                          '100%': { opacity: 0.6, transform: 'scale(0.85)' },
+                        },
+                      };
                     }}
                   />
                 }

@@ -439,6 +439,7 @@ const LearnerManagement = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
                 fullWidth={false}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
                 onClick={() => setAddLearnerOpen(true)}
               >
                 Add Learner

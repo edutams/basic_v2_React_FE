@@ -359,9 +359,13 @@ const ParentManagement = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-              <Button variant="contained"
+              <Button
+                variant="contained"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
-color="primary" fullWidth={false} onClick={handleOpenAdd}>
+                color="primary"
+                fullWidth={false}
+                onClick={handleOpenAdd}
+              >
                 Add Single Parent
               </Button>
               <Button

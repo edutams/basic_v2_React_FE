@@ -71,7 +71,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const [selectedAppTermId, setSelectedAppTermId] = useState('');
   const [autoGenerateConfig, setAutoGenerateConfig] = useState({
     startDate: '',
-    numWeeks: 15,
+    numWeeks: 0,
   });
   const [activeSessionTermId, setActiveSessionTermId] = useState(null);
   const [confirmDeleteWeek, setConfirmDeleteWeek] = useState(false);
@@ -83,6 +83,15 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const tableWrapRef = useRef(null); // ref on the Box wrapping the table
   const [hintStyle, setHintStyle] = useState(null);
   const [actionHintStyle, setActionHintStyle] = useState(null);
+
+  useEffect(() => {
+    if (weeks.length > 0) {
+      setAutoGenerateConfig((prev) => ({
+        ...prev,
+        numWeeks: weeks.length,
+      }));
+    }
+  }, [weeks]);
 
   useLayoutEffect(() => {
     const btn = generateBtnRef.current;
@@ -315,7 +324,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       showSnackbar('Set start date first', 'error');
       return;
     }
-    if (autoGenerateConfig.numWeeks > 15 || autoGenerateConfig.numWeeks < 1) {
+
+    if (autoGenerateConfig.numWeeks < 1 || autoGenerateConfig.numWeeks > 15) {
       showSnackbar('Number of weeks must be between 1 and 15', 'error');
       return;
     }
@@ -327,6 +337,12 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
       });
       if (response.status) {
         setWeeks(response.data);
+
+        setAutoGenerateConfig((prev) => ({
+          ...prev,
+          numWeeks: response.data.length,
+        }));
+
         showSnackbar('Weeks generated successfully', 'success');
         loadSessionTerms(selectedSessionId);
         refreshTenantInfo();
@@ -532,6 +548,10 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                           numWeeks: parseInt(e.target.value),
                         })
                       }
+                      inputProps={{
+                        min: 1,
+                        max: 15,
+                      }}
                     />
                     <TextField
                       label="Start Date"
@@ -759,8 +779,8 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
         <DialogTitle>Remove Last Week</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to remove{' '}
-            <strong>{weeks[weeks.length - 1]?.week_name}</strong>? This cannot be undone.
+            Are you sure you want to remove <strong>{weeks[weeks.length - 1]?.week_name}</strong>?
+            This cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>

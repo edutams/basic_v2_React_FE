@@ -35,7 +35,6 @@ import ParentCard from 'src/components/shared/ParentCard';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
 
-// ── Dummy data ────────────────────────────────────────────────────────────────
 const DUMMY_SESSIONS = [
   { id: 1, sesname: '2025/2026' },
   { id: 2, sesname: '2024/2025' },
@@ -147,7 +146,6 @@ const DUMMY_BATCHES = {
   202: [],
 };
 
-// ── Status chip helper ────────────────────────────────────────────────────────
 const StatusChip = ({ status }) => {
   const isActive = status === 'active';
   return (
@@ -163,8 +161,6 @@ const StatusChip = ({ status }) => {
     />
   );
 };
-
-// ── Batch status chip ─────────────────────────────────────────────────────────
 const BatchStatusChip = ({ status }) => {
   const isOpen = status === 'open';
   return (
@@ -172,8 +168,8 @@ const BatchStatusChip = ({ status }) => {
       label={isOpen ? 'Open' : 'Close'}
       size="small"
       sx={{
-        bgcolor: isOpen ? 'success.main' : 'error.main',
-        color: '#fff',
+        bgcolor: isOpen ? 'success.light' : 'error.light',
+        color: isOpen ? 'success.dark' : 'error.dark',
         fontWeight: 700,
         fontSize: 11,
         minWidth: 52,
@@ -182,14 +178,13 @@ const BatchStatusChip = ({ status }) => {
   );
 };
 
-// ── Yes/No pill ───────────────────────────────────────────────────────────────
 const YesNoPill = ({ value }) => (
   <Chip
     label={value ? 'Yes' : 'No'}
     size="small"
     sx={{
-      bgcolor: value ? 'success.main' : 'warning.main',
-      color: '#fff',
+      bgcolor: value ? 'primary.light' : 'warning.light',
+      color: value ? 'primary.dark' : 'warning.dark',
       fontWeight: 700,
       fontSize: 11,
       minWidth: 36,
@@ -197,7 +192,6 @@ const YesNoPill = ({ value }) => (
   />
 );
 
-// ── Fee pills ─────────────────────────────────────────────────────────────────
 const FeePills = ({ requirePayment, appFee, acceptanceFee }) => {
   if (!requirePayment) return <YesNoPill value={false} />;
   return (
@@ -207,21 +201,20 @@ const FeePills = ({ requirePayment, appFee, acceptanceFee }) => {
         <Chip
           label={`Application Fee ₦${Number(appFee).toLocaleString()}`}
           size="small"
-          sx={{ bgcolor: 'success.main', color: '#fff', fontWeight: 600, fontSize: 10 }}
+          sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 600, fontSize: 10 }}
         />
       )}
       {acceptanceFee > 0 && (
         <Chip
           label={`Acceptance Fee ₦${Number(acceptanceFee).toLocaleString()}`}
           size="small"
-          sx={{ bgcolor: 'success.main', color: '#fff', fontWeight: 600, fontSize: 10 }}
+          sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 600, fontSize: 10 }}
         />
       )}
     </Stack>
   );
 };
 
-// ── View/Edit icon pair ───────────────────────────────────────────────────────
 const ViewEditPair = ({ onView, onEdit }) => (
   <Stack direction="row" spacing={0.5}>
     <Tooltip title="View">
@@ -255,40 +248,32 @@ const ViewEditPair = ({ onView, onEdit }) => (
   </Stack>
 );
 
-// ── Main Component ────────────────────────────────────────────────────────────
 const AdmissionSetup = () => {
   const navigate = useNavigate();
 
-  // ── Session / term state ──────────────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
   const [selectedTermId, setSelectedTermId] = useState(null);
   const [selectedTermLabel, setSelectedTermLabel] = useState('');
 
-  // ── Batches state ─────────────────────────────────────────────────────────
   const [batches, setBatches] = useState([]);
 
-  // ── UI state ──────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [batchesLoading, setBatchesLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuTerm, setMenuTerm] = useState(null);
 
-  // ── Batch action menu ─────────────────────────────────────────────────────
   const [batchMenuAnchor, setBatchMenuAnchor] = useState(null);
   const [menuBatch, setMenuBatch] = useState(null);
 
-  // ── Confirm dialogs ───────────────────────────────────────────────────────
   const [confirmToggleBatch, setConfirmToggleBatch] = useState({ open: false, batch: null });
 
-  // ── Load sessions on mount ────────────────────────────────────────────────
   useEffect(() => {
     loadSessions();
   }, []);
 
-  // ── Load batches when selected term changes ───────────────────────────────
   useEffect(() => {
     if (selectedTermId) {
       loadBatches(selectedTermId);
@@ -302,7 +287,6 @@ const AdmissionSetup = () => {
 
   const loadSessions = () => {
     setLoading(true);
-    // Simulate async
     setTimeout(() => {
       setSessions(DUMMY_SESSIONS);
       setSelectedSessionId(DUMMY_SESSIONS[0].id);
@@ -334,7 +318,6 @@ const AdmissionSetup = () => {
     }, 200);
   };
 
-  // ── Session change ────────────────────────────────────────────────────────
   const handleSessionChange = (e) => {
     const id = Number(e.target.value);
     setSelectedSessionId(id);
@@ -344,13 +327,11 @@ const AdmissionSetup = () => {
     loadSessionTerms(id);
   };
 
-  // ── Term row click ────────────────────────────────────────────────────────
   const handleTermSelect = (term) => {
     setSelectedTermId(term.session_term_id);
     setSelectedTermLabel(term.display_name);
   };
 
-  // ── Term action menu ──────────────────────────────────────────────────────
   const handleMenuOpen = (e, term) => {
     e.stopPropagation();
     setAnchorEl(e.currentTarget);
@@ -361,7 +342,6 @@ const AdmissionSetup = () => {
     setMenuTerm(null);
   };
 
-  // ── Batch toggle status ───────────────────────────────────────────────────
   const handleToggleBatchStatus = () => {
     const batch = confirmToggleBatch.batch;
     setConfirmToggleBatch({ open: false, batch: null });
@@ -374,7 +354,6 @@ const AdmissionSetup = () => {
     showSnackbar(`Batch ${batch.status === 'open' ? 'closed' : 'opened'} successfully`);
   };
 
-  // ── Navigate to create / edit batch page ──────────────────────────────────
   const handleCreateBatch = () => {
     navigate('/admission-setup/create-batch', {
       state: { termId: selectedTermId, termLabel: selectedTermLabel },
@@ -391,11 +370,9 @@ const AdmissionSetup = () => {
 
   return (
     <PageContainer title="Admission Setup" description="Manage admission batches">
-      {/* ── Breadcrumb ── */}
       <Breadcrumb title="Admission Setup" items={BCrumb} />
 
       <Grid container spacing={3} alignItems="flex-start">
-        {/* ── LEFT: Manage Admissions ── */}
         <Grid size={{ xs: 12, md: 4 }}>
           <ParentCard title="Manage Admissions">
             {loading ? (
@@ -404,7 +381,6 @@ const AdmissionSetup = () => {
               </Box>
             ) : (
               <>
-                {/* Session term dropdown */}
                 <Box sx={{ mb: 2 }}>
                   <TextField
                     select
@@ -422,7 +398,6 @@ const AdmissionSetup = () => {
                   </TextField>
                 </Box>
 
-                {/* Session terms table */}
                 {sessionTerms.length === 0 ? (
                   <Alert severity="info">No session terms found.</Alert>
                 ) : (
@@ -483,7 +458,6 @@ const AdmissionSetup = () => {
           </ParentCard>
         </Grid>
 
-        {/* ── RIGHT: Manage Admission Batches ── */}
         <Grid size={{ xs: 12, md: 8 }}>
           <ParentCard
             title={
@@ -574,8 +548,8 @@ const AdmissionSetup = () => {
                                 label="Set E-Exam"
                                 size="small"
                                 sx={{
-                                  bgcolor: 'success.main',
-                                  color: '#fff',
+                                  bgcolor: 'success.light',
+                                  color: 'success.dark',
                                   fontWeight: 700,
                                   fontSize: 10,
                                 }}
@@ -633,7 +607,6 @@ const AdmissionSetup = () => {
         </Grid>
       </Grid>
 
-      {/* ── Term action menu ── */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -651,11 +624,13 @@ const AdmissionSetup = () => {
         </MenuItem>
       </Menu>
 
-      {/* ── Batch action menu ── */}
       <Menu
         anchorEl={batchMenuAnchor}
         open={Boolean(batchMenuAnchor)}
-        onClose={() => { setBatchMenuAnchor(null); setMenuBatch(null); }}
+        onClose={() => {
+          setBatchMenuAnchor(null);
+          setMenuBatch(null);
+        }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
@@ -674,7 +649,6 @@ const AdmissionSetup = () => {
         </MenuItem>
       </Menu>
 
-      {/* ── Toggle batch status confirmation ── */}
       <Dialog
         open={confirmToggleBatch.open}
         onClose={() => setConfirmToggleBatch({ open: false, batch: null })}
@@ -687,8 +661,13 @@ const AdmissionSetup = () => {
         <DialogContent>
           <Typography>
             Are you sure you want to{' '}
-            <strong>{confirmToggleBatch.batch?.status === 'open' ? 'close' : 'open'}</strong>{' '}
-            <strong>{confirmToggleBatch.batch?.batch_name}</strong>?
+            <Box component="span">
+              {confirmToggleBatch.batch?.status === 'open' ? 'close' : 'open'}
+            </Box>{' '}
+            <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {confirmToggleBatch.batch?.batch_name}
+            </Box>
+            ?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -706,7 +685,6 @@ const AdmissionSetup = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ── Snackbar ── */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}

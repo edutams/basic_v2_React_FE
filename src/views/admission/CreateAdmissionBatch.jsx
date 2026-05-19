@@ -72,16 +72,31 @@ const LETTER_TEMPLATES = [
   },
 ];
 
-// ── Live preview renderer ─────────────────────────────────────────────────────
-const renderPreview = (template) => {
-  if (!template) return null;
-  return template.preview
-    .replace("[Student's First Name]", 'John')
-    .replace("[Student's Last Name]", 'Doe')
-    .replace('[Entrance Score]', '85')
-    .replace('[Class Name]', 'Junior Secondary')
-    .replace('[School Division]', 'Brightwood School')
-    .replace('[Admission Session]', '2025/2026 Session');
+// ── Sample values for live preview placeholder substitution ──────────────────
+const PREVIEW_SAMPLES = {
+  "[Student's First Name]": 'John',
+  "[Student's Last Name]": 'Doe',
+  '[Class Name]': 'Junior Secondary',
+  '[Entrance Score]': '85',
+  "[Parent's Name]": 'Mr. & Mrs. Doe',
+  '[School Division]': 'Brightwood School',
+  '[Admission Session]': '2025/2026 Session',
+};
+
+const applyPreviewSamples = (html) => {
+  if (!html) return '';
+  let result = html;
+  Object.entries(PREVIEW_SAMPLES).forEach(([token, value]) => {
+    // Escape the token for use in a regex, then match with or without the brackets
+    const inner = token.replace(/^\[/, '').replace(/\]$/, '');
+    // Match [token], [token with HTML entities], or just the inner text
+    const pattern = new RegExp(
+      `\\[${inner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]|${inner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+      'gi',
+    );
+    result = result.replace(pattern, `<strong style="color:#1976d2">${value}</strong>`);
+  });
+  return result;
 };
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -143,16 +158,16 @@ const CreateAdmissionBatch = () => {
       letter_content: letterContent,
       status: isOpen ? 'open' : 'close',
     };
-    // TODO: wire to API
     console.log('Batch payload:', payload);
     navigate('/admission-setup');
   };
 
   return (
     <PageContainer title="Create New Admission Batch" description="Set up a new admission batch">
-      {/* ── Breadcrumb with Back button ── */}
-      <Breadcrumb title="Create New Admission Batch" subtitle={termLabel} items={BCrumb}>
-        <Button
+      <Breadcrumb title="Create New Admission Batch" items={BCrumb} subtitle={termLabel} sx={{ mb: 0 }}></Breadcrumb>
+
+      {/* <Box display="flex" justifyContent="end" alignItems="center" mb={1} mt={0}>
+         <Button
           variant="contained"
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/admission-setup')}
@@ -160,16 +175,12 @@ const CreateAdmissionBatch = () => {
         >
           Back
         </Button>
-      </Breadcrumb>
+      </Box> */}
 
       <Grid container spacing={3} alignItems="flex-start">
-        {/* ══════════════════════════════════════════════════════════════════
-            LEFT PANEL — Batch configuration
-        ══════════════════════════════════════════════════════════════════ */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Paper variant="outlined" sx={{ borderRadius: 2, p: 3 }}>
             <Stack spacing={3}>
-              {/* Batch Name */}
               <Box>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>
                   Batch Name
@@ -183,7 +194,6 @@ const CreateAdmissionBatch = () => {
                 />
               </Box>
 
-              {/* Entry Term */}
               <Box>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>
                   Entry Term
@@ -197,7 +207,6 @@ const CreateAdmissionBatch = () => {
                 />
               </Box>
 
-              {/* Programme & Class */}
               <Box>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 6 }}>
@@ -255,7 +264,6 @@ const CreateAdmissionBatch = () => {
                   </Grid>
                 </Grid>
 
-                {/* Selected class chips */}
                 {selectedClasses.length > 0 && (
                   <Stack direction="row" flexWrap="wrap" gap={0.75} mt={1.5}>
                     {selectedClasses.map((cls) => (
@@ -533,12 +541,8 @@ const CreateAdmissionBatch = () => {
           </Paper>
         </Grid>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            RIGHT PANEL — Admission Letter Editor
-        ══════════════════════════════════════════════════════════════════ */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 12, md: 9 }}>
           <ParentCard title="Admission Letter Editor">
-            {/* Blue header bar */}
             <Box
               sx={{
                 bgcolor: 'primary.main',
@@ -699,7 +703,17 @@ const CreateAdmissionBatch = () => {
                     '& .ProseMirror': { minHeight: 180, p: 1.5, outline: 'none' },
                   }}
                 >
-                  <TiptapEdit onUpdate={({ editor }) => setLetterContent(editor.getHTML())} />
+                  <TiptapEdit
+                    initialContent={
+                      selectedTemplate
+                        ? selectedTemplate.preview
+                            .split('\n')
+                            .map((line) => (line.trim() ? `<p>${line}</p>` : '<p></p>'))
+                            .join('')
+                        : '<p>Type here...</p>'
+                    }
+                    onUpdate={({ editor }) => setLetterContent(editor.getHTML())}
+                  />
                 </Box>
 
                 {/* Action buttons */}
@@ -773,24 +787,33 @@ const CreateAdmissionBatch = () => {
                     minHeight: 220,
                     bgcolor: 'grey.50',
                     borderRadius: 1,
+                    overflowY: 'auto',
+                    maxHeight: 320,
                   }}
                 >
-                  {selectedTemplate ? (
-                    <Typography
-                      variant="body2"
-                      sx={{ whiteSpace: 'pre-line', fontSize: 12, lineHeight: 1.7 }}
-                    >
-                      {renderPreview(selectedTemplate)}
-                    </Typography>
+                  {letterContent ? (
+                    <Box
+                      sx={{
+                        fontSize: 12,
+                        lineHeight: 1.7,
+                        color: 'text.primary',
+                        '& p': { mt: 0, mb: 0.75 },
+                        '& strong': { fontWeight: 700 },
+                        '& em': { fontStyle: 'italic' },
+                        '& ul, & ol': { pl: 2.5, mb: 0.75 },
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: applyPreviewSamples(letterContent),
+                      }}
+                    />
                   ) : (
                     <Typography variant="caption" color="text.disabled">
-                      Select a template to preview
+                      Start typing in the editor to see a live preview
                     </Typography>
                   )}
                 </Paper>
 
-                {/* Validation status */}
-                <Box
+                {/* <Box
                   sx={{
                     mt: 1.5,
                     p: 1.5,
@@ -804,12 +827,11 @@ const CreateAdmissionBatch = () => {
                   <Typography variant="caption" color="success.dark" fontWeight={600}>
                     ✓ All fields are complete and ready to send!
                   </Typography>
-                </Box>
+                </Box> */}
               </Grid>
             </Grid>
           </ParentCard>
 
-          {/* ── Create New Admission button ── */}
           <Box display="flex" justifyContent="flex-end" mt={2}>
             <Button
               variant="contained"

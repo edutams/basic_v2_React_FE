@@ -24,17 +24,28 @@ import {
 import './Tiptap.css';
 
 
-const TiptapEdit = ({ onUpdate }) => {
+const TiptapEdit = ({ onUpdate, initialContent }) => {
 
   const editor = useEditor({
     extensions: [StarterKit],
-    content: "<p>Type here...</p>",
+    content: initialContent ?? "<p>Type here...</p>",
     onUpdate: ({ editor }) => {
       if (onUpdate) {
         onUpdate({ editor });
       }
     },
   });
+
+  // Sync editor content when initialContent changes externally (e.g. template switch)
+  useEffect(() => {
+    if (editor && initialContent !== undefined) {
+      // Only update if content actually differs to avoid cursor reset on every keystroke
+      const current = editor.getHTML();
+      if (current !== initialContent) {
+        editor.commands.setContent(initialContent, false);
+      }
+    }
+  }, [editor, initialContent]);
 
   // If the editor instance changes (e.g., hot reload), call onUpdate with the current content
   useEffect(() => {

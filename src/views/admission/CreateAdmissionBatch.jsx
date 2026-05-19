@@ -703,19 +703,37 @@ const CreateAdmissionBatch = () => {
                 </Box>
 
                 {/* Action buttons */}
-                <Stack direction="row" spacing={1} mt={1.5} justifyContent="space-between">
-                  <Stack direction="row" spacing={1}>
+                <Stack
+                  direction="row"
+                  spacing={{ xs: 0.5, sm: 1 }}
+                  mt={1.5}
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
                     <Button
                       variant="outlined"
                       size="small"
-                      sx={{ fontWeight: 600, textTransform: 'none' }}
+                      sx={{
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        fontSize: { xs: 10, sm: 11, md: 12 },
+                        px: { xs: 1, sm: 1.5, md: 2 },
+                        whiteSpace: 'nowrap',
+                      }}
                     >
                       Save Template
                     </Button>
                     <Button
                       variant="outlined"
                       size="small"
-                      sx={{ fontWeight: 600, textTransform: 'none' }}
+                      sx={{
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        fontSize: { xs: 10, sm: 11, md: 12 },
+                        px: { xs: 1, sm: 1.5, md: 2 },
+                        whiteSpace: 'nowrap',
+                      }}
                     >
                       Send Test Email
                     </Button>
@@ -723,10 +741,16 @@ const CreateAdmissionBatch = () => {
                   <Button
                     variant="contained"
                     size="small"
-                    sx={{ fontWeight: 700, textTransform: 'none' }}
+                    sx={{
+                      fontWeight: 700,
+                      textTransform: 'none',
+                      fontSize: { xs: 10, sm: 11, md: 12 },
+                      px: { xs: 1, sm: 1.5, md: 2 },
+                      whiteSpace: 'nowrap',
+                    }}
                     onClick={() => {}}
                   >
-                    Save &amp; Preview
+                    Save
                   </Button>
                 </Stack>
               </Grid>

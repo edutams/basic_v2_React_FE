@@ -49,11 +49,11 @@ const ParentManagement = Loadable(
 const LearnerManagement = Loadable(
   lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
 );
-const NewApplication = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
-const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionStatus')));
-const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
+const NewApplication = Loadable(lazy(() => import('../views/admission/NewApplication')));
+const AdmissionStatus = Loadable(lazy(() => import('../views/admission/AdmissionStatus')));
+const AdmissionLetter = Loadable(lazy(() => import('../views/admission/AdmissionLetter')));
 const ApplicationTracker = Loadable(
-  lazy(() => import('../views/parent-dashboard/ApplicationTracker')),
+  lazy(() => import('../views/admission/ApplicationTracker')),
 );
 
 const TenantRoutes = [

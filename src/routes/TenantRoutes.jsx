@@ -192,8 +192,6 @@ const TenantRoutes = [
 
       // Admission Application
       { path: 'application-setup', element: <NewApplication /> },
-      // { path: 'admission-status',   element: <NewApplication /> },
-      // { path: 'admission-letter',   element: <NewApplication /> },
     ],
   },
 ];

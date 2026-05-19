@@ -58,7 +58,7 @@ const PLACEHOLDER_FIELDS = [
 const LETTER_TEMPLATES = [
   {
     id: 'congratulations',
-    label: 'Congratulations',
+    label: 'Congratulations Letter',
     preview:
       "Dear [Student's First Name] [Student's Last Name],\n\nCongratulations! You've achieved an entrance score of [Entrance Score],\n\nWelcome to [Class Name] at [School Division]. We look forward to having you join us for the [Admission Session].",
     image: templateImg,
@@ -598,33 +598,6 @@ const CreateAdmissionBatch = () => {
                 <Divider sx={{ my: 2 }} />
 
                 {/* Template Options */}
-                {/* <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
-                  Template Options
-                </Typography>
-                <Stack spacing={1}>
-                  {LETTER_TEMPLATES.map((tpl) => (
-                    <Paper
-                      key={tpl.id}
-                      variant="outlined"
-                      onClick={() => setSelectedTemplate(tpl)}
-                      sx={{
-                        p: 1,
-                        cursor: 'pointer',
-                        borderColor: selectedTemplate?.id === tpl.id ? 'primary.main' : 'divider',
-                        bgcolor: selectedTemplate?.id === tpl.id ? 'primary.light' : 'transparent',
-                        borderRadius: 1,
-                        transition: 'all 0.15s',
-                        '&:hover': { borderColor: 'primary.main' },
-                      }}
-                    >
-                      <Typography variant="caption" fontWeight={600} display="block" textAlign="center">
-                        {tpl.label}
-                      </Typography>
-                    </Paper>
-                  ))}
-                </Stack> */}
-
-                {/* Template Options */}
                 <Typography
                   variant="caption"
                   fontWeight={700}
@@ -634,59 +607,53 @@ const CreateAdmissionBatch = () => {
                 >
                   Template Options
                 </Typography>
-
-                <Grid container spacing={2}>
+                <Stack direction="row" spacing={1}>
                   {LETTER_TEMPLATES.map((tpl) => (
-                    <Grid item xs={6} sm={4} md={3} key={tpl.id}>
-                      <Paper
-                        elevation={0}
-                        onClick={() => setSelectedTemplate(tpl)}
+                    <Paper
+                      key={tpl.id}
+                      elevation={0}
+                      onClick={() => setSelectedTemplate(tpl)}
+                      sx={{
+                        flex: 1,
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        borderRadius: 1.5,
+                        border: '2px solid',
+                        borderColor: selectedTemplate?.id === tpl.id ? 'primary.main' : 'divider',
+                        transition: 'all 0.15s',
+                        bgcolor:
+                          selectedTemplate?.id === tpl.id ? 'primary.light' : 'background.paper',
+                        '&:hover': { borderColor: 'primary.main', boxShadow: 1 },
+                      }}
+                    >
+                      <Box
                         sx={{
-                          cursor: 'pointer',
-                          overflow: 'hidden',
-                          borderRadius: 2,
-                          border: '2px solid',
-                          borderColor: selectedTemplate?.id === tpl.id ? 'primary.main' : 'divider',
-                          transition: 'all 0.2s ease',
-                          bgcolor:
-                            selectedTemplate?.id === tpl.id ? 'primary.50' : 'background.paper',
-                            
-
-                          '&:hover': {
-                            borderColor: 'primary.main',
-                            transform: 'translateY(-2px)',
-                            boxShadow: 2,
-                          },
+                          height: 52,
+                          bgcolor: 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
-                        {/* Image */}
-                        <Box
-                          component="img"
-                          src={tpl.image}
-                          alt={tpl.label}
-                          sx={{
-                            width: '100%',
-                            height: 120,
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                        />
-
-                        {/* Label */}
-                        <Box sx={{ p: 1.5 }}>
-                          <Typography
-                            variant="body2"
-                            fontWeight={700}
-                            textAlign="center"
-                            lineHeight={1.2}
-                          >
-                            {tpl.label}
-                          </Typography>
-                        </Box>
-                      </Paper>
-                    </Grid>
+                        <Typography variant="caption" color="text.disabled" fontSize={9}>
+                          preview
+                        </Typography>
+                      </Box>
+                      <Box sx={{ px: 0.5, py: 0.5 }}>
+                        <Typography
+                          variant="caption"
+                          fontWeight={600}
+                          display="block"
+                          textAlign="center"
+                          fontSize={10}
+                          lineHeight={1.2}
+                        >
+                          {tpl.label}
+                        </Typography>
+                      </Box>
+                    </Paper>
                   ))}
-                </Grid>
+                </Stack>
               </Grid>
 
               {/* ── Letter Editor ── */}

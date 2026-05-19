@@ -56,6 +56,7 @@ const ApplicationTracker = Loadable(
   lazy(() => import('../views/admission/ApplicationTracker')),
 );
 const AdmissionSetup = Loadable(lazy(() => import('../views/admission/AdmissionSetup')));
+const CreateAdmissionBatch = Loadable(lazy(() => import('../views/admission/CreateAdmissionBatch')));
 
 const TenantRoutes = [
   {
@@ -163,6 +164,14 @@ const TenantRoutes = [
       {
         path: 'admission-setup',
         element: <AdmissionSetup />,
+      },
+      {
+        path: 'admission-setup/create-batch',
+        element: <CreateAdmissionBatch />,
+      },
+      {
+        path: 'admission-setup/edit-batch/:id',
+        element: <CreateAdmissionBatch />,
       },
       {
         path: 'process-applications',

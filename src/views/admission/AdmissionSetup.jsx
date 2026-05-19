@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -26,23 +27,125 @@ import {
   Stack,
   Tooltip,
 } from '@mui/material';
-import {
-  MoreVert as MoreVertIcon,
-  Add as AddIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
+import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
 import { IconEye, IconPencil } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
-import admissionSetupApi from 'src/api/admissionSetupApi';
-import { fetchCurrentSession, fetchSessionTerms } from 'src/api/sessionTermApi';
-import CreateAdmissionBatchModal from 'src/components/tenant-components/admission/setup/CreateAdmissionBatchModal';
 
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { title: 'Admission Setup' },
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
+
+// ── Dummy data ────────────────────────────────────────────────────────────────
+const DUMMY_SESSIONS = [
+  { id: 1, sesname: '2025/2026' },
+  { id: 2, sesname: '2024/2025' },
 ];
+
+const DUMMY_SESSION_TERMS = {
+  1: [
+    {
+      session_term_id: 101,
+      app_term_id: 1,
+      display_name: '2025/2026 First Term',
+      status: 'active',
+      is_subscribed: 'yes',
+    },
+    {
+      session_term_id: 102,
+      app_term_id: 2,
+      display_name: '2025/2026 Second Term',
+      status: 'inactive',
+      is_subscribed: 'yes',
+    },
+    {
+      session_term_id: 103,
+      app_term_id: 3,
+      display_name: '2025/2026 Third Term',
+      status: 'inactive',
+      is_subscribed: 'yes',
+    },
+  ],
+  2: [
+    {
+      session_term_id: 201,
+      app_term_id: 1,
+      display_name: '2024/2025 First Term',
+      status: 'inactive',
+      is_subscribed: 'yes',
+    },
+    {
+      session_term_id: 202,
+      app_term_id: 2,
+      display_name: '2024/2025 Second Term',
+      status: 'inactive',
+      is_subscribed: 'yes',
+    },
+  ],
+};
+
+const DUMMY_BATCHES = {
+  101: [
+    {
+      id: 1,
+      batch_name: 'Batch 1',
+      has_entrance_exam: false,
+      require_payment: true,
+      application_fee: 5000,
+      acceptance_fee: 15000,
+      app_instruction: 'Fill all fields carefully.',
+      admission_letter_template: '',
+      status: 'close',
+    },
+    {
+      id: 2,
+      batch_name: 'Batch 2',
+      has_entrance_exam: false,
+      require_payment: true,
+      application_fee: 5000,
+      acceptance_fee: 15000,
+      app_instruction: '',
+      admission_letter_template: '',
+      status: 'close',
+    },
+    {
+      id: 3,
+      batch_name: 'Batch 3',
+      has_entrance_exam: true,
+      require_payment: true,
+      application_fee: 5000,
+      acceptance_fee: 15000,
+      app_instruction: '',
+      admission_letter_template: '',
+      status: 'open',
+    },
+    {
+      id: 4,
+      batch_name: 'Batch 4',
+      has_entrance_exam: true,
+      require_payment: true,
+      application_fee: 5000,
+      acceptance_fee: 15000,
+      app_instruction: '',
+      admission_letter_template: '',
+      status: 'open',
+    },
+    {
+      id: 5,
+      batch_name: 'Batch 5',
+      has_entrance_exam: true,
+      require_payment: true,
+      application_fee: 5000,
+      acceptance_fee: 15000,
+      app_instruction: '',
+      admission_letter_template: '',
+      status: 'open',
+    },
+  ],
+  102: [],
+  103: [],
+  201: [],
+  202: [],
+};
 
 // ── Status chip helper ────────────────────────────────────────────────────────
 const StatusChip = ({ status }) => {
@@ -52,8 +155,8 @@ const StatusChip = ({ status }) => {
       label={isActive ? 'Active' : 'Inactive'}
       size="small"
       sx={{
-        bgcolor: isActive ? '#dcfce7' : '#fee2e2',
-        color: isActive ? '#166534' : '#991b1b',
+        bgcolor: isActive ? 'success.light' : 'error.light',
+        color: isActive ? 'success.dark' : 'error.dark',
         fontWeight: 600,
         fontSize: 11,
       }}
@@ -69,7 +172,7 @@ const BatchStatusChip = ({ status }) => {
       label={isOpen ? 'Open' : 'Close'}
       size="small"
       sx={{
-        bgcolor: isOpen ? '#166534' : '#991b1b',
+        bgcolor: isOpen ? 'success.main' : 'error.main',
         color: '#fff',
         fontWeight: 700,
         fontSize: 11,
@@ -85,7 +188,7 @@ const YesNoPill = ({ value }) => (
     label={value ? 'Yes' : 'No'}
     size="small"
     sx={{
-      bgcolor: value ? '#166534' : '#f97316',
+      bgcolor: value ? 'success.main' : 'warning.main',
       color: '#fff',
       fontWeight: 700,
       fontSize: 11,
@@ -104,14 +207,14 @@ const FeePills = ({ requirePayment, appFee, acceptanceFee }) => {
         <Chip
           label={`Application Fee ₦${Number(appFee).toLocaleString()}`}
           size="small"
-          sx={{ bgcolor: '#166534', color: '#fff', fontWeight: 600, fontSize: 10 }}
+          sx={{ bgcolor: 'success.main', color: '#fff', fontWeight: 600, fontSize: 10 }}
         />
       )}
       {acceptanceFee > 0 && (
         <Chip
           label={`Acceptance Fee ₦${Number(acceptanceFee).toLocaleString()}`}
           size="small"
-          sx={{ bgcolor: '#166534', color: '#fff', fontWeight: 600, fontSize: 10 }}
+          sx={{ bgcolor: 'success.main', color: '#fff', fontWeight: 600, fontSize: 10 }}
         />
       )}
     </Stack>
@@ -125,7 +228,12 @@ const ViewEditPair = ({ onView, onEdit }) => (
       <IconButton
         size="small"
         onClick={onView}
-        sx={{ bgcolor: 'primary.light', borderRadius: 1, p: 0.5 }}
+        sx={{
+          bgcolor: 'primary.light',
+          color: 'primary.main',
+          borderRadius: 1,
+          p: 0.5,
+        }}
       >
         <IconEye size={14} color="#1976d2" />
       </IconButton>
@@ -134,9 +242,14 @@ const ViewEditPair = ({ onView, onEdit }) => (
       <IconButton
         size="small"
         onClick={onEdit}
-        sx={{ bgcolor: '#e8f5e9', borderRadius: 1, p: 0.5 }}
+        sx={{
+          bgcolor: 'success.light',
+          color: 'success.main',
+          borderRadius: 1,
+          p: 0.5,
+        }}
       >
-        <IconPencil size={14} color="#2e7d32" />
+        <IconPencil size={14} />
       </IconButton>
     </Tooltip>
   </Stack>
@@ -144,6 +257,8 @@ const ViewEditPair = ({ onView, onEdit }) => (
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const AdmissionSetup = () => {
+  const navigate = useNavigate();
+
   // ── Session / term state ──────────────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
@@ -161,9 +276,9 @@ const AdmissionSetup = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuTerm, setMenuTerm] = useState(null);
 
-  // ── Modals ────────────────────────────────────────────────────────────────
-  const [createBatchOpen, setCreateBatchOpen] = useState(false);
-  const [editBatch, setEditBatch] = useState(null);
+  // ── Batch action menu ─────────────────────────────────────────────────────
+  const [batchMenuAnchor, setBatchMenuAnchor] = useState(null);
+  const [menuBatch, setMenuBatch] = useState(null);
 
   // ── Confirm dialogs ───────────────────────────────────────────────────────
   const [confirmToggleBatch, setConfirmToggleBatch] = useState({ open: false, batch: null });
@@ -185,61 +300,43 @@ const AdmissionSetup = () => {
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
-  const loadSessions = async () => {
-    try {
-      setLoading(true);
-      const res = await fetchCurrentSession();
-      if (res.status && res.data.length > 0) {
-        setSessions(res.data);
-        const firstId = res.data[0].id;
-        setSelectedSessionId(firstId);
-        await loadSessionTerms(firstId);
-      }
-    } catch {
-      showSnackbar('Failed to load sessions', 'error');
-    } finally {
+  const loadSessions = () => {
+    setLoading(true);
+    // Simulate async
+    setTimeout(() => {
+      setSessions(DUMMY_SESSIONS);
+      setSelectedSessionId(DUMMY_SESSIONS[0].id);
+      loadSessionTerms(DUMMY_SESSIONS[0].id);
       setLoading(false);
+    }, 300);
+  };
+
+  const loadSessionTerms = (sessionId) => {
+    const terms = DUMMY_SESSION_TERMS[sessionId] ?? [];
+    setSessionTerms(terms);
+    const active = terms.find((t) => t.status === 'active');
+    const first = terms[0];
+    const selected = active ?? first ?? null;
+    if (selected) {
+      setSelectedTermId(selected.session_term_id);
+      setSelectedTermLabel(selected.display_name);
+    } else {
+      setSelectedTermId(null);
+      setSelectedTermLabel('');
     }
   };
 
-  const loadSessionTerms = async (sessionId) => {
-    try {
-      const res = await fetchSessionTerms(sessionId);
-      if (res.status) {
-        setSessionTerms(res.data);
-        // Auto-select the active term
-        const active = res.data.find((t) => t.status === 'active');
-        if (active) {
-          setSelectedTermId(active.session_term_id);
-          setSelectedTermLabel(active.display_name);
-        } else if (res.data.length > 0) {
-          setSelectedTermId(res.data[0].session_term_id);
-          setSelectedTermLabel(res.data[0].display_name);
-        }
-      }
-    } catch {
-      showSnackbar('Failed to load session terms', 'error');
-    }
-  };
-
-  const loadBatches = async (termId) => {
-    try {
-      setBatchesLoading(true);
-      const res = await admissionSetupApi.getBatchesByTerm(termId);
-      if (res.status) {
-        setBatches(res.data);
-      }
-    } catch {
-      // Silently handle — batches may not exist yet
-      setBatches([]);
-    } finally {
+  const loadBatches = (termId) => {
+    setBatchesLoading(true);
+    setTimeout(() => {
+      setBatches(DUMMY_BATCHES[termId] ?? []);
       setBatchesLoading(false);
-    }
+    }, 200);
   };
 
   // ── Session change ────────────────────────────────────────────────────────
   const handleSessionChange = (e) => {
-    const id = e.target.value;
+    const id = Number(e.target.value);
     setSelectedSessionId(id);
     setSelectedTermId(null);
     setSelectedTermLabel('');
@@ -265,31 +362,31 @@ const AdmissionSetup = () => {
   };
 
   // ── Batch toggle status ───────────────────────────────────────────────────
-  const handleToggleBatchStatus = async () => {
+  const handleToggleBatchStatus = () => {
     const batch = confirmToggleBatch.batch;
     setConfirmToggleBatch({ open: false, batch: null });
     if (!batch) return;
-    try {
-      setBatchesLoading(true);
-      const res = await admissionSetupApi.toggleBatchStatus(batch.id);
-      if (res.status) {
-        showSnackbar(`Batch ${batch.status === 'open' ? 'closed' : 'opened'} successfully`);
-        loadBatches(selectedTermId);
-      } else {
-        showSnackbar(res.message || 'Failed to update batch status', 'error');
-      }
-    } catch {
-      showSnackbar('Failed to update batch status', 'error');
-    } finally {
-      setBatchesLoading(false);
-    }
+    setBatches((prev) =>
+      prev.map((b) =>
+        b.id === batch.id ? { ...b, status: b.status === 'open' ? 'close' : 'open' } : b,
+      ),
+    );
+    showSnackbar(`Batch ${batch.status === 'open' ? 'closed' : 'opened'} successfully`);
   };
 
-  // ── Batch created / updated callback ─────────────────────────────────────
-  const handleBatchSaved = () => {
-    setCreateBatchOpen(false);
-    setEditBatch(null);
-    if (selectedTermId) loadBatches(selectedTermId);
+  // ── Navigate to create / edit batch page ──────────────────────────────────
+  const handleCreateBatch = () => {
+    navigate('/admission-setup/create-batch', {
+      state: { termId: selectedTermId, termLabel: selectedTermLabel },
+    });
+  };
+
+  const handleEditBatch = (batch) => {
+    setBatchMenuAnchor(null);
+    setMenuBatch(null);
+    navigate(`/admission-setup/edit-batch/${batch.id}`, {
+      state: { batch, termId: selectedTermId, termLabel: selectedTermLabel },
+    });
   };
 
   return (
@@ -369,10 +466,7 @@ const AdmissionSetup = () => {
                                   )}
                                 </TableCell>
                                 <TableCell align="center">
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => handleMenuOpen(e, term)}
-                                  >
+                                  <IconButton size="small" onClick={(e) => handleMenuOpen(e, term)}>
                                     <MoreVertIcon fontSize="small" />
                                   </IconButton>
                                 </TableCell>
@@ -396,14 +490,28 @@ const AdmissionSetup = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">
                   Manage Admission Batches
-                  {selectedTermLabel ? ` For ${selectedTermLabel}` : ''}
+                  {selectedTermLabel && (
+                    <>
+                      {' '}
+                      For{' '}
+                      <Box
+                        component="span"
+                        sx={{
+                          color: 'primary.main',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {selectedTermLabel}
+                      </Box>
+                    </>
+                  )}
                 </Typography>
                 <Button
                   variant="contained"
                   size="small"
                   startIcon={<AddIcon />}
                   disabled={!selectedTermId}
-                  onClick={() => setCreateBatchOpen(true)}
+                  onClick={handleCreateBatch}
                   sx={{ fontWeight: 700, whiteSpace: 'nowrap', ml: 2 }}
                 >
                   Create New Admission
@@ -466,7 +574,7 @@ const AdmissionSetup = () => {
                                 label="Set E-Exam"
                                 size="small"
                                 sx={{
-                                  bgcolor: '#166534',
+                                  bgcolor: 'success.main',
                                   color: '#fff',
                                   fontWeight: 700,
                                   fontSize: 10,
@@ -488,18 +596,12 @@ const AdmissionSetup = () => {
 
                           {/* App Instruction */}
                           <TableCell align="center">
-                            <ViewEditPair
-                              onView={() => {}}
-                              onEdit={() => {}}
-                            />
+                            <ViewEditPair onView={() => {}} onEdit={() => {}} />
                           </TableCell>
 
                           {/* Admission Letter */}
                           <TableCell align="center">
-                            <ViewEditPair
-                              onView={() => {}}
-                              onEdit={() => {}}
-                            />
+                            <ViewEditPair onView={() => {}} onEdit={() => {}} />
                           </TableCell>
 
                           {/* Status */}
@@ -513,7 +615,8 @@ const AdmissionSetup = () => {
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setEditBatch(batch);
+                                setBatchMenuAnchor(e.currentTarget);
+                                setMenuBatch(batch);
                               }}
                             >
                               <MoreVertIcon fontSize="small" />
@@ -548,46 +651,28 @@ const AdmissionSetup = () => {
         </MenuItem>
       </Menu>
 
-      {/* ── Batch action menu (edit row) ── */}
-      {editBatch && (
-        <Menu
-          anchorEl={null}
-          open={Boolean(editBatch)}
-          onClose={() => setEditBatch(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      {/* ── Batch action menu ── */}
+      <Menu
+        anchorEl={batchMenuAnchor}
+        open={Boolean(batchMenuAnchor)}
+        onClose={() => { setBatchMenuAnchor(null); setMenuBatch(null); }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={() => handleEditBatch(menuBatch)}>
+          <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit Batch
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setConfirmToggleBatch({ open: true, batch: menuBatch });
+            setBatchMenuAnchor(null);
+            setMenuBatch(null);
+          }}
+          sx={{ color: menuBatch?.status === 'open' ? 'error.main' : 'success.main' }}
         >
-          <MenuItem
-            onClick={() => {
-              setCreateBatchOpen(true);
-            }}
-          >
-            <EditIcon fontSize="small" sx={{ mr: 1 }} /> Edit Batch
-          </MenuItem>
-          <MenuItem
-            onClick={() => {
-              setConfirmToggleBatch({ open: true, batch: editBatch });
-              setEditBatch(null);
-            }}
-            sx={{ color: editBatch?.status === 'open' ? 'error.main' : 'success.main' }}
-          >
-            {editBatch?.status === 'open' ? 'Close Batch' : 'Open Batch'}
-          </MenuItem>
-        </Menu>
-      )}
-
-      {/* ── Create / Edit Batch Modal ── */}
-      <CreateAdmissionBatchModal
-        open={createBatchOpen || Boolean(editBatch && createBatchOpen)}
-        onClose={() => {
-          setCreateBatchOpen(false);
-          setEditBatch(null);
-        }}
-        sessionTermId={selectedTermId}
-        sessionTermLabel={selectedTermLabel}
-        batch={editBatch}
-        onSaved={handleBatchSaved}
-      />
+          {menuBatch?.status === 'open' ? 'Close Batch' : 'Open Batch'}
+        </MenuItem>
+      </Menu>
 
       {/* ── Toggle batch status confirmation ── */}
       <Dialog
@@ -602,17 +687,12 @@ const AdmissionSetup = () => {
         <DialogContent>
           <Typography>
             Are you sure you want to{' '}
-            <strong>
-              {confirmToggleBatch.batch?.status === 'open' ? 'close' : 'open'}
-            </strong>{' '}
+            <strong>{confirmToggleBatch.batch?.status === 'open' ? 'close' : 'open'}</strong>{' '}
             <strong>{confirmToggleBatch.batch?.batch_name}</strong>?
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            size="small"
-            onClick={() => setConfirmToggleBatch({ open: false, batch: null })}
-          >
+          <Button size="small" onClick={() => setConfirmToggleBatch({ open: false, batch: null })}>
             Cancel
           </Button>
           <Button

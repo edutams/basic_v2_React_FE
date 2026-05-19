@@ -14,8 +14,6 @@ import {
   Grid,
 } from '@mui/material';
 import ReusableModal from 'src/components/shared/ReusableModal';
-import admissionSetupApi from 'src/api/admissionSetupApi';
-import { useNotification } from 'src/hooks/useNotification';
 
 const INITIAL_FORM = {
   batch_name: '',
@@ -36,7 +34,6 @@ const CreateAdmissionBatchModal = ({
   batch,       // if provided → edit mode
   onSaved,
 }) => {
-  const notify = useNotification();
   const isEdit = Boolean(batch);
 
   const [form, setForm] = useState(INITIAL_FORM);
@@ -65,8 +62,7 @@ const CreateAdmissionBatchModal = ({
   }, [open, batch, isEdit]);
 
   const handleChange = (field) => (e) => {
-    const value =
-      e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -85,38 +81,25 @@ const CreateAdmissionBatchModal = ({
     return '';
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const err = validate();
     if (err) { setError(err); return; }
     setError('');
 
     const payload = {
       ...form,
+      id: batch?.id ?? null,
       session_term_id: sessionTermId,
       application_fee: form.require_payment ? Number(form.application_fee) : 0,
       acceptance_fee: form.require_payment ? Number(form.acceptance_fee) : 0,
     };
 
-    try {
-      setLoading(true);
-      let res;
-      if (isEdit) {
-        res = await admissionSetupApi.updateBatch(batch.id, payload);
-      } else {
-        res = await admissionSetupApi.createBatch(payload);
-      }
-
-      if (res.status) {
-        notify.success(isEdit ? 'Batch updated successfully' : 'Batch created successfully');
-        onSaved?.();
-      } else {
-        setError(res.message || 'Failed to save batch.');
-      }
-    } catch (e) {
-      setError(e?.response?.data?.message || 'Failed to save batch.');
-    } finally {
+    // ── Dummy save (no API call yet) ──────────────────────────────────────
+    setLoading(true);
+    setTimeout(() => {
       setLoading(false);
-    }
+      onSaved?.(payload);
+    }, 300);
   };
 
   return (
@@ -191,11 +174,7 @@ const CreateAdmissionBatchModal = ({
                     color="success"
                   />
                 }
-                label={
-                  <Typography variant="body2">
-                    Entrance Exam Required
-                  </Typography>
-                }
+                label={<Typography variant="body2">Entrance Exam Required</Typography>}
               />
             </Box>
           </Grid>
@@ -231,9 +210,7 @@ const CreateAdmissionBatchModal = ({
                   onChange={handleChange('application_fee')}
                   slotProps={{
                     input: {
-                      startAdornment: (
-                        <InputAdornment position="start">₦</InputAdornment>
-                      ),
+                      startAdornment: <InputAdornment position="start">₦</InputAdornment>,
                     },
                   }}
                   inputProps={{ min: 0 }}
@@ -249,9 +226,7 @@ const CreateAdmissionBatchModal = ({
                   onChange={handleChange('acceptance_fee')}
                   slotProps={{
                     input: {
-                      startAdornment: (
-                        <InputAdornment position="start">₦</InputAdornment>
-                      ),
+                      startAdornment: <InputAdornment position="start">₦</InputAdornment>,
                     },
                   }}
                   inputProps={{ min: 0 }}

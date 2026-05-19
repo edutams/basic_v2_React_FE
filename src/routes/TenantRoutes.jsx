@@ -50,7 +50,7 @@ const LearnerManagement = Loadable(
   lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
 );
 const NewApplication = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
-const AdmissionStatus = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionStatus')));
+const MyApplication = Loadable(lazy(() => import('../views/parent-dashboard/MyApplication')));
 const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
 const ApplicationTracker = Loadable(
   lazy(() => import('../views/parent-dashboard/ApplicationTracker')),
@@ -183,15 +183,15 @@ const TenantRoutes = [
 
       // ── Parent-specific routes ──
       { path: 'admission/new-application', element: <NewApplication /> },
-      { path: 'admission-status', element: <AdmissionStatus /> },
-      { path: 'admission-status/:id', element: <AdmissionStatus /> },
+      { path: 'admission/my_applications', element: <MyApplication /> },
+      { path: 'admission/my_applications/:id', element: <MyApplication /> },
       { path: 'admission-letter', element: <AdmissionLetter /> },
       { path: 'admission-letter/:id', element: <AdmissionLetter /> },
       { path: 'application-tracker', element: <ApplicationTracker /> },
       { path: 'application-tracker/:id', element: <ApplicationTracker /> },
 
       // Admission Application
-      { path: 'application-setup', element: <NewApplication /> },
+      // { path: 'application-setup', element: <NewApplication /> },
     ],
   },
 ];

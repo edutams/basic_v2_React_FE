@@ -55,6 +55,7 @@ const AdmissionLetter = Loadable(lazy(() => import('../views/admission/Admission
 const ApplicationTracker = Loadable(
   lazy(() => import('../views/admission/ApplicationTracker')),
 );
+const AdmissionSetup = Loadable(lazy(() => import('../views/admission/AdmissionSetup')));
 
 const TenantRoutes = [
   {
@@ -161,12 +162,7 @@ const TenantRoutes = [
 
       {
         path: 'admission-setup',
-        element: (
-          <PageUnderDevelopment
-            title="Admission Setup Under Development"
-            subtitle="The Admission Setup module is currently under development. Check back soon!"
-          />
-        ),
+        element: <AdmissionSetup />,
       },
       {
         path: 'process-applications',

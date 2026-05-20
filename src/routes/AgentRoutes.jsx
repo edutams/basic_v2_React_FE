@@ -41,9 +41,11 @@ const MyCommissionByTransaction = Loadable(
 const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
 const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
 const AgentCurriculumManager = Loadable(
-  lazy(() => import('../views/curriculum-manager/AgentCurriculumManager')),
+  lazy(() => import('../tenant/pages/curriculum-manager/AgentCurriculumManager')),
 );
-const AgentSchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/AgentSchemeOfWork')));
+const AgentSchemeOfWork = Loadable(
+  lazy(() => import('../tenant/pages/scheme-of-work/AgentSchemeOfWork')),
+);
 
 const FrontendPages = Loadable(lazy(() => import('../views/FrontendPages')));
 
@@ -53,11 +55,15 @@ const AccountSetting = Loadable(
 );
 
 // Authentication
-const Login = Loadable(lazy(() => import('../views/authentication/auth1/Login')));
-const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
-const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/ResetPassword')));
-const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
-const Error = Loadable(lazy(() => import('../views/authentication/Error')));
+const Login = Loadable(lazy(() => import('../tenant/pages/authentication/auth1/Login')));
+const ForgotPassword = Loadable(
+  lazy(() => import('../tenant/pages/authentication/auth1/ForgotPassword')),
+);
+const ResetPassword = Loadable(
+  lazy(() => import('../tenant/pages/authentication/auth1/ResetPassword')),
+);
+const VerifyOtp = Loadable(lazy(() => import('../tenant/pages/authentication/auth1/VerifyOtp')));
+const Error = Loadable(lazy(() => import('../tenant/pages/authentication/Error')));
 
 const Analytics_ = Loadable(lazy(() => import('../views/analytics_/index')));
 

@@ -1,54 +1,56 @@
 import React, { lazy } from 'react';
-import { Navigate } from 'react-router-dom';
-import Loadable from '../layouts/full/shared/loadable/Loadable';
-import TenantProtectedRoute from '../components/auth/TenantProtectedRoute';
-import ParentProtectedRoute from '../components/auth/ParentProtectedRoute';
-import PermissionGate from '../components/auth/PermissionGate';
-import SetupRedirectHandler from '../context/TenantContext/SetupRedirectHandler';
+import Loadable from '@/layouts/full/shared/loadable/Loadable';
+import TenantProtectedRoute from '@/components/auth/TenantProtectedRoute';
+import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
 
-const SchoolLayout = Loadable(lazy(() => import('../layouts/school/SchoolLayout')));
-const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
+const SchoolLayout = Loadable(lazy(() => import('@/layouts/school/SchoolLayout')));
+const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
 
 const SchoolDashboardMain = Loadable(
-  lazy(() => import('../views/school-dashboard/SchoolDashboard')),
+  lazy(() => import('@/tenant/pages/school-dashboard/SchoolDashboard')),
 );
-const SetupWelcome = Loadable(lazy(() => import('../views/school-setup/SetupWelcome')));
-const InitialSetup = Loadable(lazy(() => import('../views/school-setup/InitialSetup')));
-const CompleteSetup = Loadable(lazy(() => import('../views/school-setup/CompleteSetup')));
-const SessionWeekManager = Loadable(lazy(() => import('../views/school/SessionWeekManager')));
-const SchemeOfWork = Loadable(lazy(() => import('../views/scheme-of-work/SchemeOfWork')));
+const SetupWelcome = Loadable(lazy(() => import('@/tenant/pages/school-setup/SetupWelcome')));
+const InitialSetup = Loadable(lazy(() => import('@/tenant/pages/school-setup/InitialSetup')));
+const CompleteSetup = Loadable(lazy(() => import('@/tenant/pages/school-setup/CompleteSetup')));
+const SessionWeekManager = Loadable(lazy(() => import('@/tenant/pages/school/SessionWeekManager')));
+const SchemeOfWork = Loadable(lazy(() => import('@/tenant/pages/scheme-of-work/SchemeOfWork')));
 const CurriculumManager = Loadable(
-  lazy(() => import('../views/curriculum-manager/CurriculumManager')),
+  lazy(() => import('@/tenant/pages/curriculum-manager/CurriculumManager')),
 );
 const ClassStructureManager = Loadable(
-  lazy(() => import('../components/school/components/ClassStructureManager')),
+  lazy(() => import('@/tenant/components/ClassStructureManager')),
 );
-const SubscriptionIndex = Loadable(lazy(() => import('../views/subcriptions/SubscriptionIndex')));
-const TenantLogin = Loadable(lazy(() => import('../views/authentication/auth1/TenantLogin')));
-const ForgotPassword = Loadable(lazy(() => import('../views/authentication/auth1/ForgotPassword')));
-const VerifyOtp = Loadable(lazy(() => import('../views/authentication/auth1/VerifyOtp')));
-const ResetPassword = Loadable(lazy(() => import('../views/authentication/auth1/ResetPassword')));
-const AdmissionApply = Loadable(lazy(() => import('../views/authentication/auth1/AdmissionApply')));
-const ImpersonateLogin = Loadable(lazy(() => import('../views/authentication/ImpersonateLogin')));
-const Error = Loadable(lazy(() => import('../views/authentication/Error')));
-const SchoolNotFound = Loadable(lazy(() => import('../views/authentication/SchoolNotFound')));
-const AlcManager = Loadable(
-  lazy(() => import('../views/tenants-views/alc-manager/SchoolAlcManager')),
+const SubscriptionIndex = Loadable(
+  lazy(() => import('@/tenant/pages/subcriptions/SubscriptionIndex')),
 );
-const ActivityLog = Loadable(lazy(() => import('../views/tenants-views/activity-log/ActivityLog')));
+const TenantLogin = Loadable(lazy(() => import('@/tenant/pages/authentication/auth1/TenantLogin')));
+const ForgotPassword = Loadable(
+  lazy(() => import('@/tenant/pages/authentication/auth1/ForgotPassword')),
+);
+const VerifyOtp = Loadable(lazy(() => import('@/tenant/pages/authentication/auth1/VerifyOtp')));
+const ResetPassword = Loadable(
+  lazy(() => import('@/tenant/pages/authentication/auth1/ResetPassword')),
+);
+const AdmissionApply = Loadable(
+  lazy(() => import('@/tenant/pages/authentication/auth1/AdmissionApply')),
+);
+const ImpersonateLogin = Loadable(
+  lazy(() => import('@/tenant/pages/authentication/ImpersonateLogin')),
+);
+const Error = Loadable(lazy(() => import('@/tenant/pages/authentication/Error')));
+const SchoolNotFound = Loadable(lazy(() => import('@/tenant/pages/authentication/SchoolNotFound')));
+const AlcManager = Loadable(lazy(() => import('@/tenant/pages/alc-manager/SchoolAlcManager')));
+const ActivityLog = Loadable(lazy(() => import('@/tenant/pages/activity-log/ActivityLog')));
 
-const CalendarPage = Loadable(lazy(() => import('../views/school-setup/CalendarPage')));
-const AccountSetting = Loadable(lazy(() => import('../views/pages/tenant-pages/AccountSetting')));
+const CalendarPage = Loadable(lazy(() => import('@/tenant/pages/school-setup/CalendarPage')));
+const AccountSetting = Loadable(lazy(() => import('@/views/pages/tenant-pages/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
 const PageUnderDevelopment = Loadable(
-  lazy(() => import('../components/shared/PageUnderDevelopment')),
+  lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
-const ParentManagement = Loadable(
-  lazy(() => import('../views/tenants-views/parents/ParentManagement')),
-);
-const LearnerManagement = Loadable(
-  lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
-);
+const ParentManagement = Loadable(lazy(() => import('@/tenant/pages/parents/ParentManagement')));
+const LearnerManagement = Loadable(lazy(() => import('@/tenant/pages/learners/LearnerManagement')));
+
 const NewApplication = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
 const MyApplication = Loadable(lazy(() => import('../views/parent-dashboard/MyApplication')));
 const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));

@@ -1,6 +1,6 @@
 import * as React from 'react';
-import PageContainer from 'src/components/container/PageContainer';
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 
 import { Grid } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
@@ -10,12 +10,12 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 
 // components
-import AccountTab from '../../../components/pages/tenant/account-setting/AccountTab';
+import AccountTab from '@/components/pages/tenant/account-setting/AccountTab';
 import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons';
-import BlankCard from '../../../components/shared/BlankCard';
-import NotificationTab from '../../../components/pages/tenant/account-setting/NotificationTab';
-import BillsTab from '../../../components/pages/tenant/account-setting/BillsTab';
-import SecurityTab from '../../../components/pages/tenant/account-setting/SecurityTab';
+import BlankCard from '@/components/shared/BlankCard';
+import NotificationTab from '@/components/pages/tenant/account-setting/NotificationTab';
+import BillsTab from '@/components/pages/tenant/account-setting/BillsTab';
+import SecurityTab from '@/components/pages/tenant/account-setting/SecurityTab';
 
 const BCrumb = [
   {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Box,
   Grid,
@@ -70,15 +70,26 @@ const applyPreviewSamples = (html) => {
 const AdmissionLetterEditor = ({ onChange }) => {
   const [selectedTemplate, setSelectedTemplate] = useState(LETTER_TEMPLATES[0]);
   const [letterContent,    setLetterContent]    = useState('');
+  const editorRef = useRef(null); // holds the tiptap editor instance
 
   const handleTemplateChange = (tpl) => {
     setSelectedTemplate(tpl);
   };
 
   const handleEditorUpdate = ({ editor }) => {
+    editorRef.current = editor;
     const html = editor.getHTML();
     setLetterContent(html);
     onChange?.(html);
+  };
+
+  const handleInsertPlaceholder = (value) => {
+    if (editorRef.current) {
+      editorRef.current.chain().focus().insertContent(value).run();
+    } else {
+      // fallback: copy to clipboard
+      navigator.clipboard?.writeText(value);
+    }
   };
 
   const initialContent = selectedTemplate
@@ -114,12 +125,12 @@ const AdmissionLetterEditor = ({ onChange }) => {
 
           <Stack spacing={0.75}>
             {PLACEHOLDER_FIELDS.map((field) => (
-              <Tooltip key={field.value} title={`Click to copy: ${field.value}`} placement="right">
+              <Tooltip key={field.value} title={`Insert: ${field.value}`} placement="right">
                 <Button
                   variant="outlined"
                   size="small"
                   fullWidth
-                  onClick={() => navigator.clipboard?.writeText(field.value)}
+                  onClick={() => handleInsertPlaceholder(field.value)}
                   sx={{
                     justifyContent: 'flex-start',
                     textTransform: 'none',
@@ -283,7 +294,7 @@ const AdmissionLetterEditor = ({ onChange }) => {
                 whiteSpace: 'nowrap',
               }}
             >
-              Save &amp; Preview
+              Save
             </Button>
           </Stack>
         </Grid>

@@ -17,12 +17,12 @@ import ParentCard from 'src/components/shared/ParentCard';
 
 const PLACEHOLDER_FIELDS = [
   { label: "Student's First Name", value: "[Student's First Name]" },
-  { label: "Student's Last Name",  value: "[Student's Last Name]" },
-  { label: 'Class Name',           value: '[Class Name]' },
-  { label: 'Entrance Score',       value: '[Entrance Score]' },
-  { label: "Parent's Name",        value: "[Parent's Name]" },
-  { label: 'School Division',      value: '[School Division]' },
-  { label: 'Admission Session',    value: '[Admission Session]' },
+  { label: "Student's Last Name", value: "[Student's Last Name]" },
+  { label: 'Class Name', value: '[Class Name]' },
+  { label: 'Entrance Score', value: '[Entrance Score]' },
+  { label: "Parent's Name", value: "[Parent's Name]" },
+  { label: 'School Division', value: '[School Division]' },
+  { label: 'Admission Session', value: '[Admission Session]' },
 ];
 
 export const LETTER_TEMPLATES = [
@@ -42,12 +42,12 @@ export const LETTER_TEMPLATES = [
 
 const PREVIEW_SAMPLES = {
   "[Student's First Name]": 'John',
-  "[Student's Last Name]":  'Doe',
-  '[Class Name]':           'Junior Secondary',
-  '[Entrance Score]':       '85',
-  "[Parent's Name]":        'Mr. & Mrs. Doe',
-  '[School Division]':      'Brightwood School',
-  '[Admission Session]':    '2025/2026 Session',
+  "[Student's Last Name]": 'Doe',
+  '[Class Name]': 'Junior Secondary',
+  '[Entrance Score]': '85',
+  "[Parent's Name]": 'Mr. & Mrs. Doe',
+  '[School Division]': 'Brightwood School',
+  '[Admission Session]': '2025/2026 Session',
 };
 
 const applyPreviewSamples = (html) => {
@@ -59,17 +59,14 @@ const applyPreviewSamples = (html) => {
       `\\[${inner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]|${inner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
       'gi',
     );
-    result = result.replace(
-      pattern,
-      `<strong style="color:#1976d2">${value}</strong>`,
-    );
+    result = result.replace(pattern, `<strong style="color:#1976d2">${value}</strong>`);
   });
   return result;
 };
 
 const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
   const [selectedTemplate, setSelectedTemplate] = useState(LETTER_TEMPLATES[0]);
-  const [letterContent,    setLetterContent]    = useState('');
+  const [letterContent, setLetterContent] = useState('');
   const editorRef = useRef(null); // holds the tiptap editor instance
 
   const handleTemplateChange = (tpl) => {
@@ -118,13 +115,23 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 3 }}>
-          <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+          <Typography
+            variant="caption"
+            fontWeight={700}
+            color="text.secondary"
+            display="block"
+            mb={1}
+          >
             Placeholder Fields
           </Typography>
 
           <Stack spacing={0.75}>
             {PLACEHOLDER_FIELDS.map((field) => (
-              <Tooltip key={field.value} title={readOnly ? field.value : `Insert: ${field.value}`} placement="right">
+              <Tooltip
+                key={field.value}
+                title={readOnly ? field.value : `Insert: ${field.value}`}
+                placement="right"
+              >
                 <span>
                   <Button
                     variant="outlined"
@@ -152,7 +159,13 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
 
           <Divider sx={{ my: 2 }} />
 
-          <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
+          <Typography
+            variant="caption"
+            fontWeight={700}
+            color="text.secondary"
+            display="block"
+            mb={1}
+          >
             Template Options
           </Typography>
           <Stack direction="row" spacing={1}>
@@ -236,15 +249,20 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
             ))}
           </TextField>
 
-          {/* Tiptap editor */}
           <Box
             sx={{
               border: '1px solid',
               borderColor: 'divider',
               borderRadius: 1,
               minHeight: 220,
+              maxHeight: 400,
+              overflowY: 'auto',
               bgcolor: readOnly ? 'grey.50' : 'background.paper',
-              '& .ProseMirror': { minHeight: 180, p: 1.5, outline: 'none' },
+              '& .ProseMirror': {
+                minHeight: 180,
+                p: 1.5,
+                outline: 'none',
+              },
             }}
           >
             <TiptapEdit
@@ -308,7 +326,13 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="caption" fontWeight={700} color="primary.main" display="block" mb={1}>
+          <Typography
+            variant="caption"
+            fontWeight={700}
+            color="primary.main"
+            display="block"
+            mb={1}
+          >
             Live Preview
           </Typography>
           <Paper
@@ -328,9 +352,9 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
                   fontSize: 12,
                   lineHeight: 1.7,
                   color: 'text.primary',
-                  '& p':        { mt: 0, mb: 0.75 },
-                  '& strong':   { fontWeight: 700 },
-                  '& em':       { fontStyle: 'italic' },
+                  '& p': { mt: 0, mb: 0.75 },
+                  '& strong': { fontWeight: 700 },
+                  '& em': { fontStyle: 'italic' },
                   '& ul, & ol': { pl: 2.5, mb: 0.75 },
                 }}
                 dangerouslySetInnerHTML={{ __html: applyPreviewSamples(letterContent) }}

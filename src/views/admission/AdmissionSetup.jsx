@@ -26,12 +26,12 @@ import {
   CircularProgress,
   Stack,
   Tooltip,
-} from '@mui/material';
-import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
-import { IconEye, IconPencil } from '@tabler/icons-react';
+} from '@mui/material';import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';import { IconEye, IconPencil } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
+import AdmissionLetterEditor from 'src/components/tenant-components/admission/setup/AdmissionLetterEditor';
+import ReusableModal from 'src/components/shared/ReusableModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
 
@@ -225,7 +225,7 @@ const ViewEditPair = ({ onView, onEdit }) => (
           p: 0.5,
         }}
       >
-        <IconEye size={14} color="#1976d2" />
+        <IconEye size={14} sx={{ color: 'primary.main' }} />
       </IconButton>
     </Tooltip>
     <Tooltip title="Edit">
@@ -266,6 +266,10 @@ const AdmissionSetup = () => {
   const [menuBatch, setMenuBatch] = useState(null);
 
   const [confirmToggleBatch, setConfirmToggleBatch] = useState({ open: false, batch: null });
+
+  // ── Admission Letter Editor dialog ────────────────────────────────────────
+  const [letterEditorOpen, setLetterEditorOpen] = useState(false);
+  const [letterEditorBatch, setLetterEditorBatch] = useState(null);
 
   useEffect(() => {
     loadSessions();
@@ -578,7 +582,10 @@ const AdmissionSetup = () => {
 
                           {/* Admission Letter */}
                           <TableCell align="center">
-                            <ViewEditPair onView={() => {}} onEdit={() => {}} />
+                            <ViewEditPair
+                              onView={() => { setLetterEditorBatch(batch); setLetterEditorOpen(true); }}
+                              onEdit={() => { setLetterEditorBatch(batch); setLetterEditorOpen(true); }}
+                            />
                           </TableCell>
 
                           {/* Status */}
@@ -687,6 +694,37 @@ const AdmissionSetup = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ReusableModal
+        open={letterEditorOpen}
+        onClose={() => setLetterEditorOpen(false)}
+        title={`Admission Letter — ${letterEditorBatch?.batch_name ?? ''}`}
+        subtitle={selectedTermLabel}
+        size="extraLarge"
+        showDivider
+      >
+        <AdmissionLetterEditor
+          key={letterEditorBatch?.id}
+          onChange={(html) => {
+            // console.log('Letter content for batch', letterEditorBatch?.id, html);
+          }}
+        />
+        <Box display="flex" justifyContent="flex-end" gap={1.5} mt={2}>
+          <Button onClick={() => setLetterEditorOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              showSnackbar('Admission letter saved successfully');
+              setLetterEditorOpen(false);
+            }}
+            sx={{ fontWeight: 700 }}
+          >
+            Save Letter
+          </Button>
+        </Box>
+      </ReusableModal>
 
       <Snackbar
         open={snackbar.open}

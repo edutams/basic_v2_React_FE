@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import PageContainer from '../../components/container/PageContainer';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
-import ParentDashboard from '../parent-dashboard/ParentDashboard';
+import ParentDashboard from '../admission/ParentDashboard';
 import PageUnderDevelopment from '../../components/shared/PageUnderDevelopment';
 
 export default function SchoolDashboard() {

@@ -28,7 +28,6 @@ import AdmissionBatchModal from 'src/components/tenant-components/admission/Admi
 
 import ApplicationCard from 'src/components/tenant-components/admission/status/ApplicationCard';
 
-// ── Mock data (multiple wards) ────────────────────────────────────────────────
 const MOCK_APPLICATIONS = [
   {
     id: 3,
@@ -110,7 +109,6 @@ const MOCK_APPLICATIONS = [
     ],
   },
 ];
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 const MyApplication = () => {
   const navigate = useNavigate();
@@ -121,8 +119,6 @@ const MyApplication = () => {
     navigate('/admission/new-application', { state: { batch } });
   };
 
-  // If navigated with a single ward/application, show just that one (expanded)
-  // Otherwise show all mock applications
   const single = location.state?.application ?? location.state?.ward ?? null;
 
   const applications = single
@@ -149,7 +145,6 @@ const MyApplication = () => {
 
   return (
     <PageContainer title="Admission Status" description="Application status">
-      {/* Page header */}
       <Box
         display="flex"
         justifyContent="space-between"

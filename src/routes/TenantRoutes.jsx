@@ -49,12 +49,14 @@ const ParentManagement = Loadable(
 const LearnerManagement = Loadable(
   lazy(() => import('../views/tenants-views/learners/LearnerManagement')),
 );
-const NewApplication = Loadable(lazy(() => import('../views/parent-dashboard/NewApplication')));
-const MyApplication = Loadable(lazy(() => import('../views/parent-dashboard/MyApplication')));
-const AdmissionLetter = Loadable(lazy(() => import('../views/parent-dashboard/AdmissionLetter')));
+const NewApplication = Loadable(lazy(() => import('../views/admission/NewApplication')));
+const MyApplication = Loadable(lazy(() => import('../views/admission/MyApplication')));
+const AdmissionLetter = Loadable(lazy(() => import('../views/admission/AdmissionLetter')));
 const ApplicationTracker = Loadable(
-  lazy(() => import('../views/parent-dashboard/ApplicationTracker')),
+  lazy(() => import('../views/admission/ApplicationTracker')),
 );
+const AdmissionSetup = Loadable(lazy(() => import('../views/admission/AdmissionSetup')));
+const CreateAdmissionBatch = Loadable(lazy(() => import('../views/admission/CreateAdmissionBatch')));
 
 const TenantRoutes = [
   {
@@ -161,12 +163,15 @@ const TenantRoutes = [
 
       {
         path: 'admission-setup',
-        element: (
-          <PageUnderDevelopment
-            title="Admission Setup Under Development"
-            subtitle="The Admission Setup module is currently under development. Check back soon!"
-          />
-        ),
+        element: <AdmissionSetup />,
+      },
+      {
+        path: 'admission-setup/create-batch',
+        element: <CreateAdmissionBatch />,
+      },
+      {
+        path: 'admission-setup/edit-batch/:id',
+        element: <CreateAdmissionBatch />,
       },
       {
         path: 'process-applications',

@@ -6,7 +6,7 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 
 const Breadcrumb = ({ subtitle, items, title, children }) => (
   <Box
-    mb={3}
+    mb={2}
     display="flex"
     flexDirection={{ xs: 'column', md: 'row' }}
     alignItems={{ xs: 'flex-start', md: 'center' }}
@@ -21,6 +21,18 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
         flex: 1,
       }}
     >
+      <Typography
+        fontWeight="700"
+        variant="h5"
+        sx={{
+          fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.5rem' },
+          lineHeight: 1.2,
+          textAlign: 'left',
+          wordBreak: 'break-word',
+        }}
+      >
+        {title}
+      </Typography>
       {subtitle && (
         <Typography
           color="textSecondary"
@@ -35,18 +47,7 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
           {subtitle}
         </Typography>
       )}
-      <Typography
-        fontWeight="700"
-        variant="h5"
-        sx={{
-          fontSize: { xs: '0.95rem', sm: '1.1rem', md: '1.5rem' },
-          lineHeight: 1.2,
-          textAlign: 'left',
-          wordBreak: 'break-word',
-        }}
-      >
-        {title}
-      </Typography>
+      
     </Box>
 
     <Box

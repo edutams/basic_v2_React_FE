@@ -9,8 +9,8 @@ import {
   School as SchoolIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import PageContainer from 'src/components/container/PageContainer';
-import { TenantAuthContext } from 'src/context/TenantContext/auth';
+import PageContainer from '@/components/container/PageContainer';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
 
 // ── Print / Download helper
 const toDataUrl = (url) =>
@@ -68,7 +68,7 @@ const printLetter = async () => {
 
   const wrapper = document.createElement('div');
   wrapper.id = 'admission-letter-root';
-  wrapper.style.display = 'none'; 
+  wrapper.style.display = 'none';
   wrapper.appendChild(el.cloneNode(true));
   document.body.appendChild(wrapper);
 
@@ -292,7 +292,7 @@ const AdmissionLetter = () => {
   const schoolLogo = tenantInfo?.logo_url ?? tenantInfo?.logo ?? null;
 
   const handlePrint = () => printLetter();
-  const handleDownload = () => printLetter(); 
+  const handleDownload = () => printLetter();
 
   return (
     <PageContainer title="Admission Letter" description="View admission letter">

@@ -1,4 +1,3 @@
-import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import {
   Box,
@@ -23,12 +22,11 @@ import {
 } from '@mui/icons-material';
 import { IconClipboardCheck, IconSearch, IconTrophy, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import PageContainer from 'src/components/container/PageContainer';
-import AdmissionBatchModal from 'src/components/tenant-components/admission/AdmissionBatchModal';
+import PageContainer from '@/components/container/PageContainer';
+import AdmissionBatchModal from '@/components/tenant-components/admission/AdmissionBatchModal';
 
-import ApplicationCard from 'src/components/tenant-components/admission/status/ApplicationCard';
+import ApplicationCard from '@/components/tenant-components/admission/status/ApplicationCard';
 
-// ── Mock data (multiple wards) ────────────────────────────────────────────────
 const MOCK_APPLICATIONS = [
   {
     id: 3,
@@ -110,7 +108,6 @@ const MOCK_APPLICATIONS = [
     ],
   },
 ];
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 const MyApplication = () => {
   const navigate = useNavigate();
@@ -121,8 +118,6 @@ const MyApplication = () => {
     navigate('/admission/new-application', { state: { batch } });
   };
 
-  // If navigated with a single ward/application, show just that one (expanded)
-  // Otherwise show all mock applications
   const single = location.state?.application ?? location.state?.ward ?? null;
 
   const applications = single
@@ -149,7 +144,6 @@ const MyApplication = () => {
 
   return (
     <PageContainer title="Admission Status" description="Application status">
-      {/* Page header */}
       <Box
         display="flex"
         justifyContent="space-between"

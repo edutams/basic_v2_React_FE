@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '@mui/material/styles';
-import {
-  Box,
-  Grid,
-  Typography,
-  Paper,
-  Button,
-  Chip,
-  Stack,
-  Divider,
-} from '@mui/material';
+import { Box, Grid, Typography, Paper, Button, Chip, Stack, Divider } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Groups as GroupsIcon,
@@ -20,34 +11,29 @@ import {
   Send as SendIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import PageContainer from 'src/components/container/PageContainer';
-import WardDetailForm from 'src/components/tenant-components/admission/WardDetailForm';
-import AcademicInfoForm from 'src/components/tenant-components/admission/AcademicInfoForm';
-import AdmissionBatchModal from 'src/components/tenant-components/admission/AdmissionBatchModal';
-import PaymentStep from 'src/components/tenant-components/admission/PaymentStep';
-import DocumentsStep from 'src/components/tenant-components/admission/DocumentsStep';
-import SubmitStep from 'src/components/tenant-components/admission/SubmitStep';
+import PageContainer from '@/components/container/PageContainer';
+import WardDetailForm from '@/components/tenant-components/admission/WardDetailForm';
+import AcademicInfoForm from '@/components/tenant-components/admission/AcademicInfoForm';
+import AdmissionBatchModal from '@/components/tenant-components/admission/AdmissionBatchModal';
+import PaymentStep from '@/components/tenant-components/admission/PaymentStep';
+import DocumentsStep from '@/components/tenant-components/admission/DocumentsStep';
+import SubmitStep from '@/components/tenant-components/admission/SubmitStep';
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 const STEPS = [
-  { label: 'Ward Detail',   icon: GroupsIcon,     isTabler: false },
-  { label: 'Academic info', icon: SchoolIcon,     isTabler: false  },
-  { label: 'Payment',       icon: CreditCardIcon, isTabler: false  },
-  { label: 'Documents',     icon: DescriptionIcon,   isTabler: false  },
-  { label: 'Submit',        icon: SendIcon,       isTabler: false  },
+  { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
+  { label: 'Academic info', icon: SchoolIcon, isTabler: false },
+  { label: 'Payment', icon: CreditCardIcon, isTabler: false },
+  { label: 'Documents', icon: DescriptionIcon, isTabler: false },
+  { label: 'Submit', icon: SendIcon, isTabler: false },
 ];
-
 
 // ── Stepper ───────────────────────────────────────────────────────────────────
 const StepperBar = ({ activeStep }) => {
-  const theme = useTheme(); 
+  const theme = useTheme();
 
   const getIconColor = (active, done) =>
-    active
-      ? '#fff'
-      : done
-      ? theme.palette.primary.main
-      : theme.palette.grey[500];
+    active ? '#fff' : done ? theme.palette.primary.main : theme.palette.grey[500];
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, overflowX: 'auto', pb: 1 }}>
@@ -147,7 +133,7 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
 
     {[
       { label: 'Pre-Application Payment', value: batch?.pre_application_fee ?? 5000 },
-      { label: 'Post-Admission Payment',  value: batch?.post_admission_fee  ?? 15000 },
+      { label: 'Post-Admission Payment', value: batch?.post_admission_fee ?? 15000 },
     ].map(({ label, value }) => (
       <Box
         key={label}
@@ -162,7 +148,9 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
           mb: 1.5,
         }}
       >
-        <Typography variant="body2" color="error.dark" fontWeight={500}>{label}</Typography>
+        <Typography variant="body2" color="error.dark" fontWeight={500}>
+          {label}
+        </Typography>
         <Typography variant="body2" color="error.dark" fontWeight={700}>
           ₦{value.toLocaleString()}
         </Typography>
@@ -193,10 +181,10 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
   </Paper>
 );
 
-// ── Main Page 
+// ── Main Page
 const NewApplication = () => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const batch = location.state?.batch ?? null;
   const existingWard = location.state?.ward ?? null;
@@ -208,45 +196,51 @@ const NewApplication = () => {
     ? (() => {
         const parts = (existingWard.name ?? '').trim().split(' ');
         return {
-          surname:         existingWard.surname         ?? parts[0] ?? '',
-          first_name:      existingWard.first_name      ?? parts[1] ?? '',
-          other_name:      existingWard.other_name      ?? parts.slice(2).join(' '),
-          dob:             existingWard.dob             ?? '',
-          gender:          existingWard.gender          ?? '',
+          surname: existingWard.surname ?? parts[0] ?? '',
+          first_name: existingWard.first_name ?? parts[1] ?? '',
+          other_name: existingWard.other_name ?? parts.slice(2).join(' '),
+          dob: existingWard.dob ?? '',
+          gender: existingWard.gender ?? '',
           state_of_origin: existingWard.state_of_origin ?? '',
-          lga:             existingWard.lga             ?? '',
-          home_address:    existingWard.home_address    ?? '',
+          lga: existingWard.lga ?? '',
+          home_address: existingWard.home_address ?? '',
         };
       })()
     : null;
 
   const seedAcademicData = existingWard
     ? {
-        has_previous_school:   existingWard.has_previous_school   ?? false,
-        previous_school_name:  existingWard.previous_school_name  ?? '',
+        has_previous_school: existingWard.has_previous_school ?? false,
+        previous_school_name: existingWard.previous_school_name ?? '',
         previous_school_state: existingWard.previous_school_state ?? '',
-        previous_school_lga:   existingWard.previous_school_lga   ?? '',
-        previous_class:        existingWard.previous_class        ?? '',
-        programme_id:          existingWard.programme_id          ?? '',
-        class_id:              existingWard.class_id              ?? '',
-        boarding_status:       existingWard.boarding_status       ?? '',
+        previous_school_lga: existingWard.previous_school_lga ?? '',
+        previous_class: existingWard.previous_class ?? '',
+        programme_id: existingWard.programme_id ?? '',
+        class_id: existingWard.class_id ?? '',
+        boarding_status: existingWard.boarding_status ?? '',
       }
     : null;
 
   // Resume at the step where progress stopped.
   const initialStepFromWard = existingWard
-    ? existingWard.isDraft 
-      ? existingWard.draftStep ?? 0
-      : existingWard.step >= 1 ? 2 : existingWard.step >= 0 ? 1 : 0
+    ? existingWard.isDraft
+      ? (existingWard.draftStep ?? 0)
+      : existingWard.step >= 1
+        ? 2
+        : existingWard.step >= 0
+          ? 1
+          : 0
     : 0;
 
   const resumeStep = queryStep !== null ? parseInt(queryStep, 10) : initialStepFromWard;
 
-  const [activeStep, setActiveStep]     = useState(resumeStep);
-  const [wardData,   setWardData]       = useState(seedWardData);
-  const [academicData, setAcademicData] = useState((existingWard?.step >= 1 || existingWard?.draftStep >= 1) ? seedAcademicData : null);
+  const [activeStep, setActiveStep] = useState(resumeStep);
+  const [wardData, setWardData] = useState(seedWardData);
+  const [academicData, setAcademicData] = useState(
+    existingWard?.step >= 1 || existingWard?.draftStep >= 1 ? seedAcademicData : null,
+  );
   const [documentsData, setDocumentsData] = useState(null);
-  const [isLoading,  setIsLoading]      = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
   const [selectedBatch, setSelectedBatch] = useState(existingWard?.batch ?? batch);
@@ -305,17 +299,14 @@ const NewApplication = () => {
           />
         );
       case 2:
-        return (
-          <PaymentStep
-            onNext={handleNext}
-            onBack={handleBack}
-            isLoading={isLoading}
-          />
-        );
+        return <PaymentStep onNext={handleNext} onBack={handleBack} isLoading={isLoading} />;
       case 3:
         return (
           <DocumentsStep
-            onNext={(files) => { setDocumentsData(files); handleNext(); }}
+            onNext={(files) => {
+              setDocumentsData(files);
+              handleNext();
+            }}
             onBack={handleBack}
             isLoading={isLoading}
           />
@@ -336,84 +327,90 @@ const NewApplication = () => {
             isLoading={isLoading}
           />
         );
-      default: return null;
+      default:
+        return null;
     }
   };
 
   return (
     <PageContainer title="New Application" description="Apply for admission">
       <Box sx={activeStep === 4 ? { overflow: 'hidden', height: '100vh' } : {}}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: 'primary.main', borderRightWidth: 2 }}
+            />
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: 'primary.light',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <GroupsIcon sx={{ color: 'primary.main', fontSize: 22 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
+                Application Form
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Session: {selectedBatch?.session_term ?? '2025/26'}&nbsp;·&nbsp; ₦
+                {(selectedBatch?.pre_application_fee ?? 5000).toLocaleString()} Application Fee
+              </Typography>
+            </Box>
+          </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ borderColor: 'primary.main', borderRightWidth: 2 }}
-          />
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '50%',
-              bgcolor: 'primary.light',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/dashboard')}
+            sx={{ color: 'text.secondary', fontWeight: 500 }}
           >
-            <GroupsIcon sx={{ color: 'primary.main', fontSize: 22 }} />
-          </Box>
-          <Box>
-            <Typography variant="subtitle1" fontWeight={700} lineHeight={1.2}>
-              Application Form
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Session: {selectedBatch?.session_term ?? '2025/26'}&nbsp;·&nbsp;
-              ₦{(selectedBatch?.pre_application_fee ?? 5000).toLocaleString()} Application Fee
-            </Typography>
-          </Box>
+            Back to dashboard
+          </Button>
         </Box>
 
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/dashboard')}
-          sx={{ color: 'text.secondary', fontWeight: 500 }}
-        >
-          Back to dashboard
-        </Button>
-      </Box>
+        <StepperBar activeStep={activeStep} />
 
-      <StepperBar activeStep={activeStep} />
+        {/* ── Content + Sidebar ── */}
+        <Grid container spacing={3} alignItems="flex-start">
+          <Grid size={{ xs: 12, lg: activeStep === 4 || activeStep === 2 ? 12 : 8 }}>
+            <Paper
+              sx={{
+                borderRadius: 3,
+                p: { xs: 2.5, sm: 3.5 },
+                ...(activeStep === 4 && {
+                  height: 'calc(100vh - 260px)',
+                  overflowY: 'auto',
+                }),
+              }}
+            >
+              {renderStep()}
+            </Paper>
+          </Grid>
 
-      {/* ── Content + Sidebar ── */}
-      <Grid container spacing={3} alignItems="flex-start">
-        <Grid size={{ xs: 12, lg: activeStep === 4 || activeStep === 2 ? 12 : 8 }}>
-          <Paper
-            sx={{
-              borderRadius: 3,
-              p: { xs: 2.5, sm: 3.5 },
-              ...(activeStep === 4 && {
-                height: 'calc(100vh - 260px)',
-                overflowY: 'auto',
-              }),
-            }}
+          <Grid
+            size={{ xs: 12, lg: 4 }}
+            sx={{ display: activeStep === 4 || activeStep === 2 ? 'none' : 'block' }}
           >
-            {renderStep()}
-          </Paper>
+            <BatchSummaryCard
+              batch={selectedBatch}
+              onChangeBatch={() => setBatchModalOpen(true)}
+              activeStep={activeStep}
+            />
+          </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }} sx={{ display: activeStep === 4 || activeStep === 2 ? 'none' : 'block' }}>
-          <BatchSummaryCard batch={selectedBatch} onChangeBatch={() => setBatchModalOpen(true)} activeStep={activeStep} />
-        </Grid>
-      </Grid>
-
-      <AdmissionBatchModal
-        open={batchModalOpen}
-        onClose={() => setBatchModalOpen(false)}
-        onApply={(newBatch) => setSelectedBatch(newBatch)}
-      />
-
+        <AdmissionBatchModal
+          open={batchModalOpen}
+          onClose={() => setBatchModalOpen(false)}
+          onApply={(newBatch) => setSelectedBatch(newBatch)}
+        />
       </Box>
     </PageContainer>
   );

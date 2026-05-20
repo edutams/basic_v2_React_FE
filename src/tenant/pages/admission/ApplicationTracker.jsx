@@ -1,12 +1,12 @@
 import { Box, Grid, Typography, Button, Paper } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import PageContainer from 'src/components/container/PageContainer';
-import ward from 'src/assets/images/backgrounds/ward.png';
+import PageContainer from '@/components/container/PageContainer';
+import ward from '@/assets/images/backgrounds/ward.png';
 
-import TrackerHeader from 'src/components/tenant-components/admission/tracker/TrackerHeader';
-import TrackerMain from 'src/components/tenant-components/admission/tracker/TrackerMain';
-import TrackerSidebar from 'src/components/tenant-components/admission/tracker/TrackerSidebar';
+import TrackerHeader from '@/components/tenant-components/admission/tracker/TrackerHeader';
+import TrackerMain from '@/components/tenant-components/admission/tracker/TrackerMain';
+import TrackerSidebar from '@/components/tenant-components/admission/tracker/TrackerSidebar';
 
 const ApplicationTracker = () => {
   const navigate = useNavigate();
@@ -24,7 +24,6 @@ const ApplicationTracker = () => {
 
   return (
     <PageContainer title="Application Tracker" description="Track your admission application">
-
       {/* Page header */}
       <Box
         display="flex"
@@ -86,7 +85,6 @@ const ApplicationTracker = () => {
           </Grid>
         </Grid>
       </Paper>
-
     </PageContainer>
   );
 };

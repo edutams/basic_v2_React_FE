@@ -724,7 +724,7 @@ const AdmissionSetup = () => {
           key={`${letterEditorBatch?.id}-${letterEditorReadOnly}`}
           readOnly={letterEditorReadOnly}
           onChange={(html) => {
-            console.log('Letter content for batch', letterEditorBatch?.id, html);
+            // console.log('Letter content for batch', letterEditorBatch?.id, html);
           }}
         />
         <Box display="flex" justifyContent="flex-end" gap={1.5} mt={2}>

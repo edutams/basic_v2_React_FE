@@ -31,7 +31,7 @@ const CreateAdmissionBatchModal = ({
   onClose,
   sessionTermId,
   sessionTermLabel,
-  batch,       // if provided → edit mode
+  batch,       
   onSaved,
 }) => {
   const isEdit = Boolean(batch);
@@ -40,7 +40,6 @@ const CreateAdmissionBatchModal = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Populate form when editing
   useEffect(() => {
     if (open) {
       setError('');
@@ -94,7 +93,6 @@ const CreateAdmissionBatchModal = ({
       acceptance_fee: form.require_payment ? Number(form.acceptance_fee) : 0,
     };
 
-    // ── Dummy save (no API call yet) ──────────────────────────────────────
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -123,7 +121,6 @@ const CreateAdmissionBatchModal = ({
         )}
 
         <Grid container spacing={2}>
-          {/* Batch Name */}
           <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
@@ -136,7 +133,6 @@ const CreateAdmissionBatchModal = ({
             />
           </Grid>
 
-          {/* Status */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               select
@@ -268,7 +264,6 @@ const CreateAdmissionBatchModal = ({
           </Grid>
         </Grid>
 
-        {/* Actions */}
         <Box display="flex" justifyContent="flex-end" gap={1.5} mt={3}>
           <Button onClick={onClose} color="inherit" disabled={loading}>
             Cancel

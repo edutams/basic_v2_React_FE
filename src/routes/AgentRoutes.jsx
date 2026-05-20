@@ -1,71 +1,69 @@
 import React, { lazy, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import Loadable from '../layouts/full/shared/loadable/Loadable';
-import ProtectedRoute from '../components/auth/ProtectedRoute';
-import { useAuth } from '../hooks/useAuth';
+import Loadable from '@/layouts/full/shared/loadable/Loadable';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/hooks/useAuth';
 
 /* ***Layouts**** */
-const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
-const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
+const FullLayout = Loadable(lazy(() => import('@/layouts/full/FullLayout')));
+const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
 
 /* ****Pages***** */
-const AnalyticalDashboard = Loadable(lazy(() => import('../views/dashboard/Analytical')));
-const SchoolDashboard = Loadable(
-  lazy(() => import('../views/agent/components/SchoolsTab/SchoolsTab')),
-);
-const ECommerceDashboard = Loadable(lazy(() => import('../views/dashboard/Ecommerce')));
-const ModernDashboard = Loadable(lazy(() => import('../views/dashboard/Modern')));
-const PackageManager = Loadable(lazy(() => import('../views/dashboard/PackageManager')));
-const AlcManager = Loadable(lazy(() => import('../views/alc-manager/AlcManager')));
+const AnalyticalDashboard = Loadable(lazy(() => import('@/landlord/dashboard/Analytical')));
+const PackageManager = Loadable(lazy(() => import('@/landlord/dashboard/PackageManager')));
 
-const Agent = Loadable(lazy(() => import('../views/agent/Agent')));
-const ViewAgent = Loadable(lazy(() => import('../views/agent/ViewAgent')));
-const AgentDashboard = Loadable(lazy(() => import('../views/agent/AgentDashboard')));
-const Gateway = Loadable(lazy(() => import('../views/gateway/Gateway')));
-const CalendarManagement = Loadable(lazy(() => import('../views/calendar/CalendarManagement')));
-const ViewSchool = Loadable(lazy(() => import('../components/add-school/component/ViewSchool')));
-const AgentSubscriptionManagement = Loadable(
-  lazy(() => import('../views/agent/subscriptions/AgentSubscriptionIndex')),
+const SchoolDashboard = Loadable(
+  lazy(() => import('@/landlord/views/agent/components/SchoolsTab/SchoolsTab')),
 );
-const ActivityLog = Loadable(lazy(() => import('../views/activity-log/ActivityLog')));
+
+const AlcManager = Loadable(lazy(() => import('@/landlord/views/alc-manager/AlcManager')));
+
+const Agent = Loadable(lazy(() => import('@/landlord/views/agent/Agent')));
+const ViewAgent = Loadable(lazy(() => import('@/landlord/views/agent/ViewAgent')));
+const AgentDashboard = Loadable(lazy(() => import('@/landlord/views/agent/AgentDashboard')));
+const Gateway = Loadable(lazy(() => import('@/landlord/views/gateway/Gateway')));
+const CalendarManagement = Loadable(
+  lazy(() => import('@/landlord/views/calendar/CalendarManagement')),
+);
+const ViewSchool = Loadable(lazy(() => import('@/components/add-school/component/ViewSchool')));
+const AgentSubscriptionManagement = Loadable(
+  lazy(() => import('@/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
+);
+const ActivityLog = Loadable(lazy(() => import('@/landlord/views/activity-log/ActivityLog')));
 const CommissionManagement = Loadable(
-  lazy(() => import('../views/commission/CommissionManagement')),
+  lazy(() => import('@/landlord/views/commission/CommissionManagement')),
 );
 const MyCommissionBySubscription = Loadable(
-  lazy(() => import('../views/commission/MyCommissionBySubscription')),
+  lazy(() => import('@/landlord/views/commission/MyCommissionBySubscription')),
 );
 const MyCommissionByTransaction = Loadable(
-  lazy(() => import('../views/commission/MyCommissionByTransaction')),
+  lazy(() => import('@/landlord/views/commission/MyCommissionByTransaction')),
 );
 
-const SubjectAndTopics = Loadable(lazy(() => import('../views/phet/subjectandtopics')));
-const StimulationLinks = Loadable(lazy(() => import('../views/phet/stimulation-links')));
+const SubjectAndTopics = Loadable(lazy(() => import('@/landlord/views/phet/subjectandtopics')));
+const StimulationLinks = Loadable(lazy(() => import('@/landlord/views/phet/stimulation-links')));
 const AgentCurriculumManager = Loadable(
-  lazy(() => import('../tenant/pages/curriculum-manager/AgentCurriculumManager')),
+  lazy(() => import('@/landlord/views/curriculum-manager/AgentCurriculumManager')),
 );
 const AgentSchemeOfWork = Loadable(
-  lazy(() => import('../tenant/pages/scheme-of-work/AgentSchemeOfWork')),
+  lazy(() => import('@/landlord/views/scheme-of-work/AgentSchemeOfWork')),
 );
 
-const FrontendPages = Loadable(lazy(() => import('../views/FrontendPages')));
+const FrontendPages = Loadable(lazy(() => import('@/landlord/views/FrontendPages')));
 
 // Pages
 const AccountSetting = Loadable(
-  lazy(() => import('../views/pages/account-setting/AccountSetting')),
+  lazy(() => import('@/landlord/views/pages/account-setting/AccountSetting')),
 );
 
 // Authentication
-const Login = Loadable(lazy(() => import('../tenant/pages/authentication/auth1/Login')));
-const ForgotPassword = Loadable(
-  lazy(() => import('../tenant/pages/authentication/auth1/ForgotPassword')),
-);
-const ResetPassword = Loadable(
-  lazy(() => import('../tenant/pages/authentication/auth1/ResetPassword')),
-);
-const VerifyOtp = Loadable(lazy(() => import('../tenant/pages/authentication/auth1/VerifyOtp')));
-const Error = Loadable(lazy(() => import('../tenant/pages/authentication/Error')));
+const Login = Loadable(lazy(() => import('@/authentication/auth1/Login')));
+const ForgotPassword = Loadable(lazy(() => import('@/authentication/auth1/ForgotPassword')));
+const ResetPassword = Loadable(lazy(() => import('@/authentication/auth1/ResetPassword')));
+const VerifyOtp = Loadable(lazy(() => import('@/authentication/auth1/VerifyOtp')));
+const Error = Loadable(lazy(() => import('@/authentication/Error')));
 
-const Analytics_ = Loadable(lazy(() => import('../views/analytics_/index')));
+const Analytics_ = Loadable(lazy(() => import('@/landlord/views/analytics_/index')));
 
 const appMode = import.meta.env.MODE;
 const CENTRAL_DOMAIN =
@@ -135,8 +133,6 @@ const AgentRoutes = [
       { path: 'organization/commissions', element: <CommissionManagement /> },
       { path: 'commission/subscription', element: <MyCommissionBySubscription /> },
       { path: 'commission/transaction', element: <MyCommissionByTransaction /> },
-      { path: 'ecommerce', element: <ECommerceDashboard /> },
-      { path: 'modern', element: <ModernDashboard /> },
       { path: 'plan', element: <PackageManager /> },
       { path: 'phet/subject_topics', element: <SubjectAndTopics /> },
       { path: 'phet/stimulation_links', element: <StimulationLinks /> },

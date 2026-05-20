@@ -37,6 +37,7 @@ const MOCK_APPLICATIONS = [
     applicationNo: '—',
     class: 'JSS 1',
     session: '2025/26',
+    batch: 'Batch 1',
     currentStep: 0,
     acceptanceFee: null,
     feeDue: null,
@@ -53,6 +54,7 @@ const MOCK_APPLICATIONS = [
     applicationNo: 'A-10428',
     class: 'JSS 1',
     session: '2025/26',
+    batch: 'Batch 2',
     currentStep: 2,
     acceptanceFee: 35000,
     feeDue: 'Acceptance fee due Sep 5',
@@ -87,6 +89,7 @@ const MOCK_APPLICATIONS = [
     applicationNo: 'A-10431',
     class: 'JSS 2',
     session: '2025/26',
+    batch: 'Batch 2',
     currentStep: 1,
     acceptanceFee: null,
     feeDue: null,
@@ -167,18 +170,26 @@ const MyApplication = () => {
           <Button
             variant="contained"
             onClick={() => setBatchModalOpen(true)}
-            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            // sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            sx={{ display: 'inline-flex' }}
           >
             New Application
           </Button>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/dashboard')}
-            sx={{ color: 'text.secondary', fontWeight: 500, flexShrink: 0 }}
-          >
-            Back to dashboard
-          </Button>
         </Box>
+      </Box>
+      <Box mb={3}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/dashboard')}
+          sx={{
+            color: '#262292',
+            // onHover: { color: 'primary.main' },
+            fontWeight: 500,
+            flexShrink: 0,
+          }}
+        >
+          Back to dashboard
+        </Button>
       </Box>
 
       {/* Application cards */}

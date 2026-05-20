@@ -1,12 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box, Typography, Paper, Button, Chip
-} from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  Person as PersonIcon,
-} from '@mui/icons-material';
+import { Box, Typography, Paper, Button, Chip } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Person as PersonIcon } from '@mui/icons-material';
 
 export const statusChipSx = (status) => {
   if (status === 'Admitted') return { bgcolor: 'success.light', color: 'success.dark' };
@@ -99,7 +94,12 @@ const ApplicationCard = ({ app }) => {
           }}
         >
           <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1} mb={1}>
-            <Typography variant="subtitle1" fontWeight={800} noWrap sx={{ lineHeight: 1.2, fontSize: '1rem' }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={800}
+              noWrap
+              sx={{ lineHeight: 1.2, fontSize: '1rem' }}
+            >
               {app.surname ? `${app.surname} ${app.first_name}` : app.name}
             </Typography>
 
@@ -110,25 +110,51 @@ const ApplicationCard = ({ app }) => {
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" color="text.secondary" >Applicant:</Typography>
-              <Typography variant="h6" fontWeight={600} color="text.primary" noWrap sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}>
+              <Typography variant="h6" color="text.secondary">
+                Applicant:
+              </Typography>
+              <Typography
+                variant="h6"
+                fontWeight={600}
+                color="text.primary"
+                noWrap
+                sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
+              >
                 {app.applicationNo || '—'}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" color="text.secondary">Session:</Typography>
-              <Typography variant="h6" fontWeight={600} color="text.primary" noWrap sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}>
-                {app.class} · {app.session}
+              <Typography variant="h6" color="text.secondary">
+                Session:
+              </Typography>
+              <Typography
+                variant="h6"
+                fontWeight={600}
+                color="text.primary"
+                noWrap
+                sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
+              >
+                {app.class} · {app.session} · {app.batch}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" color="text.secondary" >Gender / DoB:</Typography>
-              <Typography variant="h6" fontWeight={600} color="text.primary" noWrap sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}>
+              <Typography variant="h6" color="text.secondary">
+                Gender / DoB:
+              </Typography>
+              <Typography
+                variant="h6"
+                fontWeight={600}
+                color="text.primary"
+                noWrap
+                sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
+              >
                 {app.gender || 'Female'} / {app.dob || '2013-07-03'}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" color="text.secondary">Form Submit Status:</Typography>
+              <Typography variant="h6" color="text.secondary">
+                Form Submit Status:
+              </Typography>
               {(() => {
                 const submitted = !isDraft;
                 const label = submitted ? 'Submitted' : 'Incomplete';
@@ -142,8 +168,12 @@ const ApplicationCard = ({ app }) => {
                     icon={
                       <Box
                         sx={(theme) => ({
-                          width: 6, height: 6, borderRadius: '50%',
-                          bgcolor: submitted ? theme.palette.success.main : theme.palette.error.main,
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: submitted
+                            ? theme.palette.success.main
+                            : theme.palette.error.main,
                           ml: 0.75,
                           boxShadow: `0 0 6px ${submitted ? theme.palette.success.main : theme.palette.error.main}`,
                           animation: 'pulseGlow 2s infinite',
@@ -161,9 +191,12 @@ const ApplicationCard = ({ app }) => {
               })()}
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" color="text.secondary">Admission Status:</Typography>
+              <Typography variant="h6" color="text.secondary">
+                Admission Status:
+              </Typography>
               {(() => {
-                const admissionLabel = app.status === 'Admitted' || app.status === 'Enrolled' ? app.status : 'Pending';
+                const admissionLabel =
+                  app.status === 'Admitted' || app.status === 'Enrolled' ? app.status : 'Pending';
                 const isAdmitted = admissionLabel === 'Admitted' || admissionLabel === 'Enrolled';
                 const chipSx = isAdmitted
                   ? { bgcolor: 'primary.light', color: 'primary.dark' }
@@ -175,8 +208,12 @@ const ApplicationCard = ({ app }) => {
                     icon={
                       <Box
                         sx={(theme) => ({
-                          width: 6, height: 6, borderRadius: '50%',
-                          bgcolor: isAdmitted ? theme.palette.primary.main : theme.palette.warning.main,
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          bgcolor: isAdmitted
+                            ? theme.palette.primary.main
+                            : theme.palette.warning.main,
                           ml: 0.75,
                           boxShadow: `0 0 6px ${isAdmitted ? theme.palette.primary.main : theme.palette.warning.main}`,
                           animation: 'pulseGlow 2s infinite',
@@ -211,6 +248,29 @@ const ApplicationCard = ({ app }) => {
             }}
           >
             Continue Application
+          </Button>
+        </Box>
+      )}
+
+      {(app.status === 'Admitted' || app.status === 'Enrolled') && (
+        <Box sx={{ px: 2, pb: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            fullWidth
+            onClick={(e) => {
+              e.stopPropagation();
+
+              // navigate or print logic here
+              navigate(`/admission-letter/${app.id}`);
+            }}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Print Admission Letter
           </Button>
         </Box>
       )}

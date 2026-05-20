@@ -44,18 +44,18 @@ import {
   IconDownload,
   IconUpload,
 } from '@tabler/icons-react';
-import PageContainer from '../../components/container/PageContainer';
-import Breadcrumb from '../../layouts/full/shared/breadcrumb/Breadcrumb';
-import staffApi from '../../api/staffApi';
-import useNotification from '../../hooks/useNotification';
-import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import staffApi from '@/api/staffApi';
+import useNotification from '@/hooks/useNotification';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import StaffModal from './StaffModal';
 import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
 import UploadStaffModal from './components/UploadStaffModal';
 import dayjs from 'dayjs';
-import { TenantAuthContext } from '../../context/TenantContext/auth';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
 
 const BCrumb = [

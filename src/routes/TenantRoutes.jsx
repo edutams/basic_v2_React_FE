@@ -43,8 +43,8 @@ const AlcManager = Loadable(lazy(() => import('@/tenant/pages/alc-manager/School
 const ActivityLog = Loadable(lazy(() => import('@/tenant/pages/activity-log/ActivityLog')));
 
 const CalendarPage = Loadable(lazy(() => import('@/tenant/pages/school-setup/CalendarPage')));
-const AccountSetting = Loadable(lazy(() => import('@/views/pages/tenant-pages/AccountSetting')));
-const StaffManager = Loadable(lazy(() => import('../views/staff-manager/StaffManager')));
+const AccountSetting = Loadable(lazy(() => import('@/tenant/pages/profile/AccountSetting')));
+const StaffManager = Loadable(lazy(() => import('@/tenant/pages/staff-manager/StaffManager')));
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );

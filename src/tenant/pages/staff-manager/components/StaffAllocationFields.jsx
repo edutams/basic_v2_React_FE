@@ -18,8 +18,8 @@ import {
   fetchCurriculums,
   fetchSubjects,
   fetchSessionTerms,
-} from '../../../api/tenantCurriculumApi';
-import useNotification from '../../../hooks/useNotification';
+} from '@/api/tenantCurriculumApi';
+import useNotification from '@/hooks/useNotification';
 
 const StaffAllocationFields = ({
   values,

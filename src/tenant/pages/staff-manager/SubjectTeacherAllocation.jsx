@@ -18,12 +18,16 @@ import {
   Alert,
 } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
-import ConfirmationDialog from '../../components/shared/ConfirmationDialog';
-import staffApi from '../../api/staffApi';
-import allocationApi from '../../api/allocationApi';
-import { fetchProgrammes, fetchSubjectsByProgramme, fetchClassArmsByProgramme } from '../../api/tenantCurriculumApi';
-import { fetchCurrentSession, fetchSessionTerms } from '../../api/sessionTermApi';
-import useNotification from '../../hooks/useNotification';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import staffApi from '@/api/staffApi';
+import allocationApi from '@/api/allocationApi';
+import {
+  fetchProgrammes,
+  fetchSubjectsByProgramme,
+  fetchClassArmsByProgramme,
+} from '@/api/tenantCurriculumApi';
+import { fetchCurrentSession, fetchSessionTerms } from '@/api/sessionTermApi';
+import useNotification from '@/hooks/useNotification';
 
 const SubjectTeacherAllocation = () => {
   const notify = useNotification();
@@ -59,7 +63,7 @@ const SubjectTeacherAllocation = () => {
         setSessionTerms(terms);
 
         // Find active term
-        const activeTerm = terms.find(t => t.status?.toUpperCase() === 'ACTIVE');
+        const activeTerm = terms.find((t) => t.status?.toUpperCase() === 'ACTIVE');
         if (activeTerm) {
           setActiveSessionTermId(activeTerm.id);
           setSelectedTerm(activeTerm.id);
@@ -156,12 +160,14 @@ const SubjectTeacherAllocation = () => {
   };
 
   const handleTeacherChange = (index, teacherId) => {
-    const teacher = teachers.find(t => t.id === teacherId);
+    const teacher = teachers.find((t) => t.id === teacherId);
     const updatedAllocations = [...allocations];
     updatedAllocations[index] = {
       ...updatedAllocations[index],
       teacher_id: teacherId,
-      teacher_name: teacher ? `${teacher.user?.fname} ${teacher.user?.lname} (${teacher.staff_id})` : '',
+      teacher_name: teacher
+        ? `${teacher.user?.fname} ${teacher.user?.lname} (${teacher.staff_id})`
+        : '',
     };
     setAllocations(updatedAllocations);
   };
@@ -177,7 +183,9 @@ const SubjectTeacherAllocation = () => {
     try {
       if (allocationToDelete.allocation_id) {
         // Remove from backend
-        const response = await allocationApi.removeSubjectTeacherAllocation(allocationToDelete.allocation_id);
+        const response = await allocationApi.removeSubjectTeacherAllocation(
+          allocationToDelete.allocation_id,
+        );
         if (response.status) {
           notify.success('Allocation removed successfully');
           if (selectedProgramme && selectedClassArm) {
@@ -185,10 +193,8 @@ const SubjectTeacherAllocation = () => {
           }
         }
       } else {
-        const updatedAllocations = allocations.map(a =>
-          a.id === allocationToDelete.id
-            ? { ...a, teacher_id: null, teacher_name: '' }
-            : a
+        const updatedAllocations = allocations.map((a) =>
+          a.id === allocationToDelete.id ? { ...a, teacher_id: null, teacher_name: '' } : a,
         );
         setAllocations(updatedAllocations);
         notify.success('Selection cleared');
@@ -216,8 +222,8 @@ const SubjectTeacherAllocation = () => {
     try {
       // Prepare allocations data
       const allocationsData = allocations
-        .filter(a => a.teacher_id) // Only send allocations with teachers
-        .map(a => ({
+        .filter((a) => a.teacher_id) // Only send allocations with teachers
+        .map((a) => ({
           subject_id: a.subject_id,
           user_id: a.teacher_id,
         }));
@@ -284,8 +290,6 @@ const SubjectTeacherAllocation = () => {
             ))}
           </TextField>
         </Grid>
-
-
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <TextField
@@ -372,7 +376,7 @@ const SubjectTeacherAllocation = () => {
                           bgcolor: '#ffebee',
                           color: '#c62828',
                           cursor: 'pointer',
-                          '& .MuiChip-deleteIcon': { color: '#c62828' }
+                          '& .MuiChip-deleteIcon': { color: '#c62828' },
                         }}
                       />
                     )}
@@ -387,11 +391,7 @@ const SubjectTeacherAllocation = () => {
       {/* Save Button */}
       {allocations.length > 0 && (
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'right' }}>
-          <Button
-            variant="contained"
-            onClick={handleSaveAll}
-
-          >
+          <Button variant="contained" onClick={handleSaveAll}>
             Save All
           </Button>
         </Box>

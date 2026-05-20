@@ -1,5 +1,5 @@
 import React from 'react';
-import ReusableModal from 'src/components/shared/ReusableModal';
+import ReusableModal from '@/components/shared/ReusableModal';
 import UploadStaffForm from './UploadStaffForm';
 import PropTypes from 'prop-types';
 

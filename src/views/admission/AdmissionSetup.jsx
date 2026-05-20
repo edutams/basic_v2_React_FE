@@ -33,7 +33,6 @@ import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import AdmissionLetterEditor from 'src/components/tenant-components/admission/setup/AdmissionLetterEditor';
-import ReusableModal from 'src/components/shared/ReusableModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
 
@@ -598,7 +597,6 @@ const AdmissionSetup = () => {
                             />
                           </TableCell>
 
-                          {/* Status */}
                           <TableCell align="center">
                             <BatchStatusChip status={batch.status} />
                           </TableCell>
@@ -705,29 +703,40 @@ const AdmissionSetup = () => {
         </DialogActions>
       </Dialog>
 
-      <ReusableModal
+      <Dialog
         open={letterEditorOpen}
         onClose={() => setLetterEditorOpen(false)}
-        title={
-          <>
-            {letterEditorReadOnly ? 'View' : 'Edit'} Admission Letter —{' '}
-            <Typography component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-              {letterEditorBatch?.batch_name ?? ''}
-            </Typography>
-          </>
-        }
-        subtitle={selectedTermLabel}
-        size="extraLarge"
-        showDivider
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2 } }}
       >
-        <AdmissionLetterEditor
-          key={`${letterEditorBatch?.id}-${letterEditorReadOnly}`}
-          readOnly={letterEditorReadOnly}
-          onChange={(html) => {
-            // console.log('Letter content for batch', letterEditorBatch?.id, html);
-          }}
-        />
-        <Box display="flex" justifyContent="flex-end" gap={1.5} mt={2}>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h6" fontWeight={700}>
+              {letterEditorReadOnly ? 'View' : 'Edit'} Admission Letter —{' '}
+              <Box component="span" sx={{ color: 'primary.main' }}>
+                {letterEditorBatch?.batch_name ?? ''}
+              </Box>
+            </Typography>
+            {selectedTermLabel && (
+              <Typography variant="caption" color="text.secondary">
+                {selectedTermLabel}
+              </Typography>
+            )}
+          </Box>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ p: 2 }}>
+          <AdmissionLetterEditor
+            key={`${letterEditorBatch?.id}-${letterEditorReadOnly}`}
+            readOnly={letterEditorReadOnly}
+            onChange={(html) => {
+              console.log('Letter content for batch', letterEditorBatch?.id, html);
+            }}
+          />
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={() => setLetterEditorOpen(false)} color="inherit">
             {letterEditorReadOnly ? 'Close' : 'Cancel'}
           </Button>
@@ -743,8 +752,8 @@ const AdmissionSetup = () => {
               Save Letter
             </Button>
           )}
-        </Box>
-      </ReusableModal>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

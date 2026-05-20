@@ -128,7 +128,7 @@ const CreateAdmissionBatch = () => {
                 />
               </Box>
 
-              <Box>
+              <Box sx={{ bgcolor: 'primary.light', p: 2}}>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 6 }}>
                     <Typography variant="subtitle2" fontWeight={700} mb={1}>Programme</Typography>
@@ -165,7 +165,7 @@ const CreateAdmissionBatch = () => {
                     {selectedClasses.map((cls) => (
                       <Chip
                         key={cls} label={cls} size="small" onDelete={() => toggleClass(cls)}
-                        sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700, fontSize: 11 }}
+                        sx={{ bgcolor: 'grey.50', color: 'primary.main', fontWeight: 700, fontSize: 11 }}
                       />
                     ))}
                   </Stack>

@@ -26,7 +26,9 @@ import {
   CircularProgress,
   Stack,
   Tooltip,
-} from '@mui/material';import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';import { IconEye, IconPencil } from '@tabler/icons-react';
+} from '@mui/material';
+import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
+import { IconEye, IconPencil } from '@tabler/icons-react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
@@ -267,9 +269,9 @@ const AdmissionSetup = () => {
 
   const [confirmToggleBatch, setConfirmToggleBatch] = useState({ open: false, batch: null });
 
-  // ── Admission Letter Editor dialog ────────────────────────────────────────
   const [letterEditorOpen, setLetterEditorOpen] = useState(false);
   const [letterEditorBatch, setLetterEditorBatch] = useState(null);
+  const [letterEditorReadOnly, setLetterEditorReadOnly] = useState(false);
 
   useEffect(() => {
     loadSessions();
@@ -583,8 +585,16 @@ const AdmissionSetup = () => {
                           {/* Admission Letter */}
                           <TableCell align="center">
                             <ViewEditPair
-                              onView={() => { setLetterEditorBatch(batch); setLetterEditorOpen(true); }}
-                              onEdit={() => { setLetterEditorBatch(batch); setLetterEditorOpen(true); }}
+                              onView={() => {
+                                setLetterEditorBatch(batch);
+                                setLetterEditorReadOnly(true);
+                                setLetterEditorOpen(true);
+                              }}
+                              onEdit={() => {
+                                setLetterEditorBatch(batch);
+                                setLetterEditorReadOnly(false);
+                                setLetterEditorOpen(true);
+                              }}
                             />
                           </TableCell>
 
@@ -698,31 +708,41 @@ const AdmissionSetup = () => {
       <ReusableModal
         open={letterEditorOpen}
         onClose={() => setLetterEditorOpen(false)}
-        title={`Admission Letter — ${letterEditorBatch?.batch_name ?? ''}`}
+        title={
+          <>
+            {letterEditorReadOnly ? 'View' : 'Edit'} Admission Letter —{' '}
+            <Typography component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {letterEditorBatch?.batch_name ?? ''}
+            </Typography>
+          </>
+        }
         subtitle={selectedTermLabel}
         size="extraLarge"
         showDivider
       >
         <AdmissionLetterEditor
-          key={letterEditorBatch?.id}
+          key={`${letterEditorBatch?.id}-${letterEditorReadOnly}`}
+          readOnly={letterEditorReadOnly}
           onChange={(html) => {
-            // console.log('Letter content for batch', letterEditorBatch?.id, html);
+            console.log('Letter content for batch', letterEditorBatch?.id, html);
           }}
         />
         <Box display="flex" justifyContent="flex-end" gap={1.5} mt={2}>
           <Button onClick={() => setLetterEditorOpen(false)} color="inherit">
-            Cancel
+            {letterEditorReadOnly ? 'Close' : 'Cancel'}
           </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              showSnackbar('Admission letter saved successfully');
-              setLetterEditorOpen(false);
-            }}
-            sx={{ fontWeight: 700 }}
-          >
-            Save Letter
-          </Button>
+          {!letterEditorReadOnly && (
+            <Button
+              variant="contained"
+              onClick={() => {
+                showSnackbar('Admission letter saved successfully');
+                setLetterEditorOpen(false);
+              }}
+              sx={{ fontWeight: 700 }}
+            >
+              Save Letter
+            </Button>
+          )}
         </Box>
       </ReusableModal>
 

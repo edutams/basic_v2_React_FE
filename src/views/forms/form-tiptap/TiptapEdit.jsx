@@ -24,17 +24,25 @@ import {
 import './Tiptap.css';
 
 
-const TiptapEdit = ({ onUpdate, initialContent }) => {
+const TiptapEdit = ({ onUpdate, initialContent, readOnly = false }) => {
 
   const editor = useEditor({
     extensions: [StarterKit],
     content: initialContent ?? "<p>Type here...</p>",
+    editable: !readOnly,
     onUpdate: ({ editor }) => {
       if (onUpdate) {
         onUpdate({ editor });
       }
     },
   });
+
+  // Sync editable state when readOnly prop changes
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!readOnly);
+    }
+  }, [editor, readOnly]);
 
   // Sync editor content when initialContent changes externally (e.g. template switch)
   useEffect(() => {

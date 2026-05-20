@@ -67,7 +67,7 @@ const applyPreviewSamples = (html) => {
   return result;
 };
 
-const AdmissionLetterEditor = ({ onChange }) => {
+const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
   const [selectedTemplate, setSelectedTemplate] = useState(LETTER_TEMPLATES[0]);
   const [letterContent,    setLetterContent]    = useState('');
   const editorRef = useRef(null); // holds the tiptap editor instance
@@ -117,7 +117,6 @@ const AdmissionLetterEditor = ({ onChange }) => {
       </Box>
 
       <Grid container spacing={2}>
-        {/* ── Placeholder Fields + Template Options ── */}
         <Grid size={{ xs: 12, sm: 3 }}>
           <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
             Placeholder Fields
@@ -125,25 +124,28 @@ const AdmissionLetterEditor = ({ onChange }) => {
 
           <Stack spacing={0.75}>
             {PLACEHOLDER_FIELDS.map((field) => (
-              <Tooltip key={field.value} title={`Insert: ${field.value}`} placement="right">
-                <Button
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  onClick={() => handleInsertPlaceholder(field.value)}
-                  sx={{
-                    justifyContent: 'flex-start',
-                    textTransform: 'none',
-                    fontSize: 11,
-                    fontWeight: 500,
-                    borderColor: 'divider',
-                    color: 'text.primary',
-                    py: 0.5,
-                    '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.light' },
-                  }}
-                >
-                  {field.label}
-                </Button>
+              <Tooltip key={field.value} title={readOnly ? field.value : `Insert: ${field.value}`} placement="right">
+                <span>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    disabled={readOnly}
+                    onClick={() => handleInsertPlaceholder(field.value)}
+                    sx={{
+                      justifyContent: 'flex-start',
+                      textTransform: 'none',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      borderColor: 'divider',
+                      color: 'text.primary',
+                      py: 0.5,
+                      '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.light' },
+                    }}
+                  >
+                    {field.label}
+                  </Button>
+                </span>
               </Tooltip>
             ))}
           </Stack>
@@ -158,17 +160,18 @@ const AdmissionLetterEditor = ({ onChange }) => {
               <Paper
                 key={tpl.id}
                 elevation={0}
-                onClick={() => handleTemplateChange(tpl)}
+                onClick={() => !readOnly && handleTemplateChange(tpl)}
                 sx={{
                   flex: 1,
-                  cursor: 'pointer',
+                  cursor: readOnly ? 'default' : 'pointer',
                   overflow: 'hidden',
                   borderRadius: 1.5,
                   border: '2px solid',
                   borderColor: selectedTemplate?.id === tpl.id ? 'primary.main' : 'divider',
                   transition: 'all 0.15s',
                   bgcolor: selectedTemplate?.id === tpl.id ? 'primary.light' : 'background.paper',
-                  '&:hover': { borderColor: 'primary.main', boxShadow: 1 },
+                  opacity: readOnly ? 0.6 : 1,
+                  '&:hover': !readOnly ? { borderColor: 'primary.main', boxShadow: 1 } : {},
                 }}
               >
                 <Box
@@ -219,6 +222,7 @@ const AdmissionLetterEditor = ({ onChange }) => {
             size="small"
             label="Template"
             value={selectedTemplate?.id ?? ''}
+            disabled={readOnly}
             onChange={(e) => {
               const tpl = LETTER_TEMPLATES.find((t) => t.id === e.target.value);
               if (tpl) handleTemplateChange(tpl);
@@ -239,64 +243,68 @@ const AdmissionLetterEditor = ({ onChange }) => {
               borderColor: 'divider',
               borderRadius: 1,
               minHeight: 220,
+              bgcolor: readOnly ? 'grey.50' : 'background.paper',
               '& .ProseMirror': { minHeight: 180, p: 1.5, outline: 'none' },
             }}
           >
             <TiptapEdit
               initialContent={initialContent}
               onUpdate={handleEditorUpdate}
+              readOnly={readOnly}
             />
           </Box>
 
-          <Stack
-            direction="row"
-            spacing={{ xs: 0.5, sm: 1 }}
-            mt={1.5}
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
+          {!readOnly && (
+            <Stack
+              direction="row"
+              spacing={{ xs: 0.5, sm: 1 }}
+              mt={1.5}
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: { xs: 10, sm: 11, md: 12 },
+                    px: { xs: 1, sm: 1.5, md: 2 },
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Save Template
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: { xs: 10, sm: 11, md: 12 },
+                    px: { xs: 1, sm: 1.5, md: 2 },
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Send Test Email
+                </Button>
+              </Stack>
               <Button
-                variant="outlined"
+                variant="contained"
                 size="small"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
                   textTransform: 'none',
                   fontSize: { xs: 10, sm: 11, md: 12 },
                   px: { xs: 1, sm: 1.5, md: 2 },
                   whiteSpace: 'nowrap',
                 }}
               >
-                Save Template
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                sx={{
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  fontSize: { xs: 10, sm: 11, md: 12 },
-                  px: { xs: 1, sm: 1.5, md: 2 },
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Send Test Email
+                Save & Preview
               </Button>
             </Stack>
-            <Button
-              variant="contained"
-              size="small"
-              sx={{
-                fontWeight: 700,
-                textTransform: 'none',
-                fontSize: { xs: 10, sm: 11, md: 12 },
-                px: { xs: 1, sm: 1.5, md: 2 },
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Save
-            </Button>
-          </Stack>
+          )}
         </Grid>
 
         <Grid size={{ xs: 12, sm: 4 }}>

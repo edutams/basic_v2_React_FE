@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Link } from '@mui/material';
 import { IconVideo, IconChevronRight, IconPower, IconArrowLeft } from '@tabler/icons-react';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-import SetupIllustration from '../../../assets/images/setup/setup.png';
+import SetupIllustration from '@/assets/images/setup/setup.png';
 
 // ── Keyframes ────────────────────────────────────────────────────────────────
 const keyframes = {

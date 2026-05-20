@@ -16,7 +16,6 @@ import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '@/components/forms/theme-elements/CustomFormLabel';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import { useNotification } from '@/hooks/useNotification';
-import EduTAMSLogo from '../../../assets/images/logos/EduTAMS.jpeg';
 import { Avatar } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 

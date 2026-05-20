@@ -141,9 +141,6 @@ const DUMMY_BATCHES = {
     },
   ],
   102: [],
-  103: [],
-  201: [],
-  202: [],
 };
 
 const StatusChip = ({ status }) => {
@@ -184,7 +181,7 @@ const YesNoPill = ({ value }) => (
     size="small"
     sx={{
       bgcolor: value ? 'primary.light' : 'warning.light',
-      color: value ? 'primary.dark' : 'warning.dark',
+      color: value ? 'primary.main' : 'warning.main',
       fontWeight: 700,
       fontSize: 11,
       minWidth: 36,
@@ -201,14 +198,14 @@ const FeePills = ({ requirePayment, appFee, acceptanceFee }) => {
         <Chip
           label={`Application Fee ₦${Number(appFee).toLocaleString()}`}
           size="small"
-          sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 600, fontSize: 10 }}
+          sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 10 }}
         />
       )}
       {acceptanceFee > 0 && (
         <Chip
           label={`Acceptance Fee ₦${Number(acceptanceFee).toLocaleString()}`}
           size="small"
-          sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 600, fontSize: 10 }}
+          sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 10 }}
         />
       )}
     </Stack>
@@ -500,16 +497,22 @@ const AdmissionSetup = () => {
                 <CircularProgress size={28} />
               </Box>
             ) : batches.length === 0 ? (
-              <Alert severity="info">
-                No admission batches yet for this term. Click &quot;Create New Admission&quot; to
-                add one.
+              <Alert
+                severity="info"
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                No admission batches yet for this term. Click "Create New Admission" to add one.
               </Alert>
             ) : (
               <Paper variant="outlined">
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
-                      <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableRow>
                         <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>Batch Name</TableCell>
                         <TableCell align="center" sx={{ fontWeight: 700 }}>

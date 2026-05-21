@@ -47,7 +47,7 @@ import {
   IconCheck,
   IconX,
 } from '@tabler/icons-react';
-import { tenantSchemeApi } from '@/api/landlord/scheme-of-work/schemeOfWorkApi';
+import { tenantSchemeApi } from '@/api/tenant/scheme-of-work/schemeOfWorkApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,

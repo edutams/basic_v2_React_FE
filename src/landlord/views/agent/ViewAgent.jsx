@@ -150,10 +150,10 @@ const ViewAgent = () => {
 
                 created_at: tenant.created_at
                   ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })
                   : '—',
               })),
 
@@ -182,7 +182,6 @@ const ViewAgent = () => {
     }
   }, [id, refreshKey]);
 
-  // Fetch analytics for TotalSchoolModal
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
@@ -241,7 +240,7 @@ const ViewAgent = () => {
 
               <Grid size={{ xs: 12, md: 8, lg: 8 }}>
                 <StatCards
-                  stats={agentData.stats}
+                  stats={mergedStats}
                   onTransactionClick={() => setIsTransactionModalOpen(true)}
                   onSchoolClick={() => setIsSchoolModalOpen(true)}
                   onSubAgentClick={() => setIsSubAgentModalOpen(true)}
@@ -353,7 +352,8 @@ const ViewAgent = () => {
         <TotalSchoolModal
           open={isSchoolModalOpen}
           onClose={() => setIsSchoolModalOpen(false)}
-          stats={agentData?.stats}
+          stats={mergedStats}
+          organizationId={id}
         />
 
         <TotalTransactionModal
@@ -366,6 +366,8 @@ const ViewAgent = () => {
           onClose={() => setIsSubAgentModalOpen(false)}
           totalSubAgents={agentData?.stats?.totalSubAgents}
           handleRefresh={() => setRefreshKey((prev) => prev + 1)}
+          orgId={id}
+          accessLevel={accessLevel}
         />
 
         <AgentModal
@@ -383,12 +385,12 @@ const ViewAgent = () => {
           selectedAgent={
             agentData
               ? {
-                  ...agentData.raw,
-                  ...agentData.leadUser,
-                  id: id,
-                  organization_logo: agentData.raw?.organization_logo,
-                  avatar: agentData.leadUser?.avatar,
-                }
+                ...agentData.raw,
+                ...agentData.leadUser,
+                id: id,
+                organization_logo: agentData.raw?.organization_logo,
+                avatar: agentData.leadUser?.avatar,
+              }
               : null
           }
         />

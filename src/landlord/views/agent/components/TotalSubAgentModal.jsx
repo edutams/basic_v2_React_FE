@@ -28,7 +28,7 @@ import StandardModal from 'src/components/shared/StandardModal';
 import agentApi from '@/api/landlord/organizations/agent';
 import { AuthContext } from 'src/context/AgentContext/auth';
 
-const TotalSubAgentModal = ({ open, onClose, orgId }) => {
+const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -43,16 +43,16 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
   const [levelInput, setLevelInput] = useState('');
 
   const { user } = useContext(AuthContext);
-  const userLevel = parseInt(user?.organization?.access_level || 1);
+  const currentLevel = parseInt(accessLevel || user?.organization?.access_level || 1);
 
-  // Dynamic levels based on logged in organization level
+  // Dynamic levels based on organization level
   const levelOptions = useMemo(() => {
     const options = [];
-    for (let i = userLevel + 1; i <= 5; i++) {
+    for (let i = currentLevel + 1; i <= 5; i++) {
       options.push({ value: i.toString(), label: `Level ${i}` });
     }
     return options;
-  }, [userLevel]);
+  }, [currentLevel]);
 
   useEffect(() => {
     // if (open && orgId) {
@@ -83,6 +83,10 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
       // Add level parameter if it's set
       if (level) {
         params.access_level = level;
+      }
+
+      if (orgId) {
+        params.organization_id = orgId;
       }
 
       const res = await agentApi.getSubOrganizations(params);

@@ -16,7 +16,7 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import Chart from 'react-apexcharts';
 import agentApi from '@/api/landlord/organizations/agent';
 
-const SchoolsOverviewModal = ({ open, onClose, stats }) => {
+const SchoolsOverviewModal = ({ open, onClose, stats, organizationId }) => {
   const theme = useTheme();
   const [tab, setTab] = useState(0);
   const [pendingYear, setPendingYear] = useState(String(new Date().getFullYear()));
@@ -28,7 +28,11 @@ const SchoolsOverviewModal = ({ open, onClose, stats }) => {
   const fetchChartData = useCallback(async (selectedYear) => {
     setChartLoading(true);
     try {
-      const res = await agentApi.getSchoolChartData({ year: selectedYear });
+      const params = { year: selectedYear };
+      if (organizationId) {
+        params.organizationId = organizationId;
+      }
+      const res = await agentApi.getSchoolChartData(params);
       if (res.status) {
         setChartData(res.data);
       }

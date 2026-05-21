@@ -331,6 +331,7 @@ const AgentDashboard = () => {
           open={isSchoolModalOpen}
           onClose={() => setIsSchoolModalOpen(false)}
           stats={analytics}
+          organizationId={id}
         />
         <TotalTransactionModal
           open={isTransactionModalOpen}
@@ -341,6 +342,8 @@ const AgentDashboard = () => {
           onClose={() => setIsSubAgentModalOpen(false)}
           totalSubAgents={agentData?.stats?.totalSubAgents}
           handleRefresh={() => setRefreshKey?.((prev) => prev + 1)}
+          orgId={id}
+          accessLevel={currentUser?.organization?.access_level}
         />
         <AgentModal
           open={isAddAgentModalOpen}

@@ -99,7 +99,6 @@ const TenantLogin = () => {
     recaptchaRef.current?.reset();
   };
 
-  // ── Login view ─────────────────────────────────────────────────────────────
   return (
     <PageContainer title="School Login" description="Tenant Login page">
       <Grid container spacing={0} sx={{ overflowX: 'hidden' }}>
@@ -235,7 +234,6 @@ const TenantLogin = () => {
           }}
         >
           {view === 'login' ? (
-            /* ── original login layout, unchanged ── */
             <Box
               p={4}
               sx={{

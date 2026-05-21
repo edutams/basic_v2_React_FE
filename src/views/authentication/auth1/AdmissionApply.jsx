@@ -170,7 +170,6 @@ const AdmissionApply = () => {
               </Alert>
             )}
 
-            {/* Reuse ParentForm with confirm password shown */}
             <ParentForm
               onSubmit={handleSubmit}
               onCancel={() => navigate('/login')}

@@ -110,12 +110,9 @@ const MOCK_APPLICATIONS = [
   },
 ];
 
-<<<<<<<< HEAD:src/views/admission/AdmissionStatus.jsx
 const AdmissionStatus = () => {
-========
-// ── Page ──────────────────────────────────────────────────────────────────────
+  
 const MyApplication = () => {
->>>>>>>> origin/develop:src/views/admission/MyApplication.jsx
   const navigate = useNavigate();
   const location = useLocation();
   const [batchModalOpen, setBatchModalOpen] = useState(false);

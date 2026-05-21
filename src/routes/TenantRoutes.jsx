@@ -58,7 +58,7 @@ const TenantRoutes = [
   {
     path: '/setup-welcome',
     element: (
-      <TenantProtectedRoute>
+      <TenantProtectedRoute permission="setup.school.welcome">
         <SetupRedirectHandler />
         <BlankLayout />
       </TenantProtectedRoute>
@@ -68,7 +68,7 @@ const TenantRoutes = [
   {
     path: '/school-profile',
     element: (
-      <TenantProtectedRoute>
+      <TenantProtectedRoute permission="setup.school.profile">
         <SetupRedirectHandler />
         <BlankLayout />
       </TenantProtectedRoute>
@@ -117,7 +117,7 @@ const TenantRoutes = [
   {
     path: '/complete-setup',
     element: (
-      <TenantProtectedRoute>
+      <TenantProtectedRoute permission="setup.school.complete">
         <SetupRedirectHandler />
         <BlankLayout />
       </TenantProtectedRoute>
@@ -127,7 +127,7 @@ const TenantRoutes = [
   {
     path: '/',
     element: (
-      <TenantProtectedRoute>
+      <TenantProtectedRoute permission="dashboard.index">
         <SetupRedirectHandler />
         <SchoolLayout />
       </TenantProtectedRoute>
@@ -135,47 +135,159 @@ const TenantRoutes = [
     children: [
       { index: true, element: <SchoolDashboardMain /> },
 
-      { path: 'acl-manager', element: <AlcManager /> },
+      {
+        path: 'acl-manager',
+        element: (
+          <TenantProtectedRoute permission="acl.index">
+            <AlcManager />
+          </TenantProtectedRoute>
+        ),
+      },
 
-      { path: 'curriculum-setup', element: <CurriculumManager /> },
+      {
+        path: 'curriculum-setup',
+        element: (
+          <TenantProtectedRoute permission="curriculum.setup.index">
+            <CurriculumManager />
+          </TenantProtectedRoute>
+        ),
+      },
 
-      { path: 'scheme-of-work', element: <SchemeOfWork /> },
+      {
+        path: 'scheme-of-work',
+        element: (
+          <TenantProtectedRoute permission="scheme.of.work.index">
+            <SchemeOfWork />
+          </TenantProtectedRoute>
+        ),
+      },
 
-      { path: 'class-structure-manager', element: <ClassStructureManager /> },
+      {
+        path: 'class-structure-manager',
+        element: (
+          <TenantProtectedRoute permission="class.structure.index">
+            <ClassStructureManager />
+          </TenantProtectedRoute>
+        ),
+      },
 
-      { path: 'manage-subscription', element: <SubscriptionIndex /> },
-      { path: 'subscription-history', element: <SubscriptionIndex /> },
+      {
+        path: 'manage-subscription',
+        element: (
+          <TenantProtectedRoute permission="manage.subscription.index">
+            <SubscriptionIndex />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'subscription-history',
+        element: (
+          <TenantProtectedRoute permission="manage.subscription.index">
+            <SubscriptionIndex />
+          </TenantProtectedRoute>
+        ),
+      },
 
-      { path: 'session-week-manager', element: <SessionWeekManager /> },
+      {
+        path: 'session-week-manager',
+        element: (
+          <TenantProtectedRoute permission="calendar.index">
+            <SessionWeekManager />
+          </TenantProtectedRoute>
+        ),
+      },
 
-      { path: 'school-calendar', element: <CalendarPage /> },
+      {
+        path: 'school-calendar',
+        element: (
+          <TenantProtectedRoute permission="calendar.index">
+            <CalendarPage />
+          </TenantProtectedRoute>
+        ),
+      },
 
-      { path: 'activity-logs', element: <ActivityLog /> },
-      { path: 'parent-management', element: <ParentManagement /> },
-      { path: 'learner-management', element: <LearnerManagement /> },
-      { path: 'calendar', element: <CalendarPage /> },
-      { path: 'pages/account-settings', element: <AccountSetting /> },
-      { path: 'staff-setup', element: <StaffManager /> },
+      {
+        path: 'activity-logs',
+        element: (
+          <TenantProtectedRoute permission="activity_log.index">
+            <ActivityLog />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'parent-management',
+        element: (
+          <TenantProtectedRoute permission="parent.setup.index">
+            <ParentManagement />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'learner-management',
+        element: (
+          <TenantProtectedRoute permission="learner.setup.index">
+            <LearnerManagement />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'calendar',
+        element: (
+          <TenantProtectedRoute permission="calendar.index">
+            <CalendarPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'pages/account-settings',
+        element: (
+          <TenantProtectedRoute anyOf={['dashboard.profile.view', 'dashboard.profile.edit']}>
+            <AccountSetting />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'staff-setup',
+        element: (
+          <TenantProtectedRoute permission="staff.setup.index">
+            <StaffManager />
+          </TenantProtectedRoute>
+        ),
+      },
 
       {
         path: 'admission-setup',
-        element: <AdmissionSetup />,
+        element: (
+          <TenantProtectedRoute permission="admission_manager.setup.index">
+            <AdmissionSetup />
+          </TenantProtectedRoute>
+        ),
       },
       {
         path: 'admission-setup/create-batch',
-        element: <CreateAdmissionBatch />,
+        element: (
+          <TenantProtectedRoute permission="admission_manager.setup.create">
+            <CreateAdmissionBatch />
+          </TenantProtectedRoute>
+        ),
       },
       {
         path: 'admission-setup/edit-batch/:id',
-        element: <CreateAdmissionBatch />,
+        element: (
+          <TenantProtectedRoute permission="admission_manager.setup.edit">
+            <CreateAdmissionBatch />
+          </TenantProtectedRoute>
+        ),
       },
       {
         path: 'process-applications',
         element: (
-          <PageUnderDevelopment
-            title="Process Admission Under Development"
-            subtitle="The Process Admission module is currently under development. Check back soon!"
-          />
+          <TenantProtectedRoute permission="admission_manager.process.index">
+            <PageUnderDevelopment
+              title="Process Admission Under Development"
+              subtitle="The Process Admission module is currently under development. Check back soon!"
+            />
+          </TenantProtectedRoute>
         ),
       },
 
@@ -183,16 +295,62 @@ const TenantRoutes = [
       { path: 'dashboard', element: <SchoolDashboardMain /> },
 
       // ── Parent-specific routes ──
-      { path: 'admission/new-application', element: <NewApplication /> },
-      { path: 'admission/my_applications', element: <MyApplication /> },
-      { path: 'admission/my_applications/:id', element: <MyApplication /> },
-      { path: 'admission-letter', element: <AdmissionLetter /> },
-      { path: 'admission-letter/:id', element: <AdmissionLetter /> },
-      { path: 'application-tracker', element: <ApplicationTracker /> },
-      { path: 'application-tracker/:id', element: <ApplicationTracker /> },
-
-      // Admission Application
-      // { path: 'application-setup', element: <NewApplication /> },
+      {
+        path: 'admission/new-application',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.my_applications.index">
+            <NewApplication />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/my_applications',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.my_applications.index">
+            <MyApplication />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/my_applications/:id',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.my_applications.index">
+            <MyApplication />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission-letter',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.letter.index">
+            <AdmissionLetter />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission-letter/:id',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.letter.index">
+            <AdmissionLetter />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'application-tracker',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.tracker.index">
+            <ApplicationTracker />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'application-tracker/:id',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.tracker.index">
+            <ApplicationTracker />
+          </TenantProtectedRoute>
+        ),
+      },
     ],
   },
 ];

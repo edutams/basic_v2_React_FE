@@ -2,6 +2,14 @@ import { Box, Container, Typography, Button } from '@mui/material';
 import { Link } from 'react-router-dom';
 import ErrorImg from '@/assets/images/backgrounds/errorimg.svg';
 
+const hostname = window.location.hostname;
+const centralHost = import.meta.env.VITE_API_BASE_URL
+  ? new URL(import.meta.env.VITE_API_BASE_URL).hostname
+  : 'basic_v2.test';
+
+const isTenantSubdomain =
+  hostname !== centralHost && hostname !== 'localhost' && hostname !== '127.0.0.1';
+
 const Error = ({ message = 'This page you are looking for could not be found.' }) => (
   <Box
     display="flex"
@@ -22,10 +30,10 @@ const Error = ({ message = 'This page you are looking for could not be found.' }
         color="primary"
         variant="contained"
         component={Link}
-        to="/agent/dashboard"
+        to={isTenantSubdomain ? '/dashboard' : '/agent/dashboard'}
         disableElevation
       >
-        Back to Dashboard
+        Go Back
       </Button>
     </Container>
   </Box>

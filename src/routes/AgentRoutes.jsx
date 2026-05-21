@@ -1,7 +1,7 @@
 import React, { lazy, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Loadable from '@/layouts/full/shared/loadable/Loadable';
-import ProtectedRoute from '@/components/auth/LandlordProtectedRoute';
+import LandlordProtectedRoute from '@/components/auth/LandlordProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
 
 /* ***Layouts**** */
@@ -108,148 +108,148 @@ const AgentRoutes = [
   {
     path: '/agent',
     element: (
-      <ProtectedRoute>
+      <LandlordProtectedRoute>
         <FullLayout />
-      </ProtectedRoute>
+      </LandlordProtectedRoute>
     ),
     children: [
       { index: true, element: <DashboardRouteWrapper /> },
       {
         path: 'dashboard',
         element: (
-          <ProtectedRoute permission="landlord.dashboard">
+          <LandlordProtectedRoute permission="landlord.dashboard">
             <DashboardRouteWrapper />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'analytics_',
         element: (
-          <ProtectedRoute permission="landlord.tenant_analytics_for_landlord_level_one_only.index">
+          <LandlordProtectedRoute permission="landlord.tenant_analytics_for_landlord_level_one_only.index">
             <Analytics_ />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'acl_manager',
         element: (
-          <ProtectedRoute permission="landlord.acl.index">
+          <LandlordProtectedRoute permission="landlord.acl.index">
             <AlcManager />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'organization',
         element: (
-          <ProtectedRoute permission="landlord.organization.index">
+          <LandlordProtectedRoute permission="landlord.organization.index">
             <Agent />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       { path: 'view/:id', element: <ViewAgent /> },
       {
         path: 'gateway',
         element: (
-          <ProtectedRoute permission="landlord.gateway.index">
+          <LandlordProtectedRoute permission="landlord.gateway.index">
             <Gateway />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'calendar',
         element: (
-          <ProtectedRoute permission="landlord.calendar.index">
+          <LandlordProtectedRoute permission="landlord.calendar.index">
             <CalendarManagement />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'school',
         element: (
-          <ProtectedRoute permission="landlord.school.index">
+          <LandlordProtectedRoute permission="landlord.school.index">
             <SchoolDashboard />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       { path: 'view-school/:id', element: <ViewSchool /> },
       {
         path: 'organization/subscriptions',
         element: (
-          <ProtectedRoute permission="landlord.subscription.index">
+          <LandlordProtectedRoute permission="landlord.subscription.index">
             <AgentSubscriptionManagement />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'activity_log',
         element: (
-          <ProtectedRoute permission="landlord.activity_log.index">
+          <LandlordProtectedRoute permission="landlord.activity_log.index">
             <ActivityLog />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'organization/commissions',
         element: (
-          <ProtectedRoute permission="landlord.commission.index">
+          <LandlordProtectedRoute permission="landlord.commission.index">
             <CommissionManagement />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'commission/subscription',
         element: (
-          <ProtectedRoute permission="landlord.commission.index">
+          <LandlordProtectedRoute permission="landlord.commission.index">
             <MyCommissionBySubscription />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'commission/transaction',
         element: (
-          <ProtectedRoute permission="landlord.commission.index">
+          <LandlordProtectedRoute permission="landlord.commission.index">
             <MyCommissionByTransaction />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'plan',
         element: (
-          <ProtectedRoute permission="landlord.plan.index">
+          <LandlordProtectedRoute permission="landlord.plan.index">
             <PackageManager />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'phet/subject_topics',
         element: (
-          <ProtectedRoute permission="landlord.phet_simulation.index">
+          <LandlordProtectedRoute permission="landlord.phet_simulation.index">
             <SubjectAndTopics />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'phet/stimulation_links',
         element: (
-          <ProtectedRoute permission="landlord.phet_simulation.index">
+          <LandlordProtectedRoute permission="landlord.phet_simulation.index">
             <StimulationLinks />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'curriculum-manager',
         element: (
-          <ProtectedRoute permission="landlord.curriculum.index">
+          <LandlordProtectedRoute permission="landlord.curriculum.index">
             <AgentCurriculumManager />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       {
         path: 'pages/account-settings',
         element: (
-          <ProtectedRoute anyOf={['landlord.profile.view', 'landlord.profile.edit']}>
+          <LandlordProtectedRoute anyOf={['landlord.profile.view', 'landlord.profile.edit']}>
             <AccountSetting />
-          </ProtectedRoute>
+          </LandlordProtectedRoute>
         ),
       },
       { path: '*', element: <Navigate to="/auth/404" /> },

@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Spinner from '@/landlord/views/spinner/Spinner';
 import { usePermissions } from '@/context/AgentContext/permissions';
 
-const ProtectedRoute = ({ children, permission = null, anyOf = null }) => {
+const LandlordProtectedRoute = ({ children, permission = null, anyOf = null }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   const { can, canAny } = usePermissions();
@@ -30,4 +30,4 @@ const ProtectedRoute = ({ children, permission = null, anyOf = null }) => {
   return children;
 };
 
-export default ProtectedRoute;
+export default LandlordProtectedRoute;

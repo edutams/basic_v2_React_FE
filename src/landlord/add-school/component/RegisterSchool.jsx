@@ -28,11 +28,11 @@ import {
   createProspectiveTenant,
   updateProspectiveTenant,
 } from '@/api/landlord/school/schoolApi';
-// import {
-//   getSessions,
-//   getCurrentSessionForSelect,
-//   getCurrentSessionAndAbove,
-// } from '@/api/landlord/school/schoolApi';
+import {
+  getSessions,
+  getCurrentSessionForSelect,
+  getCurrentSessionAndAbove,
+} from '@/api/landlord/calendar/session-calendar';
 
 import useNotification from '@/hooks/useNotification';
 
@@ -233,20 +233,20 @@ const RegisterSchoolForm = ({
   }, []);
 
   // Fetch current session on mount
-  // useEffect(() => {
-  //   getCurrentSessionAndAbove()
-  //     .then((res) => {
-  //       const session = res.data || res;
-  //       setCurrentSession(session);
-  //       // Only prefill if user hasn't selected anything yet
-  //       if (!formData.session_id && session?.id) {
-  //         setFormData((prev) => ({ ...prev, session_id: session.id }));
-  //       }
-  //     })
-  //     .catch((error) => {
-  //       console.error('Failed to fetch current session:', error);
-  //     });
-  // }, []);
+  useEffect(() => {
+    getCurrentSessionAndAbove()
+      .then((res) => {
+        const session = res.data || res;
+        setCurrentSession(session);
+        // Only prefill if user hasn't selected anything yet
+        if (!formData.session_id && session?.id) {
+          setFormData((prev) => ({ ...prev, session_id: session.id }));
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to fetch current session:', error);
+      });
+  }, []);
 
   useEffect(() => {
     if (formData.state_id) {

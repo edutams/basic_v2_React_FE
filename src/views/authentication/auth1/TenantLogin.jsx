@@ -5,6 +5,7 @@ import PageContainer from 'src/components/container/PageContainer';
 import img1 from 'src/assets/images/backgrounds/login-bg.svg';
 import Logo from 'src/layouts/full/shared/logo/Logo';
 import AuthTenantLogin from '../authForms/AuthTenantLogin';
+import AuthForgotPassword from '../authForms/AuthForgotPassword';
 import EduTAMSLogo from 'src/assets/images/logos/EduTAMS.jpeg';
 import SchoolIcon from '@mui/icons-material/School';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -52,7 +53,7 @@ const IconCircle = ({ children }) => (
 );
 
 const TenantLogin = () => {
-  const [view, setView] = useState('login'); // 'login' | 'apply'
+  const [view, setView] = useState('login'); 
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -233,7 +234,7 @@ const TenantLogin = () => {
             flexDirection: 'column',
           }}
         >
-          {view === 'login' ? (
+          {view === 'login' && (
             <Box
               p={4}
               sx={{
@@ -251,6 +252,7 @@ const TenantLogin = () => {
                   <AuthTenantLogin
                     title="Institution Portal"
                     onCreateAccount={() => setView('apply')}
+                    onForgotPassword={() => setView('forgot-password')}
                   />
                 </Box>
               </Box>
@@ -274,8 +276,9 @@ const TenantLogin = () => {
                 />
               </Box>
             </Box>
-          ) : (
-            /* ── apply: full column width, generous padding, scrollable ── */
+          )}
+
+          {view === 'apply' && (
             <Box
               sx={{
                 flex: 1,
@@ -328,6 +331,53 @@ const TenantLogin = () => {
               <Box
                 sx={{
                   pt: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Powered by
+                </Typography>
+                <Box
+                  component="img"
+                  src={EduTAMSLogo}
+                  alt="EduTAMS"
+                  sx={{ height: 24, objectFit: 'contain' }}
+                />
+              </Box>
+            </Box>
+          )}
+
+          {view === 'forgot-password' && (
+            <Box
+              p={4}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                width: '100%',
+                maxWidth: 480,
+                mx: 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Typography variant="h5" fontWeight={700} mb={1}>
+                  Forgot your password?
+                </Typography>
+
+                <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2}>
+                  Please enter the email address associated with your account and we will email you a link to reset your password.
+                </Typography>
+
+                <AuthForgotPassword onBackToLogin={handleBackToLogin} />
+              </Box>
+
+              <Box
+                sx={{
+                  pb: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

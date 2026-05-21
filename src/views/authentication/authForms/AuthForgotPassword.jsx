@@ -7,7 +7,7 @@ import tenantApi from '../../../api/tenant_api';
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 
-const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
+const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin }) => {
   const location = useLocation();
 
   // Auto-detect paths based on current route if not explicitly provided
@@ -88,7 +88,10 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
         </Button>
 
         <Box mt={2} textAlign="center">
-          <Button component={Link} to={resolvedLoginPath} fullWidth>
+          <Button
+            {...(onBackToLogin ? { onClick: onBackToLogin } : { component: Link, to: resolvedLoginPath })}
+            fullWidth
+          >
             Back to Login
           </Button>
         </Box>

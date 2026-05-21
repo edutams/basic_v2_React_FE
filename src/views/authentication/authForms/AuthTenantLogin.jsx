@@ -20,7 +20,7 @@ import EduTAMSLogo from '../../../assets/images/logos/EduTAMS.jpeg';
 import { Avatar } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
 
-const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount }) => {
+const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPassword }) => {
   const [formData, setFormData] = useState({
     login: '',
     password: '',
@@ -185,12 +185,19 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount }) => {
               />
             </FormGroup>
             <Typography
-              component={Link}
-              to="/forgot_password"
+              {...(onForgotPassword
+                ? { component: 'button', onClick: onForgotPassword, type: 'button' }
+                : { component: Link, to: '/forgot_password' })}
               fontWeight="500"
               sx={{
                 textDecoration: 'none',
                 color: 'primary.main',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 'inherit',
               }}
             >
               Forgot Password ?

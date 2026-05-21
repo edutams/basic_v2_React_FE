@@ -7,7 +7,7 @@ import tenantApi from '../../../api/tenant_api';
 import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
 
-const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin }) => {
+const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin, onSuccess }) => {
   const location = useLocation();
 
   // Auto-detect paths based on current route if not explicitly provided
@@ -36,12 +36,16 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin }) => {
 
       setMessage(res.data.message || 'Reset link sent to your email!');
 
-      navigate(`${resolvedVerifyOtpPath}?email=${encodeURIComponent(email)}`, {
-        replace: true,
-        state: {
-          message: 'Reset link sent to your email. Please verify your OTP.',
-        },
-      });
+      if (onSuccess) {
+        onSuccess(email);
+      } else {
+        navigate(`${resolvedVerifyOtpPath}?email=${encodeURIComponent(email)}`, {
+          replace: true,
+          state: {
+            message: 'Reset link sent to your email. Please verify your OTP.',
+          },
+        });
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset link');
     } finally {

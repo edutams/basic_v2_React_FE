@@ -6,6 +6,8 @@ import img1 from 'src/assets/images/backgrounds/login-bg.svg';
 import Logo from 'src/layouts/full/shared/logo/Logo';
 import AuthTenantLogin from '../authForms/AuthTenantLogin';
 import AuthForgotPassword from '../authForms/AuthForgotPassword';
+import AuthVerifyOtp from '../authForms/AuthVerifyOtp';
+import AuthResetPassword from '../authForms/AuthResetPassword';
 import EduTAMSLogo from 'src/assets/images/logos/EduTAMS.jpeg';
 import SchoolIcon from '@mui/icons-material/School';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -54,6 +56,8 @@ const IconCircle = ({ children }) => (
 
 const TenantLogin = () => {
   const [view, setView] = useState('login'); 
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -372,7 +376,142 @@ const TenantLogin = () => {
                   Please enter the email address associated with your account and we will email you a link to reset your password.
                 </Typography>
 
-                <AuthForgotPassword onBackToLogin={handleBackToLogin} />
+                <AuthForgotPassword 
+                  onBackToLogin={handleBackToLogin}
+                  onSuccess={(email) => {
+                    setResetEmail(email);
+                    setView('verify-otp');
+                  }}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  pb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Powered by
+                </Typography>
+                <Box
+                  component="img"
+                  src={EduTAMSLogo}
+                  alt="EduTAMS"
+                  sx={{ height: 24, objectFit: 'contain' }}
+                />
+              </Box>
+            </Box>
+          )}
+
+          {view === 'verify-otp' && (
+            <Box
+              p={4}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                width: '100%',
+                maxWidth: 480,
+                mx: 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Typography variant="h5" fontWeight={700} mb={1}>
+                  Verify OTP
+                </Typography>
+
+                <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2}>
+                  Enter the OTP sent to your email to verify your identity.
+                </Typography>
+
+                <AuthVerifyOtp 
+                  emailProp={resetEmail}
+                  onSuccess={(email, token) => {
+                    setResetEmail(email);
+                    setResetToken(token);
+                    setView('reset-password');
+                  }}
+                />
+                
+                <Box mt={3}>
+                  <Button
+                    variant="text"
+                    fullWidth
+                    onClick={handleBackToLogin}
+                    sx={{ color: 'text.secondary', textTransform: 'none' }}
+                  >
+                    ← Back to Login
+                  </Button>
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  pb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Powered by
+                </Typography>
+                <Box
+                  component="img"
+                  src={EduTAMSLogo}
+                  alt="EduTAMS"
+                  sx={{ height: 24, objectFit: 'contain' }}
+                />
+              </Box>
+            </Box>
+          )}
+
+          {view === 'reset-password' && (
+            <Box
+              p={4}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+                width: '100%',
+                maxWidth: 480,
+                mx: 'auto',
+                justifyContent: 'center',
+              }}
+            >
+              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Typography variant="h5" fontWeight={700} mb={1}>
+                  Reset Password
+                </Typography>
+
+                <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2}>
+                  Enter your new password below.
+                </Typography>
+
+                <AuthResetPassword 
+                  emailProp={resetEmail}
+                  tokenProp={resetToken}
+                  onSuccess={() => {
+                    setView('login');
+                  }}
+                />
+                
+                <Box mt={3}>
+                  <Button
+                    variant="text"
+                    fullWidth
+                    onClick={handleBackToLogin}
+                    sx={{ color: 'text.secondary', textTransform: 'none' }}
+                  >
+                    ← Back to Login
+                  </Button>
+                </Box>
               </Box>
 
               <Box

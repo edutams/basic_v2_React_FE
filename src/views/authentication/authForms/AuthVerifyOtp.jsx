@@ -4,7 +4,7 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import agentApi from '../../../api/auth';
 import tenantApi from '../../../api/tenant_api';
 
-const AuthVerifyOtp = () => {
+const AuthVerifyOtp = ({ emailProp, onSuccess }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,7 +15,7 @@ const AuthVerifyOtp = () => {
   const resetPath = isAgentFlow ? '/agent/reset_password' : '/reset_password';
 
   const [formData, setFormData] = useState({
-    email: searchParams.get('email') || '',
+    email: emailProp || searchParams.get('email') || '',
     otp: '',
   });
 
@@ -41,10 +41,14 @@ const AuthVerifyOtp = () => {
           ? `?token=${reset_token}&email=${encodeURIComponent(formData.email)}`
           : `?email=${encodeURIComponent(formData.email)}`;
 
-        navigate(`${resetPath}${query}`, {
-          replace: true,
-          state: { message: 'OTP verified successfully! Please reset your password.' },
-        });
+        if (onSuccess) {
+          onSuccess(formData.email, reset_token);
+        } else {
+          navigate(`${resetPath}${query}`, {
+            replace: true,
+            state: { message: 'OTP verified successfully! Please reset your password.' },
+          });
+        }
       })
       .catch((err) => {
         setError(err.response?.data?.error || err.response?.data?.message || 'Invalid OTP');

@@ -1,4 +1,4 @@
-import api from '../../../api/tenant/tenant_api';
+import api from '@/api/tenant/tenant_api';
 
 /**
  * Validates that the given hostname belongs to a registered tenant.

@@ -1,4 +1,4 @@
-import api from '../../../api/landlord/landlord_api';
+import api from '@/api/landlord/landlord_api';
 
 export const getAllStates = async () => {
   try {

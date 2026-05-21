@@ -48,7 +48,7 @@ import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import FilterSideDrawer from 'src/components/shared/FilterSideDrawer';
 import useNotification from 'src/hooks/useNotification';
-import agentApi from 'src/api/auth';
+import agentApi from '@/api/landlord/landlord_api';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Calendar Management' }];
 
@@ -205,13 +205,13 @@ function SessionsPanel({ isLevel1 }) {
       sessions.findIndex((s) => s.id === active.id),
       sessions.findIndex((s) => s.id === over.id),
     );
-    
+
     // Update sort_order values locally to reflect the new order
     const updatedSessions = reordered.map((session, index) => ({
       ...session,
-      sort_order: index + 1
+      sort_order: index + 1,
     }));
-    
+
     setSessions(updatedSessions);
     setReordering(true);
     try {
@@ -323,7 +323,6 @@ function SessionsPanel({ isLevel1 }) {
 
   return (
     <>
-     
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Sessions</Typography>
         {isLevel1 && (
@@ -365,11 +364,7 @@ function SessionsPanel({ isLevel1 }) {
           Drag the grip handle on the left to reorder sessions.
         </Alert>
       )}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
@@ -540,13 +535,24 @@ function SessionsPanel({ isLevel1 }) {
         <DialogActions>
           <Button onClick={closeDialog}>Cancel</Button>
           <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? <CircularProgress size={20} /> : editTarget ? 'Save Changes' : 'Create Session'}
+            {submitting ? (
+              <CircularProgress size={20} />
+            ) : editTarget ? (
+              'Save Changes'
+            ) : (
+              'Create Session'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Set Current Session Dialog */}
-      <Dialog open={setCurrentOpen} onClose={() => setSetCurrentOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={setCurrentOpen}
+        onClose={() => setSetCurrentOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Set Current Session</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
@@ -677,13 +683,13 @@ function TermsPanel({ isLevel1 }) {
       terms.findIndex((t) => t.id === active.id),
       terms.findIndex((t) => t.id === over.id),
     );
-    
+
     // Update sort_order values locally to reflect the new order
     const updatedTerms = reordered.map((term, index) => ({
       ...term,
-      sort_order: index + 1
+      sort_order: index + 1,
     }));
-    
+
     setTerms(updatedTerms);
     setReordering(true);
     try {
@@ -770,7 +776,6 @@ function TermsPanel({ isLevel1 }) {
 
   return (
     <>
-      
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Academic Terms</Typography>
         {isLevel1 && (
@@ -812,11 +817,7 @@ function TermsPanel({ isLevel1 }) {
           Drag the grip handle on the left to reorder terms.
         </Alert>
       )}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
@@ -940,7 +941,13 @@ function TermsPanel({ isLevel1 }) {
         <DialogActions>
           <Button onClick={closeDialog}>Cancel</Button>
           <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? <CircularProgress size={20} /> : editTarget ? 'Save Changes' : 'Create Term'}
+            {submitting ? (
+              <CircularProgress size={20} />
+            ) : editTarget ? (
+              'Save Changes'
+            ) : (
+              'Create Term'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1130,11 +1137,7 @@ function MappingsPanel() {
         Tenants only see the session-term pairs you've mapped here.
         {mappings.length > 1 && <> Drag the grip handle to reorder.</>}
       </Alert>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>

@@ -9,9 +9,9 @@ import {
   FbLeftIconForm,
   FbRightIconForm,
   FbInputVariants,
-} from '../../../components/forms/form-layouts/index';
-import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
+} from '@/components/forms/form-layouts/index';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 
 const BCrumb = [
   {

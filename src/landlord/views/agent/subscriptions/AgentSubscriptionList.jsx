@@ -34,7 +34,7 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 
-import axios from 'src/api/auth';
+import axios from '@/api/landlord/landlord_api';
 import useNotification from 'src/hooks/useNotification';
 
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';

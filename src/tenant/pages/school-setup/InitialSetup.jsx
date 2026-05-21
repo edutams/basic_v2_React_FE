@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import tenantApi from '@/api/tenant_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 import Stage1SchoolProfile from './stages/Stage1SchoolProfile';
 import Stage2ManageSessions from './stages/Stage2ManageSessions';

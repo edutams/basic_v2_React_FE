@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Alert, CircularProgress } from '@mui/material';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import agentApi from '@/api/auth';
-import tenantApi from '@/api/tenant_api';
+import agentApi from '@/api/landlord/landlord_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const AuthResetPassword = ({ emailProp, tokenProp, onSuccess }) => {
   const [searchParams] = useSearchParams();

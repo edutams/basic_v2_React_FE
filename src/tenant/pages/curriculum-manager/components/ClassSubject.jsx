@@ -41,7 +41,7 @@ import {
   addOrUpdateClassSubject,
   fetchSubjects,
   fetchSubjectsByProgramme,
-} from '@/api/tenantCurriculumApi';
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const ClassSubject = () => {
   // Internal state

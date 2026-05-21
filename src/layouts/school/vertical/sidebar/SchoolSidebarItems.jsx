@@ -6,7 +6,7 @@ import NavCollapse from '../../../full/vertical/sidebar/NavCollapse';
 import NavGroup from '../../../full/vertical/sidebar/NavGroup/NavGroup';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useAuth } from 'src/hooks/useAuth';
-import tenantApi from 'src/api/tenant_api';
+import tenantApi from '@/api/tenant/tenant_api';
 import { PermissionProvider, usePermissions } from '../../../../context/TenantContext/permissions';
 import {
   IconChartPie,

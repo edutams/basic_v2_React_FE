@@ -48,16 +48,16 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
-import learnerApi from '@/api/learnerApi';
+import learnerApi from '@/api/tenant/learners/learnerApi';
 import {
   getClassesWithDivisions,
   createLearner,
 } from '@/context/TenantContext/services/tenant.service';
-import api from '@/api/tenant_api';
+import api from '@/api/tenant/tenant_api';
 import AddLearnerModal from '@/tenant/pages/school-setup/components/AddLearnerModal';
-import LinkParentModal from '@/components/tenant-components/learners/LinkParentModal';
-import ViewParentsModal from '@/components/tenant-components/learners/ViewParentsModal';
-import UploadLearnerModal from '@/components/tenant-components/learners/UploadLearnerModal';
+import LinkParentModal from '@/tenant/components/learners/LinkParentModal';
+import ViewParentsModal from '@/tenant/components/learners/ViewParentsModal';
+import UploadLearnerModal from '@/tenant/components/learners/UploadLearnerModal';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
 

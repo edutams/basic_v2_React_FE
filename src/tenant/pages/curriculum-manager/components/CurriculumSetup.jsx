@@ -43,7 +43,7 @@ import {
   fetchAgentCurriculums,
   fetchCurriculumSubjects,
   importSelectedCurriculums,
-} from '@/api/tenantCurriculumApi';
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
   return (

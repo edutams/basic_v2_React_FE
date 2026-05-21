@@ -47,13 +47,13 @@ import {
   IconCheck,
   IconX,
 } from '@tabler/icons-react';
-import { tenantSchemeApi } from '@/api/schemeOfWorkApi';
+import { tenantSchemeApi } from '@/api/landlord/scheme-of-work/schemeOfWorkApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchSubjectsByClass,
   fetchSubjects,
-} from '@/api/tenantCurriculumApi';
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import useNotification from '@/hooks/useNotification';
 import ReusableModal from '@/components/shared/ReusableModal';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';

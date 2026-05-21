@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../../api/auth';
+import api from '../../api/landlord/landlord_api';
 import { PermissionProvider } from './permissions';
 import axios from 'axios';
 import { CustomizerContext } from '../CustomizerContext';

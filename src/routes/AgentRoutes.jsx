@@ -25,7 +25,7 @@ const Gateway = Loadable(lazy(() => import('@/landlord/views/gateway/Gateway')))
 const CalendarManagement = Loadable(
   lazy(() => import('@/landlord/views/calendar/CalendarManagement')),
 );
-const ViewSchool = Loadable(lazy(() => import('@/components/add-school/component/ViewSchool')));
+const ViewSchool = Loadable(lazy(() => import('@/landlord/add-school/component/ViewSchool')));
 const AgentSubscriptionManagement = Loadable(
   lazy(() => import('@/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
 );

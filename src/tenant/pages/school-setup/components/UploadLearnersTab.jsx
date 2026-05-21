@@ -23,10 +23,10 @@ import {
   createLearner,
   getStudentCountByClass,
 } from '@/context/TenantContext/services/tenant.service';
-import api from '@/api/tenant_api';
+import api from '@/api/tenant/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
-import UploadLearnerModal from '@/components/tenant-components/learners/UploadLearnerModal';
+import UploadLearnerModal from '@/tenant/components/learners/UploadLearnerModal';
 
 const HINTS = ['add', 'download', 'upload'];
 

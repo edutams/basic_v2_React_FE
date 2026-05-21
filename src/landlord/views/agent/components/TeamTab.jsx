@@ -30,8 +30,8 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { IconUsers } from '@tabler/icons-react';
-import AgentModal from '../../../../components/add-agent/components/AgentModal';
-import agentApi from '../../../../api/agent';
+import AgentModal from '../../../add-agent/components/AgentModal';
+import agentApi from '../../../../api/landlord/organizations/agent';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../../context/AgentContext/auth.jsx';
 

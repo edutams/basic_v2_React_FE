@@ -32,7 +32,7 @@ import { IconEye, IconPencil } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
-import AdmissionLetterEditor from '@/components/tenant-components/admission/setup/AdmissionLetterEditor';
+import AdmissionLetterEditor from '@/tenant/components/admission/setup/AdmissionLetterEditor';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
 

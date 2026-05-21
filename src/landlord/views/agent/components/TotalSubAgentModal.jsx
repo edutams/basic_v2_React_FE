@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
 import StandardModal from 'src/components/shared/StandardModal';
-import agentApi from 'src/api/agent';
+import agentApi from '@/api/landlord/organizations/agent';
 import { AuthContext } from 'src/context/AgentContext/auth';
 
 const TotalSubAgentModal = ({ open, onClose, orgId }) => {
@@ -127,11 +127,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
         />
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Level</InputLabel>
-          <Select
-            value={levelInput}
-            label="Level"
-            onChange={(e) => setLevelInput(e.target.value)}
-          >
+          <Select value={levelInput} label="Level" onChange={(e) => setLevelInput(e.target.value)}>
             <MenuItem value="">All Levels</MenuItem>
             {levelOptions.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
@@ -140,12 +136,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
             ))}
           </Select>
         </FormControl>
-        <Button
-          variant="contained"
-          size="small"
-          onClick={handleSearch}
-          sx={{ height: 40 }}
-        >
+        <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
           Search
         </Button>
       </Box>
@@ -179,9 +170,21 @@ const TotalSubAgentModal = ({ open, onClose, orgId }) => {
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <Avatar
                         src={org.organization_logo}
-                        sx={{ width: 36, height: 36, fontSize: '14px', bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          fontSize: '14px',
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          fontWeight: 700,
+                        }}
                       >
-                        {org.organization_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                        {org.organization_name
+                          ?.split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .slice(0, 2)
+                          .toUpperCase()}
                       </Avatar>
                       <Box>
                         <Typography fontWeight={700} fontSize="14px">

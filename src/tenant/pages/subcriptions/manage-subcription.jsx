@@ -31,7 +31,7 @@ import TransactionModal from '../../../components/subcription/TransactionModal';
 import InvoiceModal from '../../../components/subcription/InvoiceModal';
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
-import tenantApi from 'src/api/tenant_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const DUMMY_ROWS = [
   {

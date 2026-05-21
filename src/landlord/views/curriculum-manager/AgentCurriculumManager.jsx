@@ -12,7 +12,7 @@ import {
   createSubjectRecord,
   updateSubjectRecord,
   deleteSubjectRecord,
-} from '@/api/curriculumApi';
+} from '@/api/landlord/curriculum/curriculumApi';
 import AgentSchemeOfWork from '../scheme-of-work/AgentSchemeOfWork';
 import {
   Box,

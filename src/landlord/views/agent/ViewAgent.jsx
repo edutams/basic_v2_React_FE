@@ -15,13 +15,13 @@ import ManageTeamTab from './components/ManageTeamTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import TotalSubAgentModal from './components/TotalSubAgentModal';
-import AgentModal from '../../../components/add-agent/components/AgentModal';
+import AgentModal from '../../add-agent/components/AgentModal';
 import ReusableModal from '../../../components/shared/ReusableModal';
-import RegisterSchoolForm from '../../../components/add-school/component/RegisterSchool';
+import RegisterSchoolForm from '../../add-school/component/RegisterSchool';
 
 import { AuthContext } from '../../../context/AgentContext/auth';
 
-import agentApi from '../../../api/agent';
+import agentApi from '../../../api/landlord/organizations/agent';
 import SchoolsTab from './components/SchoolsTab/SchoolsTab';
 
 const ViewAgent = () => {

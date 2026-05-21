@@ -3,19 +3,19 @@ import { Grid } from '@mui/material';
 import Typography from '@mui/material/Typography';
 
 // components
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from 'src/components/container/PageContainer';
-import ParentCard from 'src/components/shared/ParentCard';
-import BasicLayout from '../../../components/forms/form-horizontal/BasicLayout';
-import BasicIcons from '../../../components/forms/form-horizontal/BasicIcons';
-import FormSeparator from '../../../components/forms/form-horizontal/FormSeparator';
-import FormLabelAlignment from '../../../components/forms/form-horizontal/FormLabelAlignment';
-import CollapsibleForm from '../../../components/forms/form-horizontal/CollapsibleForm';
-import FormTabs from '../../../components/forms/form-horizontal/FormTabs';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import ParentCard from '@/components/shared/ParentCard';
+import BasicLayout from '@/components/forms/form-horizontal/BasicLayout';
+import BasicIcons from '@/components/forms/form-horizontal/BasicIcons';
+import FormSeparator from '@/components/forms/form-horizontal/FormSeparator';
+import FormLabelAlignment from '@/components/forms/form-horizontal/FormLabelAlignment';
+import CollapsibleForm from '@/components/forms/form-horizontal/CollapsibleForm';
+import FormTabs from '@/components/forms/form-horizontal/FormTabs';
 
-import BasicLayoutCode from '../../../components/forms/form-horizontal/code/BasicIconsCode';
-import BasicIconsCode from '../../../components/forms/form-horizontal/code/BasicIconsCode';
-import FormSeparatorCode from '../../../components/forms/form-horizontal/code/FormSeparatorCode';
+import BasicLayoutCode from '@/components/forms/form-horizontal/code/BasicIconsCode';
+import BasicIconsCode from '@/components/forms/form-horizontal/code/BasicIconsCode';
+import FormSeparatorCode from '@/components/forms/form-horizontal/code/FormSeparatorCode';
 
 const BCrumb = [
   {

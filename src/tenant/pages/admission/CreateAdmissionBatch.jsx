@@ -18,7 +18,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
-import AdmissionLetterEditor from '@/components/tenant-components/admission/setup/AdmissionLetterEditor';
+import AdmissionLetterEditor from '@/tenant/components/admission/setup/AdmissionLetterEditor';
 
 const CREATE_BCRUMB = [
   { to: '/', title: 'Home' },

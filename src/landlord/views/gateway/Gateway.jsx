@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
-import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import GatewayTable from '../../../components/gateway/components/GatewayTable';
-import GatewayModal from '../../../components/gateway/components/GatewayModal';
-import ConfirmationDialog from '../../../components/shared/ConfirmationDialog';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import GatewayTable from '@/landlord/gateway/components/GatewayTable';
+import GatewayModal from '@/landlord/gateway/components/GatewayModal';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import PropTypes from 'prop-types';
-import { useNotification } from '../../../hooks/useNotification';
-import gatewayApi from '../../../api/gatewayApi';
+import { useNotification } from '@/hooks/useNotification';
+import gatewayApi from '@/api/landlord/gateway/gatewayApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Gateways' }];
 

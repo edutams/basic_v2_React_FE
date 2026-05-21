@@ -11,8 +11,8 @@ import AuthResetPassword from '../authForms/AuthResetPassword';
 import EduTAMSLogo from '@/assets/images/logos/EduTAMS.jpeg';
 import SchoolIcon from '@mui/icons-material/School';
 import ReCAPTCHA from 'react-google-recaptcha';
-import ParentForm from '@/components/tenant-components/parents/ParentForm';
-import guardianApi from '@/api/parentApi';
+import ParentForm from '@/tenant/components/parents/ParentForm';
+import guardianApi from '@/api/tenant/guardians/parentApi';
 
 const cardStyle = {
   p: 3,

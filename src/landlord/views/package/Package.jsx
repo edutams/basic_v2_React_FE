@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import PackageManagement from '../../../components/add-package/components/PackageManagement';
-import { useNotification } from '../../../hooks/useNotification';
-import eduTierApi from '../../../api/eduTierApi';
+import PackageManagement from '../../add-package/components/PackageManagement';
+import { useNotification } from '@/hooks/useNotification';
+import eduTierApi from '@/api/landlord/edutier/eduTierApi';
 
 const Package = () => {
   const [packages, setPackages] = useState([]);

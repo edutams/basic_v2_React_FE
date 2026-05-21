@@ -41,10 +41,10 @@ import PageContainer from '../../../components/container/PageContainer';
 import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../components/shared/ParentCard';
 import FilterSideDrawer from '../../../components/shared/FilterSideDrawer';
-import AgentModal from '../../../components/add-agent/components/AgentModal';
+import AgentModal from '../../add-agent/components/AgentModal';
 import EmptyTableState from '../../../components/shared/EmptyTableState';
 import useTableEmptyState from '../../../hooks/useTableEmptyState';
-import agentApi from '../../../api/agent';
+import agentApi from '../../../api/landlord/organizations/agent';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
@@ -266,7 +266,7 @@ const ActionMenuCell = ({
   );
 };
 
-import locationApi from '../../../api/location';
+import locationApi from '../../../api/landlord/location/location';
 import useNotification from '../../../hooks/useNotification';
 
 const Agent = () => {

@@ -24,7 +24,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
-import agentApi from '@/api/agent';
+import agentApi from '@/api/landlord/organizations/agent';
 import {
   flexRender,
   getCoreRowModel,

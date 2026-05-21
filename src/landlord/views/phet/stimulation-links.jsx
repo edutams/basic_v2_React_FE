@@ -21,12 +21,12 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import ParentCard from 'src/components/shared/ParentCard';
-import StimulationLinkModal from '../../../components/phet/stimulation-links/StimulationLinkModal';
-import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
-import useNotification from 'src/hooks/useNotification';
-import phetApi from 'src/api/phet/phetApi';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import ParentCard from '@/components/shared/ParentCard';
+import StimulationLinkModal from '@/landlord/phet/stimulation-links/StimulationLinkModal';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import useNotification from '@/hooks/useNotification';
+import phetApi from '@/api/landlord/phet/phetApi';
 
 const StimulationLinks = () => {
   return (

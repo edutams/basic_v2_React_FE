@@ -46,7 +46,7 @@ import {
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
-import staffApi from '@/api/staffApi';
+import staffApi from '@/api/tenant/staffs/staffApi';
 import useNotification from '@/hooks/useNotification';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import StaffModal from './StaffModal';

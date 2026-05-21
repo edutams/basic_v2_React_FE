@@ -1,24 +1,24 @@
 import React from 'react';
 import { Grid } from '@mui/material';
 
-import ParentCard from '../../../../components/shared/ParentCard';
-import ChildCard from '../../../../components/shared/ChildCard';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../../components/container/PageContainer';
+import ParentCard from '@/components/shared/ParentCard';
+import ChildCard from '@/components/shared/ChildCard';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
 
-import CustomExSwitch from '../../../../components/forms/form-elements/switch/Custom';
-import DefaultSwitch from '../../../../components/forms/form-elements/switch/Default';
-import DefaultLabelSwitch from '../../../../components/forms/form-elements/switch/DefaultLabel';
-import SizesSwitch from '../../../../components/forms/form-elements/switch/Sizes';
-import ColorsSwitch from '../../../../components/forms/form-elements/switch/Colors';
-import PositionSwitch from '../../../../components/forms/form-elements/switch/Position';
+import CustomExSwitch from '@/components/forms/form-elements/switch/Custom';
+import DefaultSwitch from '@/components/forms/form-elements/switch/Default';
+import DefaultLabelSwitch from '@/components/forms/form-elements/switch/DefaultLabel';
+import SizesSwitch from '@/components/forms/form-elements/switch/Sizes';
+import ColorsSwitch from '@/components/forms/form-elements/switch/Colors';
+import PositionSwitch from '@/components/forms/form-elements/switch/Position';
 
-import CustomSwitchCode from '../../../../components/forms/form-elements/switch/code/CustomSwitchCode';
-import DefaultSwitchCode from '../../../../components/forms/form-elements/switch/code/DefaultSwitchCode';
-import DefaultLabelSwitchCode from '../../../../components/forms/form-elements/switch/code/DefaultLabelSwitchCode';
-import SizesSwitchCode from '../../../../components/forms/form-elements/switch/code/SizesSwitchCode';
-import ColorsSwitchCode from '../../../../components/forms/form-elements/switch/code/ColorsSwitchCode';
-import PositionSwitchCode from '../../../../components/forms/form-elements/switch/code/PositionSwitchCode';
+import CustomSwitchCode from '@/components/forms/form-elements/switch/code/CustomSwitchCode';
+import DefaultSwitchCode from '@/components/forms/form-elements/switch/code/DefaultSwitchCode';
+import DefaultLabelSwitchCode from '@/components/forms/form-elements/switch/code/DefaultLabelSwitchCode';
+import SizesSwitchCode from '@/components/forms/form-elements/switch/code/SizesSwitchCode';
+import ColorsSwitchCode from '@/components/forms/form-elements/switch/code/ColorsSwitchCode';
+import PositionSwitchCode from '@/components/forms/form-elements/switch/code/PositionSwitchCode';
 
 const BCrumb = [
   {

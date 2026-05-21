@@ -21,8 +21,6 @@ import {
   Button,
   Tabs,
   Tab,
-  TextField,
-  InputAdornment,
   CircularProgress,
   Alert,
 } from '@mui/material';
@@ -32,13 +30,13 @@ import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 
 import ParentCard from '@/components/shared/ParentCard';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
-import PermissionAttachmentModal from '@/components/tenant-components/alc-manager/SchoolPermissionAttachmentModal';
-import ViewPermissionModal from '@/components/tenant-components/alc-manager/SchoolViewPermissionModal';
-import NewRoleModal from '@/components/tenant-components/alc-manager/SchoolNewRoleModal';
-import SchoolAssignmentManagement from '@/components/tenant-components/alc-manager/SchoolAssignmentManagement';
-import SchoolAccessAnalysis from '@/components/tenant-components/alc-manager/SchoolAccessAnalysis';
+import PermissionAttachmentModal from '@/tenant/components/alc-manager/SchoolPermissionAttachmentModal';
+import ViewPermissionModal from '@/tenant/components/alc-manager/SchoolViewPermissionModal';
+import NewRoleModal from '@/tenant/components/alc-manager/SchoolNewRoleModal';
+import SchoolAssignmentManagement from '@/tenant/components/alc-manager/SchoolAssignmentManagement';
+import SchoolAccessAnalysis from '@/tenant/components/alc-manager/SchoolAccessAnalysis';
 
-import aclApi from '@/api/aclApi';
+import aclApi from '@/api/tenant/acl/aclApi';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'ACL Manager' }];
 

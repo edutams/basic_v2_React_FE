@@ -1,10 +1,10 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import ParentCard from '../../../../components/shared/ParentCard';
-import ChildCard from '../../../../components/shared/ChildCard';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../../components/container/PageContainer';
-import CustomTextField from '../../../../components/forms/theme-elements/CustomTextField';
+import ParentCard from '@/components/shared/ParentCard';
+import ChildCard from '@/components/shared/ChildCard';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { MobileDateTimePicker } from '@mui/x-date-pickers/MobileDateTimePicker';
@@ -14,9 +14,9 @@ import dayjs from 'dayjs';
 import { renderTimeViewClock } from '@mui/x-date-pickers/timeViewRenderers';
 
 // codeModel
-import BasicDateTimeCode from '../../../../components/forms/form-elements/date-time/code/BasicDateTimeCode';
-import DifferentDesignCode from '../../../../components/forms/form-elements/date-time/code/DifferentDesignCode';
-import TimepickerCode from '../../../../components/forms/form-elements/date-time/code/TimepickerCode';
+import BasicDateTimeCode from '@/components/forms/form-elements/date-time/code/BasicDateTimeCode';
+import DifferentDesignCode from '@/components/forms/form-elements/date-time/code/DifferentDesignCode';
+import TimepickerCode from '@/components/forms/form-elements/date-time/code/TimepickerCode';
 
 const BCrumb = [
   {

@@ -28,7 +28,7 @@ import {
   IconArchive,
 } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
-import api from '../../../../api/auth';
+import api from '../../../../api/landlord/landlord_api';
 
 const iconMapper = {
   ChartPie: IconChartPie,

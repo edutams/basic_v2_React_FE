@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import ModuleManagement from '../../../components/add-modules/components/ModuleManagement';
-import { useNotification } from '../../../hooks/useNotification';
-import eduTierApi from '../../../api/eduTierApi';
+import ModuleManagement from '../../add-modules/components/ModuleManagement';
+import { useNotification } from '@/hooks/useNotification';
+import eduTierApi from '@/api/landlord/edutier/eduTierApi';
 
 const Modules = () => {
   const [modules, setModules] = useState([]);

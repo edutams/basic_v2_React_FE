@@ -32,7 +32,7 @@ import {
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import ArrowHint from '@/components/shared/ArrowHint';
 import AddTeacherModal from './AddTeacherModal';
-import UploadTeacherModal from '@/components/tenant-components/staff/UploadTeacherModal';
+import UploadTeacherModal from '@/tenant/components/staff/UploadTeacherModal';
 import {
   getAllStaff,
   createStaff,

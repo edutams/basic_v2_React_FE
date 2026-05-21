@@ -12,19 +12,19 @@ import {
   IconButton,
 } from '@mui/material';
 import { IconRefresh } from '@tabler/icons-react';
-import OverviewCards from '../../../components/analytics_/OverviewCards';
-import SchoolGrowthChart from '../../../components/analytics_/SchoolGrowthChart';
-import EnrollmentChart from '../../../components/analytics_/EnrollmentChart';
-import OnboardingFunnel from '../../../components/analytics_/OnboardingFunnel';
-import GeographicBreakdown from '../../../components/analytics_/GeographicBreakdown';
-import PerSchoolTable from '../../../components/analytics_/PerSchoolTable';
+import OverviewCards from '../../analytics_/OverviewCards';
+import SchoolGrowthChart from '../../analytics_/SchoolGrowthChart';
+import EnrollmentChart from '../../analytics_/EnrollmentChart';
+import OnboardingFunnel from '../../analytics_/OnboardingFunnel';
+import GeographicBreakdown from '../../analytics_/GeographicBreakdown';
+import PerSchoolTable from '../../analytics_/PerSchoolTable';
 import {
   fetchOverview,
   fetchSchoolGrowth,
   fetchEnrollments,
   fetchGeographic,
   fetchOnboardingFunnel,
-} from '../../../api/analyticsApi';
+} from '../../../api/landlord/analytics/analyticsApi';
 
 const Analytics = () => {
   const [activeTab, setActiveTab] = useState(0);

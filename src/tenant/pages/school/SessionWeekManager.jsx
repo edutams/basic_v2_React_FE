@@ -17,7 +17,7 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import useNotification from '@/hooks/useNotification';
-import tenantApi from '@/api/tenant_api';
+import tenantApi from '@/api/tenant/tenant_api';
 import ManageSessions from '@/tenant/components/ManageSessions';
 import ManageWeeks from '@/tenant/components/ManageWeeks';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';

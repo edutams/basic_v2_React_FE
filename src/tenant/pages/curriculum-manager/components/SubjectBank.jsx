@@ -42,7 +42,7 @@ import {
   updateSubjectGroup,
   deleteSubjectGroup,
   fetchCurriculums,
-} from '@/api/tenantCurriculumApi';
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const SubjectBank = () => {
   // Internal state

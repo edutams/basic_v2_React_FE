@@ -3,24 +3,24 @@ import { CardContent } from '@mui/material';
 import { Grid } from '@mui/material';
 
 // common components
-import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import ChildCard from '../../../components/shared/ChildCard';
-import BlankCard from '../../../components/shared/BlankCard';
-import Logo from '../../../layouts/full/shared/logo/Logo';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import ChildCard from '@/components/shared/ChildCard';
+import BlankCard from '@/components/shared/BlankCard';
+import Logo from '@/layouts/full/shared/logo/Logo';
 
 // custom components
-import FVLogin from '../../../components/forms/form-validation/FVLogin';
-import FVRegister from '../../../components/forms/form-validation/FVRegister';
-import FVOnLeave from '../../../components/forms/form-validation/FVOnLeave';
-import FVRadio from '../../../components/forms/form-validation/FVRadio';
-import FVCheckbox from '../../../components/forms/form-validation/FVCheckbox';
-import FVSelect from '../../../components/forms/form-validation/FVSelect';
+import FVLogin from '@/components/forms/form-validation/FVLogin';
+import FVRegister from '@/components/forms/form-validation/FVRegister';
+import FVOnLeave from '@/components/forms/form-validation/FVOnLeave';
+import FVRadio from '@/components/forms/form-validation/FVRadio';
+import FVCheckbox from '@/components/forms/form-validation/FVCheckbox';
+import FVSelect from '@/components/forms/form-validation/FVSelect';
 
-import OnLeaveCode from '../../../components/forms/form-validation/code/OnLeaveCode';
-import SelectCode from '../../../components/forms/form-validation/code/SelectCode';
-import RadioCode from '../../../components/forms/form-validation/code/RadioCode';
-import CheckboxCode from '../../../components/forms/form-validation/code/CheckboxCode';
+import OnLeaveCode from '@/components/forms/form-validation/code/OnLeaveCode';
+import SelectCode from '@/components/forms/form-validation/code/SelectCode';
+import RadioCode from '@/components/forms/form-validation/code/RadioCode';
+import CheckboxCode from '@/components/forms/form-validation/code/CheckboxCode';
 
 const BCrumb = [
   {

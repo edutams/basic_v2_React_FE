@@ -31,7 +31,7 @@ import {
   getClassArms,
   getClassesWithDivisions,
 } from '@/context/TenantContext/services/tenant.service';
-import learnerApi from '@/api/learnerApi';
+import learnerApi from '@/api/tenant/learners/learnerApi';
 import { useNotification } from '@/hooks/useNotification';
 import dayjs from 'dayjs';
 

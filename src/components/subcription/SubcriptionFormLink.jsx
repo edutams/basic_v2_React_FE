@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import { stimulationLinkValidationSchema } from './validation/subcriptionValidationSchema';
-import tenantApi from 'src/api/tenant_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const SubcriptionFormLink = ({
   initialValues = {},
@@ -90,7 +90,9 @@ const SubcriptionFormLink = ({
   const filteredPlans = form.studentpopulation
     ? options.plans.filter((plan) => {
         const data = plan?.plan?.data
-          ? (typeof plan.plan.data === 'string' ? JSON.parse(plan.plan.data) : plan.plan.data)
+          ? typeof plan.plan.data === 'string'
+            ? JSON.parse(plan.plan.data)
+            : plan.plan.data
           : {};
         return data.students_limit === form.studentpopulation;
       })
@@ -101,7 +103,7 @@ const SubcriptionFormLink = ({
     try {
       await stimulationLinkValidationSchema.validate(form, { abortEarly: false });
       setErrors({});
-      // Ensure we map student population correctly if needed, 
+      // Ensure we map student population correctly if needed,
       // but for now let's just send the form
       onSubmit(form);
     } catch (validationError) {
@@ -215,8 +217,8 @@ const SubcriptionFormLink = ({
           !form.studentpopulation
             ? 'Select a student population first to see matching plans'
             : filteredPlans.length === 0
-            ? 'No plans available for the selected student population'
-            : errors.availableplan
+              ? 'No plans available for the selected student population'
+              : errors.availableplan
         }
         select
         disabled={!form.studentpopulation || filteredPlans.length === 0}

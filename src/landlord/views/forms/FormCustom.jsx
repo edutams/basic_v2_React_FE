@@ -13,25 +13,25 @@ import {
 import { Grid } from '@mui/material';
 import { SliderThumb } from '@mui/material/Slider';
 
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import CustomTextField from '../../../components/forms/theme-elements/CustomTextField';
-import CustomSelect from '../../../components/forms/theme-elements/CustomSelect';
-import CustomSlider from '../../../components/forms/theme-elements/CustomSlider';
-import CustomRangeSlider from '../../../components/forms/theme-elements/CustomRangeSlider';
-import CustomSwitch from '../../../components/forms/theme-elements/CustomSwitch';
-import CustomDisabledButton from '../../../components/forms/theme-elements/CustomDisabledButton';
-import CustomOutlinedButton from '../../../components/forms/theme-elements/CustomOutlinedButton';
-import CustomFormLabel from '../../../components/forms/theme-elements/CustomFormLabel';
-import CustomCheckbox from '../../../components/forms/theme-elements/CustomCheckbox';
-import CustomRadio from '../../../components/forms/theme-elements/CustomRadio';
-import ParentCard from '../../../components/shared/ParentCard';
+import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
+import CustomSelect from '@/components/forms/theme-elements/CustomSelect';
+import CustomSlider from '@/components/forms/theme-elements/CustomSlider';
+import CustomRangeSlider from '@/components/forms/theme-elements/CustomRangeSlider';
+import CustomSwitch from '@/components/forms/theme-elements/CustomSwitch';
+import CustomDisabledButton from '@/components/forms/theme-elements/CustomDisabledButton';
+import CustomOutlinedButton from '@/components/forms/theme-elements/CustomOutlinedButton';
+import CustomFormLabel from '@/components/forms/theme-elements/CustomFormLabel';
+import CustomCheckbox from '@/components/forms/theme-elements/CustomCheckbox';
+import CustomRadio from '@/components/forms/theme-elements/CustomRadio';
+import ParentCard from '@/components/shared/ParentCard';
 import { IconVolume, IconVolume2 } from '@tabler/icons';
 
 const CustomThumbComponent = (props) => {

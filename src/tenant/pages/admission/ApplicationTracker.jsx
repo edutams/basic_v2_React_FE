@@ -4,9 +4,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import ward from '@/assets/images/backgrounds/ward.png';
 
-import TrackerHeader from '@/components/tenant-components/admission/tracker/TrackerHeader';
-import TrackerMain from '@/components/tenant-components/admission/tracker/TrackerMain';
-import TrackerSidebar from '@/components/tenant-components/admission/tracker/TrackerSidebar';
+import TrackerHeader from '@/tenant/components/admission/tracker/TrackerHeader';
+import TrackerMain from '@/tenant/components/admission/tracker/TrackerMain';
+import TrackerSidebar from '@/tenant/components/admission/tracker/TrackerSidebar';
 
 const ApplicationTracker = () => {
   const navigate = useNavigate();

@@ -23,9 +23,9 @@ import {
 import { IconClipboardCheck, IconSearch, IconTrophy, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
-import AdmissionBatchModal from '@/components/tenant-components/admission/AdmissionBatchModal';
+import AdmissionBatchModal from '@/tenant/components/admission/AdmissionBatchModal';
 
-import ApplicationCard from '@/components/tenant-components/admission/status/ApplicationCard';
+import ApplicationCard from '@/tenant/components/admission/status/ApplicationCard';
 
 const MOCK_APPLICATIONS = [
   {

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Box, Button, Alert, CircularProgress, Stack } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import agentApi from '@/api/auth';
-import tenantApi from '@/api/tenant_api';
+import agentApi from '@/api/landlord/landlord_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '@/components/forms/theme-elements/CustomFormLabel';

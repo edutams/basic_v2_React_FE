@@ -29,7 +29,7 @@ import config from 'src/context/config';
 import { useContext } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-import api from '../../../../api/auth';
+import api from '../../../../api/landlord/landlord_api';
 import axios from 'axios';
 import { AuthContext } from '../../../../context/AgentContext/auth';
 

@@ -28,14 +28,14 @@ import {
 } from '@mui/material';
 import { IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
-import { fetchCurrentSession, fetchSessionTerms } from '@/api/sessionTermApi';
+import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import {
   fetchHolidays,
   createHolidays,
   deleteHoliday,
   fetchHolidayStatistics,
-} from '@/api/holidayApi';
-import { fetchTermDateRange } from '@/api/weekApi';
+} from '@/api/tenant/holidays/holidayApi';
+import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 

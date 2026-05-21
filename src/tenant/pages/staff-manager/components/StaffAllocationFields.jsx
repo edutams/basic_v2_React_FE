@@ -18,7 +18,7 @@ import {
   fetchCurriculums,
   fetchSubjects,
   fetchSessionTerms,
-} from '@/api/tenantCurriculumApi';
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import useNotification from '@/hooks/useNotification';
 
 const StaffAllocationFields = ({

@@ -12,12 +12,12 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
-import WardDetailForm from '@/components/tenant-components/admission/WardDetailForm';
-import AcademicInfoForm from '@/components/tenant-components/admission/AcademicInfoForm';
-import AdmissionBatchModal from '@/components/tenant-components/admission/AdmissionBatchModal';
-import PaymentStep from '@/components/tenant-components/admission/PaymentStep';
-import DocumentsStep from '@/components/tenant-components/admission/DocumentsStep';
-import SubmitStep from '@/components/tenant-components/admission/SubmitStep';
+import WardDetailForm from '@/tenant/components/admission/WardDetailForm';
+import AcademicInfoForm from '@/tenant/components/admission/AcademicInfoForm';
+import AdmissionBatchModal from '@/tenant/components/admission/AdmissionBatchModal';
+import PaymentStep from '@/tenant/components/admission/PaymentStep';
+import DocumentsStep from '@/tenant/components/admission/DocumentsStep';
+import SubmitStep from '@/tenant/components/admission/SubmitStep';
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 const STEPS = [

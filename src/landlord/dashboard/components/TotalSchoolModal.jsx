@@ -14,7 +14,7 @@ import {
 import { IconSchool, IconUsers, IconLayoutDashboard } from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import Chart from 'react-apexcharts';
-import agentApi from '@/api/agent';
+import agentApi from '@/api/landlord/organizations/agent';
 
 const SchoolsOverviewModal = ({ open, onClose, stats }) => {
   const theme = useTheme();

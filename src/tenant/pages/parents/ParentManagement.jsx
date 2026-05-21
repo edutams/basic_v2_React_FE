@@ -57,12 +57,12 @@ import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
 import LinkIcon from '@mui/icons-material/Link';
 
-import guardianApi from 'src/api/parentApi';
+import guardianApi from '@/api/tenant/guardians/parentApi';
 import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
-import ParentModal from 'src/components/tenant-components/parents/ParentModal';
-import UploadParentModal from 'src/components/tenant-components/parents/UploadParentModal';
-import LinkWardModal from 'src/components/tenant-components/parents/LinkWardModal';
-import ViewWardsModal from 'src/components/tenant-components/parents/ViewWardsModal';
+import ParentModal from '@/tenant/components/parents/ParentModal';
+import UploadParentModal from '@/tenant/components/parents/UploadParentModal';
+import LinkWardModal from '@/tenant/components/parents/LinkWardModal';
+import ViewWardsModal from '@/tenant/components/parents/ViewWardsModal';
 import StatCard from 'src/components/shared/StatCard';
 import { useNavigate } from 'react-router-dom';
 import { TenantAuthContext } from '../../../context/TenantContext/auth';

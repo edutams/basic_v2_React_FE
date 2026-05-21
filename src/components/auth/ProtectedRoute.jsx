@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import Spinner from '../../landlord/views/spinner/Spinner';
+import { useAuth } from '@/hooks/useAuth';
+import Spinner from '@/landlord/views/spinner/Spinner';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();

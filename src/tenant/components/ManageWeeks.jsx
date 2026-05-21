@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
 import useNotification from '@/hooks/useNotification';
-import tenantApi from '@/api/tenant_api';
+import tenantApi from '@/api/tenant/tenant_api';
 
 const ManageWeeks = ({ sessionTermId }) => {
   const notify = useNotification();

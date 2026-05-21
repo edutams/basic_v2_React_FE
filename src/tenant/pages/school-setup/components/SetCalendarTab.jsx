@@ -37,8 +37,13 @@ import {
   subscribeSessionTerm,
   fetchTerms,
   toggleSessionTermStatus,
-} from '@/api/sessionTermApi';
-import { fetchWeeks, autoGenerateWeeks, toggleWeekStatus, deleteWeek } from '@/api/weekApi';
+} from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchWeeks,
+  autoGenerateWeeks,
+  toggleWeekStatus,
+  deleteWeek,
+} from '@/api/tenant/term-weeks/weekApi';
 
 const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
   const { refreshTenantInfo } = useContext(TenantAuthContext);

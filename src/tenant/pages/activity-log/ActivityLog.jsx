@@ -25,7 +25,7 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 import BlankCard from '@/components/shared/BlankCard';
-import tenantApi from '@/api/tenant_api';
+import tenantApi from '@/api/tenant/tenant_api';
 import { IconSearch, IconEye, IconX } from '@tabler/icons-react';
 
 const BCrumb = [

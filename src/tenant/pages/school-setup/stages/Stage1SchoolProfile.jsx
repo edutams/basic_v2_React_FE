@@ -1,10 +1,10 @@
 import { useState, useEffect, useContext } from 'react';
 import { Box, Typography, Link, CircularProgress, useTheme, Button } from '@mui/material';
 import { IconUpload, IconPhoto } from '@tabler/icons-react';
-import { getTenantInfo } from '@/api/tenant_api';
+import { getTenantInfo } from '@/api/tenant/tenant_api';
 import { getFullImageUrl } from '@/helpers/ImageHelper';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-import UploadLogoModal from '@/components/tenant-components/school/UploadLogoModal';
+import UploadLogoModal from '@/tenant/components/school/UploadLogoModal';
 import SetupShell from './SetupShell';
 import ParentCard from '@/components/shared/ParentCard';
 import ArrowHint from '@/components/shared/ArrowHint';

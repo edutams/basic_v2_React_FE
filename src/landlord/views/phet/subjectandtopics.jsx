@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Grid } from '@mui/material';
-import SubjectTable from '../../../components/phet/subjectandtopics/SubjectTable';
-import TopicPanel from '../../../components/phet/subjectandtopics/TopicPanel';
-import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import AddSubjectModal from '../../../components/phet/subjectandtopics/AddSubjectModal';
-import SubjectModal from '../../../components/phet/subjectandtopics/SubjectModal';
-import TopicModal from '../../../components/phet/subjectandtopics/TopicModal';
-import ConfirmationDialog from '../../../components/shared/ConfirmationDialog';
+import SubjectTable from '@/landlord/phet/subjectandtopics/SubjectTable';
+import TopicPanel from '@/landlord/phet/subjectandtopics/TopicPanel';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import AddSubjectModal from '@/landlord/phet/subjectandtopics/AddSubjectModal';
+import SubjectModal from '@/landlord/phet/subjectandtopics/SubjectModal';
+import TopicModal from '@/landlord/phet/subjectandtopics/TopicModal';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import useNotification from 'src/hooks/useNotification';
-import phetApi from 'src/api/phet/phetApi';
-import ParentCard from 'src/components/shared/ParentCard';
+import phetApi from '@/api/landlord/phet/phetApi';
+import ParentCard from '@/components/shared/ParentCard';
 
 const BCrumb = [
   { to: '/', title: 'Home' },

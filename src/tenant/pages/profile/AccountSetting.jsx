@@ -10,12 +10,12 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 
 // components
-import AccountTab from '@/components/pages/tenant/account-setting/AccountTab';
 import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons';
 import BlankCard from '@/components/shared/BlankCard';
-import NotificationTab from '@/components/pages/tenant/account-setting/NotificationTab';
-import BillsTab from '@/components/pages/tenant/account-setting/BillsTab';
-import SecurityTab from '@/components/pages/tenant/account-setting/SecurityTab';
+import NotificationTab from '@/tenant/components/account-setting/NotificationTab';
+import BillsTab from '@/tenant/components/account-setting/BillsTab';
+import SecurityTab from '@/tenant/components/account-setting/SecurityTab';
+import AccountTab from '@/tenant/components/account-setting/AccountTab';
 
 const BCrumb = [
   {

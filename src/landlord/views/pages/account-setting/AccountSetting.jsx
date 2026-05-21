@@ -1,6 +1,6 @@
 import * as React from 'react';
-import PageContainer from 'src/components/container/PageContainer';
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 
 import { Grid } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
@@ -10,12 +10,12 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 
 // components
-import AccountTab from '../../../../components/pages/account-setting/AccountTab';
+import AccountTab from '@/landlord/account-setting/AccountTab';
 import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons';
-import BlankCard from '../../../../components/shared/BlankCard';
-import NotificationTab from '../../../../components/pages/account-setting/NotificationTab';
-import BillsTab from '../../../../components/pages/account-setting/BillsTab';
-import SecurityTab from '../../../../components/pages/account-setting/SecurityTab';
+import BlankCard from '@/components/shared/BlankCard';
+import NotificationTab from '@/landlord/account-setting/NotificationTab';
+import BillsTab from '@/landlord/account-setting/BillsTab';
+import SecurityTab from '@/landlord/account-setting/SecurityTab';
 
 const BCrumb = [
   {

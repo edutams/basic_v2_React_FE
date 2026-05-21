@@ -21,15 +21,15 @@ import {
   TextField,
   CircularProgress,
 } from '@mui/material';
-import api from '../../../api/auth';
+import api from '@/api/landlord/landlord_api';
 import { IconSchool } from '@tabler/icons-react';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../components/container/PageContainer';
-import ParentCard from '../../../components/shared/ParentCard';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import ParentCard from '@/components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ReusableModal from '../../../components/shared/ReusableModal';
-import ConfirmationDialog from '../../../components/shared/ConfirmationDialog';
-import FormDialog from '../../../components/shared/FormDialog';
+import ReusableModal from '@/components/shared/ReusableModal';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import FormDialog from '@/components/shared/FormDialog';
 
 import PlanDistributionModal from '../agent/components/PlanDistributionModal';
 

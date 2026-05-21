@@ -6,23 +6,23 @@ import Slider from '@mui/material/Slider';
 import Typography from '@mui/material/Typography';
 import { SliderThumb } from '@mui/material/Slider';
 
-import ParentCard from '../../../../components/shared/ParentCard';
-import ChildCard from '../../../../components/shared/ChildCard';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../../components/container/PageContainer';
-import CustomRangeSlider from '../../../../components/forms/theme-elements/CustomRangeSlider';
-import CustomSlider from '../../../../components/forms/theme-elements/CustomSlider';
+import ParentCard from '@/components/shared/ParentCard';
+import ChildCard from '@/components/shared/ChildCard';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import CustomRangeSlider from '@/components/forms/theme-elements/CustomRangeSlider';
+import CustomSlider from '@/components/forms/theme-elements/CustomSlider';
 import { IconVolume, IconVolume2 } from '@tabler/icons';
 import { Stack } from '@mui/system';
 
 // codeModel
-import CustomSliderCode from '../../../../components/forms/form-elements/slider/code/CustomSliderCode';
-import VolumesliderCode from '../../../../components/forms/form-elements/slider/code/VolumesliderCode';
-import RangesliderCode from '../../../../components/forms/form-elements/slider/code/RangesliderCode';
-import DefaultsliderCode from '../../../../components/forms/form-elements/slider/code/DefaultsliderCode';
-import DisabledSliderCode from '../../../../components/forms/form-elements/slider/code/DisabledSliderCode';
-import DiscreteSliderCode from '../../../../components/forms/form-elements/slider/code/DiscreteSliderCode';
-import TemperatureRangeCode from '../../../../components/forms/form-elements/slider/code/TemperatureRangeCode';
+import CustomSliderCode from '@/components/forms/form-elements/slider/code/CustomSliderCode';
+import VolumesliderCode from '@/components/forms/form-elements/slider/code/VolumesliderCode';
+import RangesliderCode from '@/components/forms/form-elements/slider/code/RangesliderCode';
+import DefaultsliderCode from '@/components/forms/form-elements/slider/code/DefaultsliderCode';
+import DisabledSliderCode from '@/components/forms/form-elements/slider/code/DisabledSliderCode';
+import DiscreteSliderCode from '@/components/forms/form-elements/slider/code/DiscreteSliderCode';
+import TemperatureRangeCode from '@/components/forms/form-elements/slider/code/TemperatureRangeCode';
 
 const BCrumb = [
   {

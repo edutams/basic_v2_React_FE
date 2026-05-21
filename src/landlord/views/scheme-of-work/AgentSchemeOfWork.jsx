@@ -51,14 +51,14 @@ import {
   IconCheck,
   IconX,
 } from '@tabler/icons-react';
-import { landlordSchemeApi } from '@/api/schemeOfWorkApi';
+import { landlordSchemeApi } from '@/api/landlord/scheme-of-work/schemeOfWorkApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchSubjectsByProgramme,
   fetchSubjects,
   fetchCurriculums,
-} from '@/api/curriculumApi';
+} from '@/api/landlord/curriculum/curriculumApi';
 import useNotification from '@/hooks/useNotification';
 import ReusableModal from '@/components/shared/ReusableModal';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';

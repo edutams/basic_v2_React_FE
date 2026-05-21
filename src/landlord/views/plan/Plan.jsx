@@ -26,17 +26,17 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { IconSchool } from '@tabler/icons-react';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../components/container/PageContainer';
-import ParentCard from '../../../components/shared/ParentCard';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import ParentCard from '@/components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ReusableModal from '../../../components/shared/ReusableModal';
-import PlanForm from '../../../components/add-plan/component/PlanForm';
-import ConfirmationDialog from '../../../components/shared/ConfirmationDialog';
-import PackageModal from '../../../components/package/PackageModal';
-import ManageModule from '../../../components/add-plan/component/ManageModule';
-import ManagePackagesModal from '../../../components/plan/ManagePackagesModal';
-import eduTierApi from '../../../api/eduTierApi';
+import ReusableModal from '@/components/shared/ReusableModal';
+import PlanForm from '../../add-plan/component/PlanForm';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import PackageModal from '@/components/package/PackageModal';
+import ManageModule from '../../add-plan/component/ManageModule';
+import ManagePackagesModal from '@/landlord/plan/ManagePackagesModal';
+import eduTierApi from '@/api/landlord/edutier/eduTierApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
 

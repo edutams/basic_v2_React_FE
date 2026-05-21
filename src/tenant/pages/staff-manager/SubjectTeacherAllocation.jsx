@@ -19,14 +19,14 @@ import {
 } from '@mui/material';
 import { IconTrash } from '@tabler/icons-react';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
-import staffApi from '@/api/staffApi';
-import allocationApi from '@/api/allocationApi';
+import staffApi from '@/api/tenant/staffs/staffApi';
+import allocationApi from '@/api/tenant/allocations/allocationApi';
 import {
   fetchProgrammes,
   fetchSubjectsByProgramme,
   fetchClassArmsByProgramme,
-} from '@/api/tenantCurriculumApi';
-import { fetchCurrentSession, fetchSessionTerms } from '@/api/sessionTermApi';
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
 
 const SubjectTeacherAllocation = () => {

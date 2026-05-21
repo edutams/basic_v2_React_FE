@@ -36,7 +36,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useAuth } from '@/hooks/useAuth';
 
 import ReusableModal from '@/components/shared/ReusableModal';
-import RegisterSchoolForm from '@/components/add-school/component/RegisterSchool';
+import RegisterSchoolForm from '@/landlord/add-school/component/RegisterSchool';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 
 import {
@@ -47,7 +47,7 @@ import {
   updateSchool,
   approveSchoolOnboarding,
 } from '@/context/AgentContext/services/school.service';
-import agentApi from '@/api/agent';
+import agentApi from '@/api/landlord/organizations/agent';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';

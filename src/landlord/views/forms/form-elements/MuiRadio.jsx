@@ -1,25 +1,25 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import ParentCard from '../../../../components/shared/ParentCard';
-import ChildCard from '../../../../components/shared/ChildCard';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import PageContainer from '../../../../components/container/PageContainer';
+import ParentCard from '@/components/shared/ParentCard';
+import ChildCard from '@/components/shared/ChildCard';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
 
 // custom
-import ColorLabelRadio from '../../../../components/forms/form-elements/radio/ColorLabel';
-import DefaultRadio from '../../../../components/forms/form-elements/radio/Default';
-import ColorsRadio from '../../../../components/forms/form-elements/radio/Colors';
-import SizesRadio from '../../../../components/forms/form-elements/radio/Sizes';
-import CustomExRadio from '../../../../components/forms/form-elements/radio/Custom';
-import PositionRadio from '../../../../components/forms/form-elements/radio/Position';
+import ColorLabelRadio from '@/components/forms/form-elements/radio/ColorLabel';
+import DefaultRadio from '@/components/forms/form-elements/radio/Default';
+import ColorsRadio from '@/components/forms/form-elements/radio/Colors';
+import SizesRadio from '@/components/forms/form-elements/radio/Sizes';
+import CustomExRadio from '@/components/forms/form-elements/radio/Custom';
+import PositionRadio from '@/components/forms/form-elements/radio/Position';
 
 // codeModel
-import CustomExRadioCode from '../../../../components/forms/form-elements/radio/code/CustomExRadioCode';
-import ColorLabelRadioCode from '../../../../components/forms/form-elements/radio/code/ColorLabelRadioCode';
-import DefaultRadioCode from '../../../../components/forms/form-elements/radio/code/DefaultRadioCode';
-import ColorsRadioCode from '../../../../components/forms/form-elements/radio/code/ColorsRadioCode';
-import SizesRadioCode from '../../../../components/forms/form-elements/radio/code/SizesRadioCode';
-import PositionRadioCode from '../../../../components/forms/form-elements/radio/code/PositionRadioCode';
+import CustomExRadioCode from '@/components/forms/form-elements/radio/code/CustomExRadioCode';
+import ColorLabelRadioCode from '@/components/forms/form-elements/radio/code/ColorLabelRadioCode';
+import DefaultRadioCode from '@/components/forms/form-elements/radio/code/DefaultRadioCode';
+import ColorsRadioCode from '@/components/forms/form-elements/radio/code/ColorsRadioCode';
+import SizesRadioCode from '@/components/forms/form-elements/radio/code/SizesRadioCode';
+import PositionRadioCode from '@/components/forms/form-elements/radio/code/PositionRadioCode';
 
 const BCrumb = [
   {

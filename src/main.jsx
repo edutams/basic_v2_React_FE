@@ -17,7 +17,7 @@ if (tenantValidation?.status === false && window.location.pathname !== '/school-
   window.location.replace('/school-not-found');
 }
 
-// ✅ Lazy import — TenantAuthProvider only loads on tenant subdomains
+// Lazy import — TenantAuthProvider only loads on tenant subdomains
 const TenantAuthProvider = isTenantSubdomain
   ? lazy(() =>
       import('./context/TenantContext/auth').then((m) => ({

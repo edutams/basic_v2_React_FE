@@ -1,11 +1,7 @@
 import { useContext } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
 import { Outlet } from 'react-router-dom';
-import Header from './vertical/header/Header';
 import Sidebar from './vertical/sidebar/Sidebar';
-import Customizer from './shared/customizer/Customizer';
-import Navigation from './horizontal/navbar/Navigation';
-import HorizontalHeader from './horizontal/header/Header';
 import ScrollToTop from '@/components/shared/ScrollToTop';
 import LoadingBar from '@/LoadingBar';
 import DashboardFooter from '@/components/shared/DashboardFooter';
@@ -59,12 +55,6 @@ const FullLayout = () => {
             }),
           }}
         >
-          {/* ------------------------------------------- */}
-          {/* Header */}
-          {/* ------------------------------------------- */}
-          {activeLayout === 'horizontal' ? <HorizontalHeader /> : <Header />}
-          {/* PageContent */}
-          {activeLayout === 'horizontal' ? <Navigation /> : ''}
           <Container
             sx={{
               maxWidth: isLayout === 'boxed' ? '1300px !important' : '100%!important',

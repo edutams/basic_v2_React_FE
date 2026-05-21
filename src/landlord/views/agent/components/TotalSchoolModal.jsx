@@ -66,7 +66,7 @@ const TopCard = ({ label, value, icon: Icon, iconBg, valueColor }) => {
   );
 };
 
-const TotalSchoolModal = ({ open, onClose, stats, refreshKey }) => {
+const TotalSchoolModal = ({ open, onClose, stats, refreshKey, organizationId }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [tabValue, setTabValue] = useState('1');
@@ -84,6 +84,9 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey }) => {
     setChartLoading(true);
     try {
       const params = { year: selectedYear };
+      if (organizationId) {
+        params.organizationId = organizationId;
+      }
       const res = await agentApi.getSchoolChartData(params);
       if (res.status) {
         setChartData(res.data);
@@ -103,6 +106,9 @@ const TotalSchoolModal = ({ open, onClose, stats, refreshKey }) => {
       const params = { year: selectedYear };
       if (selectedAgent && selectedAgent !== 'All') {
         params.agent = selectedAgent;
+      }
+      if (organizationId) {
+        params.organizationId = organizationId;
       }
       const res = await agentApi.getSchoolChartData(params);
       if (res.status) {

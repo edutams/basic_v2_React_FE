@@ -7,16 +7,14 @@ import tenantApi from '@/api/tenant_api';
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '@/components/forms/theme-elements/CustomFormLabel';
 
-const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
+const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin, onSuccess }) => {
   const location = useLocation();
 
-  // Auto-detect paths based on current route if not explicitly provided
   const isAgentFlow = location.pathname.startsWith('/agent');
   const resolvedLoginPath = loginPath ?? (isAgentFlow ? '/agent/login' : '/login');
   const resolvedVerifyOtpPath =
     verifyOtpPath ?? (isAgentFlow ? '/agent/verify_otp' : '/verify_otp');
 
-  // Agent uses the landlord axios instance; tenant uses tenantApi (adds X-Tenant-ID header)
   const api = isAgentFlow ? agentApi : tenantApi;
   const apiEndpoint = isAgentFlow ? '/v1/landlord/auth/forgot_password' : '/forgot_password';
   const [email, setEmail] = useState('');
@@ -37,12 +35,16 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
 
       setMessage(res.data.message || 'Reset link sent to your email!');
 
-      navigate(`${resolvedVerifyOtpPath}?email=${encodeURIComponent(email)}`, {
-        replace: true,
-        state: {
-          message: 'Reset link sent to your email. Please verify your OTP.',
-        },
-      });
+      if (onSuccess) {
+        onSuccess(email);
+      } else {
+        navigate(`${resolvedVerifyOtpPath}?email=${encodeURIComponent(email)}`, {
+          replace: true,
+          state: {
+            message: 'Reset link sent to your email. Please verify your OTP.',
+          },
+        });
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset link');
     } finally {
@@ -89,7 +91,10 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath }) => {
         </Button>
 
         <Box mt={2} textAlign="center">
-          <Button component={Link} to={resolvedLoginPath} fullWidth>
+          <Button
+            {...(onBackToLogin ? { onClick: onBackToLogin } : { component: Link, to: resolvedLoginPath })}
+            fullWidth
+          >
             Back to Login
           </Button>
         </Box>

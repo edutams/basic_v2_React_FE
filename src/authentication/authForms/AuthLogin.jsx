@@ -20,7 +20,7 @@ import { useNotification } from '@/hooks/useNotification';
 
 // import AuthSocialButtons from './AuthSocialButtons';
 
-const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forgot_password' }) => {
+const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forgot_password', onForgotPassword }) => {
   const [formData, setFormData] = useState({
     login: '',
     password: '',
@@ -168,12 +168,19 @@ const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forg
               />
             </FormGroup>
             <Typography
-              component={Link}
-              to={forgotPasswordPath}
+              {...(onForgotPassword
+                ? { component: 'button', onClick: onForgotPassword, type: 'button' }
+                : { component: Link, to: forgotPasswordPath })}
               fontWeight="500"
               sx={{
                 textDecoration: 'none',
                 color: 'primary.main',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 'inherit',
               }}
             >
               Forgot Password ?

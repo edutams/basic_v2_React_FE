@@ -4,7 +4,7 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import agentApi from '@/api/auth';
 import tenantApi from '@/api/tenant_api';
 
-const AuthResetPassword = () => {
+const AuthResetPassword = ({ emailProp, tokenProp, onSuccess }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -15,8 +15,8 @@ const AuthResetPassword = () => {
   const loginPath = isAgentFlow ? '/agent/login' : '/login';
 
   const [formData, setFormData] = useState({
-    email: searchParams.get('email') || '',
-    token: searchParams.get('token') || '',
+    email: emailProp || searchParams.get('email') || '',
+    token: tokenProp || searchParams.get('token') || '',
     password: '',
     password_confirmation: '',
   });
@@ -41,10 +41,14 @@ const AuthResetPassword = () => {
       localStorage.removeItem('access_token');
       setFormData({ email: '', token: '', password: '', password_confirmation: '' });
 
-      navigate(loginPath, {
-        replace: true,
-        state: { message: 'Password reset successful! Please login with your new password.' },
-      });
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        navigate(loginPath, {
+          replace: true,
+          state: { message: 'Password reset successful! Please login with your new password.' },
+        });
+      }
     } catch (err) {
       setError(
         err.response?.data?.error || err.response?.data?.message || 'Failed to reset password',

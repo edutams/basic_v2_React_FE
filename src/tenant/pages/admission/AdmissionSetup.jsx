@@ -344,6 +344,22 @@ const AdmissionSetup = () => {
     setMenuTerm(null);
   };
 
+  const handleToggleTermStatus = () => {
+    if (!menuTerm) return;
+    setSessionTerms((prev) =>
+      prev.map((term) =>
+        term.session_term_id === menuTerm.session_term_id
+          ? { ...term, status: term.status === 'active' ? 'inactive' : 'active' }
+          : term
+      )
+    );
+    showSnackbar(
+      `Term ${menuTerm.display_name} ${menuTerm.status === 'active' ? 'deactivated' : 'activated'} successfully`,
+      'success'
+    );
+    handleMenuClose();
+  };
+
   const handleToggleBatchStatus = () => {
     const batch = confirmToggleBatch.batch;
     setConfirmToggleBatch({ open: false, batch: null });
@@ -639,6 +655,12 @@ const AdmissionSetup = () => {
           }}
         >
           View Batches
+        </MenuItem>
+        <MenuItem
+          sx={{ color: menuTerm?.status === 'active' ? 'error.main' : 'success.main' }}
+          onClick={handleToggleTermStatus}
+        >
+          {menuTerm?.status === 'active' ? 'Deactivate Term' : 'Activate Term'}
         </MenuItem>
       </Menu>
 

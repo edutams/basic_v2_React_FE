@@ -114,7 +114,14 @@ const AgentRoutes = [
     ),
     children: [
       { index: true, element: <DashboardRouteWrapper /> },
-      { path: 'dashboard', element: <DashboardRouteWrapper /> },
+      {
+        path: 'dashboard',
+        element: (
+          <ProtectedRoute permission="landlord.dashboard">
+            <DashboardRouteWrapper />
+          </ProtectedRoute>
+        ),
+      },
       {
         path: 'analytics_',
         element: (
@@ -166,7 +173,7 @@ const AgentRoutes = [
       },
       { path: 'view-school/:id', element: <ViewSchool /> },
       {
-        path: 'organization/subscription',
+        path: 'organization/subscriptions',
         element: (
           <ProtectedRoute permission="landlord.subscription.index">
             <AgentSubscriptionManagement />
@@ -237,7 +244,14 @@ const AgentRoutes = [
           </ProtectedRoute>
         ),
       },
-      { path: 'pages/account-settings', element: <AccountSetting /> },
+      {
+        path: 'pages/account-settings',
+        element: (
+          <ProtectedRoute anyOf={['landlord.profile.view', 'landlord.profile.edit']}>
+            <AccountSetting />
+          </ProtectedRoute>
+        ),
+      },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

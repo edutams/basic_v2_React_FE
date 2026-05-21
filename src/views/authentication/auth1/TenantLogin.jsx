@@ -260,25 +260,6 @@ const TenantLogin = () => {
                   />
                 </Box>
               </Box>
-              <Box
-                sx={{
-                  pb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">
-                  Powered by
-                </Typography>
-                <Box
-                  component="img"
-                  src={EduTAMSLogo}
-                  alt="EduTAMS"
-                  sx={{ height: 24, objectFit: 'contain' }}
-                />
-              </Box>
             </Box>
           )}
 
@@ -331,26 +312,6 @@ const TenantLogin = () => {
                   }
                 />
               </Box>
-
-              <Box
-                sx={{
-                  pt: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">
-                  Powered by
-                </Typography>
-                <Box
-                  component="img"
-                  src={EduTAMSLogo}
-                  alt="EduTAMS"
-                  sx={{ height: 24, objectFit: 'contain' }}
-                />
-              </Box>
             </Box>
           )}
 
@@ -382,26 +343,6 @@ const TenantLogin = () => {
                     setResetEmail(email);
                     setView('verify-otp');
                   }}
-                />
-              </Box>
-
-              <Box
-                sx={{
-                  pb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">
-                  Powered by
-                </Typography>
-                <Box
-                  component="img"
-                  src={EduTAMSLogo}
-                  alt="EduTAMS"
-                  sx={{ height: 24, objectFit: 'contain' }}
                 />
               </Box>
             </Box>
@@ -449,26 +390,6 @@ const TenantLogin = () => {
                   </Button>
                 </Box>
               </Box>
-
-              <Box
-                sx={{
-                  pb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">
-                  Powered by
-                </Typography>
-                <Box
-                  component="img"
-                  src={EduTAMSLogo}
-                  alt="EduTAMS"
-                  sx={{ height: 24, objectFit: 'contain' }}
-                />
-              </Box>
             </Box>
           )}
 
@@ -513,28 +434,28 @@ const TenantLogin = () => {
                   </Button>
                 </Box>
               </Box>
-
-              <Box
-                sx={{
-                  pb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                }}
-              >
-                <Typography variant="caption" color="text.secondary">
-                  Powered by
-                </Typography>
-                <Box
-                  component="img"
-                  src={EduTAMSLogo}
-                  alt="EduTAMS"
-                  sx={{ height: 24, objectFit: 'contain' }}
-                />
-              </Box>
             </Box>
           )}
+
+          <Box
+            sx={{
+              pb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              Powered by
+            </Typography>
+            <Box
+              component="img"
+              src={EduTAMSLogo}
+              alt="EduTAMS"
+              sx={{ height: 24, objectFit: 'contain' }}
+            />
+          </Box>
         </Grid>
       </Grid>
     </PageContainer>

@@ -10,12 +10,10 @@ import CustomFormLabel from '../../../components/forms/theme-elements/CustomForm
 const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin, onSuccess }) => {
   const location = useLocation();
 
-  // Auto-detect paths based on current route if not explicitly provided
   const isAgentFlow = location.pathname.startsWith('/agent');
   const resolvedLoginPath = loginPath ?? (isAgentFlow ? '/agent/login' : '/login');
   const resolvedVerifyOtpPath = verifyOtpPath ?? (isAgentFlow ? '/agent/verify_otp' : '/verify_otp');
 
-  // Agent uses the landlord axios instance; tenant uses tenantApi (adds X-Tenant-ID header)
   const api = isAgentFlow ? agentApi : tenantApi;
   const apiEndpoint = isAgentFlow ? '/v1/landlord/auth/forgot_password' : '/forgot_password';
   const [email, setEmail] = useState('');

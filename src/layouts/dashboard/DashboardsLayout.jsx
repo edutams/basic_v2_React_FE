@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import ProtectedRoute from '../../components/auth/ProtectedRoute';
+import ProtectedRoute from '@/components/auth/LandlordProtectedRoute';
 
 const DashboardsLayout = () => {
   return (

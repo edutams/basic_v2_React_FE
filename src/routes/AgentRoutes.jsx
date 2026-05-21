@@ -126,7 +126,6 @@ const AgentRoutes = [
       { path: 'calendar', element: <CalendarManagement /> },
       { path: 'school', element: <SchoolDashboard /> },
       { path: 'view-school/:id', element: <ViewSchool /> },
-      { path: 'school/sub-school/:id', element: <ViewSchool /> },
       { path: 'organization/subscriptions', element: <AgentSubscriptionManagement /> },
       { path: 'subscription', element: <AgentSubscriptionManagement /> },
       { path: 'activity_log', element: <ActivityLog /> },

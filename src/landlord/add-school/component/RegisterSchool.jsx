@@ -27,13 +27,13 @@ import {
   getLgasByState,
   createProspectiveTenant,
   updateProspectiveTenant,
-} from '../../../context/AgentContext/services/school.service';
+} from '@/context/AgentContext/services/school.service';
 import {
   getSessions,
   getCurrentSessionForSelect,
   getCurrentSessionAndAbove,
-} from '../../../context/AgentContext/services/session.service';
-import useNotification from '../../../hooks/useNotification';
+} from '@/context/AgentContext/services/session.service';
+import useNotification from '@/hooks/useNotification';
 
 import { IMaskInput } from 'react-imask';
 
@@ -231,21 +231,6 @@ const RegisterSchoolForm = ({
       .catch(() => notify.error('Failed to load states'));
   }, []);
 
-  // Fetch current session on mount
-  // useEffect(() => {
-  //   getCurrentSessionAndAbove()
-  //     .then((res) => {
-  //       const session = res.data || res;
-  //       setCurrentSession(session);
-  //       // Only prefill if user hasn't selected anything yet
-  //       if (!formData.session_id && session?.id) {
-  //         setFormData((prev) => ({ ...prev, session_id: session.id }));
-  //       }
-  //     })
-  //     .catch((error) => {
-  //       console.error('Failed to fetch current session:', error);
-  //     });
-  // }, []);
   // Fetch current session on mount
   useEffect(() => {
     getCurrentSessionAndAbove()

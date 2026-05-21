@@ -27,10 +27,7 @@ import { useFormik } from 'formik';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import {
-  getClassArms,
-  getClassesWithDivisions,
-} from '@/context/TenantContext/services/tenant.service';
+import { getClassArms, getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
 import learnerApi from '@/api/tenant/learners/learnerApi';
 import { useNotification } from '@/hooks/useNotification';
 import dayjs from 'dayjs';

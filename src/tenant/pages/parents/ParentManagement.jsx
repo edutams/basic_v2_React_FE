@@ -58,7 +58,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import LinkIcon from '@mui/icons-material/Link';
 
 import guardianApi from '@/api/tenant/guardians/parentApi';
-import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
 import ParentModal from '@/tenant/components/parents/ParentModal';
 import UploadParentModal from '@/tenant/components/parents/UploadParentModal';
 import LinkWardModal from '@/tenant/components/parents/LinkWardModal';

@@ -22,10 +22,10 @@ const Error = ({ message = 'This page you are looking for could not be found.' }
         color="primary"
         variant="contained"
         component={Link}
-        to="/agent/login"
+        to="/agent/dashboard"
         disableElevation
       >
-        Go Back to Home
+        Back to Dashboard
       </Button>
     </Container>
   </Box>

@@ -62,7 +62,7 @@ import {
   approveProspectiveTenant,
   rejectProspectiveTenant,
   deleteProspectiveTenant,
-} from '@/context/AgentContext/services/school.service';
+} from '@/api/landlord/school/schoolApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'School' }];
 

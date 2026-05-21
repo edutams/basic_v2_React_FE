@@ -21,7 +21,7 @@ import {
   Close as CloseIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
 import { useNotification } from 'src/hooks/useNotification';
 import guardianApi from '@/api/tenant/guardians/parentApi';
 import PropTypes from 'prop-types';

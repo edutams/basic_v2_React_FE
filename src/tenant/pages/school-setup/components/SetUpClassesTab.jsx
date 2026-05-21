@@ -23,10 +23,7 @@ import {
   Alert,
   useTheme,
 } from '@mui/material';
-import {
-  getClassesWithDivisions,
-  saveClasses,
-} from '@/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions, saveClasses } from '@/api/tenant/set-up/tenant-setup';
 import ArrowHint from '@/components/shared/ArrowHint';
 
 const SetUpClassesTab = forwardRef(

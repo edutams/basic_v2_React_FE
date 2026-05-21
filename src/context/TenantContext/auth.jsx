@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '@/api/tenant/tenant_api';
 import { PermissionProvider } from './permissions';
-import { validateTenantDomain } from './services/tenant.service';
+import { validateTenantDomain } from '../../api/tenant/set-up/tenant-setup';
 import { CustomizerContext } from '../CustomizerContext';
 import tenantApi from '@/api/tenant/tenant_api';
 import impersonationApi from '@/api/tenant/impersonation/impersonationApi';

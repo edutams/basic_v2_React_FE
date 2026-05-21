@@ -28,7 +28,7 @@ import {
   School as SchoolIcon,
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import { getLearnersByClass } from '@/context/TenantContext/services/tenant.service';
+import { getLearnersByClass } from '@/api/tenant/set-up/tenant-setup';
 
 const LearnerListModal = ({ open, onClose, classId, className }) => {
   const [learners, setLearners] = useState([]);

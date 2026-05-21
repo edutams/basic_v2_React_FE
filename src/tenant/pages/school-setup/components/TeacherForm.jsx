@@ -14,10 +14,7 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import PropTypes from 'prop-types';
-import {
-  getClassesWithDivisions,
-  getClassArms,
-} from '@/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions, getClassArms } from '@/api/tenant/set-up/tenant-setup';
 import { teacherValidationSchema } from './validation/teacherValidationSchema';
 import { IMaskInput } from 'react-imask';
 

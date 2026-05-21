@@ -6,11 +6,11 @@ import Sidebar from './vertical/sidebar/Sidebar';
 import Customizer from './shared/customizer/Customizer';
 import Navigation from './horizontal/navbar/Navigation';
 import HorizontalHeader from './horizontal/header/Header';
-import ScrollToTop from '../../components/shared/ScrollToTop';
-import LoadingBar from '../../LoadingBar';
-import DashboardFooter from '../../components/shared/DashboardFooter';
-import { CustomizerContext } from 'src/context/CustomizerContext';
-import config from 'src/context/config';
+import ScrollToTop from '@/components/shared/ScrollToTop';
+import LoadingBar from '@/LoadingBar';
+import DashboardFooter from '@/components/shared/DashboardFooter';
+import { CustomizerContext } from '@/context/CustomizerContext';
+import config from '@/context/config';
 
 const MainWrapper = styled('div')(() => ({
   display: 'flex',

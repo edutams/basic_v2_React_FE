@@ -40,7 +40,7 @@ import {
   deleteStaff,
   downloadTeacherTemplate,
   uploadTeachers,
-} from '@/context/TenantContext/services/tenant.service';
+} from '@/api/tenant/set-up/tenant-setup';
 
 // Hints fire in sequence: download → upload → add, 5s each
 const HINTS = ['download', 'upload', 'add'];

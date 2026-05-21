@@ -28,7 +28,7 @@ import { useFormik } from 'formik';
 import { parentValidationSchema } from './validation/parentValidationSchema';
 import PropTypes from 'prop-types';
 import guardianApi from '@/api/tenant/guardians/parentApi';
-import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
 import { useNotification } from 'src/hooks/useNotification';
 
 const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {

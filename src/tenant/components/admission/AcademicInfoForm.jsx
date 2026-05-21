@@ -17,36 +17,163 @@ import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import PropTypes from 'prop-types';
 import { academicInfoValidationSchema } from './validation/academicInfoValidationSchema';
-import { getClassesWithDivisions } from 'src/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
 import { useNotification } from 'src/hooks/useNotification';
 
 // ── Nigerian states + LGAs  ───────────────────────────────────────
 const NIGERIA_STATES = [
-  { name: 'Abia',        lgas: ['Aba North','Aba South','Arochukwu','Bende','Ikwuano','Isiala Ngwa North','Isiala Ngwa South','Isuikwuato','Obi Ngwa','Ohafia','Osisioma','Ugwunagbo','Ukwa East','Ukwa West','Umuahia North','Umuahia South','Umu Nneochi'] },
-  { name: 'Adamawa',     lgas: ['Demsa','Fufure','Ganye','Gombi','Hong','Jada','Lamurde','Madagali','Maiha','Mayo Belwa','Michika','Mubi North','Mubi South','Numan','Shelleng','Song','Toungo','Yola North','Yola South'] },
-  { name: 'Akwa Ibom',   lgas: ['Abak','Eastern Obolo','Eket','Esit Eket','Essien Udim','Etim Ekpo','Etinan','Ibeno','Ibesikpo Asutan','Ibiono-Ibom','Ika','Ikono','Ikot Abasi','Ikot Ekpene','Ini','Itu','Mbo','Mkpat-Enin','Nsit-Atai','Nsit-Ibom','Nsit-Ubium','Obot Akara','Okobo','Onna','Oron','Oruk Anam','Udung-Uko','Ukanafun','Uruan','Urue-Offong/Oruko','Uyo'] },
-  { name: 'Anambra',     lgas: ['Aguata','Anambra East','Anambra West','Anaocha','Awka North','Awka South','Ayamelum','Dunukofia','Ekwusigo','Idemili North','Idemili South','Ihiala','Njikoka','Nnewi North','Nnewi South','Ogbaru','Onitsha North','Onitsha South','Orumba North','Orumba South','Oyi'] },
-  { name: 'Bauchi',      lgas: ['Alkaleri','Bauchi','Bogoro','Damban','Darazo','Dass','Gamawa','Ganjuwa','Giade','Itas/Gadau','Katagum','Kirfi','Misau','Ningi','Shira','Tafawa Balewa','Toro','Warji','Zaki'] },
+  {
+    name: 'Abia',
+    lgas: [
+      'Aba North',
+      'Aba South',
+      'Arochukwu',
+      'Bende',
+      'Ikwuano',
+      'Isiala Ngwa North',
+      'Isiala Ngwa South',
+      'Isuikwuato',
+      'Obi Ngwa',
+      'Ohafia',
+      'Osisioma',
+      'Ugwunagbo',
+      'Ukwa East',
+      'Ukwa West',
+      'Umuahia North',
+      'Umuahia South',
+      'Umu Nneochi',
+    ],
+  },
+  {
+    name: 'Adamawa',
+    lgas: [
+      'Demsa',
+      'Fufure',
+      'Ganye',
+      'Gombi',
+      'Hong',
+      'Jada',
+      'Lamurde',
+      'Madagali',
+      'Maiha',
+      'Mayo Belwa',
+      'Michika',
+      'Mubi North',
+      'Mubi South',
+      'Numan',
+      'Shelleng',
+      'Song',
+      'Toungo',
+      'Yola North',
+      'Yola South',
+    ],
+  },
+  {
+    name: 'Akwa Ibom',
+    lgas: [
+      'Abak',
+      'Eastern Obolo',
+      'Eket',
+      'Esit Eket',
+      'Essien Udim',
+      'Etim Ekpo',
+      'Etinan',
+      'Ibeno',
+      'Ibesikpo Asutan',
+      'Ibiono-Ibom',
+      'Ika',
+      'Ikono',
+      'Ikot Abasi',
+      'Ikot Ekpene',
+      'Ini',
+      'Itu',
+      'Mbo',
+      'Mkpat-Enin',
+      'Nsit-Atai',
+      'Nsit-Ibom',
+      'Nsit-Ubium',
+      'Obot Akara',
+      'Okobo',
+      'Onna',
+      'Oron',
+      'Oruk Anam',
+      'Udung-Uko',
+      'Ukanafun',
+      'Uruan',
+      'Urue-Offong/Oruko',
+      'Uyo',
+    ],
+  },
+  {
+    name: 'Anambra',
+    lgas: [
+      'Aguata',
+      'Anambra East',
+      'Anambra West',
+      'Anaocha',
+      'Awka North',
+      'Awka South',
+      'Ayamelum',
+      'Dunukofia',
+      'Ekwusigo',
+      'Idemili North',
+      'Idemili South',
+      'Ihiala',
+      'Njikoka',
+      'Nnewi North',
+      'Nnewi South',
+      'Ogbaru',
+      'Onitsha North',
+      'Onitsha South',
+      'Orumba North',
+      'Orumba South',
+      'Oyi',
+    ],
+  },
+  {
+    name: 'Bauchi',
+    lgas: [
+      'Alkaleri',
+      'Bauchi',
+      'Bogoro',
+      'Damban',
+      'Darazo',
+      'Dass',
+      'Gamawa',
+      'Ganjuwa',
+      'Giade',
+      'Itas/Gadau',
+      'Katagum',
+      'Kirfi',
+      'Misau',
+      'Ningi',
+      'Shira',
+      'Tafawa Balewa',
+      'Toro',
+      'Warji',
+      'Zaki',
+    ],
+  },
 ];
 
 const EMPTY_FORM = {
-  has_previous_school:   false,
-  previous_school_name:  '',
+  has_previous_school: false,
+  previous_school_name: '',
   previous_school_state: '',
-  previous_school_lga:   '',
-  previous_class:        '',
-  programme_id:          '',
-  class_id:              '',
-  boarding_status:       '',
+  previous_school_lga: '',
+  previous_class: '',
+  programme_id: '',
+  class_id: '',
+  boarding_status: '',
 };
 
 const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }) => {
   const notify = useNotification();
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [programmes, setProgrammes]   = useState([]);  // [{id, label, classes:[]}]
-  const [classes,    setClasses]      = useState([]);  // filtered by selected programme
-  const [lgas,       setLgas]         = useState([]);  // filtered by selected state
+  const [programmes, setProgrammes] = useState([]); // [{id, label, classes:[]}]
+  const [classes, setClasses] = useState([]); // filtered by selected programme
+  const [lgas, setLgas] = useState([]); // filtered by selected state
 
   // ── Load programmes on mount ──────────────────────────────────────────────
   useEffect(() => {
@@ -56,10 +183,10 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
         (data || []).forEach((division) => {
           (division.programmes || []).forEach((prog) => {
             flat.push({
-              id:      prog.id,
-              label:   prog.programme_code || prog.programme_name,
+              id: prog.id,
+              label: prog.programme_code || prog.programme_name,
               classes: (prog.classes || []).map((cls) => ({
-                id:    cls.id,
+                id: cls.id,
                 label: cls.class_code || cls.class_name,
               })),
             });
@@ -130,9 +257,7 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
         }}
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="body2">
-            Does your ward have Previous school information
-          </Typography>
+          <Typography variant="body2">Does your ward have Previous school information</Typography>
           <Checkbox
             name="has_previous_school"
             checked={formik.values.has_previous_school}
@@ -173,7 +298,9 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
                 label="State"
               >
                 {NIGERIA_STATES.map((s) => (
-                  <MenuItem key={s.name} value={s.name}>{s.name}</MenuItem>
+                  <MenuItem key={s.name} value={s.name}>
+                    {s.name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -194,7 +321,9 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
                 label="LGA"
               >
                 {lgas.map((l) => (
-                  <MenuItem key={l} value={l}>{l}</MenuItem>
+                  <MenuItem key={l} value={l}>
+                    {l}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -234,7 +363,9 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
               label="Programme"
             >
               {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.label}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {p.label}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -255,7 +386,9 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
               label="Class Choice"
             >
               {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.label}</MenuItem>
+                <MenuItem key={c.id} value={c.id}>
+                  {c.label}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>

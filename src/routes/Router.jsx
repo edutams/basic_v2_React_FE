@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import TenantRoutes from './TenantRoutes';
 import AgentRoutes from './AgentRoutes';
-import { validateTenantDomain } from '../context/TenantContext/services/tenant.service';
+import { validateTenantDomain } from '../api/tenant/set-up/tenant-setup';
 
 const hostname = window.location.hostname;
 

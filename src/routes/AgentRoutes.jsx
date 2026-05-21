@@ -45,9 +45,6 @@ const StimulationLinks = Loadable(lazy(() => import('@/landlord/views/phet/stimu
 const AgentCurriculumManager = Loadable(
   lazy(() => import('@/landlord/views/curriculum-manager/AgentCurriculumManager')),
 );
-const AgentSchemeOfWork = Loadable(
-  lazy(() => import('@/landlord/views/scheme-of-work/AgentSchemeOfWork')),
-);
 
 const FrontendPages = Loadable(lazy(() => import('@/landlord/views/FrontendPages')));
 
@@ -118,25 +115,128 @@ const AgentRoutes = [
     children: [
       { index: true, element: <DashboardRouteWrapper /> },
       { path: 'dashboard', element: <DashboardRouteWrapper /> },
-      { path: 'analytics_', element: <Analytics_ /> },
-      { path: 'acl_manager', element: <AlcManager /> },
-      { path: 'organization', element: <Agent /> },
+      {
+        path: 'analytics_',
+        element: (
+          <ProtectedRoute permission="landlord.tenant_analytics_for_landlord_level_one_only.index">
+            <Analytics_ />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'acl_manager',
+        element: (
+          <ProtectedRoute permission="landlord.acl.index">
+            <AlcManager />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'organization',
+        element: (
+          <ProtectedRoute permission="landlord.organization.index">
+            <Agent />
+          </ProtectedRoute>
+        ),
+      },
       { path: 'view/:id', element: <ViewAgent /> },
-      { path: 'gateway', element: <Gateway /> },
-      { path: 'calendar', element: <CalendarManagement /> },
-      { path: 'school', element: <SchoolDashboard /> },
+      {
+        path: 'gateway',
+        element: (
+          <ProtectedRoute permission="landlord.gateway.index">
+            <Gateway />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'calendar',
+        element: (
+          <ProtectedRoute permission="landlord.calendar.index">
+            <CalendarManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'school',
+        element: (
+          <ProtectedRoute permission="landlord.school.index">
+            <SchoolDashboard />
+          </ProtectedRoute>
+        ),
+      },
       { path: 'view-school/:id', element: <ViewSchool /> },
-      { path: 'organization/subscriptions', element: <AgentSubscriptionManagement /> },
-      { path: 'subscription', element: <AgentSubscriptionManagement /> },
-      { path: 'activity_log', element: <ActivityLog /> },
-      { path: 'organization/commissions', element: <CommissionManagement /> },
-      { path: 'commission/subscription', element: <MyCommissionBySubscription /> },
-      { path: 'commission/transaction', element: <MyCommissionByTransaction /> },
-      { path: 'plan', element: <PackageManager /> },
-      { path: 'phet/subject_topics', element: <SubjectAndTopics /> },
-      { path: 'phet/stimulation_links', element: <StimulationLinks /> },
-      { path: 'curriculum-manager', element: <AgentCurriculumManager /> },
-      { path: 'scheme-of-work', element: <AgentSchemeOfWork /> },
+      {
+        path: 'organization/subscription',
+        element: (
+          <ProtectedRoute permission="landlord.subscription.index">
+            <AgentSubscriptionManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'activity_log',
+        element: (
+          <ProtectedRoute permission="landlord.activity_log.index">
+            <ActivityLog />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'organization/commissions',
+        element: (
+          <ProtectedRoute permission="landlord.commission.index">
+            <CommissionManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'commission/subscription',
+        element: (
+          <ProtectedRoute permission="landlord.commission.index">
+            <MyCommissionBySubscription />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'commission/transaction',
+        element: (
+          <ProtectedRoute permission="landlord.commission.index">
+            <MyCommissionByTransaction />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'plan',
+        element: (
+          <ProtectedRoute permission="landlord.plan.index">
+            <PackageManager />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'phet/subject_topics',
+        element: (
+          <ProtectedRoute permission="landlord.phet_simulation.index">
+            <SubjectAndTopics />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'phet/stimulation_links',
+        element: (
+          <ProtectedRoute permission="landlord.phet_simulation.index">
+            <StimulationLinks />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'curriculum-manager',
+        element: (
+          <ProtectedRoute permission="landlord.curriculum.index">
+            <AgentCurriculumManager />
+          </ProtectedRoute>
+        ),
+      },
       { path: 'pages/account-settings', element: <AccountSetting /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],

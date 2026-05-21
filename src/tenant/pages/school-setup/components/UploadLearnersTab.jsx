@@ -22,7 +22,7 @@ import {
   getClassesWithDivisions,
   createLearner,
   getStudentCountByClass,
-} from '@/context/TenantContext/services/tenant.service';
+} from '@/api/tenant/set-up/tenant-setup';
 import api from '@/api/tenant/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';

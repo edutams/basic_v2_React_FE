@@ -33,7 +33,7 @@ import {
   storeSchoolCategory,
   updateSchoolCategory,
   deleteSchoolCategory,
-} from '@/context/AgentContext/services/school.service';
+} from '@/api/landlord/school/schoolApi';
 import useNotification from '@/hooks/useNotification';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 

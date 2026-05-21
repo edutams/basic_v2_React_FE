@@ -46,7 +46,7 @@ import {
   rejectProspectiveTenant,
   updateSchool,
   approveSchoolOnboarding,
-} from '@/context/AgentContext/services/school.service';
+} from '@/api/landlord/school/schoolApi';
 import agentApi from '@/api/landlord/organizations/agent';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';

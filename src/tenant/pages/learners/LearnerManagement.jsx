@@ -49,10 +49,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import learnerApi from '@/api/tenant/learners/learnerApi';
-import {
-  getClassesWithDivisions,
-  createLearner,
-} from '@/context/TenantContext/services/tenant.service';
+import { getClassesWithDivisions, createLearner } from '@/api/tenant/set-up/tenant-setup';
 import api from '@/api/tenant/tenant_api';
 import AddLearnerModal from '@/tenant/pages/school-setup/components/AddLearnerModal';
 import LinkParentModal from '@/tenant/components/learners/LinkParentModal';

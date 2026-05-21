@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
-import { AuthContext } from '../../../context/AgentContext/auth';
+import { AuthContext } from '@/context/AgentContext/auth';
 
 import {
   Grid,
@@ -37,38 +37,25 @@ import {
   Tab,
   CircularProgress,
 } from '@mui/material';
-import PageContainer from '../../../components/container/PageContainer';
-import Breadcrumb from '../../../layouts/full/shared/breadcrumb/Breadcrumb';
-import ParentCard from '../../../components/shared/ParentCard';
-import FilterSideDrawer from '../../../components/shared/FilterSideDrawer';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import ParentCard from '@/components/shared/ParentCard';
+import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import AgentModal from '../../add-agent/components/AgentModal';
-import EmptyTableState from '../../../components/shared/EmptyTableState';
-import useTableEmptyState from '../../../hooks/useTableEmptyState';
-import agentApi from '../../../api/landlord/organizations/agent';
+import EmptyTableState from '@/components/shared/EmptyTableState';
+import useTableEmptyState from '@/hooks/useTableEmptyState';
+import agentApi from '@/api/landlord/organizations/agent';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {
-  IconUsers,
-  IconSchool,
-  IconCurrencyNaira,
-  IconChartBar,
-  IconAdjustmentsHorizontal,
-} from '@tabler/icons-react';
-
-import DashboardStatCard from '../../../components/shared/cards/DashboardStatCard';
-import AgentSubAgentsCard from './components/AgentSubAgentsCard';
-import AgentRevenueCard from './components/AgentRevenueCard';
-import AgentSchoolCard from './components/AgentSchoolCard';
-import LoginActivitiesCard from './components/LoginActivitiesCard';
+import { IconSchool, IconChartBar, IconAdjustmentsHorizontal } from '@tabler/icons-react';
 import PlanDistributionModal from './components/PlanDistributionModal';
 import LoggedInUsersModal from './components/LoggedInUsersModal';
 import ViewUsersListModal from './components/ViewUsersListModal';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
-import ReusableBarChart from '../../../components/shared/charts/ReusableBarChart';
-import ReusablePieChart from '../../../components/shared/charts/ReusablePieChart';
+import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 
 import ManageTeamTab from './components/ManageTeamTab';
 import { IconFilter } from '@tabler/icons-react';
@@ -266,8 +253,8 @@ const ActionMenuCell = ({
   );
 };
 
-import locationApi from '../../../api/landlord/location/location';
-import useNotification from '../../../hooks/useNotification';
+import locationApi from '@/api/landlord/location/location';
+import useNotification from '@/hooks/useNotification';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);

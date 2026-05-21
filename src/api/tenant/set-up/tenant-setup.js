@@ -23,6 +23,7 @@ export const getSetupStats = async () => {
   }
 };
 
+
 export const getSetupStage = async () => {
   try {
     const res = await api.get('school_setup/stage');

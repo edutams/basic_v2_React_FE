@@ -12,7 +12,7 @@ import {
   Divider,
   Tooltip,
 } from '@mui/material';
-import TiptapEdit from 'src/views/forms/form-tiptap/TiptapEdit';
+import TiptapEdit from '@/landlord/views/forms/form-tiptap/TiptapEdit';
 import ParentCard from 'src/components/shared/ParentCard';
 
 const PLACEHOLDER_FIELDS = [

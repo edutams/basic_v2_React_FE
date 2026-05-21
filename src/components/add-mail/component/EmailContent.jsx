@@ -17,7 +17,7 @@ import {
 import { IconStar, IconAlertCircle, IconTrash } from '@tabler/icons-react';
 import emailIcon from 'src/assets/images/breadcrumb/emailSv.png';
 import { EmailContext } from 'src/context/EmailContext';
-import TiptapEdit from 'src/views/forms/form-tiptap/TiptapEdit';
+import TiptapEdit from '@/landlord/views/forms/form-tiptap/TiptapEdit';
 import { useTheme } from '@mui/material/styles';
 
 const EmailContent = () => {

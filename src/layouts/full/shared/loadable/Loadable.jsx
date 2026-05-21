@@ -3,12 +3,11 @@
 import React, { Suspense } from 'react';
 
 // project imports
-import Spinner from 'src/views/spinner/Spinner';
+import Spinner from '@/landlord/views/spinner/Spinner';
 
 // ===========================|| LOADABLE - LAZY LOADING ||=========================== //
 
-const Loadable = (Component) => (props) =>
-(
+const Loadable = (Component) => (props) => (
   <Suspense fallback={<Spinner />}>
     <Component {...props} />
   </Suspense>

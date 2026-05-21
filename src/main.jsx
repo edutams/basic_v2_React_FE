@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import Spinner from './views/spinner/Spinner';
+import Spinner from './landlord/views/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { SnackbarProvider } from './context/SnackbarContext';

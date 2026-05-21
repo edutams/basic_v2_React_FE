@@ -1,11 +1,10 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../../api/tenant_api';
-import authApi from '../../api/auth';
+import api from '@/api/tenant_api';
 import { PermissionProvider } from './permissions';
 import { validateTenantDomain } from './services/tenant.service';
 import { CustomizerContext } from '../CustomizerContext';
-import tenantApi from '../../api/tenant_api';
-import impersonationApi from '../../api/tenant/impersonationApi';
+import tenantApi from '@/api/tenant_api';
+import impersonationApi from '@/api/tenant/impersonationApi';
 
 export const TenantAuthContext = createContext(undefined);
 

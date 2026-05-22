@@ -636,7 +636,7 @@ const SchemeOfWork = () => {
       </Grid>
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+      {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}>
         <Button
           variant="outlined"
           onClick={() => setDlSchemeOpen(true)}
@@ -645,7 +645,7 @@ const SchemeOfWork = () => {
         >
           Download
         </Button>
-      </Box>
+      </Box> */}
       {/* <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="contained"

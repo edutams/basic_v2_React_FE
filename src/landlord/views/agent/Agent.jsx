@@ -41,7 +41,7 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
-import AgentModal from '../../add-agent/components/AgentModal';
+import AgentModal from '../../../components/landlord/add-agent/components/AgentModal';
 import EmptyTableState from '@/components/shared/EmptyTableState';
 import useTableEmptyState from '@/hooks/useTableEmptyState';
 import agentApi from '@/api/landlord/organizations/agent';

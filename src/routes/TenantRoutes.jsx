@@ -1,6 +1,6 @@
 import React, { lazy } from 'react';
 import Loadable from '@/layouts/full/shared/loadable/Loadable';
-import TenantProtectedRoute from '@/components/auth/TenantProtectedRoute';
+import TenantProtectedRoute from '@/components/protectedroutes/TenantProtectedRoute';
 import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
 
 const SchoolLayout = Loadable(lazy(() => import('@/layouts/school/SchoolLayout')));

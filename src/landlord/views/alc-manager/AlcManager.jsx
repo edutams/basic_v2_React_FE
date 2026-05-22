@@ -34,11 +34,11 @@ import { IconFilter } from '@tabler/icons-react';
 import ParentCard from '../../../components/shared/ParentCard';
 import FilterSideDrawer from '../../../components/shared/FilterSideDrawer';
 import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
-import PermissionAttachmentModal from '@/landlord/alc-manager/components/PermissionAttachmentModal';
-import ViewPermissionModal from '@/landlord/alc-manager/components/ViewPermissionModal';
-import NewRoleModal from '@/landlord/alc-manager/components/NewRoleModal';
-import AssignmentManagement from '@/landlord/alc-manager/components/AssignmentManagement';
-import AccessAnalysis from '@/landlord/alc-manager/components/AccessAnalysis';
+import PermissionAttachmentModal from '@/components/landlord/alc-manager/components/PermissionAttachmentModal';
+import ViewPermissionModal from '@/components/landlord/alc-manager/components/ViewPermissionModal';
+import NewRoleModal from '@/components/landlord/alc-manager/components/NewRoleModal';
+import AssignmentManagement from '@/components/landlord/alc-manager/components/AssignmentManagement';
+import AccessAnalysis from '@/components/landlord/alc-manager/components/AccessAnalysis';
 
 import aclApi from '@/api/landlord/acl/aclApi';
 

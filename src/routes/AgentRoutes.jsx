@@ -1,7 +1,7 @@
 import React, { lazy, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Loadable from '@/layouts/full/shared/loadable/Loadable';
-import LandlordProtectedRoute from '@/components/auth/LandlordProtectedRoute';
+import LandlordProtectedRoute from '@/components/protectedroutes/LandlordProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
 
 /* ***Layouts**** */
@@ -25,7 +25,9 @@ const Gateway = Loadable(lazy(() => import('@/landlord/views/gateway/Gateway')))
 const CalendarManagement = Loadable(
   lazy(() => import('@/landlord/views/calendar/CalendarManagement')),
 );
-const ViewSchool = Loadable(lazy(() => import('@/landlord/add-school/component/ViewSchool')));
+const ViewSchool = Loadable(
+  lazy(() => import('@/components/landlord/add-school/component/ViewSchool')),
+);
 const AgentSubscriptionManagement = Loadable(
   lazy(() => import('@/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
 );

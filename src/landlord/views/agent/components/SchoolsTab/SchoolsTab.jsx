@@ -36,7 +36,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useAuth } from '@/hooks/useAuth';
 
 import ReusableModal from '@/components/shared/ReusableModal';
-import RegisterSchoolForm from '@/landlord/add-school/component/RegisterSchool';
+import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 
 import {

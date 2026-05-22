@@ -55,7 +55,7 @@ const IconCircle = ({ children }) => (
 );
 
 const TenantLogin = () => {
-  const [view, setView] = useState('login'); 
+  const [view, setView] = useState('login');
   const [resetEmail, setResetEmail] = useState('');
   const [resetToken, setResetToken] = useState('');
 
@@ -328,16 +328,19 @@ const TenantLogin = () => {
                 justifyContent: 'center',
               }}
             >
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Box
+                sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+              >
                 <Typography variant="h5" fontWeight={700} mb={1}>
                   Forgot your password?
                 </Typography>
 
                 <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2}>
-                  Please enter the email address associated with your account and we will email you a link to reset your password.
+                  Please enter the email address associated with your account and we will email you
+                  a link to reset your password.
                 </Typography>
 
-                <AuthForgotPassword 
+                <AuthForgotPassword
                   onBackToLogin={handleBackToLogin}
                   onSuccess={(email) => {
                     setResetEmail(email);
@@ -361,7 +364,9 @@ const TenantLogin = () => {
                 justifyContent: 'center',
               }}
             >
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Box
+                sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+              >
                 <Typography variant="h5" fontWeight={700} mb={1}>
                   Verify OTP
                 </Typography>
@@ -370,7 +375,7 @@ const TenantLogin = () => {
                   Enter the OTP sent to your email to verify your identity.
                 </Typography>
 
-                <AuthVerifyOtp 
+                <AuthVerifyOtp
                   emailProp={resetEmail}
                   onSuccess={(email, token) => {
                     setResetEmail(email);
@@ -378,7 +383,7 @@ const TenantLogin = () => {
                     setView('reset-password');
                   }}
                 />
-                
+
                 <Box mt={3}>
                   <Button
                     variant="text"
@@ -406,7 +411,9 @@ const TenantLogin = () => {
                 justifyContent: 'center',
               }}
             >
-              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Box
+                sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+              >
                 <Typography variant="h5" fontWeight={700} mb={1}>
                   Reset Password
                 </Typography>
@@ -415,14 +422,14 @@ const TenantLogin = () => {
                   Enter your new password below.
                 </Typography>
 
-                <AuthResetPassword 
+                <AuthResetPassword
                   emailProp={resetEmail}
                   tokenProp={resetToken}
                   onSuccess={() => {
                     setView('login');
                   }}
                 />
-                
+
                 <Box mt={3}>
                   <Button
                     variant="text"

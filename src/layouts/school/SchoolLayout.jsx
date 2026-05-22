@@ -3,11 +3,14 @@ import { styled, Container, Box, useTheme } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
 import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
-import DashboardFooter from '@/components/shared/DashboardFooter';
-import { CustomizerContext } from '@/context/CustomizerContext';
-import ScrollToTop from '@/components/shared/ScrollToTop';
-import LoadingBar from '@/LoadingBar';
-import config from '@/context/config';
+import Customizer from '../full/shared/customizer/Customizer';
+import DashboardFooter from '../../components/shared/DashboardFooter';
+import { CustomizerContext } from 'src/context/CustomizerContext';
+import Navigation from './horizontal/navbar/SchoolNavigation';
+import HorizontalHeader from './horizontal/header/SchoolHeader';
+import ScrollToTop from '../../components/shared/ScrollToTop';
+import LoadingBar from '../../LoadingBar';
+import config from 'src/context/config';
 
 const MainWrapper = styled('div')(() => ({
   display: 'flex',
@@ -49,6 +52,10 @@ const SchoolLayout = () => {
             }),
           }}
         >
+          {activeLayout === 'horizontal' ? <HorizontalHeader /> : <SchoolHeader />}
+
+          {activeLayout === 'horizontal' ? <Navigation /> : ''}
+
           <Container
             sx={{
               maxWidth: '100%!important',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ModuleManagement from '../../add-modules/components/ModuleManagement';
+import ModuleManagement from '../../../components/landlord/add-modules/components/ModuleManagement';
 import { useNotification } from '@/hooks/useNotification';
 import eduTierApi from '@/api/landlord/edutier/eduTierApi';
 

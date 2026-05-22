@@ -43,7 +43,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 import ReusableModal from '@/components/shared/ReusableModal';
-import RegisterSchoolForm from '@/landlord/add-school/component/RegisterSchool';
+import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import BlankCard from '@/components/shared/BlankCard';
 import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';

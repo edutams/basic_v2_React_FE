@@ -1,0 +1,356 @@
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import {
+  Box,
+  Typography,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableFooter,
+  TablePagination,
+  Paper,
+  IconButton,
+  Menu,
+  MenuItem,
+  Chip,
+  Button,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
+import {
+  MoreVert as MoreVertIcon,
+  Add as AddIcon,
+  FilterList as FilterListIcon,
+} from '@mui/icons-material';
+import { IconFilter } from '@tabler/icons-react';
+
+import PropTypes from 'prop-types';
+import ParentCard from '@/components/shared/ParentCard';
+import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
+import moduleApi from '@/api/landlord/modules/moduleApi';
+
+const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading }) => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedModule, setSelectedModule] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [moduleList, setModuleList] = useState(modules);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [totalCount, setTotalCount] = useState(0);
+
+  const moduleFilterDefs = [
+    { key: 'search', label: 'Module Name', type: 'text', placeholder: 'Search by module name…' },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
+
+  const fetchModules = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await moduleApi.getTenantModules({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: activeFilters.search || '',
+        status: activeFilters.status || '',
+      });
+
+      if (Array.isArray(response.data)) {
+        setModuleList(response.data);
+        setTotalCount(response.total || response.data.length);
+      } else if (response.data && Array.isArray(response.data.modules)) {
+        setModuleList(response.data.modules);
+        setTotalCount(response.total || response.data.modules.length);
+      } else if (response.data && Array.isArray(response.data.data)) {
+        setModuleList(response.data.data);
+        setTotalCount(response.total || response.data.data.length);
+      } else if (Array.isArray(response)) {
+        // Direct array response
+        setModuleList(response);
+        setTotalCount(response.length);
+      } else {
+        console.warn('⚠️ Unexpected response structure:', response);
+        setModuleList([]);
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching tenant modules:', error);
+      // Fallback to prop modules if API fails
+      setModuleList(modules);
+      setTotalCount(modules.length);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, rowsPerPage, activeFilters, modules]);
+
+  useEffect(() => {
+    fetchModules();
+  }, [fetchModules]);
+
+  // Removed useEffect that overwrites moduleList with modules to allow filtering to work properly
+
+  const handleMenuOpen = (event, module) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedModule(module);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedModule(null);
+  };
+
+  const handleFilterApply = (filterValues) => {
+    setActiveFilters(filterValues);
+    setPage(0);
+  };
+
+  const handleFilterReset = () => {
+    setActiveFilters({});
+    setPage(0);
+  };
+
+  const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
+
+  const handleAction = async (action, module) => {
+    try {
+      let response;
+      const moduleId = module.id || module.mod_id;
+
+      switch (action) {
+        case 'activate':
+          response = await moduleApi.activateTenantModule(moduleId);
+          break;
+        case 'deactivate':
+          response = await moduleApi.deactivateTenantModule(moduleId);
+          break;
+        case 'delete':
+          response = await moduleApi.deleteTenantModule(moduleId);
+          break;
+        default:
+          break;
+      }
+
+      // Refresh the module list after action only if it was an API action
+      if (['activate', 'deactivate', 'delete'].includes(action)) {
+        await fetchModules();
+      }
+
+      // Call the original action handler
+      onModuleAction(action, module);
+    } catch (error) {
+      console.error(`Error performing ${action}:`, error);
+      // Fallback to original handler
+      onModuleAction(action, module);
+    }
+    handleMenuClose();
+  };
+
+  return (
+    <ParentCard
+      title={
+        <Box
+          display="flex"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          justifyContent="space-between"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          gap={1}
+        >
+          <Typography variant="h5">Manage Modules</Typography>
+          <Button
+            variant="outlined"
+            startIcon={<IconFilter size={18} />}
+            onClick={() => setFilterDrawerOpen(true)}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}
+          >
+            Filters
+            {activeFilterCount > 0 && (
+              <Chip
+                label={activeFilterCount}
+                size="small"
+                color="primary"
+                sx={{ ml: 1, height: 20, minWidth: 20, fontSize: '0.75rem' }}
+              />
+            )}
+          </Button>
+        </Box>
+      }
+    >
+      <Box sx={{ p: 0 }}>
+        {/* Filter Side Drawer */}
+        <FilterSideDrawer
+          open={filterDrawerOpen}
+          onClose={() => setFilterDrawerOpen(false)}
+          filters={moduleFilterDefs}
+          title="Filter Modules"
+          onApply={handleFilterApply}
+          onReset={handleFilterReset}
+        />
+
+        <Paper variant="outlined">
+          <TableContainer>
+            <Table sx={{ whiteSpace: 'nowrap' }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Module Name</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Link</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Permission</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
+                      <CircularProgress size={40} />
+                    </TableCell>
+                  </TableRow>
+                ) : moduleList.length > 0 ? (
+                  moduleList.map((module, index) => (
+                    <TableRow hover key={module.id || index}>
+                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight="medium">
+                          {module.module_name || module.mod_name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {module.module_description || module.mod_description}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontFamily="monospace">
+                          {module.module_links?.link || module.mod_links?.link}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontFamily="monospace">
+                          {module.module_links?.permission || module.mod_links?.permission}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          sx={{
+                            bgcolor:
+                              (module.module_status || module.mod_status) === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              (module.module_status || module.mod_status) === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                          }}
+                          size="small"
+                          label={module.module_status}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, module)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl) && selectedModule?.id === module.id}
+                          onClose={handleMenuClose}
+                        >
+                          <MenuItem onClick={() => handleAction('update', module)}>
+                            Edit Module
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() =>
+                              handleAction(
+                                (module.module_status || module.mod_status) === 'active'
+                                  ? 'deactivate'
+                                  : 'activate',
+                                module,
+                              )
+                            }
+                          >
+                            {(module.module_status || module.mod_status) === 'active'
+                              ? 'Deactivate Module'
+                              : 'Activate Module'}
+                          </MenuItem>
+                          {/* <MenuItem onClick={() => handleAction('delete', module)}>
+                            Delete Module
+                          </MenuItem> */}
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 0,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': {
+                            mr: 1.5,
+                          },
+                        }}
+                      >
+                        <Typography variant="body1" color="textSecondary">
+                          {activeFilterCount > 0
+                            ? 'No modules match your filters'
+                            : 'No modules found'}
+                        </Typography>
+                      </Alert>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25, 50]}
+                    colSpan={7}
+                    count={totalCount}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
+                  />
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </TableContainer>
+        </Paper>
+      </Box>
+    </ParentCard>
+  );
+};
+
+ModuleTable.propTypes = {
+  modules: PropTypes.array,
+  onModuleAction: PropTypes.func.isRequired,
+  isLoading: PropTypes.bool,
+};
+
+ModuleTable.defaultProps = {
+  modules: [],
+  isLoading: false,
+};
+
+export default ModuleTable;

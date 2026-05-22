@@ -350,12 +350,12 @@ const AdmissionSetup = () => {
       prev.map((term) =>
         term.session_term_id === menuTerm.session_term_id
           ? { ...term, status: term.status === 'active' ? 'inactive' : 'active' }
-          : term
-      )
+          : term,
+      ),
     );
     showSnackbar(
       `Term ${menuTerm.display_name} ${menuTerm.status === 'active' ? 'deactivated' : 'activated'} successfully`,
-      'success'
+      'success',
     );
     handleMenuClose();
   };

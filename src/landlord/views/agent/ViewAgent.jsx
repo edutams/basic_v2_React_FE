@@ -15,9 +15,9 @@ import ManageTeamTab from './components/ManageTeamTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import TotalSubAgentModal from './components/TotalSubAgentModal';
-import AgentModal from '../../add-agent/components/AgentModal';
+import AgentModal from '../../../components/landlord/add-agent/components/AgentModal';
 import ReusableModal from '../../../components/shared/ReusableModal';
-import RegisterSchoolForm from '../../add-school/component/RegisterSchool';
+import RegisterSchoolForm from '../../../components/landlord/add-school/component/RegisterSchool';
 
 import { AuthContext } from '../../../context/AgentContext/auth';
 
@@ -150,10 +150,10 @@ const ViewAgent = () => {
 
                 created_at: tenant.created_at
                   ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  })
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })
                   : '—',
               })),
 
@@ -385,12 +385,12 @@ const ViewAgent = () => {
           selectedAgent={
             agentData
               ? {
-                ...agentData.raw,
-                ...agentData.leadUser,
-                id: id,
-                organization_logo: agentData.raw?.organization_logo,
-                avatar: agentData.leadUser?.avatar,
-              }
+                  ...agentData.raw,
+                  ...agentData.leadUser,
+                  id: id,
+                  organization_logo: agentData.raw?.organization_logo,
+                  avatar: agentData.leadUser?.avatar,
+                }
               : null
           }
         />

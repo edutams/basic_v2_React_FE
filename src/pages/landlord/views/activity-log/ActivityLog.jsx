@@ -23,7 +23,7 @@ import {
   IconButton,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import BlankCard from '@/components/shared/BlankCard';
 import api from '@/api/landlord/landlord_api';
 import { IconSearch, IconEye, IconX } from '@tabler/icons-react';

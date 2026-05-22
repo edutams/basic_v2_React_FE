@@ -30,7 +30,7 @@ import {
 import { MoreVert as MoreVertIcon, Add as AddIcon, Edit as EditIcon } from '@mui/icons-material';
 import { IconEye, IconPencil } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
 

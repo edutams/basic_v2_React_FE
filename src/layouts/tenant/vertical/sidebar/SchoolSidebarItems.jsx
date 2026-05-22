@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Box, List, useMediaQuery } from '@mui/material';
-import NavItem from '../../../full/vertical/sidebar/NavItem';
-import NavCollapse from '../../../full/vertical/sidebar/NavCollapse';
-import NavGroup from '../../../full/vertical/sidebar/NavGroup/NavGroup';
+import NavItem from '../../../landlord/vertical/sidebar/NavItem';
+import NavCollapse from '../../../landlord/vertical/sidebar/NavCollapse';
+import NavGroup from '../../../landlord/vertical/sidebar/NavGroup/NavGroup';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useAuth } from 'src/hooks/useAuth';
 import tenantApi from '@/api/tenant/tenant_api';

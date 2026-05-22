@@ -1,6 +1,6 @@
 import { useMediaQuery, Box, Drawer, Container } from '@mui/material';
 import SchoolNavListing from './SchoolNavListing';
-import Logo from '../../../full/shared/logo/Logo';
+import Logo from '../../../landlord/shared/logo/Logo';
 import SchoolSidebarItems from '../../vertical/sidebar/SchoolSidebarItems';
 import { useContext } from 'react';
 import { CustomizerContext } from 'src/context/CustomizerContext';
@@ -38,7 +38,7 @@ const SchoolNavigation = () => {
             border: '0 !important',
             boxShadow: (theme) => theme.shadows[8],
           },
-        }
+        },
       }}
     >
       <Box px={2}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import GatewayTable from '@/pages/landlord/gateway/components/GatewayTable';
 import GatewayModal from '@/pages/landlord/gateway/components/GatewayModal';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';

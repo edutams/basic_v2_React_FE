@@ -3,7 +3,7 @@ import { Grid, Box, Typography, Button, Alert } from '@mui/material';
 import { InfoOutlined } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import img1 from '@/assets/images/backgrounds/login-bg.svg';
-import Logo from '@/layouts/full/shared/logo/Logo';
+import Logo from '@/layouts/landlord/shared/logo/Logo';
 import AuthTenantLogin from '@/components/tenant/auth/AuthTenantLogin';
 import AuthForgotPassword from '@/components/tenant/auth/AuthForgotPassword';
 import AuthVerifyOtp from '@/components/tenant/auth/AuthVerifyOtp';

@@ -3,7 +3,7 @@ import Chart from 'react-apexcharts';
 import { useTheme } from '@mui/material/styles';
 import { Grid } from '@mui/material';
 import PageContainer from '../../../../components/container/PageContainer';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '../../../../components/shared/ParentCard';
 
 const BCrumb = [

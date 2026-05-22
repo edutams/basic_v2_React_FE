@@ -2,7 +2,7 @@ import React from 'react';
 import { useMediaQuery, Box, Drawer, useTheme } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import SchoolSidebarItems from './SchoolSidebarItems';
-import Logo from '../../../full/shared/logo/Logo';
+import Logo from '../../../landlord/shared/logo/Logo';
 import Scrollbar from 'src/components/custom-scroll/Scrollbar';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';

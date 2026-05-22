@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Tab, Tabs } from '@mui/material';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import SetCalendarTab from './components/SetCalendarTab';
 import HolidaySection from './components/HolidaySection';
 

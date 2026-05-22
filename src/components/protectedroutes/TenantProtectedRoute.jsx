@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
-import Spinner from '@/pages/landlord/views/spinner/Spinner';
+import Spinner from '@/components/shared/spinner/Spinner';
 import { usePermissions } from '@/context/TenantContext/permissions';
 
 const TenantProtectedRoute = ({ children, permission = null, anyOf = null }) => {

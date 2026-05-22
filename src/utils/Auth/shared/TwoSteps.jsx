@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 
 import PageContainer from '@/components/container/PageContainer';
 import img1 from '@/assets/images/backgrounds/login-bg.svg';
-import Logo from '@/layouts/full/shared/logo/Logo';
+import Logo from '@/layouts/landlord/shared/logo/Logo';
 
 import AuthTwoSteps from './AuthTwoSteps';
 

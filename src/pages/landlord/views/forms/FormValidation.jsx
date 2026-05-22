@@ -4,10 +4,10 @@ import { Grid } from '@mui/material';
 
 // common components
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ChildCard from '@/components/shared/ChildCard';
 import BlankCard from '@/components/shared/BlankCard';
-import Logo from '@/layouts/full/shared/logo/Logo';
+import Logo from '@/layouts/landlord/shared/logo/Logo';
 
 // custom components
 import FVLogin from '@/components/forms/form-validation/FVLogin';

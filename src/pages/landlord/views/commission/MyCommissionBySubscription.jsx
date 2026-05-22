@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { IconArrowLeft, IconLayoutDashboard, IconDownload } from '@tabler/icons-react';
 import PageContainer from '../../../../components/container/PageContainer';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
 import MyCommissionStatCards from './components/MyCommissionStatCards';
 import MyCommissionTable from './components/MyCommissionTable';
 import { mockCommissionData } from './mockData';

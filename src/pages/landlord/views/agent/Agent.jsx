@@ -38,7 +38,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import AgentModal from '@/components/landlord/add-agent/components/AgentModal';

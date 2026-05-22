@@ -3,7 +3,7 @@ import { Grid } from '@mui/material';
 
 import ParentCard from '@/components/shared/ParentCard';
 import ChildCard from '@/components/shared/ChildCard';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 
 import CustomExSwitch from '@/components/forms/form-elements/switch/Custom';

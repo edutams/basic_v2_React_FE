@@ -27,11 +27,11 @@ import {
 } from '@tabler/icons-react';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import config from 'src/context/config';
-import Logo from '../../../full/shared/logo/Logo';
-import Search from '../../../full/vertical/header/Search';
-import Language from '../../../full/vertical/header/Language';
-import Notifications from '../../../full/vertical/header/Notification';
-import Profile from '../../../full/vertical/header/Profile';
+import Logo from '../../../landlord/shared/logo/Logo';
+import Search from '../../../landlord/vertical/header/Search';
+import Language from '../../../landlord/vertical/header/Language';
+import Notifications from '../../../landlord/vertical/header/Notification';
+import Profile from '../../../landlord/vertical/header/Profile';
 import { TenantAuthContext } from '../../../../context/TenantContext/auth';
 // import SchoolNavigation from './SchoolNavigation';
 

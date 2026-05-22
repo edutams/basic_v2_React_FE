@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
 
 const CREATE_BCRUMB = [

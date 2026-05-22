@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
 import { Save as SaveIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import SetUpClassesTab from '@/pages/tenant/school-setup/components/SetUpClassesTab';
 
 const BCrumb = [

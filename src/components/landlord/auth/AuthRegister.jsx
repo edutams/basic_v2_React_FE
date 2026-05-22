@@ -6,7 +6,7 @@ import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '@/components/forms/theme-elements/CustomFormLabel';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotification } from '@/hooks/useNotification';
-import AuthSocialButtons from '../../../utils/Auth/shared/AuthSocialButtons';
+import AuthSocialButtons from '../../../utils/auth/shared/AuthSocialButtons';
 
 const AuthRegister = ({ title, subtitle, subtext }) => {
   const [formData, setFormData] = useState({

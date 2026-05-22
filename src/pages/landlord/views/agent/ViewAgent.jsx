@@ -5,7 +5,7 @@ import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react'
 import { useParams } from 'react-router-dom';
 
 import PageContainer from '../../../../components/container/PageContainer';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
 
 import ProfileHeader from './components/ProfileHeader';
 import StatCards from './components/StatCards';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
 import { Grid } from '@mui/material';
 import Tabs from '@mui/material/Tabs';

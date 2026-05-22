@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import StimulationLinkModal from '@/pages/landlord/phet/stimulation-links/StimulationLinkModal';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';

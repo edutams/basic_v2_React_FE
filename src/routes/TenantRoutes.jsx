@@ -1,9 +1,9 @@
 import React, { lazy } from 'react';
-import Loadable from '@/layouts/full/shared/loadable/Loadable';
+import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import TenantProtectedRoute from '@/components/protectedroutes/TenantProtectedRoute';
 import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
 
-const SchoolLayout = Loadable(lazy(() => import('@/layouts/school/SchoolLayout')));
+const SchoolLayout = Loadable(lazy(() => import('@/layouts/tenant/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
 
 const SchoolDashboardMain = Loadable(
@@ -28,9 +28,9 @@ const ForgotPassword = Loadable(lazy(() => import('@/components/tenant/auth/Forg
 const VerifyOtp = Loadable(lazy(() => import('@/components/tenant/auth/VerifyOtp')));
 const ResetPassword = Loadable(lazy(() => import('@/components/tenant/auth/ResetPassword')));
 const AdmissionApply = Loadable(lazy(() => import('@/pages/tenant/auth/admission/AdmissionApply')));
-const ImpersonateLogin = Loadable(lazy(() => import('../../src/utils/Auth/ImpersonateLogin')));
-const Error = Loadable(lazy(() => import('../../src/utils/Auth/Error')));
-const SchoolNotFound = Loadable(lazy(() => import('../../src/utils/Auth/SchoolNotFound')));
+const ImpersonateLogin = Loadable(lazy(() => import('../utils/auth/ImpersonateLogin')));
+const Error = Loadable(lazy(() => import('../utils/auth/Error')));
+const SchoolNotFound = Loadable(lazy(() => import('../utils/auth/SchoolNotFound')));
 const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/SchoolAlcManager')));
 const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
 

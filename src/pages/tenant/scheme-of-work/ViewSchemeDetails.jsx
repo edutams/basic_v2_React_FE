@@ -15,7 +15,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconPrinter } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
 const ViewSchemeDetails = ({ api }) => {
   const { id } = useParams();

@@ -3,7 +3,7 @@ import { Grid } from '@mui/material';
 import SubjectTable from '@/pages/landlord/phet/subjectandtopics/SubjectTable';
 import TopicPanel from '@/pages/landlord/phet/subjectandtopics/TopicPanel';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import AddSubjectModal from '@/pages/landlord/phet/subjectandtopics/AddSubjectModal';
 import SubjectModal from '@/pages/landlord/phet/subjectandtopics/SubjectModal';
 import TopicModal from '@/pages/landlord/phet/subjectandtopics/TopicModal';

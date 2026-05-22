@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 // import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
 import { Grid, Paper, Typography, Chip, useTheme } from '@mui/material';
 import Tabs from '@mui/material/Tabs';

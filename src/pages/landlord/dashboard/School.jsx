@@ -46,7 +46,7 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import BlankCard from '@/components/shared/BlankCard';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import PlanDistributionModal from './components/PlanDistributionModal';
 import LoginActivities from './components/LoginActivities';

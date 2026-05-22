@@ -19,9 +19,9 @@ import { IconMenu2, IconMoon, IconSun, IconArrowLeft, IconSchool } from '@tabler
 import config from 'src/context/config';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-import Search from '../../../full/vertical/header/Search';
-import Language from '../../../full/vertical/header/Language';
-import Notifications from '../../../full/vertical/header/Notification';
+import Search from '../../../landlord/vertical/header/Search';
+import Language from '../../../landlord/vertical/header/Language';
+import Notifications from '../../../landlord/vertical/header/Notification';
 import Profile from './TenantProfile';
 import { TenantAuthContext } from '../../../../context/TenantContext/auth';
 

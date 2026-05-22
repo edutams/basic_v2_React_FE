@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import api from '@/api/landlord/landlord_api';
 import { IconSchool } from '@tabler/icons-react';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';

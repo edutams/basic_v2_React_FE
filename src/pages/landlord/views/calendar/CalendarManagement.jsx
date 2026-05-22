@@ -44,7 +44,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
 import FilterSideDrawer from 'src/components/shared/FilterSideDrawer';
 import useNotification from 'src/hooks/useNotification';

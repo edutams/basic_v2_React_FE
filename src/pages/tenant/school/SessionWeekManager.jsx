@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import useNotification from '@/hooks/useNotification';
 import tenantApi from '@/api/tenant/tenant_api';

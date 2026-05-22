@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import CurriculumSetup from './components/CurriculumSetup';
 import SubjectBank from './components/SubjectBank';

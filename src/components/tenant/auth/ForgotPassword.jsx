@@ -3,7 +3,7 @@ import { Grid } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
-import Logo from '@/layouts/full/shared/logo/Logo';
+import Logo from '@/layouts/landlord/shared/logo/Logo';
 import PageContainer from '@/components/container/PageContainer';
 
 import img1 from '@/assets/images/backgrounds/login-bg.svg';

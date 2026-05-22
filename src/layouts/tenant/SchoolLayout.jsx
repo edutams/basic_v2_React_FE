@@ -3,7 +3,7 @@ import { styled, Container, Box, useTheme } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
 import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
-import Customizer from '../full/shared/customizer/Customizer';
+import Customizer from '../landlord/shared/customizer/Customizer';
 import DashboardFooter from '../../components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import Navigation from './horizontal/navbar/SchoolNavigation';

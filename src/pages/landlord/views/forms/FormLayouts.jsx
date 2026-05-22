@@ -11,7 +11,7 @@ import {
   FbInputVariants,
 } from '@/components/forms/form-layouts/index';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
 const BCrumb = [
   {

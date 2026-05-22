@@ -10,7 +10,7 @@ import {
   Alert,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import FormWizardCode from '@/components/forms/form-wizard/code/FormWizardCode';
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
 import CustomCheckbox from '@/components/forms/theme-elements/CustomCheckbox';

@@ -13,7 +13,7 @@ import {
 import { Grid } from '@mui/material';
 import { SliderThumb } from '@mui/material/Slider';
 
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';

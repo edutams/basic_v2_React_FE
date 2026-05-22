@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Container, Tab, Tabs, Typography } from '@mui/material';
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from 'src/components/container/PageContainer';
 import ParentCard from 'src/components/shared/ParentCard';
 import AgentSubscriptionList from './AgentSubscriptionList';

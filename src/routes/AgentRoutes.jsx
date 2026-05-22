@@ -1,11 +1,11 @@
 import React, { lazy, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import Loadable from '@/layouts/full/shared/loadable/Loadable';
+import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import LandlordProtectedRoute from '@/components/protectedroutes/LandlordProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
 
 /* ***Layouts**** */
-const FullLayout = Loadable(lazy(() => import('@/layouts/full/FullLayout')));
+const FullLayout = Loadable(lazy(() => import('@/layouts/landlord/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
 
 /* ****Pages***** */
@@ -64,7 +64,7 @@ const AuthForgotPassword = Loadable(
 );
 const ResetPassword = Loadable(lazy(() => import('@/components/landlord/auth/AuthResetPassword')));
 const VerifyOtp = Loadable(lazy(() => import('@/components/landlord/auth/AuthVerifyOtp')));
-const Error = Loadable(lazy(() => import('../../src/utils/Auth/Error')));
+const Error = Loadable(lazy(() => import('../utils/auth/Error')));
 
 const Analytics_ = Loadable(lazy(() => import('@/pages/landlord/views/analytics_/index')));
 

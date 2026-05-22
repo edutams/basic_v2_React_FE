@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useNotification } from '@/hooks/useNotification';
 
 import {

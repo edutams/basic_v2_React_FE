@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Tabs, Tab, Paper } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ManageSubscriptions from './manage-subcription';
 import SubscriptionHistory from './subscription-history';
 

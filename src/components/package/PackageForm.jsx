@@ -31,7 +31,7 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
   const handleRemoveFeature = (featureToRemove) => {
     formik.setFieldValue(
       'features',
-      formik.values.features.filter(feature => feature !== featureToRemove)
+      formik.values.features.filter((feature) => feature !== featureToRemove),
     );
   };
 
@@ -46,7 +46,7 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
     <Box component="form" onSubmit={formik.handleSubmit}>
       <Grid container spacing={3}>
         {/* Package Name */}
-        <Grid size={{ xs: 12, sm: 6 }} >
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Package Name"
             name="package_name"
@@ -59,12 +59,11 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
             helperText={formik.touched.package_name && formik.errors.package_name}
             required
             size="small"
-
           />
         </Grid>
 
         {/* Package Type */}
-        <Grid size={{ xs: 12, sm: 6 }} >
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl fullWidth variant="outlined">
             <InputLabel>Package Type</InputLabel>
             <Select
@@ -74,7 +73,6 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
               onBlur={formik.handleBlur}
               label="Package Type"
               size="small"
-
               error={formik.touched.package_type && Boolean(formik.errors.package_type)}
             >
               <MenuItem value="Monthly">Monthly</MenuItem>
@@ -85,7 +83,7 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
         </Grid>
 
         {/* Package Description */}
-        <Grid size={{ xs: 12 }} >
+        <Grid size={{ xs: 12 }}>
           <TextField
             label="Package Description"
             name="package_description"
@@ -100,12 +98,11 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
             helperText={formik.touched.package_description && formik.errors.package_description}
             required
             size="small"
-
           />
         </Grid>
 
         {/* Price */}
-        <Grid size={{ xs: 12, sm: 6 }} >
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             label="Price"
             name="price"
@@ -122,7 +119,6 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
             helperText={formik.touched.price && formik.errors.price}
             required
             size="small"
-
           />
         </Grid>
 
@@ -138,7 +134,6 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
               label="Status"
               error={formik.touched.status && Boolean(formik.errors.status)}
               size="small"
-
             >
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
@@ -172,7 +167,6 @@ const PackageForm = ({ formik, actionType, selectedPackage, onCancel, loading = 
               }}
               placeholder="Enter a feature and press Enter or click +"
               size="small"
-
             />
           </Box>
 

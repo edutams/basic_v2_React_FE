@@ -11,10 +11,10 @@ import {
 } from '@mui/icons-material';
 
 import StatCard from '@/components/shared/StatCard';
-import AdmissionBanner from '@/components/tenant/components/admission/AdmissionBanner';
-import EnrolledWardCard from '@/components/tenant/components/admission/EnrolledWardCard';
-import ProspectiveWardCard from '@/components/tenant/components/admission/ProspectiveWardCard';
-import AdmissionBatchModal from '@/components/tenant/components/admission/AdmissionBatchModal';
+import AdmissionBanner from '@/components/tenant/admission/AdmissionBanner';
+import EnrolledWardCard from '@/components/tenant/admission/EnrolledWardCard';
+import ProspectiveWardCard from '@/components/tenant/admission/ProspectiveWardCard';
+import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
 import ward from '@/assets/images/backgrounds/ward.png';
 
 const ENROLLED_WARDS = [

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, Tabs, Tab, Paper } from '@mui/material';
-import SchoolRoleBasedAccess from '@/components/tenant/components/alc-manager/SchoolRoleBasedAccess';
-import SchoolPermissionBased from '@/components/tenant/components/alc-manager/SchoolPermissionBased';
+import SchoolRoleBasedAccess from '@/components/tenant/alc-manager/SchoolRoleBasedAccess';
+import SchoolPermissionBased from '@/components/tenant/alc-manager/SchoolPermissionBased';
 
 const SchoolAccessAnalysis = () => {
   const [subActiveTab, setSubActiveTab] = useState('Role Based');

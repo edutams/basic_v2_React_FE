@@ -8,7 +8,7 @@ import { IconSchool } from '@tabler/icons-react';
 import { Avatar } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import ReCAPTCHA from 'react-google-recaptcha';
-import ParentForm from '@/components/tenant/components/parents/ParentForm';
+import ParentForm from '@/components/tenant/parents/ParentForm';
 import guardianApi from '@/api/tenant/guardians/parentApi';
 
 const AdmissionApply = () => {

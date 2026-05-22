@@ -59,10 +59,10 @@ import LinkIcon from '@mui/icons-material/Link';
 
 import guardianApi from '@/api/tenant/guardians/parentApi';
 import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
-import ParentModal from '@/components/tenant/components/parents/ParentModal';
-import UploadParentModal from '@/components/tenant/components/parents/UploadParentModal';
-import LinkWardModal from '@/components/tenant/components/parents/LinkWardModal';
-import ViewWardsModal from '@/components/tenant/components/parents/ViewWardsModal';
+import ParentModal from '@/components/tenant/parents/ParentModal';
+import UploadParentModal from '@/components/tenant/parents/UploadParentModal';
+import LinkWardModal from '@/components/tenant/parents/LinkWardModal';
+import ViewWardsModal from '@/components/tenant/parents/ViewWardsModal';
 import StatCard from 'src/components/shared/StatCard';
 import { useNavigate } from 'react-router-dom';
 import { TenantAuthContext } from '../../../context/TenantContext/auth';

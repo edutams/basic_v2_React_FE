@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Box, Grid as Grid } from '@mui/material';
-import PageContainer from '../../../container/PageContainer';
-import Breadcrumb from '../../../../layouts/full/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 import PackageTable from './PackageTable';
 import ModuleManagement from './ModuleManagement';
 import PackageModal from './PackageModal';

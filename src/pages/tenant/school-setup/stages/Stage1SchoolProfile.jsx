@@ -4,7 +4,7 @@ import { IconUpload, IconPhoto } from '@tabler/icons-react';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
 import { getFullImageUrl } from '@/helpers/ImageHelper';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-import UploadLogoModal from '@/components/tenant/components/school/UploadLogoModal';
+import UploadLogoModal from '@/components/tenant/school/UploadLogoModal';
 import SetupShell from './SetupShell';
 import ParentCard from '@/components/shared/ParentCard';
 import ArrowHint from '@/components/shared/ArrowHint';

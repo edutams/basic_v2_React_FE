@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import ReusableModal from '../../../shared/ReusableModal';
+import ReusableModal from '@/components/shared/ReusableModal';
 import PackageForm from './PackageForm';
 import PropTypes from 'prop-types';
 
-import ConfirmationDialog from '../../../shared/ConfirmationDialog';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 
 const getModalConfig = (actionType) => {
   const configs = {

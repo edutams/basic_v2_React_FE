@@ -18,15 +18,15 @@ const CurriculumManager = Loadable(
   lazy(() => import('@/pages/tenant/curriculum-manager/CurriculumManager')),
 );
 const ClassStructureManager = Loadable(
-  lazy(() => import('@/components/tenant/components/ClassStructureManager')),
+  lazy(() => import('@/components/tenant/class-structure/ClassStructureManager')),
 );
 const SubscriptionIndex = Loadable(
   lazy(() => import('@/pages/tenant/subcriptions/SubscriptionIndex')),
 );
 const TenantLogin = Loadable(lazy(() => import('@/pages/Auth/tenant/TenantLogin')));
-const ForgotPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ForgotPassword')));
-const VerifyOtp = Loadable(lazy(() => import('@/components/Auth/tenant/VerifyOtp')));
-const ResetPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ResetPassword')));
+const ForgotPassword = Loadable(lazy(() => import('@/components/tenant/auth/ForgotPassword')));
+const VerifyOtp = Loadable(lazy(() => import('@/components/tenant/auth/VerifyOtp')));
+const ResetPassword = Loadable(lazy(() => import('@/components/tenant/auth/ResetPassword')));
 const AdmissionApply = Loadable(lazy(() => import('@/pages/Auth/tenant/admission/AdmissionApply')));
 const ImpersonateLogin = Loadable(lazy(() => import('../../src/utils/Auth/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../../src/utils/Auth/Error')));

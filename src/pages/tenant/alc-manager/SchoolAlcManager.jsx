@@ -30,11 +30,11 @@ import { IconAdjustmentsHorizontal } from '@tabler/icons-react';
 
 import ParentCard from '@/components/shared/ParentCard';
 import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
-import PermissionAttachmentModal from '@/components/tenant/components/alc-manager/SchoolPermissionAttachmentModal';
-import ViewPermissionModal from '@/components/tenant/components/alc-manager/SchoolViewPermissionModal';
-import NewRoleModal from '@/components/tenant/components/alc-manager/SchoolNewRoleModal';
-import SchoolAssignmentManagement from '@/components/tenant/components/alc-manager/SchoolAssignmentManagement';
-import SchoolAccessAnalysis from '@/components/tenant/components/alc-manager/SchoolAccessAnalysis';
+import PermissionAttachmentModal from '@/components/tenant/alc-manager/SchoolPermissionAttachmentModal';
+import ViewPermissionModal from '@/components/tenant/alc-manager/SchoolViewPermissionModal';
+import NewRoleModal from '@/components/tenant/alc-manager/SchoolNewRoleModal';
+import SchoolAssignmentManagement from '@/components/tenant/alc-manager/SchoolAssignmentManagement';
+import SchoolAccessAnalysis from '@/components/tenant/alc-manager/SchoolAccessAnalysis';
 
 import aclApi from '@/api/tenant/acl/aclApi';
 

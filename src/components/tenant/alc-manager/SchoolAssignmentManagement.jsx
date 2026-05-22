@@ -25,8 +25,8 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 import ParentCard from 'src/components/shared/ParentCard';
-import RoleAttachmentModal from '@/components/tenant/components/alc-manager/RoleAttachmentModal';
-import ViewRoleModal from '@/components/tenant/components/alc-manager/ViewRoleModal';
+import RoleAttachmentModal from '@/components/tenant/alc-manager/RoleAttachmentModal';
+import ViewRoleModal from '@/components/tenant/alc-manager/ViewRoleModal';
 import aclApi from '@/api/tenant/acl/aclApi';
 import { useNotification } from '@/hooks/useNotification';
 

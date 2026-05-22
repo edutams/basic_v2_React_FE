@@ -18,11 +18,11 @@ import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import useNotification from '@/hooks/useNotification';
 import tenantApi from '@/api/tenant/tenant_api';
-import ManageSessions from '@/components/tenant/components/ManageSessions';
-import ManageWeeks from '@/components/tenant/components/ManageWeeks';
+import ManageSessions from '@/components/tenant/session-week-term/ManageSessions';
+import ManageWeeks from '@/components/tenant/session-week-term/ManageWeeks';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
-import SetSessionTermModal from '@/components/tenant/components/SetSessionTermModal';
-import HolidayTab from '@/components/tenant/components/HolidayTab';
+import SetSessionTermModal from '@/components/tenant/session-week-term/SetSessionTermModal';
+import HolidayTab from '@/components/tenant/holiday/HolidayTab';
 
 const BCrumb = [
   {

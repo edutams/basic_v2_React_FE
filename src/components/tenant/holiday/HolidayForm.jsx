@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Grid, TextField, Button } from '@mui/material';
 import { useFormik } from 'formik';
-import { holidayValidationSchema } from './validation/holidayValidationSchema';
+import { holidayValidationSchema } from '../validation/holidayValidationSchema';
 import PropTypes from 'prop-types';
 
 const HolidayForm = ({

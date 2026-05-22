@@ -26,7 +26,7 @@ import {
 import api from '@/api/tenant/tenant_api';
 import AddLearnerModal from './AddLearnerModal';
 import LearnerListModal from './LearnerListModal';
-import UploadLearnerModal from '@/components/tenant/components/learners/UploadLearnerModal';
+import UploadLearnerModal from '@/components/tenant/learners/UploadLearnerModal';
 
 const HINTS = ['add', 'download', 'upload'];
 

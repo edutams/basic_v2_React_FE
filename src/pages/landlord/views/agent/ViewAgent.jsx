@@ -4,8 +4,8 @@ import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
 
-import PageContainer from '../../../../components/container/PageContainer';
-import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
 import ProfileHeader from './components/ProfileHeader';
 import StatCards from './components/StatCards';
@@ -15,14 +15,14 @@ import ManageTeamTab from './components/ManageTeamTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import TotalSubAgentModal from './components/TotalSubAgentModal';
-import AgentModal from '../../add-agent/components/AgentModal';
-import ReusableModal from '../../../../components/tenant/shared/ReusableModal';
-import RegisterSchoolForm from '../../../../components/landlord/add-school/RegisterSchool';
 
-import { AuthContext } from '../../../../context/AgentContext/auth';
+import { AuthContext } from '@/context/AgentContext/auth';
 
-import agentApi from '../../../../api/landlord/organizations/agent';
+import agentApi from '@/api/landlord/organizations/agent';
 import SchoolsTab from './components/SchoolsTab/SchoolsTab';
+import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
+import ReusableModal from '@/components/shared/ReusableModal';
+import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
 
 const ViewAgent = () => {
   const { id } = useParams();

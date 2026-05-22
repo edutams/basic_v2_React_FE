@@ -31,12 +31,12 @@ import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ReusableModal from '@/components/shared/ReusableModal';
-import PlanForm from '../../../../components/landlord/add-plan/component/PlanForm';
+import PlanForm from '@/components/landlord/add-plan/component/PlanForm';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
-import PackageModal from '@/components/package/PackageModal';
-import ManageModule from '../../../../components/landlord/add-plan/component/ManageModule';
+import ManageModule from '@/components/landlord/add-plan/component/ManageModule';
 import ManagePackagesModal from '@/pages/landlord/plan/ManagePackagesModal';
 import eduTierApi from '@/api/landlord/edutier/eduTierApi';
+import PackageModal from '@/components/landlord/add-package/components/PackageModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
 

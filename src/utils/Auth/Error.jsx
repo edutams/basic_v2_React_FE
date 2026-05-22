@@ -30,7 +30,7 @@ const Error = ({ message = 'This page you are looking for could not be found.' }
         color="primary"
         variant="contained"
         component={Link}
-        to={isTenantSubdomain ? '/dashboard' : '/agent/dashboard'}
+        to={isTenantSubdomain ? '/dashboard' : '/agent'}
         disableElevation
       >
         Go Back

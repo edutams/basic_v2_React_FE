@@ -5,10 +5,10 @@ import img1 from '@/assets/images/backgrounds/login-bg.svg';
 import PageContainer from '@/components/container/PageContainer';
 import Logo from '@/layouts/full/shared/logo/Logo';
 import Typography from '@mui/material/Typography';
-import AuthVerifyOtp from '../authForms/AuthVerifyOtp';
+import AuthResetPassword from './AuthResetPassword';
 
-const VerifyOtp = () => (
-  <PageContainer title="Verify Otp" description="this is Verify Otp page">
+const ResetPassword = () => (
+  <PageContainer title="Reset Password" description="Reset your password">
     <Grid container justifyContent="center" spacing={0} sx={{ overflowX: 'hidden' }}>
       <Grid
         size={{ xs: 12, sm: 12, lg: 8, xl: 9 }}
@@ -60,17 +60,17 @@ const VerifyOtp = () => (
       >
         <Box p={4}>
           <Typography variant="h4" fontWeight="700">
-            Verify Otp
+            Reset Your Password
           </Typography>
 
           <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2}>
-            Please enter the OTP sent to your email address.
+            Please provide your new password below.
           </Typography>
-          <AuthVerifyOtp />
+          <AuthResetPassword />
         </Box>
       </Grid>
     </Grid>
   </PageContainer>
 );
 
-export default VerifyOtp;
+export default ResetPassword;

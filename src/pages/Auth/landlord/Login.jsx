@@ -8,13 +8,13 @@ import Typography from '@mui/material/Typography';
 import PageContainer from '@/components/container/PageContainer';
 import img1 from '@/assets/images/backgrounds/login-bg.svg';
 import Logo from '@/layouts/full/shared/logo/Logo';
-import AuthLogin from '../authForms/AuthLogin';
-import AuthForgotPassword from '../authForms/AuthForgotPassword';
-import AuthVerifyOtp from '../authForms/AuthVerifyOtp';
-import AuthResetPassword from '../authForms/AuthResetPassword';
+import AuthLogin from '@/components/Auth/landlord/AuthLogin';
+import AuthForgotPassword from '@/components/Auth/landlord/AuthForgotPassword';
+import AuthVerifyOtp from '@/components/Auth/landlord/AuthVerifyOtp';
+import AuthResetPassword from '@/components/Auth/landlord/AuthResetPassword';
 
 const Login = () => {
-  const [view, setView] = useState('login'); 
+  const [view, setView] = useState('login');
   const [resetEmail, setResetEmail] = useState('');
   const [resetToken, setResetToken] = useState('');
 
@@ -88,9 +88,10 @@ const Login = () => {
                 Forgot your password?
               </Typography>
               <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2} mb={2}>
-                Please enter the email address associated with your account and we will email you a link to reset your password.
+                Please enter the email address associated with your account and we will email you a
+                link to reset your password.
               </Typography>
-              <AuthForgotPassword 
+              <AuthForgotPassword
                 onBackToLogin={handleBackToLogin}
                 onSuccess={(email) => {
                   setResetEmail(email);
@@ -108,7 +109,7 @@ const Login = () => {
               <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2} mb={2}>
                 Enter the OTP sent to your email to verify your identity.
               </Typography>
-              <AuthVerifyOtp 
+              <AuthVerifyOtp
                 emailProp={resetEmail}
                 onSuccess={(email, token) => {
                   setResetEmail(email);
@@ -137,7 +138,7 @@ const Login = () => {
               <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2} mb={2}>
                 Enter your new password below.
               </Typography>
-              <AuthResetPassword 
+              <AuthResetPassword
                 emailProp={resetEmail}
                 tokenProp={resetToken}
                 onSuccess={() => {

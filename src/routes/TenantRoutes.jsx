@@ -23,14 +23,14 @@ const ClassStructureManager = Loadable(
 const SubscriptionIndex = Loadable(
   lazy(() => import('@/pages/tenant/subcriptions/SubscriptionIndex')),
 );
-const TenantLogin = Loadable(lazy(() => import('@/authentication/auth1/TenantLogin')));
-const ForgotPassword = Loadable(lazy(() => import('@/authentication/auth1/ForgotPassword')));
-const VerifyOtp = Loadable(lazy(() => import('@/authentication/auth1/VerifyOtp')));
-const ResetPassword = Loadable(lazy(() => import('@/authentication/auth1/ResetPassword')));
-const AdmissionApply = Loadable(lazy(() => import('@/authentication/auth1/AdmissionApply')));
-const ImpersonateLogin = Loadable(lazy(() => import('@/authentication/ImpersonateLogin')));
-const Error = Loadable(lazy(() => import('@/authentication/Error')));
-const SchoolNotFound = Loadable(lazy(() => import('@/authentication/SchoolNotFound')));
+const TenantLogin = Loadable(lazy(() => import('@/pages/Auth/tenant/TenantLogin')));
+const ForgotPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ForgotPassword')));
+const VerifyOtp = Loadable(lazy(() => import('@/components/Auth/tenant/VerifyOtp')));
+const ResetPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ResetPassword')));
+const AdmissionApply = Loadable(lazy(() => import('@/pages/Auth/tenant/admission/AdmissionApply')));
+const ImpersonateLogin = Loadable(lazy(() => import('../../src/utils/Auth/ImpersonateLogin')));
+const Error = Loadable(lazy(() => import('../../src/utils/Auth/Error')));
+const SchoolNotFound = Loadable(lazy(() => import('../../src/utils/Auth/SchoolNotFound')));
 const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/SchoolAlcManager')));
 const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
 

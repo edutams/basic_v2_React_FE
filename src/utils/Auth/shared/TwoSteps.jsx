@@ -1,21 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Grid } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Stack from '@mui/material/Stack';
 
 import PageContainer from '@/components/container/PageContainer';
 import img1 from '@/assets/images/backgrounds/login-bg.svg';
 import Logo from '@/layouts/full/shared/logo/Logo';
 
-import AuthRegister from '../authForms/AuthRegister';
+import AuthTwoSteps from './AuthTwoSteps';
 
-const Register = () => (
-  <PageContainer title="Register" description="this is Register page">
+const TwoSteps = () => (
+  <PageContainer title="Two Steps" description="this is Two Steps page">
     <Grid container spacing={0} justifyContent="center" sx={{ overflowX: 'hidden' }}>
       <Grid
-        size={{ xs: 12, sm: 12, lg: 7, xl: 8 }}
+        size={{ xs: 12, sm: 12, lg: 8, xl: 9 }}
         sx={{
           position: 'relative',
           '&:before': {
@@ -57,42 +55,28 @@ const Register = () => (
         </Box>
       </Grid>
       <Grid
-        size={{ xs: 12, sm: 12, lg: 5, xl: 4 }}
+        size={{ xs: 12, sm: 12, lg: 4, xl: 3 }}
         display="flex"
         justifyContent="center"
         alignItems="center"
       >
         <Box p={4}>
-          <AuthRegister
-            title="Welcome to EduTams Basic"
-            subtext={
-              <Typography variant="subtitle1" color="textSecondary" mb={1}>
-                Your Admin Dashboard
-              </Typography>
-            }
-            subtitle={
-              <Stack direction="row" spacing={1} mt={3}>
-                <Typography color="textSecondary" variant="h6" fontWeight="400">
-                  Already have an Account?
-                </Typography>
-                <Typography
-                  component={Link}
-                  to="/agent/login"
-                  fontWeight="500"
-                  sx={{
-                    textDecoration: 'none',
-                    color: 'primary.main',
-                  }}
-                >
-                  Sign In
-                </Typography>
-              </Stack>
-            }
-          />
+          <Typography variant="h4" fontWeight="700">
+            Two Step Verification
+          </Typography>
+
+          <Typography variant="subtitle1" color="textSecondary" mt={2} mb={1}>
+            We sent a verification code to your mobile. Enter the code from the mobile in the field
+            below.
+          </Typography>
+          <Typography variant="subtitle1" fontWeight="700" mb={1}>
+            ******1234
+          </Typography>
+          <AuthTwoSteps />
         </Box>
       </Grid>
     </Grid>
   </PageContainer>
 );
 
-export default Register;
+export default TwoSteps;

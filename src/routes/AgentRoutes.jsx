@@ -58,11 +58,11 @@ const AccountSetting = Loadable(
 );
 
 // Authentication
-const Login = Loadable(lazy(() => import('@/authentication/auth1/Login')));
-const ForgotPassword = Loadable(lazy(() => import('@/authentication/auth1/ForgotPassword')));
-const ResetPassword = Loadable(lazy(() => import('@/authentication/auth1/ResetPassword')));
-const VerifyOtp = Loadable(lazy(() => import('@/authentication/auth1/VerifyOtp')));
-const Error = Loadable(lazy(() => import('@/authentication/Error')));
+const Login = Loadable(lazy(() => import('@/pages/Auth/landlord/Login')));
+const ForgotPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ForgotPassword')));
+const ResetPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ResetPassword')));
+const VerifyOtp = Loadable(lazy(() => import('@/components/Auth/tenant/VerifyOtp')));
+const Error = Loadable(lazy(() => import('../../src/utils/Auth/Error')));
 
 const Analytics_ = Loadable(lazy(() => import('@/pages/landlord/views/analytics_/index')));
 

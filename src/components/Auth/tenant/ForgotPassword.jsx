@@ -3,15 +3,16 @@ import { Grid } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
-import PageContainer from '@/components/container/PageContainer';
-import img1 from '@/assets/images/backgrounds/login-bg.svg';
 import Logo from '@/layouts/full/shared/logo/Logo';
+import PageContainer from '@/components/container/PageContainer';
 
-import AuthTwoSteps from '../authForms/AuthTwoSteps';
+import img1 from '@/assets/images/backgrounds/login-bg.svg';
 
-const TwoSteps = () => (
-  <PageContainer title="Two Steps" description="this is Two Steps page">
-    <Grid container spacing={0} justifyContent="center" sx={{ overflowX: 'hidden' }}>
+import AuthForgotPassword from './AuthForgotPassword';
+
+const ForgotPassword = () => (
+  <PageContainer title="Forgot Password" description="this is Forgot Password page">
+    <Grid container justifyContent="center" spacing={0} sx={{ overflowX: 'hidden' }}>
       <Grid
         size={{ xs: 12, sm: 12, lg: 8, xl: 9 }}
         sx={{
@@ -62,21 +63,18 @@ const TwoSteps = () => (
       >
         <Box p={4}>
           <Typography variant="h4" fontWeight="700">
-            Two Step Verification
+            Forgot your password?
           </Typography>
 
-          <Typography variant="subtitle1" color="textSecondary" mt={2} mb={1}>
-            We sent a verification code to your mobile. Enter the code from the mobile in the field
-            below.
+          <Typography color="textSecondary" variant="subtitle2" fontWeight="400" mt={2}>
+            Please enter the email address associated with your account and We will email you a link
+            to reset your password.
           </Typography>
-          <Typography variant="subtitle1" fontWeight="700" mb={1}>
-            ******1234
-          </Typography>
-          <AuthTwoSteps />
+          <AuthForgotPassword />
         </Box>
       </Grid>
     </Grid>
   </PageContainer>
 );
 
-export default TwoSteps;
+export default ForgotPassword;

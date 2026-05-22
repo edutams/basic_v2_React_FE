@@ -26,7 +26,7 @@ import { IconDotsVertical, IconEye, IconEdit } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
-import { usePermissions } from '../../../../../../context/AgentContext/permissions';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 const ApplicationReview = ({
   prospectList,

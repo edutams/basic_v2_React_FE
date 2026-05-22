@@ -27,9 +27,9 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
-import agentApi from '../../../../../api/landlord/organizations/agent';
+import agentApi from '@/api/landlord/organizations/agent';
 import { IMaskInput } from 'react-imask';
-import { useNotification } from '../../../../../hooks/useNotification';
+import { useNotification } from '@/hooks/useNotification';
 
 const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   const { onChange, ...other } = props;

@@ -41,7 +41,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import ReusablePieChart from 'src/components/shared/charts/ReusablePieChart';
+import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 
 const agentColumnHelper = createColumnHelper();
 const schoolColumnHelper = createColumnHelper();

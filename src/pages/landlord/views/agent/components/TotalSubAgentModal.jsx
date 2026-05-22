@@ -24,9 +24,9 @@ import {
   InputLabel,
 } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
-import StandardModal from 'src/components/shared/StandardModal';
+import StandardModal from '@/components/shared/StandardModal';
 import agentApi from '@/api/landlord/organizations/agent';
-import { AuthContext } from 'src/context/AgentContext/auth';
+import { AuthContext } from '@/context/AgentContext/auth';
 
 const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
   const theme = useTheme();

@@ -11,6 +11,7 @@ export const statusConfig = {
   pending: { bg: '#fef3c7', color: '#d97706', label: 'Pending' },
   approved: { bg: '#dcfce7', color: '#16a34a', label: 'Approved' },
   rejected: { bg: '#ffe4e6', color: '#e11d48', label: 'Rejected' },
+  completed: { bg: '#dcfce7', color: '#1c3c66', label: 'Completed' },
 };
 
 export const StatusChip = ({ status }) => {

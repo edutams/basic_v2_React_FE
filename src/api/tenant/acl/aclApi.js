@@ -5,6 +5,7 @@ const aclApi = {
     getSchoolRoles: async (params) => {
         const response = await tenantApi.get('/censis/acl/roles/get_paginated_roles', {
             params,
+            without_pagination: true,
         });
         return response.data;
     },

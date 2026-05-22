@@ -26,7 +26,7 @@ import { IconDotsVertical, IconEdit } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
-import { usePermissions } from '../../../../../../context/AgentContext/permissions';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 const SetupApprovals = ({
   schoolList,
@@ -205,7 +205,7 @@ const SetupApprovals = ({
                       <StatusChip status={row.status} />
                     </TableCell>
                     <TableCell>
-                      <StatusChip status={row.onboarding_status || 'pending'} />
+                      <StatusChip status={row.onboarding_status} />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">

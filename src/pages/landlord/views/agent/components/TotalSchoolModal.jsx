@@ -12,9 +12,9 @@ import {
   useTheme,
   CircularProgress,
 } from '@mui/material';
-import StandardModal from 'src/components/shared/StandardModal';
+import StandardModal from '@/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
-import PrimaryButton from 'src/components/shared/PrimaryButton';
+import PrimaryButton from '@/components/shared/PrimaryButton';
 import { IconSchool, IconChartBar, IconBuildingCommunity } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
 

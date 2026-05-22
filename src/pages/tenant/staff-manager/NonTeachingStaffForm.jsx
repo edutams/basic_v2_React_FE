@@ -1,17 +1,10 @@
-import React from 'react';
-import {
-  Box,
-  TextField,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { IMaskInput } from 'react-imask';
 import PropTypes from 'prop-types';
+import aclApi from '@/api/tenant/acl/aclApi';
 
 const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   const { onChange, ...other } = props;
@@ -20,7 +13,7 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
       {...other}
       mask="00000000000"
       definitions={{
-        '0': /[0-9]/,
+        0: /[0-9]/,
       }}
       inputRef={ref}
       onAccept={(value) => onChange({ target: { name: props.name, value } })}
@@ -63,19 +56,24 @@ const NonTeachingStaffForm = ({
     onSubmit: (values) => onSubmit(values),
   });
 
-  // Predefined roles for non-teaching staff
-  const roles = [
-    'Bursar',
-    'Security',
-    'Librarian',
-    'Cleaner',
-    'Driver',
-    'Cook',
-    'Gardener',
-    'IT Support',
-    'Admin',
-    'Accountant',
-  ];
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    const getRoles = async () => {
+      try {
+        const res = await aclApi.getSchoolRoles({
+          exclude_super_admin: true,
+          // without_pagination: true,
+        });
+
+        setRoles(res.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch roles:', error);
+      }
+    };
+
+    getRoles();
+  }, []);
 
   return (
     <Box component="form" onSubmit={formik.handleSubmit}>
@@ -142,7 +140,11 @@ const NonTeachingStaffForm = ({
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
-          <FormControl fullWidth error={formik.touched.gender && Boolean(formik.errors.gender)} required>
+          <FormControl
+            fullWidth
+            error={formik.touched.gender && Boolean(formik.errors.gender)}
+            required
+          >
             <InputLabel>Gender</InputLabel>
             <Select
               name="gender"
@@ -179,7 +181,11 @@ const NonTeachingStaffForm = ({
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 45%', minWidth: '45%' }}>
-          <FormControl fullWidth error={formik.touched.status && Boolean(formik.errors.status)} required>
+          <FormControl
+            fullWidth
+            error={formik.touched.status && Boolean(formik.errors.status)}
+            required
+          >
             <InputLabel>Status</InputLabel>
             <Select
               name="status"
@@ -211,9 +217,14 @@ const NonTeachingStaffForm = ({
             onBlur={formik.handleBlur}
             label="Select Role"
           >
+            {/* {roles.map((role) => (
+              <MenuItem key={role.id} value={role.name}>
+                {role.name}
+              </MenuItem>
+            ))} */}
             {roles.map((role) => (
-              <MenuItem key={role} value={role}>
-                {role}
+              <MenuItem key={role.id} value={role.name}>
+                {role.name.replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
               </MenuItem>
             ))}
           </Select>
@@ -229,10 +240,7 @@ const NonTeachingStaffForm = ({
         <Button color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button 
-          variant="contained" 
-          type="submit" 
-        >
+        <Button variant="contained" type="submit">
           {isLoading ? 'Saving...' : submitText}
         </Button>
       </Box>

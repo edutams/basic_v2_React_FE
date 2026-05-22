@@ -7,21 +7,21 @@ const SchoolLayout = Loadable(lazy(() => import('@/layouts/school/SchoolLayout')
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
 
 const SchoolDashboardMain = Loadable(
-  lazy(() => import('@/tenant/pages/school-dashboard/SchoolDashboard')),
+  lazy(() => import('@/pages/tenant/school-dashboard/SchoolDashboard')),
 );
-const SetupWelcome = Loadable(lazy(() => import('@/tenant/pages/school-setup/SetupWelcome')));
-const InitialSetup = Loadable(lazy(() => import('@/tenant/pages/school-setup/InitialSetup')));
-const CompleteSetup = Loadable(lazy(() => import('@/tenant/pages/school-setup/CompleteSetup')));
-const SessionWeekManager = Loadable(lazy(() => import('@/tenant/pages/school/SessionWeekManager')));
-const SchemeOfWork = Loadable(lazy(() => import('@/tenant/pages/scheme-of-work/SchemeOfWork')));
+const SetupWelcome = Loadable(lazy(() => import('@/pages/tenant/school-setup/SetupWelcome')));
+const InitialSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/InitialSetup')));
+const CompleteSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/CompleteSetup')));
+const SessionWeekManager = Loadable(lazy(() => import('@/pages/tenant/school/SessionWeekManager')));
+const SchemeOfWork = Loadable(lazy(() => import('@/pages/tenant/scheme-of-work/SchemeOfWork')));
 const CurriculumManager = Loadable(
-  lazy(() => import('@/tenant/pages/curriculum-manager/CurriculumManager')),
+  lazy(() => import('@/pages/tenant/curriculum-manager/CurriculumManager')),
 );
 const ClassStructureManager = Loadable(
-  lazy(() => import('@/tenant/components/ClassStructureManager')),
+  lazy(() => import('@/components/tenant/components/ClassStructureManager')),
 );
 const SubscriptionIndex = Loadable(
-  lazy(() => import('@/tenant/pages/subcriptions/SubscriptionIndex')),
+  lazy(() => import('@/pages/tenant/subcriptions/SubscriptionIndex')),
 );
 const TenantLogin = Loadable(lazy(() => import('@/authentication/auth1/TenantLogin')));
 const ForgotPassword = Loadable(lazy(() => import('@/authentication/auth1/ForgotPassword')));
@@ -31,27 +31,27 @@ const AdmissionApply = Loadable(lazy(() => import('@/authentication/auth1/Admiss
 const ImpersonateLogin = Loadable(lazy(() => import('@/authentication/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('@/authentication/Error')));
 const SchoolNotFound = Loadable(lazy(() => import('@/authentication/SchoolNotFound')));
-const AlcManager = Loadable(lazy(() => import('@/tenant/pages/alc-manager/SchoolAlcManager')));
-const ActivityLog = Loadable(lazy(() => import('@/tenant/pages/activity-log/ActivityLog')));
+const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/SchoolAlcManager')));
+const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
 
-const CalendarPage = Loadable(lazy(() => import('@/tenant/pages/school-setup/CalendarPage')));
-const AccountSetting = Loadable(lazy(() => import('@/tenant/pages/profile/AccountSetting')));
-const StaffManager = Loadable(lazy(() => import('@/tenant/pages/staff-manager/StaffManager')));
+const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
+const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
+const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/StaffManager')));
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
-const ParentManagement = Loadable(lazy(() => import('@/tenant/pages/parents/ParentManagement')));
-const LearnerManagement = Loadable(lazy(() => import('@/tenant/pages/learners/LearnerManagement')));
+const ParentManagement = Loadable(lazy(() => import('@/pages/tenant/parents/ParentManagement')));
+const LearnerManagement = Loadable(lazy(() => import('@/pages/tenant/learners/LearnerManagement')));
 
-const NewApplication = Loadable(lazy(() => import('@/tenant/pages/admission/NewApplication')));
-const MyApplication = Loadable(lazy(() => import('@/tenant/pages/admission/MyApplication')));
-const AdmissionLetter = Loadable(lazy(() => import('@/tenant/pages/admission/AdmissionLetter')));
+const NewApplication = Loadable(lazy(() => import('@/pages/tenant/admission/NewApplication')));
+const MyApplication = Loadable(lazy(() => import('@/pages/tenant/admission/MyApplication')));
+const AdmissionLetter = Loadable(lazy(() => import('@/pages/tenant/admission/AdmissionLetter')));
 const ApplicationTracker = Loadable(
-  lazy(() => import('@/tenant/pages/admission/ApplicationTracker')),
+  lazy(() => import('@/pages/tenant/admission/ApplicationTracker')),
 );
-const AdmissionSetup = Loadable(lazy(() => import('@/tenant/pages/admission/AdmissionSetup')));
+const AdmissionSetup = Loadable(lazy(() => import('@/pages/tenant/admission/AdmissionSetup')));
 const CreateAdmissionBatch = Loadable(
-  lazy(() => import('@/tenant/pages/admission/CreateAdmissionBatch')),
+  lazy(() => import('@/pages/tenant/admission/CreateAdmissionBatch')),
 );
 
 const TenantRoutes = [

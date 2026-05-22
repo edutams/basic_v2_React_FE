@@ -9,50 +9,52 @@ const FullLayout = Loadable(lazy(() => import('@/layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
 
 /* ****Pages***** */
-const AnalyticalDashboard = Loadable(lazy(() => import('@/landlord/dashboard/Analytical')));
-const PackageManager = Loadable(lazy(() => import('@/landlord/dashboard/PackageManager')));
+const AnalyticalDashboard = Loadable(lazy(() => import('@/pages/landlord/dashboard/Analytical')));
+const PackageManager = Loadable(lazy(() => import('@/pages/landlord/dashboard/PackageManager')));
 
 const SchoolDashboard = Loadable(
-  lazy(() => import('@/landlord/views/agent/components/SchoolsTab/SchoolsTab')),
+  lazy(() => import('@/pages/landlord/views/agent/components/SchoolsTab/SchoolsTab')),
 );
 
-const AlcManager = Loadable(lazy(() => import('@/landlord/views/alc-manager/AlcManager')));
+const AlcManager = Loadable(lazy(() => import('@/pages/landlord/views/alc-manager/AlcManager')));
 
-const Agent = Loadable(lazy(() => import('@/landlord/views/agent/Agent')));
-const ViewAgent = Loadable(lazy(() => import('@/landlord/views/agent/ViewAgent')));
-const AgentDashboard = Loadable(lazy(() => import('@/landlord/views/agent/AgentDashboard')));
-const Gateway = Loadable(lazy(() => import('@/landlord/views/gateway/Gateway')));
+const Agent = Loadable(lazy(() => import('@/pages/landlord/views/agent/Agent')));
+const ViewAgent = Loadable(lazy(() => import('@/pages/landlord/views/agent/ViewAgent')));
+const AgentDashboard = Loadable(lazy(() => import('@/pages/landlord/views/agent/AgentDashboard')));
+const Gateway = Loadable(lazy(() => import('@/pages/landlord/views/gateway/Gateway')));
 const CalendarManagement = Loadable(
-  lazy(() => import('@/landlord/views/calendar/CalendarManagement')),
+  lazy(() => import('@/pages/landlord/views/calendar/CalendarManagement')),
 );
 const ViewSchool = Loadable(
   lazy(() => import('@/components/landlord/add-school/component/ViewSchool')),
 );
 const AgentSubscriptionManagement = Loadable(
-  lazy(() => import('@/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
+  lazy(() => import('@/pages/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
 );
-const ActivityLog = Loadable(lazy(() => import('@/landlord/views/activity-log/ActivityLog')));
+const ActivityLog = Loadable(lazy(() => import('@/pages/landlord/views/activity-log/ActivityLog')));
 const CommissionManagement = Loadable(
-  lazy(() => import('@/landlord/views/commission/CommissionManagement')),
+  lazy(() => import('@/pages/landlord/views/commission/CommissionManagement')),
 );
 const MyCommissionBySubscription = Loadable(
-  lazy(() => import('@/landlord/views/commission/MyCommissionBySubscription')),
+  lazy(() => import('@/pages/landlord/views/commission/MyCommissionBySubscription')),
 );
 const MyCommissionByTransaction = Loadable(
-  lazy(() => import('@/landlord/views/commission/MyCommissionByTransaction')),
+  lazy(() => import('@/pages/landlord/views/commission/MyCommissionByTransaction')),
 );
 
-const SubjectAndTopics = Loadable(lazy(() => import('@/landlord/views/phet/subjectandtopics')));
-const StimulationLinks = Loadable(lazy(() => import('@/landlord/views/phet/stimulation-links')));
+const SubjectAndTopics = Loadable(
+  lazy(() => import('@/pages/landlord/views/phet/subjectandtopics')),
+);
+const StimulationLinks = Loadable(
+  lazy(() => import('@/pages/landlord/views/phet/stimulation-links')),
+);
 const AgentCurriculumManager = Loadable(
-  lazy(() => import('@/landlord/views/curriculum-manager/AgentCurriculumManager')),
+  lazy(() => import('@/pages/landlord/views/curriculum-manager/AgentCurriculumManager')),
 );
-
-const FrontendPages = Loadable(lazy(() => import('@/landlord/views/FrontendPages')));
 
 // Pages
 const AccountSetting = Loadable(
-  lazy(() => import('@/landlord/views/pages/account-setting/AccountSetting')),
+  lazy(() => import('@/pages/landlord/views/pages/account-setting/AccountSetting')),
 );
 
 // Authentication
@@ -62,7 +64,7 @@ const ResetPassword = Loadable(lazy(() => import('@/authentication/auth1/ResetPa
 const VerifyOtp = Loadable(lazy(() => import('@/authentication/auth1/VerifyOtp')));
 const Error = Loadable(lazy(() => import('@/authentication/Error')));
 
-const Analytics_ = Loadable(lazy(() => import('@/landlord/views/analytics_/index')));
+const Analytics_ = Loadable(lazy(() => import('@/pages/landlord/views/analytics_/index')));
 
 const appMode = import.meta.env.MODE;
 const CENTRAL_DOMAIN =
@@ -268,12 +270,6 @@ const AgentRoutes = [
       { path: '/agent/forgot_password', element: <ForgotPassword /> },
       { path: '/agent/verify_otp', element: <VerifyOtp /> },
       { path: '/agent/reset_password', element: <ResetPassword /> },
-      { path: '/frontend-pages/homepage', element: <FrontendPages /> },
-      { path: '/frontend-pages/about', element: <FrontendPages /> },
-      { path: '/frontend-pages/contact', element: <FrontendPages /> },
-      { path: '/frontend-pages/pricing', element: <FrontendPages /> },
-      { path: '/frontend-pages/portfolio', element: <FrontendPages /> },
-      { path: '/frontend-pages/blog', element: <FrontendPages /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

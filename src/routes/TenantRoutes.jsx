@@ -23,11 +23,11 @@ const ClassStructureManager = Loadable(
 const SubscriptionIndex = Loadable(
   lazy(() => import('@/pages/tenant/subcriptions/SubscriptionIndex')),
 );
-const TenantLogin = Loadable(lazy(() => import('@/pages/Auth/tenant/TenantLogin')));
+const TenantLogin = Loadable(lazy(() => import('@/pages/tenant/auth/TenantLogin')));
 const ForgotPassword = Loadable(lazy(() => import('@/components/tenant/auth/ForgotPassword')));
 const VerifyOtp = Loadable(lazy(() => import('@/components/tenant/auth/VerifyOtp')));
 const ResetPassword = Loadable(lazy(() => import('@/components/tenant/auth/ResetPassword')));
-const AdmissionApply = Loadable(lazy(() => import('@/pages/Auth/tenant/admission/AdmissionApply')));
+const AdmissionApply = Loadable(lazy(() => import('@/pages/tenant/auth/admission/AdmissionApply')));
 const ImpersonateLogin = Loadable(lazy(() => import('../../src/utils/Auth/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../../src/utils/Auth/Error')));
 const SchoolNotFound = Loadable(lazy(() => import('../../src/utils/Auth/SchoolNotFound')));

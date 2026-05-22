@@ -8,10 +8,10 @@ import Typography from '@mui/material/Typography';
 import PageContainer from '@/components/container/PageContainer';
 import img1 from '@/assets/images/backgrounds/login-bg.svg';
 import Logo from '@/layouts/full/shared/logo/Logo';
-import AuthLogin from '@/components/Auth/landlord/AuthLogin';
-import AuthForgotPassword from '@/components/Auth/landlord/AuthForgotPassword';
-import AuthVerifyOtp from '@/components/Auth/landlord/AuthVerifyOtp';
-import AuthResetPassword from '@/components/Auth/landlord/AuthResetPassword';
+import AuthLogin from '@/components/landlord/auth/AuthLogin';
+import AuthForgotPassword from '@/components/landlord/auth/AuthForgotPassword';
+import AuthVerifyOtp from '@/components/landlord/auth/AuthVerifyOtp';
+import AuthResetPassword from '@/components/landlord/auth/AuthResetPassword';
 
 const Login = () => {
   const [view, setView] = useState('login');

@@ -58,10 +58,12 @@ const AccountSetting = Loadable(
 );
 
 // Authentication
-const Login = Loadable(lazy(() => import('@/pages/Auth/landlord/Login')));
-const ForgotPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ForgotPassword')));
-const ResetPassword = Loadable(lazy(() => import('@/components/Auth/tenant/ResetPassword')));
-const VerifyOtp = Loadable(lazy(() => import('@/components/Auth/tenant/VerifyOtp')));
+const Login = Loadable(lazy(() => import('@/pages/landlord/auth/Login')));
+const AuthForgotPassword = Loadable(
+  lazy(() => import('@/components/landlord/auth/AuthForgotPassword')),
+);
+const ResetPassword = Loadable(lazy(() => import('@/components/landlord/auth/AuthResetPassword')));
+const VerifyOtp = Loadable(lazy(() => import('@/components/landlord/auth/AuthVerifyOtp')));
 const Error = Loadable(lazy(() => import('../../src/utils/Auth/Error')));
 
 const Analytics_ = Loadable(lazy(() => import('@/pages/landlord/views/analytics_/index')));
@@ -267,7 +269,7 @@ const AgentRoutes = [
     children: [
       { path: '/auth/404', element: <Error /> },
       { path: '/agent/login', element: <Login /> },
-      { path: '/agent/forgot_password', element: <ForgotPassword /> },
+      { path: '/agent/forgot_password', element: <AuthForgotPassword /> },
       { path: '/agent/verify_otp', element: <VerifyOtp /> },
       { path: '/agent/reset_password', element: <ResetPassword /> },
       { path: '*', element: <Navigate to="/auth/404" /> },

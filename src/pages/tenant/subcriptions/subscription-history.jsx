@@ -28,7 +28,7 @@ import {
 } from '@mui/icons-material';
 
 import ParentCard from '@/components/shared/ParentCard';
-import ReceiptModal from '@/components/subcription/ReceiptModal';
+import ReceiptModal from '@/components/shared/subcription/ReceiptModal';
 
 // Dummy transaction data
 const DUMMY_TRANSACTIONS = [

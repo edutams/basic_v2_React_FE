@@ -23,15 +23,15 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon, MoreVert as MoreVertIcon } from '@mui/icons-material';
 
-import Breadcrumb from 'src/layouts/full/shared/breadcrumb/Breadcrumb';
-import ParentCard from 'src/components/shared/ParentCard';
-import SubcriptionModal from '../../../components/subcription/SubcriptionModal';
-import UpgradePlanModal from '../../../components/subcription/UpgradePlanModal';
-import TransactionModal from '../../../components/subcription/TransactionModal';
-import InvoiceModal from '../../../components/subcription/InvoiceModal';
-import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
-import useNotification from 'src/hooks/useNotification';
+import Breadcrumb from '@/layouts/full/shared/breadcrumb/Breadcrumb';
+import ParentCard from '@/components/shared/ParentCard';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import useNotification from '@/hooks/useNotification';
 import tenantApi from '@/api/tenant/tenant_api';
+import InvoiceModal from '@/components/shared/subcription/InvoiceModal';
+import SubcriptionModal from '@/components/shared/subcription/SubcriptionModal';
+import TransactionModal from '@/components/shared/subcription/TransactionModal';
+import UpgradePlanModal from '@/components/shared/subcription/UpgradePlanModal';
 
 const DUMMY_ROWS = [
   {

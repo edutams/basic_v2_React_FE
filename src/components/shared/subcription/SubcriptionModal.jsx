@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import ReusableModal from 'src/components/shared/ReusableModal';
-import SubcriptionFormLink from 'src/components/subcription/SubcriptionFormLink';
 import PropTypes from 'prop-types';
+import SubcriptionFormLink from './SubcriptionFormLink';
 
 const getModalConfig = (actionType) => {
   const configs = {

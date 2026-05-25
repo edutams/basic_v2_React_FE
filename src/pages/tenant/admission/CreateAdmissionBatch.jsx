@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -14,11 +14,23 @@ import {
   InputAdornment,
   ToggleButton,
   ToggleButtonGroup,
+  CircularProgress,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
+import {
+  fetchProgrammes,
+  fetchClassesByProgramme,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  createAdmissionBatch,
+  updateAdmissionBatch,
+  fetchAdmissionEntrySessionTerm,
+} from '@/api/tenant/admission/admissionApi';
 
 const CREATE_BCRUMB = [
   { to: '/', title: 'Home' },
@@ -32,67 +44,241 @@ const EDIT_BCRUMB = [
   { title: 'Edit Admission Batch' },
 ];
 
-const DUMMY_PROGRAMMES = [
-  { id: 1, name: 'Junior Secondary' },
-  { id: 2, name: 'Senior Secondary' },
-];
-
-const DUMMY_CLASSES = {
-  1: ['JSS1', 'JSS2', 'JSS3'],
-  2: ['SSS1', 'SSS2', 'SSS3'],
+// Safely extract array from various API response shapes
+const extractList = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
 };
 
 const CreateAdmissionBatch = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Get data from location.state OR URL params
   const existingBatch = location.state?.batch ?? null;
-  const termLabel = location.state?.termLabel ?? '';
+  const sessionId = location.state?.sessionId ?? new URLSearchParams(location.search).get('sessionId');
+  const sessionTermId = location.state?.sessionTermId ?? new URLSearchParams(location.search).get('sessionTermId');
+  const sessionTermLabel = location.state?.sessionTermLabel ?? '';
   const isEdit = Boolean(existingBatch);
 
+  // Debug: Log the existing batch data
+  useEffect(() => {
+    if (existingBatch) {
+      console.log('Existing Batch Data:', existingBatch);
+      console.log('Class IDs:', existingBatch?.class_ids);
+      console.log('Programme ID:', existingBatch?.programme_id);
+    }
+  }, [existingBatch]);
+
+  // ─── Form state ────────────────────────────────────────────────────────────
   const [batchName, setBatchName] = useState(existingBatch?.batch_name ?? '');
   const [programmeId, setProgrammeId] = useState(existingBatch?.programme_id ?? '');
-  const [selectedClasses, setSelectedClasses] = useState(existingBatch?.classes ?? []);
+  const [selectedClassIds, setSelectedClassIds] = useState(existingBatch?.class_ids ?? []);
+
+  const [entrySessionTermId, setEntrySessionTermId] = useState(existingBatch?.entry_session_term_id ?? sessionTermId ?? '');
 
   const [entranceExam, setEntranceExam] = useState(existingBatch?.has_entrance_exam ?? false);
   const [examType, setExamType] = useState(existingBatch?.exam_type ?? 'CBT');
-  const [examDate, setExamDate] = useState(existingBatch?.exam_date ?? '');
-  const [passMark, setPassMark] = useState(existingBatch?.pass_mark ?? 70);
+  // Format exam_date from ISO datetime to YYYY-MM-DD for date input
+  const [examDate, setExamDate] = useState(
+    existingBatch?.exam_date 
+      ? new Date(existingBatch.exam_date).toISOString().split('T')[0] 
+      : ''
+  );
+  const [passMark, setPassMark] = useState(existingBatch?.pass_mark ?? 1);
 
   const [enablePayment, setEnablePayment] = useState(existingBatch?.require_payment ?? false);
   const [preAppFee, setPreAppFee] = useState(existingBatch?.application_fee ?? '');
   const [postAppFee, setPostAppFee] = useState(existingBatch?.acceptance_fee ?? '');
 
   const [enableLetter, setEnableLetter] = useState(existingBatch?.enable_letter ?? false);
-  const [letterContent, setLetterContent] = useState('');
+  const [letterContent, setLetterContent] = useState(
+    existingBatch?.admission_letter_template ?? '',
+  );
 
   const [isOpen, setIsOpen] = useState(existingBatch?.status !== 'close');
 
-  const availableClasses = DUMMY_CLASSES[programmeId] ?? [];
+  // ─── API data state ─────────────────────────────────────────────────────────
+  const [programmes, setProgrammes] = useState([]);
+  const [programmesLoading, setProgrammesLoading] = useState(false);
 
+  const [availableClasses, setAvailableClasses] = useState([]);
+  const [classesLoading, setClassesLoading] = useState(false);
+
+  // Entry term options: current term + next term
+  const [entrySessionTermOptions, setEntrySessionTermOptions] = useState([]);
+  const [currentSessionTermLabel, setCurrentSessionTermLabel] = useState(sessionTermLabel);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [errors, setErrors] = useState({});
+
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
+
+  // Validate form fields
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!batchName.trim()) {
+      newErrors.batchName = 'Batch name is required';
+    }
+
+    if (!entrySessionTermId) {
+      newErrors.entrySessionTermId = 'Entry session term is required';
+    }
+
+    if (entranceExam) {
+      if (!examDate) {
+        newErrors.examDate = 'Exam date is required';
+      }
+      if (!passMark || passMark < 0 || passMark > 100) {
+        newErrors.passMark = 'Pass mark must be between 0 and 100';
+      }
+    }
+
+    if (enablePayment) {
+      if (!preAppFee || Number(preAppFee) < 0) {
+        newErrors.preAppFee = 'Pre-application fee must be 0 or greater';
+      }
+      if (!postAppFee || Number(postAppFee) < 0) {
+        newErrors.postAppFee = 'Post-application fee must be 0 or greater';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ─── Load programmes on mount ───────────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      setProgrammesLoading(true);
+      try {
+        const res = await fetchProgrammes();
+        setProgrammes(extractList(res));
+      } catch (err) {
+        console.error('Failed to load programmes', err);
+        showSnackbar('Failed to load programmes', 'error');
+      } finally {
+        setProgrammesLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (!sessionTermId) return;
+    const load = async () => {
+      try {
+        const res = await fetchAdmissionEntrySessionTerm(sessionTermId);
+        const session_terms = extractList(res);
+        setEntrySessionTermOptions(session_terms);
+        
+        // Set the current session term label from the first option if not already set
+        if (session_terms.length > 0 && !currentSessionTermLabel) {
+          setCurrentSessionTermLabel(session_terms[0].display_name);
+        }
+        
+        // Default entry term to current term (first in list)
+        if (!existingBatch && session_terms.length > 0) {
+          setEntrySessionTermId(session_terms[0].session_term_id);
+        }
+      } catch (err) {
+        console.error('Failed to load entry terms', err);
+      }
+    };
+    load();
+  }, [sessionTermId]);
+
+  // ─── Load classes when programme changes ────────────────────────────────────
+  useEffect(() => {
+    if (!programmeId) {
+      setAvailableClasses([]);
+      // Only clear selected classes if not in edit mode
+      if (!isEdit) {
+        setSelectedClassIds([]);
+      }
+      return;
+    }
+    const load = async () => {
+      setClassesLoading(true);
+      try {
+        const res = await fetchClassesByProgramme(programmeId);
+        setAvailableClasses(extractList(res));
+      } catch (err) {
+        console.error('Failed to load classes', err);
+        showSnackbar('Failed to load classes', 'error');
+      } finally {
+        setClassesLoading(false);
+      }
+    };
+    load();
+  }, [programmeId, isEdit]);
+
+  // ─── Class chip helpers ─────────────────────────────────────────────────────
   const toggleClass = (cls) =>
-    setSelectedClasses((prev) =>
-      prev.includes(cls) ? prev.filter((c) => c !== cls) : [...prev, cls],
+    setSelectedClassIds((prev) =>
+      prev.includes(cls.id) ? prev.filter((id) => id !== cls.id) : [...prev, cls.id],
     );
 
-  const handleSubmit = () => {
+  const getClassName = (id) => availableClasses.find((c) => c.id === id)?.class_code ?? String(id);
+
+  // ─── Submit ─────────────────────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    // Validate form
+    if (!validateForm()) {
+      showSnackbar('Please fix the errors in the form', 'error');
+      return;
+    }
+
     const payload = {
-      batch_name: batchName,
-      programme_id: programmeId,
-      classes: selectedClasses,
+      session_term_id: sessionTermId,
+      entry_session_term_id: entrySessionTermId || sessionTermId,
+      batch_name: batchName.trim(),
+      programme_id: programmeId || null,
+      class_ids: selectedClassIds,
       has_entrance_exam: entranceExam,
-      exam_type: examType,
-      exam_date: examDate,
-      pass_mark: passMark,
+      exam_type: entranceExam ? examType : null,
+      exam_date: entranceExam ? examDate : null,
+      pass_mark: entranceExam ? Number(passMark) : null,
       require_payment: enablePayment,
       application_fee: enablePayment ? Number(preAppFee) : 0,
       acceptance_fee: enablePayment ? Number(postAppFee) : 0,
-      enable_letter: enableLetter,
-      letter_content: letterContent,
+      // enable_letter: enableLetter,
+      admission_letter_template: letterContent ?? null,
       status: isOpen ? 'open' : 'close',
     };
-    console.log('Batch payload:', payload);
-    navigate('/admission-setup');
+
+    setSubmitting(true);
+    try {
+      if (isEdit) {
+        await updateAdmissionBatch(existingBatch.id, payload);
+        showSnackbar('Admission batch updated successfully');
+      } else {
+        await createAdmissionBatch(payload);
+        showSnackbar('Admission batch created successfully');
+      }
+      setTimeout(() => navigate('/admission-setup'), 1000);
+    } catch (err) {
+      console.error('Failed to save batch', err);
+      
+      // Handle backend validation errors
+      if (err?.response?.data?.errors) {
+        const backendErrors = {};
+        Object.keys(err.response.data.errors).forEach((key) => {
+          backendErrors[key] = err.response.data.errors[key][0];
+        });
+        setErrors(backendErrors);
+      }
+      
+      const msg =
+        err?.response?.data?.message ?? `Failed to ${isEdit ? 'update' : 'create'} batch`;
+      showSnackbar(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -102,7 +288,7 @@ const CreateAdmissionBatch = () => {
     >
       <Breadcrumb
         title={isEdit ? 'Edit Admission Batch' : 'Create New Admission Batch'}
-        subtitle={termLabel}
+        subtitle={sessionTermLabel}
         items={isEdit ? EDIT_BCRUMB : CREATE_BCRUMB}
       />
 
@@ -110,6 +296,7 @@ const CreateAdmissionBatch = () => {
         <Grid size={{ xs: 12, md: 3 }}>
           <Paper variant="outlined" sx={{ borderRadius: 2, p: 3 }}>
             <Stack spacing={3}>
+              {/* Batch Name */}
               <Box>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>
                   Batch Name
@@ -119,23 +306,45 @@ const CreateAdmissionBatch = () => {
                   size="small"
                   placeholder="Eg Batch3"
                   value={batchName}
-                  onChange={(e) => setBatchName(e.target.value)}
+                  onChange={(e) => {
+                    setBatchName(e.target.value);
+                    if (errors.batchName) {
+                      setErrors((prev) => ({ ...prev, batchName: '' }));
+                    }
+                  }}
+                  error={Boolean(errors.batchName)}
+                  helperText={errors.batchName}
                 />
               </Box>
 
+              {/* Entry Term */}
               <Box>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>
-                  Entry Term
+                  Entry Session Term
                 </Typography>
                 <TextField
+                  select
                   fullWidth
                   size="small"
-                  value={termLabel || '2025/2026 First Term'}
-                  disabled
-                  sx={{ bgcolor: 'grey.50' }}
-                />
+                  value={entrySessionTermId}
+                  disabled={entrySessionTermOptions.length === 0}
+                  onChange={(e) => setEntrySessionTermId(e.target.value)}
+                >
+                  {entrySessionTermOptions.length === 0 ? (
+                    <MenuItem value="" disabled>
+                      Loading...
+                    </MenuItem>
+                  ) : (
+                    entrySessionTermOptions.map((st) => (
+                      <MenuItem key={st.id} value={st.id}>
+                         {st?.session?.sesname} {st?.display_term?.display_name}
+                      </MenuItem>
+                    ))
+                  )}
+                </TextField>
               </Box>
 
+              {/* Programme + Class */}
               <Box sx={{ bgcolor: 'primary.light', p: 2 }}>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 6 }}>
@@ -145,19 +354,39 @@ const CreateAdmissionBatch = () => {
                     <TextField
                       select
                       fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: 'background.paper',
+                          '& fieldset': {
+                            borderColor: 'transparent',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                       size="small"
                       value={programmeId}
+                      disabled={programmesLoading}
                       onChange={(e) => {
-                        setProgrammeId(e.target.value);
-                        setSelectedClasses([]);
+                        const newProgrammeId = e.target.value;
+                        setProgrammeId(newProgrammeId);
+                        // Only clear selected classes if changing to a different programme in edit mode
+                        // or always clear in create mode
+                        if (!isEdit || (isEdit && newProgrammeId !== existingBatch?.programme_id)) {
+                          setSelectedClassIds([]);
+                        }
                       }}
                     >
                       <MenuItem value="" disabled>
-                        Select
+                        {programmesLoading ? 'Loading…' : 'Select'}
                       </MenuItem>
-                      {DUMMY_PROGRAMMES.map((p) => (
+                      {programmes.map((p) => (
                         <MenuItem key={p.id} value={p.id}>
-                          {p.name}
+                          {p.programme_name}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -169,35 +398,52 @@ const CreateAdmissionBatch = () => {
                     <TextField
                       select
                       fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          bgcolor: 'background.paper',
+                          '& fieldset': {
+                            borderColor: 'transparent',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                       size="small"
                       value=""
-                      disabled={!programmeId}
+                      disabled={!programmeId || classesLoading}
                       onChange={(e) => {
-                        const cls = e.target.value;
-                        if (cls && !selectedClasses.includes(cls))
-                          setSelectedClasses((prev) => [...prev, cls]);
+                        const cls = availableClasses.find((c) => c.id === e.target.value);
+                        if (cls && !selectedClassIds.includes(cls.id)) {
+                          setSelectedClassIds((prev) => [...prev, cls.id]);
+                        }
                       }}
                     >
                       <MenuItem value="" disabled>
-                        Select
+                        {classesLoading ? 'Loading…' : 'Select'}
                       </MenuItem>
                       {availableClasses.map((cls) => (
-                        <MenuItem key={cls} value={cls}>
-                          {cls}
+                        <MenuItem key={cls.id} value={cls.id}>
+                          {cls.class_code}
                         </MenuItem>
                       ))}
                     </TextField>
                   </Grid>
                 </Grid>
 
-                {selectedClasses.length > 0 && (
+                {selectedClassIds.length > 0 && (
                   <Stack direction="row" flexWrap="wrap" gap={0.75} mt={1.5}>
-                    {selectedClasses.map((cls) => (
+                    {selectedClassIds.map((id) => (
                       <Chip
-                        key={cls}
-                        label={cls}
+                        key={id}
+                        label={getClassName(id)}
                         size="small"
-                        onDelete={() => toggleClass(cls)}
+                        onDelete={() =>
+                          setSelectedClassIds((prev) => prev.filter((x) => x !== id))
+                        }
                         sx={{
                           bgcolor: 'grey.50',
                           color: 'primary.main',
@@ -212,6 +458,7 @@ const CreateAdmissionBatch = () => {
 
               <Divider />
 
+              {/* Entrance Exam */}
               <Box>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start">
                   <Box>
@@ -293,6 +540,7 @@ const CreateAdmissionBatch = () => {
 
               <Divider />
 
+              {/* Payment */}
               <Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="subtitle2" fontWeight={700}>
@@ -416,9 +664,10 @@ const CreateAdmissionBatch = () => {
                 )}
               </Box>
 
-              <Divider />
+              {/* <Divider /> */}
 
-              <Box>
+              {/* Admission Letter */}
+              {/* <Box>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start">
                   <Box>
                     <Typography variant="subtitle2" fontWeight={700}>
@@ -434,10 +683,11 @@ const CreateAdmissionBatch = () => {
                     color="primary"
                   />
                 </Box>
-              </Box>
+              </Box> */}
 
               <Divider />
 
+              {/* Status */}
               <Box>
                 <Box display="flex" justifyContent="space-between" alignItems="flex-start">
                   <Box>
@@ -460,20 +710,55 @@ const CreateAdmissionBatch = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 9 }}>
-          <AdmissionLetterEditor onChange={setLetterContent} />
+          <AdmissionLetterEditor
+            key={existingBatch?.id ?? 'new'}
+            onChange={setLetterContent}
+            initialContent={existingBatch?.admission_letter_template ?? ''}
+          />
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => navigate('/admission-setup')}
+              sx={{ fontWeight: 700, px: 3, mr: 2 }}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
             <Button
               variant="contained"
               size="large"
               onClick={handleSubmit}
+              disabled={submitting}
               sx={{ fontWeight: 700, px: 4 }}
+              startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
             >
-              {isEdit ? 'Save Changes' : 'Create New Admission'}
+              {submitting
+                ? isEdit
+                  ? 'Saving…'
+                  : 'Creating…'
+                : isEdit
+                  ? 'Save Changes'
+                  : 'Create New Admission'}
             </Button>
           </Box>
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 };

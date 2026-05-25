@@ -206,3 +206,11 @@ export const fetchSessionTerms = async () => {
   const response = await api.get('/curriculum/get-subscribed-session-terms');
   return response.data;
 };
+
+// Fetch session terms for a specific session ID
+export const fetchSessionTermsBySession = async (sessionId) => {
+  const response = await api.get(
+    `/curriculum/get-subscribed-session-terms-by-session/${sessionId}`,
+  );
+  return response.data;
+};

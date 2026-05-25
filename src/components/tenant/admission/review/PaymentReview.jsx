@@ -22,7 +22,6 @@ const RECEIPT_META = [
   { label: 'METHOD',     value: 'Bank Transfer - Globus Bank' },
 ];
 
-// Builds a self-contained HTML string of just the receipt
 const buildReceiptHtml = (totalPaid) => `
 <!DOCTYPE html>
 <html>
@@ -105,7 +104,6 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
       subtitle="Confirmation of admission application payment"
       id="section-payment"
     >
-      {/* Receipt header bar */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -144,7 +142,6 @@ const PaymentReview = ({ totalPaid = '₦25,500' }) => {
         </Box>
       </Box>
 
-      {/* Receipt body */}
       <Box ref={receiptRef} sx={{ p: 2, bgcolor: '#f2fcf7' }}>
         <Grid container spacing={1.5} sx={{ mb: 2 }}>
           {RECEIPT_META.map(({ label, value }) => (

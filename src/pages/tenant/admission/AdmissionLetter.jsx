@@ -28,7 +28,7 @@ const toDataUrl = (url) =>
       canvas.getContext('2d').drawImage(img, 0, 0);
       resolve(canvas.toDataURL());
     };
-    img.onerror = () => resolve(null); // fallback — just skip if blocked
+    img.onerror = () => resolve(null);
     img.src = url;
   });
 
@@ -108,7 +108,6 @@ const DetailCell = ({ label, value }) => (
   </Box>
 );
 
-// ── The printable letter card
 const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail }) => {
   const theme = useTheme();
 
@@ -127,7 +126,6 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
       <Box sx={{ height: 8, background: bg }} />
 
       <Box sx={{ p: { xs: 3, sm: 5 } }}>
-        {/* School header */}
         <Box
           display="flex"
           justifyContent="space-between"
@@ -157,7 +155,7 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
 
           <Box
             sx={{
-              textAlign: { xs: 'left', md: 'right' }, // 👈 align properly on mobile
+              textAlign: { xs: 'left', md: 'right' }, 
             }}
           >
             <Typography variant="body2" fontWeight={700}>
@@ -172,7 +170,6 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
           </Box>
         </Box>
 
-        {/* Reference + Date */}
         <Box display="flex" justifyContent="space-between" mb={3}>
           <Box>
             <Typography
@@ -226,7 +223,6 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
           for the {letter.session} academic session.
         </Typography>
 
-        {/* Details box */}
         <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 3, bgcolor: '#F7FAFC' }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>

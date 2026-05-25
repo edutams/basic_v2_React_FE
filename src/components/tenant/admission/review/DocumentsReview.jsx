@@ -11,7 +11,6 @@ const DOC_DEFS = [
   { key: 'medical_record',         label: 'Medical record',         required: false },
 ];
 
-// ── Inline preview dialog (same logic as DocumentsStep) ──────────────────────
 const PreviewDialog = ({ file, onClose }) => {
   const [objectUrl, setObjectUrl] = useState(null);
 
@@ -53,7 +52,6 @@ const PreviewDialog = ({ file, onClose }) => {
   );
 };
 
-// ── Single doc row ────────────────────────────────────────────────────────────
 const DocRow = ({ label, file, required, onView }) => {
   const uploaded = Boolean(file);
 
@@ -117,11 +115,9 @@ const DocRow = ({ label, file, required, onView }) => {
   );
 };
 
-// ── Main component ────────────────────────────────────────────────────────────
 const DocumentsReview = ({ documentsData }) => {
   const [preview, setPreview] = useState(null);
 
-  // documentsData is the files object: { birth_certificate: File, ... }
   const files = documentsData ?? {};
 
   return (

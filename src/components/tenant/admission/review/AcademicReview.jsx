@@ -20,7 +20,6 @@ const AcademicReview = ({ academicData, intendingClass }) => {
         Previous school information
       </Typography>
 
-      {/* Summary textarea */}
       <Grid container spacing={2} sx={{ mb: 2.5 }}>
         <Grid size={{ xs: 12 }}>
           <ReadField label="" value={prevSummary} multiline rows={3} />

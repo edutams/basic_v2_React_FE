@@ -219,7 +219,7 @@ const AccountTab = () => {
                   value={formData.phone}
                   onChange={handleProfileChange}
                   fullWidth
-                  disabled={!isTenantSubdomain}
+                  disabled={isTenantSubdomain}
                 />
               </Box>
               <Box>

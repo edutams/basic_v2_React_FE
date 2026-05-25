@@ -1,15 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Grid,
   Typography,
   Button,
-  TextField,
-  MenuItem,
   Chip,
   Stack,
   Paper,
-  Divider,
   Tooltip,
 } from '@mui/material';
 import TiptapEdit from '@/pages/landlord/views/forms/form-tiptap/TiptapEdit';
@@ -26,12 +23,6 @@ const PLACEHOLDER_FIELDS = [
 ];
 
 export const LETTER_TEMPLATES = [
-  {
-    id: 'congratulations',
-    label: 'Congratulations Letter',
-    preview:
-      "Dear [Student's First Name] [Student's Last Name],\n\nCongratulations! You've achieved an entrance score of [Entrance Score],\n\nWelcome to [Class Name] at [School Division]. We look forward to having you join us for the [Admission Session].",
-  },
   {
     id: 'offer',
     label: 'Admission Offer',
@@ -64,14 +55,9 @@ const applyPreviewSamples = (html) => {
   return result;
 };
 
-const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
-  const [selectedTemplate, setSelectedTemplate] = useState(LETTER_TEMPLATES[0]);
+const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false }) => {
   const [letterContent, setLetterContent] = useState('');
   const editorRef = useRef(null); // holds the tiptap editor instance
-
-  const handleTemplateChange = (tpl) => {
-    setSelectedTemplate(tpl);
-  };
 
   const handleEditorUpdate = ({ editor }) => {
     editorRef.current = editor;
@@ -89,12 +75,20 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
     }
   };
 
-  const initialContent = selectedTemplate
-    ? selectedTemplate.preview
-        .split('\n')
-        .map((line) => (line.trim() ? `<p>${line}</p>` : '<p></p>'))
-        .join('')
-    : '<p>Type here...</p>';
+  // Determine what content to show in the editor
+  const getInitialContent = () => {
+    // If initialContent is provided (edit mode), use it
+    if (initialContent && initialContent.trim()) {
+      return initialContent;
+    }
+    
+    // Otherwise, use the default template
+    const defaultTemplate = LETTER_TEMPLATES[0];
+    return defaultTemplate.preview
+      .split('\n')
+      .map((line) => (line.trim() ? `<p>${line}</p>` : '<p></p>'))
+      .join('');
+  };
 
   return (
     <ParentCard title="Admission Letter Editor">
@@ -157,7 +151,7 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
             ))}
           </Stack>
 
-          <Divider sx={{ my: 2 }} />
+          {/* <Divider sx={{ my: 2 }} />
 
           <Typography
             variant="caption"
@@ -167,8 +161,8 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
             mb={1}
           >
             Template Options
-          </Typography>
-          <Stack direction="row" spacing={1}>
+          </Typography> */}
+          {/* <Stack direction="row" spacing={1}>
             {LETTER_TEMPLATES.map((tpl) => (
               <Paper
                 key={tpl.id}
@@ -214,7 +208,7 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
                 </Box>
               </Paper>
             ))}
-          </Stack>
+          </Stack> */}
         </Grid>
 
         <Grid size={{ xs: 12, sm: 5 }}>
@@ -229,7 +223,7 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
             />
           </Box>
 
-          <TextField
+          {/* <TextField
             select
             fullWidth
             size="small"
@@ -247,7 +241,7 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
                 {tpl.label}
               </MenuItem>
             ))}
-          </TextField>
+          </TextField> */}
 
           <Box
             sx={{
@@ -266,13 +260,14 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
             }}
           >
             <TiptapEdit
-              initialContent={initialContent}
+              key={initialContent} // Force re-render when initialContent changes
+              initialContent={getInitialContent()}
               onUpdate={handleEditorUpdate}
               readOnly={readOnly}
             />
           </Box>
 
-          {!readOnly && (
+          {/* {!readOnly && (
             <Stack
               direction="row"
               spacing={{ xs: 0.5, sm: 1 }}
@@ -322,7 +317,7 @@ const AdmissionLetterEditor = ({ onChange, readOnly = false }) => {
                 Save & Preview
               </Button>
             </Stack>
-          )}
+          )} */}
         </Grid>
 
         <Grid size={{ xs: 12, sm: 4 }}>

@@ -33,115 +33,20 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
+import { fetchSessions, fetchSessionTermsBySession } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchAdmissionBatches,
+  toggleAdmissionBatchStatus,
+  updateAdmissionBatch,
+} from '@/api/tenant/admission/admissionApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
 
-const DUMMY_SESSIONS = [
-  { id: 1, sesname: '2025/2026' },
-  { id: 2, sesname: '2024/2025' },
-];
-
-const DUMMY_SESSION_TERMS = {
-  1: [
-    {
-      session_term_id: 101,
-      app_term_id: 1,
-      display_name: '2025/2026 First Term',
-      status: 'active',
-      is_subscribed: 'yes',
-    },
-    {
-      session_term_id: 102,
-      app_term_id: 2,
-      display_name: '2025/2026 Second Term',
-      status: 'inactive',
-      is_subscribed: 'yes',
-    },
-    {
-      session_term_id: 103,
-      app_term_id: 3,
-      display_name: '2025/2026 Third Term',
-      status: 'inactive',
-      is_subscribed: 'yes',
-    },
-  ],
-  2: [
-    {
-      session_term_id: 201,
-      app_term_id: 1,
-      display_name: '2024/2025 First Term',
-      status: 'inactive',
-      is_subscribed: 'yes',
-    },
-    {
-      session_term_id: 202,
-      app_term_id: 2,
-      display_name: '2024/2025 Second Term',
-      status: 'inactive',
-      is_subscribed: 'yes',
-    },
-  ],
-};
-
-const DUMMY_BATCHES = {
-  101: [
-    {
-      id: 1,
-      batch_name: 'Batch 1',
-      has_entrance_exam: false,
-      require_payment: true,
-      application_fee: 5000,
-      acceptance_fee: 15000,
-      app_instruction: 'Fill all fields carefully.',
-      admission_letter_template: '',
-      status: 'close',
-    },
-    {
-      id: 2,
-      batch_name: 'Batch 2',
-      has_entrance_exam: false,
-      require_payment: true,
-      application_fee: 5000,
-      acceptance_fee: 15000,
-      app_instruction: '',
-      admission_letter_template: '',
-      status: 'close',
-    },
-    {
-      id: 3,
-      batch_name: 'Batch 3',
-      has_entrance_exam: true,
-      require_payment: true,
-      application_fee: 5000,
-      acceptance_fee: 15000,
-      app_instruction: '',
-      admission_letter_template: '',
-      status: 'open',
-    },
-    {
-      id: 4,
-      batch_name: 'Batch 4',
-      has_entrance_exam: true,
-      require_payment: true,
-      application_fee: 5000,
-      acceptance_fee: 15000,
-      app_instruction: '',
-      admission_letter_template: '',
-      status: 'open',
-    },
-    {
-      id: 5,
-      batch_name: 'Batch 5',
-      has_entrance_exam: true,
-      require_payment: true,
-      application_fee: 5000,
-      acceptance_fee: 15000,
-      app_instruction: '',
-      admission_letter_template: '',
-      status: 'open',
-    },
-  ],
-  102: [],
+// helper — safely extract array from various API response shapes
+const extractList = (res) => {
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
 };
 
 const StatusChip = ({ status }) => {
@@ -252,8 +157,8 @@ const AdmissionSetup = () => {
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [sessionTerms, setSessionTerms] = useState([]);
-  const [selectedTermId, setSelectedTermId] = useState(null);
-  const [selectedTermLabel, setSelectedTermLabel] = useState('');
+  const [selectedSessionTermId, setSelectedSessionTermId] = useState(null);
+  const [selectedSessionTermLabel, setSelectedSessionTermLabel] = useState('');
 
   const [batches, setBatches] = useState([]);
 
@@ -271,73 +176,91 @@ const AdmissionSetup = () => {
   const [letterEditorOpen, setLetterEditorOpen] = useState(false);
   const [letterEditorBatch, setLetterEditorBatch] = useState(null);
   const [letterEditorReadOnly, setLetterEditorReadOnly] = useState(false);
+  const [letterEditorContent, setLetterEditorContent] = useState('');
 
   useEffect(() => {
     loadSessions();
   }, []);
 
   useEffect(() => {
-    if (selectedTermId) {
-      loadBatches(selectedTermId);
+    if (selectedSessionTermId) {
+      loadBatches(selectedSessionTermId);
     } else {
       setBatches([]);
     }
-  }, [selectedTermId]);
+  }, [selectedSessionTermId]);
 
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
-  const loadSessions = () => {
+  const loadSessions = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setSessions(DUMMY_SESSIONS);
-      setSelectedSessionId(DUMMY_SESSIONS[0].id);
-      loadSessionTerms(DUMMY_SESSIONS[0].id);
+    try {
+      const res = await fetchSessions();
+      const list = extractList(res);
+      setSessions(list);
+      if (list.length > 0) {
+        setSelectedSessionId(list[0].id);
+        await loadSessionTerms(list[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to load sessions', err);
+      showSnackbar('Failed to load sessions', 'error');
+    } finally {
       setLoading(false);
-    }, 300);
-  };
-
-  const loadSessionTerms = (sessionId) => {
-    const terms = DUMMY_SESSION_TERMS[sessionId] ?? [];
-    setSessionTerms(terms);
-    const active = terms.find((t) => t.status === 'active');
-    const first = terms[0];
-    const selected = active ?? first ?? null;
-    if (selected) {
-      setSelectedTermId(selected.session_term_id);
-      setSelectedTermLabel(selected.display_name);
-    } else {
-      setSelectedTermId(null);
-      setSelectedTermLabel('');
     }
   };
 
-  const loadBatches = (termId) => {
+  const loadSessionTerms = async (sessionId) => {
+    try {
+      const res = await fetchSessionTermsBySession(sessionId);
+      const session_terms = extractList(res);
+      setSessionTerms(session_terms);
+      const selected = session_terms[0] ?? null;
+      if (selected) {
+        setSelectedSessionTermId(selected.id);
+        setSelectedSessionTermLabel(`${selected.session.sesname} - ${selected.display_term.display_name}`);
+      } else {
+        setSelectedSessionTermId(null);
+        setSelectedSessionTermLabel('');
+      }
+    } catch (err) {
+      console.error('Failed to load session terms', err);
+      showSnackbar('Failed to load session terms', 'error');
+    }
+  };
+
+  const loadBatches = async (termId) => {
     setBatchesLoading(true);
-    setTimeout(() => {
-      setBatches(DUMMY_BATCHES[termId] ?? []);
+    try {
+      const res = await fetchAdmissionBatches(termId);
+      setBatches(extractList(res));
+    } catch (err) {
+      console.error('Failed to load batches', err);
+      showSnackbar('Failed to load admission batches', 'error');
+    } finally {
       setBatchesLoading(false);
-    }, 200);
+    }
   };
 
   const handleSessionChange = (e) => {
     const id = Number(e.target.value);
     setSelectedSessionId(id);
-    setSelectedTermId(null);
-    setSelectedTermLabel('');
+    setSelectedSessionTermId(null);
+    setSelectedSessionTermLabel('');
     setBatches([]);
     loadSessionTerms(id);
   };
 
-  const handleTermSelect = (term) => {
-    setSelectedTermId(term.session_term_id);
-    setSelectedTermLabel(term.display_name);
+  const handleTermSelect = (session_term) => {
+    setSelectedSessionTermId(session_term.id);
+    setSelectedSessionTermLabel(`${session_term.session.sesname} - ${session_term.display_term.display_name}`);
   };
 
-  const handleMenuOpen = (e, term) => {
+  const handleMenuOpen = (e, session_term) => {
     e.stopPropagation();
     setAnchorEl(e.currentTarget);
-    setMenuTerm(term);
+    setMenuTerm(session_term);
   };
   const handleMenuClose = () => {
     setAnchorEl(null);
@@ -360,21 +283,61 @@ const AdmissionSetup = () => {
     handleMenuClose();
   };
 
-  const handleToggleBatchStatus = () => {
+  const handleToggleBatchStatus = async () => {
     const batch = confirmToggleBatch.batch;
     setConfirmToggleBatch({ open: false, batch: null });
     if (!batch) return;
+    // Optimistic update
+    const newStatus = batch.status === 'open' ? 'close' : 'open';
     setBatches((prev) =>
-      prev.map((b) =>
-        b.id === batch.id ? { ...b, status: b.status === 'open' ? 'close' : 'open' } : b,
-      ),
+      prev.map((b) => (b.id === batch.id ? { ...b, status: newStatus } : b)),
     );
-    showSnackbar(`Batch ${batch.status === 'open' ? 'closed' : 'opened'} successfully`);
+    try {
+      await toggleAdmissionBatchStatus(batch.id);
+      showSnackbar(`Batch ${newStatus === 'open' ? 'opened' : 'closed'} successfully`);
+    } catch (err) {
+      // Revert on failure
+      setBatches((prev) =>
+        prev.map((b) => (b.id === batch.id ? { ...b, status: batch.status } : b)),
+      );
+      showSnackbar('Failed to update batch status', 'error');
+    }
+  };
+
+  const handleSaveAdmissionLetter = async () => {
+    if (!letterEditorBatch) return;
+    
+    try {
+      const payload = {
+        admission_letter_template: letterEditorContent,
+      };
+      
+      await updateAdmissionBatch(letterEditorBatch.id, payload);
+      
+      // Update the batch in the local state
+      setBatches((prev) =>
+        prev.map((b) =>
+          b.id === letterEditorBatch.id
+            ? { ...b, admission_letter_template: letterEditorContent }
+            : b,
+        ),
+      );
+      
+      showSnackbar('Admission letter saved successfully');
+      setLetterEditorOpen(false);
+    } catch (err) {
+      console.error('Failed to save admission letter', err);
+      showSnackbar('Failed to save admission letter', 'error');
+    }
   };
 
   const handleCreateBatch = () => {
     navigate('/admission-setup/create-batch', {
-      state: { termId: selectedTermId, termLabel: selectedTermLabel },
+      state: {
+        sessionId: selectedSessionId,
+        sessionTermId: selectedSessionTermId,
+        sessionTermLabel: selectedSessionTermLabel,
+      },
     });
   };
 
@@ -382,7 +345,12 @@ const AdmissionSetup = () => {
     setBatchMenuAnchor(null);
     setMenuBatch(null);
     navigate(`/admission-setup/edit-batch/${batch.id}`, {
-      state: { batch, termId: selectedTermId, termLabel: selectedTermLabel },
+      state: {
+        batch,
+        sessionId: selectedSessionId,
+        sessionTermId: selectedSessionTermId,
+        sessionTermLabel: selectedSessionTermLabel,
+      },
     });
   };
 
@@ -435,23 +403,23 @@ const AdmissionSetup = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {sessionTerms.map((term, i) => {
-                            const isSelected = selectedTermId === term.session_term_id;
+                          {sessionTerms.map((session_term, i) => {
+                            const isSelected = selectedSessionTermId === session_term.id;
                             return (
                               <TableRow
-                                key={term.session_term_id ?? term.app_term_id}
+                                key={session_term.id}
                                 hover
                                 selected={isSelected}
-                                onClick={() => handleTermSelect(term)}
+                                onClick={() => handleTermSelect(session_term)}
                                 sx={{ cursor: 'pointer' }}
                               >
                                 <TableCell>{i + 1}</TableCell>
                                 <TableCell sx={{ fontWeight: isSelected ? 700 : 400 }}>
-                                  {term.display_name}
+                                  {session_term?.session?.sesname} {session_term?.display_term?.display_name}
                                 </TableCell>
                                 <TableCell align="center">
-                                  {term.is_subscribed === 'yes' ? (
-                                    <StatusChip status={term.status} />
+                                  {session_term?.is_subscribed === 'yes' ? (
+                                    <StatusChip status={session_term?.status} />
                                   ) : (
                                     <Typography variant="caption" color="text.disabled">
                                       —
@@ -482,7 +450,7 @@ const AdmissionSetup = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h5">
                   Manage Admission Batches
-                  {selectedTermLabel && (
+                  {selectedSessionTermLabel && (
                     <>
                       {' '}
                       For{' '}
@@ -493,7 +461,7 @@ const AdmissionSetup = () => {
                           fontWeight: 600,
                         }}
                       >
-                        {selectedTermLabel}
+                        {selectedSessionTermLabel}
                       </Box>
                     </>
                   )}
@@ -502,7 +470,7 @@ const AdmissionSetup = () => {
                   variant="contained"
                   size="small"
                   startIcon={<AddIcon />}
-                  disabled={!selectedTermId}
+                  disabled={!selectedSessionTermId}
                   onClick={handleCreateBatch}
                   sx={{ fontWeight: 700, whiteSpace: 'nowrap', ml: 2 }}
                 >
@@ -511,7 +479,7 @@ const AdmissionSetup = () => {
               </Box>
             }
           >
-            {!selectedTermId ? (
+            {!selectedSessionTermId ? (
               <Alert severity="info">Select a session term on the left to manage batches.</Alert>
             ) : batchesLoading ? (
               <Box display="flex" justifyContent="center" py={4}>
@@ -542,9 +510,9 @@ const AdmissionSetup = () => {
                         <TableCell align="center" sx={{ fontWeight: 700 }}>
                           Require Payment
                         </TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>
+                        {/* <TableCell align="center" sx={{ fontWeight: 700 }}>
                           App Instruction
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell align="center" sx={{ fontWeight: 700 }}>
                           Admission Letter
                         </TableCell>
@@ -562,7 +530,7 @@ const AdmissionSetup = () => {
                           <TableCell>{i + 1}</TableCell>
 
                           <TableCell sx={{ fontWeight: 600 }}>
-                            {batch.batch_name ?? `Batch ${i + 1}`}
+                            {batch.batch_name }
                           </TableCell>
 
                           {/* Entrance Exam */}
@@ -593,9 +561,9 @@ const AdmissionSetup = () => {
                           </TableCell>
 
                           {/* App Instruction */}
-                          <TableCell align="center">
-                            <ViewEditPair onView={() => {}} onEdit={() => {}} />
-                          </TableCell>
+                          {/* <TableCell align="center">
+                            <ViewEditPair onView={() => { }} onEdit={() => { }} />
+                          </TableCell> */}
 
                           {/* Admission Letter */}
                           <TableCell align="center">
@@ -742,9 +710,9 @@ const AdmissionSetup = () => {
                 {letterEditorBatch?.batch_name ?? ''}
               </Box>
             </Typography>
-            {selectedTermLabel && (
+            {selectedSessionTermLabel && (
               <Typography variant="caption" color="text.secondary">
-                {selectedTermLabel}
+                {selectedSessionTermLabel}
               </Typography>
             )}
           </Box>
@@ -753,9 +721,10 @@ const AdmissionSetup = () => {
         <DialogContent dividers sx={{ p: 2 }}>
           <AdmissionLetterEditor
             key={`${letterEditorBatch?.id}-${letterEditorReadOnly}`}
+            initialContent={letterEditorBatch?.admission_letter_template ?? ''}
             readOnly={letterEditorReadOnly}
             onChange={(html) => {
-              console.log('Letter content for batch', letterEditorBatch?.id, html);
+              setLetterEditorContent(html);
             }}
           />
         </DialogContent>
@@ -767,10 +736,7 @@ const AdmissionSetup = () => {
           {!letterEditorReadOnly && (
             <Button
               variant="contained"
-              onClick={() => {
-                showSnackbar('Admission letter saved successfully');
-                setLetterEditorOpen(false);
-              }}
+              onClick={handleSaveAdmissionLetter}
               sx={{ fontWeight: 700 }}
             >
               Save Letter

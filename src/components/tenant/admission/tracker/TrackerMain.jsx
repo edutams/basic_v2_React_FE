@@ -6,7 +6,6 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-// ── Form Submitted card ───────────────────────────────────────────────────────
 const FormSubmittedCard = ({ submittedDate, onViewDetails }) => (
   <Paper
     variant="outlined"

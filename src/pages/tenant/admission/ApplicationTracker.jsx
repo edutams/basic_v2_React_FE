@@ -16,7 +16,7 @@ const ApplicationTracker = () => {
 
   const applicantName = wardData
     ? `${wardData.surname ?? ''} ${wardData.first_name ?? ''} ${wardData.other_name ?? ''}`.trim()
-    : 'Queensley Ademola';
+    : 'Adewale Johnson';
 
   const intendingClass = academicData?.class_label ?? 'JSS1';
   const gender = wardData?.gender ? wardData.gender.toUpperCase() : 'FEMALE';
@@ -24,7 +24,6 @@ const ApplicationTracker = () => {
 
   return (
     <PageContainer title="Application Tracker" description="Track your admission application">
-      {/* Page header */}
       <Box
         display="flex"
         justifyContent="space-between"

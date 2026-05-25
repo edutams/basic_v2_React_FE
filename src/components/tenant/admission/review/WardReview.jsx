@@ -11,7 +11,6 @@ const WardReview = ({ wardData, intendingClass }) => {
 
   return (
     <ReviewSection number={1} title="Tell us about your ward" subtitle="Basic information" id="section-ward-detail">
-      {/* Avatar */}
       <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
         <Box sx={{ position: 'relative', mb: 1 }}>
           <Avatar src={wardData?.imageUrl} sx={{ width: 72, height: 72, bgcolor: 'grey.300' }}>

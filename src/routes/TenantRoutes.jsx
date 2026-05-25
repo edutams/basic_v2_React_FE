@@ -304,7 +304,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'admission/my_applications',
+        path: 'admission_manager/my_applications',
         element: (
           <TenantProtectedRoute permission="admission_manager.my_applications.index">
             <MyApplication />
@@ -312,7 +312,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'admission/my_applications/:id',
+        path: 'admission_manager/my_applications/:id',
         element: (
           <TenantProtectedRoute permission="admission_manager.my_applications.index">
             <MyApplication />

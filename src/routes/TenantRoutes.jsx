@@ -49,6 +49,7 @@ const AdmissionLetter = Loadable(lazy(() => import('@/pages/tenant/admission/Adm
 const ApplicationTracker = Loadable(
   lazy(() => import('@/pages/tenant/admission/ApplicationTracker')),
 );
+const FormDetails = Loadable(lazy(() => import('@/pages/tenant/admission/FormDetails')));
 const AdmissionSetup = Loadable(lazy(() => import('@/pages/tenant/admission/AdmissionSetup')));
 const CreateAdmissionBatch = Loadable(
   lazy(() => import('@/pages/tenant/admission/CreateAdmissionBatch')),
@@ -348,6 +349,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="admission_manager.tracker.index">
             <ApplicationTracker />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission/form-details',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.tracker.index">
+            <FormDetails />
           </TenantProtectedRoute>
         ),
       },

@@ -20,7 +20,6 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-// ── Document definitions ──────────────────────────────────────────────────────
 const DOCUMENTS = [
   { key: 'birth_certificate',      label: 'Birth certificate',      required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
   { key: 'previous_school_report', label: 'Previous school report', required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
@@ -33,7 +32,6 @@ const MAX_MB   = 5;
 
 const isImage = (file) => file?.type?.startsWith('image/');
 
-// ── Preview dialog ────────────────────────────────────────────────────────────
 const PreviewDialog = ({ file, onClose }) => {
   const [objectUrl, setObjectUrl] = useState(null);
 
@@ -83,7 +81,6 @@ const PreviewDialog = ({ file, onClose }) => {
   );
 };
 
-// ── Single upload row ─────────────────────────────────────────────────────────
 const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver, onDragOver, onDragLeave, onDrop }) => {
   const inputRef = useRef(null);
 
@@ -108,7 +105,6 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
-      {/* Upload icon */}
       <Box
         sx={{
           width: 44,
@@ -127,7 +123,6 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
         }
       </Box>
 
-      {/* Label + hint / selected file */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="body2" fontWeight={700}>
           {doc.label}
@@ -155,7 +150,6 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
         )}
       </Box>
 
-      {/* Actions when file is selected: eye + remove */}
       {file ? (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <IconButton
@@ -186,7 +180,6 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
         </Button>
       )}
 
-      {/* Hidden file input */}
       <input
         ref={inputRef}
         type="file"
@@ -202,12 +195,11 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
   );
 };
 
-// ── Main step ─────────────────────────────────────────────────────────────────
 const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
   const [files,    setFiles]    = useState({});
   const [dragOver, setDragOver] = useState(null);
   const [errors,   setErrors]   = useState({});
-  const [preview,  setPreview]  = useState(null); // File object to preview
+  const [preview,  setPreview]  = useState(null);
 
   const handleFile = (key, file) => {
     const doc = DOCUMENTS.find((d) => d.key === key);
@@ -281,7 +273,6 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
         ))}
       </Box>
 
-      {/* Footer */}
       <Divider sx={{ mt: 4, mb: 2 }} />
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
@@ -297,7 +288,6 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
         </Button>
       </Box>
 
-      {/* File preview dialog */}
       {preview && <PreviewDialog file={preview} onClose={() => setPreview(null)} />}
     </Box>
   );

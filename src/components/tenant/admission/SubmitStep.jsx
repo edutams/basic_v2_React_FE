@@ -8,7 +8,6 @@ import PaymentReview   from './review/PaymentReview';
 import DocumentsReview from './review/DocumentsReview';
 import FinalReview     from './review/FinalReview';
 
-// ── Quick jump
 const JUMP_LINKS = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
 
 const handleJump = (e, id) => {
@@ -17,34 +16,47 @@ const handleJump = (e, id) => {
   if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
 };
 
-const QuickJump = () => (
-  <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2, position: 'sticky', top: 24 }}>
-    <Typography variant="h6" fontWeight={700} color="text.secondary" display="block" mb={1}>
-      Quick jump
-    </Typography>
-    <Stack spacing={0.5}>
-      {JUMP_LINKS.map((s) => {
-        const id = `section-${s.toLowerCase().replace(' ', '-')}`;
-        return (
-          <Link
-            key={s}
-            href={`#${id}`}
-            underline="hover"
-            variant="h6"
-            color="primary.main"
-            sx={{ fontWeight: 500 }}
-            onClick={(e) => handleJump(e, id)}
-          >
-            · {s}
-          </Link>
-        );
-      })}
-    </Stack>
-  </Paper>
-);
+const QuickJump = ({ viewMode = false }) => {
+  const links = viewMode ? JUMP_LINKS.slice(0, -1) : JUMP_LINKS;
+  
+  return (
+    <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2, position: 'sticky', top: 24 }}>
+      <Typography variant="h6" fontWeight={700} color="text.secondary" display="block" mb={1}>
+        Quick jump
+      </Typography>
+      <Stack spacing={0.5}>
+        {links.map((s) => {
+          
+          const id = `section-${s.toLowerCase().replace(' ', '-')}`;
+          return (
+            <Link
+              key={s}
+              href={`#${id}`}
+              underline="hover"
+              variant="h6"
+              color="primary.main"
+              sx={{ fontWeight: 500 }}
+              onClick={(e) => handleJump(e, id)}
+            >
+              · {s}
+            </Link>
+          );
+        })}
+      </Stack>
+    </Paper>
+  );
+};
 
-// ── Main 
-const SubmitStep = ({ wardData, academicData, documentsData, selectedBatch, onBack, onSubmit, isLoading = false }) => {
+const SubmitStep = ({ 
+  wardData, 
+  academicData, 
+  documentsData, 
+  selectedBatch, 
+  onBack, 
+  onSubmit, 
+  isLoading = false,
+  viewMode = false 
+}) => {
   const applicantName = wardData
     ? `${wardData.surname ?? ''} ${wardData.first_name ?? ''} ${wardData.other_name ?? ''}`.trim()
     : 'Adewunmi Oluwadunke Gold';
@@ -58,20 +70,21 @@ const SubmitStep = ({ wardData, academicData, documentsData, selectedBatch, onBa
   return (
     <Grid container spacing={3} alignItems="flex-start">
 
-      {/* ── Sections ── */}
       <Grid size={{ xs: 12, md: 9 }}>
         <WardReview     wardData={wardData}       intendingClass={intendingClass} />
         <AcademicReview academicData={academicData} intendingClass={intendingClass} />
         <PaymentReview  totalPaid={totalPaid} />
         <DocumentsReview documentsData={documentsData} />
-        <FinalReview
-          applicantName={applicantName}
-          intendingClass={intendingClass}
-          admissionBatch={admissionBatch}
-          totalPaid={totalPaid}
-          onSubmit={onSubmit}
-          isLoading={isLoading}
-        />
+        {!viewMode && (
+          <FinalReview
+            applicantName={applicantName}
+            intendingClass={intendingClass}
+            admissionBatch={admissionBatch}
+            totalPaid={totalPaid}
+            onSubmit={onSubmit}
+            isLoading={isLoading}
+          />
+        )}
 
         <Box display="flex" sx={{ mt: 1, mb: 2 }}>
           <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
@@ -80,9 +93,8 @@ const SubmitStep = ({ wardData, academicData, documentsData, selectedBatch, onBa
         </Box>
       </Grid>
 
-      {/* ── Quick jump */}
       <Grid size={{ xs: 12, md: 3 }} sx={{ display: { xs: 'none', md: 'block' } }}>
-        <QuickJump />
+        <QuickJump viewMode={viewMode} />
       </Grid>
 
     </Grid>
@@ -97,6 +109,7 @@ SubmitStep.propTypes = {
   onBack:        PropTypes.func.isRequired,
   onSubmit:      PropTypes.func.isRequired,
   isLoading:     PropTypes.bool,
+  viewMode:      PropTypes.bool,
 };
 
 export default SubmitStep;

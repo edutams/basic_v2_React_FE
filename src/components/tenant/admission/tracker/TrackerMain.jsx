@@ -6,7 +6,6 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-// ── Form Submitted card ───────────────────────────────────────────────────────
 const FormSubmittedCard = ({ submittedDate, onViewDetails }) => (
   <Paper
     variant="outlined"
@@ -78,7 +77,6 @@ FormSubmittedCard.propTypes = {
   onViewDetails: PropTypes.func,
 };
 
-// ── Current Stage card ────────────────────────────────────────────────────────
 const CurrentStageCard = ({
   stageTitle,
   stageDescription,
@@ -88,7 +86,6 @@ const CurrentStageCard = ({
   onPractice,
 }) => (
   <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2, bgcolor: '#F7F9FF' }}>
-    {/* Header row */}
     <Box display="flex" alignItems="center" gap={1} mb={1}>
       <Box
         sx={{
@@ -147,7 +144,6 @@ const CurrentStageCard = ({
       {stageDescription}
     </Typography>
 
-    {/* Status row */}
     <Paper
       variant="outlined"
       sx={{
@@ -190,7 +186,6 @@ const CurrentStageCard = ({
       </Box>
     </Paper>
 
-    {/* Action buttons */}
     <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1.5}>
       <Button
         variant="contained"
@@ -221,7 +216,6 @@ CurrentStageCard.propTypes = {
   onPractice: PropTypes.func,
 };
 
-// ── Next Step card ────────────────────────────────────────────────────────────
 const NextStepCard = ({ title, description, actionLabel, actionDisabled, onAction }) => (
   <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 } }}>
     <Box
@@ -292,7 +286,6 @@ NextStepCard.propTypes = {
   onAction: PropTypes.func,
 };
 
-// ── Main export ───────────────────────────────────────────────────────────────
 const TrackerMain = ({
   submittedDate,
   onViewDetails = () => {},

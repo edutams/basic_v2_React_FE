@@ -12,7 +12,6 @@ const REQUIREMENTS = [
 
 const TrackerSidebar = () => (
   <Box>
-    {/* Upcoming Requirements */}
     <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2 }}>
       <Typography
         variant="caption"
@@ -64,7 +63,6 @@ const TrackerSidebar = () => (
       ))}
     </Paper>
 
-    {/* Need Assistance */}
     <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, bgcolor: 'info.light' }}>
       <Box display="flex" alignItems="flex-start" gap={1.5} mb={1.5}>
         <Box

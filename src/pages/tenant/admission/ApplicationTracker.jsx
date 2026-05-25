@@ -16,15 +16,26 @@ const ApplicationTracker = () => {
 
   const applicantName = wardData
     ? `${wardData.surname ?? ''} ${wardData.first_name ?? ''} ${wardData.other_name ?? ''}`.trim()
-    : 'Queensley Ademola';
+    : 'Adewale Johnson';
 
   const intendingClass = academicData?.class_label ?? 'JSS1';
   const gender = wardData?.gender ? wardData.gender.toUpperCase() : 'FEMALE';
   const address = wardData?.home_address ?? 'NO 3, Adeleke Tolulope Street, Akinola Road.';
 
+  const handleViewDetails = () => {
+    const formData = {
+      wardData,
+      academicData,
+      selectedBatch,
+      viewMode: true,
+    };
+    sessionStorage.setItem('formDetailsData', JSON.stringify(formData));
+    
+    window.open('/admission/form-details', '_blank');
+  };
+
   return (
     <PageContainer title="Application Tracker" description="Track your admission application">
-      {/* Page header */}
       <Box
         display="flex"
         justifyContent="space-between"
@@ -45,7 +56,6 @@ const ApplicationTracker = () => {
         </Button>
       </Box>
 
-      {/* Applicant profile + progress tracker */}
       <TrackerHeader
         name={applicantName}
         intendingClass={intendingClass}
@@ -55,17 +65,12 @@ const ApplicationTracker = () => {
         currentStage={1}
       />
 
-      {/* Main content + sidebar */}
       <Paper sx={{ p: 3, bgcolor: '#e5e8f86a' }}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
             <TrackerMain
               submittedDate="Sept 12, 2024"
-              onViewDetails={() =>
-                navigate('/admission/new-application', {
-                  state: { wardData, academicData, selectedBatch },
-                })
-              }
+              onViewDetails={handleViewDetails}
               stageTitle="Entrance Exam"
               stageDescription="Your child is required to take the online aptitude test as part of the admission process."
               requirementStatus="Ready to Begin"

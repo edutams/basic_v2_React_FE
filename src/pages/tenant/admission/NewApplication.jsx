@@ -19,7 +19,6 @@ import PaymentStep from '@/components/tenant/admission/PaymentStep';
 import DocumentsStep from '@/components/tenant/admission/DocumentsStep';
 import SubmitStep from '@/components/tenant/admission/SubmitStep';
 
-// ── Step definitions ──────────────────────────────────────────────────────────
 const STEPS = [
   { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
   { label: 'Academic info', icon: SchoolIcon, isTabler: false },
@@ -28,7 +27,6 @@ const STEPS = [
   { label: 'Submit', icon: SendIcon, isTabler: false },
 ];
 
-// ── Stepper ───────────────────────────────────────────────────────────────────
 const StepperBar = ({ activeStep }) => {
   const theme = useTheme();
 
@@ -107,7 +105,6 @@ const StepperBar = ({ activeStep }) => {
   );
 };
 
-// ── Batch Summary Sidebar
 const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
   <Paper sx={{ borderRadius: 3, p: 3, position: 'sticky', top: 24 }}>
     <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" mb={1}>
@@ -191,7 +188,7 @@ const NewApplication = () => {
   const searchParams = new URLSearchParams(location.search);
   const queryStep = searchParams.get('step');
 
-  // Map prospective ward data → per-step initial values
+  // prospective ward data → per-step initial values
   const seedWardData = existingWard
     ? (() => {
         const parts = (existingWard.name ?? '').trim().split(' ');

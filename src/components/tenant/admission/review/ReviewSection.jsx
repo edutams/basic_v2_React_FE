@@ -1,9 +1,6 @@
 import { Box, Paper, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 
-/**
- * Shared numbered section wrapper used across all review sections.
- */
 const ReviewSection = ({ number, title, subtitle, id, children }) => (
   <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2 }} id={id}>
     <Box display="flex" alignItems="flex-start" gap={1.5} mb={2}>

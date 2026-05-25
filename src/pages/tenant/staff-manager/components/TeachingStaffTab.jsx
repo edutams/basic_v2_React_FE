@@ -54,7 +54,7 @@ const TeachingStaffTab = ({
 }) => {
   return (
     <Box>
-      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+      {/* <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={activeSubTab}
           onChange={(e, newValue) => {
@@ -65,9 +65,9 @@ const TeachingStaffTab = ({
           }}
         >
           <Tab label="Profiling" value="profiling" />
-          {/* <Tab label="Allocation" value="allocation" /> */}
+          <Tab label="Allocation" value="allocation" />
         </Tabs>
-      </Box>
+      </Box> */}
 
       {activeSubTab === 'profiling' && (
         <>

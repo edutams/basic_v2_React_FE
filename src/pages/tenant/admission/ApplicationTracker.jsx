@@ -61,8 +61,8 @@ const ApplicationTracker = () => {
             <TrackerMain
               submittedDate="Sept 12, 2024"
               onViewDetails={() =>
-                navigate('/admission/new-application', {
-                  state: { wardData, academicData, selectedBatch },
+                navigate('/admission/form-details', {
+                  state: { wardData, academicData, selectedBatch, viewMode: true },
                 })
               }
               stageTitle="Entrance Exam"

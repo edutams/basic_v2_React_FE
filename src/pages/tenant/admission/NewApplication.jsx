@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { Box, Grid, Typography, Paper, Button, Chip, Stack, Divider } from '@mui/material';
 import {
@@ -18,6 +18,8 @@ import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchMod
 import PaymentStep from '@/components/tenant/admission/PaymentStep';
 import DocumentsStep from '@/components/tenant/admission/DocumentsStep';
 import SubmitStep from '@/components/tenant/admission/SubmitStep';
+import { useAdmissionForm } from '@/hooks/useAdmissionForm';
+import { useNotification } from 'src/hooks/useNotification';
 
 const STEPS = [
   { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
@@ -27,7 +29,7 @@ const STEPS = [
   { label: 'Submit', icon: SendIcon, isTabler: false },
 ];
 
-const StepperBar = ({ activeStep }) => {
+const StepperBar = ({ activeStep, steps }) => {
   const theme = useTheme();
 
   const getIconColor = (active, done) =>
@@ -35,7 +37,7 @@ const StepperBar = ({ activeStep }) => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, overflowX: 'auto', pb: 1 }}>
-      {STEPS.map((step, i) => {
+      {steps.map((step, i) => {
         const done = i < activeStep;
         const active = i === activeStep;
         const Icon = step.icon;
@@ -87,7 +89,7 @@ const StepperBar = ({ activeStep }) => {
               </Box>
             </Box>
 
-            {i < STEPS.length - 1 && (
+            {i < steps.length - 1 && (
               <Box
                 sx={{
                   flex: 1,
@@ -111,48 +113,67 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
       Selected Admission Batch Detail
     </Typography>
 
-    <Typography variant="h5" fontWeight={800} mb={2}>
-      {batch?.session_term ?? '2025/2026'} Admission Batch {batch?.batch_number ?? '2'}
-    </Typography>
+        <Typography variant="h5" fontWeight={800} mb={2}>
+        Session:{' '}
+        {batch?.session_term?.session?.sesname}{' '}
+        {batch?.session_term?.display_term?.display_name}
+        {' • '}
+        Admission Batch:{' '}
+        {batch?.batch_name ?? '2'}
+      </Typography>
 
     <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
-      {(batch?.classes ?? ['JSS1', 'JSS2', 'JSS3']).map((cls) => (
+      {(batch?.classes || []).map((cls) => (
         <Chip
-          key={cls}
-          label={cls}
+          key={cls.id}
+          label={cls.class_code}
           size="small"
           sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700, fontSize: 11 }}
         />
       ))}
     </Stack>
+          {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
 
-    <Divider sx={{ mb: 2 }} />
 
-    {[
-      { label: 'Pre-Application Payment', value: batch?.pre_application_fee ?? 5000 },
-      { label: 'Post-Admission Payment', value: batch?.post_admission_fee ?? 15000 },
-    ].map(({ label, value }) => (
-      <Box
-        key={label}
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          bgcolor: 'error.light',
-          borderRadius: 2,
-          px: 2,
-          py: 1.25,
-          mb: 1.5,
-        }}
-      >
-        <Typography variant="body2" color="error.dark" fontWeight={500}>
-          {label}
-        </Typography>
-        <Typography variant="body2" color="error.dark" fontWeight={700}>
-          ₦{value.toLocaleString()}
-        </Typography>
-      </Box>
-    ))}
+   {[
+  batch?.require_payment && batch?.acceptance_fee !== '0.00'
+    ? {
+        label: 'Pre-Application Payment',
+        value: batch?.acceptance_fee,
+      }
+    : null,
+
+  batch?.require_payment && batch?.application_fee !== '0.00'
+    ? {
+        label: 'Post-Admission Payment',
+        value: batch?.application_fee,
+      }
+    : null,
+]
+  .filter(Boolean)
+  .map(({ label, value }) => (
+    <Box
+      key={label}
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        bgcolor: 'error.light',
+        borderRadius: 2,
+        px: 2,
+        py: 1.25,
+        mb: 1.5,
+      }}
+    >
+      <Typography variant="body2" color="error.dark" fontWeight={500}>
+        {label}
+      </Typography>
+
+      <Typography variant="body2" color="error.dark" fontWeight={700}>
+        ₦{Number(value).toLocaleString()}
+      </Typography>
+    </Box>
+  ))}
 
     {activeStep !== 3 && (
       <>
@@ -182,70 +203,65 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
 const NewApplication = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const notify = useNotification();
 
   const batch = location.state?.batch ?? null;
   const existingWard = location.state?.ward ?? null;
+  const resumeApplication = location.state?.resumeApplication ?? false;
   const searchParams = new URLSearchParams(location.search);
   const queryStep = searchParams.get('step');
+  const parsedQueryStep = queryStep ? Number(queryStep) - 1 : null;
 
-  // prospective ward data → per-step initial values
-  const seedWardData = existingWard
-    ? (() => {
-        const parts = (existingWard.name ?? '').trim().split(' ');
-        return {
-          surname: existingWard.surname ?? parts[0] ?? '',
-          first_name: existingWard.first_name ?? parts[1] ?? '',
-          other_name: existingWard.other_name ?? parts.slice(2).join(' '),
-          dob: existingWard.dob ?? '',
-          gender: existingWard.gender ?? '',
-          state_of_origin: existingWard.state_of_origin ?? '',
-          lga: existingWard.lga ?? '',
-          home_address: existingWard.home_address ?? '',
-        };
-      })()
-    : null;
-
-  const seedAcademicData = existingWard
-    ? {
-        has_previous_school: existingWard.has_previous_school ?? false,
-        previous_school_name: existingWard.previous_school_name ?? '',
-        previous_school_state: existingWard.previous_school_state ?? '',
-        previous_school_lga: existingWard.previous_school_lga ?? '',
-        previous_class: existingWard.previous_class ?? '',
-        programme_id: existingWard.programme_id ?? '',
-        class_id: existingWard.class_id ?? '',
-        boarding_status: existingWard.boarding_status ?? '',
-      }
-    : null;
-
-  // Resume at the step where progress stopped.
-  const initialStepFromWard = existingWard
-    ? existingWard.isDraft
-      ? (existingWard.draftStep ?? 0)
-      : existingWard.step >= 1
-        ? 2
-        : existingWard.step >= 0
-          ? 1
-          : 0
-    : 0;
-
-  const resumeStep = queryStep !== null ? parseInt(queryStep, 10) : initialStepFromWard;
-
-  const [activeStep, setActiveStep] = useState(resumeStep);
-  const [wardData, setWardData] = useState(seedWardData);
-  const [academicData, setAcademicData] = useState(
-    existingWard?.step >= 1 || existingWard?.draftStep >= 1 ? seedAcademicData : null,
-  );
-  const [documentsData, setDocumentsData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState(existingWard?.admission_batch ?? batch);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
-  const [selectedBatch, setSelectedBatch] = useState(existingWard?.batch ?? batch);
+  // Initialize the admission form hook with existing admission data if resuming
+  const {
+    admissionId,
+    currentStage,
+    formData,
+    isLoading,
+    errors: serverErrors,
+    saveStepData,
+    updateStage,
+    submitApplication,
+  } = useAdmissionForm(selectedBatch, resumeApplication ? existingWard : null);
 
-  React.useEffect(() => {
+  // Build dynamic steps based on batch requirements
+  const ALL_STEPS = [
+    { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
+    { label: 'Academic info', icon: SchoolIcon, isTabler: false },
+    ...(selectedBatch?.require_payment ? [{ label: 'Payment', icon: CreditCardIcon, isTabler: false }] : []),
+    { label: 'Documents', icon: DescriptionIcon, isTabler: false },
+    { label: 'Submit', icon: SendIcon, isTabler: false },
+  ];
+
+  const STEPS = ALL_STEPS;
+
+  // Determine initial step - use currentStage from hook if resuming, otherwise start at 0
+  const resumeStep =
+    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep)
+      ? parsedQueryStep
+      : 0;
+
+  const [activeStep, setActiveStep] = useState(resumeStep);
+
+  // Update activeStep when currentStage changes (for resuming applications)
+  useEffect(() => {
+    if (resumeApplication && currentStage !== null && currentStage !== undefined) {
+      // Only update if we're resuming and currentStage is loaded
+      setActiveStep(currentStage);
+    }
+  }, [currentStage, resumeApplication]);
+
+  // Sync URL with active step
+  useEffect(() => {
     const currentQueryStep = new URLSearchParams(location.search).get('step');
-    if (currentQueryStep !== String(activeStep)) {
-      navigate(`?step=${activeStep}`, { replace: true, state: location.state });
+    if (currentQueryStep !== String(activeStep + 1)) {
+      navigate(`?step=${activeStep + 1}`, {
+        replace: true,
+        state: location.state,
+      });
     }
   }, [activeStep, location.search, navigate, location.state]);
 
@@ -256,71 +272,134 @@ const NewApplication = () => {
   };
 
   const handleWardSubmit = async (values) => {
-    setIsLoading(true);
-    try {
-      setWardData(values);
+    const result = await saveStepData(0, values);
+    if (result.success) {
       handleNext();
-    } finally {
-      setIsLoading(false);
+    } else {
+      notify.error(result.error || 'Failed to save ward details');
     }
   };
 
   const handleAcademicSubmit = async (values) => {
-    setIsLoading(true);
-    try {
-      setAcademicData(values);
+    const result = await saveStepData(1, values);
+    if (result.success) {
       handleNext();
-    } finally {
-      setIsLoading(false);
+    } else {
+      notify.error(result.error || 'Failed to save academic information');
+    }
+  };
+
+  const handlePaymentComplete = async () => {
+    const paymentStepIndex = 2; // Payment is always step 2 when present
+    const result = await updateStage(paymentStepIndex);
+    if (result.success) {
+      handleNext();
+    } else {
+      notify.error(result.error || 'Failed to update payment status');
+    }
+  };
+
+  const handleDocumentsSubmit = async (files) => {
+    const documentsStepIndex = selectedBatch?.require_payment ? 3 : 2;
+    const result = await saveStepData(documentsStepIndex, files);
+    if (result.success) {
+      handleNext();
+    } else {
+      notify.error(result.error || 'Failed to save documents');
+    }
+  };
+
+  const handleFinalSubmit = async () => {
+    const result = await submitApplication();
+    if (result.success) {
+      notify.success('Application submitted successfully!');
+      navigate('/application-tracker', {
+        state: { admissionId },
+      });
+    } else {
+      notify.error(result.error || 'Failed to submit application');
     }
   };
 
   const renderStep = () => {
-    switch (activeStep) {
+    // Map activeStep to actual step considering dynamic payment step
+    let actualStep = activeStep;
+    
+    switch (actualStep) {
       case 0:
         return (
           <WardDetailForm
-            initialValues={wardData}
+            initialValues={formData.wardData}
             onSubmit={handleWardSubmit}
             onBack={handleBack}
             isLoading={isLoading}
+            serverErrors={serverErrors}
           />
         );
       case 1:
         return (
           <AcademicInfoForm
-            initialValues={academicData}
+            initialValues={formData.academicData}
             onSubmit={handleAcademicSubmit}
             onBack={handleBack}
             isLoading={isLoading}
+            serverErrors={serverErrors}
+            selectedBatch={selectedBatch}
           />
         );
       case 2:
-        return <PaymentStep onNext={handleNext} onBack={handleBack} isLoading={isLoading} />;
+        if (selectedBatch?.require_payment) {
+          return (
+            <PaymentStep
+              onNext={handlePaymentComplete}
+              onBack={handleBack}
+              isLoading={isLoading}
+            />
+          );
+        } else {
+          // Documents step when no payment required
+          return (
+            <DocumentsStep
+              onNext={handleDocumentsSubmit}
+              onBack={handleBack}
+              isLoading={isLoading}
+            />
+          );
+        }
       case 3:
-        return (
-          <DocumentsStep
-            onNext={(files) => {
-              setDocumentsData(files);
-              handleNext();
-            }}
-            onBack={handleBack}
-            isLoading={isLoading}
-          />
-        );
+        if (selectedBatch?.require_payment) {
+          // Documents step when payment is required
+          return (
+            <DocumentsStep
+              onNext={handleDocumentsSubmit}
+              onBack={handleBack}
+              isLoading={isLoading}
+            />
+          );
+        } else {
+          // Submit step when no payment required
+          return (
+            <SubmitStep
+              wardData={formData.wardData}
+              academicData={formData.academicData}
+              documentsData={formData.documentsData}
+              selectedBatch={selectedBatch}
+              onBack={handleBack}
+              onSubmit={handleFinalSubmit}
+              isLoading={isLoading}
+            />
+          );
+        }
       case 4:
+        // Submit step when payment is required
         return (
           <SubmitStep
-            wardData={wardData}
-            academicData={academicData}
-            documentsData={documentsData}
+            wardData={formData.wardData}
+            academicData={formData.academicData}
+            documentsData={formData.documentsData}
             selectedBatch={selectedBatch}
             onBack={handleBack}
-            onSubmit={() => {
-              navigate('/application-tracker', {
-                state: { wardData, academicData, selectedBatch },
-              });
-            }}
+            onSubmit={handleFinalSubmit}
             isLoading={isLoading}
           />
         );
@@ -357,8 +436,20 @@ const NewApplication = () => {
                 Application Form
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Session: {selectedBatch?.session_term ?? '2025/26'}&nbsp;·&nbsp; ₦
-                {(selectedBatch?.pre_application_fee ?? 5000).toLocaleString()} Application Fee
+                Session: {
+                selectedBatch?.session_term?.session?.sesname} {selectedBatch?.session_term?.display_term?.display_name}
+                &nbsp;·&nbsp; 
+
+
+               {
+                selectedBatch?.require_payment &&
+                selectedBatch?.application_fee !== '0.00' && (
+                  <>
+                    ₦{Number(selectedBatch?.application_fee ?? 5000).toLocaleString()}
+                    {' '}Application Fee
+                  </>
+                )
+              }
               </Typography>
             </Box>
           </Box>
@@ -372,7 +463,7 @@ const NewApplication = () => {
           </Button>
         </Box>
 
-        <StepperBar activeStep={activeStep} />
+        <StepperBar activeStep={activeStep} steps={STEPS} />
 
         {/* ── Content + Sidebar ── */}
         <Grid container spacing={3} alignItems="flex-start">

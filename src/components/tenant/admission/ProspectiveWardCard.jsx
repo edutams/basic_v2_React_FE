@@ -7,62 +7,125 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-// Admission progress stepper
-const ADMISSION_STEPS = ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
+/**
+ * Calculate form completion step based on admission_stage
+ * Maps backend admission_stage to visual step index accounting for dynamic payment step
+ */
+const calculateFormStep = (admissionData) => {
+  const admission = admissionData?.admissionData || admissionData;
+  
+  // If form is submitted, show as completed (last step)
+  if (admission?.form_submit_status === 'yes') {
+    const requiresPayment = admission?.admission_batch?.require_payment;
+    return requiresPayment ? 4 : 3; // Last step index
+  }
+  
+  // Use the current admission_stage from backend
+  const stage = admission?.admission_stage ?? 0;
+  const requiresPayment = admission?.admission_batch?.require_payment;
+  
+  // If payment is not required and stage >= 2, we need to adjust
+  // because the visual steps don't include payment
+  // Backend stages: 0=Ward, 1=Academic, 2=Payment, 3=Documents, 4=Submit
+  // Visual steps (no payment): 0=Ward, 1=Academic, 2=Documents, 3=Submit
+  if (!requiresPayment && stage >= 2) {
+    return stage - 1; // Shift down by 1 to skip payment step
+  }
+  
+  return stage;
+};
 
-const AdmissionSteps = ({ currentStep }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1.5, mb: 1 }}>
-    {ADMISSION_STEPS.map((step, i) => {
-      const done = i < currentStep;
-      const active = i === currentStep;
-      return (
-        <React.Fragment key={step}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-            <Box
-              sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                bgcolor: done || active ? 'primary.main' : 'grey.200',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {done ? (
-                <CheckCircleIcon sx={{ fontSize: 18, color: '#fff' }} />
-              ) : (
-                <PendingIcon sx={{ fontSize: 18, color: active ? '#fff' : 'grey.400' }} />
-              )}
+/**
+ * Build form steps array based on batch configuration
+ */
+const buildFormSteps = (admissionData) => {
+  const admission = admissionData?.admissionData || admissionData;
+  const requiresPayment = admission?.admission_batch?.require_payment;
+
+  if (requiresPayment) {
+    return ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
+  } else {
+    return ['Ward Detail', 'Academic Info', 'Documents', 'Submit'];
+  }
+};
+
+// Form progress stepper
+const AdmissionSteps = ({ admissionData }) => {
+  const steps = buildFormSteps(admissionData);
+  const currentStep = calculateFormStep(admissionData);
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1.5, mb: 1 }}>
+      {steps.map((step, i) => {
+        const done = i < currentStep;
+        const active = i === currentStep;
+        return (
+          <React.Fragment key={step}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <Box
+                sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  bgcolor: done || active ? 'primary.main' : 'grey.200',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {done ? (
+                  <CheckCircleIcon sx={{ fontSize: 18, color: '#fff' }} />
+                ) : (
+                  <PendingIcon sx={{ fontSize: 18, color: active ? '#fff' : 'grey.400' }} />
+                )}
+              </Box>
+              <Typography
+                variant="caption"
+                color={done || active ? 'primary.main' : 'text.disabled'}
+                mt={0.5}
+                sx={{ fontSize: '0.65rem' }}
+              >
+                {step}
+              </Typography>
             </Box>
-            <Typography
-              variant="caption"
-              color={done || active ? 'primary.main' : 'text.disabled'}
-              mt={0.5}
-            >
-              {step}
-            </Typography>
-          </Box>
 
-          {i < ADMISSION_STEPS.length - 1 && (
-            <Box
-              sx={{
-                flex: 1,
-                height: 2,
-                bgcolor: done ? 'primary.main' : 'grey.200',
-                mb: 2.5,
-              }}
-            />
-          )}
-        </React.Fragment>
-      );
-    })}
-  </Box>
-);
+            {i < steps.length - 1 && (
+              <Box
+                sx={{
+                  flex: 1,
+                  height: 2,
+                  bgcolor: done ? 'primary.main' : 'grey.200',
+                  mb: 2.5,
+                }}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </Box>
+  );
+};
 
 // Prospective ward card — always expanded, click header to navigate to application
 const ProspectiveWardCard = ({ ward, onViewDetails }) => {
   const isAdmitted = ward.status === 'Admitted';
+  const admission = ward.admissionData;
+
+  // Check if payment is required and not yet paid
+  const requiresPayment = admission?.admission_batch?.require_payment;
+  const applicationFee = parseFloat(admission?.admission_batch?.application_fee || 0);
+  const acceptanceFee = parseFloat(admission?.admission_batch?.acceptance_fee || 0);
+  const totalFee = applicationFee + acceptanceFee;
+
+  // Show payment action if:
+  // 1. Payment is required
+  // 2. Form is submitted
+  // 3. Total fee > 0
+  // 4. Not yet admitted (payment should be done before admission)
+  const showPaymentAction = requiresPayment &&
+    admission?.form_submit_status === 'yes' &&
+    totalFee > 0 &&
+    admission?.admission_status !== 'admitted';
 
   return (
     <Paper variant="outlined" sx={{
@@ -79,7 +142,6 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
           alignItems: 'center',
           gap: 1.5,
           p: 1.5,
-
         }}
       >
         <Avatar sx={{ width: 36, height: 36, fontSize: 14, fontWeight: 700 }}>
@@ -120,9 +182,9 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
 
       {/* Detail — always visible */}
       <Box sx={{ px: 2, pb: 2 }}>
-        <AdmissionSteps currentStep={ward.step ?? 2} />
+        <AdmissionSteps admissionData={ward} />
 
-        {ward.actionLabel && (
+        {showPaymentAction && (
           <Paper
             sx={{
               mt: 1,
@@ -154,13 +216,11 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
               </Box>
               <Box>
                 <Typography variant="body2" fontWeight={600}>
-                  {ward.actionLabel}
+                  Pay application fee · ₦{totalFee.toLocaleString()}
                 </Typography>
-                {ward.actionDue && (
-                  <Typography variant="caption" color="text.secondary">
-                    Due {ward.actionDue}
-                  </Typography>
-                )}
+                <Typography variant="caption" color="text.secondary">
+                  Complete payment to proceed
+                </Typography>
               </Box>
             </Box>
 
@@ -190,6 +250,7 @@ ProspectiveWardCard.propTypes = {
     expanded: PropTypes.bool,
     actionLabel: PropTypes.string,
     actionDue: PropTypes.string,
+    admissionData: PropTypes.object,
   }).isRequired,
   onViewDetails: PropTypes.func,
 };

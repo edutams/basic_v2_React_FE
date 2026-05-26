@@ -1,13 +1,12 @@
 import { useTheme } from '@mui/material/styles';
-import { useContext, useState } from 'react';
-import { Box, Grid, Typography, Paper, Button, Chip, Stack } from '@mui/material';
+import { useContext, useState, useEffect } from 'react';
+import { Box, Grid, Typography, Paper, Button, Stack, FormControl, Select, MenuItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import {
   Groups as GroupsIcon,
   AccountBalanceWallet as WalletIcon,
-  School as SchoolIcon,
 } from '@mui/icons-material';
 
 import StatCard from '@/components/shared/StatCard';
@@ -15,74 +14,103 @@ import AdmissionBanner from '@/components/tenant/admission/AdmissionBanner';
 import EnrolledWardCard from '@/components/tenant/admission/EnrolledWardCard';
 import ProspectiveWardCard from '@/components/tenant/admission/ProspectiveWardCard';
 import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
+import { getUserProspectiveAdmissions } from '@/api/tenant/admission/admissionApi';
+import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { useNotification } from 'src/hooks/useNotification';
 import ward from '@/assets/images/backgrounds/ward.png';
-
-const ENROLLED_WARDS = [
-  {
-    id: 1,
-    name: 'Blessing Okafor',
-    avatar: null,
-    tags: ['ESA/01 | JSS 2A'],
-    regNo: 'FAH/2025/098',
-    compulsory: 30000,
-    optional: 10000,
-    total: 40000,
-  },
-  {
-    id: 2,
-    name: 'Kolawole Johnson',
-    avatar: null,
-    tags: ['ESA/02 | JSS1A'],
-    regNo: 'FAH/2025/099',
-    compulsory: 30000,
-    optional: 10000,
-    total: 40000,
-  },
-  {
-    id: 3,
-    name: 'Amina Mohammed',
-    avatar: null,
-    tags: ['ESA/03 | JSS1A'],
-    regNo: 'FAH/2025/100',
-    compulsory: 30000,
-    optional: 10000,
-    total: 40000,
-  },
-];
-
-const PROSPECTIVE_WARDS = [
-  {
-    id: 1,
-    name: 'Chinaza Okafor',
-    initials: 'JD',
-    class: 'JSS1',
-    applicationNo: 'A-10428',
-    status: 'Exam Scheduled',
-    step: 1,
-    expanded: false,
-  },
-  {
-    id: 2,
-    name: 'Olaoluwa Serah',
-    initials: 'OS',
-    class: 'JSS 1',
-    applicationNo: 'A-10427',
-    status: 'Admitted',
-    step: 2,
-    expanded: true,
-    actionLabel: 'Pay acceptance fee · ₦35,000',
-    actionDue: 'Sep 5, 2023 to confirm enrollment',
-  },
-];
 
 // ── Dashboard
 const ParentDashboard = () => {
   const navigate = useNavigate();
+  const notify = useNotification();
   const { tenantInfo } = useContext(TenantAuthContext);
+
+  const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
+  const [prospectiveWards, setProspectiveWards] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState('all');
+  const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
 
   const session = tenantInfo?.academic_session || '2025/2026';
   const term = tenantInfo?.academic_term || '';
-  const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
+
+  // Fetch session terms on mount
+  useEffect(() => {
+    const loadSessionTerms = async () => {
+      try {
+        const response = await fetchSessionTerms();
+        if (response.status) {
+          const sess_terms = [
+            { id: 'all', label: 'All Sessions' },
+            ...response.data.map((sterm) => ({
+              id: sterm.id,
+              label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+            })),
+          ];
+          setSessionTerms(sess_terms);
+        }
+      } catch (error) {
+        console.error('Failed to fetch session terms:', error);
+      }
+    };
+
+    loadSessionTerms();
+  }, []); // Only run once on mount
+
+  // Fetch prospective wards (user's admissions)
+  useEffect(() => {
+    const fetchProspectiveWards = async () => {
+      setLoading(true);
+      try {
+        const sessionTermId = selectedSessionTerm === 'all' ? null : selectedSessionTerm;
+        const response = await getUserProspectiveAdmissions(sessionTermId);
+        
+        if (response.status) {
+          // Transform backend data to match component expectations
+          const transformed = response.data.map((admission) => ({
+            id: admission.id,
+            name: `${admission.surname} ${admission.first_name} ${admission.other_name || ''}`.trim(),
+            initials: `${admission.surname?.[0] || ''}${admission.first_name?.[0] || ''}`,
+            class: admission.intending_class?.class_code || admission.intending_class?.class_name || 'N/A',
+            applicationNo: admission.form_number,
+            status: getAdmissionStatus(admission),
+            step: admission.admission_stage || 0,
+            expanded: false,
+            admissionData: admission, // Store full admission data for navigation
+          }));
+          
+          setProspectiveWards(transformed);
+        }
+      } catch (error) {
+        console.error('Failed to fetch prospective wards:', error);
+        notify.error('Failed to load prospective wards');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProspectiveWards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSessionTerm]); // Only depend on selectedSessionTerm
+
+  // Helper function to determine admission status
+  const getAdmissionStatus = (admission) => {
+    if (admission.form_submit_status === 'yes') {
+      if (admission.admission_status === 'admitted') {
+        return 'Admitted';
+      } else if (admission.admission_status === 'rejected') {
+        return 'Rejected';
+      } else {
+        return 'Under Review';
+      }
+    } else if (admission.admission_stage >= 4) {
+      return 'Pending Submission';
+    } else if (admission.admission_stage >= 2) {
+      return 'In Progress';
+    } else {
+      return 'Draft';
+    }
+  };
 
   const handleApplyAdmission = (batch) => {
     navigate('/admission/new-application', { state: { batch } });
@@ -101,11 +129,20 @@ const ParentDashboard = () => {
   };
 
   const handleViewProspectiveWard = (ward) => {
-    navigate('/admission/new-application', { state: { ward } });
+    // Navigate to application with the admission data
+    navigate('/admission/new-application', { 
+      state: { 
+        ward: ward.admissionData,
+        resumeApplication: true 
+      } 
+    });
   };
 
   const theme = useTheme();
   const bg = `linear-gradient(90deg, #121212e3 0%, ${theme.palette.primary.main} 100%)`;
+
+  // Hardcoded enrolled wards for now (you can create a separate API for this)
+  const ENROLLED_WARDS = [];
 
   return (
     <PageContainer title="Parent Dashboard" description="Parent portal">
@@ -118,13 +155,13 @@ const ParentDashboard = () => {
             <StatCard icon={GroupsIcon} count={ENROLLED_WARDS.length} label="Enrolled Ward" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard icon={GroupsIcon} count={PROSPECTIVE_WARDS.length} label="Prospective Ward" />
+            <StatCard icon={GroupsIcon} count={prospectiveWards.length} label="Prospective Ward" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard icon={WalletIcon} count="₦35,000" label="Outstanding Fees" />
+            <StatCard icon={WalletIcon} count="₦0" label="Outstanding Fees" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard icon={WalletIcon} count="₦35,000" label="Wallet Balance" />
+            <StatCard icon={WalletIcon} count="₦0" label="Wallet Balance" />
           </Grid>
         </Grid>
       </Box>
@@ -145,23 +182,49 @@ const ParentDashboard = () => {
               <Typography variant="h6" fontWeight={700}>
                 Enrolled Ward
               </Typography>
-              <Chip
-                label={`${session}${term ? ` — ${term}` : ''}`}
-                size="small"
-                sx={{ bgcolor: '#F1F4F1', color: '#000', fontWeight: 500 }}
-              />
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <Select
+                  value={selectedSessionTerm}
+                  onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                  displayEmpty
+                  sx={{ 
+                    bgcolor: '#F1F4F1', 
+                    fontWeight: 500,
+                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+                  }}
+                >
+                  {sessionTerms.map((term) => (
+                    <MenuItem key={term.id} value={term.id}>
+                      {term.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
 
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
-              <Stack spacing={1.5}>
-                {ENROLLED_WARDS.map((ward) => (
-                  <EnrolledWardCard
-                    key={ward.id}
-                    ward={ward}
-                    onViewDetails={handleViewEnrolledWard}
-                  />
-                ))}
-              </Stack>
+              {ENROLLED_WARDS.length > 0 ? (
+                <Stack spacing={1.5}>
+                  {ENROLLED_WARDS.map((ward) => (
+                    <EnrolledWardCard
+                      key={ward.id}
+                      ward={ward}
+                      onViewDetails={handleViewEnrolledWard}
+                    />
+                  ))}
+                </Stack>
+              ) : (
+                <Box 
+                  display="flex" 
+                  alignItems="center" 
+                  justifyContent="center" 
+                  height="100%"
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    No enrolled wards yet
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Paper>
 
@@ -220,22 +283,59 @@ const ParentDashboard = () => {
               <Typography variant="h6" fontWeight={700}>
                 Prospective
               </Typography>
-              <Chip
-                label={`${session}${term ? ` — ${term} Admission` : ' Admission'}`}
-                size="small"
-                sx={{ bgcolor: '#F1F4F1', color: '#000', fontWeight: 500 }}
-              />
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <Select
+                  value={selectedSessionTerm}
+                  onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                  displayEmpty
+                  sx={{ 
+                    bgcolor: '#F1F4F1', 
+                    fontWeight: 500,
+                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+                  }}
+                >
+                  {sessionTerms.map((term) => (
+                    <MenuItem key={term.id} value={term.id}>
+                      {term.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
-              <Stack spacing={1.5}>
-                {PROSPECTIVE_WARDS.map((ward) => (
-                  <ProspectiveWardCard
-                    key={ward.id}
-                    ward={ward}
-                    onViewDetails={handleViewProspectiveWard}
-                  />
-                ))}
-              </Stack>
+              {loading ? (
+                <Box 
+                  display="flex" 
+                  alignItems="center" 
+                  justifyContent="center" 
+                  height="100%"
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Loading...
+                  </Typography>
+                </Box>
+              ) : prospectiveWards.length > 0 ? (
+                <Stack spacing={1.5}>
+                  {prospectiveWards.map((ward) => (
+                    <ProspectiveWardCard
+                      key={ward.id}
+                      ward={ward}
+                      onViewDetails={handleViewProspectiveWard}
+                    />
+                  ))}
+                </Stack>
+              ) : (
+                <Box 
+                  display="flex" 
+                  alignItems="center" 
+                  justifyContent="center" 
+                  height="100%"
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    No prospective wards yet
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Paper>
         </Grid>

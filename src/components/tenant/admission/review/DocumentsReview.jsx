@@ -5,10 +5,10 @@ import PropTypes from 'prop-types';
 import ReviewSection from './ReviewSection';
 
 const DOC_DEFS = [
-  { key: 'birth_certificate',      label: 'Birth certificate',      required: true  },
-  { key: 'previous_school_report', label: 'Previous school report', required: true  },
-  { key: 'passport_photo',         label: 'Passport photo',         required: true  },
-  { key: 'medical_record',         label: 'Medical record',         required: false },
+  { key: 'birth_cert',         label: 'Birth certificate',      required: true  },
+  { key: 'prev_school_report', label: 'Previous school report', required: true  },
+  { key: 'passport_photo',     label: 'Passport photo',         required: true  },
+  { key: 'medical_record',     label: 'Medical record',         required: false },
 ];
 
 const PreviewDialog = ({ file, onClose }) => {
@@ -16,19 +16,33 @@ const PreviewDialog = ({ file, onClose }) => {
 
   useEffect(() => {
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setObjectUrl(url);
-    return () => URL.revokeObjectURL(url);
+    
+    // If file is already a URL string, use it directly
+    if (typeof file === 'string') {
+      setObjectUrl(file);
+      return;
+    }
+    
+    // If file is a File/Blob object, create object URL
+    if (file instanceof File || file instanceof Blob) {
+      const url = URL.createObjectURL(file);
+      setObjectUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
   }, [file]);
 
   if (!file) return null;
-  const isImage = file.type?.startsWith('image/');
+  
+  // Determine if it's an image
+  const isImage = typeof file === 'string' 
+    ? file.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+    : file.type?.startsWith('image/');
 
   return (
     <Dialog open onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
         <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ flex: 1, mr: 1 }}>
-          {file.name}
+          {typeof file === 'string' ? 'Document Preview' : file.name}
         </Typography>
         <IconButton size="small" onClick={onClose}>
           <CloseIcon fontSize="small" />
@@ -39,12 +53,12 @@ const PreviewDialog = ({ file, onClose }) => {
           <Box
             component="img"
             src={objectUrl}
-            alt={file.name}
+            alt={typeof file === 'string' ? 'Document' : file.name}
             sx={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 2, objectFit: 'contain' }}
           />
         ) : objectUrl ? (
           <Box sx={{ height: '70vh' }}>
-            <iframe src={objectUrl} title={file.name} width="100%" height="100%" style={{ border: 'none', borderRadius: 8 }} />
+            <iframe src={objectUrl} title={typeof file === 'string' ? 'Document' : file.name} width="100%" height="100%" style={{ border: 'none', borderRadius: 8 }} />
           </Box>
         ) : null}
       </DialogContent>
@@ -54,6 +68,13 @@ const PreviewDialog = ({ file, onClose }) => {
 
 const DocRow = ({ label, file, required, onView }) => {
   const uploaded = Boolean(file);
+  
+  // Get file name - handle both File objects and URL strings
+  const fileName = file instanceof File 
+    ? file.name 
+    : typeof file === 'string' 
+    ? file.split('/').pop() 
+    : null;
 
   return (
     <Box
@@ -77,9 +98,9 @@ const DocRow = ({ label, file, required, onView }) => {
             {label}
             {required && <Typography component="span" color="error.main" ml={0.5}>*</Typography>}
           </Typography>
-          {file && (
+          {fileName && (
             <Typography variant="caption" color="text.secondary" noWrap display="block">
-              {file.name}
+              {fileName}
             </Typography>
           )}
         </Box>

@@ -291,6 +291,39 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+      {
+        path: 'payment-schedule',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <PageUnderDevelopment
+              title="Bursury Payment Schedule Under Development"
+              subtitle="The Payment Schedule module is currently under development. Check back soon!"
+            />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'bursary-setup',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <PageUnderDevelopment
+              title="Bursary Setup Under Development"
+              subtitle="The Bursary Setup module is currently under development. Check back soon!"
+            />
+          </TenantProtectedRoute>
+        ),
+      },
+       {
+        path: 'class-ledger',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <PageUnderDevelopment
+              title="Class Ledger  Under Development"
+              subtitle="The Bursary Class Ledger module is currently under development. Check back soon!"
+            />
+          </TenantProtectedRoute>
+        ),
+      },
 
       // ── Dashboard route (handles both school and parent dashboards) ──
       { path: 'dashboard', element: <SchoolDashboardMain /> },

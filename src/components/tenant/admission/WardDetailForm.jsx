@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -10,6 +10,7 @@ import {
   MenuItem,
   Typography,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
@@ -17,117 +18,8 @@ import PropTypes from 'prop-types';
 import { wardValidationSchema } from './validation/wardValidationSchema';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-
-const NIGERIA_STATES = [
-  {
-    name: 'Abia',
-    lgas: [
-      'Aba North',
-      'Aba South',
-      'Arochukwu',
-      'Bende',
-      'Ikwuano',
-      'Isiala Ngwa North',
-      'Isiala Ngwa South',
-      'Isuikwuato',
-      'Obi Ngwa',
-      'Ohafia',
-      'Osisioma',
-      'Ugwunagbo',
-      'Ukwa East',
-      'Ukwa West',
-      'Umuahia North',
-      'Umuahia South',
-      'Umu Nneochi',
-    ],
-  },
-  {
-    name: 'Adamawa',
-    lgas: [
-      'Demsa',
-      'Fufure',
-      'Ganye',
-      'Gombi',
-      'Hong',
-      'Jada',
-      'Lamurde',
-      'Madagali',
-      'Maiha',
-      'Mayo Belwa',
-      'Michika',
-      'Mubi North',
-      'Mubi South',
-      'Numan',
-      'Shelleng',
-      'Song',
-      'Toungo',
-      'Yola North',
-      'Yola South',
-    ],
-  },
-  {
-    name: 'Akwa Ibom',
-    lgas: [
-      'Abak',
-      'Eastern Obolo',
-      'Eket',
-      'Esit Eket',
-      'Essien Udim',
-      'Etim Ekpo',
-      'Etinan',
-      'Ibeno',
-      'Ibesikpo Asutan',
-      'Ibiono-Ibom',
-      'Ika',
-      'Ikono',
-      'Ikot Abasi',
-      'Ikot Ekpene',
-      'Ini',
-      'Itu',
-      'Mbo',
-      'Mkpat-Enin',
-      'Nsit-Atai',
-      'Nsit-Ibom',
-      'Nsit-Ubium',
-      'Obot Akara',
-      'Okobo',
-      'Onna',
-      'Oron',
-      'Oruk Anam',
-      'Udung-Uko',
-      'Ukanafun',
-      'Uruan',
-      'Urue-Offong/Oruko',
-      'Uyo',
-    ],
-  },
-  {
-    name: 'Anambra',
-    lgas: [
-      'Aguata',
-      'Anambra East',
-      'Anambra West',
-      'Anaocha',
-      'Awka North',
-      'Awka South',
-      'Ayamelum',
-      'Dunukofia',
-      'Ekwusigo',
-      'Idemili North',
-      'Idemili South',
-      'Ihiala',
-      'Njikoka',
-      'Nnewi North',
-      'Nnewi South',
-      'Ogbaru',
-      'Onitsha North',
-      'Onitsha South',
-      'Orumba North',
-      'Orumba South',
-      'Oyi',
-    ],
-  },
-];
+import { getAllStates, getLgasByState } from '@/api/tenant/admission/admissionApi';
+import { useNotification } from 'src/hooks/useNotification';
 
 const EMPTY_FORM = {
   surname: '',
@@ -136,12 +28,16 @@ const EMPTY_FORM = {
   dob: '',
   gender: '',
   state_of_origin: '',
-  lga: '',
+  lga_id: '',
   home_address: '',
 };
 
-const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) => {
+const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, serverErrors = {} }) => {
+  const notify = useNotification();
+  const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
+  const [statesLoading, setStatesLoading] = useState(false);
+  const [lgasLoading, setLgasLoading] = useState(false);
 
   const formik = useFormik({
     initialValues: initialValues ?? EMPTY_FORM,
@@ -150,13 +46,61 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
     onSubmit: (values) => onSubmit(values),
   });
 
+  // Load states on mount
+  useEffect(() => {
+    const loadStates = async () => {
+      setStatesLoading(true);
+      try {
+        const data = await getAllStates();
+        setStates(data || []);
+      } catch (error) {
+        notify.error('Failed to load states');
+      } finally {
+        setStatesLoading(false);
+      }
+    };
+    loadStates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  // Load LGAs when state changes OR when initialValues has a state (for resuming)
+  useEffect(() => {
+    if (formik.values.state_of_origin && states.length > 0) {
+      const loadLgas = async () => {
+        setLgasLoading(true);
+        try {
+          const stateId = typeof formik.values.state_of_origin === 'string' 
+            ? parseInt(formik.values.state_of_origin) 
+            : formik.values.state_of_origin;
+          const data = await getLgasByState(stateId);
+          setLgas(data || []);
+        } catch (error) {
+          notify.error('Failed to load LGAs');
+        } finally {
+          setLgasLoading(false);
+        }
+      };
+      loadLgas();
+    } else {
+      setLgas([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.state_of_origin, states]); // Removed notify from dependencies
+
   const handleStateChange = (e) => {
-    const stateName = e.target.value;
-    formik.setFieldValue('state_of_origin', stateName);
-    formik.setFieldValue('lga', '');
-    const found = NIGERIA_STATES.find((s) => s.name === stateName);
-    setLgas(found?.lgas ?? []);
+    const stateId = e.target.value;
+    formik.setFieldValue('state_of_origin', stateId);
+    formik.setFieldValue('lga_id', '');
   };
+
+  // Merge server errors with formik errors
+  useEffect(() => {
+    if (serverErrors && Object.keys(serverErrors).length > 0) {
+      Object.keys(serverErrors).forEach(key => {
+        formik.setFieldError(key, serverErrors[key]);
+      });
+    }
+  }, [serverErrors]);
 
   return (
     <Box component="form" onSubmit={formik.handleSubmit}>
@@ -174,7 +118,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
           <TextField
             label="Surname"
             name="surname"
-            value={formik.values.surname}
+            value={formik.values.surname.trim()}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
@@ -187,7 +131,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
           <TextField
             label="First name"
             name="first_name"
-            value={formik.values.first_name}
+            value={formik.values.first_name.trim()}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
@@ -200,7 +144,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
           <TextField
             label="Other name"
             name="other_name"
-            value={formik.values.other_name}
+            value={formik.values.other_name.trim()}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
@@ -210,18 +154,13 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
         <Grid size={{ xs: 12, sm: 6 }}>
           <DatePicker
             label="Date of Birth"
-            value={formik.values.dob ? dayjs(formik.values.dob) : null}
+            value={
+              formik.values.dob && dayjs(formik.values.dob).isValid()
+                ? dayjs(formik.values.dob)
+                : null
+            }
             onChange={(val) => {
               formik.setFieldValue('dob', val ? val.format('YYYY-MM-DD') : '');
-            }}
-            maxDate={dayjs().subtract(1, 'day')}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                onBlur: formik.handleBlur,
-                error: formik.touched.dob && Boolean(formik.errors.dob),
-                helperText: formik.touched.dob && formik.errors.dob,
-              },
             }}
           />
         </Grid>
@@ -246,6 +185,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
           <FormControl
             fullWidth
             error={formik.touched.state_of_origin && Boolean(formik.errors.state_of_origin)}
+            disabled={statesLoading}
           >
             <InputLabel>State of Origin</InputLabel>
             <Select
@@ -254,10 +194,11 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
               onChange={handleStateChange}
               onBlur={formik.handleBlur}
               label="State of Origin"
+              endAdornment={statesLoading && <CircularProgress size={20} sx={{ mr: 2 }} />}
             >
-              {NIGERIA_STATES.map((s) => (
-                <MenuItem key={s.name} value={s.name}>
-                  {s.name}
+              {states.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.state_name}
                 </MenuItem>
               ))}
             </Select>
@@ -267,20 +208,21 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
         <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl
             fullWidth
-            error={formik.touched.lga && Boolean(formik.errors.lga)}
-            disabled={lgas.length === 0}
+            error={formik.touched.lga_id && Boolean(formik.errors.lga_id)}
+            disabled={lgas.length === 0 || lgasLoading}
           >
             <InputLabel>LGA of Origin</InputLabel>
             <Select
-              name="lga"
-              value={formik.values.lga}
+              name="lga_id"
+              value={formik.values.lga_id}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="LGA of Origin"
+              endAdornment={lgasLoading && <CircularProgress size={20} sx={{ mr: 2 }} />}
             >
               {lgas.map((l) => (
-                <MenuItem key={l} value={l}>
-                  {l}
+                <MenuItem key={l.id} value={l.id}>
+                  {l.lga_name}
                 </MenuItem>
               ))}
             </Select>
@@ -307,8 +249,8 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false }) 
         <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
-          {isLoading ? 'Saving...' : 'Save and Continue'}
+        <Button variant="contained" type="submit" >
+          {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>
     </Box>
@@ -320,6 +262,7 @@ WardDetailForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onBack: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  serverErrors: PropTypes.object,
 };
 
 export default WardDetailForm;

@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -21,10 +22,10 @@ import {
 import PropTypes from 'prop-types';
 
 const DOCUMENTS = [
-  { key: 'birth_certificate',      label: 'Birth certificate',      required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
-  { key: 'previous_school_report', label: 'Previous school report', required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
-  { key: 'passport_photo',         label: 'Passport photo',         required: true,  accept: '.jpg,.jpeg,.png'      },
-  { key: 'medical_record',         label: 'Medical record',         required: false, accept: '.pdf,.jpg,.jpeg,.png' },
+  { key: 'birth_cert',         label: 'Birth certificate',      required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
+  { key: 'prev_school_report', label: 'Previous school report', required: true,  accept: '.pdf,.jpg,.jpeg,.png' },
+  { key: 'passport_photo',     label: 'Passport photo',         required: true,  accept: '.jpg,.jpeg,.png'      },
+  { key: 'medical_record',     label: 'Medical record',         required: false, accept: '.pdf,.jpg,.jpeg,.png' },
 ];
 
 const ACCEPTED = '.pdf,.jpg,.jpeg,.png';
@@ -284,7 +285,7 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
           disabled={isLoading || !allRequiredOk}
           sx={{ fontWeight: 700, px: 4, borderRadius: 2 }}
         >
-          {isLoading ? 'Saving...' : 'Save and Continue'}
+         {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>
 

@@ -12,223 +12,117 @@ import {
   Divider,
   Checkbox,
   Alert,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import PropTypes from 'prop-types';
 import { academicInfoValidationSchema } from './validation/academicInfoValidationSchema';
-import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
+import { getAllStates, getLgasByState } from '@/api/tenant/admission/admissionApi';
 import { useNotification } from 'src/hooks/useNotification';
-
-// ── Nigerian states + LGAs  ───────────────────────────────────────
-const NIGERIA_STATES = [
-  {
-    name: 'Abia',
-    lgas: [
-      'Aba North',
-      'Aba South',
-      'Arochukwu',
-      'Bende',
-      'Ikwuano',
-      'Isiala Ngwa North',
-      'Isiala Ngwa South',
-      'Isuikwuato',
-      'Obi Ngwa',
-      'Ohafia',
-      'Osisioma',
-      'Ugwunagbo',
-      'Ukwa East',
-      'Ukwa West',
-      'Umuahia North',
-      'Umuahia South',
-      'Umu Nneochi',
-    ],
-  },
-  {
-    name: 'Adamawa',
-    lgas: [
-      'Demsa',
-      'Fufure',
-      'Ganye',
-      'Gombi',
-      'Hong',
-      'Jada',
-      'Lamurde',
-      'Madagali',
-      'Maiha',
-      'Mayo Belwa',
-      'Michika',
-      'Mubi North',
-      'Mubi South',
-      'Numan',
-      'Shelleng',
-      'Song',
-      'Toungo',
-      'Yola North',
-      'Yola South',
-    ],
-  },
-  {
-    name: 'Akwa Ibom',
-    lgas: [
-      'Abak',
-      'Eastern Obolo',
-      'Eket',
-      'Esit Eket',
-      'Essien Udim',
-      'Etim Ekpo',
-      'Etinan',
-      'Ibeno',
-      'Ibesikpo Asutan',
-      'Ibiono-Ibom',
-      'Ika',
-      'Ikono',
-      'Ikot Abasi',
-      'Ikot Ekpene',
-      'Ini',
-      'Itu',
-      'Mbo',
-      'Mkpat-Enin',
-      'Nsit-Atai',
-      'Nsit-Ibom',
-      'Nsit-Ubium',
-      'Obot Akara',
-      'Okobo',
-      'Onna',
-      'Oron',
-      'Oruk Anam',
-      'Udung-Uko',
-      'Ukanafun',
-      'Uruan',
-      'Urue-Offong/Oruko',
-      'Uyo',
-    ],
-  },
-  {
-    name: 'Anambra',
-    lgas: [
-      'Aguata',
-      'Anambra East',
-      'Anambra West',
-      'Anaocha',
-      'Awka North',
-      'Awka South',
-      'Ayamelum',
-      'Dunukofia',
-      'Ekwusigo',
-      'Idemili North',
-      'Idemili South',
-      'Ihiala',
-      'Njikoka',
-      'Nnewi North',
-      'Nnewi South',
-      'Ogbaru',
-      'Onitsha North',
-      'Onitsha South',
-      'Orumba North',
-      'Orumba South',
-      'Oyi',
-    ],
-  },
-  {
-    name: 'Bauchi',
-    lgas: [
-      'Alkaleri',
-      'Bauchi',
-      'Bogoro',
-      'Damban',
-      'Darazo',
-      'Dass',
-      'Gamawa',
-      'Ganjuwa',
-      'Giade',
-      'Itas/Gadau',
-      'Katagum',
-      'Kirfi',
-      'Misau',
-      'Ningi',
-      'Shira',
-      'Tafawa Balewa',
-      'Toro',
-      'Warji',
-      'Zaki',
-    ],
-  },
-];
 
 const EMPTY_FORM = {
   has_previous_school: false,
-  previous_school_name: '',
-  previous_school_state: '',
-  previous_school_lga: '',
+  prev_school_name: '',
+  prev_school_state: '',
+  prev_school_lga: '',
   previous_class: '',
-  programme_id: '',
-  class_id: '',
-  boarding_status: '',
+  intending_programme_id: '',
+  intending_class_id: '',
+  study_mode: '',
 };
 
-const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }) => {
+const AcademicInfoForm = ({ 
+  initialValues, 
+  onSubmit, 
+  onBack, 
+  isLoading = false, 
+  serverErrors = {},
+  selectedBatch 
+}) => {
   const notify = useNotification();
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const [programmes, setProgrammes] = useState([]); // [{id, label, classes:[]}]
-  const [classes, setClasses] = useState([]); // filtered by selected programme
+  const [states, setStates] = useState([]); // all states
   const [lgas, setLgas] = useState([]); // filtered by selected state
+  const [statesLoading, setStatesLoading] = useState(false);
+  const [lgasLoading, setLgasLoading] = useState(false);
 
-  // ── Load programmes on mount ──────────────────────────────────────────────
+  // Extract programme and classes from selectedBatch
+  const batchProgramme = selectedBatch?.programme;
+  const batchClasses = selectedBatch?.classes || [];
+
+  // ── Load states on mount ──────────────────────────────────────────────
   useEffect(() => {
-    getClassesWithDivisions()
-      .then((data) => {
-        const flat = [];
-        (data || []).forEach((division) => {
-          (division.programmes || []).forEach((prog) => {
-            flat.push({
-              id: prog.id,
-              label: prog.programme_code || prog.programme_name,
-              classes: (prog.classes || []).map((cls) => ({
-                id: cls.id,
-                label: cls.class_code || cls.class_name,
-              })),
-            });
-          });
-        });
-        setProgrammes(flat);
-      })
-      .catch(() => notify.error('Failed to load programmes'));
-  }, []);
+    const loadStates = async () => {
+      setStatesLoading(true);
+      try {
+        const data = await getAllStates();
+        setStates(data || []);
+      } catch (err) {
+        console.error('Failed to load states', err);
+        notify.error('Failed to load states');
+      } finally {
+        setStatesLoading(false);
+      }
+    };
+
+    loadStates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // ── Formik ────────────────────────────────────────────────────────────────
   const formik = useFormik({
-    initialValues: initialValues ?? EMPTY_FORM,
+    initialValues: {
+      ...EMPTY_FORM,
+      intending_programme_id: batchProgramme?.id || '',
+      ...initialValues,
+    },
     validationSchema: academicInfoValidationSchema,
     enableReinitialize: true,
     onSubmit: (values) => onSubmit(values),
   });
 
+  // ── Load LGAs when state changes OR when initialValues has a state (for resuming) ──
+  useEffect(() => {
+    if (formik.values.prev_school_state && states.length > 0) {
+      const loadLgas = async () => {
+        setLgasLoading(true);
+        try {
+          const stateId = typeof formik.values.prev_school_state === 'string' 
+            ? parseInt(formik.values.prev_school_state) 
+            : formik.values.prev_school_state;
+          const data = await getLgasByState(stateId);
+          setLgas(data || []);
+        } catch (error) {
+          notify.error('Failed to load LGAs');
+        } finally {
+          setLgasLoading(false);
+        }
+      };
+      loadLgas();
+    } else {
+      setLgas([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.prev_school_state, states]);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStateChange = (e) => {
-    const stateName = e.target.value;
-    formik.setFieldValue('previous_school_state', stateName);
-    formik.setFieldValue('previous_school_lga', '');
-    const found = NIGERIA_STATES.find((s) => s.name === stateName);
-    setLgas(found?.lgas ?? []);
+    const stateId = e.target.value;
+    formik.setFieldValue('prev_school_state', stateId);
+    formik.setFieldValue('prev_school_lga', '');
   };
 
-  const handleProgrammeChange = (e) => {
-    const progId = e.target.value;
-    formik.setFieldValue('programme_id', progId);
-    formik.setFieldValue('class_id', '');
-    const found = programmes.find((p) => String(p.id) === String(progId));
-    setClasses(found?.classes ?? []);
-  };
-
-  // Restore classes when editing with an existing programme_id
+  // Merge server errors with formik errors
   useEffect(() => {
-    if (formik.values.programme_id && programmes.length > 0) {
-      const found = programmes.find((p) => String(p.id) === String(formik.values.programme_id));
-      setClasses(found?.classes ?? []);
+    if (serverErrors && Object.keys(serverErrors).length > 0) {
+      Object.keys(serverErrors).forEach(key => {
+        formik.setFieldError(key, serverErrors[key]);
+      });
     }
-  }, [programmes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverErrors]);
 
   const hasPrev = formik.values.has_previous_school;
   const fe = formik.errors;
@@ -274,32 +168,34 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
           <Grid size={{ xs: 12 }}>
             <TextField
               label="Previous school name"
-              name="previous_school_name"
-              value={formik.values.previous_school_name}
+              name="prev_school_name"
+              value={formik.values.prev_school_name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               fullWidth
-              error={ft.previous_school_name && Boolean(fe.previous_school_name)}
-              helperText={ft.previous_school_name && fe.previous_school_name}
+              error={ft.prev_school_name && Boolean(fe.prev_school_name)}
+              helperText={ft.prev_school_name && fe.prev_school_name}
             />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl
               fullWidth
-              error={ft.previous_school_state && Boolean(fe.previous_school_state)}
+              error={ft.prev_school_state && Boolean(fe.prev_school_state)}
+              disabled={statesLoading}
             >
               <InputLabel>State</InputLabel>
               <Select
-                name="previous_school_state"
-                value={formik.values.previous_school_state}
+                name="prev_school_state"
+                value={formik.values.prev_school_state}
                 onChange={handleStateChange}
                 onBlur={formik.handleBlur}
                 label="State"
+                endAdornment={statesLoading && <CircularProgress size={20} sx={{ mr: 2 }} />}
               >
-                {NIGERIA_STATES.map((s) => (
-                  <MenuItem key={s.name} value={s.name}>
-                    {s.name}
+                {states.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.state_name}
                   </MenuItem>
                 ))}
               </Select>
@@ -309,20 +205,21 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
           <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl
               fullWidth
-              error={ft.previous_school_lga && Boolean(fe.previous_school_lga)}
-              disabled={lgas.length === 0}
+              error={ft.prev_school_lga && Boolean(fe.prev_school_lga)}
+              disabled={lgas.length === 0 || lgasLoading}
             >
               <InputLabel>LGA</InputLabel>
               <Select
-                name="previous_school_lga"
-                value={formik.values.previous_school_lga}
+                name="prev_school_lga"
+                value={formik.values.prev_school_lga}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 label="LGA"
+                endAdornment={lgasLoading && <CircularProgress size={20} sx={{ mr: 2 }} />}
               >
                 {lgas.map((l) => (
-                  <MenuItem key={l} value={l}>
-                    {l}
+                  <MenuItem key={l.id} value={l.id}>
+                    {l.lga_name}
                   </MenuItem>
                 ))}
               </Select>
@@ -347,59 +244,63 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
       <Divider sx={{ mb: 3 }} />
 
       {/* ── Intending class ── */}
-      <Typography variant="subtitle1" fontWeight={700} mb={2}>
+      <Box mb={4}>
+
+      <Typography variant="subtitle1" fontWeight={700}>
         Intending Class
       </Typography>
+      <small className='text-success'>Programme and class are determined by the Selected Batch,select the intend class!!!</small>
+      </Box>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth error={ft.programme_id && Boolean(fe.programme_id)}>
-            <InputLabel>Programme</InputLabel>
-            <Select
-              name="programme_id"
-              value={formik.values.programme_id}
-              onChange={handleProgrammeChange}
-              onBlur={formik.handleBlur}
-              label="Programme"
-            >
-              {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            label="Programme"
+            value={batchProgramme?.programme_name || batchProgramme?.programme_code || 'N/A'}
+            fullWidth
+            disabled
+            InputProps={{
+              readOnly: true,
+            }}
+          />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl
             fullWidth
-            error={ft.class_id && Boolean(fe.class_id)}
-            disabled={classes.length === 0}
+            error={ft.intending_class_id && Boolean(fe.intending_class_id)}
           >
             <InputLabel>Class Choice</InputLabel>
             <Select
-              name="class_id"
-              value={formik.values.class_id}
+              name="intending_class_id"
+              value={formik.values.intending_class_id}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Class Choice"
             >
-              {classes.map((c) => (
+              <MenuItem value="" disabled>
+                Select Class
+              </MenuItem>
+              {batchClasses.map((c) => (
                 <MenuItem key={c.id} value={c.id}>
-                  {c.label}
+                  {c.class_code || c.class_name}
                 </MenuItem>
               ))}
             </Select>
+            {ft.intending_class_id && fe.intending_class_id && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                {fe.intending_class_id}
+              </Typography>
+            )}
           </FormControl>
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <FormControl fullWidth error={ft.boarding_status && Boolean(fe.boarding_status)}>
+          <FormControl fullWidth error={ft.study_mode && Boolean(fe.study_mode)}>
             <InputLabel>Boarding Status</InputLabel>
             <Select
-              name="boarding_status"
-              value={formik.values.boarding_status}
+              name="study_mode"
+              value={formik.values.study_mode}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Boarding Status"
@@ -407,6 +308,11 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
               <MenuItem value="day">Day Student</MenuItem>
               <MenuItem value="boarding">Boarding Student</MenuItem>
             </Select>
+            {ft.study_mode && fe.study_mode && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                {fe.study_mode}
+              </Typography>
+            )}
           </FormControl>
         </Grid>
       </Grid>
@@ -416,8 +322,8 @@ const AcademicInfoForm = ({ initialValues, onSubmit, onBack, isLoading = false }
         <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
-          {isLoading ? 'Saving...' : 'Save and Continue'}
+        <Button variant="contained" type="submit" >
+           {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>
     </Box>
@@ -429,6 +335,8 @@ AcademicInfoForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   onBack: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  serverErrors: PropTypes.object,
+  selectedBatch: PropTypes.object.isRequired,
 };
 
 export default AcademicInfoForm;

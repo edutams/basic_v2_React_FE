@@ -23,6 +23,7 @@ import {
 import { School as SchoolIcon } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import { useNotification } from 'src/hooks/useNotification';
+import { getOpenBatches } from '@/api/tenant/admission/admissionApi';
 
 // ── Confirmation dialog ───────────────────────────────────────────────────────
 const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
@@ -54,14 +55,14 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
             Session
           </Typography>
           <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-            {batch.session_term}
+            {batch?.session_term?.session?.sesname} {batch?.session_term?.display_term?.display_name}
           </Typography>
 
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
             Batch
           </Typography>
           <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-            {batch.application_batch}
+            {batch.batch_name}
           </Typography>
 
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, mb: 0.5 }}>
@@ -69,21 +70,26 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
           </Typography>
           <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1.5}>
             {batch.classes.map((cls) => (
-              <Chip key={cls} label={cls} size="small"
+              <Chip key={cls.id} label={cls.class_code} size="small"
                 sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 11, height: 22 }} />
             ))}
           </Stack>
 
-          <Divider sx={{ my: 1.5 }} />
+          {batch?.require_payment && <Divider sx={{ my: 1.5 }} />}
+          {
+            (batch?.require_payment && batch?.acceptance_fee != '0.00') && <Box display="flex" justifyContent="space-between" mb={0.75} >
+              <Typography variant="body2" color="text.secondary">Pre-Application Fee</Typography>
+              <Typography variant="body2" fontWeight={700}>₦{batch.acceptance_fee.toLocaleString()}</Typography>
+            </Box>
+          }
 
-          <Box display="flex" justifyContent="space-between" mb={0.75}>
-            <Typography variant="body2" color="text.secondary">Pre-Application Fee</Typography>
-            <Typography variant="body2" fontWeight={700}>₦{batch.pre_application_fee.toLocaleString()}</Typography>
-          </Box>
-          <Box display="flex" justifyContent="space-between">
-            <Typography variant="body2" color="text.secondary">Post-Admission Fee</Typography>
-            <Typography variant="body2" fontWeight={700}>₦{batch.post_admission_fee.toLocaleString()}</Typography>
-          </Box>
+          {
+            (batch?.require_payment && batch?.application_fee != '0.00') &&
+            <Box display="flex" justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">Post-Admission Fee</Typography>
+              <Typography variant="body2" fontWeight={700}>₦{batch.application_fee.toLocaleString()}</Typography>
+            </Box>
+          }
         </Paper>
 
         <Typography variant="caption" color="text.secondary" display="block" mt={2}>
@@ -106,8 +112,8 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
 // ── Main modal ────────────────────────────────────────────────────────────────
 const AdmissionBatchModal = ({ open, onClose, onApply }) => {
   const notify = useNotification();
-  const [batches,    setBatches]    = useState([]);
-  const [loading,    setLoading]    = useState(false);
+  const [batches, setBatches] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [confirmBatch, setConfirmBatch] = useState(null); // batch pending confirmation
 
@@ -115,22 +121,20 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
     if (open) {
       setSelectedId(null);
       setConfirmBatch(null);
-      fetchBatches();
+      fetchOpenBatches();
     }
   }, [open]);
 
-  const fetchBatches = async () => {
+  const fetchOpenBatches = async () => {
     try {
       setLoading(true);
-      setBatches([
-        { id: 1, session_term: '2025 / 2026', application_batch: 'Junior Secondary Admission Batch 1', classes: ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3'], pre_application_fee: 5000,  post_admission_fee: 15000 },
-        { id: 2, session_term: '2025 / 2026', application_batch: 'Junior Secondary Admission Batch 2', classes: ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3'], pre_application_fee: 7000,  post_admission_fee: 17000 },
-        { id: 3, session_term: '2025 / 2026', application_batch: 'Junior Secondary Admission Batch 3', classes: ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3'], pre_application_fee: 10000, post_admission_fee: 20000 },
-        { id: 4, session_term: '2025 / 2026', application_batch: 'Junior Secondary Admission Batch 4', classes: ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3'], pre_application_fee: 15000, post_admission_fee: 25000 },
-        { id: 5, session_term: '2025 / 2026', application_batch: 'Junior Secondary Admission Batch 5', classes: ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3'], pre_application_fee: 20000, post_admission_fee: 30000 },
-      ]);
+      const response = await getOpenBatches();
+      const data = response?.data?.data || response?.data || [];
+      setBatches(data);
     } catch (error) {
+      console.error('Failed to fetch open batches:', error);
       notify.error('Failed to fetch admission batches');
+      setBatches([]);
     } finally {
       setLoading(false);
     }
@@ -159,7 +163,7 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                   <TableCell sx={{ fontWeight: 600, width: '15%' }}>Session Term</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '30%' }}>Application Batch</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '20%' }}>Classes</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '25%' }}>Fee</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '25%' }}>Fee Required</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
@@ -176,32 +180,46 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                       sx={{ cursor: 'pointer' }}
                     >
                       <TableCell>
-                        <Typography variant="body2" fontWeight={600}>{batch.session_term}</Typography>
+                        <Typography variant="body2" fontWeight={600}>
+                          {batch?.session_term?.session?.sesname} {batch?.session_term?.display_term?.display_name}
+                        </Typography>
                       </TableCell>
 
                       <TableCell>
-                        <Typography variant="body2">{batch.application_batch}</Typography>
+                        <Typography variant="body2">{batch.batch_name}</Typography>
                       </TableCell>
 
                       <TableCell>
                         <Stack direction="row" flexWrap="wrap" gap={0.5}>
                           {batch.classes.map((cls) => (
-                            <Chip key={cls} label={cls} size="small"
+                            <Chip key={cls.id} label={cls.class_code} size="small"
                               sx={{ bgcolor: '#E8E8E8', color: '#333', fontWeight: 600, fontSize: 11, height: 22 }} />
                           ))}
                         </Stack>
                       </TableCell>
+                      {batch?.require_payment ?
+                        <TableCell>
+                          <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
+                            Pre-Application :{' '}
+                            <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.acceptance_fee.toLocaleString()}</strong>
+                          </Typography>
+                          <Typography variant="caption" color="primary.main" display="block" fontWeight={600} mt={0.3}>
+                            Post-Admission :{' '}
+                            <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.application_fee.toLocaleString()}</strong>
+                          </Typography>
+                        </TableCell>
 
-                      <TableCell>
-                        <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
-                          Pre-Application :{' '}
-                          <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.pre_application_fee.toLocaleString()}</strong>
-                        </Typography>
-                        <Typography variant="caption" color="primary.main" display="block" fontWeight={600} mt={0.3}>
-                          Post-Admission :{' '}
-                          <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.post_admission_fee.toLocaleString()}</strong>
-                        </Typography>
-                      </TableCell>
+                        :
+                        <TableCell>
+                          <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
+                              <strong>No Payment Required</strong>
+                          </Typography>
+                        </TableCell>
+
+                      }
+
+
+
 
                       <TableCell align="center">
                         <Button

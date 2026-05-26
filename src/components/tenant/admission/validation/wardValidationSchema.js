@@ -7,6 +7,6 @@ export const wardValidationSchema = Yup.object({
   dob:             Yup.string().required('Date of birth is required'),
   gender:          Yup.string().required('Gender is required'),
   state_of_origin: Yup.string().required('State of origin is required'),
-  lga:             Yup.string().required('LGA is required'),
+  lga_id:             Yup.string().required('LGA is required'),
   home_address:    Yup.string().required('Home address is required'),
 });

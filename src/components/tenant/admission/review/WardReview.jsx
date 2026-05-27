@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import ReviewSection from './ReviewSection';
 import ReadField from './ReadField';
 import { getAllStates, getLgasByState } from '@/api/tenant/admission/admissionApi';
+import dayjs from 'dayjs';
 
 const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) => {
   const [stateName, setStateName] = useState('Loading...');
@@ -37,7 +38,7 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
           const state = states.find(s => s.id === parseInt(wardData.state_of_origin));
           if (state) {
             setStateName(state.state_name);
-            
+
             // Fetch LGAs for this state
             if (wardData?.lga_id) {
               const lgas = await getLgasByState(state.id);
@@ -74,7 +75,7 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
     <ReviewSection number={1} title="Tell us about your ward" subtitle="Basic information" id="section-ward-detail">
       <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
         <Box sx={{ position: 'relative', mb: 1 }}>
-          <Avatar src={wardData?.passport_photo } sx={{ width: 72, height: 72, bgcolor: 'grey.300' }}>
+          <Avatar src={wardData?.passport_photo} sx={{ width: 72, height: 72, bgcolor: 'grey.300' }}>
             {(!wardData?.passport_photo) && <PersonIcon sx={{ color: '#000', fontSize: 40 }} />}
           </Avatar>
           <Box
@@ -95,21 +96,28 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
       </Box>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Surname"         value={wardData?.surname || 'N/A'}          /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="First Name"      value={wardData?.first_name || 'N/A'}       /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Other Name"      value={wardData?.other_name || 'N/A'}       /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Date of Birth"   value={wardData?.dob || 'N/A'}              /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Select Gender"   value={wardData?.gender ? wardData.gender.charAt(0).toUpperCase() + wardData.gender.slice(1) : 'N/A'}           /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="State of Origin" value={stateName}  /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="LGA of Origin"   value={lgaName}              /></Grid>
-        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Home Address"    value={wardData?.home_address || 'N/A'}     /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Surname" value={wardData?.surname || 'N/A'} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="First Name" value={wardData?.first_name || 'N/A'} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Other Name" value={wardData?.other_name || 'N/A'} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField
+          label="Date of Birth"
+          value={
+            wardData?.dob
+              ? dayjs(wardData.dob).format('DD MMM YYYY')
+              : 'N/A'
+          }
+        /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Select Gender" value={wardData?.gender ? wardData.gender.charAt(0).toUpperCase() + wardData.gender.slice(1) : 'N/A'} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="State of Origin" value={stateName} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="LGA of Origin" value={lgaName} /></Grid>
+        <Grid size={{ xs: 12, sm: 6 }}><ReadField label="Home Address" value={wardData?.home_address || 'N/A'} /></Grid>
       </Grid>
     </ReviewSection>
   );
 };
 
 WardReview.propTypes = {
-  wardData:      PropTypes.object,
+  wardData: PropTypes.object,
   intendingClass: PropTypes.string,
   selectedBatch: PropTypes.object,
   academicData: PropTypes.object,

@@ -193,9 +193,9 @@ const ParentDashboard = () => {
                     '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
                   }}
                 >
-                  {sessionTerms.map((term) => (
-                    <MenuItem key={term.id} value={term.id}>
-                      {term.label}
+                  {sessionTerms.map((st) => (
+                    <MenuItem key={st.id} value={st.id}>
+                      {st.label}
                     </MenuItem>
                   ))}
                 </Select>

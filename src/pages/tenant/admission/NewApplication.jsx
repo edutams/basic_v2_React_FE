@@ -360,6 +360,7 @@ const NewApplication = () => {
           // Documents step when no payment required
           return (
             <DocumentsStep
+              initialValues={formData.documentsData}
               onNext={handleDocumentsSubmit}
               onBack={handleBack}
               isLoading={isLoading}
@@ -371,6 +372,7 @@ const NewApplication = () => {
           // Documents step when payment is required
           return (
             <DocumentsStep
+              initialValues={formData.documentsData}
               onNext={handleDocumentsSubmit}
               onBack={handleBack}
               isLoading={isLoading}

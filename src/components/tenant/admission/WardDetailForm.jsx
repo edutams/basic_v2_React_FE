@@ -38,14 +38,13 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
   const [lgas, setLgas] = useState([]);
   const [statesLoading, setStatesLoading] = useState(false);
   const [lgasLoading, setLgasLoading] = useState(false);
-
+  const [hydrated, setHydrated] = useState(false);
+  
   const formik = useFormik({
-    initialValues: initialValues ?? EMPTY_FORM,
+    initialValues: EMPTY_FORM,
     validationSchema: wardValidationSchema,
-    enableReinitialize: true,
     onSubmit: (values) => onSubmit(values),
   });
-
   // Load states on mount
   useEffect(() => {
     const loadStates = async () => {
@@ -61,38 +60,69 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
     };
     loadStates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, []);
 
-  // Load LGAs when state changes OR when initialValues has a state (for resuming)
+  // Hydrate form with initialValues once states are loaded
   useEffect(() => {
-    if (formik.values.state_of_origin && states.length > 0) {
-      const loadLgas = async () => {
+    if (!states.length || !initialValues || hydrated) return;
+
+    const hydrate = async () => {
+      const stateId = initialValues.lga.state_id;
+      const lgaId = initialValues.lga_id;
+
+      // Set all form values first
+      formik.setValues({
+        ...EMPTY_FORM,
+        ...initialValues,
+        state_of_origin: stateId || '',
+        lga_id: '', // Temporarily clear LGA until options load
+      });
+
+      // Load LGAs if state exists
+      if (stateId) {
         setLgasLoading(true);
         try {
-          const stateId = typeof formik.values.state_of_origin === 'string' 
-            ? parseInt(formik.values.state_of_origin) 
-            : formik.values.state_of_origin;
           const data = await getLgasByState(stateId);
           setLgas(data || []);
-        } catch (error) {
+          
+          // Set LGA after options are loaded
+          if (lgaId) {
+            formik.setFieldValue('lga_id', lgaId);
+          }
+        } catch (err) {
           notify.error('Failed to load LGAs');
         } finally {
           setLgasLoading(false);
         }
-      };
-      loadLgas();
-    } else {
-      setLgas([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formik.values.state_of_origin, states]); // Removed notify from dependencies
+      }
 
-  const handleStateChange = (e) => {
+      setHydrated(true);
+    };
+
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [states, initialValues]);
+
+  const handleStateChange = async (e) => {
     const stateId = e.target.value;
+
     formik.setFieldValue('state_of_origin', stateId);
     formik.setFieldValue('lga_id', '');
-  };
 
+    setLgas([]);
+    
+    if (!stateId) return;
+
+    setLgasLoading(true);
+    try {
+      const data = await getLgasByState(stateId);
+      setLgas(data || []);
+    } catch (error) {
+      notify.error('Failed to load LGAs');
+    } finally {
+      setLgasLoading(false);
+    }
+  };
   // Merge server errors with formik errors
   useEffect(() => {
     if (serverErrors && Object.keys(serverErrors).length > 0) {
@@ -118,7 +148,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
           <TextField
             label="Surname"
             name="surname"
-            value={formik.values.surname.trim()}
+            value={formik.values.surname}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
@@ -131,7 +161,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
           <TextField
             label="First name"
             name="first_name"
-            value={formik.values.first_name.trim()}
+            value={formik.values.first_name}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
@@ -144,7 +174,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
           <TextField
             label="Other name"
             name="other_name"
-            value={formik.values.other_name.trim()}
+            value={formik.values.other_name}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
@@ -190,7 +220,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
             <InputLabel>State of Origin</InputLabel>
             <Select
               name="state_of_origin"
-              value={formik.values.state_of_origin}
+              value={formik.values.state_of_origin || ''}
               onChange={handleStateChange}
               onBlur={formik.handleBlur}
               label="State of Origin"
@@ -209,12 +239,12 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
           <FormControl
             fullWidth
             error={formik.touched.lga_id && Boolean(formik.errors.lga_id)}
-            disabled={lgas.length === 0 || lgasLoading}
+            disabled={!formik.values.state_of_origin || lgasLoading}
           >
             <InputLabel>LGA of Origin</InputLabel>
             <Select
               name="lga_id"
-              value={formik.values.lga_id}
+              value={formik.values.lga_id || ''}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="LGA of Origin"

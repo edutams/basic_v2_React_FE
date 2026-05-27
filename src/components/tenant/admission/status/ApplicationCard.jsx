@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Button, Chip } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Person as PersonIcon } from '@mui/icons-material';
+import dayjs from 'dayjs';
+
 
 export const statusChipSx = (status) => {
   if (status === 'Admitted') return { bgcolor: 'success.light', color: 'success.dark' };
@@ -44,12 +46,17 @@ const ApplicationCard = ({ app }) => {
         }}
         onClick={() => {
           if (isDraft) {
-            navigate(`/admission/new-application?step=${app.draftStep ?? 0}`, {
-              state: { ward: app },
+            // Navigate to continue application with resumeApplication flag
+            navigate('/admission/new-application', {
+              state: { 
+                ward: app._original || app,
+                resumeApplication: true,
+              },
             });
           } else {
-            navigate(`/application-tracker/${app.id || app.applicationNo}`, {
-              state: { application: app },
+            // Navigate to application tracker
+            navigate(`/application-tracker/${app.id}`, {
+              state: { admission: app._original || app },
             });
           }
         }}
@@ -100,7 +107,7 @@ const ApplicationCard = ({ app }) => {
               noWrap
               sx={{ lineHeight: 1.2, fontSize: '1rem' }}
             >
-              {app.surname ? `${app.surname} ${app.first_name}` : app.name}
+             {app.surname} {app.first_name}
             </Typography>
 
             <Box sx={{ flexShrink: 0, color: 'text.secondary', mt: -0.5, mr: -0.5 }}>
@@ -111,7 +118,7 @@ const ApplicationCard = ({ app }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="h6" color="text.secondary">
-                Applicant:
+                Form Number:
               </Typography>
               <Typography
                 variant="h6"
@@ -134,7 +141,21 @@ const ApplicationCard = ({ app }) => {
                 noWrap
                 sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
               >
-                {app.class} · {app.session} · {app.batch}
+                 {app.session} 
+              </Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6" color="text.secondary">
+                Batch:
+              </Typography>
+              <Typography
+                variant="h6"
+                fontWeight={600}
+                color="text.primary"
+                noWrap
+                sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
+              >
+                {app.batch}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -148,7 +169,10 @@ const ApplicationCard = ({ app }) => {
                 noWrap
                 sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
               >
-                {app.gender || 'Female'} / {app.dob || '2013-07-03'}
+                {app.gender} / {app?.dob
+                              ? dayjs(app.dob).format('DD MMM YYYY')
+                              : 'N/A'}
+                
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">

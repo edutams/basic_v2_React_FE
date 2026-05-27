@@ -82,6 +82,12 @@ export const getUserProspectiveAdmissions = async (sessionTermId = null) => {
   return response.data;
 };
 
+export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
+  const params = sessionTermId ? { session_term_id: sessionTermId } : {};
+  const response = await api.get('/admission/all-my-applications', { params });
+  return response.data;
+};
+
 // States and LGAs
 export const getAllStates = async () => {
   try {

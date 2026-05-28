@@ -282,7 +282,11 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
         <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button variant="contained" type="submit" >
+        <Button
+          variant="contained"
+          type="submit"
+          disabled={!formik.isValid || isLoading}
+        >
           {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>

@@ -153,28 +153,39 @@ const ApplicationTracker = () => {
         gender={gender}
         address={address}
         photo={photo}
-        currentStage={currentStage}
+        admission={admission}
       />
 
       <Paper sx={{ p: 3, bgcolor: '#e5e8f86a' }}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
-            <TrackerMain
-              submittedDate={submittedDate}
-              onViewDetails={handleViewDetails}
-              admission={admission}
-              stageTitle="Entrance Exam"
-              stageDescription="Your child is required to take the online aptitude test as part of the admission process."
-              requirementStatus="Ready to Begin"
-              timeLimit="45 Minutes"
-              onStart={() => {}}
-              onPractice={() => {}}
-              nextTitle="Admission Decision"
-              nextDescription="Requires completion of Entrance Exam."
-              nextActionLabel="Pay Acceptance Fee"
-              nextActionDisabled
-              onNextAction={() => {}}
-            />
+            {admission?.admission_batch?.has_entrance_exam ? (
+              <TrackerMain
+                submittedDate={submittedDate}
+                onViewDetails={handleViewDetails}
+                admission={admission}
+                stageTitle="Entrance Exam"
+                stageDescription="Your child is required to take the online aptitude test as part of the admission process."
+                requirementStatus="Ready to Begin"
+                timeLimit="45 Minutes"
+                onStart={() => {}}
+                onPractice={() => {}}
+                nextTitle="Admission Decision"
+                nextDescription="Requires completion of Entrance Exam."
+                nextActionLabel="Pay Acceptance Fee"
+                nextActionDisabled
+                onNextAction={() => {}}
+              />
+            ) : (
+              <Paper variant="outlined" sx={{ borderRadius: 3, p: 3, textAlign: 'center', bgcolor: 'primary.lighter' }}>
+                <Typography variant="h6" color="primary.main" gutterBottom>
+                  Admission Doesnt has Entrance exam you can proceed with the next requiremets.
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Please monitor your application status.
+                </Typography>
+              </Paper>
+            )}
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>

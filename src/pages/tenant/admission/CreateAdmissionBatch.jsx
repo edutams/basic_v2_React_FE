@@ -78,12 +78,17 @@ const CreateAdmissionBatch = () => {
 
   const [entrySessionTermId, setEntrySessionTermId] = useState(existingBatch?.entry_session_term_id ?? sessionTermId ?? '');
 
+  const [closingDate, setClosingDate] = useState(
+    existingBatch?.closing_date
+      ? new Date(existingBatch.closing_date).toISOString().split('T')[0]
+      : ''
+  );
   const [entranceExam, setEntranceExam] = useState(existingBatch?.has_entrance_exam ?? false);
   const [examType, setExamType] = useState(existingBatch?.exam_type ?? 'CBT');
   // Format exam_date from ISO datetime to YYYY-MM-DD for date input
   const [examDate, setExamDate] = useState(
-    existingBatch?.exam_date 
-      ? new Date(existingBatch.exam_date).toISOString().split('T')[0] 
+    existingBatch?.exam_date
+      ? new Date(existingBatch.exam_date).toISOString().split('T')[0]
       : ''
   );
   const [passMark, setPassMark] = useState(existingBatch?.pass_mark ?? 1);
@@ -133,6 +138,11 @@ const CreateAdmissionBatch = () => {
       if (!examDate) {
         newErrors.examDate = 'Exam date is required';
       }
+
+      if (!closingDate) {
+        newErrors.closingDate = 'Closing date is required';
+      }
+
       if (!passMark || passMark < 0 || passMark > 100) {
         newErrors.passMark = 'Pass mark must be between 0 and 100';
       }
@@ -175,12 +185,12 @@ const CreateAdmissionBatch = () => {
         const res = await fetchAdmissionEntrySessionTerm(sessionTermId);
         const session_terms = extractList(res);
         setEntrySessionTermOptions(session_terms);
-        
+
         // Set the current session term label from the first option if not already set
         if (session_terms.length > 0 && !currentSessionTermLabel) {
           setCurrentSessionTermLabel(session_terms[0].display_name);
         }
-        
+
         // Default entry term to current term (first in list)
         if (!existingBatch && session_terms.length > 0) {
           setEntrySessionTermId(session_terms[0].session_term_id);
@@ -242,6 +252,7 @@ const CreateAdmissionBatch = () => {
       has_entrance_exam: entranceExam,
       exam_type: entranceExam ? examType : null,
       exam_date: entranceExam ? examDate : null,
+      closing_date: closingDate,
       pass_mark: entranceExam ? Number(passMark) : null,
       require_payment: enablePayment,
       application_fee: enablePayment ? Number(preAppFee) : 0,
@@ -263,7 +274,7 @@ const CreateAdmissionBatch = () => {
       setTimeout(() => navigate('/admission-setup'), 1000);
     } catch (err) {
       console.error('Failed to save batch', err);
-      
+
       // Handle backend validation errors
       if (err?.response?.data?.errors) {
         const backendErrors = {};
@@ -272,7 +283,7 @@ const CreateAdmissionBatch = () => {
         });
         setErrors(backendErrors);
       }
-      
+
       const msg =
         err?.response?.data?.message ?? `Failed to ${isEdit ? 'update' : 'create'} batch`;
       showSnackbar(msg, 'error');
@@ -316,6 +327,27 @@ const CreateAdmissionBatch = () => {
                   helperText={errors.batchName}
                 />
               </Box>
+              {/* Batch Name */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={700} mb={1}>
+                  Closing Date
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="date"
+                  placeholder="YYYY-MM-DD"
+                  value={closingDate}
+                  onChange={(e) => {
+                    setClosingDate(e.target.value);
+                    if (errors.closingDate) {
+                      setErrors((prev) => ({ ...prev, closingDate: '' }));
+                    }
+                  }}
+                  error={Boolean(errors.closingDate)}
+                  helperText={errors.closingDate}
+                />
+              </Box>
 
               {/* Entry Term */}
               <Box>
@@ -337,7 +369,7 @@ const CreateAdmissionBatch = () => {
                   ) : (
                     entrySessionTermOptions.map((st) => (
                       <MenuItem key={st.id} value={st.id}>
-                         {st?.session?.sesname} {st?.display_term?.display_name}
+                        {st?.session?.sesname} {st?.display_term?.display_name}
                       </MenuItem>
                     ))
                   )}

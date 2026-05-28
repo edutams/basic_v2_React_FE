@@ -58,6 +58,8 @@ const AcademicInfoForm = ({
     initialValues: EMPTY_FORM,
     validationSchema: academicInfoValidationSchema,
     onSubmit: (values) => onSubmit(values),
+    validateOnChange: true,
+    validateOnBlur: true,
   });
 
   // Validation helpers
@@ -71,11 +73,20 @@ const AcademicInfoForm = ({
     );
 
   const isIntendingValid =
-    formik.values.intending_class_id &&
-    formik.values.study_mode;
+    Boolean(formik.values.intending_class_id) &&
+    Boolean(formik.values.study_mode);
 
   const isFormValid =
     isPrevSchoolValid && isIntendingValid && formik.isValid;
+
+  // Trigger form validation when batch classes are loaded
+  useEffect(() => {
+    if (batchClasses.length > 0) {
+      // Re-validate the form when classes become available
+      formik.validateForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchClasses.length]);
 
   // ── Load states on mount ──────────────────────────────────────────────
   useEffect(() => {
@@ -104,11 +115,12 @@ const AcademicInfoForm = ({
       const prevSchoolState = initialValues.prev_school_state;
       const prevSchoolLga = initialValues.prev_school_lga;
 
-      // Set all form values first
+      // Set all form values first - ensure batch programme is not overridden
       formik.setValues({
         ...EMPTY_FORM,
-        intending_programme_id: batchProgramme?.id || '',
         ...initialValues,
+        intending_programme_id: batchProgramme?.id || initialValues?.intending_programme_id || '',
+        intending_class_id: initialValues?.intending_class_id || '',
         prev_school_state: prevSchoolState || '',
         prev_school_lga: '', // Temporarily clear LGA until options load
       });
@@ -119,7 +131,7 @@ const AcademicInfoForm = ({
         try {
           const data = await getLgasByState(prevSchoolState);
           setLgas(data || []);
-          
+
           // Set LGA after options are loaded
           if (prevSchoolLga) {
             formik.setFieldValue('prev_school_lga', prevSchoolLga);
@@ -138,6 +150,25 @@ const AcademicInfoForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [states, initialValues]);
 
+  // Update batch-related fields when selectedBatch changes
+  useEffect(() => {
+    if (!hydrated) return; // Only update after initial hydration
+    
+    if (batchProgramme?.id) {
+      formik.setFieldValue('intending_programme_id', batchProgramme.id);
+    }
+    
+    // Clear intending_class_id if batch changed (since classes might be different)
+    if (formik.values.intending_class_id && batchClasses.length > 0) {
+      const classExists = batchClasses.find(c => c.id === parseInt(formik.values.intending_class_id));
+      if (!classExists) {
+        // Class doesn't exist in new batch, clear it
+        formik.setFieldValue('intending_class_id', '');
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchProgramme?.id, batchClasses.length]);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStateChange = async (e) => {
     const stateId = e.target.value;
@@ -146,7 +177,7 @@ const AcademicInfoForm = ({
     formik.setFieldValue('prev_school_lga', '');
 
     setLgas([]);
-    
+
     if (!stateId) return;
 
     setLgasLoading(true);
@@ -319,7 +350,7 @@ const AcademicInfoForm = ({
             <InputLabel>Class Choice</InputLabel>
             <Select
               name="intending_class_id"
-              value={formik.values.intending_class_id}
+              value={formik.values.intending_class_id || ''}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Class Choice"
@@ -328,7 +359,7 @@ const AcademicInfoForm = ({
                 Select Class
               </MenuItem>
               {batchClasses.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
+                <MenuItem key={c.id} value={String(c.id)}>
                   {c.class_code || c.class_name}
                 </MenuItem>
               ))}
@@ -346,7 +377,7 @@ const AcademicInfoForm = ({
             <InputLabel>Boarding Status</InputLabel>
             <Select
               name="study_mode"
-              value={formik.values.study_mode}
+              value={formik.values.study_mode ?? ''}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               label="Boarding Status"

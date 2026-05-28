@@ -27,12 +27,12 @@ const MyApplication = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const notify = useNotification();
-  
+
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [applications, setApplications] = useState([]);
-   const [selectedSessionTerm, setSelectedSessionTerm] = useState('all');
-    const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
-  
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState('all');
+  const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
+
   const [loading, setLoading] = useState(true);
   const [sessionTermsLoading, setSessionTermsLoading] = useState(true);
 
@@ -42,16 +42,16 @@ const MyApplication = () => {
       setSessionTermsLoading(true);
       try {
         const response = await fetchSessionTerms();
-         const sess_terms = [
-            { id: 'all', label: 'All Sessions' },
-            ...response.data.map((sterm) => ({
-              id: sterm.id,
-              label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
-            })),
-          ];
+        const sess_terms = [
+          { id: 'all', label: 'All Sessions' },
+          ...response.data.map((sterm) => ({
+            id: sterm.id,
+            label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+          })),
+        ];
         setSessionTerms(sess_terms);
-        
-       
+
+
       } catch (error) {
         console.error('Failed to load session terms:', error);
         notify.error('Failed to load session terms');
@@ -67,21 +67,20 @@ const MyApplication = () => {
   useEffect(() => {
     const loadApplications = async () => {
       if (!selectedSessionTerm) return;
-      
+
       setLoading(true);
       try {
-          const sessionTermId = selectedSessionTerm === 'all' ? null : selectedSessionTerm;
+        const sessionTermId = selectedSessionTerm === 'all' ? null : selectedSessionTerm;
         const response = await getAllMyAdmissionApplication(sessionTermId);
         const apps = response?.data || [];
-        
+
         // Transform backend data to match ApplicationCard expectations
         const transformedApps = apps.map((app) => ({
           id: app.id,
           surname: app.surname,
           first_name: app.first_name,
           other_name: app.other_name,
-          name: `${app.surname} ${app.first_name}`,
-          status: app.admission_status || 'pending',
+          status: app.admission_status,
           applicationNo: app.form_number || '—',
           class: app.intending_class?.class_code || app.intending_class?.class_name || '—',
           session: app.admission_batch?.session_term?.session?.sesname || '—',
@@ -90,15 +89,16 @@ const MyApplication = () => {
           acceptanceFee: app.admission_batch?.acceptance_fee || null,
           feeDue: null,
           timeline: [],
-          isDraft: app.form_submit_status === 'no',
           draftStep: app.admission_stage || 0,
           gender: app.gender,
           dob: app.dob,
+          form_submit_status: app.form_submit_status,
+          admission_status: app.admission_status,
           image: app.passport_photo || null,
           // Keep original data for navigation
           _original: app,
         }));
-        
+
         setApplications(transformedApps);
       } catch (error) {
         console.error('Failed to load applications:', error);
@@ -137,21 +137,21 @@ const MyApplication = () => {
             {loading ? 'Loading...' : `${applications.length} application${applications.length !== 1 ? 's' : ''} found`}
           </Typography>
         </Box>
-        
+
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-           <FormControl size="small" sx={{ minWidth: 200 }}>
-                <Select
-                  value={selectedSessionTerm}
-                  onChange={(e) => setSelectedSessionTerm(e.target.value)}
-                >
-                  {sessionTerms.map((st) => (
-                    <MenuItem key={st.id} value={st.id}>
-                      {st.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-          
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <Select
+              value={selectedSessionTerm}
+              onChange={(e) => setSelectedSessionTerm(e.target.value)}
+            >
+              {sessionTerms.map((st) => (
+                <MenuItem key={st.id} value={st.id}>
+                  {st.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Button
             variant="contained"
             onClick={() => setBatchModalOpen(true)}
@@ -161,7 +161,7 @@ const MyApplication = () => {
           </Button>
         </Box>
       </Box>
-      
+
       <Box mb={3}>
         <Button
           startIcon={<ArrowBackIcon />}

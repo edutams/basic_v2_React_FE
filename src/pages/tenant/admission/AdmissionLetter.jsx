@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material/styles';
-import { useContext } from 'react';
+import { useContext, useEffect, useState, useRef } from 'react';
 import { Box, Grid, Typography, Paper, Button, Divider, Avatar } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -8,74 +8,13 @@ import {
   Download as DownloadIcon,
   School as SchoolIcon,
 } from '@mui/icons-material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
+import { useReactToPrint } from 'react-to-print';
+import { updateAdmissionPrintStatus, getAdmissionLetterDetails } from '@/api/tenant/admission/admissionApi';
+import { useNotification } from 'src/hooks/useNotification';
 
-// ── Print / Download helper
-const toDataUrl = (url) =>
-  new Promise((resolve) => {
-    if (!url) {
-      resolve(null);
-      return;
-    }
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      resolve(canvas.toDataURL());
-    };
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
-
-const printLetter = async () => {
-  // Inject a one-time print stylesheet that hides everything except the letter
-  const styleId = 'admission-print-style';
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.innerHTML = `
-      @media print {
-        body > * { display: none !important; }
-        #admission-letter-root { display: block !important; }
-        #admission-letter-root * {
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-          color-adjust: exact !important;
-        }
-        #admission-letter-root img {
-          display: block !important;
-          visibility: visible !important;
-          opacity: 1 !important;
-          max-width: 100% !important;
-        }
-        #admission-letter-root svg {
-          display: inline-block !important;
-          visibility: visible !important;
-          opacity: 1 !important;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  const el = document.getElementById('admission-letter-print');
-  if (!el) return;
-
-  const wrapper = document.createElement('div');
-  wrapper.id = 'admission-letter-root';
-  wrapper.style.display = 'none';
-  wrapper.appendChild(el.cloneNode(true));
-  document.body.appendChild(wrapper);
-
-  window.print();
-
-  document.body.removeChild(wrapper);
-};
 const MOCK_LETTER = {
   reference: 'TASUES/ADM/2025/10428',
   date: 'August 30, 2025',
@@ -155,7 +94,7 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
 
           <Box
             sx={{
-              textAlign: { xs: 'left', md: 'right' }, 
+              textAlign: { xs: 'left', md: 'right' },
             }}
           >
             <Typography variant="body2" fontWeight={700}>
@@ -281,14 +220,64 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
 const AdmissionLetter = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
+  const notify = useNotification();
   const { tenantInfo } = useContext(TenantAuthContext);
 
-  const letter = location.state?.letter ?? MOCK_LETTER;
+  const [letter, setLetter] = useState(location.state?.letter ?? MOCK_LETTER);
+  const [isLoading, setIsLoading] = useState(Boolean(id && !location.state?.letter));
+
+  useEffect(() => {
+    const fetchLetter = async () => {
+      if (id && !location.state?.letter) {
+        try {
+          const res = await getAdmissionLetterDetails(id);
+          if (res?.data) {
+            setLetter(res.data);
+          }
+        } catch (error) {
+          console.error(error);
+          notify.error('Failed to load admission letter details');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    fetchLetter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, location.state?.letter]);
+
   const schoolName = tenantInfo?.school_name ?? tenantInfo?.name ?? 'FunmiSchool';
   const schoolLogo = tenantInfo?.logo_url ?? tenantInfo?.logo ?? null;
 
-  const handlePrint = () => printLetter();
-  const handleDownload = () => printLetter();
+  const contentRef = useRef(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `Admission_Letter_${letter.studentName?.replace(/\s+/g, '_') || 'Student'}`,
+    onAfterPrint: async () => {
+      if (id) {
+        try {
+          await updateAdmissionPrintStatus(id);
+          notify.success('Form printed and marked as complete');
+        } catch (error) {
+          console.error('Failed to update print status', error);
+        }
+      }
+    },
+  });
+
+  const handleDownload = () => handlePrint();
+
+  if (isLoading) {
+    return (
+      <PageContainer title="Admission Letter" description="View admission letter">
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+          <Typography variant="body1" color="text.secondary">Loading admission letter details...</Typography>
+        </Box>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer title="Admission Letter" description="View admission letter">
@@ -318,17 +307,17 @@ const AdmissionLetter = () => {
         </Box>
 
         <Box display="flex" gap={1} flexWrap="wrap">
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{ fontWeight: 600 }}
           >
             Print
-          </Button>
-          <Button variant="outlined" startIcon={<ShareIcon />} sx={{ fontWeight: 600 }}>
+          </Button> */}
+          {/* <Button variant="outlined" startIcon={<ShareIcon />} sx={{ fontWeight: 600 }}>
             Share
-          </Button>
+          </Button> */}
           <Button
             variant="contained"
             startIcon={<DownloadIcon />}
@@ -341,7 +330,9 @@ const AdmissionLetter = () => {
       </Box>
 
       <Box sx={{ bgcolor: '#EEF2F7', py: 4, px: { xs: 1, sm: 3 }, borderRadius: 3 }}>
-        <LetterCard letter={letter} schoolName={schoolName} schoolLogo={schoolLogo} />
+        <div ref={contentRef} style={{ padding: '20px' }}>
+          <LetterCard letter={letter} schoolName={schoolName} schoolLogo={schoolLogo} />
+        </div>
       </Box>
     </PageContainer>
   );

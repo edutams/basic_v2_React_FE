@@ -8,107 +8,142 @@ import {
 import PropTypes from 'prop-types';
 
 /**
- * Calculate form completion step based on admission_stage
- * Maps backend admission_stage to visual step index accounting for dynamic payment step
+ * Build admission steps array based on batch configuration
+ * These represent the admission process stages, not form completion
  */
-const calculateFormStep = (admissionData) => {
-  const admission = admissionData?.admissionData || admissionData;
-  
-  // If form is submitted, show as completed (last step)
-  if (admission?.form_submit_status === 'yes') {
-    const requiresPayment = admission?.admission_batch?.require_payment;
-    return requiresPayment ? 4 : 3; // Last step index
+const buildAdmissionSteps = (adm) => {
+  const admission = adm?.admissionData;
+  const hasEntranceExam = admission?.admission_batch?.has_entrance_exam;
+
+  if (hasEntranceExam) {
+    return ['Applied', 'E-Exam', 'Admitted', 'Enrolled'];
+  } else {
+    return ['Applied', 'Admitted', 'Enrolled'];
   }
-  
-  // Use the current admission_stage from backend
-  const stage = admission?.admission_stage ?? 0;
-  const requiresPayment = admission?.admission_batch?.require_payment;
-  
-  // If payment is not required and stage >= 2, we need to adjust
-  // because the visual steps don't include payment
-  // Backend stages: 0=Ward, 1=Academic, 2=Payment, 3=Documents, 4=Submit
-  // Visual steps (no payment): 0=Ward, 1=Academic, 2=Documents, 3=Submit
-  if (!requiresPayment && stage >= 2) {
-    return stage - 1; // Shift down by 1 to skip payment step
-  }
-  
-  return stage;
 };
 
 /**
- * Build form steps array based on batch configuration
+ * Calculate current admission step based on admission status
+ * Returns the index of the current step in the admission process
  */
-const buildFormSteps = (admissionData) => {
+const calculateAdmissionStep = (admissionData) => {
   const admission = admissionData?.admissionData || admissionData;
-  const requiresPayment = admission?.admission_batch?.require_payment;
+  const hasExam = admission?.admission_batch?.has_entrance_exam;
 
-  if (requiresPayment) {
-    return ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
-  } else {
-    return ['Ward Detail', 'Academic Info', 'Documents', 'Submit'];
+  const isAdmitted = admission?.admission_status === 'admitted';
+  const isEnrolled = isAdmitted && admission?.accept_admission_offer === 'yes';
+
+  // Step 3: Enrolled 
+  if (isEnrolled) {
+    return hasExam ? 3 : 2;
   }
+
+  // Step 2: Admitted
+  if (isAdmitted) {
+    return hasExam ? 2 : 1;
+  }
+
+  // Step 1: Exam completed
+  if (
+    hasExam &&
+    admission?.form_submit_status === 'yes' &&
+    admission?.entrance_exam_score != null
+  ) {
+    return 1;
+  }
+
+  // Step 0: Applied (ONLY if submitted but not admitted)
+  if (admission?.form_submit_status === 'yes') {
+    return 0;
+  }
+
+  // Draft
+  return -1;
 };
 
-// Form progress stepper
+// Admission progress stepper
 const AdmissionSteps = ({ admissionData }) => {
-  const steps = buildFormSteps(admissionData);
-  const currentStep = calculateFormStep(admissionData);
+  const steps = buildAdmissionSteps(admissionData);
+  const currentStep = calculateAdmissionStep(admissionData);
+  const admission = admissionData?.admissionData || admissionData;
+  
+  // If form not submitted yet, show "Draft" state
+  const isDraft = admission?.form_submit_status !== 'yes';
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1.5, mb: 1 }}>
-      {steps.map((step, i) => {
-        const done = i < currentStep;
-        const active = i === currentStep;
-        return (
-          <React.Fragment key={step}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <Box
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  bgcolor: done || active ? 'primary.main' : 'grey.200',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {done ? (
-                  <CheckCircleIcon sx={{ fontSize: 18, color: '#fff' }} />
-                ) : (
-                  <PendingIcon sx={{ fontSize: 18, color: active ? '#fff' : 'grey.400' }} />
-                )}
+      {isDraft ? (
+        // Show draft state
+        <Box sx={{ 
+          width: '100%', 
+          textAlign: 'center', 
+          py: 1, 
+          bgcolor: 'warning.lighter',
+          borderRadius: 1,
+        }}>
+          <Typography variant="caption" color="warning.dark" fontWeight={600}>
+            Application Draft - Not Yet Submitted
+          </Typography>
+        </Box>
+      ) : (
+        // Show admission process steps
+        steps.map((step, i) => {
+          // A step is "done" if it's at or before the current step
+          const done = i <= currentStep;
+          // No "active" state - steps are either done or pending
+          const pending = i > currentStep;
+          
+          return (
+            <React.Fragment key={step}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    bgcolor: done ? 'primary.main' : 'grey.200',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {done ? (
+                    <CheckCircleIcon sx={{ fontSize: 18, color: '#fff' }} />
+                  ) : (
+                    <PendingIcon sx={{ fontSize: 18, color: 'grey.400' }} />
+                  )}
+                </Box>
+                <Typography
+                  variant="caption"
+                  color={done ? 'primary.main' : 'text.disabled'}
+                  mt={0.5}
+                  sx={{ fontSize: '0.65rem' }}
+                >
+                  {step}
+                </Typography>
               </Box>
-              <Typography
-                variant="caption"
-                color={done || active ? 'primary.main' : 'text.disabled'}
-                mt={0.5}
-                sx={{ fontSize: '0.65rem' }}
-              >
-                {step}
-              </Typography>
-            </Box>
 
-            {i < steps.length - 1 && (
-              <Box
-                sx={{
-                  flex: 1,
-                  height: 2,
-                  bgcolor: done ? 'primary.main' : 'grey.200',
-                  mb: 2.5,
-                }}
-              />
-            )}
-          </React.Fragment>
-        );
-      })}
+              {i < steps.length - 1 && (
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: 2,
+                    bgcolor: done ? 'primary.main' : 'grey.200',
+                    mb: 2.5,
+                  }}
+                />
+              )}
+            </React.Fragment>
+          );
+        })
+      )}
     </Box>
   );
 };
 
 // Prospective ward card — always expanded, click header to navigate to application
 const ProspectiveWardCard = ({ ward, onViewDetails }) => {
-  const isAdmitted = ward.status === 'Admitted';
+  const isAdmitted = ward.status === 'admitted';
   const admission = ward.admissionData;
 
   // Check if payment is required and not yet paid
@@ -117,13 +152,13 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
   const acceptanceFee = parseFloat(admission?.admission_batch?.acceptance_fee || 0);
   const totalFee = applicationFee + acceptanceFee;
 
-  // Show payment action if:
-  // 1. Payment is required
-  // 2. Form is submitted
-  // 3. Total fee > 0
-  // 4. Not yet admitted (payment should be done before admission)
-  const showPaymentAction = requiresPayment &&
-    admission?.form_submit_status === 'yes' &&
+  // Show payment action if ALL conditions are met:
+  // 1. Payment is required (require_payment === true)
+  // 2. Form is submitted (form_submit_status === 'yes')
+  // 3. Total fee > 0 (application_fee + acceptance_fee)
+  // 4. Not yet admitted (admission_status !== 'admitted')
+  const showPaymentAction = 
+    requiresPayment &&
     totalFee > 0 &&
     admission?.admission_status !== 'admitted';
 

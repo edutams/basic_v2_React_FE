@@ -16,7 +16,7 @@ export const statusChipSx = (status) => {
 const ApplicationCard = ({ app }) => {
   const navigate = useNavigate();
 
-  const isDraft = app.status === 'Incomplete' || app.isDraft;
+  const isDraft = app.form_submit_status === 'no';
 
   const draftStepNames = ['Ward Detail', 'Academic Info', 'Payment', 'Documents', 'Submit'];
   const draftStepName = isDraft ? draftStepNames[app.draftStep ?? 0] : '';
@@ -48,7 +48,7 @@ const ApplicationCard = ({ app }) => {
           if (isDraft) {
             // Navigate to continue application with resumeApplication flag
             navigate('/admission/new-application', {
-              state: { 
+              state: {
                 ward: app._original || app,
                 resumeApplication: true,
               },
@@ -107,7 +107,7 @@ const ApplicationCard = ({ app }) => {
               noWrap
               sx={{ lineHeight: 1.2, fontSize: '1rem' }}
             >
-             {app.surname} {app.first_name}
+              {app.surname} {app.first_name}
             </Typography>
 
             <Box sx={{ flexShrink: 0, color: 'text.secondary', mt: -0.5, mr: -0.5 }}>
@@ -141,7 +141,7 @@ const ApplicationCard = ({ app }) => {
                 noWrap
                 sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
               >
-                 {app.session} 
+                {app.session}
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -170,9 +170,9 @@ const ApplicationCard = ({ app }) => {
                 sx={{ maxWidth: '60%', textAlign: 'right', fontSize: '0.78rem' }}
               >
                 {app.gender} / {app?.dob
-                              ? dayjs(app.dob).format('DD MMM YYYY')
-                              : 'N/A'}
-                
+                  ? dayjs(app.dob).format('DD MMM YYYY')
+                  : 'N/A'}
+
               </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -180,7 +180,7 @@ const ApplicationCard = ({ app }) => {
                 Form Submit Status:
               </Typography>
               {(() => {
-                const submitted = !isDraft;
+                const submitted = app.form_submit_status === 'yes';
                 const label = submitted ? 'Submitted' : 'Incomplete';
                 const chipSx = submitted
                   ? { bgcolor: 'success.light', color: 'success.dark' }
@@ -219,12 +219,20 @@ const ApplicationCard = ({ app }) => {
                 Admission Status:
               </Typography>
               {(() => {
-                const admissionLabel =
-                  app.status === 'Admitted' || app.status === 'Enrolled' ? app.status : 'Pending';
-                const isAdmitted = admissionLabel === 'Admitted' || admissionLabel === 'Enrolled';
-                const chipSx = isAdmitted
-                  ? { bgcolor: 'primary.light', color: 'primary.dark' }
-                  : { bgcolor: 'warning.light', color: 'warning.dark' };
+                const rawStatus = (app.admission_status || 'pending').toLowerCase();
+                const admissionLabel = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
+
+                let chipSx = { bgcolor: 'warning.light', color: 'warning.dark' };
+                let themeColor = 'warning';
+
+                if (rawStatus === 'admitted') {
+                  chipSx = { bgcolor: 'primary.light', color: 'primary.dark' };
+                  themeColor = 'primary';
+                } else if (rawStatus === 'declined') {
+                  chipSx = { bgcolor: 'error.light', color: 'error.dark' };
+                  themeColor = 'error';
+                }
+
                 return (
                   <Chip
                     label={admissionLabel}
@@ -235,11 +243,9 @@ const ApplicationCard = ({ app }) => {
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
-                          bgcolor: isAdmitted
-                            ? theme.palette.primary.main
-                            : theme.palette.warning.main,
+                          bgcolor: theme.palette[themeColor].main,
                           ml: 0.75,
-                          boxShadow: `0 0 6px ${isAdmitted ? theme.palette.primary.main : theme.palette.warning.main}`,
+                          boxShadow: `0 0 6px ${theme.palette[themeColor].main}`,
                           animation: 'pulseGlow 2s infinite',
                           '@keyframes pulseGlow': {
                             '0%': { opacity: 0.6, transform: 'scale(0.85)' },
@@ -276,7 +282,7 @@ const ApplicationCard = ({ app }) => {
         </Box>
       )}
 
-      {(app.status === 'Admitted' || app.status === 'Enrolled') && (
+      {app.admission_status === 'admitted' && (
         <Box sx={{ px: 2, pb: 2 }}>
           <Button
             variant="outlined"

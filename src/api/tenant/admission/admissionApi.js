@@ -71,8 +71,18 @@ export const updateAdmissionStage = async (id, stage) => {
   return response.data;
 };
 
+export const updateAdmissionPrintStatus = async (id) => {
+  const response = await api.put(`/admission/applications/${id}`, { print_form_status: 'yes' });
+  return response.data;
+};
+
 export const getAdmissionApplication = async (id) => {
   const response = await api.get(`/admission/applications/${id}`);
+  return response.data;
+};
+
+export const getAdmissionLetterDetails = async (id) => {
+  const response = await api.get(`/admission/applications/${id}/letter`);
   return response.data;
 };
 

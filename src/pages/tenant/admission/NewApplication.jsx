@@ -20,6 +20,7 @@ import DocumentsStep from '@/components/tenant/admission/DocumentsStep';
 import SubmitStep from '@/components/tenant/admission/SubmitStep';
 import { useAdmissionForm } from '@/hooks/useAdmissionForm';
 import { useNotification } from 'src/hooks/useNotification';
+import { getOpenBatches } from '@/api/tenant/admission/admissionApi';
 
 const STEPS = [
   { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
@@ -215,6 +216,26 @@ const NewApplication = () => {
   const [selectedBatch, setSelectedBatch] = useState(existingWard?.admission_batch ?? batch);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
+  // Load full batch data when resuming application to ensure classes are available
+  useEffect(() => {
+    if (resumeApplication && selectedBatch?.id && !selectedBatch?.classes) {
+      const loadFullBatchData = async () => {
+        try {
+          const response = await getOpenBatches();
+          const batches = response?.data?.data || response?.data || [];
+          const fullBatch = batches.find(b => b.id === selectedBatch.id);
+          if (fullBatch) {
+            setSelectedBatch(fullBatch);
+          }
+        } catch (error) {
+          console.error('Failed to load full batch data:', error);
+          // Continue with existing batch data if fetch fails
+        }
+      };
+      loadFullBatchData();
+    }
+  }, [resumeApplication, selectedBatch?.id]);
+
   // Initialize the admission form hook with existing admission data if resuming
   const {
     admissionId,
@@ -313,9 +334,11 @@ const NewApplication = () => {
     const result = await submitApplication();
     if (result.success) {
       notify.success('Application submitted successfully!');
-      navigate('/application-tracker', {
-        state: { admissionId },
-      });
+      // Clear any persisted form state from storage
+      sessionStorage.removeItem('formDetailsData');
+      sessionStorage.removeItem('admissionFormData');
+      localStorage.removeItem('admissionFormData');
+      navigate('/admission_manager/my_applications');
     } else {
       notify.error(result.error || 'Failed to submit application');
     }

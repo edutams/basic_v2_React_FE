@@ -44,7 +44,10 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
     initialValues: EMPTY_FORM,
     validationSchema: wardValidationSchema,
     onSubmit: (values) => onSubmit(values),
+    validateOnChange: true,
+    validateOnBlur: true,
   });
+  
   // Load states on mount
   useEffect(() => {
     const loadStates = async () => {

@@ -1,9 +1,11 @@
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import SubmitStep from '@/components/tenant/admission/SubmitStep';
+import { useReactToPrint } from 'react-to-print';
+import { Print as PrintIcon } from '@mui/icons-material';
 
 const FormDetails = () => {
   const navigate = useNavigate();
@@ -13,11 +15,13 @@ const FormDetails = () => {
   useEffect(() => {
     if (location.state?.wardData) {
       setFormData(location.state);
+      // Persist to session storage so it survives a reload if we arrived via state
+      sessionStorage.setItem('formDetailsData', JSON.stringify(location.state));
     } else {
       const storedData = sessionStorage.getItem('formDetailsData');
       if (storedData) {
         setFormData(JSON.parse(storedData));
-        sessionStorage.removeItem('formDetailsData');
+        // Removed sessionStorage.removeItem('formDetailsData') to prevent data loss on reload
       }
     }
   }, [location.state]);
@@ -35,6 +39,12 @@ const FormDetails = () => {
       });
     }
   };
+
+  const contentRef = useRef(null);
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `Application_Form_${formData?.wardData?.surname || ''}_${formData?.wardData?.first_name || ''}`,
+  });
 
   if (!formData) {
     return (
@@ -63,13 +73,23 @@ const FormDetails = () => {
         <Typography variant="h5" fontWeight={800}>
           Application Form Details
         </Typography>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBack}
-          sx={{ color: 'text.secondary', fontWeight: 500 }}
-        >
-          Back to Tracker
-        </Button>
+        <Box display="flex" gap={1} flexWrap="wrap">
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrint}
+            sx={{ fontWeight: 600 }}
+          >
+            Print Application
+          </Button>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={handleBack}
+            sx={{ color: 'text.secondary', fontWeight: 500 }}
+          >
+            Back to Tracker
+          </Button>
+        </Box>
       </Box>
 
       <Paper
@@ -80,15 +100,17 @@ const FormDetails = () => {
           overflowY: 'auto',
         }}
       >
-        <SubmitStep
-          wardData={wardData}
-          academicData={academicData}
-          documentsData={documentsData}
-          selectedBatch={selectedBatch}
-          onBack={handleBack}
-          onSubmit={() => {}}
-          viewMode={true}
-        />
+        <div ref={contentRef} style={{ padding: '20px' }}>
+          <SubmitStep
+            wardData={wardData}
+            academicData={academicData}
+            documentsData={documentsData}
+            selectedBatch={selectedBatch}
+            onBack={handleBack}
+            onSubmit={() => {}}
+            viewMode={true}
+          />
+        </div>
       </Paper>
     </PageContainer>
   );

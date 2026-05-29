@@ -140,7 +140,7 @@ const ApplicationTracker = () => {
         </Typography>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/my-applications')}
+          onClick={() => navigate('/admission_manager/my_applications')}
           sx={{ color: 'text.secondary', fontWeight: 500 }}
         >
           Back to applications

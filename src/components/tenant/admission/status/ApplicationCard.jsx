@@ -270,6 +270,14 @@ const ApplicationCard = ({ app }) => {
             variant="contained"
             size="small"
             fullWidth
+            onClick={() =>
+              navigate('/admission/new-application', {
+                state: {
+                  ward: app._original || app,
+                  resumeApplication: true,
+                },
+              })
+            }
             endIcon={<ArrowBackIcon sx={{ transform: 'rotate(180deg)' }} />}
             sx={{
               borderRadius: 2,

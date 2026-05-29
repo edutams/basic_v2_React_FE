@@ -10,6 +10,7 @@ import {
 } from '@mui/icons-material';
 
 import StatCard from '@/components/shared/StatCard';
+import WalletCard from '@/components/shared/WalletCard';
 import AdmissionBanner from '@/components/tenant/admission/AdmissionBanner';
 import EnrolledWardCard from '@/components/tenant/admission/EnrolledWardCard';
 import ProspectiveWardCard from '@/components/tenant/admission/ProspectiveWardCard';
@@ -161,8 +162,15 @@ const ParentDashboard = () => {
             <StatCard icon={WalletIcon} count="₦0" label="Outstanding Fees" />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCard icon={WalletIcon} count="₦0" label="Wallet Balance" />
+            {/* <WalletCard balance="₦40,000.00" accountNumber="987123793" bankName="Globus Bank" /> */}
+          <WalletCard
+  balance="₦50,000"
+  accountNumber="1234567890"
+  bankName="GTBank"
+  icon={WalletIcon}
+/>
           </Grid>
+          
         </Grid>
       </Box>
 

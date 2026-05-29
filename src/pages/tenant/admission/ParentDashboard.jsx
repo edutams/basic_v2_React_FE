@@ -65,7 +65,7 @@ const ParentDashboard = () => {
       try {
         const sessionTermId = selectedSessionTerm === 'all' ? null : selectedSessionTerm;
         const response = await getUserProspectiveAdmissions(sessionTermId);
-        
+
         if (response.status) {
           // Transform backend data to match component expectations
           const transformed = response.data.map((admission) => ({
@@ -79,7 +79,7 @@ const ParentDashboard = () => {
             expanded: false,
             admissionData: admission, // Store full admission data for navigation
           }));
-          
+
           setProspectiveWards(transformed);
         }
       } catch (error) {
@@ -130,13 +130,22 @@ const ParentDashboard = () => {
   };
 
   const handleViewProspectiveWard = (ward) => {
-    // Navigate to application with the admission data
-    navigate('/admission/new-application', { 
-      state: { 
-        ward: ward.admissionData,
-        resumeApplication: true 
-      } 
-    });
+    const admission = ward.admissionData;
+    
+    // If form is submitted, go to application tracker
+    if (admission?.form_submit_status === 'yes') {
+      navigate(`/application-tracker/${admission.id}`, {
+        state: { admission }
+      });
+    } else {
+      // If draft, go to application form to continue
+      navigate('/admission/new-application', { 
+        state: { 
+          ward: admission,
+          resumeApplication: true 
+        } 
+      });
+    }
   };
 
   const theme = useTheme();
@@ -163,14 +172,14 @@ const ParentDashboard = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             {/* <WalletCard balance="₦40,000.00" accountNumber="987123793" bankName="Globus Bank" /> */}
-          <WalletCard
-  balance="₦50,000"
-  accountNumber="1234567890"
-  bankName="GTBank"
-  icon={WalletIcon}
-/>
+            <WalletCard
+              balance="₦50,000"
+              accountNumber="1234567890"
+              bankName="GTBank"
+              icon={WalletIcon}
+            />
           </Grid>
-          
+
         </Grid>
       </Box>
 
@@ -195,8 +204,8 @@ const ParentDashboard = () => {
                   value={selectedSessionTerm}
                   onChange={(e) => setSelectedSessionTerm(e.target.value)}
                   displayEmpty
-                  sx={{ 
-                    bgcolor: '#F1F4F1', 
+                  sx={{
+                    bgcolor: '#F1F4F1',
                     fontWeight: 500,
                     '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
                   }}
@@ -222,10 +231,10 @@ const ParentDashboard = () => {
                   ))}
                 </Stack>
               ) : (
-                <Box 
-                  display="flex" 
-                  alignItems="center" 
-                  justifyContent="center" 
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
                   height="100%"
                 >
                   <Typography variant="body2" color="text.secondary">
@@ -296,8 +305,8 @@ const ParentDashboard = () => {
                   value={selectedSessionTerm}
                   onChange={(e) => setSelectedSessionTerm(e.target.value)}
                   displayEmpty
-                  sx={{ 
-                    bgcolor: '#F1F4F1', 
+                  sx={{
+                    bgcolor: '#F1F4F1',
                     fontWeight: 500,
                     '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
                   }}
@@ -312,10 +321,10 @@ const ParentDashboard = () => {
             </Box>
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
               {loading ? (
-                <Box 
-                  display="flex" 
-                  alignItems="center" 
-                  justifyContent="center" 
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
                   height="100%"
                 >
                   <Typography variant="body2" color="text.secondary">
@@ -333,10 +342,10 @@ const ParentDashboard = () => {
                   ))}
                 </Stack>
               ) : (
-                <Box 
-                  display="flex" 
-                  alignItems="center" 
-                  justifyContent="center" 
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
                   height="100%"
                 >
                   <Typography variant="body2" color="text.secondary">

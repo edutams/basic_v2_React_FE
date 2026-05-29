@@ -33,17 +33,21 @@ const MAX_MB   = 5;
 
 const isImage = (file) => file?.type?.startsWith('image/');
 
-const PreviewDialog = ({ file, onClose }) => {
+const PreviewDialog = ({ file, url, onClose }) => {
   const [objectUrl, setObjectUrl] = useState(null);
 
   useEffect(() => {
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setObjectUrl(url);
-    return () => URL.revokeObjectURL(url);
+    const newUrl = URL.createObjectURL(file);
+    setObjectUrl(newUrl);
+    return () => URL.revokeObjectURL(newUrl);
   }, [file]);
 
-  if (!file) return null;
+  if (!file && !url) return null;
+
+  const displayUrl = objectUrl || url;
+  const displayName = file?.name || url?.split('/').pop() || 'Document';
+  const isImageFile = file ? isImage(file) : url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
 
   return (
     <Dialog open onClose={onClose} maxWidth="md" fullWidth>
@@ -51,7 +55,7 @@ const PreviewDialog = ({ file, onClose }) => {
         sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}
       >
         <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ flex: 1, mr: 1 }}>
-          {file.name}
+          {displayName}
         </Typography>
         <IconButton size="small" onClick={onClose}>
           <CloseIcon fontSize="small" />
@@ -59,18 +63,18 @@ const PreviewDialog = ({ file, onClose }) => {
       </DialogTitle>
 
       <DialogContent sx={{ p: 2, textAlign: 'center', bgcolor: '#f5f5f5' }}>
-        {objectUrl && isImage(file) ? (
+        {displayUrl && isImageFile ? (
           <Box
             component="img"
-            src={objectUrl}
-            alt={file.name}
+            src={displayUrl}
+            alt={displayName}
             sx={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 2, objectFit: 'contain' }}
           />
-        ) : objectUrl ? (
+        ) : displayUrl ? (
           <Box sx={{ height: '70vh' }}>
             <iframe
-              src={objectUrl}
-              title={file.name}
+              src={displayUrl}
+              title={displayName}
               width="100%"
               height="100%"
               style={{ border: 'none', borderRadius: 8 }}
@@ -82,8 +86,10 @@ const PreviewDialog = ({ file, onClose }) => {
   );
 };
 
-const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver, onDragOver, onDragLeave, onDrop }) => {
+const DocumentRow = ({ doc, file, existingUrl, onFileChange, onRemove, onPreview, isDragOver, onDragOver, onDragLeave, onDrop }) => {
   const inputRef = useRef(null);
+  const hasDocument = Boolean(file || existingUrl);
+  const displayName = file?.name || (existingUrl ? existingUrl.split('/').pop() : null);
 
   return (
     <Paper
@@ -99,9 +105,9 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
         borderColor: isDragOver ? 'primary.main' : 'divider',
         bgcolor: isDragOver ? 'primary.lighter' : 'background.paper',
         transition: 'all 0.15s',
-        cursor: file ? 'default' : 'pointer',
+        cursor: hasDocument ? 'default' : 'pointer',
       }}
-      onClick={() => !file && inputRef.current?.click()}
+      onClick={() => !hasDocument && inputRef.current?.click()}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -111,14 +117,14 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
           width: 44,
           height: 44,
           borderRadius: 2,
-          bgcolor: file ? 'success.light' : 'primary.light',
+          bgcolor: hasDocument ? 'success.light' : 'primary.light',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        {file
+        {hasDocument
           ? <FileIcon sx={{ color: 'success.dark', fontSize: 22 }} />
           : <UploadIcon sx={{ color: 'primary.main', fontSize: 22 }} />
         }
@@ -132,16 +138,26 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
           )}
         </Typography>
 
-        {file ? (
+        {hasDocument ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
             <Typography variant="caption" color="text.secondary" noWrap>
-              {file.name}
+              {displayName}
             </Typography>
-            <Chip
-              label={`${(file.size / 1024 / 1024).toFixed(1)} MB`}
-              size="small"
-              sx={{ height: 16, fontSize: 10, ml: 0.5 }}
-            />
+            {file && (
+              <Chip
+                label={`${(file.size / 1024 / 1024).toFixed(1)} MB`}
+                size="small"
+                sx={{ height: 16, fontSize: 10, ml: 0.5 }}
+              />
+            )}
+            {existingUrl && !file && (
+              <Chip
+                label="Previously uploaded"
+                size="small"
+                color="success"
+                sx={{ height: 16, fontSize: 10, ml: 0.5 }}
+              />
+            )}
           </Box>
         ) : (
           <Typography variant="caption" color="text.secondary">
@@ -151,7 +167,7 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
         )}
       </Box>
 
-      {file ? (
+      {hasDocument ? (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <IconButton
             size="small"
@@ -165,7 +181,7 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
             size="small"
             color="error"
             onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            title="Remove file"
+            title={existingUrl && !file ? "Remove and upload new" : "Remove file"}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -196,11 +212,25 @@ const DocumentRow = ({ doc, file, onFileChange, onRemove, onPreview, isDragOver,
   );
 };
 
-const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
-  const [files,    setFiles]    = useState({});
+const DocumentsStep = ({ initialValues, onNext, onBack, isLoading = false }) => {
+  const [files, setFiles] = useState({});
+  const [existingDocs, setExistingDocs] = useState({});
   const [dragOver, setDragOver] = useState(null);
-  const [errors,   setErrors]   = useState({});
-  const [preview,  setPreview]  = useState(null);
+  const [errors, setErrors] = useState({});
+  const [preview, setPreview] = useState({ file: null, url: null });
+
+  // Initialize existing documents from initialValues
+  useEffect(() => {
+    if (initialValues) {
+      const existing = {};
+      DOCUMENTS.forEach((doc) => {
+        if (initialValues[doc.key]) {
+          existing[doc.key] = initialValues[doc.key];
+        }
+      });
+      setExistingDocs(existing);
+    }
+  }, [initialValues]);
 
   const handleFile = (key, file) => {
     const doc = DOCUMENTS.find((d) => d.key === key);
@@ -220,6 +250,7 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
 
   const handleRemove = (key) => {
     setFiles((prev) => { const n = { ...prev }; delete n[key]; return n; });
+    setExistingDocs((prev) => { const n = { ...prev }; delete n[key]; return n; });
     setErrors((prev) => { const n = { ...prev }; delete n[key]; return n; });
   };
 
@@ -230,16 +261,27 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
     if (file) handleFile(key, file);
   };
 
-  const requiredKeys  = DOCUMENTS.filter((d) => d.required).map((d) => d.key);
-  const allRequiredOk = requiredKeys.every((k) => Boolean(files[k]));
+  const requiredKeys = DOCUMENTS.filter((d) => d.required).map((d) => d.key);
+  // Check if all required documents are either newly uploaded or already exist
+  const allRequiredOk = requiredKeys.every((k) => Boolean(files[k] || existingDocs[k]));
 
   const handleSubmit = () => {
     const newErrors = {};
     requiredKeys.forEach((k) => {
-      if (!files[k]) newErrors[k] = 'This document is required';
+      if (!files[k] && !existingDocs[k]) {
+        newErrors[k] = 'This document is required';
+      }
     });
-    if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
-    onNext(files);
+    if (Object.keys(newErrors).length) { 
+      setErrors(newErrors); 
+      return; 
+    }
+    
+    // Pass both new files and existing document URLs
+    onNext({ 
+      newFiles: files, 
+      existingDocs: existingDocs 
+    });
   };
 
   return (
@@ -257,9 +299,13 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
             <DocumentRow
               doc={doc}
               file={files[doc.key] ?? null}
+              existingUrl={existingDocs[doc.key] ?? null}
               onFileChange={(f) => handleFile(doc.key, f)}
               onRemove={() => handleRemove(doc.key)}
-              onPreview={() => setPreview(files[doc.key])}
+              onPreview={() => setPreview({ 
+                file: files[doc.key] || null, 
+                url: existingDocs[doc.key] || null 
+              })}
               isDragOver={dragOver === doc.key}
               onDragOver={(e) => { e.preventDefault(); setDragOver(doc.key); }}
               onDragLeave={() => setDragOver(null)}
@@ -289,14 +335,21 @@ const DocumentsStep = ({ onNext, onBack, isLoading = false }) => {
         </Button>
       </Box>
 
-      {preview && <PreviewDialog file={preview} onClose={() => setPreview(null)} />}
+      {(preview.file || preview.url) && (
+        <PreviewDialog 
+          file={preview.file} 
+          url={preview.url} 
+          onClose={() => setPreview({ file: null, url: null })} 
+        />
+      )}
     </Box>
   );
 };
 
 DocumentsStep.propTypes = {
-  onNext:    PropTypes.func.isRequired,
-  onBack:    PropTypes.func.isRequired,
+  initialValues: PropTypes.object,
+  onNext: PropTypes.func.isRequired,
+  onBack: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
 };
 

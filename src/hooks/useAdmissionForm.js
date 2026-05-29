@@ -168,7 +168,7 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
         // Add ward data
         if (updatedFormData.wardData) {
           Object.entries(updatedFormData.wardData).forEach(([key, value]) => {
-            if (value !== null && value !== undefined && value !== '') {
+            if (value !== null && value !== undefined && value !== '' && key !== 'lga') {
               payload.append(key, value);
             }
           });
@@ -177,6 +177,11 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
         // Add academic data
         if (updatedFormData.academicData) {
           Object.entries(updatedFormData.academicData).forEach(([key, value]) => {
+            // Skip relationship objects
+            if (key === 'intending_programme' || key === 'intending_class') {
+              return;
+            }
+            
             if (value !== null && value !== undefined && value !== '') {
               // Convert boolean values to 0 or 1 for Laravel
               if (typeof value === 'boolean') {
@@ -188,11 +193,22 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
           });
         }
         
-        // Add document files
+        // Handle documents - data can be { newFiles, existingDocs } or direct files
         if (data) {
-          Object.entries(data).forEach(([key, file]) => {
+          const newFiles = data.newFiles || {};
+          const existingDocs = data.existingDocs || {};
+          
+          // Add new file uploads
+          Object.entries(newFiles).forEach(([key, file]) => {
             if (file instanceof File) {
               payload.append(key, file);
+            }
+          });
+          
+          // Add existing document URLs (keep them)
+          Object.entries(existingDocs).forEach(([key, url]) => {
+            if (url && typeof url === 'string') {
+              payload.append(key, url);
             }
           });
         }

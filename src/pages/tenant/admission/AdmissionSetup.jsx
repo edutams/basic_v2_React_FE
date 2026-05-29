@@ -447,7 +447,13 @@ const AdmissionSetup = () => {
         <Grid size={{ xs: 12, md: 8 }}>
           <ParentCard
             title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                flexDirection={{ xs: 'column', sm: 'row' }}
+                gap={{ xs: 1.5, sm: 0 }}
+              >
                 <Typography variant="h5">
                   Manage Admission Batches
                   {selectedSessionTermLabel && (
@@ -472,7 +478,7 @@ const AdmissionSetup = () => {
                   startIcon={<AddIcon />}
                   disabled={!selectedSessionTermId}
                   onClick={handleCreateBatch}
-                  sx={{ fontWeight: 700, whiteSpace: 'nowrap', ml: 2 }}
+                  sx={{ fontWeight: 700, whiteSpace: 'nowrap', ml: { xs: 0, sm: 2 } }}
                 >
                   Create New Admission
                 </Button>

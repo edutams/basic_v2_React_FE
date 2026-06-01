@@ -209,6 +209,7 @@ const NewApplication = () => {
   const batch = location.state?.batch ?? null;
   const existingWard = location.state?.ward ?? null;
   const resumeApplication = location.state?.resumeApplication ?? false;
+  const startFromFirstStep = location.state?.startFromFirstStep ?? false;
   const searchParams = new URLSearchParams(location.search);
   const queryStep = searchParams.get('step');
   const parsedQueryStep = queryStep ? Number(queryStep) - 1 : null;
@@ -260,20 +261,21 @@ const NewApplication = () => {
   const STEPS = ALL_STEPS;
 
   // Determine initial step - use currentStage from hook if resuming, otherwise start at 0
-  const resumeStep =
-    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep)
-      ? parsedQueryStep
-      : 0;
+  const resumeStep = startFromFirstStep
+    ? 0
+    : parsedQueryStep !== null && !Number.isNaN(parsedQueryStep)
+    ? parsedQueryStep
+    : 0;
 
   const [activeStep, setActiveStep] = useState(resumeStep);
 
   // Update activeStep when currentStage changes (for resuming applications)
   useEffect(() => {
-    if (resumeApplication && currentStage !== null && currentStage !== undefined) {
-      // Only update if we're resuming and currentStage is loaded
+    if (resumeApplication && !startFromFirstStep && currentStage !== null && currentStage !== undefined) {
+      // Only update the active step when resuming a draft or continuing from the saved stage.
       setActiveStep(currentStage);
     }
-  }, [currentStage, resumeApplication]);
+  }, [currentStage, resumeApplication, startFromFirstStep]);
 
   // Sync URL with active step
   useEffect(() => {

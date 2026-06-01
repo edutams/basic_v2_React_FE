@@ -187,6 +187,7 @@ const TrackerHeader = ({
   gender,
   address,
   photo,
+  dob,
   admission,
 }) => (
   <Box
@@ -216,12 +217,14 @@ const TrackerHeader = ({
       />
       <Box sx={{ minWidth: 0 }}>
         <Typography variant="subtitle1" fontWeight={800} noWrap>{name}</Typography>
-        <Typography variant="body2" color="success.dark" fontWeight={600}>
+       
+        <Typography variant="body2" fontWeight={500}>Gender : {gender}</Typography>
+        <Typography variant="body2" fontWeight={500}>DoB : {  dob}</Typography>
+         <Typography variant="body2" color="success.dark" fontWeight={600}>
           Intending Class : {intendingClass}
         </Typography>
-        <Typography variant="body2" fontWeight={500}>Gender : {gender}</Typography>
-        <Typography variant="caption" color="warning.dark">Parent Address:</Typography>
-        <Typography variant="caption" color="text.secondary" display="block">{address}</Typography>
+        {/* <Typography variant="caption" color="warning.dark">Parent Address:</Typography> */}
+        {/* <Typography variant="caption" color="text.secondary" display="block">{address}</Typography> */}
       </Box>
     </Box>
 

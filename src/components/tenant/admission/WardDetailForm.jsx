@@ -70,8 +70,9 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
     if (!states.length || !initialValues || hydrated) return;
 
     const hydrate = async () => {
-      const stateId = initialValues.lga.state_id;
-      const lgaId = initialValues.lga_id;
+      // state_id can come from the loaded lga relationship (backend) or state_of_origin (local form data)
+      const stateId = initialValues.lga?.state_id || initialValues.state_of_origin || '';
+      const lgaId = initialValues.lga_id || '';
 
       // Set all form values first
       formik.setValues({
@@ -87,7 +88,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
         try {
           const data = await getLgasByState(stateId);
           setLgas(data || []);
-          
+
           // Set LGA after options are loaded
           if (lgaId) {
             formik.setFieldValue('lga_id', lgaId);

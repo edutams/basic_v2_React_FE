@@ -4,22 +4,24 @@ import {
   Grid,
   Typography,
   Button,
-  Chip,
   Stack,
   Paper,
   Tooltip,
+  Divider,
 } from '@mui/material';
 import TiptapEdit from '@/pages/landlord/views/forms/form-tiptap/TiptapEdit';
 import ParentCard from 'src/components/shared/ParentCard';
 
 const PLACEHOLDER_FIELDS = [
-  { label: "Student's First Name", value: "[Student's First Name]" },
-  { label: "Student's Last Name", value: "[Student's Last Name]" },
-  { label: 'Class Name', value: '[Class Name]' },
-  { label: 'Entrance Score', value: '[Entrance Score]' },
-  { label: "Parent's Name", value: "[Parent's Name]" },
-  { label: 'School Division', value: '[School Division]' },
-  { label: 'Admission Session', value: '[Admission Session]' },
+  { label: "Student's First Name", value: "[@Student's First Name]" },
+  { label: "Student's Middle Name", value: "[@Student's Middle Name]" },
+  { label: "Student's Last Name", value: "[@Student's Last Name]" },
+  { label: 'Form Number', value: '[@Form Number]' },
+  { label: 'Class Name', value: '[@Class Name]' },
+  { label: 'Entrance Score', value: '[@Entrance Score]' },
+  { label: "Parent's Name", value: "[@Parent's Name]" },
+  { label: 'School Division', value: '[@School Division]' },
+  { label: 'Admission Session', value: '[@Admission Session]' },
 ];
 
 export const LETTER_TEMPLATES = [
@@ -27,18 +29,20 @@ export const LETTER_TEMPLATES = [
     id: 'offer',
     label: 'Admission Offer',
     preview:
-      "Dear [Student's First Name],\n\nWe are pleased to offer you admission to [Class Name] at [School Division] for the [Admission Session].\n\nPlease complete your registration to confirm your place.",
+      "Name [@Student's Last Name] [@Student's First Name] [@Student's Middle Name]\n\n[@Form Number]\n\n\nOFFER OF PROVISIONAL ADMISSION INTO [@Admission Session] FOR 2020 / 2021 ACADEMIC SESSION\n\nAs a result of your performance in the Entrance Examination conducted by the school, you are hereby offered admission into [@Class Name] for the 2020/2021 academic session.\n\nCongratulations!\n\nPlease note that all fees must be paid using Master Card before admission can be allowed on the School portal.\n\nThe 2020/2021 academic session commences on Sunday (Boarder) 20th September, 2020; Monday (Day Students) 21st September, 2020 respectively.\n\nIntending Boarder should please see the Vice Principal (Administration) who is in-charge of the Hostel Requirements.\n\nI wish you a very brilliant future as you step into this Great School. By the special grace of God, you are assured of an all-round quality education.\n\nOnce again, accept my congratulations\n\nYours faithfully,\n\nOlaniyan B.I (Mrs.)",
   },
 ];
 
 const PREVIEW_SAMPLES = {
-  "[Student's First Name]": 'John',
-  "[Student's Last Name]": 'Doe',
-  '[Class Name]': 'Junior Secondary',
-  '[Entrance Score]': '85',
-  "[Parent's Name]": 'Mr. & Mrs. Doe',
-  '[School Division]': 'Brightwood School',
-  '[Admission Session]': '2025/2026 Session',
+  "[@Student's First Name]": 'John',
+  "[@Student's Middle Name]": 'K.',
+  "[@Student's Last Name]": 'Doe',
+  '[@Form Number]': 'ADM/2026/0012',
+  '[@Class Name]': 'Junior Secondary',
+  '[@Entrance Score]': '85',
+  "[@Parent's Name]": 'Mr. & Mrs. Doe',
+  '[@School Division]': 'Brightwood School',
+  '[@Admission Session]': '2025/2026 Session',
 };
 
 const applyPreviewSamples = (html) => {
@@ -57,7 +61,23 @@ const applyPreviewSamples = (html) => {
 
 const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false }) => {
   const [letterContent, setLetterContent] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [activeTab, setActiveTab] = useState('editor');
   const editorRef = useRef(null); // holds the tiptap editor instance
+
+  const makeTemplateHtml = (templateText) =>
+    templateText
+      .split('\n')
+      .map((line) => (line.trim() ? `<p>${line}</p>` : '<p></p>'))
+      .join('');
+
+  const handleTemplateChange = (template) => {
+    const html = makeTemplateHtml(template.preview);
+    setSelectedTemplate(template);
+    setLetterContent(html);
+    setActiveTab('editor');
+    onChange?.(html);
+  };
 
   const handleEditorUpdate = ({ editor }) => {
     editorRef.current = editor;
@@ -75,19 +95,17 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
     }
   };
 
+  useEffect(() => {
+    setLetterContent(getInitialContent());
+  }, [initialContent]);
+
   // Determine what content to show in the editor
   const getInitialContent = () => {
-    // If initialContent is provided (edit mode), use it
     if (initialContent && initialContent.trim()) {
       return initialContent;
     }
-    
-    // Otherwise, use the default template
-    const defaultTemplate = LETTER_TEMPLATES[0];
-    return defaultTemplate.preview
-      .split('\n')
-      .map((line) => (line.trim() ? `<p>${line}</p>` : '<p></p>'))
-      .join('');
+
+    return '';
   };
 
   return (
@@ -151,7 +169,7 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
             ))}
           </Stack>
 
-          {/* <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 2 }} />
 
           <Typography
             variant="caption"
@@ -161,8 +179,8 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
             mb={1}
           >
             Template Options
-          </Typography> */}
-          {/* <Stack direction="row" spacing={1}>
+          </Typography>
+          <Stack direction="row" spacing={1}>
             {LETTER_TEMPLATES.map((tpl) => (
               <Paper
                 key={tpl.id}
@@ -208,19 +226,30 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
                 </Box>
               </Paper>
             ))}
-          </Stack> */}
+          </Stack>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 5 }}>
+        <Grid size={{ xs: 12, sm: 9 }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
             <Typography variant="caption" fontWeight={700} color="text.secondary">
-              Letter Editor
+              Admission Letter
             </Typography>
-            <Chip
-              label="⚠ Check Missing Fields"
-              size="small"
-              sx={{ bgcolor: '#fef3c7', color: '#92400e', fontWeight: 600, fontSize: 10 }}
-            />
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant={activeTab === 'editor' ? 'contained' : 'outlined'}
+                size="small"
+                onClick={() => setActiveTab('editor')}
+              >
+                Letter Editor
+              </Button>
+              <Button
+                variant={activeTab === 'preview' ? 'contained' : 'outlined'}
+                size="small"
+                onClick={() => setActiveTab('preview')}
+              >
+                Live Preview
+              </Button>
+            </Stack>
           </Box>
 
           {/* <TextField
@@ -259,12 +288,34 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
               },
             }}
           >
-            <TiptapEdit
-              key={initialContent} // Force re-render when initialContent changes
-              initialContent={getInitialContent()}
-              onUpdate={handleEditorUpdate}
-              readOnly={readOnly}
-            />
+            {activeTab === 'editor' ? (
+              <TiptapEdit
+                initialContent={letterContent || ''}
+                onUpdate={handleEditorUpdate}
+                readOnly={readOnly}
+              />
+            ) : (
+              <Box sx={{ p: 2 }}>
+                {letterContent ? (
+                  <Box
+                    sx={{
+                      fontSize: 12,
+                      lineHeight: 1.7,
+                      color: 'text.primary',
+                      '& p': { mt: 0, mb: 0.75 },
+                      '& strong': { fontWeight: 700 },
+                      '& em': { fontStyle: 'italic' },
+                      '& ul, & ol': { pl: 2.5, mb: 0.75 },
+                    }}
+                    dangerouslySetInnerHTML={{ __html: applyPreviewSamples(letterContent) }}
+                  />
+                ) : (
+                  <Typography variant="caption" color="text.disabled">
+                    Start typing in the editor to see a live preview
+                  </Typography>
+                )}
+              </Box>
+            )}
           </Box>
 
           {/* {!readOnly && (
@@ -318,48 +369,6 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
               </Button>
             </Stack>
           )} */}
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography
-            variant="caption"
-            fontWeight={700}
-            color="primary.main"
-            display="block"
-            mb={1}
-          >
-            Live Preview
-          </Typography>
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2,
-              minHeight: 220,
-              maxHeight: 320,
-              overflowY: 'auto',
-              bgcolor: 'grey.50',
-              borderRadius: 1,
-            }}
-          >
-            {letterContent ? (
-              <Box
-                sx={{
-                  fontSize: 12,
-                  lineHeight: 1.7,
-                  color: 'text.primary',
-                  '& p': { mt: 0, mb: 0.75 },
-                  '& strong': { fontWeight: 700 },
-                  '& em': { fontStyle: 'italic' },
-                  '& ul, & ol': { pl: 2.5, mb: 0.75 },
-                }}
-                dangerouslySetInnerHTML={{ __html: applyPreviewSamples(letterContent) }}
-              />
-            ) : (
-              <Typography variant="caption" color="text.disabled">
-                Start typing in the editor to see a live preview
-              </Typography>
-            )}
-          </Paper>
         </Grid>
       </Grid>
     </ParentCard>

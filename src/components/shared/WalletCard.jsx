@@ -36,7 +36,7 @@ const WalletCard = ({
     <Paper
       sx={{
         borderRadius: 2,
-      p: 1,
+      p: 0.5,
       width: '100%',       // fills whatever Grid cell it's in
       bgcolor: 'background.paper',
       display: 'flex',
@@ -73,7 +73,7 @@ const WalletCard = ({
 
       {/* CONTENT */}
       <Box sx={{ flex: 1, px: 2 }}>
-        <Typography sx={{ fontSize: 12, color: 'text.secondary', fontWeight: 500 }}>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary', fontWeight: 800 }}>
           Wallet Balance
         </Typography>
 
@@ -104,7 +104,7 @@ const WalletCard = ({
           Wallet Account
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.0 }}>
           <Typography
             sx={{
               fontSize: 11,
@@ -121,7 +121,7 @@ const WalletCard = ({
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              p: 0.2,
+              p: 0.1,
               borderRadius: 1,
               '&:hover': { bgcolor: 'grey.100' },
             }}
@@ -130,7 +130,7 @@ const WalletCard = ({
           </Box>
         </Box>
 
-        <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.5 }}>
+        <Typography sx={{ fontSize: 10, color: 'text.secondary', mt: 0.0 }}>
           {bankName}
         </Typography>
       </Box>

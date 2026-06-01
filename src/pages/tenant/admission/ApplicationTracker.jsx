@@ -1,10 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Box, Grid, Typography, Button, Paper, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Typography,
+  Button,
+  Paper,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import ward from '@/assets/images/backgrounds/ward.png';
-import { getAdmissionApplication } from '@/api/tenant/admission/admissionApi';
+import {
+  getAdmissionApplication,
+  updateAdmissionApplication,
+} from '@/api/tenant/admission/admissionApi';
 import { useNotification } from 'src/hooks/useNotification';
 
 import TrackerHeader from '@/components/tenant/admission/tracker/TrackerHeader';
@@ -19,6 +34,8 @@ const ApplicationTracker = () => {
 
   const [admission, setAdmission] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [editLoading, setEditLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Load admission data
   useEffect(() => {
@@ -53,7 +70,7 @@ const ApplicationTracker = () => {
 
   const handleViewDetails = () => {
     if (!admission) return;
-    
+
     const formData = {
       wardData: {
         surname: admission.surname,
@@ -74,11 +91,17 @@ const ApplicationTracker = () => {
         intending_class: admission.intending_class,
         study_mode: admission.study_mode,
       },
+      documentsData: {
+        birth_cert: admission.birth_cert,
+        prev_school_report: admission.prev_school_report,
+        passport_photo: admission.passport_photo,
+        medical_record: admission.medical_record,
+      },
       selectedBatch: admission.admission_batch,
       viewMode: true,
     };
+
     sessionStorage.setItem('formDetailsData', JSON.stringify(formData));
-    
     window.open('/admission/form-details', '_blank');
   };
 
@@ -91,6 +114,66 @@ const ApplicationTracker = () => {
       </PageContainer>
     );
   }
+
+  const hasEntranceExam = admission?.admission_batch?.has_entrance_exam;
+  const isBatchOpen = admission?.admission_batch?.status === 'open';
+
+  const handleEditForm = () => {
+    if (!admission?.id) return;
+    setConfirmOpen(true);
+  };
+
+  const confirmEditForm = async () => {
+    if (!admission?.id) return;
+
+    setConfirmOpen(false);
+    setEditLoading(true);
+
+    try {
+      const payload = {
+        form_submit_status: 'no',
+        admission_batch_id: admission.admission_batch_id || admission.admission_batch?.id,
+        admission_stage:  0,
+        surname: admission.surname,
+        first_name: admission.first_name,
+        other_name: admission.other_name,
+        dob: admission.dob,
+        gender: admission.gender,
+        home_address: admission.home_address,
+        lga_id: admission.lga_id || admission.lga?.id || admission.lga,
+        has_previous_school: admission.has_previous_school,
+        prev_school_name: admission.prev_school_name,
+        prev_school_state: admission.prev_school_state,
+        prev_school_lga: admission.prev_school_lga,
+        previous_class: admission.previous_class,
+        intending_programme_id:
+          admission.intending_programme_id || admission.intending_programme?.id || null,
+        intending_class_id:
+          admission.intending_class_id || admission.intending_class?.id || null,
+        study_mode: admission.study_mode,
+      };
+
+      const updated = await updateAdmissionApplication(admission.id, payload);
+
+      const updatedAdmission = updated?.data ?? updated;
+      setAdmission(updatedAdmission);
+
+      navigate('/admission/new-application', {
+        state: {
+          ward: updatedAdmission || admission,
+          resumeApplication: true,
+          startFromFirstStep: true,
+          batch: admission.admission_batch,
+          selectedBatch: admission.admission_batch,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to revert application to draft:', error);
+      notify.error('Unable to edit application right now');
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   if (!admission) {
     return (
@@ -116,6 +199,7 @@ const ApplicationTracker = () => {
   const gender = admission.gender ? admission.gender.toUpperCase() : 'N/A';
   const address = admission.home_address || 'No address provided';
   const photo = admission.passport_photo || ward;
+  const dob = admission.dob ? new Date(admission.dob).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'  ;
   const currentStage = admission.admission_stage || 0;
   const submittedDate = admission.form_submit_completion 
     ? new Date(admission.form_submit_completion).toLocaleDateString('en-US', { 
@@ -153,39 +237,36 @@ const ApplicationTracker = () => {
         gender={gender}
         address={address}
         photo={photo}
+        dob={dob}
         admission={admission}
       />
 
       <Paper sx={{ p: 3, bgcolor: '#e5e8f86a' }}>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 8 }}>
-            {admission?.admission_batch?.has_entrance_exam ? (
-              <TrackerMain
-                submittedDate={submittedDate}
-                onViewDetails={handleViewDetails}
-                admission={admission}
-                stageTitle="Entrance Exam"
-                stageDescription="Your child is required to take the online aptitude test as part of the admission process."
-                requirementStatus="Ready to Begin"
-                timeLimit="45 Minutes"
-                onStart={() => {}}
-                onPractice={() => {}}
-                nextTitle="Admission Decision"
-                nextDescription="Requires completion of Entrance Exam."
-                nextActionLabel="Pay Acceptance Fee"
-                nextActionDisabled
-                onNextAction={() => {}}
-              />
-            ) : (
-              <Paper variant="outlined" sx={{ borderRadius: 3, p: 3, textAlign: 'center', bgcolor: 'primary.lighter' }}>
-                <Typography variant="h6" color="primary.main" gutterBottom>
-                  Admission Doesnt has Entrance exam you can proceed with the next requiremets.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Please monitor your application status.
-                </Typography>
-              </Paper>
-            )}
+            <TrackerMain
+              submittedDate={submittedDate}
+              onViewDetails={handleViewDetails}
+              onEditForm={isBatchOpen ? handleEditForm : undefined}
+              stageTitle={hasEntranceExam ? 'Entrance Exam' : 'Application Overview'}
+              stageDescription={
+                hasEntranceExam
+                  ? 'Your child is required to take the online aptitude test as part of the admission process.'
+                  : 'No entrance exam is required for this application. You can view details or edit the form if the batch is still open.'
+              }
+              requirementStatus={hasEntranceExam ? 'Ready to Begin' : ''}
+              timeLimit={hasEntranceExam ? '45 Minutes' : ''}
+              onStart={() => {}}
+              onPractice={() => {}}
+              showCurrentStageActions={hasEntranceExam}
+              showRequirementStatus={hasEntranceExam}
+              showNextStepCard={hasEntranceExam}
+              nextTitle="Admission Decision"
+              nextDescription="Requires completion of Entrance Exam."
+              nextActionLabel="Pay Acceptance Fee"
+              nextActionDisabled={hasEntranceExam || editLoading}
+              onNextAction={() => {}}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
@@ -193,6 +274,27 @@ const ApplicationTracker = () => {
           </Grid>
         </Grid>
       </Paper>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        aria-labelledby="confirm-edit-form-dialog"
+      >
+        <DialogTitle id="confirm-edit-form-dialog">Confirm Edit</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to edit the form? This will reopen the application for editing.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)} disabled={editLoading}>
+            No
+          </Button>
+          <Button onClick={confirmEditForm} variant="contained" disabled={editLoading}>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

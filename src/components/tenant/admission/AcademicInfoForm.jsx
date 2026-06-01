@@ -13,6 +13,7 @@ import {
   Checkbox,
   Alert,
   CircularProgress,
+  Switch
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
@@ -58,6 +59,7 @@ const AcademicInfoForm = ({
     initialValues: EMPTY_FORM,
     validationSchema: academicInfoValidationSchema,
     onSubmit: (values) => onSubmit(values),
+    validateOnMount: true,
     validateOnChange: true,
     validateOnBlur: true,
   });
@@ -77,7 +79,9 @@ const AcademicInfoForm = ({
     Boolean(formik.values.study_mode);
 
   const isFormValid =
-    isPrevSchoolValid && isIntendingValid && formik.isValid;
+  isPrevSchoolValid &&
+  isIntendingValid &&
+  Object.keys(formik.errors).length === 0;
 
   // Trigger form validation when batch classes are loaded
   useEffect(() => {
@@ -153,11 +157,11 @@ const AcademicInfoForm = ({
   // Update batch-related fields when selectedBatch changes
   useEffect(() => {
     if (!hydrated) return; // Only update after initial hydration
-    
+
     if (batchProgramme?.id) {
       formik.setFieldValue('intending_programme_id', batchProgramme.id);
     }
-    
+
     // Clear intending_class_id if batch changed (since classes might be different)
     if (formik.values.intending_class_id && batchClasses.length > 0) {
       const classExists = batchClasses.find(c => c.id === parseInt(formik.values.intending_class_id));
@@ -213,31 +217,92 @@ const AcademicInfoForm = ({
       </Typography>
       <Divider sx={{ mb: 3 }} />
 
-      {/* ── Previous school ── */}
-      <Typography variant="subtitle1" fontWeight={700} mb={2}>
-        Previous school information
-      </Typography>
 
       {/* Toggle row */}
-      <Alert
-        severity="info"
+      <Box
         sx={{
-          mb: 2.5,
-          bgcolor: '#F0F9FF',
-          '& .MuiAlert-message': { width: '100%', p: 0 },
+          mb: 3,
+          p: 2,
+          border: '1px solid',
+          borderColor: formik.values.has_previous_school
+            ? 'primary.main'
+            : 'divider',
+          borderRadius: 2,
+          bgcolor: formik.values.has_previous_school
+            ? 'primary.50'
+            : 'background.paper',
+          transition: 'all .2s ease',
         }}
       >
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="body2">Does your ward have Previous school information</Typography>
-          <Checkbox
-            name="has_previous_school"
-            checked={formik.values.has_previous_school}
-            onChange={formik.handleChange}
-            color="primary"
-            sx={{ p: 0.5 }}
-          />
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          gap={2}
+        >
+          <Box>
+            <Typography fontWeight={600}>
+              Previous School Information
+            </Typography>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              Has your ward attended another school before?
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
+          >
+            <Typography
+              variant="body2"
+              color={
+                !formik.values.has_previous_school
+                  ? 'text.primary'
+                  : 'text.secondary'
+              }
+              fontWeight={
+                !formik.values.has_previous_school
+                  ? 600
+                  : 400
+              }
+            >
+              No
+            </Typography>
+
+            <Switch
+              checked={formik.values.has_previous_school}
+              name='has_previous_school'
+              onChange={(e) => {
+                formik.setFieldValue('has_previous_school', e.target.checked);
+              }}
+            />
+
+            <Typography
+              variant="body2"
+              color={
+                formik.values.has_previous_school
+                  ? 'primary.main'
+                  : 'text.secondary'
+              }
+              fontWeight={
+                formik.values.has_previous_school
+                  ? 600
+                  : 400
+              }
+            >
+              Yes
+            </Typography>
+          </Box>
         </Box>
-      </Alert>
+      </Box>
 
       {/* Previous school fields */}
       {hasPrev && (
@@ -276,6 +341,11 @@ const AcademicInfoForm = ({
                   </MenuItem>
                 ))}
               </Select>
+              {ft.prev_school_state && fe.prev_school_state && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {fe.prev_school_state}
+                </Typography>
+              )}
             </FormControl>
           </Grid>
 
@@ -300,6 +370,11 @@ const AcademicInfoForm = ({
                   </MenuItem>
                 ))}
               </Select>
+              {ft.prev_school_lga && fe.prev_school_lga && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                  {fe.prev_school_lga}
+                </Typography>
+              )}
             </FormControl>
           </Grid>
 

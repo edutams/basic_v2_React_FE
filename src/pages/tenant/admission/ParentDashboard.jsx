@@ -132,22 +132,18 @@ const ParentDashboard = () => {
   const handleViewProspectiveWard = (ward) => {
     const admission = ward.admissionData;
     
-    // If form is submitted, open the admission form from the first step
+    // If form is submitted, go to application tracker
     if (admission?.form_submit_status === 'yes') {
-      navigate('/admission/new-application', {
-        state: {
-          ward: admission,
-          resumeApplication: true,
-          startFromFirstStep: true,
-        },
+      navigate(`/application-tracker/${admission.id}`, {
+        state: { admission }
       });
     } else {
       // If draft, go to application form to continue
-      navigate('/admission/new-application', {
-        state: {
+      navigate('/admission/new-application', { 
+        state: { 
           ward: admission,
-          resumeApplication: true,
-        },
+          resumeApplication: true 
+        } 
       });
     }
   };

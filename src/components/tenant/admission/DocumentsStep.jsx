@@ -251,28 +251,37 @@ const DocumentRow = ({
   );
 };
 
-const DocumentsStep = ({ initialValues, onNext, onBack, isLoading = false }) => {
+const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBack, isLoading = false }) => {
   const [files, setFiles] = useState({});
   const [existingDocs, setExistingDocs] = useState({});
   const [dragOver, setDragOver] = useState(null);
   const [errors, setErrors] = useState({});
   const [preview, setPreview] = useState({ file: null, url: null });
 
+  // Build effective documents list — conditionally require prev_school_report
+  // based on the hasPreviousSchool flag passed from the Academic Info step
+  const EFFECTIVE_DOCUMENTS = DOCUMENTS.map((doc) => {
+    if (doc.key === 'prev_school_report') {
+      return { ...doc, required: hasPreviousSchool };
+    }
+    return doc;
+  });
+
   // Initialize existing documents from initialValues
   useEffect(() => {
     if (initialValues) {
       const existing = {};
-      DOCUMENTS.forEach((doc) => {
+      EFFECTIVE_DOCUMENTS.forEach((doc) => {
         if (initialValues[doc.key]) {
           existing[doc.key] = initialValues[doc.key];
         }
       });
       setExistingDocs(existing);
     }
-  }, [initialValues]);
+  }, [initialValues, hasPreviousSchool]);
 
   const handleFile = (key, file) => {
-    const doc = DOCUMENTS.find((d) => d.key === key);
+    const doc = EFFECTIVE_DOCUMENTS.find((d) => d.key === key);
     const acceptedExts = (doc?.accept ?? ACCEPTED).split(',').map((e) => e.trim().toLowerCase());
     const fileExt = '.' + file.name.split('.').pop().toLowerCase();
     if (!acceptedExts.includes(fileExt)) {
@@ -319,7 +328,7 @@ const DocumentsStep = ({ initialValues, onNext, onBack, isLoading = false }) => 
     if (file) handleFile(key, file);
   };
 
-  const requiredKeys = DOCUMENTS.filter((d) => d.required).map((d) => d.key);
+  const requiredKeys = EFFECTIVE_DOCUMENTS.filter((d) => d.required).map((d) => d.key);
   // Check if all required documents are either newly uploaded or already exist
   const allRequiredOk = requiredKeys.every((k) => Boolean(files[k] || existingDocs[k]));
 
@@ -352,7 +361,7 @@ const DocumentsStep = ({ initialValues, onNext, onBack, isLoading = false }) => 
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        {DOCUMENTS.map((doc) => (
+        {EFFECTIVE_DOCUMENTS.map((doc) => (
           <Box key={doc.key}>
             <DocumentRow
               doc={doc}
@@ -411,6 +420,8 @@ const DocumentsStep = ({ initialValues, onNext, onBack, isLoading = false }) => 
 
 DocumentsStep.propTypes = {
   initialValues: PropTypes.object,
+  /** Pass true when the applicant indicated they attended a previous school (from Academic Info step) */
+  hasPreviousSchool: PropTypes.bool,
   onNext: PropTypes.func.isRequired,
   onBack: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,

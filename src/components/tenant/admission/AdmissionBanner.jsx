@@ -3,7 +3,7 @@ import { useTheme } from '@mui/material/styles';
 import { School as SchoolIcon, ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const AdmissionBanner = ({ session, onApply }) => {
+const AdmissionBanner = ({ session, onApply, hasOpenBatches }) => {
   const theme = useTheme();
   const bg = `linear-gradient(90deg, #020411 0%, ${theme.palette.primary.main} 100%)`;
 
@@ -41,7 +41,7 @@ const AdmissionBanner = ({ session, onApply }) => {
         </Box>
 
         <Box>
-          {session && (
+          {hasOpenBatches && (
             <Chip
               label={`Session ${session}`}
               size="small"
@@ -49,35 +49,40 @@ const AdmissionBanner = ({ session, onApply }) => {
             />
           )}
           <Typography variant="h5" fontWeight={800} lineHeight={1.2}>
-            Admission is now open!
+            {hasOpenBatches ? 'Admission is now open!' : 'Welcome back'}
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
-            Apply for your child today. Application closes Oct 30, 2025.
+            {hasOpenBatches
+              ? 'Apply for your child today. Application closes Oct 30, 2025.'
+              : 'We are excited to welcome you back. Always check here for your ward activities and updates.'}
           </Typography>
         </Box>
       </Box>
 
-      <Button
-        variant="contained"
-        endIcon={<ArrowForwardIcon />}
-        onClick={onApply}
-        sx={{
-          bgcolor: '#fff',
-          color: 'primary.main',
-          fontWeight: 700,
-          borderRadius: 2,
-          px: 3,
-          whiteSpace: 'nowrap',
-        }}
-      >
-        Apply Now
-      </Button>
+      {hasOpenBatches && (
+        <Button
+          variant="contained"
+          endIcon={<ArrowForwardIcon />}
+          onClick={onApply}
+          sx={{
+            bgcolor: '#fff',
+            color: 'primary.main',
+            fontWeight: 700,
+            borderRadius: 2,
+            px: 3,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Apply Now
+        </Button>
+      )}
     </Paper>
   );
 };
 
 AdmissionBanner.propTypes = {
   session: PropTypes.string,
+  hasOpenBatches: PropTypes.bool,
   onApply: PropTypes.func.isRequired,
 };
 

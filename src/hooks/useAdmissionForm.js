@@ -105,10 +105,11 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
       admissionId,
       currentStage,
       formData: data || formData,
+      selectedBatch,
       timestamp: new Date().toISOString(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-  }, [admissionId, currentStage, formData]);
+  }, [admissionId, currentStage, formData, selectedBatch]);
 
   // Clear draft from localStorage
   const clearDraft = useCallback(() => {

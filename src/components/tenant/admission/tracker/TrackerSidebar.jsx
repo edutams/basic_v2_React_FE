@@ -69,19 +69,31 @@ const TrackerSidebar = ({ admission }) => {
               window.open(action, '_blank');
             }
           }}
-          sx={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 1.5,
-            p: { xs: 1.5, sm: 2 },
-            borderRadius: 2,
-            bgcolor: 'grey.200',
-            mb: 1,
-            cursor: 'pointer',
-            '&:hover': { bgcolor: 'grey.300' },
-            '&:last-child': { mb: 0 },
-          }}
-        >
+    sx={{
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: 1.5,
+  p: { xs: 1.5, sm: 2 },
+  borderRadius: 2,
+  bgcolor: 'grey.300',
+  border: '1px solid',
+  borderColor: 'primary.100',
+  mb: 1,
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    bgcolor: 'primary.100',
+    borderColor: 'primary.main',
+    transform: 'translateY(-2px)',
+    boxShadow: 2,
+  },
+  '&:active': {
+    transform: 'translateY(0)',
+  },
+  '&:last-child': {
+    mb: 0,
+  },
+}}        >
           <Box
             sx={{
               width: 36,
@@ -97,12 +109,19 @@ const TrackerSidebar = ({ admission }) => {
             <Icon sx={{ color: 'text.disabled', fontSize: 20 }} />
           </Box>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" fontWeight={600} color="text.secondary">
-              {label}
-            </Typography>
-            <Typography variant="caption" color="text.disabled" fontStyle="italic">
-              {sub}
-            </Typography>
+            <Typography
+  variant="body2"
+  fontWeight={700}
+  color="text.primary"
+>
+  {label}
+</Typography>
+           <Typography
+  variant="caption"
+  color="text.secondary"
+>
+  {sub}
+</Typography>
           </Box>
         </Box>
       ))}

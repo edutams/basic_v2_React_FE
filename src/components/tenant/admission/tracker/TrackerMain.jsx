@@ -6,7 +6,7 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const FormSubmittedCard = ({ submittedDate, onViewDetails }) => (
+const FormSubmittedCard = ({ submittedDate, onViewDetails, onEditForm }) => (
   <Paper
     variant="outlined"
     sx={{
@@ -55,26 +55,43 @@ const FormSubmittedCard = ({ submittedDate, onViewDetails }) => (
       </Box>
     </Box>
 
-    <Button
-      variant="outlined"
-      size="small"
-      onClick={onViewDetails}
-      sx={{
-        fontWeight: 600,
-        borderRadius: 2,
-        flexShrink: 0,
-        whiteSpace: 'nowrap',
-        alignSelf: { xs: 'flex-end', sm: 'center' },
-      }}
-    >
-      View Form Details
-    </Button>
+    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%' }}>
+      {onEditForm && (
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onEditForm}
+          sx={{
+            fontWeight: 600,
+            borderRadius: 2,
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Edit Form
+        </Button>
+      )}
+      <Button
+        variant={onEditForm ? 'outlined' : 'contained'}
+        size="small"
+        onClick={onViewDetails}
+        sx={{
+          fontWeight: 600,
+          borderRadius: 2,
+          flexShrink: 0,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        View Form Details
+      </Button>
+    </Box>
   </Paper>
 );
 
 FormSubmittedCard.propTypes = {
   submittedDate: PropTypes.string,
   onViewDetails: PropTypes.func,
+  onEditForm: PropTypes.func,
 };
 
 const CurrentStageCard = ({
@@ -84,6 +101,8 @@ const CurrentStageCard = ({
   timeLimit,
   onStart,
   onPractice,
+  showActions = true,
+  showRequirementStatus = true,
 }) => (
   <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2, bgcolor: '#F7F9FF' }}>
     <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -144,66 +163,70 @@ const CurrentStageCard = ({
       {stageDescription}
     </Typography>
 
-    <Paper
-      variant="outlined"
-      sx={{
-        borderRadius: 2,
-        bgcolor: 'info.light',
-        px: { xs: 2, sm: 2.5 },
-        py: { xs: 1.5, sm: 2 },
-        mb: 2,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 1,
-      }}
-    >
-      <Box>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          fontWeight={600}
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
-        >
-          Requirement Status
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={700} color="primary.main">
-          {requirementStatus}
-        </Typography>
-      </Box>
-      <Box sx={{ textAlign: 'right' }}>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          fontWeight={600}
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
-        >
-          Time Limit
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={700}>
-          {timeLimit}
-        </Typography>
-      </Box>
-    </Paper>
-
-    <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1.5}>
-      <Button
-        variant="contained"
-        onClick={onStart}
-        fullWidth
-        sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
-      >
-        Start {stageTitle}
-      </Button>
-      <Button
+    {showRequirementStatus && (
+      <Paper
         variant="outlined"
-        onClick={onPractice}
-        fullWidth
-        sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
+        sx={{
+          borderRadius: 2,
+          bgcolor: 'info.light',
+          px: { xs: 2, sm: 2.5 },
+          py: { xs: 1.5, sm: 2 },
+          mb: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 1,
+        }}
       >
-        Practice Test
-      </Button>
-    </Box>
+        <Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontWeight={600}
+            sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+          >
+            Requirement Status
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={700} color="primary.main">
+            {requirementStatus}
+          </Typography>
+        </Box>
+        <Box sx={{ textAlign: 'right' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontWeight={600}
+            sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+          >
+            Time Limit
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={700}>
+            {timeLimit}
+          </Typography>
+        </Box>
+      </Paper>
+    )}
+
+    {showActions && (
+      <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1.5}>
+        <Button
+          variant="contained"
+          onClick={onStart}
+          fullWidth
+          sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
+        >
+          Start {stageTitle}
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={onPractice}
+          fullWidth
+          sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
+        >
+          Practice Test
+        </Button>
+      </Box>
+    )}
   </Paper>
 );
 
@@ -214,6 +237,8 @@ CurrentStageCard.propTypes = {
   timeLimit: PropTypes.string,
   onStart: PropTypes.func,
   onPractice: PropTypes.func,
+  showActions: PropTypes.bool,
+  showRequirementStatus: PropTypes.bool,
 };
 
 const NextStepCard = ({ title, description, actionLabel, actionDisabled, onAction }) => (
@@ -289,6 +314,7 @@ NextStepCard.propTypes = {
 const TrackerMain = ({
   submittedDate,
   onViewDetails = () => {},
+  onEditForm,
   stageTitle,
   stageDescription,
   requirementStatus,
@@ -300,9 +326,12 @@ const TrackerMain = ({
   nextActionLabel,
   nextActionDisabled = false,
   onNextAction = () => {},
+  showCurrentStageActions = true,
+  showRequirementStatus = true,
+  showNextStepCard = true,
 }) => (
   <Box>
-    <FormSubmittedCard submittedDate={submittedDate} onViewDetails={onViewDetails} />
+    <FormSubmittedCard submittedDate={submittedDate} onViewDetails={onViewDetails} onEditForm={onEditForm} />
     <CurrentStageCard
       stageTitle={stageTitle}
       stageDescription={stageDescription}
@@ -310,31 +339,39 @@ const TrackerMain = ({
       timeLimit={timeLimit}
       onStart={onStart}
       onPractice={onPractice}
+      showActions={showCurrentStageActions}
+      showRequirementStatus={showRequirementStatus}
     />
-    <NextStepCard
-      title={nextTitle}
-      description={nextDescription}
-      actionLabel={nextActionLabel}
-      actionDisabled={nextActionDisabled}
-      onAction={onNextAction}
-    />
+    {showNextStepCard && (
+      <NextStepCard
+        title={nextTitle}
+        description={nextDescription}
+        actionLabel={nextActionLabel}
+        actionDisabled={nextActionDisabled}
+        onAction={onNextAction}
+      />
+    )}
   </Box>
 );
 
 TrackerMain.propTypes = {
   submittedDate: PropTypes.string,
   onViewDetails: PropTypes.func,
+  onEditForm: PropTypes.func,
   stageTitle: PropTypes.string.isRequired,
   stageDescription: PropTypes.string,
   requirementStatus: PropTypes.string,
   timeLimit: PropTypes.string,
   onStart: PropTypes.func,
   onPractice: PropTypes.func,
-  nextTitle: PropTypes.string.isRequired,
+  nextTitle: PropTypes.string,
   nextDescription: PropTypes.string,
   nextActionLabel: PropTypes.string,
   nextActionDisabled: PropTypes.bool,
   onNextAction: PropTypes.func,
+  showCurrentStageActions: PropTypes.bool,
+  showRequirementStatus: PropTypes.bool,
+  showNextStepCard: PropTypes.bool,
 };
 
 export default TrackerMain;

@@ -44,6 +44,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
     initialValues: EMPTY_FORM,
     validationSchema: wardValidationSchema,
     onSubmit: (values) => onSubmit(values),
+    validateOnMount: true,
     validateOnChange: true,
     validateOnBlur: true,
   });

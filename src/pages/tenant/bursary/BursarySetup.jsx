@@ -38,6 +38,17 @@ import {
   IconCreditCard,
   IconDotsVertical,
 } from '@tabler/icons-react';
+// import {
+//   Settings as SettingsIcon,
+//   CreditCard as CreditCardIcon,
+//   CheckCircle as CheckCircleIcon,
+// } from '@mui/icons-material';
+import {
+  Category as CategoryIcon,
+  Verified as VerifiedIcon,
+  Payments as PaymentsIcon,
+  TaskAlt as TaskAltIcon,
+} from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -210,36 +221,19 @@ const BursarySetup = () => {
       {/* Stats Cards */}
       <Grid container spacing={3} mb={3}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.totalCategories}
-            label="Total Categories"
-            icon={IconSettings}
-            color="primary"
-          />
+          <StatCard count={stats.totalCategories} label="Total Categories" icon={CategoryIcon} />
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.activeCategories}
-            label="Active Categories"
-            icon={IconSettings}
-            color="success"
-          />
+          <StatCard count={stats.activeCategories} label="Active Categories" icon={VerifiedIcon} />
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.totalInstalments}
-            label="Instalment Plans"
-            icon={IconCreditCard}
-            color="primary"
-          />
+          <StatCard count={stats.totalInstalments} label="Instalment Plans" icon={PaymentsIcon} />
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.activeInstalments}
-            label="Active Plans"
-            icon={IconCreditCard}
-            color="success"
-          />
+          <StatCard count={stats.activeInstalments} label="Active Plans" icon={TaskAltIcon} />
         </Grid>
       </Grid>
 
@@ -300,12 +294,12 @@ const BursarySetup = () => {
                   flexShrink: 0,
                 }}
               >
-                {/* <DescriptionIcon
-      sx={{
-        fontSize: 20,
-        color: 'primary.main',
-      }}
-    /> */}
+                <PaymentsIcon
+                  sx={{
+                    fontSize: 20,
+                    color: 'primary.main',
+                  }}
+                />
               </Box>
 
               <Box>
@@ -351,7 +345,9 @@ const BursarySetup = () => {
                           control={<Radio />}
                           label={
                             <Box>
-                              <Typography variant='h5' fontWeight={600}>Single payment</Typography>
+                              <Typography variant="h5" fontWeight={600}>
+                                Single payment
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 All fees collected together in one transaction.
                               </Typography>
@@ -372,7 +368,9 @@ const BursarySetup = () => {
                           control={<Radio />}
                           label={
                             <Box>
-                              <Typography variant='h5' fontWeight={600}>Pay per fee</Typography>
+                              <Typography variant="h5" fontWeight={600}>
+                                Pay per fee
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 Each fee is processed separately.
                               </Typography>
@@ -425,7 +423,9 @@ const BursarySetup = () => {
                           control={<Radio />}
                           label={
                             <Box>
-                              <Typography variant='h5' fontWeight={600}>By percentage</Typography>
+                              <Typography variant="h5" fontWeight={600}>
+                                By percentage
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 e.g. 60% now, 40% later.
                               </Typography>
@@ -446,7 +446,9 @@ const BursarySetup = () => {
                           control={<Radio />}
                           label={
                             <Box>
-                              <Typography variant='h5' fontWeight={600}>By amount</Typography>
+                              <Typography variant="h5" fontWeight={600}>
+                                By amount
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 Pay any amount, anytime.
                               </Typography>
@@ -499,7 +501,9 @@ const BursarySetup = () => {
                           control={<Radio />}
                           label={
                             <Box>
-                              <Typography variant='h5' fontWeight={600}>Parent / Student</Typography>
+                              <Typography variant="h5" fontWeight={600}>
+                                Parent / Student
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 Charges added on top of the fee.
                               </Typography>
@@ -520,7 +524,9 @@ const BursarySetup = () => {
                           control={<Radio />}
                           label={
                             <Box>
-                              <Typography variant='h5' fontWeight={600}>School</Typography>
+                              <Typography variant="h5" fontWeight={600}>
+                                School
+                              </Typography>
                               <Typography variant="body2" color="text.secondary">
                                 School absorbs the charges.
                               </Typography>
@@ -549,11 +555,26 @@ const BursarySetup = () => {
               <ParentCard
                 title={
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <IconSettings size={20} />
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 2,
+                          bgcolor: 'primary.light',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'primary.main',
+                        }}
+                      >
+                        <PaymentsIcon size={20} />
+                      </Box>
+
                       <Box>
                         <Typography variant="h6">Payment categories</Typography>
-                        <Typography variant="caption" color="textSecondary">
+
+                        <Typography variant="caption" color="text.secondary">
                           Target students for waivers, etc.
                         </Typography>
                       </Box>
@@ -590,7 +611,7 @@ const BursarySetup = () => {
                       {categories.map((category, index) => (
                         <TableRow key={category.id} hover>
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{category.name}</TableCell>
+                          <TableCell>{category.name}</TableCell>
                           <TableCell>{category.description}</TableCell>
 
                           <TableCell align="center">
@@ -615,12 +636,27 @@ const BursarySetup = () => {
               <ParentCard
                 title={
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {/* <CreditCardIcon size={20} /> */}
+                    <Box display="flex" alignItems="center" gap={1.5}>
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 2,
+                          bgcolor: 'primary.light',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'primary.main',
+                        }}
+                      >
+                        <TaskAltIcon size={20} />
+                      </Box>
+
                       <Box>
                         <Typography variant="h6">Installment plans</Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          Configure payment plans and their fees.
+
+                        <Typography variant="caption" color="text.secondary">
+                          Split options parents can pick from.
                         </Typography>
                       </Box>
                     </Box>
@@ -657,7 +693,7 @@ const BursarySetup = () => {
                         <TableRow key={instalment.id} hover>
                           <TableCell>{index + 1}</TableCell>
 
-                          <TableCell sx={{ fontWeight: 600 }}>{instalment.options}</TableCell>
+                          <TableCell>{instalment.options}</TableCell>
 
                           <TableCell align="center">
                             <StatusChip status={instalment.status} />
@@ -677,172 +713,41 @@ const BursarySetup = () => {
             </Grid>
           </Grid>
 
-          {/* Payment Categories */}
-          {/* <ParentCard
-            title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box display="flex" alignItems="center" gap={1}>
-                  <IconSettings size={20} />
-                  <Box>
-                    <Typography variant="h6">Payment categories</Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      Target students for waivers, etc.
-                    </Typography>
-                  </Box>
-                </Box>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<IconPlus size={18} />}
-                  onClick={handleAddCategory}
-                  sx={{ fontWeight: 600 }}
-                >
-                  Add Category
-                </Button>
-              </Box>
-            }
-          >
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
-                      Status
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
-                      Action
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {categories.map((category, index) => (
-                    <TableRow key={category.id} hover>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{category.name}</TableCell>
-                      <TableCell>{category.description}</TableCell>
-                      <TableCell align="center">
-                        <StatusChip status={category.status} />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Stack direction="row" spacing={0.5} justifyContent="center">
-                          <Tooltip title="Edit">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleEditCategory(category)}
-                              sx={{ color: 'primary.main' }}
-                            >
-                              <IconEdit size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeleteCategory(category.id)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </ParentCard> */}
-
-          {/* Installment Plans */}
-          {/* <ParentCard
-            title={
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Box display="flex" alignItems="center" gap={1}>
-                  <IconCreditCard size={20} />
-                  <Box>
-                    <Typography variant="h6">Installment plans</Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      Configure payment plans and their fees.
-                    </Typography>
-                  </Box>
-                </Box>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<IconPlus size={18} />}
-                  onClick={handleAddInstalment}
-                  sx={{ fontWeight: 600 }}
-                >
-                  Add New
-                </Button>
-              </Box>
-            }
-          >
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Installment Options (%)</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
-                      Status
-                    </TableCell>
-                    <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
-                      Action
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {instalments.map((instalment, index) => (
-                    <TableRow key={instalment.id} hover>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{instalment.options}</TableCell>
-                      <TableCell align="center">
-                        <StatusChip status={instalment.status} />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Stack direction="row" spacing={0.5} justifyContent="center">
-                          <Tooltip title="Edit">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleEditInstalment(instalment)}
-                              sx={{ color: 'primary.main' }}
-                            >
-                              <IconEdit size={16} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDeleteInstalment(instalment.id)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </ParentCard> */}
-
           {/* Result Viewing */}
-          <ParentCard
-            title={
-              <Box display="flex" alignItems="center" gap={1}>
-                <IconFileText size={20} />
-                <Typography variant="h6">Result viewing</Typography>
+          <ParentCard>
+            <Box display="flex" alignItems="flex-start" gap={2} mb={2}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: 'primary.light',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <PaymentsIcon
+                  sx={{
+                    fontSize: 20,
+                    color: 'primary.main',
+                  }}
+                />
               </Box>
-            }
-          >
-            <Typography variant="body2" color="textSecondary" mb={2}>
-              Control whether students can see results before paying.
-            </Typography>
+
+              <Box>
+                <Typography variant="h6" fontWeight={600}>
+                  How should fees be collected?
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  Choose how parents pay and who covers the gateway charges.
+                </Typography>
+              </Box>
+            </Box>
+
+            
 
             <Box
               sx={{
@@ -850,8 +755,8 @@ const BursarySetup = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 p: 2,
-                bgcolor: 'grey.50',
-                borderRadius: 1,
+                bgcolor: '#f6f6f6',
+                borderRadius: 2,
               }}
             >
               <Box>

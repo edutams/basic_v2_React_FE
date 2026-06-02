@@ -63,7 +63,8 @@ const SubmitStep = ({
   onBack, 
   onSubmit, 
   isLoading = false,
-  viewMode = false 
+  viewMode = false,
+  hasPreviousSchool = false,
 }) => {
   // Build applicant name from ward data
   const applicantName = wardData
@@ -111,7 +112,7 @@ const SubmitStep = ({
             selectedBatch={selectedBatch}
           />
         )}
-        <DocumentsReview documentsData={documentsData} />
+        <DocumentsReview documentsData={documentsData} hasPreviousSchool={Boolean(academicData?.has_previous_school)} />
         {!viewMode && (
           <FinalReview
             applicantName={applicantName}
@@ -140,14 +141,15 @@ const SubmitStep = ({
 };
 
 SubmitStep.propTypes = {
-  wardData:      PropTypes.object,
-  academicData:  PropTypes.object,
-  documentsData: PropTypes.array,
-  selectedBatch: PropTypes.object,
-  onBack:        PropTypes.func.isRequired,
-  onSubmit:      PropTypes.func.isRequired,
-  isLoading:     PropTypes.bool,
-  viewMode:      PropTypes.bool,
+  wardData:         PropTypes.object,
+  academicData:     PropTypes.object,
+  documentsData:    PropTypes.array,
+  selectedBatch:    PropTypes.object,
+  onBack:           PropTypes.func.isRequired,
+  onSubmit:         PropTypes.func.isRequired,
+  isLoading:        PropTypes.bool,
+  viewMode:         PropTypes.bool,
+  hasPreviousSchool: PropTypes.bool,
 };
 
 export default SubmitStep;

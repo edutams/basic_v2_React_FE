@@ -1,6 +1,7 @@
-import { Box, Avatar, Typography } from '@mui/material';
+import { Box, Avatar, Typography,Chip } from '@mui/material';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
+
 
 const buildStages = (admission) => {
   const hasEntranceExam = admission?.admission_batch?.has_entrance_exam;
@@ -189,6 +190,7 @@ const TrackerHeader = ({
   photo,
   dob,
   admission,
+  form_number
 }) => (
   <Box
     sx={{
@@ -220,6 +222,15 @@ const TrackerHeader = ({
        
         <Typography variant="body2" fontWeight={500}>Gender : {gender}</Typography>
         <Typography variant="body2" fontWeight={500}>DoB : {  dob}</Typography>
+      <Chip
+  label={`Form No: ${form_number}`}
+  color="primary"
+  size="small"
+  sx={{
+    fontWeight: 600,
+    borderRadius: 2,
+  }}
+/>
          <Typography variant="body2" color="success.dark" fontWeight={600}>
           Intending Class : {intendingClass}
         </Typography>

@@ -175,10 +175,18 @@ const DocRow = ({ label, file, required, onView }) => {
   );
 };
 
-const DocumentsReview = ({ documentsData }) => {
+const DocumentsReview = ({ documentsData, hasPreviousSchool = false }) => {
   const [preview, setPreview] = useState(null);
 
   const files = documentsData ?? {};
+
+  const effectiveDocs = DOC_DEFS
+    .filter((doc) => doc.key !== 'prev_school_report' || hasPreviousSchool)
+    .map((doc) =>
+      doc.key === 'prev_school_report'
+        ? { ...doc, required: hasPreviousSchool }
+        : doc,
+    );
 
   return (
     <ReviewSection
@@ -187,7 +195,7 @@ const DocumentsReview = ({ documentsData }) => {
       subtitle="PDF, JPG or PNG · Max 5MB each."
       id="section-documents"
     >
-      {DOC_DEFS.map((doc) => (
+      {effectiveDocs.map((doc) => (
         <DocRow
           key={doc.key}
           label={doc.label}
@@ -204,6 +212,7 @@ const DocumentsReview = ({ documentsData }) => {
 
 DocumentsReview.propTypes = {
   documentsData: PropTypes.object,
+  hasPreviousSchool: PropTypes.bool,
 };
 
 export default DocumentsReview;

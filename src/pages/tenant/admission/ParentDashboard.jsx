@@ -15,7 +15,7 @@ import AdmissionBanner from '@/components/tenant/admission/AdmissionBanner';
 import EnrolledWardCard from '@/components/tenant/admission/EnrolledWardCard';
 import ProspectiveWardCard from '@/components/tenant/admission/ProspectiveWardCard';
 import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
-import { getUserProspectiveAdmissions } from '@/api/tenant/admission/admissionApi';
+import { getUserProspectiveAdmissions, getOpenBatches } from '@/api/tenant/admission/admissionApi';
 import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { useNotification } from 'src/hooks/useNotification';
 import ward from '@/assets/images/backgrounds/ward.png';
@@ -29,6 +29,7 @@ const ParentDashboard = () => {
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false);
   const [prospectiveWards, setProspectiveWards] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hasOpenBatches, setHasOpenBatches] = useState(false);
   const [selectedSessionTerm, setSelectedSessionTerm] = useState('all');
   const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
 
@@ -57,6 +58,21 @@ const ParentDashboard = () => {
 
     loadSessionTerms();
   }, []); // Only run once on mount
+
+  useEffect(() => {
+    const loadOpenBatches = async () => {
+      try {
+        const response = await getOpenBatches();
+        const data = response?.data?.data || response?.data || [];
+        setHasOpenBatches(Array.isArray(data) && data.length > 0);
+      } catch (error) {
+        console.error('Failed to load open admission batches:', error);
+        setHasOpenBatches(false);
+      }
+    };
+
+    loadOpenBatches();
+  }, []);
 
   // Fetch prospective wards (user's admissions)
   useEffect(() => {
@@ -156,7 +172,11 @@ const ParentDashboard = () => {
 
   return (
     <PageContainer title="Parent Dashboard" description="Parent portal">
-      <AdmissionBanner session={session} onApply={() => setAdmissionModalOpen(true)} />
+      <AdmissionBanner
+        session={session}
+        hasOpenBatches={hasOpenBatches}
+        onApply={() => setAdmissionModalOpen(true)}
+      />
 
       {/* ── Stat Cards ── */}
       <Box sx={{ mb: 3 }}>

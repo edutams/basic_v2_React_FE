@@ -53,7 +53,7 @@ const AdmissionBanner = ({ session, onApply, hasOpenBatches }) => {
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
             {hasOpenBatches
-              ? 'Apply for your child today. Application closes Oct 30, 2025.'
+              ? 'Enroll  your child today in one of the opened application batches. Click the button to view available batches and apply.'
               : 'We are excited to welcome you back. Always check here for your ward activities and updates.'}
           </Typography>
         </Box>

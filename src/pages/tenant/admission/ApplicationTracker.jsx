@@ -194,7 +194,7 @@ const ApplicationTracker = () => {
     );
   }
 
-  const applicantName = `${admission.surname || ''} ${admission.first_name || ''} ${admission.other_name || ''}`.trim();
+  const applicantName = `${admission.surname.toUpperCase() || ''} ${admission.first_name.toUpperCase() || ''} ${admission.other_name.toUpperCase() || ''}`.trim();
   const intendingClass = admission.intending_class?.class_code || admission.intending_class?.class_name || 'N/A';
   const gender = admission.gender ? admission.gender.toUpperCase() : 'N/A';
   const address = admission.home_address || 'No address provided';
@@ -238,6 +238,7 @@ const ApplicationTracker = () => {
         address={address}
         photo={photo}
         dob={dob}
+        form_number={admission.form_number}
         admission={admission}
       />
 

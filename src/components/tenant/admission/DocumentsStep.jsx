@@ -268,16 +268,26 @@ const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBac
   });
 
   // Initialize existing documents from initialValues
+  // This runs whenever initialValues changes (e.g., after backend save/reload)
   useEffect(() => {
+    const existing = {};
+    const newFiles = {};
+    
     if (initialValues) {
-      const existing = {};
       EFFECTIVE_DOCUMENTS.forEach((doc) => {
+        // Only add to existing if the value is truthy (not null, not empty string)
         if (initialValues[doc.key]) {
           existing[doc.key] = initialValues[doc.key];
         }
       });
-      setExistingDocs(existing);
     }
+    
+    setExistingDocs(existing);
+    // Clear files state when initialValues change - backend is source of truth
+    setFiles(newFiles);
+    // Clear any errors
+    setErrors({});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues, hasPreviousSchool]);
 
   const handleFile = (key, file) => {
@@ -344,11 +354,29 @@ const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBac
       return;
     }
 
-    // Pass both new files and existing document URLs
-    onNext({
+    // Build the submission data
+    const submissionData = {
       newFiles: files,
-      existingDocs: existingDocs,
+      existingDocs: {},
+    };
+
+    // For each document field, explicitly set its state
+    EFFECTIVE_DOCUMENTS.forEach((doc) => {
+      const key = doc.key;
+      
+      if (files[key]) {
+        // New file uploaded - will be in newFiles
+        // Don't need to set in existingDocs
+      } else if (existingDocs[key]) {
+        // Existing document kept
+        submissionData.existingDocs[key] = existingDocs[key];
+      } else if (initialValues?.[key]) {
+        // Document was in initialValues but removed by user - explicitly send null
+        submissionData.existingDocs[key] = null;
+      }
     });
+
+    onNext(submissionData);
   };
 
   return (

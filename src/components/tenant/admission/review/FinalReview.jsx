@@ -1,6 +1,7 @@
-import { Box, Grid, Typography, Button } from '@mui/material';
+import { Box, Grid, Typography, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 import ReviewSection from './ReviewSection';
 
 const SummaryField = ({ label, value }) => (
@@ -11,15 +12,27 @@ const SummaryField = ({ label, value }) => (
 );
 
 const FinalReview = ({ applicantName, intendingClass, admissionBatch, totalPaid, onSubmit, isLoading, documentsData }) => {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   // Count uploaded documents
   const uploadedCount = documentsData 
     ? Object.values(documentsData).filter(doc => doc instanceof File || (typeof doc === 'string' && doc)).length 
     : 0;
   const totalDocuments = 4; // birth_cert, prev_school_report, passport_photo, medical_record
 
+  const handleSubmitClick = () => {
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmSubmit = () => {
+    setConfirmOpen(false);
+    onSubmit();
+  };
+
   return (
-    <ReviewSection number={5} title="Review and submit" id="section-submit">
-      <Grid container spacing={2} sx={{ mb: 2.5 }}>
+    <>
+      <ReviewSection number={5} title="Review and submit" id="section-submit">
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
         <Grid size={{ xs: 12, sm: 6 }}><SummaryField label="Applicant"       value={applicantName || 'N/A'}  /></Grid>
         <Grid size={{ xs: 12, sm: 6 }}><SummaryField label="Intending Class" value={intendingClass || 'N/A'} /></Grid>
         <Grid size={{ xs: 12, sm: 6 }}><SummaryField label="Admission Batch" value={admissionBatch || 'N/A'} /></Grid>
@@ -37,13 +50,35 @@ const FinalReview = ({ applicantName, intendingClass, admissionBatch, totalPaid,
       <Button
         variant="contained"
         fullWidth
-        onClick={onSubmit}
+        onClick={handleSubmitClick}
         disabled={isLoading}
         sx={{ fontWeight: 700, py: 1.25, borderRadius: 2, fontSize: '0.95rem' }}
       >
         {isLoading ? 'Submitting...' : 'Submit Application'}
       </Button>
     </ReviewSection>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        aria-labelledby="confirm-submit-application-dialog"
+      >
+        <DialogTitle id="confirm-submit-application-dialog">Confirm Submission</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to submit this application?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)} disabled={isLoading}>
+            No
+          </Button>
+          <Button onClick={handleConfirmSubmit} variant="contained" disabled={isLoading}>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 

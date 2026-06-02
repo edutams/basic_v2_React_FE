@@ -113,21 +113,58 @@ const AcademicInfoForm = ({
 
   // Hydrate form with initialValues once states are loaded
   useEffect(() => {
+    // Only hydrate if we have states, initialValues, and haven't hydrated yet
     if (!states.length || !initialValues || hydrated) return;
+
+    // Check if initialValues actually has meaningful data
+    const hasData = initialValues.study_mode || initialValues.intending_programme_id || initialValues.intending_class_id;
+    if (!hasData) return;
 
     const hydrate = async () => {
       const prevSchoolState = initialValues.prev_school_state;
       const prevSchoolLga = initialValues.prev_school_lga;
 
-      // Set all form values first - ensure batch programme is not overridden
-      formik.setValues({
-        ...EMPTY_FORM,
-        ...initialValues,
-        intending_programme_id: batchProgramme?.id || initialValues?.intending_programme_id || '',
-        intending_class_id: initialValues?.intending_class_id || '',
+      console.log('[AcademicInfoForm] Hydrating form with initialValues:', initialValues);
+      console.log('[AcademicInfoForm] Available batch classes:', batchClasses);
+
+      // Ensure IDs are strings
+      const programmeId = initialValues?.intending_programme_id 
+        ? String(initialValues.intending_programme_id) 
+        : (batchProgramme?.id ? String(batchProgramme.id) : '');
+      
+      // Validate that the class exists in the current batch
+      const rawClassId = initialValues?.intending_class_id 
+        ? String(initialValues.intending_class_id) 
+        : '';
+      
+      // Check if the class is valid for the current batch
+      const classExists = rawClassId && batchClasses.some(c => String(c.id) === rawClassId);
+      const classId = classExists ? rawClassId : '';
+      
+      if (rawClassId && !classExists) {
+        console.warn(`[AcademicInfoForm] Class ID ${rawClassId} doesn't exist in current batch classes. Clearing class selection.`);
+      }
+
+      console.log('[AcademicInfoForm] Computed IDs - programmeId:', programmeId, 'classId:', classId);
+
+      // Build values object explicitly, excluding relationship objects
+      const values = {
+        has_previous_school: initialValues.has_previous_school ?? false,
+        prev_school_name: initialValues.prev_school_name || '',
         prev_school_state: prevSchoolState || '',
         prev_school_lga: '', // Temporarily clear LGA until options load
-      });
+        previous_class: initialValues.previous_class || '',
+        intending_programme_id: programmeId,
+        intending_class_id: classId,
+        study_mode: initialValues.study_mode || '',
+      };
+
+      console.log('[AcademicInfoForm] Setting formik values to:', values);
+
+      // Set all form values at once
+      await formik.setValues(values, false); // false = don't validate yet
+
+      console.log('[AcademicInfoForm] Form values after hydration:', formik.values);
 
       // Load LGAs if state exists
       if (prevSchoolState) {
@@ -138,7 +175,7 @@ const AcademicInfoForm = ({
 
           // Set LGA after options are loaded
           if (prevSchoolLga) {
-            formik.setFieldValue('prev_school_lga', prevSchoolLga);
+            await formik.setFieldValue('prev_school_lga', prevSchoolLga, false);
           }
         } catch (err) {
           notify.error('Failed to load LGAs');
@@ -148,30 +185,36 @@ const AcademicInfoForm = ({
       }
 
       setHydrated(true);
+      
+      // Validate after hydration is complete
+      setTimeout(() => {
+        formik.validateForm();
+      }, 100);
     };
 
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [states, initialValues]);
+  }, [states, initialValues, hydrated]);
 
   // Update batch-related fields when selectedBatch changes
   useEffect(() => {
     if (!hydrated) return; // Only update after initial hydration
-
+    
+    // Update programme ID when batch changes
     if (batchProgramme?.id) {
-      formik.setFieldValue('intending_programme_id', batchProgramme.id);
-    }
-
-    // Clear intending_class_id if batch changed (since classes might be different)
-    if (formik.values.intending_class_id && batchClasses.length > 0) {
-      const classExists = batchClasses.find(c => c.id === parseInt(formik.values.intending_class_id));
-      if (!classExists) {
-        // Class doesn't exist in new batch, clear it
-        formik.setFieldValue('intending_class_id', '');
+      const currentProgrammeId = formik.values.intending_programme_id;
+      // Always update to match the new batch's programme
+      if (String(currentProgrammeId) !== String(batchProgramme.id)) {
+        console.log('Updating programme ID to match new batch:', batchProgramme.id);
+        formik.setFieldValue('intending_programme_id', String(batchProgramme.id));
       }
     }
+
+    // NOTE: We intentionally do NOT clear the class when batch changes
+    // The user may have changed batch after selecting a class, and we want to preserve their choice
+    // The backend will validate if the class belongs to the batch
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batchProgramme?.id, batchClasses.length]);
+  }, [batchProgramme?.id, hydrated]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStateChange = async (e) => {

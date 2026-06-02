@@ -119,6 +119,22 @@ const AcademicReview = ({ academicData, intendingClass, selectedBatch }) => {
         <Grid size={{ xs: 12, sm: 4 }}>
           <ReadField label="Study Mode" value={boardingLabel} />
         </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField 
+            label="Admission Batch" 
+            value={selectedBatch?.batch_name || 'N/A'} 
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6 }}>
+          <ReadField 
+            label="Session/Term" 
+            value={
+              selectedBatch?.session_term
+                ? `${selectedBatch.session_term.session?.sesname || ''} ${selectedBatch.session_term.display_term?.display_name || ''}`.trim() || 'N/A'
+                : 'N/A'
+            } 
+          />
+        </Grid>
       </Grid>
     </ReviewSection>
   );

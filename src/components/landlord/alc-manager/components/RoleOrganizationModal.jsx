@@ -147,7 +147,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
             Team with this Role
           </Typography>
           {totalRows > 0 && !loading && (
-            <Chip label={`${totalRows} teams`} size="small" color="primary" variant="outlined" />
+            <Chip label={`${totalRows} teams`} size="small" color="primary" />
           )}
         </Box>
         <IconButton onClick={handleClose} size="small">
@@ -172,12 +172,11 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
               ),
             }}
           />
-          <Button variant="contained" onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
+          <Button onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
             Search
           </Button>
           {search && (
             <Button
-              variant="outlined"
               onClick={() => {
                 setSearch('');
                 setSearchInput('');
@@ -249,7 +248,6 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
                               label="Lead"
                               size="small"
                               color="success"
-                              variant="outlined"
                               sx={{ height: 18, fontSize: 10 }}
                             />
                           )}
@@ -292,7 +290,6 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
                         label={user.status === 'active' ? 'Active' : 'Inactive'}
                         size="small"
                         color={user.status === 'active' ? 'success' : 'default'}
-                        variant="outlined"
                       />
                     </TableCell>
                   </TableRow>
@@ -334,7 +331,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} variant="outlined" size="small">
+        <Button onClick={handleClose} size="small">
           Close
         </Button>
       </DialogActions>

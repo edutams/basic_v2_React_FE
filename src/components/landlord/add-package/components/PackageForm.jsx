@@ -57,7 +57,6 @@ const PackageForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            variant="outlined"
             error={formik.touched.package_name && Boolean(formik.errors.package_name)}
             helperText={formik.touched.package_name && formik.errors.package_name}
           />
@@ -73,14 +72,13 @@ const PackageForm = ({
             fullWidth
             multiline
             rows={4}
-            variant="outlined"
             error={formik.touched.package_description && Boolean(formik.errors.package_description)}
             helperText={formik.touched.package_description && formik.errors.package_description}
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl fullWidth variant="outlined">
+          <FormControl fullWidth>
             <InputLabel>Status</InputLabel>
             <Select
               name="package_status"
@@ -104,7 +102,6 @@ const PackageForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            variant="outlined"
             error={formik.touched.package_code && Boolean(formik.errors.package_code)}
             helperText={formik.touched.package_code && formik.errors.package_code}
           />
@@ -118,7 +115,6 @@ const PackageForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            variant="outlined"
             error={formik.touched.package_icon && Boolean(formik.errors.package_icon)}
             helperText={formik.touched.package_icon && formik.errors.package_icon}
             placeholder="e.g. fas fa-box"
@@ -136,9 +132,7 @@ const PackageForm = ({
             >
               Cancel
             </Button>
-            <Button variant="contained" type="submit">
-              {isLoading ? 'Saving...' : submitText}
-            </Button>
+            <Button type="submit">{isLoading ? 'Saving...' : submitText}</Button>
           </Box>
         </Grid>
       </Grid>

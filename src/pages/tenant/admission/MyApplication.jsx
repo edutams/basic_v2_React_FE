@@ -11,10 +11,7 @@ import {
   MenuItem,
   CircularProgress,
 } from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  Description as DescriptionIcon,
-} from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, Description as DescriptionIcon } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
@@ -46,12 +43,11 @@ const MyApplication = () => {
           { id: 'all', label: 'All Sessions' },
           ...response.data.map((sterm) => ({
             id: sterm.id,
-            label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+            label:
+              `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
           })),
         ];
         setSessionTerms(sess_terms);
-
-
       } catch (error) {
         console.error('Failed to load session terms:', error);
         notify.error('Failed to load session terms');
@@ -134,7 +130,9 @@ const MyApplication = () => {
             My Applications
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {loading ? 'Loading...' : `${applications.length} application${applications.length !== 1 ? 's' : ''} found`}
+            {loading
+              ? 'Loading...'
+              : `${applications.length} application${applications.length !== 1 ? 's' : ''} found`}
           </Typography>
         </Box>
 
@@ -152,11 +150,7 @@ const MyApplication = () => {
             </Select>
           </FormControl>
 
-          <Button
-            variant="contained"
-            onClick={() => setBatchModalOpen(true)}
-            sx={{ whiteSpace: 'nowrap' }}
-          >
+          <Button onClick={() => setBatchModalOpen(true)} sx={{ whiteSpace: 'nowrap' }}>
             New Application
           </Button>
         </Box>
@@ -178,12 +172,13 @@ const MyApplication = () => {
 
       {/* Application cards */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}
+        >
           <CircularProgress />
         </Box>
       ) : applications.length === 0 ? (
         <Paper
-          variant="outlined"
           sx={{
             borderRadius: 3,
             p: { xs: 4, sm: 6 },
@@ -212,13 +207,11 @@ const MyApplication = () => {
               No applications yet
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360 }}>
-              You haven't submitted any admission applications for this session. Start a new application to get your
-              ward enrolled.
+              You haven't submitted any admission applications for this session. Start a new
+              application to get your ward enrolled.
             </Typography>
           </Box>
-          <Button variant="contained" onClick={() => setBatchModalOpen(true)}>
-            New Application
-          </Button>
+          <Button onClick={() => setBatchModalOpen(true)}>New Application</Button>
         </Paper>
       ) : (
         <Grid container spacing={3} alignItems="flex-start">

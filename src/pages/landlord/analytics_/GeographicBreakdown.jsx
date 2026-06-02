@@ -53,7 +53,7 @@ const GeographicBreakdown = ({ data, loading }) => {
       </Box>
 
       {tab === 0 && (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
           <Table size="small">
             <TableHead sx={{ bgcolor: '#fafafa' }}>
               <TableRow>
@@ -112,7 +112,7 @@ const GeographicBreakdown = ({ data, loading }) => {
       )}
 
       {tab === 1 && (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
           <Table size="small">
             <TableHead sx={{ bgcolor: '#fafafa' }}>
               <TableRow>
@@ -153,7 +153,7 @@ const GeographicBreakdown = ({ data, loading }) => {
       )}
 
       {tab === 2 && (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
           <Table size="small">
             <TableHead sx={{ bgcolor: '#fafafa' }}>
               <TableRow>
@@ -199,7 +199,7 @@ const GeographicBreakdown = ({ data, loading }) => {
       )}
 
       {tab === 3 && (
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
           <Table size="small">
             <TableHead sx={{ bgcolor: '#fafafa' }}>
               <TableRow>

@@ -5,13 +5,13 @@ import { IconCloudUpload, IconX, IconPhoto } from '@tabler/icons-react';
 const ImageUpload = ({
   value,
   onChange,
-  label = "Upload Image",
+  label = 'Upload Image',
   error,
   helperText,
-  shape = "square",
+  shape = 'square',
   width = 140,
   height = 140,
-  defaultImage = "https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848"
+  defaultImage = 'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
 }) => {
   const [preview, setPreview] = useState(value || defaultImage);
   const [hasCustomImage, setHasCustomImage] = useState(!!value && value !== defaultImage);
@@ -43,7 +43,10 @@ const ImageUpload = ({
 
   return (
     <Box sx={{ width: '100%', mb: 2 }}>
-      <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600, color: 'text.primary', letterSpacing: '0.02em' }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ mb: 1.5, fontWeight: 600, color: 'text.primary', letterSpacing: '0.02em' }}
+      >
         {label}
       </Typography>
 
@@ -54,8 +57,9 @@ const ImageUpload = ({
             width,
             height,
             position: 'relative',
-            borderRadius: shape === "circle" ? "50%" : "16px",
-            border: theme => `2px dashed ${error ? theme.palette.error.main : theme.palette.divider}`,
+            borderRadius: shape === 'circle' ? '50%' : '16px',
+            border: (theme) =>
+              `2px dashed ${error ? theme.palette.error.main : theme.palette.divider}`,
             bgcolor: 'grey.50',
             display: 'flex',
             alignItems: 'center',
@@ -66,8 +70,8 @@ const ImageUpload = ({
             '&:hover': {
               borderColor: 'primary.main',
               bgcolor: 'primary.lighter',
-              '& .upload-overlay': { opacity: 1 }
-            }
+              '& .upload-overlay': { opacity: 1 },
+            },
           }}
           component="label"
         >
@@ -95,7 +99,7 @@ const ImageUpload = ({
                   justifyContent: 'center',
                   opacity: 0,
                   transition: 'opacity 0.2s',
-                  color: '#fff'
+                  color: '#fff',
                 }}
               >
                 <IconCloudUpload size={32} />
@@ -114,7 +118,6 @@ const ImageUpload = ({
         <Box sx={{ textAlign: 'left', width: '100%' }}>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-start', mb: 1 }}>
             <Button
-              variant="outlined"
               size="small"
               component="label"
               startIcon={<IconCloudUpload size={16} />}
@@ -122,7 +125,7 @@ const ImageUpload = ({
                 borderRadius: '8px',
                 textTransform: 'none',
                 fontWeight: 600,
-                px: 2
+                px: 2,
               }}
             >
               Browse File...
@@ -146,14 +149,21 @@ const ImageUpload = ({
             )}
           </Box>
 
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block' }}>
+          <Typography
+            variant="caption"
+            sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block' }}
+          >
             Allowed JPG or PNG
           </Typography>
         </Box>
       </Box>
 
       {error && (
-        <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block', textAlign: 'left', fontWeight: 500 }}>
+        <Typography
+          variant="caption"
+          color="error"
+          sx={{ mt: 1, display: 'block', textAlign: 'left', fontWeight: 500 }}
+        >
           {helperText}
         </Typography>
       )}

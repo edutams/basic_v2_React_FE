@@ -1,14 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import {
-  Box,
-  Grid,
-  Typography,
-  Button,
-  Stack,
-  Paper,
-  Tooltip,
-  Divider,
-} from '@mui/material';
+import { Box, Grid, Typography, Button, Stack, Paper, Tooltip, Divider } from '@mui/material';
 import TiptapEdit from '@/pages/landlord/views/forms/form-tiptap/TiptapEdit';
 import ParentCard from 'src/components/shared/ParentCard';
 
@@ -146,7 +137,6 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
               >
                 <span>
                   <Button
-                    variant="outlined"
                     size="small"
                     fullWidth
                     disabled={readOnly}
@@ -157,9 +147,6 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
                       fontSize: 11,
                       fontWeight: 500,
                       borderColor: 'divider',
-                      color: 'text.primary',
-                      py: 0.5,
-                      '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.light' },
                     }}
                   >
                     {field.label}
@@ -328,7 +315,7 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
             >
               <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
                 <Button
-                  variant="outlined"
+                  
                   size="small"
                   sx={{
                     fontWeight: 600,
@@ -341,7 +328,7 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
                   Save Template
                 </Button>
                 <Button
-                  variant="outlined"
+                  
                   size="small"
                   sx={{
                     fontWeight: 600,
@@ -355,7 +342,7 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
                 </Button>
               </Stack>
               <Button
-                variant="contained"
+                
                 size="small"
                 sx={{
                   fontWeight: 700,

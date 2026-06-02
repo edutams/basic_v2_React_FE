@@ -12,7 +12,7 @@ const ThreeColumn = ({ leftChild, middleChild, rightChild }) => {
   const mdUp = useMediaQuery((theme) => theme.breakpoints.up('md'));
 
   return (
-    <Paper sx={{ display: 'flex', p: 0 }} variant="outlined">
+    <Paper sx={{ display: 'flex', p: 0 }}>
       {/* ------------------------------------------- */}
       {/* Left Part */}
       {/* ------------------------------------------- */}
@@ -62,7 +62,6 @@ const ThreeColumn = ({ leftChild, middleChild, rightChild }) => {
         ) : (
           <Box sx={{ p: 3 }}>
             <Button
-              variant="outlined"
               color="primary"
               size="small"
               onClick={() => setRightSidebarOpen(false)}

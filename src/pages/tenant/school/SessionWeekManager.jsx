@@ -170,7 +170,7 @@ const SessionWeekManager = () => {
     <PageContainer title="Session/Term Mapping" description="Manage academic sessions and weeks">
       <Breadcrumb title="Session/Term Mapping" items={BCrumb} />
 
-      <Card variant="outlined">
+      <Card>
         <CardContent>
           {/* Main Tabs */}
           <Tabs

@@ -146,7 +146,6 @@ const PermissionAttachmentModal = ({
             autoFocus
             placeholder="Search Permissions"
             fullWidth
-            variant="outlined"
             value={permissionSearchLocal}
             onChange={handleSearchChange}
             InputProps={{
@@ -223,9 +222,7 @@ const PermissionAttachmentModal = ({
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
-          Save Permissions
-        </Button>
+        <Button onClick={handleSave}>Save Permissions</Button>
       </DialogActions>
     </Dialog>
   );

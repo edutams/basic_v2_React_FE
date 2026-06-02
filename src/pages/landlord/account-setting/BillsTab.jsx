@@ -33,12 +33,7 @@ const BillsTab = () => {
                   <CustomFormLabel sx={{ mt: 0 }} htmlFor="text-bname">
                     Business Name*
                   </CustomFormLabel>
-                  <CustomTextField
-                    id="text-bname"
-                    value="Visitor Analytics"
-                    variant="outlined"
-                    fullWidth
-                  />
+                  <CustomTextField id="text-bname" value="Visitor Analytics" fullWidth />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <CustomFormLabel sx={{ mt: 0 }} htmlFor="text-bsector">
@@ -47,7 +42,6 @@ const BillsTab = () => {
                   <CustomTextField
                     id="text-bsector"
                     value="Arts, Media & Entertainment"
-                    variant="outlined"
                     fullWidth
                   />
                 </Grid>
@@ -55,25 +49,25 @@ const BillsTab = () => {
                   <CustomFormLabel sx={{ mt: 0 }} htmlFor="text-baddress">
                     Business Address*
                   </CustomFormLabel>
-                  <CustomTextField id="text-baddress" value="" variant="outlined" fullWidth />
+                  <CustomTextField id="text-baddress" value="" fullWidth />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <CustomFormLabel sx={{ mt: 0 }} htmlFor="text-bcy">
                     Country*
                   </CustomFormLabel>
-                  <CustomTextField id="text-bcy" value="Romania" variant="outlined" fullWidth />
+                  <CustomTextField id="text-bcy" value="Romania" fullWidth />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <CustomFormLabel sx={{ mt: 0 }} htmlFor="text-fname">
                     First Name*
                   </CustomFormLabel>
-                  <CustomTextField id="text-fname" value="" variant="outlined" fullWidth />
+                  <CustomTextField id="text-fname" value="" fullWidth />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <CustomFormLabel sx={{ mt: 0 }} htmlFor="text-lname">
                     Last Name*
                   </CustomFormLabel>
-                  <CustomTextField id="text-lname" value="" variant="outlined" fullWidth />
+                  <CustomTextField id="text-lname" value="" fullWidth />
                 </Grid>
               </Grid>
             </CardContent>
@@ -120,12 +114,8 @@ const BillsTab = () => {
               </Stack>
 
               <Stack direction="row" spacing={2}>
-                <Button variant="contained" color="primary">
-                  Change Plan
-                </Button>
-                <Button variant="outlined" color="error">
-                  Reset Plan
-                </Button>
+                <Button color="primary">Change Plan</Button>
+                <Button color="error">Reset Plan</Button>
               </Stack>
             </CardContent>
           </BlankCard>
@@ -167,16 +157,14 @@ const BillsTab = () => {
                 If you updated your payment method, it will only be dislpayed here after your next
                 billing cycle.
               </Typography>
-              <Button variant="outlined" color="error">
-                Cancel Subscription
-              </Button>
+              <Button color="error">Cancel Subscription</Button>
             </CardContent>
           </BlankCard>
         </Grid>
       </Grid>
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'end' }} mt={3}>
-        <Button size="large" variant="contained" color="primary">
+        <Button size="large" color="primary">
           Save
         </Button>
         <Button size="large" variant="text" color="error">

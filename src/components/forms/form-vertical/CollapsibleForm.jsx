@@ -135,7 +135,7 @@ const CollapsibleForm = () => {
               <CustomFormLabel htmlFor="cs-state" sx={{ mt: 0 }}>
                 State
               </CustomFormLabel>
-              <CustomSelect value={state} onChange={handleChange4} fullWidth variant="outlined">
+              <CustomSelect value={state} onChange={handleChange4} fullWidth>
                 {states.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}

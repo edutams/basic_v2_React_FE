@@ -125,7 +125,6 @@ const TransactionModal = ({ open, onClose, selectedRow }) => {
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button
                           size="small"
-                          variant="outlined"
                           startIcon={<UpdateIcon />}
                           onClick={() => handleUpdateStatus(transaction)}
                           sx={{ fontSize: '0.75rem', py: 0.25, px: 1 }}
@@ -134,7 +133,6 @@ const TransactionModal = ({ open, onClose, selectedRow }) => {
                         </Button>
                         <Button
                           size="small"
-                          variant="outlined"
                           startIcon={<PrintIcon />}
                           onClick={() => handlePrintReceipt(transaction)}
                           sx={{ fontSize: '0.75rem', py: 0.25, px: 1 }}

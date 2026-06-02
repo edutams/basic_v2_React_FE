@@ -30,9 +30,7 @@ const SecurityTab = () => {
                   Lorem ipsum, dolor sit amet consectetur adipisicing elit. Corporis sapiente sunt
                   earum officiis laboriosam ut.
                 </Typography>
-                <Button variant="contained" color="primary">
-                  Enable
-                </Button>
+                <Button color="primary">Enable</Button>
               </Stack>
 
               <Divider />
@@ -100,9 +98,7 @@ const SecurityTab = () => {
               <Typography color="textSecondary" mt={1} mb={2}>
                 Lorem ipsum dolor sit amet consectetur adipisicing elit Rem.
               </Typography>
-              <Button variant="contained" color="primary">
-                Sign out from all devices
-              </Button>
+              <Button color="primary">Sign out from all devices</Button>
 
               {/* list 1 */}
               <Stack direction="row" spacing={2} py={2} mt={3} alignItems="center">
@@ -148,7 +144,7 @@ const SecurityTab = () => {
       </Grid>
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'end' }} mt={3}>
-        <Button size="large" variant="contained" color="primary">
+        <Button size="large" color="primary">
           Save
         </Button>
         <Button size="large" variant="text" color="error">

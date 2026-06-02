@@ -33,7 +33,10 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import AdmissionLetterEditor from '@/components/tenant/admission/setup/AdmissionLetterEditor';
-import { fetchSessions, fetchSessionTermsBySession } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchSessions,
+  fetchSessionTermsBySession,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import {
   fetchAdmissionBatches,
   toggleAdmissionBatchStatus,
@@ -219,7 +222,9 @@ const AdmissionSetup = () => {
       const selected = session_terms[0] ?? null;
       if (selected) {
         setSelectedSessionTermId(selected.id);
-        setSelectedSessionTermLabel(`${selected.session.sesname} - ${selected.display_term.display_name}`);
+        setSelectedSessionTermLabel(
+          `${selected.session.sesname} - ${selected.display_term.display_name}`,
+        );
       } else {
         setSelectedSessionTermId(null);
         setSelectedSessionTermLabel('');
@@ -254,7 +259,9 @@ const AdmissionSetup = () => {
 
   const handleTermSelect = (session_term) => {
     setSelectedSessionTermId(session_term.id);
-    setSelectedSessionTermLabel(`${session_term.session.sesname} - ${session_term.display_term.display_name}`);
+    setSelectedSessionTermLabel(
+      `${session_term.session.sesname} - ${session_term.display_term.display_name}`,
+    );
   };
 
   const handleMenuOpen = (e, session_term) => {
@@ -289,9 +296,7 @@ const AdmissionSetup = () => {
     if (!batch) return;
     // Optimistic update
     const newStatus = batch.status === 'open' ? 'close' : 'open';
-    setBatches((prev) =>
-      prev.map((b) => (b.id === batch.id ? { ...b, status: newStatus } : b)),
-    );
+    setBatches((prev) => prev.map((b) => (b.id === batch.id ? { ...b, status: newStatus } : b)));
     try {
       await toggleAdmissionBatchStatus(batch.id);
       showSnackbar(`Batch ${newStatus === 'open' ? 'opened' : 'closed'} successfully`);
@@ -306,14 +311,14 @@ const AdmissionSetup = () => {
 
   const handleSaveAdmissionLetter = async () => {
     if (!letterEditorBatch) return;
-    
+
     try {
       const payload = {
         admission_letter_template: letterEditorContent,
       };
-      
+
       await updateAdmissionBatch(letterEditorBatch.id, payload);
-      
+
       // Update the batch in the local state
       setBatches((prev) =>
         prev.map((b) =>
@@ -322,7 +327,7 @@ const AdmissionSetup = () => {
             : b,
         ),
       );
-      
+
       showSnackbar('Admission letter saved successfully');
       setLetterEditorOpen(false);
     } catch (err) {
@@ -387,7 +392,7 @@ const AdmissionSetup = () => {
                 {sessionTerms.length === 0 ? (
                   <Alert severity="info">No session terms found.</Alert>
                 ) : (
-                  <Paper variant="outlined">
+                  <Paper>
                     <TableContainer>
                       <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
                         <TableHead>
@@ -415,7 +420,8 @@ const AdmissionSetup = () => {
                               >
                                 <TableCell>{i + 1}</TableCell>
                                 <TableCell sx={{ fontWeight: isSelected ? 700 : 400 }}>
-                                  {session_term?.session?.sesname} {session_term?.display_term?.display_name}
+                                  {session_term?.session?.sesname}{' '}
+                                  {session_term?.display_term?.display_name}
                                 </TableCell>
                                 <TableCell align="center">
                                   {session_term?.is_subscribed === 'yes' ? (
@@ -473,7 +479,7 @@ const AdmissionSetup = () => {
                   )}
                 </Typography>
                 <Button
-                  variant="contained"
+                  //
                   size="small"
                   startIcon={<AddIcon />}
                   disabled={!selectedSessionTermId}
@@ -503,7 +509,7 @@ const AdmissionSetup = () => {
                 No admission batches yet for this term. Click "Create New Admission" to add one.
               </Alert>
             ) : (
-              <Paper variant="outlined">
+              <Paper>
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
@@ -535,9 +541,7 @@ const AdmissionSetup = () => {
                         <TableRow key={batch.id} hover>
                           <TableCell>{i + 1}</TableCell>
 
-                          <TableCell sx={{ fontWeight: 600 }}>
-                            {batch.batch_name }
-                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{batch.batch_name}</TableCell>
 
                           {/* Entrance Exam */}
                           <TableCell align="center">
@@ -690,7 +694,6 @@ const AdmissionSetup = () => {
           </Button>
           <Button
             size="small"
-            variant="contained"
             color={confirmToggleBatch.batch?.status === 'open' ? 'error' : 'success'}
             onClick={handleToggleBatchStatus}
           >
@@ -740,11 +743,7 @@ const AdmissionSetup = () => {
             {letterEditorReadOnly ? 'Close' : 'Cancel'}
           </Button>
           {!letterEditorReadOnly && (
-            <Button
-              variant="contained"
-              onClick={handleSaveAdmissionLetter}
-              sx={{ fontWeight: 700 }}
-            >
+            <Button onClick={handleSaveAdmissionLetter} sx={{ fontWeight: 700 }}>
               Save Letter
             </Button>
           )}

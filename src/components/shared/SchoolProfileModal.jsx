@@ -69,7 +69,10 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
       <DialogContent sx={{ pt: 3 }}>
         {/* Header */}
         <Box display="flex" alignItems="center" gap={3} mb={4}>
-          <Avatar src={schoolLogo} sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32 }}>
+          <Avatar
+            src={schoolLogo}
+            sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: 32 }}
+          >
             {schoolName.charAt(0)}
           </Avatar>
           <Box>
@@ -124,9 +127,7 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
       <Divider />
 
       <DialogActions sx={{ p: 2.5 }}>
-        <Button onClick={onClose} variant="outlined">
-          Close
-        </Button>
+        <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
   );

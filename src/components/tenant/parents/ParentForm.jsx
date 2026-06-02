@@ -207,7 +207,7 @@ const ParentForm = ({
             </Typography>
           )}
         </Box>
-        <Chip label={classArm} size="small" variant="outlined" />
+        <Chip label={classArm} size="small" />
         {showRemove && (
           <IconButton
             size="small"
@@ -495,7 +495,6 @@ const ParentForm = ({
               />
 
               <Button
-                variant="contained"
                 onClick={handleWardSearch}
                 disabled={wardSearching}
                 sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
@@ -590,7 +589,7 @@ const ParentForm = ({
         <Button color="inherit" onClick={onCancel} disabled={isLoading}>
           {cancelLabel}
         </Button>
-        <Button variant="contained" type="submit" disabled={isLoading || !formik.isValid}>
+        <Button type="submit" disabled={isLoading || !formik.isValid}>
           {isLoading ? 'Saving...' : submitText || (isEdit ? 'Save Changes' : 'Add Parent')}
         </Button>
       </Box>

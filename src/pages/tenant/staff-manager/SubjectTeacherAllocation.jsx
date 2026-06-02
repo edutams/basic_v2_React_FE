@@ -391,9 +391,7 @@ const SubjectTeacherAllocation = () => {
       {/* Save Button */}
       {allocations.length > 0 && (
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'right' }}>
-          <Button variant="contained" onClick={handleSaveAll}>
-            Save All
-          </Button>
+          <Button onClick={handleSaveAll}>Save All</Button>
         </Box>
       )}
       {/* Confirmation Dialog */}

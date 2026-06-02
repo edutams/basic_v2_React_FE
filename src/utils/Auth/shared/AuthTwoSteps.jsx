@@ -12,15 +12,15 @@ const AuthTwoSteps = () => (
       <Stack mb={3}>
         <CustomFormLabel htmlFor="code">Type your 6 digits security code </CustomFormLabel>
         <Stack spacing={2} direction="row">
-          <CustomTextField id="code" variant="outlined" fullWidth />
-          <CustomTextField id="code" variant="outlined" fullWidth />
-          <CustomTextField id="code" variant="outlined" fullWidth />
-          <CustomTextField id="code" variant="outlined" fullWidth />
-          <CustomTextField id="code" variant="outlined" fullWidth />
-          <CustomTextField id="code" variant="outlined" fullWidth />
+          <CustomTextField id="code" fullWidth />
+          <CustomTextField id="code" fullWidth />
+          <CustomTextField id="code" fullWidth />
+          <CustomTextField id="code" fullWidth />
+          <CustomTextField id="code" fullWidth />
+          <CustomTextField id="code" fullWidth />
         </Stack>
       </Stack>
-      <Button color="primary" variant="contained" size="large" fullWidth component={Link} to="/">
+      <Button color="primary" size="large" fullWidth component={Link} to="/">
         Verify My Account
       </Button>
 

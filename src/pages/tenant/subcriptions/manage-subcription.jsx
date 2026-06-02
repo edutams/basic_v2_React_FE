@@ -248,7 +248,6 @@ const ManageSubscriptionList = () => {
           >
             <Typography variant="h5">Manage Subcription</Typography>
             <Button
-              variant="contained"
               color="primary"
               size="small"
               onClick={handleAddClick}
@@ -280,7 +279,7 @@ const ManageSubscriptionList = () => {
             />
           </Box>
 
-          <Paper variant="outlined">
+          <Paper>
             <TableContainer sx={{ overflowX: 'auto' }}>
               <Table sx={{ tableLayout: 'fixed', minWidth: 900 }}>
                 <TableHead>

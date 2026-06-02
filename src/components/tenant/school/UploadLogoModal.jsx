@@ -118,7 +118,6 @@ const UploadLogoModal = ({ open, onClose, onUploaded }) => {
           Cancel
         </Button>
         <Button
-          variant="contained"
           startIcon={<IconUpload size={16} />}
           onClick={handleUpload}
           disabled={!selectedFile || uploading}

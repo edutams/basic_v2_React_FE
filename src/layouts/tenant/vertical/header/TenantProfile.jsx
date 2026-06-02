@@ -215,7 +215,6 @@ const TenantProfile = () => {
 
         <Box mt={2}>
           <Button
-            variant="outlined"
             color="secondary"
             fullWidth
             onClick={handleLogout}

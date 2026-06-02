@@ -70,7 +70,7 @@ const ViewParentsContent = ({ learner, onClose }) => {
           </Typography>
         </Typography>
         {filtered.length > 0 && !loading && (
-          <Chip label={filtered.length} size="small" color="primary" variant="outlined" />
+          <Chip label={filtered.length} size="small" color="primary" />
         )}
       </Box>
 
@@ -172,7 +172,7 @@ const ViewParentsContent = ({ learner, onClose }) => {
       </TableContainer>
 
       <Box display="flex" justifyContent="flex-end" sx={{ mt: 2 }}>
-        <Button variant="outlined" size="small" onClick={onClose}>
+        <Button size="small" onClick={onClose}>
           Close
         </Button>
       </Box>

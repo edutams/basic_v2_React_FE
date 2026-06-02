@@ -92,7 +92,6 @@ const MyCommissionStatCards = () => {
             }}
           >
             <Button
-              variant="outlined"
               startIcon={<IconAdjustments size={14} />}
               onClick={() => setIsRegisterModalOpen(true)}
               sx={{
@@ -108,7 +107,7 @@ const MyCommissionStatCards = () => {
             </Button>
 
             <Button
-              // variant="contained"
+              //
               startIcon={<IconCash size={14} />}
               onClick={() => setIsRegisterModalOpen(true)}
               sx={{

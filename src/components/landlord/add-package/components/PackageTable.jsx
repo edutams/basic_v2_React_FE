@@ -124,7 +124,6 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
           <Typography variant="h5">All Packages</Typography>
           <Box display="flex" gap={1} flexWrap="wrap" width={{ xs: '100%', sm: 'auto' }}>
             <Button
-              variant="outlined"
               startIcon={<IconFilter size={18} />}
               onClick={() => setFilterDrawerOpen(true)}
               size="small"
@@ -141,7 +140,6 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
               )}
             </Button>
             <Button
-              variant="contained"
               startIcon={<AddIcon />}
               onClick={() => onPackageAction('create')}
               size="small"
@@ -164,7 +162,7 @@ const PackageTable = ({ packages = [], onPackageAction, isLoading: externalLoadi
           onReset={handleFilterReset}
         />
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>

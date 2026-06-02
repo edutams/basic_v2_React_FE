@@ -49,7 +49,7 @@ const SearchInput = styled('div')(({ theme }) => ({
   '&:focus-within': {
     borderColor: theme.palette.primary.main,
     boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.1)}`,
-  }
+  },
 }));
 
 const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCancel }) => {
@@ -65,7 +65,7 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
     if (currentPermissions && Array.isArray(currentPermissions)) {
       setSelectedModules(currentPermissions.map(String));
     } else if (selectedPlan?.modules && Array.isArray(selectedPlan.modules)) {
-      setSelectedModules(selectedPlan.modules.map(m => String(m.id || m)));
+      setSelectedModules(selectedPlan.modules.map((m) => String(m.id || m)));
     }
   }, [selectedPlan, currentPermissions]);
 
@@ -100,7 +100,7 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
 
     if (!query) return currentCategoryModules;
 
-    return allModules.filter(m => {
+    return allModules.filter((m) => {
       const name = (m.module_name || m.mod_name || m.label || '').toLowerCase();
       const desc = (m.module_description || m.mod_description || m.description || '').toLowerCase();
       const cat = getCategoryName(m).toLowerCase();
@@ -114,22 +114,22 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
 
   const handleModuleChange = (moduleId, checked) => {
     const idStr = String(moduleId);
-    setSelectedModules(prev => {
+    setSelectedModules((prev) => {
       const isPresent = prev.includes(idStr);
       if (checked && !isPresent) return [...prev, idStr];
-      if (!checked && isPresent) return prev.filter(id => id !== idStr);
+      if (!checked && isPresent) return prev.filter((id) => id !== idStr);
       return prev;
     });
   };
 
   const handleSelectAll = (moduleList) => {
-    const listIds = moduleList.map(m => String(m.id));
-    const allSelected = listIds.every(id => selectedModules.includes(id));
+    const listIds = moduleList.map((m) => String(m.id));
+    const allSelected = listIds.every((id) => selectedModules.includes(id));
 
     if (allSelected) {
-      setSelectedModules(prev => prev.filter(id => !listIds.includes(id)));
+      setSelectedModules((prev) => prev.filter((id) => !listIds.includes(id)));
     } else {
-      setSelectedModules(prev => Array.from(new Set([...prev, ...listIds])));
+      setSelectedModules((prev) => Array.from(new Set([...prev, ...listIds])));
     }
   };
 
@@ -151,14 +151,16 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
   };
 
   return (
-    <Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '90vh',
-      bgcolor: '#f8fafc',
-      borderRadius: '24px',
-      overflow: 'hidden',
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '90vh',
+        bgcolor: '#f8fafc',
+        borderRadius: '24px',
+        overflow: 'hidden',
+      }}
+    >
       {/* Scrollable Content Area */}
       <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
         {/* Header Section */}
@@ -166,7 +168,10 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <Box>
               <Typography variant="h4" fontWeight="bold" color="text.primary">
-                {selectedPlan?.name} <Typography component="span" variant="h4" color="text.secondary">Plan</Typography>
+                {selectedPlan?.name}{' '}
+                <Typography component="span" variant="h4" color="text.secondary">
+                  Plan
+                </Typography>
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                 Configure the modules and capabilities for this plan tier.
@@ -174,13 +179,28 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Paper variant="outlined" sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1.5, bgcolor: 'white' }}>
-                <Avatar sx={{ bgcolor: alpha('#5D87FF', 0.1), color: '#5D87FF', width: 32, height: 32 }}>
+              <Paper
+                sx={{
+                  px: 2,
+                  py: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  bgcolor: 'white',
+                }}
+              >
+                <Avatar
+                  sx={{ bgcolor: alpha('#5D87FF', 0.1), color: '#5D87FF', width: 32, height: 32 }}
+                >
                   <IconTerminal2 size={18} />
                 </Avatar>
                 <Box>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Active Modules</Typography>
-                  <Typography variant="subtitle2" fontWeight="bold">{selectedModules.length}</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                    Active Modules
+                  </Typography>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {selectedModules.length}
+                  </Typography>
                 </Box>
               </Paper>
             </Box>
@@ -191,9 +211,7 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
         <Grid container spacing={3}>
           {/* Sidebar */}
 
-
           {/* Module Grid */}
-
         </Grid>
       </Box>
 
@@ -208,33 +226,44 @@ const ManageModule = ({ selectedPlan, modules, currentPermissions, onSave, onCan
           justifyContent: 'center',
         }}
       >
-        <Box sx={{ maxWidth: 1200, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            maxWidth: 1200,
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Box sx={{ display: 'flex', gap: 4 }}>
             <Box>
-              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}>PLAN PRICE</Typography>
-              <Typography variant="h6" fontWeight="bold" color="primary">₦{parseFloat(selectedPlan?.price || 0).toLocaleString()}</Typography>
+              <Typography
+                variant="caption"
+                sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}
+              >
+                PLAN PRICE
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color="primary">
+                ₦{parseFloat(selectedPlan?.price || 0).toLocaleString()}
+              </Typography>
             </Box>
           </Box>
 
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              onClick={onCancel}
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-            >
+            <Button onClick={onCancel} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
               Cancel
             </Button>
             <Button
-              variant="contained"
               onClick={handleSave}
               disabled={!hasChanges || isSaving}
-              startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : null}
+              startIcon={isSaving ? <CircularProgress size={16} /> : null}
               sx={{
                 px: 4,
                 borderRadius: '8px',
                 fontWeight: 'bold',
                 textTransform: 'none',
                 boxShadow: 'none',
-                '&:hover': { boxShadow: 'none' }
+                '&:hover': { boxShadow: 'none' },
               }}
             >
               {isSaving ? 'Saving...' : 'Save Configuration'}

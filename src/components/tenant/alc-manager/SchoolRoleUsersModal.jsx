@@ -119,9 +119,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role }) => {
           <Typography variant="h6" component="span">
             Users with this Role
           </Typography>
-          {totalRows > 0 && !loading && (
-            <Chip label={totalRows} size="small" color="primary" variant="outlined" />
-          )}
+          {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
         <IconButton onClick={handleClose} size="small">
           <CloseIcon fontSize="small" />
@@ -145,7 +143,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role }) => {
               ),
             }}
           />
-          <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: '80px' }}>
+          <Button size="small" onClick={handleSearch} sx={{ minWidth: '80px' }}>
             Search
           </Button>
         </Box>
@@ -208,7 +206,6 @@ const SchoolRoleUsersModal = ({ open, onClose, role }) => {
                         label={user.status}
                         size="small"
                         color={user.status === 'active' ? 'success' : 'default'}
-                        variant="outlined"
                       />
                     </TableCell>
                   </TableRow>
@@ -248,7 +245,7 @@ const SchoolRoleUsersModal = ({ open, onClose, role }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} variant="outlined" size="small">
+        <Button onClick={handleClose} size="small">
           Close
         </Button>
       </DialogActions>

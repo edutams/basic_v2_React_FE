@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Grid,
-  Box,
-  Typography,
-  Button,
-  Paper,
-} from '@mui/material';
+import { Grid, Box, Typography, Button, Paper } from '@mui/material';
 
 const colors = [
   '#7F8C8D',
@@ -32,11 +26,11 @@ const colors = [
 
 const ColorSelector = ({ label, value, onChange }) => (
   <Grid item xs={12} md={4}>
-    <Paper variant="outlined" sx={{ p: 2 }}>
+    <Paper sx={{ p: 2 }}>
       <Typography variant="subtitle2" gutterBottom>
         {label}
       </Typography>
-      <Button variant="outlined" size="small" sx={{ mb: 2 }} onClick={() => onChange('')}>
+      <Button size="small" sx={{ mb: 2 }} onClick={() => onChange('')}>
         Default
       </Button>
       <Box

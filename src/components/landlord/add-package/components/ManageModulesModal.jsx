@@ -137,11 +137,9 @@ const ManageModulesModal = ({ open, onClose, currentPackage, onModuleAssignment 
 
         {/* Actions */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button variant="outlined" onClick={onClose}>
-            Cancel
-          </Button>
+          <Button onClick={onClose}>Cancel</Button>
 
-          <Button variant="contained" onClick={handleSave} disabled={loading}>
+          <Button onClick={handleSave} disabled={loading}>
             Save
           </Button>
         </Box>

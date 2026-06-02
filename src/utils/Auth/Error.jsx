@@ -28,7 +28,6 @@ const Error = ({ message = 'This page you are looking for could not be found.' }
       </Typography>
       <Button
         color="primary"
-        variant="contained"
         component={Link}
         to={isTenantSubdomain ? '/dashboard' : '/agent'}
         disableElevation

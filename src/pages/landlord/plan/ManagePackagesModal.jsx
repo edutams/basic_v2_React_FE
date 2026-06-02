@@ -269,7 +269,6 @@ const ManagePackagesModal = ({ selectedPlan, onClose }) => {
 
         <Button
           onClick={handleSave}
-          variant="contained"
           startIcon={saving && <CircularProgress size={20} color="inherit" />}
           disabled={saving}
           size="small"

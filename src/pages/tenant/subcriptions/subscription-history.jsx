@@ -164,7 +164,7 @@ const SubscriptionHistoryList = () => {
           />
         </Box>
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table sx={{ minWidth: 900 }}>
               <TableHead>

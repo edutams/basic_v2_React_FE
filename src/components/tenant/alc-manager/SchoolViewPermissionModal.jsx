@@ -29,13 +29,12 @@ const SchoolViewPermissionModal = ({ open, onClose, selectedRow, permissionsToVi
               {permissionsToView.map((permission, index) => {
                 const colors = ['primary', 'secondary', 'success', 'warning', 'info', 'error'];
                 const color = colors[index % colors.length];
-                
+
                 return (
                   <Chip
                     key={permission.id || index}
                     label={permission.name || permission}
                     color={color}
-                    variant="outlined"
                     size="small"
                   />
                 );

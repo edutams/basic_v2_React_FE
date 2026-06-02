@@ -194,7 +194,6 @@ const FilterSideDrawer = ({
         <Stack direction="row" spacing={1.5}>
           <Button
             fullWidth
-            variant="outlined"
             startIcon={<IconRefresh size={16} />}
             onClick={handleReset}
             sx={{ textTransform: 'none', borderRadius: 2 }}

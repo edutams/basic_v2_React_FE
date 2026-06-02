@@ -44,7 +44,7 @@ const NotificationTab = () => {
               </Typography>
 
               <CustomFormLabel htmlFor="text-email">Email Address*</CustomFormLabel>
-              <CustomTextField id="text-email" variant="outlined" fullWidth />
+              <CustomTextField id="text-email" fullWidth />
               <Typography color="textSecondary">Required for notificaitons.</Typography>
 
               {/* list 1 */}
@@ -228,7 +228,7 @@ const NotificationTab = () => {
       </Grid>
 
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'end' }} mt={3}>
-        <Button size="large" variant="contained" color="primary">
+        <Button size="large" color="primary">
           Save
         </Button>
         <Button size="large" variant="text" color="error">

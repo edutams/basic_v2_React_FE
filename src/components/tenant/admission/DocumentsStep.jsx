@@ -120,7 +120,6 @@ const DocumentRow = ({
 
   return (
     <Paper
-      variant="outlined"
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -224,7 +223,6 @@ const DocumentRow = ({
         </Box>
       ) : (
         <Button
-          variant="outlined"
           size="small"
           onClick={(e) => {
             e.stopPropagation();
@@ -251,7 +249,13 @@ const DocumentRow = ({
   );
 };
 
-const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBack, isLoading = false }) => {
+const DocumentsStep = ({
+  initialValues,
+  hasPreviousSchool = false,
+  onNext,
+  onBack,
+  isLoading = false,
+}) => {
   const [files, setFiles] = useState({});
   const [existingDocs, setExistingDocs] = useState({});
   const [dragOver, setDragOver] = useState(null);
@@ -273,7 +277,7 @@ const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBac
   useEffect(() => {
     const existing = {};
     const newFiles = {};
-    
+
     if (initialValues) {
       EFFECTIVE_DOCUMENTS.forEach((doc) => {
         // Only add to existing if the value is truthy (not null, not empty string)
@@ -282,7 +286,7 @@ const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBac
         }
       });
     }
-    
+
     setExistingDocs(existing);
     // Clear files state when initialValues change - backend is source of truth
     setFiles(newFiles);
@@ -364,7 +368,7 @@ const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBac
     // For each document field, explicitly set its state
     EFFECTIVE_DOCUMENTS.forEach((doc) => {
       const key = doc.key;
-      
+
       if (files[key]) {
         // New file uploaded - will be in newFiles
         // Don't need to set in existingDocs
@@ -427,7 +431,6 @@ const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBac
           Back
         </Button>
         <Button
-          variant="contained"
           onClick={handleSubmit}
           disabled={isLoading || !allRequiredOk}
           sx={{ fontWeight: 700, px: 4, borderRadius: 2 }}

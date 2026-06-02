@@ -834,11 +834,7 @@ const StaffManager = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            variant="contained"
-            onClick={() => setViewModalOpen(false)}
-            sx={{ textTransform: 'none' }}
-          >
+          <Button onClick={() => setViewModalOpen(false)} sx={{ textTransform: 'none' }}>
             Close
           </Button>
         </DialogActions>
@@ -865,7 +861,6 @@ const StaffManager = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
-            variant="outlined"
             color="inherit"
             onClick={() => {
               setImpersonateConfirmOpen(false);
@@ -875,7 +870,6 @@ const StaffManager = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             color="inherit"
             onClick={handleConfirmedImpersonateStaff}
             sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}

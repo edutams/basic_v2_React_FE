@@ -360,7 +360,6 @@ const ParentManagement = () => {
               }}
             >
               <Button
-                variant="contained"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
                 color="primary"
                 fullWidth={false}
@@ -369,7 +368,6 @@ const ParentManagement = () => {
                 Add Single Parent
               </Button>
               <Button
-                variant="outlined"
                 startIcon={<DownloadIcon />}
                 onClick={handleDownloadTemplate}
                 size="small"
@@ -379,7 +377,6 @@ const ParentManagement = () => {
               </Button>
 
               <Button
-                variant="outlined"
                 startIcon={<UploadIcon />}
                 onClick={() => setUploadModalOpen(true)}
                 size="small"
@@ -414,18 +411,13 @@ const ParentManagement = () => {
           />
 
           {hasFilters && (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={resetFilters}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
+            <Button size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               Clear Filters
             </Button>
           )}
         </Box>
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table>
               <TableHead>
@@ -629,7 +621,7 @@ const ParentManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleConfirmDelete} autoFocus>
+          <Button color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>
         </DialogActions>
@@ -653,7 +645,6 @@ const ParentManagement = () => {
         <DialogActions>
           <Button onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
           <Button
-            variant="contained"
             // color={parentToToggle?.status === 'active' ? 'warning' : 'success'}
             onClick={handleConfirmToggle}
             autoFocus
@@ -684,7 +675,6 @@ const ParentManagement = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
-            variant="outlined"
             color="inherit"
             onClick={() => {
               setImpersonateGuardianConfirmOpen(false);
@@ -694,7 +684,6 @@ const ParentManagement = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleConfirmedImpersonateGuardian}
             sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
           >

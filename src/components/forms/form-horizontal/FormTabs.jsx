@@ -100,7 +100,7 @@ const FormTabs = () => {
             </TabList>
           </Box>
           <TabPanel value="1">
-            <Grid container spacing={3} >
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, lg: 6 }}>
                 <Grid container spacing={3} columns={{ xs: 12, lg: 12 }}>
                   <Grid size={{ xs: 12, sm: 3, md: 3 }} display="flex" alignItems="center">
@@ -126,7 +126,6 @@ const FormTabs = () => {
                       value={country}
                       onChange={handleChange2}
                       fullWidth
-                      variant="outlined"
                     >
                       {countries.map((option) => (
                         <MenuItem key={option.value} value={option.value}>
@@ -164,12 +163,7 @@ const FormTabs = () => {
                     </CustomFormLabel>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 9, md: 9 }}>
-                    <CustomSelect
-                      value={language}
-                      onChange={handleChange3}
-                      fullWidth
-                      variant="outlined"
-                    >
+                    <CustomSelect value={language} onChange={handleChange3} fullWidth>
                       {lang.map((option) => (
                         <MenuItem key={option.value} value={option.value}>
                           {option.label}

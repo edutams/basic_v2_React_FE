@@ -89,13 +89,11 @@ const HolidayModal = ({
 
       {mode === 'create' && (
         <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button variant="contained" onClick={handleAddMore}>
-            Add More
-          </Button>
+          <Button onClick={handleAddMore}>Add More</Button>
         </Box>
       )}
 
-      <Card variant="outlined" sx={{ p: 2, width: '100%' }}>
+      <Card sx={{ p: 2, width: '100%' }}>
         {holidayForms.map((form, index) => (
           <Box key={form.id} sx={{ mb: index < holidayForms.length - 1 ? 2 : 0 }}>
             <Grid container spacing={2} alignItems="center">
@@ -136,11 +134,8 @@ const HolidayModal = ({
       </Card>
 
       <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-        <Button variant="outlined" onClick={handleCancel}>
-          Cancel
-        </Button>
+        <Button onClick={handleCancel}>Cancel</Button>
         <Button
-          variant="contained"
           onClick={handleSave}
           disabled={holidayForms.every((form) => !form.holiday_date || !form.holiday_description)}
         >

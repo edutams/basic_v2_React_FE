@@ -20,7 +20,13 @@ import { useNotification } from '@/hooks/useNotification';
 
 // import AuthSocialButtons from './AuthSocialButtons';
 
-const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forgot_password', onForgotPassword }) => {
+const AuthLogin = ({
+  title,
+  subtitle,
+  subtext,
+  forgotPasswordPath = '/agent/forgot_password',
+  onForgotPassword,
+}) => {
   const [formData, setFormData] = useState({
     login: '',
     password: '',
@@ -134,7 +140,6 @@ const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forg
             <CustomTextField
               id="login"
               name="login"
-              variant="outlined"
               fullWidth
               size="small"
               value={formData.login}
@@ -150,7 +155,6 @@ const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forg
               id="password"
               name="password"
               type="password"
-              variant="outlined"
               size="small"
               fullWidth
               value={formData.password}
@@ -190,7 +194,6 @@ const AuthLogin = ({ title, subtitle, subtext, forgotPasswordPath = '/agent/forg
         <Box mt={2}>
           <Button
             color="primary"
-            variant="contained"
             size="large"
             fullWidth
             type="submit"

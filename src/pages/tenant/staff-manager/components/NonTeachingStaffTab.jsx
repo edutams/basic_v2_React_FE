@@ -58,7 +58,15 @@ const NonTeachingStaffTab = ({
           gap: 2,
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            width: { xs: '100%', sm: 'auto' },
+          }}
+        >
           <TextField
             size="small"
             placeholder="Search staff..."
@@ -91,7 +99,6 @@ const NonTeachingStaffTab = ({
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
           <Button
-            variant="contained"
             startIcon={<IconPlus size={18} />}
             onClick={handleAddStaff}
             size="small"
@@ -99,7 +106,7 @@ const NonTeachingStaffTab = ({
           >
             Add Non-Teaching Staff
           </Button>
-          <ButtonGroup variant="outlined" sx={{ width: { xs: '100%', sm: 'auto' } }}>
+          <ButtonGroup sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Button
               startIcon={<IconPlus size={18} />}
               sx={{ textTransform: 'none', flex: 1 }}

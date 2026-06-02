@@ -1146,13 +1146,9 @@ const Agent = () => {
                   <Typography variant="h5">List of Organizations</Typography>
                 </Stack>
                 <Button
-                  variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => setIsRegisterModalOpen(true)}
                   sx={{
-                    bgcolor: 'primary.main',
-                    '&:hover': { bgcolor: 'primary.dark' },
-
                     fontSize: {
                       xs: '0.75rem',
                       sm: '0.875rem',
@@ -1182,7 +1178,6 @@ const Agent = () => {
               }}
             >
               <Button
-                variant="outlined"
                 startIcon={<IconAdjustmentsHorizontal size={18} />}
                 onClick={() => setFilterDrawerOpen(true)}
                 sx={{
@@ -1190,9 +1185,7 @@ const Agent = () => {
                   borderRadius: 2,
                   px: 2.5,
                   borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                  color: activeFilterCount > 0 ? 'primary.main' : 'text.secondary',
                   fontWeight: activeFilterCount > 0 ? 700 : 400,
-                  '&:hover': { borderColor: 'primary.main', color: '#fff' },
                 }}
               >
                 Filters
@@ -1292,7 +1285,6 @@ const Agent = () => {
                           <TableCell>
                             {editRowId === agent.s_n ? (
                               <TextField
-                                variant="outlined"
                                 value={editedData?.organizationName || ''}
                                 onChange={(e) => handleChange(e, 'organizationName', agent)}
                                 fullWidth
@@ -1457,7 +1449,6 @@ const Agent = () => {
                               <Select
                                 value={editedData?.status || ''}
                                 onChange={(e) => handleChange(e, 'status', agent)}
-                                variant="outlined"
                                 fullWidth
                               >
                                 {statusOptions.map((option) => (
@@ -1574,7 +1565,6 @@ const Agent = () => {
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
             <Button
-              variant="outlined"
               color="inherit"
               onClick={() => {
                 setImpersonateConfirmOpen(false);
@@ -1583,13 +1573,7 @@ const Agent = () => {
             >
               Cancel
             </Button>
-            <Button
-              variant="contained"
-              onClick={handleConfirmedImpersonate}
-              sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
-            >
-              Yes, Login As
-            </Button>
+            <Button onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
           </DialogActions>
         </Dialog>
 
@@ -1604,10 +1588,10 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="outlined" color="inherit" onClick={handleCancelDelete}>
+            <Button color="inherit" onClick={handleCancelDelete}>
               Cancel
             </Button>
-            <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+            <Button color="error" onClick={handleConfirmDelete}>
               Yes, Delete
             </Button>
           </DialogActions>
@@ -1630,10 +1614,10 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="outlined" color="inherit" onClick={handleCancelDeleteOrganization}>
+            <Button color="inherit" onClick={handleCancelDeleteOrganization}>
               Cancel
             </Button>
-            <Button variant="contained" color="error" onClick={handleConfirmDeleteOrganization}>
+            <Button color="error" onClick={handleConfirmDeleteOrganization}>
               Yes, Delete
             </Button>
           </DialogActions>

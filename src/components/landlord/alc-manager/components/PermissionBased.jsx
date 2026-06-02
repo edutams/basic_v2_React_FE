@@ -187,17 +187,17 @@ const PermissionBased = () => {
               ),
             }}
           />
-          <Button variant="contained" onClick={handleSearch} sx={{ height: 'fit-content', mb: 2 }}>
+          <Button onClick={handleSearch} sx={{ height: 'fit-content', mb: 2 }}>
             Search
           </Button>
           {/* {hasFilters && (
-            <Button variant="outlined" onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
+            <Button  onClick={resetFilters} sx={{ height: 'fit-content', mb: 2 }}>
               Clear Filters
             </Button>
           )} */}
         </Grid>
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
             <Table sx={{ minWidth: 600 }}>
               <TableHead>

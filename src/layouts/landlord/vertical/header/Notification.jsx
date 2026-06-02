@@ -133,13 +133,7 @@ const Notifications = () => {
           ))}
         </Scrollbar>
         <Box pt={2}>
-          <Button
-            href="/apps/email"
-            variant="outlined"
-            component={NavLink}
-            color="secondary"
-            fullWidth
-          >
+          <Button href="/apps/email" component={NavLink} color="secondary" fullWidth>
             See all Notifications
           </Button>
         </Box>

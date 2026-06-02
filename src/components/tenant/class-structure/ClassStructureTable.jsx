@@ -19,13 +19,13 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const ClassStructureTable = ({ 
-  classStructures = [], 
-  onToggleStatus, 
+const ClassStructureTable = ({
+  classStructures = [],
+  onToggleStatus,
   onNoOfArmsChange,
   onGenerateArms,
   onArmNameChange,
-  isLoading = false 
+  isLoading = false,
 }) => {
   const [confirm, setConfirm] = useState({ open: false, structure: null });
 
@@ -46,7 +46,7 @@ const ClassStructureTable = ({
 
   const renderArms = (structure) => {
     const isInactive = structure.status === 'inactive';
-    
+
     if (isInactive) {
       // Display read-only arms for inactive classes
       if (!structure.arms || structure.arms.length === 0) {
@@ -56,7 +56,7 @@ const ClassStructureTable = ({
           </Typography>
         );
       }
-      
+
       return (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {structure.arms.map((arm, i) => (
@@ -80,7 +80,7 @@ const ClassStructureTable = ({
         </Box>
       );
     }
-    
+
     // Editable arms for active classes
     return (
       <Box>
@@ -103,15 +103,16 @@ const ClassStructureTable = ({
             }}
           />
           <Button
-            variant="contained"
             size="small"
-            disabled={!structure.no_of_arms || structure.no_of_arms === 0 || structure.no_of_arms === '0'}
+            disabled={
+              !structure.no_of_arms || structure.no_of_arms === 0 || structure.no_of_arms === '0'
+            }
             onClick={() => onGenerateArms && onGenerateArms(structure.id)}
           >
             Generate
           </Button>
         </Box>
-        
+
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {structure.arm_names && structure.arm_names.length > 0 ? (
             structure.arm_names.map((armName, i) => (
@@ -120,7 +121,9 @@ const ClassStructureTable = ({
                 size="small"
                 value={armName}
                 slotProps={{ htmlInput: { min: 0 } }}
-                onChange={(e) => onArmNameChange && onArmNameChange(structure.id, i, e.target.value)}
+                onChange={(e) =>
+                  onArmNameChange && onArmNameChange(structure.id, i, e.target.value)
+                }
                 sx={{
                   width: 90,
                   '& .MuiOutlinedInput-root': {
@@ -145,15 +148,14 @@ const ClassStructureTable = ({
 
   return (
     <>
-      <TableContainer 
-        component={Paper} 
-        variant="outlined"
-        sx={{ 
-          maxHeight: 600, 
+      <TableContainer
+        component={Paper}
+        sx={{
+          maxHeight: 600,
           overflow: 'auto',
           '& .MuiTable-root': {
-            minWidth: 650
-          }
+            minWidth: 650,
+          },
         }}
       >
         <Table stickyHeader>
@@ -184,9 +186,7 @@ const ClassStructureTable = ({
                       {structure.class_name}
                     </Typography> */}
                     {structure.class_code && (
-                      <Typography variant="body2" >
-                        {structure.class_code}
-                      </Typography>
+                      <Typography variant="body2">{structure.class_code}</Typography>
                     )}
                   </TableCell>
                   <TableCell>{renderArms(structure)}</TableCell>
@@ -204,7 +204,6 @@ const ClassStructureTable = ({
                   <TableCell align="center">
                     <Button
                       size="small"
-                      variant="outlined"
                       color={structure.status === 'active' ? 'error' : 'success'}
                       onClick={() => handleToggleClick(structure)}
                     >
@@ -237,12 +236,7 @@ const ClassStructureTable = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button
-            onClick={handleConfirm}
-            variant="contained"
-            color={isActive ? 'error' : 'success'}
-            autoFocus
-          >
+          <Button onClick={handleConfirm} color={isActive ? 'error' : 'success'} autoFocus>
             {isActive ? 'Deactivate' : 'Activate'}
           </Button>
         </DialogActions>

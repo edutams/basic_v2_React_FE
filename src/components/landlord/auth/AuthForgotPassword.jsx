@@ -82,7 +82,6 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin, onSuccess
 
         <Button
           fullWidth
-          variant="contained"
           type="submit"
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : null}
@@ -92,7 +91,9 @@ const AuthForgotPassword = ({ loginPath, verifyOtpPath, onBackToLogin, onSuccess
 
         <Box mt={2} textAlign="center">
           <Button
-            {...(onBackToLogin ? { onClick: onBackToLogin } : { component: Link, to: resolvedLoginPath })}
+            {...(onBackToLogin
+              ? { onClick: onBackToLogin }
+              : { component: Link, to: resolvedLoginPath })}
             fullWidth
           >
             Back to Login

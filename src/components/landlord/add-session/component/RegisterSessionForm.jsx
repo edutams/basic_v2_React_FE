@@ -1,5 +1,15 @@
 import React from 'react';
-import { Grid, Box, Button, TextField, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
+import {
+  Grid,
+  Box,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+} from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
@@ -82,7 +92,10 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
         </Grid>
 
         <Grid item size={{ xs: 12, md: 12, sm: 12 }}>
-          <FormControl fullWidth error={formik.touched.isCurrent && Boolean(formik.errors.isCurrent)}>
+          <FormControl
+            fullWidth
+            error={formik.touched.isCurrent && Boolean(formik.errors.isCurrent)}
+          >
             <InputLabel>Is Current</InputLabel>
             <Select
               name="isCurrent"
@@ -112,11 +125,7 @@ const RegisterSessionForm = ({ actionType, selectedAgent, onSubmit, onCancel }) 
           Cancel
         </Button>
         {actionType !== 'view' && (
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={formik.isSubmitting}
-          >
+          <Button type="submit" disabled={formik.isSubmitting}>
             {actionType === 'update' ? 'Update Session' : 'Save'}
           </Button>
         )}

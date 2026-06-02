@@ -416,19 +416,13 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
       <Divider />
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          color="inherit"
-          variant="outlined"
-          sx={{ borderRadius: 2, textTransform: 'none' }}
-        >
+        <Button onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none' }}>
           Close
         </Button>
         {prospect.status === 'pending' && (
           <>
             {!showRejectInput ? (
               <Button
-                variant="outlined"
                 color="error"
                 startIcon={<CancelOutlinedIcon />}
                 onClick={() => setShowRejectInput(true)}
@@ -440,7 +434,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             ) : (
               <>
                 <Button
-                  variant="contained"
                   color="error"
                   startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(false)}
@@ -450,7 +443,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                   Cancel Rejection
                 </Button>
                 <Button
-                  variant="contained"
                   color="error"
                   startIcon={<CancelOutlinedIcon />}
                   onClick={() => onReject(prospect.id, rejectReason)}
@@ -462,7 +454,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               </>
             )}
             <Button
-              variant="contained"
               color="success"
               startIcon={<CheckCircleOutlineIcon />}
               onClick={() => onApprove(prospect.id)}
@@ -588,7 +579,6 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button
             size="small"
-            variant="outlined"
             startIcon={<IconEye size={14} />}
             onClick={() => onReview(row)}
             sx={{
@@ -605,7 +595,6 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
           {showDelete && (
             <Button
               size="small"
-              variant="outlined"
               color="error"
               onClick={() => onDelete(row)}
               sx={{ textTransform: 'none', borderRadius: '8px', fontSize: '12px' }}
@@ -1177,7 +1166,7 @@ const SchoolDashboard = () => {
             />
             {/* {activeTab === 0 && (
               <Button
-                variant="contained"
+                
                 startIcon={<IconUserPlus size={18} />}
                 onClick={() => setOpenRegisterModal(true)}
                 sx={{
@@ -1200,12 +1189,7 @@ const SchoolDashboard = () => {
                 <CircularProgress />
               </Box>
             ) : (
-              <TableContainer
-                component={Paper}
-                elevation={0}
-                variant="outlined"
-                sx={{ borderRadius: 2 }}
-              >
+              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
                 <Table>
                   <TableHead sx={{ bgcolor: '#fafafa' }}>
                     <TableRow>
@@ -1263,12 +1247,7 @@ const SchoolDashboard = () => {
 
           {/* ── Tab 1: Pending Approvals ── */}
           {activeTab === 1 && (
-            <TableContainer
-              component={Paper}
-              elevation={0}
-              variant="outlined"
-              sx={{ borderRadius: 2 }}
-            >
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
               <Table>
                 <TableHead sx={{ bgcolor: '#fafafa' }}>
                   <TableRow>
@@ -1333,12 +1312,7 @@ const SchoolDashboard = () => {
                 <CircularProgress />
               </Box>
             ) : (
-              <TableContainer
-                component={Paper}
-                elevation={0}
-                variant="outlined"
-                sx={{ borderRadius: 2 }}
-              >
+              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
                 <Table>
                   <TableHead sx={{ bgcolor: '#fafafa' }}>
                     <TableRow>

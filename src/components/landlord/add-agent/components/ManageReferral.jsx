@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
+import { Box, Typography, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 const modalStyle = {
   position: 'absolute',
@@ -32,10 +24,7 @@ const ManageReferralModal = ({ selectedAgent, onSave, onClose }) => {
   const [selectedReferrer, setSelectedReferrer] = useState('');
   const [currentReferrer, setCurrentReferrer] = useState('');
 
-  const availableReferrers = [
-    'Crownbirth Limited',
-    'Digital Solutions',
-  ];
+  const availableReferrers = ['Crownbirth Limited', 'Digital Solutions'];
 
   useEffect(() => {
     if (selectedAgent) {
@@ -61,40 +50,27 @@ const ManageReferralModal = ({ selectedAgent, onSave, onClose }) => {
 
   return (
     <Box>
+      <Typography variant="subtitle1" fontWeight="500">
+        Current Referrer: <strong>{currentReferrer}</strong>
+      </Typography>
 
-        <Typography variant="subtitle1" fontWeight="500">
-          Current Referrer: <strong>{currentReferrer}</strong>
-        </Typography>
+      <Box sx={containerStyle}>
+        <FormControl fullWidth>
+          <InputLabel>Referrer</InputLabel>
+          <Select value={selectedReferrer} label="Referrer" onChange={handleChange}>
+            {availableReferrers.map((ref, i) => (
+              <MenuItem key={i} value={ref}>
+                {ref}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
 
-        <Box sx={containerStyle}>
-          <FormControl fullWidth>
-            <InputLabel>Referrer</InputLabel>
-            <Select
-              value={selectedReferrer}
-              label="Referrer"
-              onChange={handleChange}
-            >
-              {availableReferrers.map((ref, i) => (
-                <MenuItem key={i} value={ref}>
-                  {ref}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-          <Button onClick={onClose} >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            sx={{ bgcolor: '#f9a825', color: '#fff', '&:hover': { bgcolor: '#f57f17' } }}
-          >
-            Set Referrer
-          </Button>
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit}>Set Referrer</Button>
+      </Box>
     </Box>
   );
 };

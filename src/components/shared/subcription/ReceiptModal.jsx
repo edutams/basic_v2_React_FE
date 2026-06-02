@@ -76,8 +76,8 @@ const ReceiptModal = ({ open, onClose, transaction }) => {
   const planName = transaction?.paymentDescription?.includes('OBASIC++')
     ? 'OBASIC++'
     : transaction?.paymentDescription?.includes('BASIC++')
-    ? 'BASIC++'
-    : 'BASIC++';
+      ? 'BASIC++'
+      : 'BASIC++';
 
   return (
     <ReusableModal
@@ -206,16 +206,10 @@ const ReceiptModal = ({ open, onClose, transaction }) => {
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handlePrint}
-            sx={{ borderRadius: '8px' }}
-          >
+          <Button startIcon={<DownloadIcon />} onClick={handlePrint} sx={{ borderRadius: '8px' }}>
             Download
           </Button>
           <Button
-            variant="contained"
             startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{ borderRadius: '8px', bgcolor: '#1a237e' }}

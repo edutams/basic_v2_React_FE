@@ -114,7 +114,6 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
           placeholder="Search Permissions"
           type="text"
           fullWidth
-          variant="outlined"
           value={permissionSearch}
           onChange={(e) => setPermissionSearch(e.target.value)}
           sx={{ mb: 2 }}
@@ -213,7 +212,7 @@ const DirectPermissionModal = ({ open, onClose, currentAgent, onPermissionSave }
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained" color="primary">
+        <Button onClick={handleSave} color="primary">
           Save Permissions
         </Button>
       </DialogActions>

@@ -142,7 +142,6 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
               label={`${totalRows} agent${totalRows !== 1 ? 's' : ''}`}
               size="small"
               color="primary"
-              variant="outlined"
             />
           )}
         </Box>
@@ -168,12 +167,11 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
               ),
             }}
           />
-          <Button variant="contained" onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
+          <Button onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
             Search
           </Button>
           {search && (
             <Button
-              variant="outlined"
               onClick={() => {
                 setSearch('');
                 setSearchInput('');
@@ -241,7 +239,6 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
                               label="Lead"
                               size="small"
                               color="warning"
-                              variant="outlined"
                               sx={{ height: 18, fontSize: 10 }}
                             />
                           )}
@@ -266,7 +263,6 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
                         label={user.status === 'active' ? 'Active' : 'Inactive'}
                         size="small"
                         color={user.status === 'active' ? 'success' : 'default'}
-                        variant="outlined"
                       />
                     </TableCell>
                   </TableRow>
@@ -308,7 +304,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} variant="outlined" size="small">
+        <Button onClick={handleClose} size="small">
           Close
         </Button>
       </DialogActions>

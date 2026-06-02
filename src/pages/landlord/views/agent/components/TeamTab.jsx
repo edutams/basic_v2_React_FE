@@ -408,7 +408,6 @@ const TeamTab = ({
         </Stack>
         {!isViewingProfile && (
           <Button
-            variant="contained"
             startIcon={<IconUsers size={16} />}
             onClick={onAddAgent}
             sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
@@ -461,7 +460,6 @@ const TeamTab = ({
         <Grid size={{ xs: 12, md: 2 }}>
           <Button
             fullWidth
-            variant="contained"
             size="small"
             onClick={handleSearch}
             sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
@@ -779,7 +777,7 @@ const TeamTab = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelDelete}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+          <Button onClick={handleConfirmDelete} color="error">
             Delete
           </Button>
         </DialogActions>

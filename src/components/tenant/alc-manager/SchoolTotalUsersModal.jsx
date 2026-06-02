@@ -125,9 +125,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
           <Typography variant="h6" component="span">
             Users with this Permission
           </Typography>
-          {totalRows > 0 && !loading && (
-            <Chip label={totalRows} size="small" color="primary" variant="outlined" />
-          )}
+          {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
         <IconButton onClick={handleClose} size="small">
           <CloseIcon fontSize="small" />
@@ -151,7 +149,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
               ),
             }}
           />
-          <Button variant="contained" size="small" onClick={handleSearch}>
+          <Button size="small" onClick={handleSearch}>
             Search
           </Button>
         </Box>
@@ -214,7 +212,6 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
                         label={user.status}
                         size="small"
                         color={user.status === 'active' ? 'success' : 'default'}
-                        variant="outlined"
                       />
                     </TableCell>
                   </TableRow>
@@ -256,7 +253,7 @@ const SchoolTotalUsersModal = ({ open, onClose, permission }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} variant="outlined" size="small">
+        <Button onClick={handleClose} size="small">
           Close
         </Button>
       </DialogActions>

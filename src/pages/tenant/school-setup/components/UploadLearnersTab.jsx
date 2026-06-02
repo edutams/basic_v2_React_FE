@@ -284,11 +284,7 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                       sx={{ bgcolor: cellBg, borderRadius: 2, p: 1, position: 'relative' }}
                       align="center"
                     >
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => handleAddNewLearner(item)}
-                      >
+                      <Button size="small" onClick={() => handleAddNewLearner(item)}>
                         Add New Learner
                       </Button>
                       {index === 0 && activeHint === 'add' && (
@@ -335,19 +331,13 @@ const UploadLearnersTab = ({ onLearnerAdded, onReadyChange }) => {
                     >
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                         <Button
-                          variant="outlined"
                           size="small"
                           startIcon={<DownloadIcon />}
                           onClick={() => handleDownloadTemplate(item.programme_class_id)}
                         >
                           Download Template
                         </Button>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          startIcon={<UploadIcon />}
-                          onClick={handleUploadClick}
-                        >
+                        <Button size="small" startIcon={<UploadIcon />} onClick={handleUploadClick}>
                           Upload Template
                         </Button>
                       </Box>

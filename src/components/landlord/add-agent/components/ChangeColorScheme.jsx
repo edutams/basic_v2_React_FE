@@ -9,8 +9,7 @@ const validationSchema = yup.object({
 });
 
 const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
-  const originalColor =
-    selectedAgent?.primaryColor || selectedAgent?.primary_color || '#1976d2';
+  const originalColor = selectedAgent?.primaryColor || selectedAgent?.primary_color || '#1976d2';
 
   const formik = useFormik({
     initialValues: { primaryColor: originalColor },
@@ -91,11 +90,7 @@ const ChangeColorScheme = ({ selectedAgent, onSave, onClose }) => {
           <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!formik.isValid || formik.isSubmitting}
-          >
+          <Button type="submit" disabled={!formik.isValid || formik.isSubmitting}>
             Apply Color
           </Button>
         </Box>

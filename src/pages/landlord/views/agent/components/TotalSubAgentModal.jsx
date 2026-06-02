@@ -140,7 +140,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
             ))}
           </Select>
         </FormControl>
-        <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40 }}>
+        <Button size="small" onClick={handleSearch} sx={{ height: 40 }}>
           Search
         </Button>
       </Box>
@@ -218,7 +218,6 @@ const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
                       label={org.status === 'active' ? 'Active' : 'Inactive'}
                       size="small"
                       color={org.status === 'active' ? 'success' : 'default'}
-                      variant="outlined"
                       sx={{ fontWeight: 600 }}
                     />
                   </TableCell>

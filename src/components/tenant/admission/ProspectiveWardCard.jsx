@@ -33,7 +33,7 @@ const calculateAdmissionStep = (admissionData) => {
   const isAdmitted = admission?.admission_status === 'admitted';
   const isEnrolled = isAdmitted && admission?.accept_admission_offer === 'yes';
 
-  // Step 3: Enrolled 
+  // Step 3: Enrolled
   if (isEnrolled) {
     return hasExam ? 3 : 2;
   }
@@ -66,7 +66,7 @@ const AdmissionSteps = ({ admissionData }) => {
   const steps = buildAdmissionSteps(admissionData);
   const currentStep = calculateAdmissionStep(admissionData);
   const admission = admissionData?.admissionData || admissionData;
-  
+
   // If form not submitted yet, show "Draft" state
   const isDraft = admission?.form_submit_status !== 'yes';
 
@@ -74,13 +74,15 @@ const AdmissionSteps = ({ admissionData }) => {
     <Box sx={{ display: 'flex', alignItems: 'center', mt: 1.5, mb: 1 }}>
       {isDraft ? (
         // Show draft state
-        <Box sx={{ 
-          width: '100%', 
-          textAlign: 'center', 
-          py: 1, 
-          bgcolor: 'warning.lighter',
-          borderRadius: 1,
-        }}>
+        <Box
+          sx={{
+            width: '100%',
+            textAlign: 'center',
+            py: 1,
+            bgcolor: 'warning.lighter',
+            borderRadius: 1,
+          }}
+        >
           <Typography variant="caption" color="warning.dark" fontWeight={600}>
             Application Draft - Not Yet Submitted
           </Typography>
@@ -92,7 +94,7 @@ const AdmissionSteps = ({ admissionData }) => {
           const done = i <= currentStep;
           // No "active" state - steps are either done or pending
           const pending = i > currentStep;
-          
+
           return (
             <React.Fragment key={step}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
@@ -157,17 +159,19 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
   // 2. Form is submitted (form_submit_status === 'yes')
   // 3. Total fee > 0 (application_fee + acceptance_fee)
   // 4. Not yet admitted (admission_status !== 'admitted')
-  const showPaymentAction = 
-    requiresPayment &&
-    totalFee > 0 &&
-    admission?.admission_status !== 'admitted';
+  const showPaymentAction =
+    requiresPayment && totalFee > 0 && admission?.admission_status !== 'admitted';
 
   return (
-    <Paper variant="outlined" sx={{
-      borderRadius: 2, overflow: 'hidden', mb: 1.5, cursor: 'pointer',
-      transition: 'background 0.15s',
-      '&:hover': { bgcolor: 'action.hover' }
-    }}
+    <Paper
+      sx={{
+        borderRadius: 2,
+        overflow: 'hidden',
+        mb: 1.5,
+        cursor: 'pointer',
+        transition: 'background 0.15s',
+        '&:hover': { bgcolor: 'action.hover' },
+      }}
       onClick={() => onViewDetails?.(ward)}
     >
       {/* Header row — clickable */}
@@ -260,9 +264,11 @@ const ProspectiveWardCard = ({ ward, onViewDetails }) => {
             </Box>
 
             <Button
-              variant="contained"
               size="small"
-              onClick={(e) => { e.stopPropagation(); onViewDetails?.(ward); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails?.(ward);
+              }}
               sx={{ borderRadius: 1, fontWeight: 700, bgcolor: '#EF9146', fontSize: '0.75rem' }}
             >
               Pay now

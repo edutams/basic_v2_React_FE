@@ -1,16 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Paper,
-  Button,
-  Chip,
-} from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  Person as PersonIcon,
-} from '@mui/icons-material';
+import { Box, Typography, Paper, Button, Chip } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Person as PersonIcon } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
 export const statusChipSx = (status) => {
@@ -83,12 +74,7 @@ const ApplicationCard = ({ app }) => {
   );
 
   const detailRow = (label, value) => (
-    <Box
-      display="flex"
-      justifyContent="space-between"
-      alignItems="flex-start"
-      gap={1}
-    >
+    <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
       <Typography
         variant="body2"
         color="text.secondary"
@@ -117,7 +103,6 @@ const ApplicationCard = ({ app }) => {
 
   return (
     <Paper
-      variant="outlined"
       sx={{
         borderRadius: 3,
         overflow: 'hidden',
@@ -267,20 +252,11 @@ const ApplicationCard = ({ app }) => {
 
             {detailRow(
               'Gender / DoB:',
-              `${app.gender || 'N/A'} / ${
-                app?.dob
-                  ? dayjs(app.dob).format('DD MMM YYYY')
-                  : 'N/A'
-              }`
+              `${app.gender || 'N/A'} / ${app?.dob ? dayjs(app.dob).format('DD MMM YYYY') : 'N/A'}`,
             )}
 
             {/* Form Submit Status */}
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="flex-start"
-              gap={1}
-            >
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -292,12 +268,9 @@ const ApplicationCard = ({ app }) => {
               </Typography>
 
               {(() => {
-                const submitted =
-                  app.form_submit_status === 'yes';
+                const submitted = app.form_submit_status === 'yes';
 
-                const label = submitted
-                  ? 'Submitted'
-                  : 'Incomplete';
+                const label = submitted ? 'Submitted' : 'Incomplete';
 
                 const chipSx = submitted
                   ? {
@@ -313,9 +286,7 @@ const ApplicationCard = ({ app }) => {
                   <Chip
                     label={label}
                     size="small"
-                    icon={renderAnimatedDot(
-                      submitted ? 'success' : 'error'
-                    )}
+                    icon={renderAnimatedDot(submitted ? 'success' : 'error')}
                     sx={{
                       ...chipSx,
                       fontWeight: 700,
@@ -328,12 +299,7 @@ const ApplicationCard = ({ app }) => {
             </Box>
 
             {/* Admission Status */}
-            <Box
-              display="flex"
-              justifyContent="space-between"
-              alignItems="flex-start"
-              gap={1}
-            >
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -345,13 +311,9 @@ const ApplicationCard = ({ app }) => {
               </Typography>
 
               {(() => {
-                const rawStatus = (
-                  app.admission_status || 'pending'
-                ).toLowerCase();
+                const rawStatus = (app.admission_status || 'pending').toLowerCase();
 
-                const admissionLabel =
-                  rawStatus.charAt(0).toUpperCase() +
-                  rawStatus.slice(1);
+                const admissionLabel = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1);
 
                 let chipSx = {
                   bgcolor: 'warning.light',
@@ -404,7 +366,6 @@ const ApplicationCard = ({ app }) => {
           }}
         >
           <Button
-            variant="contained"
             size="small"
             fullWidth
             endIcon={
@@ -442,7 +403,6 @@ const ApplicationCard = ({ app }) => {
           }}
         >
           <Button
-            variant="outlined"
             size="small"
             fullWidth
             onClick={(e) => {

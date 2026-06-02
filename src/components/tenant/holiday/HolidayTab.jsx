@@ -227,7 +227,7 @@ const HolidayTab = ({ handleRefresh }) => {
           ))}
         </Box>
       </Card>
-      <Card variant="outlined" sx={{ p: 3, width: '100%' }}>
+      <Card sx={{ p: 3, width: '100%' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h6" fontWeight={600}>
             Set Holiday
@@ -260,12 +260,7 @@ const HolidayTab = ({ handleRefresh }) => {
             </Select>
           </FormControl>
 
-          <Button
-            sx={{ ml: 2 }}
-            variant="contained"
-            color="primary"
-            onClick={handleSetHolidayClick}
-          >
+          <Button sx={{ ml: 2 }} color="primary" onClick={handleSetHolidayClick}>
             Set Holiday
           </Button>
         </Box>
@@ -273,7 +268,7 @@ const HolidayTab = ({ handleRefresh }) => {
         <HolidayTable holidays={filteredHolidays} onHolidayAction={handleHolidayAction} />
 
         {/* <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-          <Button variant="contained" onClick={handleSave}>
+          <Button  onClick={handleSave}>
             Save
           </Button>
         </Box> */}

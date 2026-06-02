@@ -822,14 +822,306 @@ const BursarySetup = () => {
         </Stack>
       )}
 
-      {/* Tab 2: Payment Name (Placeholder) */}
+      {/* Tab 2: Payment Name */}
       {currentTab === 1 && (
-        <ParentCard title="Payment Name Configuration">
-          <Alert severity="info">
-            Payment Name configuration will be implemented here. This section allows you to manage
-            payment types and their settings.
-          </Alert>
-        </ParentCard>
+        <Stack spacing={3}>
+          {/* Top Stats - Total Payment Items, Settlement Accounts, Fee Bearer Distribution */}
+          <Grid container spacing={3}>
+            {/* Total Payment Items Card */}
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 3, borderRadius: 2 }}>
+                <Typography variant="h6" fontWeight={600} mb={2}>
+                  Total Payment Items
+                </Typography>
+                <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
+                  164
+                </Typography>
+                <Grid container spacing={2} mb={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="textSecondary">
+                      Compulsory
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      98
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="textSecondary">
+                      Optional
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      66
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="textSecondary">
+                      Active
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      164
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="textSecondary">
+                      Inactive
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      0
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: 'success.main',
+                    }}
+                  />
+                  <Typography variant="caption" color="textSecondary">
+                    All payment items are currently active and valid to for use
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+
+            {/* Settlement Accounts Card */}
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 3, borderRadius: 2 }}>
+                <Typography variant="h6" fontWeight={600} mb={2}>
+                  Settlement Accounts
+                </Typography>
+                <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
+                  164
+                </Typography>
+                <Grid container spacing={2} mb={2}>
+                  <Grid item xs={4}>
+                    <Typography variant="caption" color="textSecondary">
+                      GTB
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      98 Items
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography variant="caption" color="textSecondary">
+                      FCMB
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      98 Items
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Typography variant="caption" color="textSecondary">
+                      Wema
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      98 Items
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: 'success.main',
+                    }}
+                  />
+                  <Typography variant="caption" color="textSecondary">
+                    GTB is the most Useeland Settlement account
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+
+            {/* Fee Bearer Distribution Card */}
+            <Grid item xs={12} md={4}>
+              <Paper sx={{ p: 3, borderRadius: 2 }}>
+                <Typography variant="h6" fontWeight={600} mb={2}>
+                  Fee Bearer Distribution
+                </Typography>
+                <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
+                  164
+                </Typography>
+                <Grid container spacing={2} mb={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="textSecondary">
+                      Client
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      400
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="textSecondary">
+                      Student
+                    </Typography>
+                    <Typography variant="h5" fontWeight={600}>
+                      0
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: 'success.main',
+                    }}
+                  />
+                  <Typography variant="caption" color="textSecondary">
+                    All Fees are Currently Borne by client
+                  </Typography>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* Payment Name Table */}
+          <ParentCard
+            title={
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Box>
+                  <Typography variant="h5" fontWeight={600}>
+                    Payment Name
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    View fee items a parent can pay for
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<IconPlus size={18} />}
+                  sx={{ fontWeight: 600 }}
+                >
+                  Add New Payment Name
+                </Button>
+              </Box>
+            }
+          >
+            {/* Search Bar */}
+            <Box display="flex" gap={2} mb={3}>
+              <TextField
+                placeholder="Search Payment Items"
+                size="small"
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+                      🔍
+                    </Box>
+                  ),
+                }}
+              />
+              <Button variant="contained" size="small" sx={{ fontWeight: 600, minWidth: 100 }}>
+                Search
+              </Button>
+            </Box>
+
+            {/* Table */}
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'grey.50' }}>
+                    <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Pay Option</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Settlement Account</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Fee Bearer</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Modules</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700 }}>
+                      Status
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 700, width: 80 }}>
+                      Action
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[...Array(15)].map((_, index) => (
+                    <TableRow key={index + 1} hover>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Acceptance Fee</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={index % 3 === 0 ? 'OPTIONAL' : 'COMPULSORY'}
+                          size="small"
+                          sx={{
+                            bgcolor:
+                              index % 3 === 0 ? 'warning.light' : 'primary.light',
+                            color:
+                              index % 3 === 0 ? 'warning.dark' : 'primary.dark',
+                            fontWeight: 600,
+                            fontSize: 10,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            GTB
+                          </Typography>
+                          <Typography variant="caption" color="error.main">
+                            0693040604
+                          </Typography>
+                          <Typography variant="caption" display="block" color="textSecondary">
+                            Ikeyi$30ceTrube$75
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label="CLIENT"
+                          size="small"
+                          sx={{
+                            bgcolor: 'success.light',
+                            color: 'success.dark',
+                            fontWeight: 600,
+                            fontSize: 10,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label="NONE"
+                          size="small"
+                          sx={{
+                            bgcolor: 'secondary.light',
+                            color: 'secondary.dark',
+                            fontWeight: 600,
+                            fontSize: 10,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label="Active"
+                          size="small"
+                          sx={{
+                            bgcolor: 'success.light',
+                            color: 'success.dark',
+                            fontWeight: 600,
+                            fontSize: 11,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <IconButton size="small">
+                          <IconDotsVertical size={18} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </ParentCard>
+        </Stack>
       )}
 
       {/* Action Menus */}

@@ -43,12 +43,10 @@ import {
   IconCheck,
   IconX,
 } from '@tabler/icons-react';
-// import {
-//   Settings as SettingsIcon,
-//   CreditCard as CreditCardIcon,
-//   CheckCircle as CheckCircleIcon,
-// } from '@mui/icons-material';
 import {
+  Settings as SettingsIcon,
+  CreditCard as CreditCardIcon,
+  CheckCircle as CheckCircleIcon,
   Category as CategoryIcon,
   Verified as VerifiedIcon,
   Payments as PaymentsIcon,
@@ -135,11 +133,31 @@ const BursarySetup = () => {
 
   const [requirePaymentForResults, setRequirePaymentForResults] = useState(true);
 
-  const stats = {
+  // Stats data for different tabs
+  const bursaryStats = {
     totalCategories: categories.length,
     activeCategories: categories.filter((c) => c.status === 'active').length,
     totalInstalments: instalments.length,
     activeInstalments: instalments.filter((i) => i.status === 'active').length,
+  };
+
+  const paymentNameStats = {
+    totalItems: 164,
+    compulsory: 98,
+    optional: 66,
+    active: 164,
+    inactive: 0,
+    settlementAccounts: {
+      total: 164,
+      gtb: 98,
+      fcmb: 98,
+      wema: 98,
+    },
+    feeBearer: {
+      total: 164,
+      client: 400,
+      student: 0,
+    },
   };
 
   useEffect(() => {
@@ -251,24 +269,196 @@ const BursarySetup = () => {
         Configure how fees are collected for the current term
       </Typography> */}
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} mb={3}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard count={stats.totalCategories} label="Total Categories" icon={CategoryIcon} />
+      {/* Stats Cards - Dynamic based on active tab */}
+      {currentTab === 0 ? (
+        // Bursary Setup Stats
+        <Grid container spacing={3} mb={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={bursaryStats.totalCategories}
+              label="Total Categories"
+              icon={SettingsIcon}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={bursaryStats.activeCategories}
+              label="Active Categories"
+              icon={CheckCircleIcon}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={bursaryStats.totalInstalments}
+              label="Instalment Plans"
+              icon={CreditCardIcon}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={bursaryStats.activeInstalments}
+              label="Active Plans"
+              icon={CheckCircleIcon}
+            />
+          </Grid>
         </Grid>
+      ) : (
+        // Payment Name Stats
+        <Grid container spacing={3} mb={3}>
+          {/* Total Payment Items Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Total Payment Items
+              </Typography>
+              <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
+                {paymentNameStats.totalItems}
+              </Typography>
+              <Grid container spacing={2} mb={2}>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Compulsory
+                  </Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {paymentNameStats.compulsory}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Optional
+                  </Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {paymentNameStats.optional}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Active
+                  </Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {paymentNameStats.active}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Inactive
+                  </Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {paymentNameStats.inactive}
+                  </Typography>
+                </Grid>
+              </Grid>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                  }}
+                />
+                <Typography variant="caption" color="textSecondary">
+                  All payment items are currently active and valid to for use
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard count={stats.activeCategories} label="Active Categories" icon={VerifiedIcon} />
-        </Grid>
+          {/* Settlement Accounts Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Settlement Accounts
+              </Typography>
+              <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
+                {paymentNameStats.settlementAccounts.total}
+              </Typography>
+              <Grid container spacing={2} mb={2}>
+                <Grid size={{ xs: 4 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    GTB
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {paymentNameStats.settlementAccounts.gtb} Items
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 4 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    FCMB
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {paymentNameStats.settlementAccounts.fcmb} Items
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 4 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Wema
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {paymentNameStats.settlementAccounts.wema} Items
+                  </Typography>
+                </Grid>
+              </Grid>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                  }}
+                />
+                <Typography variant="caption" color="textSecondary">
+                  GTB is the most Useeland Settlement account
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard count={stats.totalInstalments} label="Instalment Plans" icon={PaymentsIcon} />
+          {/* Fee Bearer Distribution Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Fee Bearer Distribution
+              </Typography>
+              <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
+                {paymentNameStats.feeBearer.total}
+              </Typography>
+              <Grid container spacing={2} mb={2}>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Client
+                  </Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {paymentNameStats.feeBearer.client}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    Student
+                  </Typography>
+                  <Typography variant="h5" fontWeight={600}>
+                    {paymentNameStats.feeBearer.student}
+                  </Typography>
+                </Grid>
+              </Grid>
+              <Box display="flex" alignItems="center" gap={1}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: 'success.main',
+                  }}
+                />
+                <Typography variant="caption" color="textSecondary">
+                  All Fees are Currently Borne by client
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
         </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard count={stats.activeInstalments} label="Active Plans" icon={TaskAltIcon} />
-        </Grid>
-      </Grid>
+      )}
 
       {/* Tab Navigation */}
       <Box sx={{ mb: 3 }}>
@@ -825,162 +1015,6 @@ const BursarySetup = () => {
       {/* Tab 2: Payment Name */}
       {currentTab === 1 && (
         <Stack spacing={3}>
-          {/* Top Stats - Total Payment Items, Settlement Accounts, Fee Bearer Distribution */}
-          <Grid container spacing={3}>
-            {/* Total Payment Items Card */}
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3, borderRadius: 2 }}>
-                <Typography variant="h6" fontWeight={600} mb={2}>
-                  Total Payment Items
-                </Typography>
-                <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
-                  164
-                </Typography>
-                <Grid container spacing={2} mb={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Compulsory
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      98
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Optional
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      66
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Active
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      164
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Inactive
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      0
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: 'success.main',
-                    }}
-                  />
-                  <Typography variant="caption" color="textSecondary">
-                    All payment items are currently active and valid to for use
-                  </Typography>
-                </Box>
-              </Paper>
-            </Grid>
-
-            {/* Settlement Accounts Card */}
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3, borderRadius: 2 }}>
-                <Typography variant="h6" fontWeight={600} mb={2}>
-                  Settlement Accounts
-                </Typography>
-                <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
-                  164
-                </Typography>
-                <Grid container spacing={2} mb={2}>
-                  <Grid item xs={4}>
-                    <Typography variant="caption" color="textSecondary">
-                      GTB
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      98 Items
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Typography variant="caption" color="textSecondary">
-                      FCMB
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      98 Items
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Typography variant="caption" color="textSecondary">
-                      Wema
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      98 Items
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: 'success.main',
-                    }}
-                  />
-                  <Typography variant="caption" color="textSecondary">
-                    GTB is the most Useeland Settlement account
-                  </Typography>
-                </Box>
-              </Paper>
-            </Grid>
-
-            {/* Fee Bearer Distribution Card */}
-            <Grid item xs={12} md={4}>
-              <Paper sx={{ p: 3, borderRadius: 2 }}>
-                <Typography variant="h6" fontWeight={600} mb={2}>
-                  Fee Bearer Distribution
-                </Typography>
-                <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
-                  164
-                </Typography>
-                <Grid container spacing={2} mb={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Client
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      400
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="caption" color="textSecondary">
-                      Student
-                    </Typography>
-                    <Typography variant="h5" fontWeight={600}>
-                      0
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: 'success.main',
-                    }}
-                  />
-                  <Typography variant="caption" color="textSecondary">
-                    All Fees are Currently Borne by client
-                  </Typography>
-                </Box>
-              </Paper>
-            </Grid>
-          </Grid>
-
           {/* Payment Name Table */}
           <ParentCard
             title={

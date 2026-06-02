@@ -16,7 +16,7 @@ const StatCard = ({ count, label, icon: Icon, color = 'primary', loading }) => (
     sx={{
       borderRadius: 2,
       p: 3,
-      width: '100%',       // fills whatever Grid cell it's in
+      width: '100%',      
       bgcolor: 'background.paper',
       display: 'flex',
       alignItems: 'center',

@@ -76,7 +76,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
     if (!hasData) return;
 
     const hydrate = async () => {
-      console.log('[WardDetailForm] Hydrating with:', initialValues);
+      // console.log('[WardDetailForm] Hydrating with:', initialValues);
       
       // IMPORTANT: Get state from lga relationship first (backend provides lga object with state_id)
       // This ensures we have the correct state even if state_of_origin wasn't set
@@ -86,12 +86,12 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
       // Priority 1: Get state from the lga relationship (most accurate)
       if (initialValues.lga?.state_id) {
         stateId = initialValues.lga.state_id;
-        console.log('[WardDetailForm] Got state from lga relationship:', stateId);
+        // console.log('[WardDetailForm] Got state from lga relationship:', stateId);
       } 
       // Priority 2: Fallback to state_of_origin
       else if (initialValues.state_of_origin) {
         stateId = initialValues.state_of_origin;
-        console.log('[WardDetailForm] Got state from state_of_origin:', stateId);
+        // console.log('[WardDetailForm] Got state from state_of_origin:', stateId);
       }
 
       // Step 1: Load LGAs for the state FIRST (before setting form values)
@@ -100,7 +100,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
         try {
           const data = await getLgasByState(stateId);
           setLgas(data || []);
-          console.log('[WardDetailForm] Loaded', data?.length, 'LGAs for state:', stateId);
+          // console.log('[WardDetailForm] Loaded', data?.length, 'LGAs for state:', stateId);
         } catch (err) {
           console.error('[WardDetailForm] Failed to load LGAs:', err);
           notify.error('Failed to load LGAs');
@@ -110,17 +110,23 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
       }
 
       // Step 2: Now set ALL form values including state and LGA
-      formik.setValues({
+      await formik.setValues({
         ...EMPTY_FORM,
         ...initialValues,
         state_of_origin: stateId || '',
         lga_id: lgaId || '', // Now LGAs are loaded, so this will work
       });
 
-      console.log('[WardDetailForm] Set form values - state:', stateId, 'lga:', lgaId);
+      // console.log('[WardDetailForm] Set form values - state:', stateId, 'lga:', lgaId);
 
       setHydrated(true);
-      console.log('[WardDetailForm] Hydration complete');
+      
+      // Trigger validation after hydration to update button state
+      setTimeout(() => {
+        formik.validateForm();
+      }, 100);
+      
+      // console.log('[WardDetailForm] Hydration complete');
     };
 
     hydrate();

@@ -64,6 +64,14 @@ const AcademicInfoForm = ({
     validateOnBlur: true,
   });
 
+  // Set programme ID when batch programme is available and field is empty
+  useEffect(() => {
+    if (batchProgramme?.id && !formik.values.intending_programme_id) {
+      formik.setFieldValue('intending_programme_id', String(batchProgramme.id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchProgramme?.id]);
+
   // Validation helpers
   const isPrevSchoolValid =
     !formik.values.has_previous_school ||
@@ -75,13 +83,12 @@ const AcademicInfoForm = ({
     );
 
   const isIntendingValid =
+    Boolean(formik.values.intending_programme_id) &&
     Boolean(formik.values.intending_class_id) &&
     Boolean(formik.values.study_mode);
 
-  const isFormValid =
-  isPrevSchoolValid &&
-  isIntendingValid &&
-  Object.keys(formik.errors).length === 0;
+  // Simplified validation - don't rely on formik.errors as it may have stale state
+  const isFormValid = isPrevSchoolValid && isIntendingValid;
 
   // Trigger form validation when batch classes are loaded
   useEffect(() => {
@@ -124,8 +131,8 @@ const AcademicInfoForm = ({
       const prevSchoolState = initialValues.prev_school_state;
       const prevSchoolLga = initialValues.prev_school_lga;
 
-      console.log('[AcademicInfoForm] Hydrating form with initialValues:', initialValues);
-      console.log('[AcademicInfoForm] Available batch classes:', batchClasses);
+      // console.log('[AcademicInfoForm] Hydrating form with initialValues:', initialValues);
+      // console.log('[AcademicInfoForm] Available batch classes:', batchClasses);
 
       // Ensure IDs are strings
       const programmeId = initialValues?.intending_programme_id 
@@ -145,7 +152,7 @@ const AcademicInfoForm = ({
         console.warn(`[AcademicInfoForm] Class ID ${rawClassId} doesn't exist in current batch classes. Clearing class selection.`);
       }
 
-      console.log('[AcademicInfoForm] Computed IDs - programmeId:', programmeId, 'classId:', classId);
+      // console.log('[AcademicInfoForm] Computed IDs - programmeId:', programmeId, 'classId:', classId);
 
       // Build values object explicitly, excluding relationship objects
       const values = {
@@ -159,12 +166,12 @@ const AcademicInfoForm = ({
         study_mode: initialValues.study_mode || '',
       };
 
-      console.log('[AcademicInfoForm] Setting formik values to:', values);
+      // console.log('[AcademicInfoForm] Setting formik values to:', values);
 
       // Set all form values at once
       await formik.setValues(values, false); // false = don't validate yet
 
-      console.log('[AcademicInfoForm] Form values after hydration:', formik.values);
+      // console.log('[AcademicInfoForm] Form values after hydration:', formik.values);
 
       // Load LGAs if state exists
       if (prevSchoolState) {
@@ -205,7 +212,7 @@ const AcademicInfoForm = ({
       const currentProgrammeId = formik.values.intending_programme_id;
       // Always update to match the new batch's programme
       if (String(currentProgrammeId) !== String(batchProgramme.id)) {
-        console.log('Updating programme ID to match new batch:', batchProgramme.id);
+        // console.log('Updating programme ID to match new batch:', batchProgramme.id);
         formik.setFieldValue('intending_programme_id', String(batchProgramme.id));
       }
     }

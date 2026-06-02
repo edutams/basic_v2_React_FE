@@ -258,13 +258,14 @@ const DocumentsStep = ({ initialValues, hasPreviousSchool = false, onNext, onBac
   const [errors, setErrors] = useState({});
   const [preview, setPreview] = useState({ file: null, url: null });
 
-  // Build effective documents list — conditionally require prev_school_report
+  // Build effective documents list — completely remove prev_school_report if not needed
   // based on the hasPreviousSchool flag passed from the Academic Info step
-  const EFFECTIVE_DOCUMENTS = DOCUMENTS.map((doc) => {
-    if (doc.key === 'prev_school_report') {
-      return { ...doc, required: hasPreviousSchool };
+  const EFFECTIVE_DOCUMENTS = DOCUMENTS.filter((doc) => {
+    // Remove prev_school_report entirely if student has no previous school
+    if (doc.key === 'prev_school_report' && !hasPreviousSchool) {
+      return false;
     }
-    return doc;
+    return true;
   });
 
   // Initialize existing documents from initialValues

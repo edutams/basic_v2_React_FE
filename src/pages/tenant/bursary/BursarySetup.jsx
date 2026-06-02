@@ -241,11 +241,15 @@ const BursarySetup = () => {
 
   return (
     <PageContainer title="Bursary Setup" description="Configure fees and payment settings">
-      <Breadcrumb title="Bursary Setup" items={BCrumb} />
+      <Breadcrumb
+  title="Bursary Setup"
+  subtitle="Configure how fees are collected for the current term"
+  items={BCrumb}
+/>
 
-      <Typography variant="subtitle1" color="textSecondary" mb={3}>
+      {/* <Typography variant="subtitle1" color="textSecondary" mb={3}>
         Configure how fees are collected for the current term
-      </Typography>
+      </Typography> */}
 
       {/* Stats Cards */}
       <Grid container spacing={3} mb={3}>

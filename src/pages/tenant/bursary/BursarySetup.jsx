@@ -28,6 +28,9 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   IconSettings,
@@ -37,6 +40,8 @@ import {
   IconTrash,
   IconCreditCard,
   IconDotsVertical,
+  IconCheck,
+  IconX,
 } from '@tabler/icons-react';
 // import {
 //   Settings as SettingsIcon,
@@ -113,6 +118,8 @@ const BursarySetup = () => {
   ]);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryMenuAnchor, setCategoryMenuAnchor] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const [instalments, setInstalments] = useState([
     { id: 1, options: '60 : 40', status: 'active' },
@@ -123,6 +130,8 @@ const BursarySetup = () => {
   ]);
   const [instalmentModalOpen, setInstalmentModalOpen] = useState(false);
   const [editingInstalment, setEditingInstalment] = useState(null);
+  const [instalmentMenuAnchor, setInstalmentMenuAnchor] = useState(null);
+  const [selectedInstalment, setSelectedInstalment] = useState(null);
 
   const [requirePaymentForResults, setRequirePaymentForResults] = useState(true);
 
@@ -162,6 +171,16 @@ const BursarySetup = () => {
   const handleEditCategory = (category) => {
     setEditingCategory(category);
     setCategoryModalOpen(true);
+    setCategoryMenuAnchor(null);
+  };
+
+  const handleToggleCategoryStatus = (category) => {
+    const newStatus = category.status === 'active' ? 'inactive' : 'active';
+    setCategories((prev) =>
+      prev.map((c) => (c.id === category.id ? { ...c, status: newStatus } : c)),
+    );
+    showSnackbar(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+    setCategoryMenuAnchor(null);
   };
 
   const handleDeleteCategory = (id) => {
@@ -190,6 +209,16 @@ const BursarySetup = () => {
   const handleEditInstalment = (instalment) => {
     setEditingInstalment(instalment);
     setInstalmentModalOpen(true);
+    setInstalmentMenuAnchor(null);
+  };
+
+  const handleToggleInstalmentStatus = (instalment) => {
+    const newStatus = instalment.status === 'active' ? 'inactive' : 'active';
+    setInstalments((prev) =>
+      prev.map((i) => (i.id === instalment.id ? { ...i, status: newStatus } : i)),
+    );
+    showSnackbar(`Instalment plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
+    setInstalmentMenuAnchor(null);
   };
 
   const handleDeleteInstalment = (id) => {
@@ -619,7 +648,13 @@ const BursarySetup = () => {
                           </TableCell>
 
                           <TableCell align="center">
-                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, category)}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setCategoryMenuAnchor(e.currentTarget);
+                                setSelectedCategory(category);
+                              }}
+                            >
                               <IconDotsVertical size={18} />
                             </IconButton>
                           </TableCell>
@@ -700,7 +735,13 @@ const BursarySetup = () => {
                           </TableCell>
 
                           <TableCell align="center">
-                            <IconButton size="small" onClick={(e) => handleMenuOpen(e, instalment)}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setInstalmentMenuAnchor(e.currentTarget);
+                                setSelectedInstalment(instalment);
+                              }}
+                            >
                               <IconDotsVertical size={18} />
                             </IconButton>
                           </TableCell>
@@ -786,6 +827,80 @@ const BursarySetup = () => {
           </Alert>
         </ParentCard>
       )}
+
+      {/* Action Menus */}
+      <Menu
+        anchorEl={categoryMenuAnchor}
+        open={Boolean(categoryMenuAnchor)}
+        onClose={() => {
+          setCategoryMenuAnchor(null);
+          setSelectedCategory(null);
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => selectedCategory && handleToggleCategoryStatus(selectedCategory)}
+          sx={{
+            color: selectedCategory?.status === 'active' ? 'error.main' : 'success.main',
+          }}
+        >
+          <ListItemIcon>
+            {selectedCategory?.status === 'active' ? (
+              <IconX size={18} color="currentColor" />
+            ) : (
+              <IconCheck size={18} color="currentColor" />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {selectedCategory?.status === 'active' ? 'Deactivate' : 'Activate'}
+          </ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => selectedCategory && handleEditCategory(selectedCategory)}>
+          <ListItemIcon>
+            <IconEdit size={18} />
+          </ListItemIcon>
+          <ListItemText>Edit Description</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Instalment Menu */}
+      <Menu
+        anchorEl={instalmentMenuAnchor}
+        open={Boolean(instalmentMenuAnchor)}
+        onClose={() => {
+          setInstalmentMenuAnchor(null);
+          setSelectedInstalment(null);
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => selectedInstalment && handleToggleInstalmentStatus(selectedInstalment)}
+          sx={{
+            color: selectedInstalment?.status === 'active' ? 'error.main' : 'success.main',
+          }}
+        >
+          <ListItemIcon>
+            {selectedInstalment?.status === 'active' ? (
+              <IconX size={18} color="currentColor" />
+            ) : (
+              <IconCheck size={18} color="currentColor" />
+            )}
+          </ListItemIcon>
+          <ListItemText>
+            {selectedInstalment?.status === 'active' ? 'Deactivate' : 'Activate'}
+          </ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => selectedInstalment && handleEditInstalment(selectedInstalment)}>
+          <ListItemIcon>
+            <IconEdit size={18} />
+          </ListItemIcon>
+          <ListItemText>Edit Installment</ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Modals */}
       <CategoryModal

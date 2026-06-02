@@ -162,6 +162,7 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
                   <TableCell sx={{ fontWeight: 600, width: '15%' }}>Session Term</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '30%' }}>Application Batch</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '30%' }}>Closing Date</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '20%' }}>Classes</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '25%' }}>Fee Required</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">Action</TableCell>
@@ -187,6 +188,9 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
 
                       <TableCell>
                         <Typography variant="body2">{batch.batch_name}</Typography>
+                      </TableCell>
+                       <TableCell>
+                        <Typography variant="body2">{batch.closing_date}</Typography>
                       </TableCell>
 
                       <TableCell>

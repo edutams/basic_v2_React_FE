@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Grid,
@@ -8,25 +8,35 @@ import {
   Tab,
   Alert,
   Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Switch,
   Button,
-  Stack,
 } from '@mui/material';
 import {
-  Settings as SettingsIcon,
   Receipt as ReceiptIcon,
-  Send as SendIcon,
+  FileUpload as UploadIcon,
 } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
-import StatCard from '@/components/shared/StatCard';
 import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
 import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
 const PaymentShedule = () => {
-  const [currentTab, setCurrentTab] = useState(0);
+  const [actionTab, setActionTab] = useState(0);
+  const [scheduleTab, setScheduleTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [selectedSession, setSelectedSession] = useState('2024/2025 - Second Term');
+  const [selectedCategory, setSelectedCategory] = useState('New Student Category');
+  const [enableFullSession, setEnableFullSession] = useState(false);
+
+  const sessions = ['2024/2025 - First Term', '2024/2025 - Second Term', '2024/2025 - Third Term'];
+  const categories = ['New Student Category', 'Returning Students', 'Scholarship'];
 
   const stats = {
     compulsorySchedule: {
@@ -50,20 +60,16 @@ const PaymentShedule = () => {
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue);
+  const handleActionTabChange = (event, newValue) => {
+    setActionTab(newValue);
   };
 
-  const handleSetSchedule = () => {
-    showSnackbar('Schedule settings updated');
+  const handleScheduleTabChange = (event, newValue) => {
+    setScheduleTab(newValue);
   };
 
-  const handleGenerateInvoice = () => {
-    showSnackbar('Invoices generated successfully');
-  };
-
-  const handleSendInvoice = () => {
-    showSnackbar('Invoices sent successfully');
+  const handleImportSchedule = () => {
+    showSnackbar('Import schedule for current term');
   };
 
   return (
@@ -206,123 +212,194 @@ const PaymentShedule = () => {
         </Grid>
       </Grid>
 
-      {/* Action Buttons */}
-      {/* <Box mb={3}>
-        <Stack direction="row" spacing={2} flexWrap="wrap">
-          <Button
-            variant="contained"
-            onClick={handleSetSchedule}
-            sx={{
-              fontWeight: 600,
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.dark' },
-            }}
-            startIcon={
-              <Box
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: 'white',
-                  color: 'primary.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                1
-              </Box>
-            }
-          >
-            Set Schedule
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleGenerateInvoice}
-            sx={{
-              fontWeight: 600,
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.dark' },
-            }}
-            startIcon={
-              <Box
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: 'white',
-                  color: 'primary.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                2
-              </Box>
-            }
-          >
-            Generate Invoice
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSendInvoice}
-            sx={{
-              fontWeight: 600,
-              bgcolor: 'primary.main',
-              '&:hover': { bgcolor: 'primary.dark' },
-            }}
-            startIcon={
-              <Box
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: 'white',
-                  color: 'primary.main',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                3
-              </Box>
-            }
-          >
-            Send Invoice
-          </Button>
-        </Stack>
-      </Box> */}
-
-      {/* Tab Navigation */}
+      {/* Action Tabs */}
       <Box sx={{ mb: 3 }}>
-        <Tabs
-          value={currentTab}
-          onChange={handleTabChange}
-          sx={{
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Tab
-            label="Compulsory"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          />
-          <Tab
-            label="Optional Payment"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          />
+        <Tabs value={actionTab} onChange={handleActionTabChange}>
+          <Tab label="1. Set Schedule" sx={{ textTransform: 'none', fontWeight: 600 }} />
+          <Tab label="2. Generate Invoice" sx={{ textTransform: 'none', fontWeight: 600 }} />
+          <Tab label="3. Send Invoice" sx={{ textTransform: 'none', fontWeight: 600 }} />
         </Tabs>
       </Box>
 
-      {/* Tab Content */}
-      {/* {currentTab === 0 && <CompulsoryScheduleTab showSnackbar={showSnackbar} />} */}
-      {/* {currentTab === 1 && <OptionalPaymentTab showSnackbar={showSnackbar} />} */}
+      {/* Main Content Card with Tabs Inside */}
+      <Paper sx={{ borderRadius: 2 }}>
+        {/* Header Section with Title and Filters on Same Row */}
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            {/* Left Side - Title and Description */}
+            <Box display="flex" alignItems="center" gap={2}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 1,
+                  bgcolor: 'primary.lighter',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Typography variant="h6" fontWeight={700} color="primary.main">
+                  ⚙️
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6" fontWeight={600}>
+                  Payment Schedule
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  Switch tabs to configure compulsory or optional items.
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Right Side - Filters Row */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                alignItems: 'center',
+              }}
+            >
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <InputLabel>Select Session</InputLabel>
+                <Select
+                  value={selectedSession}
+                  label="Select Session"
+                  onChange={(e) => setSelectedSession(e.target.value)}
+                >
+                  {sessions.map((session) => (
+                    <MenuItem key={session} value={session}>
+                      {session}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Student Pay Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  label="Student Pay Category"
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  {categories.map((category) => (
+                    <MenuItem key={category} value={category}>
+                      {category}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={enableFullSession}
+                    onChange={(e) => setEnableFullSession(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                    Enable full-session payment
+                  </Typography>
+                }
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Tabs and Import Button Row */}
+        <Box
+          sx={{
+            px: 3,
+            pt: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          {/* Schedule Type Tabs - Left Side */}
+          <Tabs
+            value={scheduleTab}
+            onChange={handleScheduleTabChange}
+            sx={{
+              minHeight: 40,
+              '& .MuiTab-root': {
+                minHeight: 40,
+              },
+            }}
+          >
+            <Tab
+              label="Compulsory"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  1
+                </Box>
+              }
+              iconPosition="start"
+            />
+            <Tab
+              label="Optional Payment"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  2
+                </Box>
+              }
+              iconPosition="start"
+            />
+          </Tabs>
+
+          {/* Import Button - Right Side */}
+          <Button
+            variant="contained"
+            startIcon={<UploadIcon />}
+            onClick={handleImportSchedule}
+            size="medium"
+            sx={{ fontWeight: 600 }}
+          >
+            Import schedule for current term
+          </Button>
+        </Box>
+
+        {/* Tab Content */}
+        <Box sx={{ p: 3 }}>
+          {scheduleTab === 0 && <CompulsoryScheduleTab showSnackbar={showSnackbar} />}
+          {scheduleTab === 1 && <OptionalPaymentTab showSnackbar={showSnackbar} />}
+        </Box>
+      </Paper>
 
       {/* Snackbar */}
       <Snackbar

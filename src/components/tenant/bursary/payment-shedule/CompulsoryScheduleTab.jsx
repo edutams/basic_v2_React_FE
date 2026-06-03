@@ -3,16 +3,9 @@ import {
   Box,
   Typography,
   Button,
-  Paper,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Stack,
   TextField,
   InputAdornment,
-  Switch,
-  FormControlLabel,
   Tabs,
   Tab,
   Table,
@@ -25,19 +18,15 @@ import {
   IconButton,
   Menu,
   MenuItem as MenuOption,
+  Paper,
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  FileUpload as UploadIcon,
   Add as AddIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
-import ParentCard from '@/components/shared/ParentCard';
 
 const CompulsoryScheduleTab = ({ showSnackbar }) => {
-  const [selectedSession, setSelectedSession] = useState('2024/2025 - Second Term');
-  const [selectedCategory, setSelectedCategory] = useState('New Student Category');
-  const [enableFullSession, setEnableFullSession] = useState(false);
   const [currentTerm, setCurrentTerm] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
@@ -75,15 +64,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     },
   ]);
 
-  const sessions = ['2024/2025 - First Term', '2024/2025 - Second Term', '2024/2025 - Third Term'];
-  const categories = ['New Student Category', 'Returning Students', 'Scholarship'];
-
   const handleAddPaymentItem = () => {
     showSnackbar?.('Add payment item clicked');
-  };
-
-  const handleImportSchedule = () => {
-    showSnackbar?.('Import schedule clicked');
   };
 
   const handleMenuOpen = (event, row) => {
@@ -107,112 +89,13 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
   };
 
   return (
-    <ParentCard>
-      <Stack spacing={3}>
-        {/* Header Section */}
-        <Box>
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                bgcolor: 'primary.lighter',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography variant="h6" fontWeight={700} color="primary.main">
-                ⚙️
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="h6" fontWeight={600}>
-                Payment Schedule
-              </Typography>
-              <Typography variant="caption" color="textSecondary">
-                Switch tabs to configure compulsory or optional items.
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Filters Row */}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 2,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              mb: 2,
-            }}
-          >
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Select Session</InputLabel>
-              <Select
-                value={selectedSession}
-                label="Select Session"
-                onChange={(e) => setSelectedSession(e.target.value)}
-              >
-                {sessions.map((session) => (
-                  <MenuItem key={session} value={session}>
-                    {session}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Student Pay Category</InputLabel>
-              <Select
-                value={selectedCategory}
-                label="Student Pay Category"
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={enableFullSession}
-                  onChange={(e) => setEnableFullSession(e.target.checked)}
-                />
-              }
-              label="Enable full-session payment"
-            />
-
-            <Box sx={{ marginLeft: 'auto' }}>
-              <Button
-                variant="contained"
-                startIcon={<UploadIcon />}
-                onClick={handleImportSchedule}
-                size="small"
-              >
-                Import schedule for current term
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Schedule Info Box */}
-        <Paper
-          sx={{
-            p: 2,
-            bgcolor: 'info.lighter',
-            border: '1px solid',
-            borderColor: 'info.light',
-          }}
-        >
-          <Typography variant="body2" fontWeight={600}>
-            Payment Schedules for {selectedSession} ({selectedCategory})
-          </Typography>
-        </Paper>
+    <Stack spacing={3}>
+      {/* Schedule Info Box - Centered */}
+      <Box display="flex" justifyContent="center">
+        <Typography variant="body2" fontWeight={600} color="textSecondary">
+          Payment Schedules for 2024/2025 - Second Term (New Student Category)
+        </Typography>
+      </Box>
 
         {/* Term Tabs */}
         <Box>
@@ -358,7 +241,6 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Stack>
 
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
@@ -367,7 +249,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
           Delete Schedule
         </MenuOption>
       </Menu>
-    </ParentCard>
+    </Stack>
   );
 };
 

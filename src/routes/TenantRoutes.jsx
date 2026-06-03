@@ -56,6 +56,10 @@ const CreateAdmissionBatch = Loadable(
   lazy(() => import('@/pages/tenant/admission/CreateAdmissionBatch')),
 );
 
+const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
+const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
+const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
+
 const TenantRoutes = [
   {
     path: '/setup-welcome',
@@ -304,6 +308,14 @@ const TenantRoutes = [
         ),
       },
       {
+        path: 'transactions',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.transactions.index">
+            <Transactions />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
         path: 'bursary-setup',
         element: (
           <TenantProtectedRoute permission="dashboard.index">
@@ -311,14 +323,19 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
-       {
+      {
         path: 'class-ledger',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
-            <PageUnderDevelopment
-              title="Class Ledger  Under Development"
-              subtitle="The Bursary Class Ledger module is currently under development. Check back soon!"
-            />
+          <TenantProtectedRoute permission="bursary_manager.ledger.index">
+            <ClassLedger />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'class-ledger/:studentId/cash-post',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.ledger.index">
+            <CashPost />
           </TenantProtectedRoute>
         ),
       },

@@ -49,6 +49,7 @@ const AdmissionLetter = Loadable(lazy(() => import('@/pages/tenant/admission/Adm
 const ApplicationTracker = Loadable(
   lazy(() => import('@/pages/tenant/admission/ApplicationTracker')),
 );
+const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
 const FormDetails = Loadable(lazy(() => import('@/pages/tenant/admission/FormDetails')));
 const AdmissionSetup = Loadable(lazy(() => import('@/pages/tenant/admission/AdmissionSetup')));
 const CreateAdmissionBatch = Loadable(
@@ -318,10 +319,7 @@ const TenantRoutes = [
         path: 'bursary-setup',
         element: (
           <TenantProtectedRoute permission="dashboard.index">
-            <PageUnderDevelopment
-              title="Bursary Setup Under Development"
-              subtitle="The Bursary Setup module is currently under development. Check back soon!"
-            />
+            <BursarySetup />
           </TenantProtectedRoute>
         ),
       },

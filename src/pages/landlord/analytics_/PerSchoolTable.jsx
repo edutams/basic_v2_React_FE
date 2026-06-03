@@ -158,7 +158,7 @@ const PerSchoolTable = () => {
         </TextField>
       </Stack>
 
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
         <Table size="small">
           <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>

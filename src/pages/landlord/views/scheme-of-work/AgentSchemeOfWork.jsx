@@ -650,7 +650,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       >
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
-            variant="contained"
+            
             color="success"
             startIcon={<IconDownload size={18} />}
             onClick={() => setDlSchemeOpen(true)}
@@ -667,7 +667,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
-            variant="contained"
+            
             startIcon={<IconUpload size={18} />}
             onClick={() => setUploadOpen(true)}
             sx={{
@@ -683,7 +683,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             Upload Scheme Template
           </Button>
           <Button
-            variant="contained"
+            
             color="success"
             startIcon={<IconDownload size={18} />}
             onClick={() => setDlTemplateOpen(true)}
@@ -727,7 +727,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Tabs>
         </Box>
         {/* <Button
-          variant="outlined"
+          
           startIcon={<IconFilter size={18} />}
           onClick={() => setFilterDrawerOpen(true)}
           sx={{
@@ -837,7 +837,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
               <Button
-                variant="contained"
                 fullWidth
                 onClick={handleFetch}
                 sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
@@ -1120,7 +1119,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth disabled={savingTopic}>
+          <Button type="submit" fullWidth disabled={savingTopic}>
             {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
@@ -1166,7 +1165,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth disabled={savingSubtopic}>
+          <Button type="submit" fullWidth disabled={savingSubtopic}>
             {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
@@ -1271,7 +1270,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedRow?.teaching_note || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" fullWidth>
             Save Objective
           </Button>
         </Box>
@@ -1447,7 +1446,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleDownloadTemplate}
             startIcon={<IconDownload size={16} />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
@@ -1593,7 +1591,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleUploadTemplate}
             disabled={uploading}
             startIcon={
@@ -1707,7 +1704,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleDownloadScheme}
             disabled={downloading}
             startIcon={
@@ -1741,7 +1737,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         >
           <Box sx={{ fontWeight: 700 }}>Scheme of Work Details</Box>
           <Button
-            variant="outlined"
             onClick={handlePrint}
             startIcon={<IconDownload size={18} />}
             sx={{ textTransform: 'none' }}
@@ -2045,7 +2040,6 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => setViewDetailsModalOpen(false)}
-            variant="contained"
             sx={{
               textTransform: 'none',
               bgcolor: '#d8b4fe',

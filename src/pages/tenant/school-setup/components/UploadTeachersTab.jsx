@@ -280,28 +280,13 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         />
 
         <Box sx={{ display: 'flex', gap: 1.5, position: 'relative' }}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadTemplate}
-          >
+          <Button size="small" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
             Download Template
           </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<UploadIcon />}
-            onClick={() => setUploadModalOpen(true)}
-          >
+          <Button size="small" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
             Upload
           </Button>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={handleAddNewTeacher}
-          >
+          <Button size="small" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
             Add New Teacher
           </Button>
 
@@ -491,7 +476,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleConfirmClose}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleDeleteTeacher}>
+          <Button color="error" onClick={handleDeleteTeacher}>
             Yes, Delete
           </Button>
         </DialogActions>

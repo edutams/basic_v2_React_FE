@@ -8,7 +8,6 @@ import PropTypes from 'prop-types';
 
 const FormSubmittedCard = ({ submittedDate, onViewDetails, onEditForm }) => (
   <Paper
-    variant="outlined"
     sx={{
       borderRadius: 3,
       p: { xs: 2, sm: 2.5 },
@@ -55,10 +54,11 @@ const FormSubmittedCard = ({ submittedDate, onViewDetails, onEditForm }) => (
       </Box>
     </Box>
 
-    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%' }}>
+    <Box
+      sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%' }}
+    >
       {onEditForm && (
         <Button
-          variant="contained"
           size="small"
           onClick={onEditForm}
           sx={{
@@ -104,7 +104,7 @@ const CurrentStageCard = ({
   showActions = true,
   showRequirementStatus = true,
 }) => (
-  <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2, bgcolor: '#F7F9FF' }}>
+  <Paper sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2, bgcolor: '#F7F9FF' }}>
     <Box display="flex" alignItems="center" gap={1} mb={1}>
       <Box
         sx={{
@@ -165,7 +165,6 @@ const CurrentStageCard = ({
 
     {showRequirementStatus && (
       <Paper
-        variant="outlined"
         sx={{
           borderRadius: 2,
           bgcolor: 'info.light',
@@ -209,20 +208,10 @@ const CurrentStageCard = ({
 
     {showActions && (
       <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1.5}>
-        <Button
-          variant="contained"
-          onClick={onStart}
-          fullWidth
-          sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
-        >
+        <Button onClick={onStart} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
           Start {stageTitle}
         </Button>
-        <Button
-          variant="outlined"
-          onClick={onPractice}
-          fullWidth
-          sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}
-        >
+        <Button onClick={onPractice} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
           Practice Test
         </Button>
       </Box>
@@ -242,7 +231,7 @@ CurrentStageCard.propTypes = {
 };
 
 const NextStepCard = ({ title, description, actionLabel, actionDisabled, onAction }) => (
-  <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 } }}>
+  <Paper sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 } }}>
     <Box
       display="flex"
       flexDirection={{ xs: 'column', sm: 'row' }}
@@ -286,7 +275,6 @@ const NextStepCard = ({ title, description, actionLabel, actionDisabled, onActio
       </Box>
 
       <Button
-        variant="contained"
         disabled={actionDisabled}
         onClick={onAction}
         sx={{
@@ -331,7 +319,11 @@ const TrackerMain = ({
   showNextStepCard = true,
 }) => (
   <Box>
-    <FormSubmittedCard submittedDate={submittedDate} onViewDetails={onViewDetails} onEditForm={onEditForm} />
+    <FormSubmittedCard
+      submittedDate={submittedDate}
+      onViewDetails={onViewDetails}
+      onEditForm={onEditForm}
+    />
     <CurrentStageCard
       stageTitle={stageTitle}
       stageDescription={stageDescription}

@@ -90,7 +90,7 @@ const StimulationLinkModal = ({
               <Button onClick={onClose} sx={{ mr: 1 }} color="inherit" disabled={isLoading}>
                 Cancel
               </Button>
-              <Button variant="contained" color="error" onClick={handleDelete} disabled={isLoading}>
+              <Button color="error" onClick={handleDelete} disabled={isLoading}>
                 {isLoading ? 'Deleting...' : 'Delete'}
               </Button>
             </Box>

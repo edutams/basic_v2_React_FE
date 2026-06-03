@@ -161,7 +161,6 @@ const TenantLogin = () => {
                       NOW OPEN
                     </Typography>
                     <Button
-                      variant="contained"
                       onClick={() => setView('apply')}
                       sx={[
                         buttonStyle,
@@ -190,10 +189,7 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       IS OUT
                     </Typography>
-                    <Button
-                      variant="contained"
-                      sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}
-                    >
+                    <Button sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}>
                       Check Result
                     </Button>
                   </Box>
@@ -210,10 +206,7 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       STATUS
                     </Typography>
-                    <Button
-                      variant="contained"
-                      sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}
-                    >
+                    <Button sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}>
                       Check Admission
                     </Button>
                   </Box>

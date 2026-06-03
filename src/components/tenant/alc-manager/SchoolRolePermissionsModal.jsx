@@ -114,9 +114,7 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
           <Typography variant="h6" component="span">
             Permissions for this Role
           </Typography>
-          {totalRows > 0 && !loading && (
-            <Chip label={totalRows} size="small" color="primary" variant="outlined" />
-          )}
+          {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
         <IconButton onClick={handleClose} size="small">
           <CloseIcon fontSize="small" />
@@ -140,7 +138,7 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
               ),
             }}
           />
-          <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: '80px' }}>
+          <Button size="small" onClick={handleSearch} sx={{ minWidth: '80px' }}>
             Search
           </Button>
         </Box>
@@ -217,7 +215,7 @@ const SchoolRolePermissionsModal = ({ open, onClose, role }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} variant="outlined" size="small">
+        <Button onClick={handleClose} size="small">
           Close
         </Button>
       </DialogActions>

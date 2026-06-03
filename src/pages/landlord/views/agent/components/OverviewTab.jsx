@@ -326,7 +326,6 @@ const OverviewTab = ({ data }) => {
           </Select>
         </Box>
         <Button
-          variant="contained"
           size="small"
           sx={{
             height: 40,
@@ -360,7 +359,6 @@ const OverviewTab = ({ data }) => {
               </Typography>
               <Button
                 size="small"
-                variant="outlined"
                 startIcon={<IconFilter size={16} />}
                 sx={{
                   borderRadius: '8px',

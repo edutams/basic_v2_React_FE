@@ -151,7 +151,6 @@ const CompleteSetup = () => {
         <Box sx={{ display: 'flex', gap: 2 }}>
           {!isApproved && (
             <Button
-              variant="outlined"
               onClick={handleBack}
               startIcon={<IconArrowLeft />}
               sx={{ color: '#fff', borderColor: 'rgba(255,255,255,0.5)' }}
@@ -161,7 +160,6 @@ const CompleteSetup = () => {
           )}
 
           <Button
-            variant="contained"
             onClick={handleContinue}
             sx={{
               bgcolor: '#fff',

@@ -34,14 +34,21 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
         <Box display="flex" alignItems="center" gap={1.5}>
           <Box
             sx={{
-              width: 40, height: 40, borderRadius: '50%',
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
               bgcolor: 'primary.light',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             <SchoolIcon sx={{ color: 'primary.main', fontSize: 22 }} />
           </Box>
-          <Typography variant="subtitle1" fontWeight={700}>Confirm Application</Typography>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Confirm Application
+          </Typography>
         </Box>
       </DialogTitle>
 
@@ -50,50 +57,81 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
           You are about to apply for the following admission batch:
         </Typography>
 
-        <Paper variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        <Paper sx={{ borderRadius: 2, p: 2 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}
+          >
             Session
           </Typography>
           <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-            {batch?.session_term?.session?.sesname} {batch?.session_term?.display_term?.display_name}
+            {batch?.session_term?.session?.sesname}{' '}
+            {batch?.session_term?.display_term?.display_name}
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}
+          >
             Batch
           </Typography>
           <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
             {batch.batch_name}
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, mb: 0.5 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, mb: 0.5 }}
+          >
             Available Classes
           </Typography>
           <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1.5}>
             {batch.classes.map((cls) => (
-              <Chip key={cls.id} label={cls.class_code} size="small"
-                sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 11, height: 22 }} />
+              <Chip
+                key={cls.id}
+                label={cls.class_code}
+                size="small"
+                sx={{
+                  bgcolor: 'primary.light',
+                  color: 'primary.main',
+                  fontWeight: 600,
+                  fontSize: 11,
+                  height: 22,
+                }}
+              />
             ))}
           </Stack>
 
           {batch?.require_payment && <Divider sx={{ my: 1.5 }} />}
-          {
-            (batch?.require_payment && batch?.acceptance_fee != '0.00') && <Box display="flex" justifyContent="space-between" mb={0.75} >
-              <Typography variant="body2" color="text.secondary">Pre-Application Fee</Typography>
-              <Typography variant="body2" fontWeight={700}>₦{batch.acceptance_fee.toLocaleString()}</Typography>
+          {batch?.require_payment && batch?.acceptance_fee != '0.00' && (
+            <Box display="flex" justifyContent="space-between" mb={0.75}>
+              <Typography variant="body2" color="text.secondary">
+                Pre-Application Fee
+              </Typography>
+              <Typography variant="body2" fontWeight={700}>
+                ₦{batch.acceptance_fee.toLocaleString()}
+              </Typography>
             </Box>
-          }
+          )}
 
-          {
-            (batch?.require_payment && batch?.application_fee != '0.00') &&
+          {batch?.require_payment && batch?.application_fee != '0.00' && (
             <Box display="flex" justifyContent="space-between">
-              <Typography variant="body2" color="text.secondary">Post-Admission Fee</Typography>
-              <Typography variant="body2" fontWeight={700}>₦{batch.application_fee.toLocaleString()}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Post-Admission Fee
+              </Typography>
+              <Typography variant="body2" fontWeight={700}>
+                ₦{batch.application_fee.toLocaleString()}
+              </Typography>
             </Box>
-          }
+          )}
         </Paper>
 
         <Typography variant="caption" color="text.secondary" display="block" mt={2}>
-          By proceeding, you confirm that you want to start a new admission application for this batch.
+          By proceeding, you confirm that you want to start a new admission application for this
+          batch.
         </Typography>
       </DialogContent>
 
@@ -101,7 +139,7 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
         <Button onClick={onCancel} color="inherit" sx={{ fontWeight: 600 }}>
           Cancel
         </Button>
-        <Button onClick={onConfirm} variant="contained" sx={{ fontWeight: 700, px: 3 }}>
+        <Button onClick={onConfirm} sx={{ fontWeight: 700, px: 3 }}>
           Yes, Apply Now
         </Button>
       </DialogActions>
@@ -156,7 +194,7 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
         ) : batches.length === 0 ? (
           <Alert severity="info">No admission batches available at the moment.</Alert>
         ) : (
-          <TableContainer component={Paper} variant="outlined">
+          <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -165,7 +203,9 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                   <TableCell sx={{ fontWeight: 700, width: '30%' }}>Closing Date</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '20%' }}>Classes</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '25%' }}>Fee Required</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">Action</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">
+                    Action
+                  </TableCell>
                 </TableRow>
               </TableHead>
 
@@ -182,54 +222,82 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                     >
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
-                          {batch?.session_term?.session?.sesname} {batch?.session_term?.display_term?.display_name}
+                          {batch?.session_term?.session?.sesname}{' '}
+                          {batch?.session_term?.display_term?.display_name}
                         </Typography>
                       </TableCell>
 
                       <TableCell>
                         <Typography variant="body2">{batch.batch_name}</Typography>
                       </TableCell>
-                       <TableCell>
+                      <TableCell>
                         <Typography variant="body2">{batch.closing_date}</Typography>
                       </TableCell>
 
                       <TableCell>
                         <Stack direction="row" flexWrap="wrap" gap={0.5}>
                           {batch.classes.map((cls) => (
-                            <Chip key={cls.id} label={cls.class_code} size="small"
-                              sx={{ bgcolor: '#E8E8E8', color: '#333', fontWeight: 600, fontSize: 11, height: 22 }} />
+                            <Chip
+                              key={cls.id}
+                              label={cls.class_code}
+                              size="small"
+                              sx={{
+                                bgcolor: '#E8E8E8',
+                                color: '#333',
+                                fontWeight: 600,
+                                fontSize: 11,
+                                height: 22,
+                              }}
+                            />
                           ))}
                         </Stack>
                       </TableCell>
-                      {batch?.require_payment ?
+                      {batch?.require_payment ? (
                         <TableCell>
-                          <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
+                          <Typography
+                            variant="caption"
+                            color="primary.main"
+                            display="block"
+                            fontWeight={600}
+                          >
                             Pre-Application :{' '}
-                            <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.acceptance_fee.toLocaleString()}</strong>
+                            <strong style={{ color: '#000', fontWeight: 600 }}>
+                              ₦ {batch.acceptance_fee.toLocaleString()}
+                            </strong>
                           </Typography>
-                          <Typography variant="caption" color="primary.main" display="block" fontWeight={600} mt={0.3}>
+                          <Typography
+                            variant="caption"
+                            color="primary.main"
+                            display="block"
+                            fontWeight={600}
+                            mt={0.3}
+                          >
                             Post-Admission :{' '}
-                            <strong style={{ color: '#000', fontWeight: 600 }}>₦ {batch.application_fee.toLocaleString()}</strong>
+                            <strong style={{ color: '#000', fontWeight: 600 }}>
+                              ₦ {batch.application_fee.toLocaleString()}
+                            </strong>
                           </Typography>
                         </TableCell>
-
-                        :
+                      ) : (
                         <TableCell>
-                          <Typography variant="caption" color="primary.main" display="block" fontWeight={600}>
-                              <strong>No Payment Required</strong>
+                          <Typography
+                            variant="caption"
+                            color="primary.main"
+                            display="block"
+                            fontWeight={600}
+                          >
+                            <strong>No Payment Required</strong>
                           </Typography>
                         </TableCell>
-
-                      }
-
-
-
+                      )}
 
                       <TableCell align="center">
                         <Button
-                          variant="contained"
                           size="small"
-                          onClick={(e) => { e.stopPropagation(); setConfirmBatch(batch); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmBatch(batch);
+                          }}
                           sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}
                         >
                           Apply Now

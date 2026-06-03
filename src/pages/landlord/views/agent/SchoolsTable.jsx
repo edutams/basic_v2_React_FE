@@ -11,7 +11,7 @@ import {
   Chip,
   Paper,
   Avatar,
-  Stack
+  Stack,
 } from '@mui/material';
 
 const schoolsData = [
@@ -64,7 +64,7 @@ const schoolsData = [
 
 const SchoolsTable = () => {
   return (
-    <TableContainer component={Paper} elevation={0} variant="outlined">
+    <TableContainer component={Paper} elevation={0}>
       <Table aria-label="simple table">
         <TableHead>
           <TableRow>
@@ -83,7 +83,7 @@ const SchoolsTable = () => {
                 Students
               </Typography>
             </TableCell>
-             <TableCell>
+            <TableCell>
               <Typography variant="subtitle2" fontWeight={600}>
                 Est. Revenue
               </Typography>
@@ -100,12 +100,17 @@ const SchoolsTable = () => {
             <TableRow key={row.id}>
               <TableCell>
                 <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar src={row.logo} alt={row.name} variant="rounded" sx={{ width: 40, height: 40 }} />
-                    <Box>
-                        <Typography variant="subtitle2" fontWeight={600}>
-                            {row.name}
-                        </Typography>
-                    </Box>
+                  <Avatar
+                    src={row.logo}
+                    alt={row.name}
+                    variant="rounded"
+                    sx={{ width: 40, height: 40 }}
+                  />
+                  <Box>
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      {row.name}
+                    </Typography>
+                  </Box>
                 </Stack>
               </TableCell>
               <TableCell>
@@ -118,7 +123,7 @@ const SchoolsTable = () => {
                   {row.students}
                 </Typography>
               </TableCell>
-               <TableCell>
+              <TableCell>
                 <Typography variant="subtitle2" fontWeight={600}>
                   {row.revenue}
                 </Typography>
@@ -130,14 +135,14 @@ const SchoolsTable = () => {
                       row.status === 'Active'
                         ? (theme) => theme.palette.success.light
                         : row.status === 'Pending'
-                        ? (theme) => theme.palette.warning.light
-                        : (theme) => theme.palette.error.light,
+                          ? (theme) => theme.palette.warning.light
+                          : (theme) => theme.palette.error.light,
                     color:
                       row.status === 'Active'
                         ? (theme) => theme.palette.success.main
                         : row.status === 'Pending'
-                        ? (theme) => theme.palette.warning.main
-                        : (theme) => theme.palette.error.main,
+                          ? (theme) => theme.palette.warning.main
+                          : (theme) => theme.palette.error.main,
                     borderRadius: '8px',
                   }}
                   size="small"

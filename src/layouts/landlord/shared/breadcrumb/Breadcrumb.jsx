@@ -39,7 +39,7 @@ const Breadcrumb = ({ subtitle, items, title, children }) => (
           fontWeight="400"
           variant="subtitle2"
           sx={{
-            fontSize: { xs: '0.9rem', md: '1.1rem' },
+            fontSize: { xs: '0.9rem', md: '1rem' },
             mb: 0.5,
             textAlign: 'left',
           }}

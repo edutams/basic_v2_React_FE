@@ -96,7 +96,6 @@ const SchoolPermissionAttachmentModal = ({
           placeholder="Search Permissions"
           type="text"
           fullWidth
-          variant="outlined"
           size="small"
           sx={{ mb: 2 }}
           value={permissionSearch}
@@ -154,7 +153,7 @@ const SchoolPermissionAttachmentModal = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" color="primary" onClick={onSave}>
+        <Button color="primary" onClick={onSave}>
           Save Permissions
         </Button>
       </DialogActions>

@@ -165,7 +165,7 @@ const AgentSubscriptionList = ({ status }) => {
           <CircularProgress />
         </Box>
       ) : (
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table>
               <TableHead>
@@ -218,7 +218,6 @@ const AgentSubscriptionList = ({ status }) => {
                           {row.status === 'pending' && (
                             <Button
                               size="small"
-                              variant="outlined"
                               color="success"
                               sx={{ mr: 1 }}
                               onClick={() => handleApproveConfirm(row)}

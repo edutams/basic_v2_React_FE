@@ -161,12 +161,7 @@ const ModuleManagement = ({
           </Box>
 
           {currentPackage && onAttachModule && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={onAttachModule}
-              size="small"
-            >
+            <Button startIcon={<AddIcon />} onClick={onAttachModule} size="small">
               Manage Module
             </Button>
           )}
@@ -198,7 +193,7 @@ const ModuleManagement = ({
         ) : packageModules.length === 0 ? (
           renderEmptyState()
         ) : (
-          <Paper variant="outlined">
+          <Paper>
             <TableContainer>
               <Table sx={{ whiteSpace: 'nowrap' }}>
                 {/* <Table> */}

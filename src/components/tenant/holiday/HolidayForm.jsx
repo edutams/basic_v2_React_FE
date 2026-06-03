@@ -58,12 +58,7 @@ const HolidayForm = ({
         </Grid>
 
         <Grid item xs={12} sm={3}>
-          <Button
-            variant="contained"
-            type="submit"
-            fullWidth
-            disabled={isLoading || !formik.isValid}
-          >
+          <Button type="submit" fullWidth disabled={isLoading || !formik.isValid}>
             {isLoading ? 'Adding...' : submitText}
           </Button>
         </Grid>

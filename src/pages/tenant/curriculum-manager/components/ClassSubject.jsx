@@ -492,18 +492,13 @@ const ClassSubject = () => {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Class Subjects
               </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                disabled={!selectedClass}
-                onClick={handleOpenAddSubjectToClass}
-              >
+              <Button size="small" disabled={!selectedClass} onClick={handleOpenAddSubjectToClass}>
                 Add Subject to Class
               </Button>
             </Box>
           }
         >
-          <Paper variant="outlined">
+          <Paper>
             <TableContainer sx={{ maxWidth: '100%', overflowX: 'auto' }}>
               <Table sx={{ minWidth: 700 }} size="small">
                 <TableHead>
@@ -717,7 +712,6 @@ const ClassSubject = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleAddSubjectToClass}
             disabled={loadingAddSubject || loadingAvailableSubjects}
@@ -835,7 +829,6 @@ const ClassSubject = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleUpdateClassSubject}
             disabled={loadingUpdateSubject}

@@ -63,11 +63,7 @@ const GatewayForm = ({
             <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel} disabled={isLoading}>
               Cancel
             </Button>
-            <Button
-              variant="contained"
-              type="submit"
-              disabled={isLoading || !formik.values.gateway_name}
-            >
+            <Button type="submit" disabled={isLoading || !formik.values.gateway_name}>
               {isLoading ? 'Saving...' : submitText}
             </Button>
           </Box>

@@ -31,7 +31,7 @@ const CreateAdmissionBatchModal = ({
   onClose,
   sessionTermId,
   sessionTermLabel,
-  batch,       
+  batch,
   onSaved,
 }) => {
   const isEdit = Boolean(batch);
@@ -82,7 +82,10 @@ const CreateAdmissionBatchModal = ({
 
   const handleSubmit = () => {
     const err = validate();
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err);
+      return;
+    }
     setError('');
 
     const payload = {
@@ -189,7 +192,11 @@ const CreateAdmissionBatchModal = ({
                   color="success"
                 />
               }
-              label={<Typography variant="body2" fontWeight={600}>Require Payment</Typography>}
+              label={
+                <Typography variant="body2" fontWeight={600}>
+                  Require Payment
+                </Typography>
+              }
             />
           </Grid>
 
@@ -268,12 +275,7 @@ const CreateAdmissionBatchModal = ({
           <Button onClick={onClose} color="inherit" disabled={loading}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={loading}
-            sx={{ fontWeight: 700, minWidth: 100 }}
-          >
+          <Button onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 700, minWidth: 100 }}>
             {loading ? <CircularProgress size={20} /> : isEdit ? 'Update' : 'Create'}
           </Button>
         </Box>

@@ -65,22 +65,22 @@ const FormWizard = () => {
         return (
           <Box>
             <CustomFormLabel htmlFor="Name">Name</CustomFormLabel>
-            <CustomTextField id="Name" variant="outlined" fullWidth />
+            <CustomTextField id="Name" fullWidth />
             <CustomFormLabel htmlFor="Email">Email</CustomFormLabel>
-            <CustomTextField id="Email" type="email" variant="outlined" fullWidth />
+            <CustomTextField id="Email" type="email" fullWidth />
             <CustomFormLabel htmlFor="Password">Password</CustomFormLabel>
-            <CustomTextField id="Password" type="password" variant="outlined" fullWidth />
+            <CustomTextField id="Password" type="password" fullWidth />
           </Box>
         );
       case 1:
         return (
           <Box>
             <CustomFormLabel htmlFor="Fname">First Name</CustomFormLabel>
-            <CustomTextField id="Fname" variant="outlined" fullWidth />
+            <CustomTextField id="Fname" fullWidth />
             <CustomFormLabel htmlFor="Lname">Last Name</CustomFormLabel>
-            <CustomTextField id="Lname" type="text" variant="outlined" fullWidth />
+            <CustomTextField id="Lname" type="text" fullWidth />
             <CustomFormLabel htmlFor="Address">Address</CustomFormLabel>
-            <CustomTextField id="Address" multiline rows={4} variant="outlined" fullWidth />
+            <CustomTextField id="Address" multiline rows={4} fullWidth />
           </Box>
         );
       case 2:
@@ -136,7 +136,7 @@ const FormWizard = () => {
                 </Alert>
 
                 <Box textAlign="right">
-                  <Button onClick={handleReset} variant="contained" color="error">
+                  <Button onClick={handleReset} color="error">
                     Reset
                   </Button>
                 </Box>
@@ -149,7 +149,6 @@ const FormWizard = () => {
               <Box display="flex" flexDirection="row" mt={3}>
                 <Button
                   color="inherit"
-                  variant="contained"
                   disabled={activeStep === 0}
                   onClick={handleBack}
                   sx={{ mr: 1 }}
@@ -165,7 +164,6 @@ const FormWizard = () => {
 
                 <Button
                   onClick={handleNext}
-                  variant="contained"
                   color={activeStep === steps.length - 1 ? 'success' : 'secondary'}
                 >
                   {activeStep === steps.length - 1 ? 'Finish' : 'Next'}

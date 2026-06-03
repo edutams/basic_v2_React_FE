@@ -272,13 +272,13 @@ const SchoolAssignmentManagement = () => {
           </Grid>
 
           <Grid size="auto">
-            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 35 }}>
+            <Button size="small" onClick={handleSearch} sx={{ height: 35 }}>
               Search
             </Button>
           </Grid>
         </Grid>
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table sx={{ tableLayout: 'fixed' }}>
               <TableHead>

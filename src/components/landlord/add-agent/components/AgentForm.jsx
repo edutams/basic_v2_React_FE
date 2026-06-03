@@ -41,7 +41,6 @@ const AgentForm = ({
         {actionType !== 'viewSchools' && (
           <Button
             type="submit"
-            variant="contained"
             disabled={loading || !formik.isValid}
             onClick={(e) => {
               if (!loading && formik.isValid) {

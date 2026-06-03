@@ -114,14 +114,12 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
       Selected Admission Batch Detail
     </Typography>
 
-        <Typography variant="h5" fontWeight={800} mb={2}>
-        Session:{' '}
-        {batch?.session_term?.session?.sesname}{' '}
-        {batch?.session_term?.display_term?.display_name}
-        {' • '}
-        Admission Batch:{' '}
-        {batch?.batch_name ?? '2'}
-      </Typography>
+    <Typography variant="h5" fontWeight={800} mb={2}>
+      Session: {batch?.session_term?.session?.sesname}{' '}
+      {batch?.session_term?.display_term?.display_name}
+      {' • '}
+      Admission Batch: {batch?.batch_name ?? '2'}
+    </Typography>
 
     <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
       {(batch?.classes || []).map((cls) => (
@@ -133,55 +131,53 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
         />
       ))}
     </Stack>
-          {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
+    {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
 
+    {[
+      batch?.require_payment && batch?.acceptance_fee !== '0.00'
+        ? {
+            label: 'Pre-Application Payment',
+            value: batch?.acceptance_fee,
+          }
+        : null,
 
-   {[
-  batch?.require_payment && batch?.acceptance_fee !== '0.00'
-    ? {
-        label: 'Pre-Application Payment',
-        value: batch?.acceptance_fee,
-      }
-    : null,
+      batch?.require_payment && batch?.application_fee !== '0.00'
+        ? {
+            label: 'Post-Admission Payment',
+            value: batch?.application_fee,
+          }
+        : null,
+    ]
+      .filter(Boolean)
+      .map(({ label, value }) => (
+        <Box
+          key={label}
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            bgcolor: 'error.light',
+            borderRadius: 2,
+            px: 2,
+            py: 1.25,
+            mb: 1.5,
+          }}
+        >
+          <Typography variant="body2" color="error.dark" fontWeight={500}>
+            {label}
+          </Typography>
 
-  batch?.require_payment && batch?.application_fee !== '0.00'
-    ? {
-        label: 'Post-Admission Payment',
-        value: batch?.application_fee,
-      }
-    : null,
-]
-  .filter(Boolean)
-  .map(({ label, value }) => (
-    <Box
-      key={label}
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        bgcolor: 'error.light',
-        borderRadius: 2,
-        px: 2,
-        py: 1.25,
-        mb: 1.5,
-      }}
-    >
-      <Typography variant="body2" color="error.dark" fontWeight={500}>
-        {label}
-      </Typography>
-
-      <Typography variant="body2" color="error.dark" fontWeight={700}>
-        ₦{Number(value).toLocaleString()}
-      </Typography>
-    </Box>
-  ))}
+          <Typography variant="body2" color="error.dark" fontWeight={700}>
+            ₦{Number(value).toLocaleString()}
+          </Typography>
+        </Box>
+      ))}
 
     {activeStep !== 3 && (
       <>
         <Divider sx={{ mb: 2 }} />
         <Button
           fullWidth
-          variant="outlined"
           startIcon={<VisibilityIcon />}
           onClick={onChangeBatch}
           sx={{
@@ -237,7 +233,7 @@ const NewApplication = () => {
           console.log('Loading batch details for ID:', formData.admission_batch.id);
           const response = await getOpenBatches();
           const batches = response?.data?.data || response?.data || [];
-          const fullBatch = batches.find(b => b.id === formData.admission_batch.id);
+          const fullBatch = batches.find((b) => b.id === formData.admission_batch.id);
           if (fullBatch) {
             console.log('Loaded full batch data:', fullBatch);
             setSelectedBatch(fullBatch);
@@ -256,13 +252,12 @@ const NewApplication = () => {
     loadBatchDetails();
   }, [formData?.admission_batch?.id, batch?.id, batchLoaded, batch, formData?.admission_batch]);
 
- 
   useEffect(() => {
     if (userChangedBatch) {
       // console.log('Skipping formData batch update - user manually changed batch');
       return;
     }
-    
+
     if (formData?.admission_batch && formData.admission_batch.id !== selectedBatch?.id) {
       setSelectedBatch(formData.admission_batch);
       setBatchLoaded(true);
@@ -273,7 +268,9 @@ const NewApplication = () => {
   const ALL_STEPS = [
     { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
     { label: 'Academic info', icon: SchoolIcon, isTabler: false },
-    ...(selectedBatch?.require_payment ? [{ label: 'Payment', icon: CreditCardIcon, isTabler: false }] : []),
+    ...(selectedBatch?.require_payment
+      ? [{ label: 'Payment', icon: CreditCardIcon, isTabler: false }]
+      : []),
     { label: 'Documents', icon: DescriptionIcon, isTabler: false },
     { label: 'Submit', icon: SendIcon, isTabler: false },
   ];
@@ -282,12 +279,10 @@ const NewApplication = () => {
 
   // Determine initial step - use currentStage from hook if resuming, otherwise start at 0
   const resumeStep =
-    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep)
-      ? parsedQueryStep
-      : 0;
+    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep) ? parsedQueryStep : 0;
 
   const [activeStep, setActiveStep] = useState(resumeStep);
-  
+
   // Hide batch summary on submit step (step 4 for payment batches, step 3 for no-payment batches)
   const submitStepIndex = selectedBatch?.require_payment ? 4 : 3;
   const hideBatchSummary = activeStep === submitStepIndex;
@@ -323,7 +318,7 @@ const NewApplication = () => {
       ...values,
       admission_batch_id: selectedBatch?.id,
     };
-    
+
     const result = await saveStepData(0, dataWithBatch);
     if (result.success) {
       // Update selectedBatch if the backend returned updated admission_batch
@@ -345,7 +340,7 @@ const NewApplication = () => {
       ...values,
       admission_batch_id: selectedBatch?.id,
     };
-    
+
     const result = await saveStepData(1, dataWithBatch);
     if (result.success) {
       // Update selectedBatch if the backend returned updated admission_batch
@@ -402,7 +397,7 @@ const NewApplication = () => {
   const renderStep = () => {
     // Map activeStep to actual step considering dynamic payment step
     let actualStep = activeStep;
-    
+
     switch (actualStep) {
       case 0:
         return (
@@ -529,20 +524,15 @@ const NewApplication = () => {
                 Application Form
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Session: {
-                selectedBatch?.session_term?.session?.sesname} {selectedBatch?.session_term?.display_term?.display_name}
-                &nbsp;·&nbsp; 
-
-
-               {
-                selectedBatch?.require_payment &&
-                selectedBatch?.application_fee !== '0.00' && (
+                Session: {selectedBatch?.session_term?.session?.sesname}{' '}
+                {selectedBatch?.session_term?.display_term?.display_name}
+                &nbsp;·&nbsp;
+                {selectedBatch?.require_payment && selectedBatch?.application_fee !== '0.00' && (
                   <>
-                    ₦{Number(selectedBatch?.application_fee ?? 5000).toLocaleString()}
-                    {' '}Application Fee
+                    ₦{Number(selectedBatch?.application_fee ?? 5000).toLocaleString()} Application
+                    Fee
                   </>
-                )
-              }
+                )}
               </Typography>
             </Box>
           </Box>

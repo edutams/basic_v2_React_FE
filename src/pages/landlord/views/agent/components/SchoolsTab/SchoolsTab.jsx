@@ -392,7 +392,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         <Button
           onClick={onClose}
           color="inherit"
-          variant="outlined"
           sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}
         >
           Close
@@ -402,7 +401,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             {!showRejectInput ? (
               <>
                 <Button
-                  variant="outlined"
                   color="error"
                   startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(true)}
@@ -412,7 +410,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                   Reject
                 </Button>
                 <Button
-                  variant="contained"
                   color="success"
                   startIcon={<CheckCircleOutlineIcon />}
                   onClick={() => onApprove(prospect.id)}
@@ -430,7 +427,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
             ) : (
               <>
                 <Button
-                  variant="outlined"
                   color="inherit"
                   onClick={() => setShowRejectInput(false)}
                   disabled={loading}
@@ -439,7 +435,6 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                   Cancel Rejection
                 </Button>
                 <Button
-                  variant="contained"
                   color="error"
                   startIcon={<CancelOutlinedIcon />}
                   onClick={() => setOpenConfirmReject(true)}
@@ -1073,7 +1068,6 @@ const SchoolsTab = ({
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ marginLeft: 'auto' }}>
               {activeTab === 0 && can('landlord.school.create') && (
                 <Button
-                  variant="contained"
                   startIcon={<IconUserPlus size={18} />}
                   onClick={() => setOpenAddModal(true)}
                   sx={{
@@ -1086,7 +1080,6 @@ const SchoolsTab = ({
                 </Button>
               )}
               <Button
-                variant="outlined"
                 startIcon={<IconAdjustmentsHorizontal size={18} />}
                 onClick={() => setFilterDrawerOpen(true)}
                 sx={{

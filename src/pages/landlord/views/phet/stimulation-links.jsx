@@ -165,7 +165,6 @@ const ManagePhETLinks = () => {
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Typography variant="h5">Manage Simulation Links</Typography>
             <Button
-              variant="contained"
               color="primary"
               onClick={handleAddClick}
               sx={{
@@ -199,13 +198,13 @@ const ManagePhETLinks = () => {
               // sx={{ flexGrow: 1, minWidth: 200 }}
             />
             {hasActiveFilters && (
-              <Button variant="outlined" onClick={clearFilters} sx={{ height: 'fit-content' }}>
+              <Button onClick={clearFilters} sx={{ height: 'fit-content' }}>
                 Clear Filters
               </Button>
             )}
           </Box>
 
-          <Paper variant="outlined">
+          <Paper>
             <TableContainer>
               <Table>
                 <TableHead>

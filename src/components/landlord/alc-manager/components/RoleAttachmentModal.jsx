@@ -96,7 +96,6 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
           type="text"
           fullWidth
           size="small"
-          variant="outlined"
           sx={{ mb: 2 }}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -149,7 +148,7 @@ const RoleAttachmentModal = ({ open, onClose, currentAgent, onRoleSelection }) =
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" color="primary" onClick={handleAttach}>
+        <Button color="primary" onClick={handleAttach}>
           Attach Roles
         </Button>
       </DialogActions>

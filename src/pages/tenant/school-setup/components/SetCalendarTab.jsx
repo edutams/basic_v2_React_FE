@@ -435,7 +435,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                   </Box>
 
                   <Box ref={tableWrapRef} sx={{ position: 'relative' }}>
-                    <Paper variant="outlined">
+                    <Paper>
                       <TableContainer>
                         <Table sx={{ whiteSpace: 'nowrap' }}>
                           <TableHead>
@@ -537,7 +537,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
             >
               {activeSessionTermId ? (
                 // paperRef anchors the hint position calculations
-                <Paper ref={paperRef} variant="outlined" sx={{ p: 2, position: 'relative' }}>
+                <Paper ref={paperRef} sx={{ p: 2, position: 'relative' }}>
                   <Box
                     sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}
                   >
@@ -572,7 +572,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
                     {/* generateBtnRef targets this button exactly */}
                     <Button
                       ref={generateBtnRef}
-                      variant="contained"
                       onClick={handleAutoGenerate}
                       disabled={loading || !activeSessionTermId}
                       size="small"
@@ -709,7 +708,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           <Button onClick={handleCloseEditModal}>Cancel</Button>
           <Button
             onClick={handleSaveDisplayName}
-            variant="contained"
             disabled={loading || !displayName.trim()}
             size="small"
           >
@@ -735,7 +733,7 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           <Button onClick={() => setConfirmSubscribe({ open: false, term: null })}>
             No, Cancel
           </Button>
-          <Button onClick={handleConfirmSubscribe} variant="contained" autoFocus disabled={loading}>
+          <Button onClick={handleConfirmSubscribe} autoFocus disabled={loading}>
             Yes, Subscribe
           </Button>
         </DialogActions>
@@ -769,7 +767,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Button>
           <Button
             onClick={handleConfirmToggleStatus}
-            variant="contained"
             color="primary"
             disabled={loading}
             size="small"
@@ -794,7 +791,6 @@ const SetCalendarTab = ({ onSaveAndContinue, onUpdate, onReadyChange }) => {
           </Button>
           <Button
             size="small"
-            variant="contained"
             color="error"
             disabled={loading}
             onClick={() => {

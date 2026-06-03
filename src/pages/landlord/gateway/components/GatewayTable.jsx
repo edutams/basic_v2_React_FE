@@ -120,7 +120,6 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Typography variant="h5">Available Gateways</Typography>
           <Button
-            variant="contained"
             //  startIcon={<AddIcon />}
             onClick={() => onGatewayAction('create')}
             sx={{
@@ -135,7 +134,6 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
     >
       <Box sx={{ p: 0, display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
         <Button
-          variant="outlined"
           startIcon={<IconFilter size={18} />}
           onClick={() => setFilterDrawerOpen(true)}
           sx={{ minWidth: 140 }}
@@ -167,7 +165,7 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
         onReset={handleFilterReset}
       />
 
-      <Paper variant="outlined">
+      <Paper>
         <TableContainer>
           <Table>
             <TableHead>

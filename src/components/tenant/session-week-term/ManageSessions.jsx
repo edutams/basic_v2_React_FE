@@ -100,7 +100,7 @@ const ManageSessions = ({ activeTab, onSessionAction, updatedSession, data, isRe
 
   return (
     <Box>
-      <Paper variant="outlined">
+      <Paper>
         <TableContainer>
           <Table sx={{ whiteSpace: 'nowrap' }}>
             <TableHead>

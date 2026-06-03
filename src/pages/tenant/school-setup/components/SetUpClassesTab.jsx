@@ -358,7 +358,6 @@ const SetUpClassesTab = forwardRef(
 
                         <Button
                           ref={index === 0 ? generateBtnRef : null}
-                          variant="contained"
                           size="small"
                           disabled={isInactive}
                           onClick={() => handleGenerateArms(classItem.unique_key)}
@@ -451,11 +450,7 @@ const SetUpClassesTab = forwardRef(
         </TableContainer>
 
         <Box mt={2} sx={{ display: 'none' }}>
-          <Button
-            variant="contained"
-            onClick={handleSaveAndContinue}
-            disabled={!hasChanges || saving}
-          >
+          <Button onClick={handleSaveAndContinue} disabled={!hasChanges || saving}>
             {saving ? 'Saving...' : 'Save & Continue'}
           </Button>
         </Box>

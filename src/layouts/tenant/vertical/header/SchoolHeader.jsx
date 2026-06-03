@@ -157,7 +157,7 @@ const SchoolHeader = () => {
                         display: { xs: 'none', sm: 'block' },
                         whiteSpace: 'normal',
                         wordBreak: 'break-word',
-                        maxWidth: 200,
+                        maxWidth: 350,
                       }}
                     >
                       {schoolName}
@@ -197,8 +197,7 @@ const SchoolHeader = () => {
 
             <Button
               size="small"
-              variant="outlined"
-              color="inherit"
+              // color="inherit"
               onClick={() => setConfirmOpen(true)}
               sx={{
                 whiteSpace: 'nowrap',
@@ -222,11 +221,10 @@ const SchoolHeader = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="outlined" color="inherit" onClick={() => setConfirmOpen(false)}>
+            <Button color="inherit" onClick={() => setConfirmOpen(false)}>
               Cancel
             </Button>
             <Button
-              variant="contained"
               onClick={() => {
                 setConfirmOpen(false);
                 stopImpersonation();

@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { Card, CardHeader, CardContent, Divider } from '@mui/material';
 
 const ChildCard = ({ title, children, codeModel }) => (
-  <Card sx={{ padding: 0 }} variant="outlined">
+  <Card sx={{ padding: 0 }}>
     {title ? (
       <>
-        <CardHeader title={title} action={codeModel}/>
+        <CardHeader title={title} action={codeModel} />
         <Divider />{' '}
       </>
     ) : (

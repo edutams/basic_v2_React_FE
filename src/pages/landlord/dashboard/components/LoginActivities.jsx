@@ -192,7 +192,6 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList }) => {
           </PrimaryButton> */}
 
           <Button
-            variant="contained"
             color="primary"
             // onClick={handleOpen}modal
             startIcon={<GetAppIcon size={18} />}

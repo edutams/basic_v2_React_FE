@@ -4,11 +4,11 @@ import CustomTextField from '../theme-elements/CustomTextField';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
 import ParentCard from '../../shared/ParentCard';
 
-import InputVariantsCode from "./code/InputVariantsCode";
+import InputVariantsCode from './code/InputVariantsCode';
 
 const FbInputVariants = () => {
   return (
-    <ParentCard title='Input Variants' codeModel={<InputVariantsCode />}>
+    <ParentCard title="Input Variants" codeModel={<InputVariantsCode />}>
       <form>
         <CustomFormLabel
           sx={{
@@ -20,7 +20,6 @@ const FbInputVariants = () => {
         </CustomFormLabel>
         <CustomTextField
           id="success-input"
-          variant="outlined"
           defaultValue="Success value"
           fullWidth
           required
@@ -34,18 +33,11 @@ const FbInputVariants = () => {
           }}
         />
         <CustomFormLabel htmlFor="error-input">Error Input</CustomFormLabel>
-        <CustomTextField
-          id="error-input"
-          variant="outlined"
-          fullWidth
-          required
-         error
-        />
+        <CustomTextField id="error-input" fullWidth required error />
         <FormControl fullWidth error>
           <CustomFormLabel htmlFor="error-text-input">Input with Error text</CustomFormLabel>
           <CustomTextField
             id="error-text-input"
-            variant="outlined"
             fullWidth
             required
             error

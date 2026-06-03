@@ -14,22 +14,22 @@ import { useFormik } from 'formik';
 import { moduleValidationSchema } from '../validation/moduleValidationSchema';
 import PropTypes from 'prop-types';
 
-const ModuleForm = ({ 
+const ModuleForm = ({
   initialValues = {
     module_name: '',
     module_description: '',
     module_status: 'active',
     module_links: {
       link: '',
-      permission: ''
+      permission: '',
     },
     is_sidebar: 'no',
-    module_order: 0
+    module_order: 0,
   },
   onSubmit,
   onCancel,
   submitText = 'Create Module',
-  isLoading = false 
+  isLoading = false,
 }) => {
   const formik = useFormik({
     initialValues: {
@@ -38,9 +38,10 @@ const ModuleForm = ({
       module_name: initialValues.module_name || initialValues.mod_name || '',
       module_description: initialValues.module_description || initialValues.mod_description || '',
       module_status: initialValues.module_status || initialValues.mod_status || 'active',
-      module_links: initialValues.module_links || initialValues.mod_links || { link: '', permission: '' },
+      module_links: initialValues.module_links ||
+        initialValues.mod_links || { link: '', permission: '' },
       is_sidebar: initialValues.is_sidebar || 'no',
-      module_order: initialValues.module_order || 0
+      module_order: initialValues.module_order || 0,
     },
     validationSchema: moduleValidationSchema,
     enableReinitialize: true,
@@ -60,7 +61,6 @@ const ModuleForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            variant="outlined"
             error={formik.touched.module_name && Boolean(formik.errors.module_name)}
             helperText={formik.touched.module_name && formik.errors.module_name}
           />
@@ -76,7 +76,6 @@ const ModuleForm = ({
             fullWidth
             multiline
             rows={1}
-            variant="outlined"
             error={formik.touched.module_description && Boolean(formik.errors.module_description)}
             helperText={formik.touched.module_description && formik.errors.module_description}
           />
@@ -90,7 +89,6 @@ const ModuleForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            variant="outlined"
             error={formik.touched.module_links?.link && Boolean(formik.errors.module_links?.link)}
             helperText={formik.touched.module_links?.link && formik.errors.module_links?.link}
             placeholder="/module-path"
@@ -105,15 +103,19 @@ const ModuleForm = ({
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             fullWidth
-            variant="outlined"
-            error={formik.touched.module_links?.permission && Boolean(formik.errors.module_links?.permission)}
-            helperText={formik.touched.module_links?.permission && formik.errors.module_links?.permission}
+            error={
+              formik.touched.module_links?.permission &&
+              Boolean(formik.errors.module_links?.permission)
+            }
+            helperText={
+              formik.touched.module_links?.permission && formik.errors.module_links?.permission
+            }
             placeholder="module.view"
           />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <FormControl fullWidth variant="outlined">
+          <FormControl fullWidth>
             <Select
               name="module_status"
               value={formik.values.module_status}
@@ -122,7 +124,7 @@ const ModuleForm = ({
               onBlur={formik.handleBlur}
               error={formik.touched.module_status && Boolean(formik.errors.module_status)}
             >
-               <MenuItem value="">Select Status</MenuItem>
+              <MenuItem value="">Select Status</MenuItem>
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
             </Select>
@@ -131,16 +133,10 @@ const ModuleForm = ({
 
         <Grid size={{ xs: 12 }}>
           <Box mt={4} display="flex" justifyContent="flex-end" gap={1}>
-            <Button
-              color="inherit"
-              onClick={onCancel}
-              type="button"
-              disabled={isLoading}
-            >
+            <Button color="inherit" onClick={onCancel} type="button" disabled={isLoading}>
               Cancel
             </Button>
             <Button
-              variant="contained"
               type="submit"
               disabled={isLoading || !formik.isValid}
               startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : null}

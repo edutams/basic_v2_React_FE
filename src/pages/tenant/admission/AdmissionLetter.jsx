@@ -12,7 +12,10 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useReactToPrint } from 'react-to-print';
-import { updateAdmissionPrintStatus, getAdmissionLetterDetails } from '@/api/tenant/admission/admissionApi';
+import {
+  updateAdmissionPrintStatus,
+  getAdmissionLetterDetails,
+} from '@/api/tenant/admission/admissionApi';
 import { useNotification } from 'src/hooks/useNotification';
 
 const MOCK_LETTER = {
@@ -162,7 +165,7 @@ const LetterCard = ({ letter, schoolName, schoolLogo, schoolAddress, schoolEmail
           for the {letter.session} academic session.
         </Typography>
 
-        <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 3, bgcolor: '#F7FAFC' }}>
+        <Paper sx={{ borderRadius: 2, p: 2.5, mb: 3, bgcolor: '#F7FAFC' }}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <DetailCell label="Class" value={letter.class} />
@@ -273,7 +276,9 @@ const AdmissionLetter = () => {
     return (
       <PageContainer title="Admission Letter" description="View admission letter">
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <Typography variant="body1" color="text.secondary">Loading admission letter details...</Typography>
+          <Typography variant="body1" color="text.secondary">
+            Loading admission letter details...
+          </Typography>
         </Box>
       </PageContainer>
     );
@@ -308,22 +313,17 @@ const AdmissionLetter = () => {
 
         <Box display="flex" gap={1} flexWrap="wrap">
           {/* <Button
-            variant="outlined"
+            
             startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{ fontWeight: 600 }}
           >
             Print
           </Button> */}
-          {/* <Button variant="outlined" startIcon={<ShareIcon />} sx={{ fontWeight: 600 }}>
+          {/* <Button  startIcon={<ShareIcon />} sx={{ fontWeight: 600 }}>
             Share
           </Button> */}
-          <Button
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownload}
-            sx={{ fontWeight: 700 }}
-          >
+          <Button startIcon={<DownloadIcon />} onClick={handleDownload} sx={{ fontWeight: 700 }}>
             Download PDF
           </Button>
         </Box>

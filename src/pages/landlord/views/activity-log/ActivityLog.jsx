@@ -168,7 +168,6 @@ const ActivityLog = () => {
               sx={{ width: { xs: '100%', sm: '160px' } }}
             />
             <Button
-              variant="contained"
               color="primary"
               size="small"
               onClick={handleSearch}
@@ -178,7 +177,6 @@ const ActivityLog = () => {
             </Button>
             {(search || dateFrom || dateTo) && (
               <Button
-                variant="outlined"
                 color="secondary"
                 size="small"
                 onClick={handleClearFilters}
@@ -197,7 +195,7 @@ const ActivityLog = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -250,7 +248,7 @@ const ActivityLog = () => {
                               label={log.subject_type || 'System'}
                               size="small"
                               color="primary"
-                              variant="outlined"
+                              
                             />
                           </TableCell> */}
                           <TableCell>
@@ -262,7 +260,6 @@ const ActivityLog = () => {
                           <TableCell align="right">
                             <Button
                               size="small"
-                              variant="outlined"
                               startIcon={<IconEye size={18} />}
                               onClick={() => handleOpenModal(log)}
                               sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
@@ -311,7 +308,7 @@ const ActivityLog = () => {
           {selectedLog &&
           selectedLog.properties &&
           Object.keys(selectedLog.properties).length > 0 ? (
-            <TableContainer component={Paper} variant="outlined">
+            <TableContainer component={Paper}>
               <Table size="small">
                 <TableHead>
                   <TableRow>

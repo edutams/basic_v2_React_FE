@@ -6,12 +6,15 @@ import PropTypes from 'prop-types';
 const UploadStaffForm = ({ onUpload, onCancel, onDownloadTemplate }) => {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [uploading, setUploading]       = useState(false);
-  const [result, setResult]             = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) { setSelectedFile(file); setResult(null); }
+    if (file) {
+      setSelectedFile(file);
+      setResult(null);
+    }
     e.target.value = '';
   };
 
@@ -41,7 +44,6 @@ const UploadStaffForm = ({ onUpload, onCancel, onDownloadTemplate }) => {
 
       {onDownloadTemplate && (
         <Button
-          variant="outlined"
           startIcon={<IconDownload size={16} />}
           onClick={onDownloadTemplate}
           fullWidth
@@ -56,7 +58,10 @@ const UploadStaffForm = ({ onUpload, onCancel, onDownloadTemplate }) => {
         sx={{
           border: '2px dashed',
           borderColor: selectedFile ? 'primary.main' : 'divider',
-          borderRadius: 2, p: 3, textAlign: 'center', cursor: 'pointer',
+          borderRadius: 2,
+          p: 3,
+          textAlign: 'center',
+          cursor: 'pointer',
           bgcolor: selectedFile ? 'primary.lighter' : 'background.default',
           transition: 'all 0.2s',
           '&:hover': { borderColor: 'primary.main', bgcolor: 'primary.lighter' },
@@ -69,19 +74,25 @@ const UploadStaffForm = ({ onUpload, onCancel, onDownloadTemplate }) => {
       </Box>
 
       <input
-        ref={fileInputRef} type="file" accept=".xlsx,.xls"
-        style={{ display: 'none' }} onChange={handleFileChange}
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
       />
 
       {uploading && <LinearProgress sx={{ mt: 2 }} />}
-      {result && <Alert severity={result.severity} sx={{ mt: 2 }}>{result.message}</Alert>}
+      {result && (
+        <Alert severity={result.severity} sx={{ mt: 2 }}>
+          {result.message}
+        </Alert>
+      )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
         <Button color="inherit" onClick={onCancel} disabled={uploading}>
           {result?.severity === 'success' ? 'Close' : 'Cancel'}
         </Button>
         <Button
-          variant="contained"
           startIcon={<IconUpload size={16} />}
           onClick={handleUpload}
           disabled={!selectedFile || uploading}

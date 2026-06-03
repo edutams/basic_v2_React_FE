@@ -13,7 +13,7 @@ import {
   Checkbox,
   Alert,
   CircularProgress,
-  Switch
+  Switch,
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useFormik } from 'formik';
@@ -39,7 +39,7 @@ const AcademicInfoForm = ({
   onBack,
   isLoading = false,
   serverErrors = {},
-  selectedBatch
+  selectedBatch,
 }) => {
   const notify = useNotification();
 
@@ -75,12 +75,10 @@ const AcademicInfoForm = ({
   // Validation helpers
   const isPrevSchoolValid =
     !formik.values.has_previous_school ||
-    (
-      formik.values.prev_school_name &&
+    (formik.values.prev_school_name &&
       formik.values.prev_school_state &&
       formik.values.prev_school_lga &&
-      formik.values.previous_class
-    );
+      formik.values.previous_class);
 
   const isIntendingValid =
     Boolean(formik.values.intending_programme_id) &&
@@ -124,7 +122,10 @@ const AcademicInfoForm = ({
     if (!states.length || !initialValues || hydrated) return;
 
     // Check if initialValues actually has meaningful data
-    const hasData = initialValues.study_mode || initialValues.intending_programme_id || initialValues.intending_class_id;
+    const hasData =
+      initialValues.study_mode ||
+      initialValues.intending_programme_id ||
+      initialValues.intending_class_id;
     if (!hasData) return;
 
     const hydrate = async () => {
@@ -135,21 +136,25 @@ const AcademicInfoForm = ({
       // console.log('[AcademicInfoForm] Available batch classes:', batchClasses);
 
       // Ensure IDs are strings
-      const programmeId = initialValues?.intending_programme_id 
-        ? String(initialValues.intending_programme_id) 
-        : (batchProgramme?.id ? String(batchProgramme.id) : '');
-      
+      const programmeId = initialValues?.intending_programme_id
+        ? String(initialValues.intending_programme_id)
+        : batchProgramme?.id
+          ? String(batchProgramme.id)
+          : '';
+
       // Validate that the class exists in the current batch
-      const rawClassId = initialValues?.intending_class_id 
-        ? String(initialValues.intending_class_id) 
+      const rawClassId = initialValues?.intending_class_id
+        ? String(initialValues.intending_class_id)
         : '';
-      
+
       // Check if the class is valid for the current batch
-      const classExists = rawClassId && batchClasses.some(c => String(c.id) === rawClassId);
+      const classExists = rawClassId && batchClasses.some((c) => String(c.id) === rawClassId);
       const classId = classExists ? rawClassId : '';
-      
+
       if (rawClassId && !classExists) {
-        console.warn(`[AcademicInfoForm] Class ID ${rawClassId} doesn't exist in current batch classes. Clearing class selection.`);
+        console.warn(
+          `[AcademicInfoForm] Class ID ${rawClassId} doesn't exist in current batch classes. Clearing class selection.`,
+        );
       }
 
       // console.log('[AcademicInfoForm] Computed IDs - programmeId:', programmeId, 'classId:', classId);
@@ -192,7 +197,7 @@ const AcademicInfoForm = ({
       }
 
       setHydrated(true);
-      
+
       // Validate after hydration is complete
       setTimeout(() => {
         formik.validateForm();
@@ -206,7 +211,7 @@ const AcademicInfoForm = ({
   // Update batch-related fields when selectedBatch changes
   useEffect(() => {
     if (!hydrated) return; // Only update after initial hydration
-    
+
     // Update programme ID when batch changes
     if (batchProgramme?.id) {
       const currentProgrammeId = formik.values.intending_programme_id;
@@ -248,7 +253,7 @@ const AcademicInfoForm = ({
   // Merge server errors with formik errors
   useEffect(() => {
     if (serverErrors && Object.keys(serverErrors).length > 0) {
-      Object.keys(serverErrors).forEach(key => {
+      Object.keys(serverErrors).forEach((key) => {
         formik.setFieldError(key, serverErrors[key]);
       });
     }
@@ -267,20 +272,15 @@ const AcademicInfoForm = ({
       </Typography>
       <Divider sx={{ mb: 3 }} />
 
-
       {/* Toggle row */}
       <Box
         sx={{
           mb: 3,
           p: 2,
           border: '1px solid',
-          borderColor: formik.values.has_previous_school
-            ? 'primary.main'
-            : 'divider',
+          borderColor: formik.values.has_previous_school ? 'primary.main' : 'divider',
           borderRadius: 2,
-          bgcolor: formik.values.has_previous_school
-            ? 'primary.50'
-            : 'background.paper',
+          bgcolor: formik.values.has_previous_school ? 'primary.50' : 'background.paper',
           transition: 'all .2s ease',
         }}
       >
@@ -292,14 +292,9 @@ const AcademicInfoForm = ({
           gap={2}
         >
           <Box>
-            <Typography fontWeight={600}>
-              Previous School Information
-            </Typography>
+            <Typography fontWeight={600}>Previous School Information</Typography>
 
-            <Typography
-              variant="body2"
-              color="text.secondary"
-            >
+            <Typography variant="body2" color="text.secondary">
               Has your ward attended another school before?
             </Typography>
           </Box>
@@ -313,23 +308,15 @@ const AcademicInfoForm = ({
           >
             <Typography
               variant="body2"
-              color={
-                !formik.values.has_previous_school
-                  ? 'text.primary'
-                  : 'text.secondary'
-              }
-              fontWeight={
-                !formik.values.has_previous_school
-                  ? 600
-                  : 400
-              }
+              color={!formik.values.has_previous_school ? 'text.primary' : 'text.secondary'}
+              fontWeight={!formik.values.has_previous_school ? 600 : 400}
             >
               No
             </Typography>
 
             <Switch
               checked={formik.values.has_previous_school}
-              name='has_previous_school'
+              name="has_previous_school"
               onChange={(e) => {
                 formik.setFieldValue('has_previous_school', e.target.checked);
               }}
@@ -337,16 +324,8 @@ const AcademicInfoForm = ({
 
             <Typography
               variant="body2"
-              color={
-                formik.values.has_previous_school
-                  ? 'primary.main'
-                  : 'text.secondary'
-              }
-              fontWeight={
-                formik.values.has_previous_school
-                  ? 600
-                  : 400
-              }
+              color={formik.values.has_previous_school ? 'primary.main' : 'text.secondary'}
+              fontWeight={formik.values.has_previous_school ? 600 : 400}
             >
               Yes
             </Typography>
@@ -447,11 +426,12 @@ const AcademicInfoForm = ({
 
       {/* ── Intending class ── */}
       <Box mb={4}>
-
         <Typography variant="subtitle1" fontWeight={700}>
           Intending Class
         </Typography>
-        <small className='text-success'>Programme and class are determined by the Selected Batch,select the intend class!!!</small>
+        <small className="text-success">
+          Programme and class are determined by the Selected Batch,select the intend class!!!
+        </small>
       </Box>
 
       <Grid container spacing={2}>
@@ -468,10 +448,7 @@ const AcademicInfoForm = ({
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6 }}>
-          <FormControl
-            fullWidth
-            error={ft.intending_class_id && Boolean(fe.intending_class_id)}
-          >
+          <FormControl fullWidth error={ft.intending_class_id && Boolean(fe.intending_class_id)}>
             <InputLabel>Class Choice</InputLabel>
             <Select
               name="intending_class_id"
@@ -524,16 +501,8 @@ const AcademicInfoForm = ({
         <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button
-          variant="contained"
-          type="submit"
-          disabled={!isFormValid || isLoading}
-        >
-          {isLoading ? (
-            <CircularProgress size={20} sx={{ mr: 2 }} />
-          ) : (
-            'Save and Continue'
-          )}
+        <Button type="submit" disabled={!isFormValid || isLoading}>
+          {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>
     </Box>

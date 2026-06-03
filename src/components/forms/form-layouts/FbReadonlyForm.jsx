@@ -18,7 +18,6 @@ const FbReadonlyForm = () => {
         </CustomFormLabel>
         <CustomTextField
           id="ro-name"
-          variant="outlined"
           defaultValue="Wrappixel"
           fullWidth
           slotProps={{
@@ -32,7 +31,6 @@ const FbReadonlyForm = () => {
         <CustomTextField
           id="ro-email-address"
           helperText="We'll never share your email with anyone else."
-          variant="outlined"
           defaultValue="info@wrappixel.com"
           fullWidth
           slotProps={{
@@ -48,7 +46,6 @@ const FbReadonlyForm = () => {
           type="password"
           autoComplete="current-password"
           defaultValue="info@wrappixel.com"
-          variant="outlined"
           fullWidth
           slotProps={{
             input: {

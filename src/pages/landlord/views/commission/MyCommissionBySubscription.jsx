@@ -110,7 +110,6 @@ const MyCommissionBySubscription = () => {
                 Subscription Commission Details
               </Typography>
               <Button
-                variant="contained"
                 startIcon={<IconDownload size={18} />}
                 size="small"
                 sx={{
@@ -162,7 +161,6 @@ const MyCommissionBySubscription = () => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <Button
-                    variant="contained"
                     onClick={handleFilter}
                     fullWidth
                     sx={{

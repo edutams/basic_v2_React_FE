@@ -114,7 +114,7 @@ const UpgradePlanModal = ({ open, onClose, selectedRow, onUpgrade, isLoading = f
           <Button sx={{ mr: 1 }} color="inherit" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
-          <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
+          <Button type="submit" color="primary" disabled={isLoading}>
             {isLoading ? 'Upgrading...' : 'Upgrade Plan'}
           </Button>
         </Box>

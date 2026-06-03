@@ -171,7 +171,7 @@ const SchoolsView = ({ selectedAgent }) => {
           }}
         />
 
-        <Button variant="contained" onClick={handleSearch} sx={{ height: 40 }}>
+        <Button onClick={handleSearch} sx={{ height: 40 }}>
           Search
         </Button>
       </Box>
@@ -259,7 +259,6 @@ const SchoolsView = ({ selectedAgent }) => {
                           ? 'success'
                           : 'default'
                       }
-                      variant="outlined"
                       sx={{ fontWeight: 600 }}
                     />
                   </TableCell>

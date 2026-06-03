@@ -1,13 +1,20 @@
 import { useTheme } from '@mui/material/styles';
 import { useContext, useState, useEffect } from 'react';
-import { Box, Grid, Typography, Paper, Button, Stack, FormControl, Select, MenuItem } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Typography,
+  Paper,
+  Button,
+  Stack,
+  FormControl,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-import {
-  Groups as GroupsIcon,
-  AccountBalanceWallet as WalletIcon,
-} from '@mui/icons-material';
+import { Groups as GroupsIcon, AccountBalanceWallet as WalletIcon } from '@mui/icons-material';
 
 import StatCard from '@/components/shared/StatCard';
 import WalletCard from '@/components/shared/WalletCard';
@@ -46,7 +53,8 @@ const ParentDashboard = () => {
             { id: 'all', label: 'All Sessions' },
             ...response.data.map((sterm) => ({
               id: sterm.id,
-              label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+              label:
+                `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
             })),
           ];
           setSessionTerms(sess_terms);
@@ -88,7 +96,10 @@ const ParentDashboard = () => {
             id: admission.id,
             name: `${admission.surname} ${admission.first_name} ${admission.other_name || ''}`.trim(),
             initials: `${admission.surname?.[0] || ''}${admission.first_name?.[0] || ''}`,
-            class: admission.intending_class?.class_code || admission.intending_class?.class_name || 'N/A',
+            class:
+              admission.intending_class?.class_code ||
+              admission.intending_class?.class_name ||
+              'N/A',
             applicationNo: admission.form_number,
             status: getAdmissionStatus(admission),
             step: admission.admission_stage || 0,
@@ -147,19 +158,19 @@ const ParentDashboard = () => {
 
   const handleViewProspectiveWard = (ward) => {
     const admission = ward.admissionData;
-    
+
     // If form is submitted, go to application tracker
     if (admission?.form_submit_status === 'yes') {
       navigate(`/application-tracker/${admission.id}`, {
-        state: { admission }
+        state: { admission },
       });
     } else {
       // If draft, go to application form to continue
-      navigate('/admission/new-application', { 
-        state: { 
+      navigate('/admission/new-application', {
+        state: {
           ward: admission,
-          resumeApplication: true 
-        } 
+          resumeApplication: true,
+        },
       });
     }
   };
@@ -199,7 +210,6 @@ const ParentDashboard = () => {
               icon={WalletIcon}
             />
           </Grid>
-
         </Grid>
       </Box>
 
@@ -227,7 +237,7 @@ const ParentDashboard = () => {
                   sx={{
                     bgcolor: '#F1F4F1',
                     fontWeight: 500,
-                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                   }}
                 >
                   {sessionTerms.map((st) => (
@@ -251,12 +261,7 @@ const ParentDashboard = () => {
                   ))}
                 </Stack>
               ) : (
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  height="100%"
-                >
+                <Box display="flex" alignItems="center" justifyContent="center" height="100%">
                   <Typography variant="body2" color="text.secondary">
                     No enrolled wards yet
                   </Typography>
@@ -290,7 +295,6 @@ const ParentDashboard = () => {
               </Box>
             </Box>
             <Button
-              variant="contained"
               sx={{
                 bgcolor: '#DFFF7D',
                 color: '#1a1a1a',
@@ -328,7 +332,7 @@ const ParentDashboard = () => {
                   sx={{
                     bgcolor: '#F1F4F1',
                     fontWeight: 500,
-                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+                    '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                   }}
                 >
                   {sessionTerms.map((term) => (
@@ -341,12 +345,7 @@ const ParentDashboard = () => {
             </Box>
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
               {loading ? (
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  height="100%"
-                >
+                <Box display="flex" alignItems="center" justifyContent="center" height="100%">
                   <Typography variant="body2" color="text.secondary">
                     Loading...
                   </Typography>
@@ -362,12 +361,7 @@ const ParentDashboard = () => {
                   ))}
                 </Stack>
               ) : (
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  height="100%"
-                >
+                <Box display="flex" alignItems="center" justifyContent="center" height="100%">
                   <Typography variant="body2" color="text.secondary">
                     No prospective wards yet
                   </Typography>

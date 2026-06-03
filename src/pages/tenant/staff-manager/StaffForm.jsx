@@ -454,7 +454,6 @@ const StaffForm = ({ initialValues, onSubmit, onCancel, isLoading, mode }) => {
               </Button>
               <Button
                 type="submit"
-                variant="contained"
                 disabled={isLoading}
                 startIcon={isLoading ? <CircularProgress size={16} /> : null}
                 sx={{ textTransform: 'none', minWidth: 100 }}

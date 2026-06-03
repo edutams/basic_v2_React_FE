@@ -197,7 +197,7 @@ const MyPlan = () => {
     <PageContainer title="My Plans" description="This is the My Plans page">
       {/* <Breadcrumb title="My Plans" items={BCrumb} /> */}
       {/* <ParentCard title={<Typography variant="h5">All My Plans</Typography>}> */}
-      <Paper variant="outlined">
+      <Paper>
         <TableContainer>
           <Table aria-label="my plan table" sx={{ whiteSpace: 'nowrap' }}>
             <TableHead>
@@ -471,7 +471,7 @@ const MyPlan = () => {
               <Button onClick={() => setOpenEditModal(false)} color="inherit">
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" color="primary">
+              <Button type="submit" color="primary">
                 Save
               </Button>
             </Box>

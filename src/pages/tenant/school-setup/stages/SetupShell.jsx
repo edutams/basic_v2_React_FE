@@ -452,7 +452,6 @@ const SetupShell = ({
             </Button> */}
             <Button
               size="small"
-              variant="contained"
               endIcon={<IconChevronRight size={16} />}
               onClick={onSaveAndContinue}
               disabled={saving || !canContinue}

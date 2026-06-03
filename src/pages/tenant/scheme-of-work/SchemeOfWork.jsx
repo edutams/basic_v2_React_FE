@@ -638,7 +638,7 @@ const SchemeOfWork = () => {
       {/* Action Buttons */}
       {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 4 }}>
         <Button
-          variant="outlined"
+          
           onClick={() => setDlSchemeOpen(true)}
           startIcon={<IconDownload size={18} />}
           sx={{ textTransform: 'none', px: 3, borderRadius: 1.5 }}
@@ -648,7 +648,7 @@ const SchemeOfWork = () => {
       </Box> */}
       {/* <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
-            variant="contained"
+            
             startIcon={<IconUpload size={18} />}
             onClick={() => setUploadOpen(true)}
             sx={{
@@ -664,7 +664,7 @@ const SchemeOfWork = () => {
             Upload Scheme Template
           </Button>
           <Button
-            variant="contained"
+            
             color="success"
             startIcon={<IconDownload size={18} />}
             onClick={() => setDlTemplateOpen(true)}
@@ -773,7 +773,6 @@ const SchemeOfWork = () => {
             </Grid>
             <Grid size={{ xs: 12, md: 1.5 }}>
               <Button
-                variant="contained"
                 onClick={handleFetch}
                 disabled={!programme || !classLevel || !subject}
                 fullWidth
@@ -1048,7 +1047,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedTopic?.topic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth disabled={savingTopic}>
+          <Button type="submit" fullWidth disabled={savingTopic}>
             {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
@@ -1094,7 +1093,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth disabled={savingSubtopic}>
+          <Button type="submit" fullWidth disabled={savingSubtopic}>
             {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
@@ -1199,7 +1198,7 @@ const SchemeOfWork = () => {
             defaultValue={selectedRow?.teaching_note || ''}
             sx={{ mb: 2 }}
           />
-          <Button type="submit" variant="contained" fullWidth>
+          <Button type="submit" fullWidth>
             Save Objective
           </Button>
         </Box>
@@ -1374,7 +1373,6 @@ const SchemeOfWork = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleDownloadTemplate}
             startIcon={<IconDownload size={16} />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
@@ -1520,7 +1518,6 @@ const SchemeOfWork = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleUploadTemplate}
             disabled={uploading}
             startIcon={
@@ -1634,7 +1631,6 @@ const SchemeOfWork = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleDownloadScheme}
             disabled={downloading}
             startIcon={
@@ -1680,7 +1676,6 @@ const SchemeOfWork = () => {
         >
           <Box sx={{ fontWeight: 700 }}>Scheme of Work Details</Box>
           <Button
-            variant="outlined"
             onClick={handlePrint}
             startIcon={<IconDownload size={18} />}
             sx={{ textTransform: 'none' }}
@@ -1979,7 +1974,6 @@ const SchemeOfWork = () => {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => setViewDetailsModalOpen(false)}
-            variant="contained"
             sx={{
               textTransform: 'none',
               bgcolor: '#d8b4fe',

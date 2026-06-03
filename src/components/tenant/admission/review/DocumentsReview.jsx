@@ -156,7 +156,6 @@ const DocRow = ({ label, file, required, onView }) => {
             <Button
               size="small"
               startIcon={<VisibilityIcon />}
-              variant="outlined"
               onClick={onView}
               sx={{ fontSize: 11, whiteSpace: 'nowrap' }}
             >
@@ -180,13 +179,11 @@ const DocumentsReview = ({ documentsData, hasPreviousSchool = false }) => {
 
   const files = documentsData ?? {};
 
-  const effectiveDocs = DOC_DEFS
-    .filter((doc) => doc.key !== 'prev_school_report' || hasPreviousSchool)
-    .map((doc) =>
-      doc.key === 'prev_school_report'
-        ? { ...doc, required: hasPreviousSchool }
-        : doc,
-    );
+  const effectiveDocs = DOC_DEFS.filter(
+    (doc) => doc.key !== 'prev_school_report' || hasPreviousSchool,
+  ).map((doc) =>
+    doc.key === 'prev_school_report' ? { ...doc, required: hasPreviousSchool } : doc,
+  );
 
   return (
     <ReviewSection

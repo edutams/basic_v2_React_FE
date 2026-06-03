@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 
 const EnrolledWardCard = ({ ward, onViewDetails }) => (
   <Paper
-    variant="outlined"
     sx={{
       p: 2,
       borderRadius: 2,
@@ -53,7 +52,11 @@ const EnrolledWardCard = ({ ward, onViewDetails }) => (
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
             Optional:{' '}
-            <Typography  variant="caption" component="span" sx={{ fontWeight: 600, color: 'primary.main' }}>
+            <Typography
+              variant="caption"
+              component="span"
+              sx={{ fontWeight: 600, color: 'primary.main' }}
+            >
               ₦{ward.optional?.toLocaleString()}
             </Typography>
           </Typography>

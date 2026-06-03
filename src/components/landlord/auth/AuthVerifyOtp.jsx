@@ -93,7 +93,6 @@ const AuthVerifyOtp = ({ emailProp, onSuccess }) => {
 
       <Button
         fullWidth
-        variant="contained"
         color="primary"
         type="submit"
         disabled={loading}

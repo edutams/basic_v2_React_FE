@@ -2,7 +2,7 @@ import { Box, Paper, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 
 const ReviewSection = ({ number, title, subtitle, id, children }) => (
-  <Paper variant="outlined" sx={{ borderRadius: 2, p: 2.5, mb: 2 }} id={id}>
+  <Paper sx={{ borderRadius: 2, p: 2.5, mb: 2 }} id={id}>
     <Box display="flex" alignItems="flex-start" gap={1.5} mb={2}>
       <Box
         sx={{
@@ -23,9 +23,13 @@ const ReviewSection = ({ number, title, subtitle, id, children }) => (
         {number}
       </Box>
       <Box>
-        <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
+        <Typography variant="subtitle1" fontWeight={700}>
+          {title}
+        </Typography>
         {subtitle && (
-          <Typography variant="caption" color="text.secondary">{subtitle}</Typography>
+          <Typography variant="caption" color="text.secondary">
+            {subtitle}
+          </Typography>
         )}
       </Box>
     </Box>
@@ -34,10 +38,10 @@ const ReviewSection = ({ number, title, subtitle, id, children }) => (
 );
 
 ReviewSection.propTypes = {
-  number:   PropTypes.number.isRequired,
-  title:    PropTypes.string.isRequired,
+  number: PropTypes.number.isRequired,
+  title: PropTypes.string.isRequired,
   subtitle: PropTypes.string,
-  id:       PropTypes.string,
+  id: PropTypes.string,
   children: PropTypes.node,
 };
 

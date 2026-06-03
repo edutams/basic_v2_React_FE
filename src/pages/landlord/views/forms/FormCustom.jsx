@@ -102,13 +102,7 @@ const FormCustom = () => {
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, sm: 12, lg: 4 }}>
             <CustomFormLabel htmlFor="name">Name</CustomFormLabel>
-            <CustomTextField
-              id="name"
-              placeholder="Enter text"
-              variant="outlined"
-              fullWidth
-              size="small"
-            />
+            <CustomTextField id="name" placeholder="Enter text" fullWidth size="small" />
             <CustomFormLabel htmlFor="demo-simple-select">Select Dropdown</CustomFormLabel>
             <CustomSelect
               labelId="demo-simple-select-label"
@@ -128,13 +122,7 @@ const FormCustom = () => {
           {/* ----------------------------------- */}
           <Grid size={{ xs: 12, sm: 12, lg: 4 }}>
             <CustomFormLabel htmlFor="cname">Company Name</CustomFormLabel>
-            <CustomTextField
-              id="cname"
-              placeholder="Enter text"
-              variant="outlined"
-              fullWidth
-              size="small"
-            />
+            <CustomTextField id="cname" placeholder="Enter text" fullWidth size="small" />
             <CustomFormLabel htmlFor="time">Time</CustomFormLabel>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DateTimePicker
@@ -168,7 +156,6 @@ const FormCustom = () => {
             <CustomTextField
               id="disabled"
               placeholder="Disabled filled"
-              variant="outlined"
               fullWidth
               disabled
               size="small"
@@ -371,21 +358,13 @@ const FormCustom = () => {
               mt={2}
             >
               <Stack spacing={1} direction="row">
-                <Button variant="contained" color="primary">
-                  Add New
-                </Button>
-                <CustomDisabledButton variant="contained" disabled>
-                  Add New
-                </CustomDisabledButton>
-                <CustomOutlinedButton variant="outlined">Add New</CustomOutlinedButton>
+                <Button color="primary">Add New</Button>
+                <CustomDisabledButton disabled>Add New</CustomDisabledButton>
+                <CustomOutlinedButton>Add New</CustomOutlinedButton>
               </Stack>
               <Stack direction="row" spacing={1}>
-                <Button variant="contained" color="secondary">
-                  Add New
-                </Button>
-                <Button variant="contained" color="success">
-                  Add New
-                </Button>
+                <Button color="secondary">Add New</Button>
+                <Button color="success">Add New</Button>
               </Stack>
             </Stack>
           </Grid>

@@ -291,12 +291,7 @@ const Plan = () => {
                     sx={{ m: 0 }}
                   />
                 )}
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleOpen('create')}
-                  sx={{ minWidth: 120 }}
-                >
+                <Button color="primary" onClick={() => handleOpen('create')} sx={{ minWidth: 120 }}>
                   Add New Plan
                 </Button>
               </Box>
@@ -321,7 +316,7 @@ const Plan = () => {
           </Box>
         }
       >
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table aria-label="plan table" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>

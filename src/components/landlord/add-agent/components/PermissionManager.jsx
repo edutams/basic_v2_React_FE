@@ -185,7 +185,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
         effect immediately after saving.
       </Alert>
 
-      <Paper variant="outlined" sx={{ p: 3, mb: 3 }} fullWidth>
+      <Paper sx={{ p: 3, mb: 3 }} fullWidth>
         <Typography variant="h6" color="primary" mb={2}>
           Access Level
         </Typography>
@@ -249,7 +249,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
             return (
               <Paper
                 key={category}
-                // variant="outlined"
+                //
                 sx={{
                   mb: 2,
                   overflow: 'hidden',
@@ -385,7 +385,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
           <Button onClick={onCancel} color="inherit">
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSave} disabled={!hasChanges}>
+          <Button onClick={handleSave} disabled={!hasChanges}>
             Save Changes
           </Button>
         </Box>

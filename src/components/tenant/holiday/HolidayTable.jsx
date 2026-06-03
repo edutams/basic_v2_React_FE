@@ -35,7 +35,7 @@ const HolidayTable = ({ holidays = [], onHolidayAction, isLoading = false }) => 
   };
 
   return (
-    <TableContainer component={Paper} variant="outlined">
+    <TableContainer component={Paper}>
       <Table>
         <TableHead>
           <TableRow sx={{ backgroundColor: 'grey.100' }}>

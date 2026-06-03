@@ -79,7 +79,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Pagination states
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -122,7 +121,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
     payment.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Pagination calculations
   const startIndex = page * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
   const paginatedPayments = filteredPayments.slice(startIndex, endIndex);
@@ -357,7 +355,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
         </ParentCard>
       </Stack>
 
-      {/* Action Menu */}
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
@@ -393,7 +390,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
         </MenuItem>
       </Menu>
 
-      {/* Payment Name Modal */}
       <PaymentNameModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

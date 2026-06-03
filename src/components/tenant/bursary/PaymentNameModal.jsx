@@ -214,8 +214,8 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 helperText="Who pays the gateway charges"
                 required
               >
-                <MenuItem value="client">Client (School)</MenuItem>
-                <MenuItem value="student">Student (Parent)</MenuItem>
+                <MenuItem value="client">Client</MenuItem>
+                <MenuItem value="student">Student</MenuItem>
               </TextField>
             </Grid>
           </Grid>
@@ -257,7 +257,6 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           </Grid>
         </Box>
 
-        {/* Action Buttons */}
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
           <Button onClick={onClose} variant="outlined">
             Cancel

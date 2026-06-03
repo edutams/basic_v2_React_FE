@@ -109,8 +109,6 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
       showDivider={true}
     >
       <Stack spacing={3}>
-
-          {/* Info Box */}
         <Box
           sx={{
             p: 2,

@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
   MenuItem,
@@ -14,6 +10,7 @@ import {
   Alert,
 } from '@mui/material';
 import PropTypes from 'prop-types';
+import ReusableModal from '@/components/shared/ReusableModal';
 
 const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
   const [formData, setFormData] = useState({
@@ -97,95 +94,95 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
   const total = (parseInt(formData.inst1, 10) || 0) + (parseInt(formData.inst2, 10) || 0);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Typography variant="h6" fontWeight={700}>
-          {instalment ? 'Edit Instalment Plan' : 'Add Instalment Plan'}
-        </Typography>
-      </DialogTitle>
+    <ReusableModal
+      open={open}
+      onClose={onClose}
+      title={instalment ? 'Edit Instalment Plan' : 'Add Instalment Plan'}
+      size="medium"
+      showCloseButton={true}
+      showDivider={true}
+    >
+      <Stack spacing={3}>
+        {errors.general && <Alert severity="error">{errors.general}</Alert>}
 
-      <DialogContent dividers>
-        <Stack spacing={3}>
-          {errors.general && <Alert severity="error">{errors.general}</Alert>}
+        <Box>
+          <Typography variant="body2" color="textSecondary" mb={2}>
+            Define the percentage split for the instalment plan. Both values must add up to 100%.
+          </Typography>
 
-          <Box>
-            <Typography variant="body2" color="textSecondary" mb={2}>
-              Define the percentage split for the instalment plan. Both values must add up to 100%.
-            </Typography>
-
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={5}>
-                <TextField
-                  label="First Instalment (%)"
-                  fullWidth
-                  value={formData.inst1}
-                  onChange={handleChange('inst1')}
-                  error={!!errors.inst1}
-                  helperText={errors.inst1}
-                  placeholder="e.g., 60"
-                  inputProps={{ maxLength: 3 }}
-                />
-              </Grid>
-              <Grid item xs={2}>
-                <Typography align="center" variant="h5" color="textSecondary">
-                  :
-                </Typography>
-              </Grid>
-              <Grid item xs={5}>
-                <TextField
-                  label="Second Instalment (%)"
-                  fullWidth
-                  value={formData.inst2}
-                  onChange={handleChange('inst2')}
-                  error={!!errors.inst2}
-                  helperText={errors.inst2}
-                  placeholder="e.g., 40"
-                  inputProps={{ maxLength: 3 }}
-                />
-              </Grid>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={5}>
+              <TextField
+                label="First Instalment (%)"
+                fullWidth
+                value={formData.inst1}
+                onChange={handleChange('inst1')}
+                error={!!errors.inst1}
+                helperText={errors.inst1}
+                placeholder="e.g., 60"
+                inputProps={{ maxLength: 3 }}
+              />
             </Grid>
-
-            <Box
-              sx={{
-                mt: 2,
-                p: 2,
-                bgcolor: total === 100 ? 'success.light' : 'warning.light',
-                borderRadius: 1,
-              }}
-            >
-              <Typography variant="body2" fontWeight={600}>
-                Total: {total}%
+            <Grid item xs={2}>
+              <Typography align="center" variant="h5" color="textSecondary">
+                :
               </Typography>
-              <Typography variant="caption" color="textSecondary">
-                {total === 100
-                  ? '✓ Perfect! This adds up to 100%'
-                  : `${total < 100 ? 'Add' : 'Reduce'} ${Math.abs(100 - total)}% to reach 100%`}
-              </Typography>
-            </Box>
-          </Box>
+            </Grid>
+            <Grid item xs={5}>
+              <TextField
+                label="Second Instalment (%)"
+                fullWidth
+                value={formData.inst2}
+                onChange={handleChange('inst2')}
+                error={!!errors.inst2}
+                helperText={errors.inst2}
+                placeholder="e.g., 40"
+                inputProps={{ maxLength: 3 }}
+              />
+            </Grid>
+          </Grid>
 
-          <TextField
-            select
-            label="Status"
-            fullWidth
-            value={formData.status}
-            onChange={handleChange('status')}
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
+              bgcolor: total === 100 ? 'success.light' : 'warning.light',
+              borderRadius: 1,
+            }}
           >
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
-          </TextField>
-        </Stack>
-      </DialogContent>
+            <Typography variant="body2" fontWeight={600}>
+              Total: {total}%
+            </Typography>
+            <Typography variant="caption" color="textSecondary">
+              {total === 100
+                ? '✓ Perfect! This adds up to 100%'
+                : `${total < 100 ? 'Add' : 'Reduce'} ${Math.abs(100 - total)}% to reach 100%`}
+            </Typography>
+          </Box>
+        </Box>
 
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit">
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
-          {instalment ? 'Update' : 'Add'} Plan
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <TextField
+          select
+          label="Status"
+          fullWidth
+          value={formData.status}
+          onChange={handleChange('status')}
+        >
+          <MenuItem value="active">Active</MenuItem>
+          <MenuItem value="inactive">Inactive</MenuItem>
+        </TextField>
+
+        {/* Action Buttons */}
+        <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
+          <Button onClick={onClose} color="inherit" variant="outlined">
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
+            {instalment ? 'Update' : 'Add'} Plan
+          </Button>
+        </Stack>
+      </Stack>
+    </ReusableModal>
   );
 };
 

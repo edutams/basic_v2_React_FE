@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
   MenuItem,
@@ -11,6 +7,7 @@ import {
   Typography,
 } from '@mui/material';
 import PropTypes from 'prop-types';
+import ReusableModal from '@/components/shared/ReusableModal';
 
 const CategoryModal = ({ open, onClose, onSave, category }) => {
   const [formData, setFormData] = useState({
@@ -65,59 +62,58 @@ const CategoryModal = ({ open, onClose, onSave, category }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        <Typography variant="h6" fontWeight={700}>
-          {category ? 'Edit Payment Category' : 'Add Payment Category'}
-        </Typography>
-      </DialogTitle>
+    <ReusableModal
+      open={open}
+      onClose={onClose}
+      title={category ? 'Edit Payment Category' : 'Add Payment Category'}
+      size="medium"
+      showCloseButton={true}
+      showDivider={true}
+    >
+      <Stack spacing={3}>
+        <TextField
+          label="Category Name"
+          fullWidth
+          value={formData.name}
+          onChange={handleChange('name')}
+          error={!!errors.name}
+          helperText={errors.name}
+          placeholder="e.g., Returning Students"
+        />
 
-      <DialogContent dividers>
-        <Stack spacing={3}>
-          <TextField
-            label="Category Name"
-            fullWidth
-            value={formData.name}
-            onChange={handleChange('name')}
-            error={!!errors.name}
-            helperText={errors.name}
-            placeholder="e.g., Returning Students"
-          />
+        <TextField
+          label="Description"
+          fullWidth
+          multiline
+          rows={3}
+          value={formData.description}
+          onChange={handleChange('description')}
+          error={!!errors.description}
+          helperText={errors.description}
+          placeholder="Describe who this category applies to"
+        />
 
-          <TextField
-            label="Description"
-            fullWidth
-            multiline
-            rows={3}
-            value={formData.description}
-            onChange={handleChange('description')}
-            error={!!errors.description}
-            helperText={errors.description}
-            placeholder="Describe who this category applies to"
-          />
+        <TextField
+          select
+          label="Status"
+          fullWidth
+          value={formData.status}
+          onChange={handleChange('status')}
+        >
+          <MenuItem value="active">Active</MenuItem>
+          <MenuItem value="inactive">Inactive</MenuItem>
+        </TextField>
 
-          <TextField
-            select
-            label="Status"
-            fullWidth
-            value={formData.status}
-            onChange={handleChange('status')}
-          >
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
-          </TextField>
+        <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
+          <Button onClick={onClose} variant="outlined">
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
+            {category ? 'Update' : 'Add'} Category
+          </Button>
         </Stack>
-      </DialogContent>
-
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose} color="inherit">
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
-          {category ? 'Update' : 'Add'} Category
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Stack>
+    </ReusableModal>
   );
 };
 

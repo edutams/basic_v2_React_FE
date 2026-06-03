@@ -305,7 +305,8 @@ const BursarySetup = () => {
       ) : (
         // Payment Name Stats
         <Grid container spacing={3} mb={3}>
-          {/* Total Payment Items Card */}
+       
+          {/* Settlement Accounts Card */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, borderRadius: 2 }}>
               <Typography variant="h6" fontWeight={600} mb={2}>
@@ -315,35 +316,35 @@ const BursarySetup = () => {
                 {paymentNameStats.totalItems}
               </Typography>
               <Grid container spacing={2} mb={2}>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 3 }}>
                   <Typography variant="caption" color="textSecondary">
                     Compulsory
                   </Typography>
-                  <Typography variant="h5" fontWeight={600}>
+                  <Typography variant="body2" fontWeight={600}>
                     {paymentNameStats.compulsory}
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 3 }}>
                   <Typography variant="caption" color="textSecondary">
                     Optional
                   </Typography>
-                  <Typography variant="h5" fontWeight={600}>
+                  <Typography variant="body2" fontWeight={600}>
                     {paymentNameStats.optional}
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 3 }}>
                   <Typography variant="caption" color="textSecondary">
                     Active
                   </Typography>
-                  <Typography variant="h5" fontWeight={600}>
+                  <Typography variant="body2" fontWeight={600}>
                     {paymentNameStats.active}
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 3 }}>
                   <Typography variant="caption" color="textSecondary">
                     Inactive
                   </Typography>
-                  <Typography variant="h5" fontWeight={600}>
+                  <Typography variant="body2" fontWeight={600}>
                     {paymentNameStats.inactive}
                   </Typography>
                 </Grid>
@@ -358,19 +359,18 @@ const BursarySetup = () => {
                   }}
                 />
                 <Typography variant="caption" color="textSecondary">
-                  All payment items are currently active and valid to for use
+                  All payment items are currently
                 </Typography>
               </Box>
             </Paper>
           </Grid>
 
-          {/* Settlement Accounts Card */}
-          <Grid size={{ xs: 12, md: 4 }}>
+           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, borderRadius: 2 }}>
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Settlement Accounts
               </Typography>
-              <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
+              <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
                 {paymentNameStats.settlementAccounts.total}
               </Typography>
               <Grid container spacing={2} mb={2}>
@@ -414,14 +414,12 @@ const BursarySetup = () => {
               </Box>
             </Paper>
           </Grid>
-
-          {/* Fee Bearer Distribution Card */}
-          <Grid size={{ xs: 12, md: 4 }}>
+           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, borderRadius: 2 }}>
               <Typography variant="h6" fontWeight={600} mb={2}>
-                Fee Bearer Distribution
+               Fee Bearer Distribution
               </Typography>
-              <Typography variant="h2" fontWeight={700} color="success.main" mb={2}>
+              <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
                 {paymentNameStats.feeBearer.total}
               </Typography>
               <Grid container spacing={2} mb={2}>
@@ -429,7 +427,7 @@ const BursarySetup = () => {
                   <Typography variant="caption" color="textSecondary">
                     Client
                   </Typography>
-                  <Typography variant="h5" fontWeight={600}>
+                  <Typography variant="body2" fontWeight={600}>
                     {paymentNameStats.feeBearer.client}
                   </Typography>
                 </Grid>
@@ -437,7 +435,7 @@ const BursarySetup = () => {
                   <Typography variant="caption" color="textSecondary">
                     Student
                   </Typography>
-                  <Typography variant="h5" fontWeight={600}>
+                  <Typography variant="body2" fontWeight={600}>
                     {paymentNameStats.feeBearer.student}
                   </Typography>
                 </Grid>
@@ -452,11 +450,12 @@ const BursarySetup = () => {
                   }}
                 />
                 <Typography variant="caption" color="textSecondary">
-                  All Fees are Currently Borne by client
+                  GTB is the most Useeland Settlement account
                 </Typography>
               </Box>
             </Paper>
           </Grid>
+
         </Grid>
       )}
 
@@ -1043,7 +1042,6 @@ const BursarySetup = () => {
               <TextField
                 placeholder="Search Payment Items"
                 size="small"
-                fullWidth
                 InputProps={{
                   startAdornment: (
                     <Box sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>

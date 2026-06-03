@@ -19,6 +19,10 @@ import {
   Menu,
   MenuItem as MenuOption,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Alert,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
@@ -33,6 +37,12 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+  });
 
   // Mock data for schedule
   const [schedules, setSchedules] = useState([
@@ -90,6 +100,36 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     handleMenuClose();
   };
 
+  const handleClassClick = (schedule, cls) => {
+    if (cls.missing) {
+      // Add payment to class
+      setConfirmDialog({
+        open: true,
+        title: 'Add Payment',
+        message: `Are you sure you want to add payment to ${cls.id} for ${schedule.paymentName}?`,
+        onConfirm: () => {
+          showSnackbar?.(`Payment added to ${cls.id} for ${schedule.paymentName}`);
+          setConfirmDialog({ ...confirmDialog, open: false });
+        },
+      });
+    } else {
+      // Edit payment for class
+      setConfirmDialog({
+        open: true,
+        title: 'Edit Payment',
+        message: `Are you sure you want to edit payment for ${cls.id} in ${schedule.paymentName}?`,
+        onConfirm: () => {
+          showSnackbar?.(`Payment edited for ${cls.id} in ${schedule.paymentName}`);
+          setConfirmDialog({ ...confirmDialog, open: false });
+        },
+      });
+    }
+  };
+
+  const handleConfirmDialogClose = () => {
+    setConfirmDialog({ ...confirmDialog, open: false });
+  };
+
   return (
     <Stack spacing={3}>
       <Alert severity="info" sx={{ mb: 2 }}>
@@ -99,7 +139,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
       </Alert>
 
       {/* Term Tabs and Search Row */}
-          <ParentCard> 
+      <ParentCard>
       <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
         {/* Term Tabs - Left Side */}
         <Tabs
@@ -271,19 +311,21 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
                   <Typography variant="body2" fontWeight={600}>
                     {schedule.paymentName}
                   </Typography>
-                  {!schedule.allClassesSet && (
-                    <Typography variant="caption" color="error.main">
-                      You are yet to set Bag for all classes
-                    </Typography>
-                  )}
                 </TableCell>
                 <TableCell>
-                  <Box display="flex" flexWrap="wrap" gap={1}>
+                  {/* Warning message if not all classes set - Above the chips */}
+                  {!schedule.allClassesSet && (
+                    <Typography variant="caption" color="error.main" display="block" mb={1}>
+                      You are yet to set Payment for all classes
+                    </Typography>
+                  )}
+                  <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
                     {schedule.classes.map((cls) => (
                       <Chip
                         key={cls.id}
                         label={cls.name}
                         size="small"
+                        onClick={() => handleClassClick(schedule, cls)}
                         sx={{
                           bgcolor: cls.missing ? 'transparent' : 'primary.main',
                           color: cls.missing ? 'error.main' : 'white',
@@ -291,11 +333,15 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
                           borderColor: 'error.main',
                           fontWeight: 600,
                           fontSize: 11,
+                          cursor: 'pointer',
+                          '&:hover': {
+                            opacity: 0.8,
+                          },
                         }}
                       />
                     ))}
                     {schedule.missingCount > 0 && (
-                      <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                      <Typography variant="caption" color="textSecondary">
                         {schedule.missingCount} missing
                       </Typography>
                     )}
@@ -311,7 +357,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
           </TableBody>
         </Table>
       </TableContainer>
-
+</ParentCard>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuOption onClick={handleEditSchedule}>Edit Schedule</MenuOption>
@@ -320,7 +366,30 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
         </MenuOption>
       </Menu>
 
-      </ParentCard>
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleConfirmDialogClose}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">{confirmDialog.message}</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button color="inherit" onClick={handleConfirmDialogClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={confirmDialog.onConfirm}
+            sx={{ fontWeight: 600 }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 };

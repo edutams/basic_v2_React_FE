@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Button,
-  TextField,
-  MenuItem,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Button, TextField, MenuItem, Stack, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
 
@@ -105,10 +99,8 @@ const CategoryModal = ({ open, onClose, onSave, category }) => {
         </TextField>
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} variant="outlined">
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSubmit} sx={{ fontWeight: 600 }}>
             {category ? 'Update' : 'Add'} Category
           </Button>
         </Stack>

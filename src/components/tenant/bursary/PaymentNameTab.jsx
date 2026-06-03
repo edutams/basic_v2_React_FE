@@ -132,6 +132,14 @@ const PaymentNameTab = ({ showSnackbar }) => {
     setPage(0);
   };
 
+  const resetFilters = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(0);
+  };
+
+  const hasFilters = searchQuery !== '';
+
   return (
     <>
       <Stack spacing={3}>
@@ -158,12 +166,19 @@ const PaymentNameTab = ({ showSnackbar }) => {
             </Box>
           }
         >
-          <Box display="flex" gap={2} mb={3}>
+          <Box display="flex" gap={2} mb={3} flexWrap="wrap">
             <TextField
               placeholder="Search Payment Items"
               size="small"
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchInput(value);
+                if (value === '') {
+                  setSearchQuery('');
+                  setPage(0);
+                }
+              }}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   handleSearch();
@@ -179,12 +194,20 @@ const PaymentNameTab = ({ showSnackbar }) => {
             />
             <Button
               variant="contained"
-              // startIcon={<SearchIcon />}
               onClick={handleSearch}
-              sx={{ minWidth: 100 }}
+              sx={{ minWidth: 100, width: { xs: '100%', sm: 'auto' } }}
             >
               Search
             </Button>
+            {hasFilters && (
+              <Button
+                size="small"
+                onClick={resetFilters}
+                sx={{ width: { xs: '100%', sm: 'auto' } }}
+              >
+                Clear Filters
+              </Button>
+            )}
           </Box>
 
           <TableContainer component={Paper} variant="outlined">
@@ -218,7 +241,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
                           '& .MuiAlert-icon': { mr: 1.5 },
                         }}
                       >
-                        {searchQuery
+                        {hasFilters
                           ? 'No payment names found matching your search'
                           : 'No payment names added yet'}
                       </Alert>

@@ -54,7 +54,17 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
   }, [paymentName, open]);
 
   const handleChange = (field) => (event) => {
-    setFormData((prev) => ({ ...prev, [field]: event.target.value }));
+    let value = event.target.value;
+    
+    if (field === 'accountNumber') {
+      value = value.replace(/\D/g, '');
+    }
+    
+    if (field === 'accountName') {
+      value = value.replace(/[^a-zA-Z\s]/g, '');
+    }
+    
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
     }
@@ -175,7 +185,11 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 helperText={errors.accountNumber}
                 placeholder="0123456789"
                 required
-                inputProps={{ maxLength: 10 }}
+                inputProps={{ 
+                  maxLength: 10,
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*'
+                }}
               />
             </Grid>
             <Grid size= {{ xs: 12, md: 6 }}>
@@ -245,7 +259,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
 
         {/* Action Buttons */}
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} color="inherit" variant="outlined">
+          <Button onClick={onClose} variant="outlined">
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>

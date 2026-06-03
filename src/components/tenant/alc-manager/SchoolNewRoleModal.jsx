@@ -23,7 +23,6 @@ const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) 
           label="Role Name"
           type="text"
           fullWidth
-          variant="outlined"
           value={formData.roleName || ''}
           onChange={(e) => onFieldChange('roleName', e.target.value)}
           sx={{ mb: 2 }}
@@ -44,7 +43,6 @@ const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) 
           label="Description"
           type="text"
           fullWidth
-          variant="outlined"
           multiline
           rows={3}
           value={formData.description || ''}
@@ -53,7 +51,7 @@ const SchoolNewRoleModal = ({ open, onClose, formData, onFieldChange, onSave }) 
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" color="primary" onClick={onSave}>
+        <Button color="primary" onClick={onSave}>
           Create Role
         </Button>
       </DialogActions>

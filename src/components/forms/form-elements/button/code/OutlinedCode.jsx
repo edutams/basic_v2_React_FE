@@ -9,19 +9,19 @@ import React from 'react';
 import { Button, Stack } from '@mui/material';
 
 <Stack spacing={1} direction={{ xs: 'column', sm: 'row' }} justifyContent="center">
-    <Button variant="outlined" color="primary">
+    <Button  color="primary">
       Primary
     </Button>
-    <Button variant="outlined" color="secondary">
+    <Button  color="secondary">
       Secondary
     </Button>
-    <Button variant="outlined" color="error">
+    <Button  color="error">
       Error
     </Button>
-    <Button variant="outlined" color="warning">
+    <Button  color="warning">
       Warning
     </Button>
-    <Button variant="outlined" color="success">
+    <Button  color="success">
       Success
     </Button>
 </Stack>`}

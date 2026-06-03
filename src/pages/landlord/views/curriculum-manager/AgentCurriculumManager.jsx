@@ -529,14 +529,14 @@ const AgentCurriculumManager = () => {
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Typography variant="h5">Curriculum</Typography>
-                      <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
+                      <Button size="small" onClick={handleOpenCreateModal}>
                         Create Curriculum
                       </Button>
                     </Box>
                   }
                   sx={{ mb: 3 }}
                 >
-                  <Paper variant="outlined">
+                  <Paper>
                     <TableContainer>
                       <Table sx={{ tableLayout: 'fixed' }}>
                         <TableHead>
@@ -638,11 +638,7 @@ const AgentCurriculumManager = () => {
                           </strong>
                         </Typography>
 
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={handleOpenAddSubjectModal}
-                        >
+                        <Button size="small" onClick={handleOpenAddSubjectModal}>
                           Add Subject
                         </Button>
                       </Box>
@@ -894,7 +890,7 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseCreateModal}>Cancel</Button>
-          <Button onClick={handleCreateCurriculum} variant="contained" disabled={loadingMutation}>
+          <Button onClick={handleCreateCurriculum} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Create'}
           </Button>
         </DialogActions>
@@ -928,7 +924,7 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditModal}>Cancel</Button>
-          <Button onClick={handleUpdateCurriculum} variant="contained" disabled={loadingMutation}>
+          <Button onClick={handleUpdateCurriculum} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Update'}
           </Button>
         </DialogActions>
@@ -950,7 +946,6 @@ const AgentCurriculumManager = () => {
           <Button
             size="small"
             onClick={handleDeleteCurriculum}
-            variant="contained"
             color="error"
             disabled={loadingMutation}
           >
@@ -1099,7 +1094,7 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAddSubjectModal}>Cancel</Button>
-          <Button onClick={handleCreateSubject} variant="contained" disabled={loadingMutation}>
+          <Button onClick={handleCreateSubject} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Save Subject'}
           </Button>
         </DialogActions>
@@ -1242,7 +1237,7 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditSubjectModal}>Cancel</Button>
-          <Button onClick={handleUpdateSubject} variant="contained" disabled={loadingMutation}>
+          <Button onClick={handleUpdateSubject} disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Update Subject'}
           </Button>
         </DialogActions>
@@ -1264,12 +1259,7 @@ const AgentCurriculumManager = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
-          <Button
-            onClick={handleDeleteSubject}
-            variant="contained"
-            color="error"
-            disabled={loadingMutation}
-          >
+          <Button onClick={handleDeleteSubject} color="error" disabled={loadingMutation}>
             {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
           </Button>
         </DialogActions>

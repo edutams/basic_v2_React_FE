@@ -85,11 +85,7 @@ const YesNoToggle = ({ label, description, checked, onChange }) => (
           No
         </Typography>
 
-        <Switch
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          color="primary"
-        />
+        <Switch checked={checked} onChange={(e) => onChange(e.target.checked)} color="primary" />
 
         <Typography
           variant="body2"
@@ -108,8 +104,10 @@ const CreateAdmissionBatch = () => {
   const location = useLocation();
 
   const existingBatch = location.state?.batch ?? null;
-  const sessionId = location.state?.sessionId ?? new URLSearchParams(location.search).get('sessionId');
-  const sessionTermId = location.state?.sessionTermId ?? new URLSearchParams(location.search).get('sessionTermId');
+  const sessionId =
+    location.state?.sessionId ?? new URLSearchParams(location.search).get('sessionId');
+  const sessionTermId =
+    location.state?.sessionTermId ?? new URLSearchParams(location.search).get('sessionTermId');
   const sessionTermLabel = location.state?.sessionTermLabel ?? '';
   const isEdit = Boolean(existingBatch);
 
@@ -130,9 +128,7 @@ const CreateAdmissionBatch = () => {
   const [entranceExam, setEntranceExam] = useState(existingBatch?.has_entrance_exam ?? false);
   const [examType, setExamType] = useState(existingBatch?.exam_type ?? 'CBT');
   const [examDate, setExamDate] = useState(
-    existingBatch?.exam_date
-      ? new Date(existingBatch.exam_date).toISOString().split('T')[0]
-      : '',
+    existingBatch?.exam_date ? new Date(existingBatch.exam_date).toISOString().split('T')[0] : '',
   );
   const [passMark, setPassMark] = useState(existingBatch?.pass_mark ?? 1);
 
@@ -299,8 +295,7 @@ const CreateAdmissionBatch = () => {
         setErrors(backendErrors);
       }
 
-      const msg =
-        err?.response?.data?.message ?? `Failed to ${isEdit ? 'update' : 'create'} batch`;
+      const msg = err?.response?.data?.message ?? `Failed to ${isEdit ? 'update' : 'create'} batch`;
       showSnackbar(msg, 'error');
     } finally {
       setSubmitting(false);
@@ -321,9 +316,8 @@ const CreateAdmissionBatch = () => {
       <Grid container spacing={3} alignItems="flex-start">
         {/* ── Left sidebar: settings ── */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper variant="outlined" sx={{ borderRadius: 2, p: 3 }}>
+          <Paper sx={{ borderRadius: 2, p: 3 }}>
             <Stack spacing={3}>
-
               {/* Batch Name */}
               <Box>
                 <Typography variant="subtitle2" fontWeight={700} mb={1}>
@@ -421,7 +415,7 @@ const CreateAdmissionBatch = () => {
                   </TextField>
                 </Grid>
 
-                <Grid size={{ xs: 12, sm: 12,md: 12 }}>
+                <Grid size={{ xs: 12, sm: 12, md: 12 }}>
                   <Typography variant="subtitle2" fontWeight={700} mb={1}>
                     Classes
                   </Typography>
@@ -432,7 +426,9 @@ const CreateAdmissionBatch = () => {
                     value={selectedClassObjects}
                     loading={classesLoading}
                     disabled={!programmeId || classesLoading}
-                    getOptionLabel={(option) => option.class_code || option.class_name || String(option.id)}
+                    getOptionLabel={(option) =>
+                      option.class_code || option.class_name || String(option.id)
+                    }
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     onChange={(_, newValue) => {
                       setSelectedClassIds(newValue.map((c) => c.id));
@@ -462,8 +458,8 @@ const CreateAdmissionBatch = () => {
                           classesLoading
                             ? 'Loading classes…'
                             : !programmeId
-                            ? 'Select a programme first'
-                            : 'Select classes'
+                              ? 'Select a programme first'
+                              : 'Select classes'
                         }
                       />
                     )}
@@ -502,7 +498,7 @@ const CreateAdmissionBatch = () => {
                   </ToggleButtonGroup>
 
                   <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, sm: 6,md: 8 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 8 }}>
                       <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
                         Set Date
                       </Typography>
@@ -516,8 +512,13 @@ const CreateAdmissionBatch = () => {
                       />
                     </Grid>
                     {examType === 'CBT' && (
-                      <Grid size={{ xs: 12, sm: 6,md:4 }}>
-                        <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                          mb={0.5}
+                        >
                           Pass Mark
                         </Typography>
                         <TextField
@@ -556,12 +557,22 @@ const CreateAdmissionBatch = () => {
                       <Chip
                         label="Application Form"
                         size="small"
-                        sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 11 }}
+                        sx={{
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          fontWeight: 600,
+                          fontSize: 11,
+                        }}
                       />
                       <Chip
                         label="Registration Fee"
                         size="small"
-                        sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 11 }}
+                        sx={{
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          fontWeight: 600,
+                          fontSize: 11,
+                        }}
                       />
                     </Stack>
                     <TextField
@@ -581,7 +592,13 @@ const CreateAdmissionBatch = () => {
                       helperText={errors.preAppFee}
                     />
                     {preAppFee > 0 && (
-                      <Typography variant="caption" color="error.main" fontWeight={600} mt={0.5} display="block">
+                      <Typography
+                        variant="caption"
+                        color="error.main"
+                        fontWeight={600}
+                        mt={0.5}
+                        display="block"
+                      >
                         Pre-Application : ₦{Number(preAppFee).toLocaleString()}
                       </Typography>
                     )}
@@ -595,12 +612,22 @@ const CreateAdmissionBatch = () => {
                       <Chip
                         label="Application Form"
                         size="small"
-                        sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 11 }}
+                        sx={{
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          fontWeight: 600,
+                          fontSize: 11,
+                        }}
                       />
                       <Chip
                         label="Registration Fee"
                         size="small"
-                        sx={{ bgcolor: 'primary.light', color: 'primary.main', fontWeight: 600, fontSize: 11 }}
+                        sx={{
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          fontWeight: 600,
+                          fontSize: 11,
+                        }}
                       />
                     </Stack>
                     <TextField
@@ -620,7 +647,13 @@ const CreateAdmissionBatch = () => {
                       helperText={errors.postAppFee}
                     />
                     {postAppFee > 0 && (
-                      <Typography variant="caption" color="error.main" fontWeight={600} mt={0.5} display="block">
+                      <Typography
+                        variant="caption"
+                        color="error.main"
+                        fontWeight={600}
+                        mt={0.5}
+                        display="block"
+                      >
                         Post-Application : ₦{Number(postAppFee).toLocaleString()}
                       </Typography>
                     )}
@@ -637,7 +670,6 @@ const CreateAdmissionBatch = () => {
                 checked={isOpen}
                 onChange={setIsOpen}
               />
-
             </Stack>
           </Paper>
         </Grid>
@@ -652,7 +684,6 @@ const CreateAdmissionBatch = () => {
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
             <Button
-              variant="outlined"
               size="large"
               onClick={() => navigate('/admission-setup')}
               sx={{ fontWeight: 700, px: 3, mr: 2 }}
@@ -661,7 +692,6 @@ const CreateAdmissionBatch = () => {
               Cancel
             </Button>
             <Button
-              variant="contained"
               size="large"
               onClick={handleSubmit}
               disabled={submitting}

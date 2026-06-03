@@ -46,7 +46,6 @@ const availableBanks = [
   { code: '057', name: 'Zenith Bank' },
 ];
 
-
 const availableCurrencies = [
   { code: 'NGN', name: 'Nigerian Naira (₦)', symbol: '₦' },
   { code: 'USD', name: 'US Dollar ($)', symbol: '$' },
@@ -81,18 +80,19 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
 
   useEffect(() => {
     if (selectedAgent) {
-      const gateway = availableGateways.find(
-        g => g.id === selectedAgent?.gateway || g.name === selectedAgent?.gateway
-      ) || null;
+      const gateway =
+        availableGateways.find(
+          (g) => g.id === selectedAgent?.gateway || g.name === selectedAgent?.gateway,
+        ) || null;
       setCurrentGateway(gateway);
     }
   }, [selectedAgent]);
 
   const handleSave = (values) => {
-    const selectedGateway = availableGateways.find(g => g.id === values.gateway);
-    const selectedBank = availableBanks.find(b => b.code === values.bank);
-    const selectedCurrency = availableCurrencies.find(c => c.code === values.currency);
-    
+    const selectedGateway = availableGateways.find((g) => g.id === values.gateway);
+    const selectedBank = availableBanks.find((b) => b.code === values.bank);
+    const selectedCurrency = availableCurrencies.find((c) => c.code === values.currency);
+
     const updatedAgent = {
       ...selectedAgent,
       gateway: values.gateway,
@@ -105,7 +105,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
       currencySymbol: selectedCurrency?.symbol || values.currency,
       lastGatewayUpdate: new Date().toISOString(),
     };
-    
+
     onSave(updatedAgent);
     onClose();
   };
@@ -113,18 +113,19 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
   return (
     <Box>
       <Alert severity="info" sx={{ mb: 3 }}>
-        Configure your payment gateway settings to receive payments from school registrations and transactions.
+        Configure your payment gateway settings to receive payments from school registrations and
+        transactions.
       </Alert>
 
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={3}>
           {currentGateway && (
             <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 3, bgcolor: 'grey.50' }}>
+              <Paper sx={{ p: 3, bgcolor: 'grey.50' }}>
                 <Typography variant="h6" color="primary" mb={2}>
                   Current Gateway
                 </Typography>
-                
+
                 <Box display="flex" alignItems="center" gap={2}>
                   <Typography variant="body1" fontWeight="medium">
                     {currentGateway.name}
@@ -133,10 +134,10 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                     ({currentGateway.description})
                   </Typography>
                 </Box>
-                
+
                 <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 1 }}>
-                  Account: {selectedAgent?.accountNumber || 'Not set'} | 
-                  Currency: {selectedAgent?.currency || 'Not set'}
+                  Account: {selectedAgent?.accountNumber || 'Not set'} | Currency:{' '}
+                  {selectedAgent?.currency || 'Not set'}
                 </Typography>
               </Paper>
             </Grid>
@@ -236,9 +237,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                       <Typography variant="body1" fontWeight="medium">
                         {currency.symbol}
                       </Typography>
-                      <Typography variant="body2">
-                        {currency.name}
-                      </Typography>
+                      <Typography variant="body2">{currency.name}</Typography>
                     </Box>
                   </MenuItem>
                 ))}
@@ -253,47 +252,47 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
 
           {formik.values.gateway && formik.values.bank && formik.values.accountNumber && (
             <Grid item xs={12}>
-            <Paper variant="outlined" sx={{ p: 3, bgcolor: 'success.light' }}>
-              <Typography variant="h6" color="success.dark" mb={2}>
-                Gateway Configuration Summary
-              </Typography>
-              
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="textSecondary">
-                    Gateway:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {availableGateways.find(g => g.id === formik.values.gateway)?.name}
-                  </Typography>
+              <Paper sx={{ p: 3, bgcolor: 'success.light' }}>
+                <Typography variant="h6" color="success.dark" mb={2}>
+                  Gateway Configuration Summary
+                </Typography>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Gateway:
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium">
+                      {availableGateways.find((g) => g.id === formik.values.gateway)?.name}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Bank:
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium">
+                      {availableBanks.find((b) => b.code === formik.values.bank)?.name}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Account:
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium">
+                      {formik.values.accountNumber}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Currency:
+                    </Typography>
+                    <Typography variant="body1" fontWeight="medium">
+                      {availableCurrencies.find((c) => c.code === formik.values.currency)?.name}
+                    </Typography>
+                  </Grid>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="textSecondary">
-                    Bank:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {availableBanks.find(b => b.code === formik.values.bank)?.name}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="textSecondary">
-                    Account:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {formik.values.accountNumber}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="textSecondary">
-                    Currency:
-                  </Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {availableCurrencies.find(c => c.code === formik.values.currency)?.name}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
+              </Paper>
+            </Grid>
           )}
         </Grid>
 
@@ -301,11 +300,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
           <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!formik.isValid || formik.isSubmitting}
-          >
+          <Button type="submit" disabled={!formik.isValid || formik.isSubmitting}>
             Create Payment Gateway
           </Button>
         </Box>

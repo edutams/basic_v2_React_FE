@@ -60,7 +60,7 @@ const ParentRow = ({ parent, onClick, showRemove, onRemove }) => {
           ID: {idCode}
         </Typography>
       </Box>
-      <Chip label={relationship} size="small" variant="outlined" />
+      <Chip label={relationship} size="small" />
       {showRemove && (
         <IconButton
           size="small"
@@ -161,7 +161,6 @@ const LinkParentForm = ({ learner, onSave, onCancel }) => {
           }}
         />
         <Button
-          variant="contained"
           onClick={handleSearch}
           disabled={searching}
           sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
@@ -247,7 +246,7 @@ const LinkParentForm = ({ learner, onSave, onCancel }) => {
         <Button color="inherit" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button variant="contained" onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </Box>

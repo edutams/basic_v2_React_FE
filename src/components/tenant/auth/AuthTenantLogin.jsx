@@ -137,7 +137,6 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
             <CustomTextField
               id="login"
               name="login"
-              variant="outlined"
               fullWidth
               value={formData.login}
               onChange={handleInputChange}
@@ -152,7 +151,6 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
               id="password"
               name="password"
               type="password"
-              variant="outlined"
               fullWidth
               value={formData.password}
               onChange={handleInputChange}
@@ -206,7 +204,6 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
         <Box mt={2}>
           <Button
             color="primary"
-            variant="contained"
             size="large"
             fullWidth
             type="submit"
@@ -222,7 +219,6 @@ const AuthTenantLogin = ({ title, subtitle, subtext, onCreateAccount, onForgotPa
             {...(onCreateAccount
               ? { onClick: onCreateAccount }
               : { component: Link, to: '/admission/apply' })}
-            variant="outlined"
             size="large"
             fullWidth
             color="primary"

@@ -114,14 +114,12 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
       Selected Admission Batch Detail
     </Typography>
 
-        <Typography variant="h5" fontWeight={800} mb={2}>
-        Session:{' '}
-        {batch?.session_term?.session?.sesname}{' '}
-        {batch?.session_term?.display_term?.display_name}
-        {' • '}
-        Admission Batch:{' '}
-        {batch?.batch_name ?? '2'}
-      </Typography>
+    <Typography variant="h5" fontWeight={800} mb={2}>
+      Session: {batch?.session_term?.session?.sesname}{' '}
+      {batch?.session_term?.display_term?.display_name}
+      {' • '}
+      Admission Batch: {batch?.batch_name ?? '2'}
+    </Typography>
 
     <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
       {(batch?.classes || []).map((cls) => (
@@ -133,55 +131,53 @@ const BatchSummaryCard = ({ batch, onChangeBatch, activeStep }) => (
         />
       ))}
     </Stack>
-          {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
+    {batch?.require_payment && <Divider sx={{ mb: 2 }} />}
 
+    {[
+      batch?.require_payment && batch?.acceptance_fee !== '0.00'
+        ? {
+            label: 'Pre-Application Payment',
+            value: batch?.acceptance_fee,
+          }
+        : null,
 
-   {[
-  batch?.require_payment && batch?.acceptance_fee !== '0.00'
-    ? {
-        label: 'Pre-Application Payment',
-        value: batch?.acceptance_fee,
-      }
-    : null,
+      batch?.require_payment && batch?.application_fee !== '0.00'
+        ? {
+            label: 'Post-Admission Payment',
+            value: batch?.application_fee,
+          }
+        : null,
+    ]
+      .filter(Boolean)
+      .map(({ label, value }) => (
+        <Box
+          key={label}
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            bgcolor: 'error.light',
+            borderRadius: 2,
+            px: 2,
+            py: 1.25,
+            mb: 1.5,
+          }}
+        >
+          <Typography variant="body2" color="error.dark" fontWeight={500}>
+            {label}
+          </Typography>
 
-  batch?.require_payment && batch?.application_fee !== '0.00'
-    ? {
-        label: 'Post-Admission Payment',
-        value: batch?.application_fee,
-      }
-    : null,
-]
-  .filter(Boolean)
-  .map(({ label, value }) => (
-    <Box
-      key={label}
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        bgcolor: 'error.light',
-        borderRadius: 2,
-        px: 2,
-        py: 1.25,
-        mb: 1.5,
-      }}
-    >
-      <Typography variant="body2" color="error.dark" fontWeight={500}>
-        {label}
-      </Typography>
-
-      <Typography variant="body2" color="error.dark" fontWeight={700}>
-        ₦{Number(value).toLocaleString()}
-      </Typography>
-    </Box>
-  ))}
+          <Typography variant="body2" color="error.dark" fontWeight={700}>
+            ₦{Number(value).toLocaleString()}
+          </Typography>
+        </Box>
+      ))}
 
     {activeStep !== 3 && (
       <>
         <Divider sx={{ mb: 2 }} />
         <Button
           fullWidth
-          variant="outlined"
           startIcon={<VisibilityIcon />}
           onClick={onChangeBatch}
           sx={{
@@ -215,28 +211,10 @@ const NewApplication = () => {
 
   const [selectedBatch, setSelectedBatch] = useState(existingWard?.admission_batch ?? batch);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [batchLoaded, setBatchLoaded] = useState(false);
+  const [userChangedBatch, setUserChangedBatch] = useState(false); // Track when user manually changes batch
 
-  // Load full batch data when resuming application to ensure classes are available
-  useEffect(() => {
-    if (resumeApplication && selectedBatch?.id && !selectedBatch?.classes) {
-      const loadFullBatchData = async () => {
-        try {
-          const response = await getOpenBatches();
-          const batches = response?.data?.data || response?.data || [];
-          const fullBatch = batches.find(b => b.id === selectedBatch.id);
-          if (fullBatch) {
-            setSelectedBatch(fullBatch);
-          }
-        } catch (error) {
-          console.error('Failed to load full batch data:', error);
-          // Continue with existing batch data if fetch fails
-        }
-      };
-      loadFullBatchData();
-    }
-  }, [resumeApplication, selectedBatch?.id]);
-
-  // Initialize the admission form hook with existing admission data if resuming
+  // Initialize the admission form hook
   const {
     admissionId,
     currentStage,
@@ -246,13 +224,53 @@ const NewApplication = () => {
     saveStepData,
     updateStage,
     submitApplication,
-  } = useAdmissionForm(selectedBatch, resumeApplication ? existingWard : null);
+  } = useAdmissionForm(selectedBatch, existingWard);
+
+  useEffect(() => {
+    const loadBatchDetails = async () => {
+      if (formData?.admission_batch?.id && !batchLoaded) {
+        try {
+          console.log('Loading batch details for ID:', formData.admission_batch.id);
+          const response = await getOpenBatches();
+          const batches = response?.data?.data || response?.data || [];
+          const fullBatch = batches.find((b) => b.id === formData.admission_batch.id);
+          if (fullBatch) {
+            console.log('Loaded full batch data:', fullBatch);
+            setSelectedBatch(fullBatch);
+          }
+          setBatchLoaded(true);
+        } catch (error) {
+          console.error('Failed to load batch details:', error);
+          setBatchLoaded(true);
+        }
+      } else if (batch?.id && !formData?.admission_batch && !batchLoaded) {
+        setSelectedBatch(batch);
+        setBatchLoaded(true);
+      }
+    };
+
+    loadBatchDetails();
+  }, [formData?.admission_batch?.id, batch?.id, batchLoaded, batch, formData?.admission_batch]);
+
+  useEffect(() => {
+    if (userChangedBatch) {
+      // console.log('Skipping formData batch update - user manually changed batch');
+      return;
+    }
+
+    if (formData?.admission_batch && formData.admission_batch.id !== selectedBatch?.id) {
+      setSelectedBatch(formData.admission_batch);
+      setBatchLoaded(true);
+    }
+  }, [formData?.admission_batch, selectedBatch?.id, userChangedBatch]);
 
   // Build dynamic steps based on batch requirements
   const ALL_STEPS = [
     { label: 'Ward Detail', icon: GroupsIcon, isTabler: false },
     { label: 'Academic info', icon: SchoolIcon, isTabler: false },
-    ...(selectedBatch?.require_payment ? [{ label: 'Payment', icon: CreditCardIcon, isTabler: false }] : []),
+    ...(selectedBatch?.require_payment
+      ? [{ label: 'Payment', icon: CreditCardIcon, isTabler: false }]
+      : []),
     { label: 'Documents', icon: DescriptionIcon, isTabler: false },
     { label: 'Submit', icon: SendIcon, isTabler: false },
   ];
@@ -261,12 +279,13 @@ const NewApplication = () => {
 
   // Determine initial step - use currentStage from hook if resuming, otherwise start at 0
   const resumeStep =
-    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep)
-      ? parsedQueryStep
-      : 0;
+    parsedQueryStep !== null && !Number.isNaN(parsedQueryStep) ? parsedQueryStep : 0;
 
   const [activeStep, setActiveStep] = useState(resumeStep);
-  const hideBatchSummary = [2, 4].includes(activeStep);
+
+  // Hide batch summary on submit step (step 4 for payment batches, step 3 for no-payment batches)
+  const submitStepIndex = selectedBatch?.require_payment ? 4 : 3;
+  const hideBatchSummary = activeStep === submitStepIndex;
 
   // Update activeStep when currentStage changes (for resuming applications)
   useEffect(() => {
@@ -294,8 +313,21 @@ const NewApplication = () => {
   };
 
   const handleWardSubmit = async (values) => {
-    const result = await saveStepData(0, values);
+    // Include the selected batch ID with ward data
+    const dataWithBatch = {
+      ...values,
+      admission_batch_id: selectedBatch?.id,
+    };
+
+    const result = await saveStepData(0, dataWithBatch);
     if (result.success) {
+      // Update selectedBatch if the backend returned updated admission_batch
+      if (result.data?.admission_batch) {
+        setSelectedBatch(result.data.admission_batch);
+        setBatchLoaded(true);
+      }
+      // Reset the userChangedBatch flag since we've now saved the batch change
+      setUserChangedBatch(false);
       handleNext();
     } else {
       notify.error(result.error || 'Failed to save ward details');
@@ -303,8 +335,21 @@ const NewApplication = () => {
   };
 
   const handleAcademicSubmit = async (values) => {
-    const result = await saveStepData(1, values);
+    // Include the selected batch ID with academic data
+    const dataWithBatch = {
+      ...values,
+      admission_batch_id: selectedBatch?.id,
+    };
+
+    const result = await saveStepData(1, dataWithBatch);
     if (result.success) {
+      // Update selectedBatch if the backend returned updated admission_batch
+      if (result.data?.admission_batch) {
+        setSelectedBatch(result.data.admission_batch);
+        setBatchLoaded(true);
+      }
+      // Reset the userChangedBatch flag since we've now saved the batch change
+      setUserChangedBatch(false);
       handleNext();
     } else {
       notify.error(result.error || 'Failed to save academic information');
@@ -325,6 +370,10 @@ const NewApplication = () => {
     const documentsStepIndex = selectedBatch?.require_payment ? 3 : 2;
     const result = await saveStepData(documentsStepIndex, files);
     if (result.success) {
+      // Update selectedBatch if the backend returned updated admission_batch
+      if (result.data?.admission_batch) {
+        setSelectedBatch(result.data.admission_batch);
+      }
       handleNext();
     } else {
       notify.error(result.error || 'Failed to save documents');
@@ -339,7 +388,7 @@ const NewApplication = () => {
       sessionStorage.removeItem('formDetailsData');
       sessionStorage.removeItem('admissionFormData');
       localStorage.removeItem('admissionFormData');
-      navigate('/admission_manager/my_applications');
+      navigate(`/application-tracker/${admissionId}`);
     } else {
       notify.error(result.error || 'Failed to submit application');
     }
@@ -348,7 +397,7 @@ const NewApplication = () => {
   const renderStep = () => {
     // Map activeStep to actual step considering dynamic payment step
     let actualStep = activeStep;
-    
+
     switch (actualStep) {
       case 0:
         return (
@@ -358,6 +407,8 @@ const NewApplication = () => {
             onBack={handleBack}
             isLoading={isLoading}
             serverErrors={serverErrors}
+            selectedBatch={selectedBatch}
+            admissionId={admissionId}
           />
         );
       case 1:
@@ -369,6 +420,7 @@ const NewApplication = () => {
             isLoading={isLoading}
             serverErrors={serverErrors}
             selectedBatch={selectedBatch}
+            admissionId={admissionId}
           />
         );
       case 2:
@@ -378,6 +430,8 @@ const NewApplication = () => {
               onNext={handlePaymentComplete}
               onBack={handleBack}
               isLoading={isLoading}
+              selectedBatch={selectedBatch}
+              admissionId={admissionId}
             />
           );
         } else {
@@ -389,6 +443,8 @@ const NewApplication = () => {
               onNext={handleDocumentsSubmit}
               onBack={handleBack}
               isLoading={isLoading}
+              selectedBatch={selectedBatch}
+              admissionId={admissionId}
             />
           );
         }
@@ -402,6 +458,8 @@ const NewApplication = () => {
               onNext={handleDocumentsSubmit}
               onBack={handleBack}
               isLoading={isLoading}
+              selectedBatch={selectedBatch}
+              admissionId={admissionId}
             />
           );
         } else {
@@ -415,6 +473,7 @@ const NewApplication = () => {
               onBack={handleBack}
               onSubmit={handleFinalSubmit}
               isLoading={isLoading}
+              admissionId={admissionId}
             />
           );
         }
@@ -429,6 +488,7 @@ const NewApplication = () => {
             onBack={handleBack}
             onSubmit={handleFinalSubmit}
             isLoading={isLoading}
+            admissionId={admissionId}
           />
         );
       default:
@@ -438,7 +498,7 @@ const NewApplication = () => {
 
   return (
     <PageContainer title="New Application" description="Apply for admission">
-      <Box sx={activeStep === 4 ? { overflow: 'hidden', height: '100vh' } : {}}>
+      <Box sx={hideBatchSummary ? { overflow: 'hidden', height: '100vh' } : {}}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Divider
@@ -464,20 +524,15 @@ const NewApplication = () => {
                 Application Form
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Session: {
-                selectedBatch?.session_term?.session?.sesname} {selectedBatch?.session_term?.display_term?.display_name}
-                &nbsp;·&nbsp; 
-
-
-               {
-                selectedBatch?.require_payment &&
-                selectedBatch?.application_fee !== '0.00' && (
+                Session: {selectedBatch?.session_term?.session?.sesname}{' '}
+                {selectedBatch?.session_term?.display_term?.display_name}
+                &nbsp;·&nbsp;
+                {selectedBatch?.require_payment && selectedBatch?.application_fee !== '0.00' && (
                   <>
-                    ₦{Number(selectedBatch?.application_fee ?? 5000).toLocaleString()}
-                    {' '}Application Fee
+                    ₦{Number(selectedBatch?.application_fee ?? 5000).toLocaleString()} Application
+                    Fee
                   </>
-                )
-              }
+                )}
               </Typography>
             </Box>
           </Box>
@@ -495,12 +550,12 @@ const NewApplication = () => {
 
         {/* ── Content + Sidebar ── */}
         <Grid container spacing={3} alignItems="flex-start">
-          <Grid size={{ xs: 12, lg: activeStep === 4 || activeStep === 2 ? 12 : 8 }}>
+          <Grid size={{ xs: 12, lg: hideBatchSummary ? 12 : 8 }}>
             <Paper
               sx={{
                 borderRadius: 3,
                 p: { xs: 2.5, sm: 3.5 },
-                ...(activeStep === 4 && {
+                ...(hideBatchSummary && {
                   height: 'calc(100vh - 260px)',
                   overflowY: 'auto',
                 }),
@@ -524,7 +579,12 @@ const NewApplication = () => {
         <AdmissionBatchModal
           open={batchModalOpen}
           onClose={() => setBatchModalOpen(false)}
-          onApply={(newBatch) => setSelectedBatch(newBatch)}
+          onApply={(newBatch) => {
+            console.log('User manually changed batch to:', newBatch);
+            setSelectedBatch(newBatch);
+            setBatchLoaded(true);
+            setUserChangedBatch(true); // Mark that user manually changed the batch
+          }}
         />
       </Box>
     </PageContainer>

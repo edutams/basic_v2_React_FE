@@ -93,6 +93,16 @@ const WardReview = ({ wardData, intendingClass, selectedBatch, academicData }) =
         <Typography variant="caption" color="text.secondary">
           Intending Class: {displayIntendingClass}
         </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.0 }}>
+          Batch: {selectedBatch?.batch_name || 'N/A'}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Session: {
+            selectedBatch?.session_term
+              ? `${selectedBatch.session_term.session?.sesname || ''} ${selectedBatch.session_term.display_term?.display_name || ''}`.trim() || 'N/A'
+              : 'N/A'
+          }
+        </Typography>
       </Box>
 
       <Grid container spacing={2}>

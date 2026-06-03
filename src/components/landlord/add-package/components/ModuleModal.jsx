@@ -99,11 +99,8 @@ const ModuleModal = ({
               Are you sure you want to activate "{moduleName}"?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button variant="outlined" onClick={onClose}>
-                Cancel
-              </Button>
+              <Button onClick={onClose}>Cancel</Button>
               <Button
-                variant="contained"
                 color="success"
                 onClick={() => handleStatusChange('active')}
                 disabled={isLoading}
@@ -125,11 +122,8 @@ const ModuleModal = ({
               Are you sure you want to deactivate "{moduleName}"?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button variant="outlined" onClick={onClose}>
-                Cancel
-              </Button>
+              <Button onClick={onClose}>Cancel</Button>
               <Button
-                variant="contained"
                 color="warning"
                 onClick={() => handleStatusChange('inactive')}
                 disabled={isLoading}

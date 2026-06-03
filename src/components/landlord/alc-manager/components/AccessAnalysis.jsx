@@ -11,7 +11,7 @@ const AccessAnalysis = () => {
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 2 }}>
+    <Paper sx={{ p: 2 }}>
       <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={subActiveTab}

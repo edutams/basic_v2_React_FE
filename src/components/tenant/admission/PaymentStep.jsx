@@ -30,7 +30,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false }) => {
 
       <Grid container spacing={3} alignItems="flex-start">
         <Grid size={{ xs: 12, md: 7 }}>
-          <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
+          <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
             {FEE_ITEMS.map((fee, i) => (
               <Box
                 key={fee.label}
@@ -55,7 +55,7 @@ const PaymentStep = ({ onNext, onBack, isLoading = false }) => {
           </Paper>
 
           {/* Totals summary */}
-          <Paper variant="outlined" sx={{ borderRadius: 2, px: 2.5, py: 2, bgcolor: '#FAFAFA' }}>
+          <Paper sx={{ borderRadius: 2, px: 2.5, py: 2, bgcolor: '#FAFAFA' }}>
             <Box display="flex" justifyContent="space-between" mb={1}>
               <Typography variant="body2" color="text.secondary">
                 Payable Fees
@@ -171,7 +171,6 @@ const PaymentStep = ({ onNext, onBack, isLoading = false }) => {
         </Typography>
 
         <Button
-          variant="contained"
           fullWidth
           onClick={onNext}
           disabled={isLoading}

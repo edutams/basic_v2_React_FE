@@ -703,7 +703,6 @@ const SubjectBank = () => {
                 </Box>
 
                 <Button
-                  variant="contained"
                   size="small"
                   onClick={handleOpenAddSubjectModal}
                   sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -853,7 +852,6 @@ const SubjectBank = () => {
                   </FormControl>
 
                   <Button
-                    variant="contained"
                     size="small"
                     sx={{ width: { xs: '100%', sm: 'auto' } }}
                     onClick={handleOpenCreateSubjectGroupModal}
@@ -1132,7 +1130,6 @@ const SubjectBank = () => {
             </Button>
 
             <Button
-              variant="contained"
               size="small"
               onClick={handleCreateSubject}
               disabled={loadingCreateSubject}
@@ -1287,7 +1284,6 @@ const SubjectBank = () => {
               Cancel
             </Button>
             <Button
-              variant="contained"
               size="small"
               onClick={handleUpdateSubject}
               disabled={loadingUpdateSubject}
@@ -1321,7 +1317,6 @@ const SubjectBank = () => {
               Cancel
             </Button>
             <Button
-              variant="contained"
               color="error"
               size="small"
               onClick={handleDeleteSubject}
@@ -1544,7 +1539,6 @@ const SubjectBank = () => {
               Cancel
             </Button>
             <Button
-              variant="contained"
               size="small"
               onClick={handleCreateSubjectGroup}
               disabled={loadingCreateGroup || subjectGroupFormData.subject_ids.length < 2}
@@ -1766,7 +1760,6 @@ const SubjectBank = () => {
               Cancel
             </Button>
             <Button
-              variant="contained"
               size="small"
               onClick={handleUpdateSubjectGroup}
               disabled={loadingUpdateGroup || subjectGroupFormData.subject_ids.length < 2}

@@ -156,17 +156,10 @@ const ManageWeeks = ({ sessionTermId }) => {
           size="small"
           sx={{ minWidth: 200 }}
         />
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleGenerateWeeks}
-          size="small"
-          disabled={loading}
-        >
+        <Button color="primary" onClick={handleGenerateWeeks} size="small" disabled={loading}>
           {loading ? <CircularProgress size={20} color="inherit" /> : 'Generate Weeks'}
         </Button>
         <Button
-          variant="outlined"
           color="success"
           startIcon={<AddIcon />}
           onClick={handleAddWeek}
@@ -177,7 +170,7 @@ const ManageWeeks = ({ sessionTermId }) => {
         </Button>
       </Stack>
 
-      <Paper variant="outlined">
+      <Paper>
         <TableContainer sx={{ maxHeight: 400 }}>
           <Table sx={{ whiteSpace: 'nowrap' }}>
             <TableHead>
@@ -207,7 +200,6 @@ const ManageWeeks = ({ sessionTermId }) => {
                         value={week.start_date || ''}
                         onChange={(e) => handleWeekChange(index, 'start_date', e.target.value)}
                         size="small"
-                        variant="outlined"
                         sx={{ minWidth: 150 }}
                       />
                     </TableCell>
@@ -217,7 +209,6 @@ const ManageWeeks = ({ sessionTermId }) => {
                         value={week.end_date || ''}
                         onChange={(e) => handleWeekChange(index, 'end_date', e.target.value)}
                         size="small"
-                        variant="outlined"
                         sx={{ minWidth: 150 }}
                       />
                     </TableCell>
@@ -241,11 +232,7 @@ const ManageWeeks = ({ sessionTermId }) => {
         </TableContainer>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
-          <Button
-            variant="contained"
-            onClick={handleSaveAll}
-            disabled={loading || weeks.length === 0}
-          >
+          <Button onClick={handleSaveAll} disabled={loading || weeks.length === 0}>
             {loading ? <CircularProgress size={20} color="inherit" /> : 'Save All'}
           </Button>
         </Box>
@@ -262,7 +249,7 @@ const ManageWeeks = ({ sessionTermId }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog({ open: false, week: null })}>Cancel</Button>
-          <Button onClick={handleDeleteWeek} color="error" variant="contained">
+          <Button onClick={handleDeleteWeek} color="error">
             Delete
           </Button>
         </DialogActions>

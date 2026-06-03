@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, Button, MenuItem, Select, InputLabel, FormControl, FormHelperText, CircularProgress } from '@mui/material';
+import {
+  Box,
+  TextField,
+  Button,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  FormHelperText,
+  CircularProgress,
+} from '@mui/material';
 
 const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = false }) => {
   const [formData, setFormData] = useState({
@@ -42,7 +52,8 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Plan name is required';
     if (!formData.price || formData.price <= 0) newErrors.price = 'Price must be a positive number';
-    if (!formData.student_limit || formData.student_limit === '') newErrors.student_limit = 'Please select a student limit';
+    if (!formData.student_limit || formData.student_limit === '')
+      newErrors.student_limit = 'Please select a student limit';
     if (!formData.status || formData.status === '') newErrors.status = 'Please select a status';
     return newErrors;
   };
@@ -65,7 +76,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
       ...formData,
       price: parseFloat(formData.price) || 0,
     });
-    
+
     if (actionType === 'create') {
       setFormData({
         name: '',
@@ -79,7 +90,11 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+    >
       <TextField
         label="Plan Name"
         name="name"
@@ -90,7 +105,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
         error={!!errors.name}
         helperText={errors.name}
       />
-      
+
       <TextField
         label="Price (₦)"
         name="price"
@@ -133,12 +148,7 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
       </FormControl>
       <FormControl fullWidth error={!!errors.status}>
         <InputLabel>Status</InputLabel>
-        <Select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          required
-        >
+        <Select name="status" value={formData.status} onChange={handleChange} required>
           <MenuItem value="" disabled>
             Choose
           </MenuItem>
@@ -154,7 +164,9 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
         <Button onClick={onCancel} color="inherit" disabled={loading}>
           Cancel
         </Button>
-        <Button type="submit" variant="contained" color="primary" 
+        <Button
+          type="submit"
+          color="primary"
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {actionType === 'create' ? 'Add Plan' : 'Update Plan'}

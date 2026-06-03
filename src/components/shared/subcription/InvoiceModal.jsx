@@ -210,16 +210,10 @@ const InvoiceModal = ({ open, onClose, selectedRow }) => {
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            onClick={handlePrint}
-            sx={{ borderRadius: '8px' }}
-          >
+          <Button startIcon={<DownloadIcon />} onClick={handlePrint} sx={{ borderRadius: '8px' }}>
             Download
           </Button>
           <Button
-            variant="contained"
             startIcon={<PrintIcon />}
             onClick={handlePrint}
             sx={{ borderRadius: '8px', bgcolor: '#1a237e' }}

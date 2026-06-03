@@ -70,9 +70,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
       title={
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5">Manage Subjects</Typography>
-          <Button variant="contained" onClick={onAddSubject}>
-            Add New Subject
-          </Button>
+          <Button onClick={onAddSubject}>Add New Subject</Button>
         </Box>
       }
     >
@@ -96,13 +94,13 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
             }}
           />
           {hasActiveFilters && (
-            <Button variant="outlined" onClick={clearFilters} sx={{ height: 'fit-content' }}>
+            <Button onClick={clearFilters} sx={{ height: 'fit-content' }}>
               Clear Filters
             </Button>
           )}
         </Box>
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>

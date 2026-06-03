@@ -165,7 +165,7 @@ const EnrollmentChart = ({ data, loading, params, onParamChange }) => {
           <Typography variant="subtitle2" color="text.secondary" mb={2}>
             Top 10 Schools by Student Count
           </Typography>
-          <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+          <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
             <Table size="small">
               <TableHead sx={{ bgcolor: '#fafafa' }}>
                 <TableRow>

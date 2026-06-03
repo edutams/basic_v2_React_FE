@@ -17,18 +17,10 @@ import {
   FormHelperText,
   Grid,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Remove as RemoveIcon,
-} from '@mui/icons-material';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
-const ClassStructureModal = ({ 
-  open, 
-  onClose, 
-  onSave, 
-  editingStructure 
-}) => {
+const ClassStructureModal = ({ open, onClose, onSave, editingStructure }) => {
   const [formData, setFormData] = useState({
     class_name: '',
     arms: [''],
@@ -41,9 +33,8 @@ const ClassStructureModal = ({
     if (editingStructure) {
       setFormData({
         class_name: editingStructure.class_name || '',
-        arms: editingStructure.arms && editingStructure.arms.length > 0 
-          ? editingStructure.arms 
-          : [''],
+        arms:
+          editingStructure.arms && editingStructure.arms.length > 0 ? editingStructure.arms : [''],
         status: editingStructure.status || 'active',
         order: editingStructure.order || 1,
       });
@@ -69,16 +60,16 @@ const ClassStructureModal = ({
 
   const handleInputChange = (field) => (event) => {
     const value = event.target.value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     // Clear error for this field
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: '',
       }));
     }
   };
@@ -86,25 +77,25 @@ const ClassStructureModal = ({
   const handleArmChange = (index, value) => {
     const newArms = [...formData.arms];
     newArms[index] = value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      arms: newArms
+      arms: newArms,
     }));
   };
 
   const addArm = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      arms: [...prev.arms, '']
+      arms: [...prev.arms, ''],
     }));
   };
 
   const removeArm = (index) => {
     if (formData.arms.length > 1) {
       const newArms = formData.arms.filter((_, i) => i !== index);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        arms: newArms
+        arms: newArms,
       }));
     }
   };
@@ -116,7 +107,7 @@ const ClassStructureModal = ({
       newErrors.class_name = 'Class name is required';
     }
 
-    const validArms = formData.arms.filter(arm => arm.trim() !== '');
+    const validArms = formData.arms.filter((arm) => arm.trim() !== '');
     if (validArms.length === 0) {
       newErrors.arms = 'At least one arm is required';
     }
@@ -137,7 +128,7 @@ const ClassStructureModal = ({
     if (validateForm()) {
       const submitData = {
         ...formData,
-        arms: formData.arms.filter(arm => arm.trim() !== ''),
+        arms: formData.arms.filter((arm) => arm.trim() !== ''),
       };
       onSave(submitData);
     }
@@ -150,7 +141,7 @@ const ClassStructureModal = ({
           {editingStructure ? 'Edit Class Structure' : 'Add New Class Structure'}
         </Typography>
       </DialogTitle>
-      
+
       <DialogContent>
         <Box sx={{ pt: 2 }}>
           <Grid container spacing={3}>
@@ -179,9 +170,7 @@ const ClassStructureModal = ({
                   <MenuItem value="active">Active</MenuItem>
                   <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
-                {errors.status && (
-                  <FormHelperText>{errors.status}</FormHelperText>
-                )}
+                {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
               </FormControl>
             </Grid>
 
@@ -194,7 +183,7 @@ const ClassStructureModal = ({
                 value={formData.order}
                 onChange={handleInputChange('order')}
                 error={!!errors.order}
-                helperText={errors.order || "Order in which this class will be displayed"}
+                helperText={errors.order || 'Order in which this class will be displayed'}
                 inputProps={{ min: 1 }}
               />
             </Grid>
@@ -207,7 +196,7 @@ const ClassStructureModal = ({
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Add the different arms or sections for this class (e.g., Alpha, Beta, A, B, etc.)
               </Typography>
-              
+
               {errors.arms && (
                 <Typography variant="body2" color="error" sx={{ mb: 1 }}>
                   {errors.arms}
@@ -231,10 +220,7 @@ const ClassStructureModal = ({
                     >
                       <RemoveIcon />
                     </IconButton>
-                    <IconButton
-                      color="primary"
-                      onClick={addArm}
-                    >
+                    <IconButton color="primary" onClick={addArm}>
                       <AddIcon />
                     </IconButton>
                   </Box>
@@ -242,21 +228,16 @@ const ClassStructureModal = ({
               </Box>
 
               {/* Preview of arms */}
-              {formData.arms.filter(arm => arm.trim() !== '').length > 0 && (
+              {formData.arms.filter((arm) => arm.trim() !== '').length > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Preview:
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {formData.arms
-                      .filter(arm => arm.trim() !== '')
+                      .filter((arm) => arm.trim() !== '')
                       .map((arm, index) => (
-                        <Chip
-                          key={index}
-                          label={arm}
-                          size="small"
-                          variant="outlined"
-                        />
+                        <Chip key={index} label={arm} size="small" />
                       ))}
                   </Box>
                 </Box>
@@ -268,10 +249,12 @@ const ClassStructureModal = ({
 
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained"
-          disabled={!formData.class_name.trim() || formData.arms.filter(arm => arm.trim() !== '').length === 0}
+        <Button
+          onClick={handleSubmit}
+          disabled={
+            !formData.class_name.trim() ||
+            formData.arms.filter((arm) => arm.trim() !== '').length === 0
+          }
         >
           {editingStructure ? 'Update' : 'Create'}
         </Button>

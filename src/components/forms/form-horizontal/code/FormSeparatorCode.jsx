@@ -174,7 +174,7 @@ const [country, setCountry] = React.useState('');
             value={country}
             onChange={handleChange}
             fullWidth
-            variant="outlined"
+            
           >
             {countries.map((option) => (
               <MenuItem key={option.value} value={option.value}>

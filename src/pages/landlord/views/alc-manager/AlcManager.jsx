@@ -290,7 +290,6 @@ const AlcManager = () => {
               <Typography variant="h5">Manage Roles</Typography>
 
               <Button
-                variant="contained"
                 color="primary"
                 onClick={() => {
                   setIsEditing(false);
@@ -313,7 +312,6 @@ const AlcManager = () => {
             }}
           >
             <Button
-              variant="outlined"
               startIcon={<IconAdjustmentsHorizontal size={18} />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{
@@ -348,7 +346,7 @@ const AlcManager = () => {
             </Button>
           </Box>
 
-          <Paper variant="outlined">
+          <Paper>
             <TableContainer>
               <Table>
                 <TableHead>
@@ -380,7 +378,6 @@ const AlcManager = () => {
                             label={row.is_sys === 'yes' ? 'Yes' : 'No'}
                             color={row.is_sys === 'yes' ? 'success' : 'default'}
                             size="small"
-                            variant="outlined"
                             sx={{ fontWeight: 600, fontSize: '0.75rem' }}
                           />
                         </TableCell>

@@ -167,7 +167,7 @@ const StimulationFormLink = ({
         <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
+        <Button type="submit" color="primary" disabled={isLoading}>
           {isLoading ? 'Submitting...' : submitText}
         </Button>
       </Box>

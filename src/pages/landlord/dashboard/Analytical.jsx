@@ -541,7 +541,6 @@ export default function Dashboard() {
                     <Typography variant="h5">Agent Performance</Typography>
                   </Stack>
                   <Button
-                    variant="contained"
                     onClick={() => navigate('/agent/organization')}
                     sx={{
                       borderRadius: '8px',
@@ -623,7 +622,6 @@ export default function Dashboard() {
                     <MenuItem value="Inactive">Inactive</MenuItem>
                   </Select>
                   <Button
-                    variant="contained"
                     sx={{
                       bgcolor: '#4a3aff',
                       color: '#fff',

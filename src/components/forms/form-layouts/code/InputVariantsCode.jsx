@@ -50,7 +50,7 @@ const CustomFormLabel = styled((props) => (
     </CustomFormLabel>
     <CustomTextField
         id="success-input"
-        variant="outlined"
+        
         defaultValue="Success value"
         fullWidth
         required
@@ -66,7 +66,7 @@ const CustomFormLabel = styled((props) => (
     <CustomFormLabel htmlFor="error-input">Error Input</CustomFormLabel>
     <CustomTextField
         id="error-input"
-        variant="outlined"
+        
         fullWidth
         required
         error
@@ -75,7 +75,7 @@ const CustomFormLabel = styled((props) => (
         <CustomFormLabel htmlFor="error-text-input">Input with Error text</CustomFormLabel>
         <CustomTextField
             id="error-text-input"
-            variant="outlined"
+            
             fullWidth
             required
             error

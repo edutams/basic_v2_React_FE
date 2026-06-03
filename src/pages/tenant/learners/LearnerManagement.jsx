@@ -433,7 +433,6 @@ const LearnerManagement = () => {
               }}
             >
               <Button
-                variant="contained"
                 startIcon={<AddIcon />}
                 fullWidth={false}
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -442,7 +441,6 @@ const LearnerManagement = () => {
                 Add Learner
               </Button>
               <Button
-                variant="outlined"
                 startIcon={<DownloadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -455,7 +453,6 @@ const LearnerManagement = () => {
               </Button>
 
               <Button
-                variant="outlined"
                 startIcon={<UploadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
@@ -509,18 +506,13 @@ const LearnerManagement = () => {
           </FormControl>
 
           {hasFilters && (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={resetFilters}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
+            <Button size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               Clear Filters
             </Button>
           )}
         </Box>
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table>
               <TableHead>
@@ -716,7 +708,7 @@ const LearnerManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleDownloadTemplate} disabled={!downloadClassId}>
+          <Button onClick={handleDownloadTemplate} disabled={!downloadClassId}>
             Download
           </Button>
         </DialogActions>
@@ -743,7 +735,6 @@ const LearnerManagement = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
-            variant="outlined"
             color="inherit"
             onClick={() => {
               setImpersonateStudentConfirmOpen(false);
@@ -753,7 +744,6 @@ const LearnerManagement = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             onClick={handleConfirmedImpersonateStudent}
             sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
           >
@@ -811,7 +801,7 @@ const LearnerManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleConfirmDelete} autoFocus>
+          <Button color="error" onClick={handleConfirmDelete} autoFocus>
             Delete
           </Button>
         </DialogActions>

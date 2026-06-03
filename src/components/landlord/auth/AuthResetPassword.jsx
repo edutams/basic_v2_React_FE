@@ -105,7 +105,6 @@ const AuthResetPassword = ({ emailProp, tokenProp, onSuccess }) => {
 
       <Button
         fullWidth
-        variant="contained"
         color="primary"
         type="submit"
         disabled={loading}

@@ -169,7 +169,7 @@ const AccountTab = () => {
                   />
                   {!isTenantSubdomain && (
                     <Stack direction="row" justifyContent="center" spacing={2} my={3}>
-                      <Button variant="contained" color="primary" component="label">
+                      <Button color="primary" component="label">
                         Upload
                         <input
                           hidden
@@ -179,7 +179,7 @@ const AccountTab = () => {
                           onChange={handleImageChange}
                         />
                       </Button>
-                      <Button variant="outlined" color="error" onClick={handleResetImage}>
+                      <Button color="error" onClick={handleResetImage}>
                         Reset
                       </Button>
                     </Stack>
@@ -262,7 +262,6 @@ const AccountTab = () => {
                 <Stack direction="row" spacing={2} mt={3}>
                   <Box>
                     <Button
-                      variant="contained"
                       color="primary"
                       type="submit"
                       disabled={isProfileLoading}
@@ -274,7 +273,7 @@ const AccountTab = () => {
                     </Button>
                   </Box>
                   <Box>
-                    <Button variant="outlined" color="error" disabled={isProfileLoading}>
+                    <Button color="error" disabled={isProfileLoading}>
                       Cancel
                     </Button>
                   </Box>
@@ -326,7 +325,6 @@ const AccountTab = () => {
 
                 <Stack direction="row" spacing={2} mt={3}>
                   <Button
-                    variant="contained"
                     color="primary"
                     type="submit"
                     disabled={isPasswordLoading}
@@ -336,7 +334,7 @@ const AccountTab = () => {
                   >
                     {isPasswordLoading ? 'Changing...' : 'Change Password'}
                   </Button>
-                  <Button variant="outlined" color="error" disabled={isPasswordLoading}>
+                  <Button color="error" disabled={isPasswordLoading}>
                     Cancel
                   </Button>
                 </Stack>

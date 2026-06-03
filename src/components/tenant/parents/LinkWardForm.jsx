@@ -152,7 +152,7 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
             </Typography>
           )}
         </Box>
-        <Chip label={classArm} size="small" variant="outlined" />
+        <Chip label={classArm} size="small" />
         {showRemove && (
           <IconButton
             size="small"
@@ -217,7 +217,6 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
         />
 
         <Button
-          variant="contained"
           onClick={handleSearch}
           disabled={searching}
           sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
@@ -303,7 +302,7 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
         <Button color="inherit" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button variant="contained" onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </Box>

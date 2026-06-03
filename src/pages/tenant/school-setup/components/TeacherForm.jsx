@@ -386,9 +386,7 @@ const TeacherForm = ({
           Cancel
         </Button>
         {/* disabled={isLoading || !formik.isValid} */}
-        <Button variant="contained" type="submit">
-          {isLoading ? 'Saving...' : submitText}
-        </Button>
+        <Button type="submit">{isLoading ? 'Saving...' : submitText}</Button>
       </Box>
     </Box>
   );

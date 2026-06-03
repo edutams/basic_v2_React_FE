@@ -162,7 +162,6 @@ const FormSeparator = () => {
             value={country}
             onChange={handleChange}
             fullWidth
-            variant="outlined"
           >
             {countries.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -180,7 +179,7 @@ const FormSeparator = () => {
           </CustomFormLabel>
           <CustomTextField id="fs-lname" placeholder="Deo" fullWidth />
           <CustomFormLabel htmlFor="fs-language">Language</CustomFormLabel>
-          <CustomSelect value={language} onChange={handleChange2} fullWidth variant="outlined">
+          <CustomSelect value={language} onChange={handleChange2} fullWidth>
             {lang.map((option) => (
               <MenuItem key={option.value} value={option.value}>
                 {option.label}

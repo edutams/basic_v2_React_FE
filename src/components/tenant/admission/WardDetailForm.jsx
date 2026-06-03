@@ -32,22 +32,29 @@ const EMPTY_FORM = {
   home_address: '',
 };
 
-const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, serverErrors = {} }) => {
+const WardDetailForm = ({
+  initialValues,
+  onSubmit,
+  onBack,
+  isLoading = false,
+  serverErrors = {},
+}) => {
   const notify = useNotification();
   const [states, setStates] = useState([]);
   const [lgas, setLgas] = useState([]);
   const [statesLoading, setStatesLoading] = useState(false);
   const [lgasLoading, setLgasLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
-  
+
   const formik = useFormik({
     initialValues: EMPTY_FORM,
     validationSchema: wardValidationSchema,
     onSubmit: (values) => onSubmit(values),
+    validateOnMount: true,
     validateOnChange: true,
     validateOnBlur: true,
   });
-  
+
   // Load states on mount
   useEffect(() => {
     const loadStates = async () => {
@@ -67,45 +74,70 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
 
   // Hydrate form with initialValues once states are loaded
   useEffect(() => {
+    // Only hydrate if we have states, initialValues, and haven't hydrated yet
     if (!states.length || !initialValues || hydrated) return;
 
+    // Check if initialValues actually has data (not just an empty object)
+    const hasData = initialValues.surname || initialValues.first_name;
+    if (!hasData) return;
+
     const hydrate = async () => {
-      // state_id can come from the loaded lga relationship (backend) or state_of_origin (local form data)
-      const stateId = initialValues.lga?.state_id || initialValues.state_of_origin || '';
-      const lgaId = initialValues.lga_id || '';
+      // console.log('[WardDetailForm] Hydrating with:', initialValues);
 
-      // Set all form values first
-      formik.setValues({
-        ...EMPTY_FORM,
-        ...initialValues,
-        state_of_origin: stateId || '',
-        lga_id: '', // Temporarily clear LGA until options load
-      });
+      // IMPORTANT: Get state from lga relationship first (backend provides lga object with state_id)
+      // This ensures we have the correct state even if state_of_origin wasn't set
+      let stateId = '';
+      let lgaId = initialValues.lga_id || '';
 
-      // Load LGAs if state exists
+      // Priority 1: Get state from the lga relationship (most accurate)
+      if (initialValues.lga?.state_id) {
+        stateId = initialValues.lga.state_id;
+        // console.log('[WardDetailForm] Got state from lga relationship:', stateId);
+      }
+      // Priority 2: Fallback to state_of_origin
+      else if (initialValues.state_of_origin) {
+        stateId = initialValues.state_of_origin;
+        // console.log('[WardDetailForm] Got state from state_of_origin:', stateId);
+      }
+
+      // Step 1: Load LGAs for the state FIRST (before setting form values)
       if (stateId) {
         setLgasLoading(true);
         try {
           const data = await getLgasByState(stateId);
           setLgas(data || []);
-
-          // Set LGA after options are loaded
-          if (lgaId) {
-            formik.setFieldValue('lga_id', lgaId);
-          }
+          // console.log('[WardDetailForm] Loaded', data?.length, 'LGAs for state:', stateId);
         } catch (err) {
+          console.error('[WardDetailForm] Failed to load LGAs:', err);
           notify.error('Failed to load LGAs');
         } finally {
           setLgasLoading(false);
         }
       }
 
+      // Step 2: Now set ALL form values including state and LGA
+      await formik.setValues({
+        ...EMPTY_FORM,
+        ...initialValues,
+        state_of_origin: stateId || '',
+        lga_id: lgaId || '', // Now LGAs are loaded, so this will work
+      });
+
+      // console.log('[WardDetailForm] Set form values - state:', stateId, 'lga:', lgaId);
+
       setHydrated(true);
+
+      // Trigger validation after hydration to update button state
+      setTimeout(() => {
+        formik.validateForm();
+      }, 100);
+
+      // console.log('[WardDetailForm] Hydration complete');
     };
 
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [states, initialValues]);
+  }, [states, initialValues, hydrated]);
 
   const handleStateChange = async (e) => {
     const stateId = e.target.value;
@@ -114,7 +146,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
     formik.setFieldValue('lga_id', '');
 
     setLgas([]);
-    
+
     if (!stateId) return;
 
     setLgasLoading(true);
@@ -130,7 +162,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
   // Merge server errors with formik errors
   useEffect(() => {
     if (serverErrors && Object.keys(serverErrors).length > 0) {
-      Object.keys(serverErrors).forEach(key => {
+      Object.keys(serverErrors).forEach((key) => {
         formik.setFieldError(key, serverErrors[key]);
       });
     }
@@ -283,11 +315,7 @@ const WardDetailForm = ({ initialValues, onSubmit, onBack, isLoading = false, se
         <Button color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
           Back
         </Button>
-        <Button
-          variant="contained"
-          type="submit"
-          disabled={!formik.isValid || isLoading}
-        >
+        <Button type="submit" disabled={!formik.isValid || isLoading}>
           {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>

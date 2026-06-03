@@ -94,9 +94,7 @@ const AppDD = () => {
                       Frequently Asked Questions
                     </Typography>
                   </Link>
-                  <Button variant="contained" color="primary">
-                    Check
-                  </Button>
+                  <Button color="primary">Check</Button>
                 </Box>
               </Box>
               <Divider orientation="vertical" />

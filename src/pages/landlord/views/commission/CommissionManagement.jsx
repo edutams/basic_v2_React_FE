@@ -198,7 +198,6 @@ const CommissionManagement = () => {
 
             {(value === '3' || value === '4') && (
               <Button
-                variant="contained"
                 size="small"
                 startIcon={<IconLayoutDashboard size={18} />}
                 onClick={() =>

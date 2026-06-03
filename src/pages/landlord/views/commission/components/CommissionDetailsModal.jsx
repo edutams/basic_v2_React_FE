@@ -148,7 +148,6 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               sx={{ flex: 2, minWidth: { xs: '100%', sm: 180 } }}
             />
             <Button
-              variant="contained"
               onClick={handleFilter}
               size="small"
               sx={{
@@ -162,7 +161,6 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
               Filter
             </Button>
             <Button
-              variant="contained"
               startIcon={<IconDownload size={18} />}
               onClick={handleExport}
               size="small"
@@ -250,7 +248,6 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
       <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
         <Button
           onClick={onClose}
-          variant="outlined"
           sx={{
             textTransform: 'none',
             borderRadius: '8px',

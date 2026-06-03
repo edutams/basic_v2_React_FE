@@ -128,7 +128,6 @@ const ViewSchemeDetails = ({ api }) => {
             </Typography>
           </Box>
           <Button
-            variant="outlined"
             onClick={handleDownload}
             startIcon={<IconPrinter size={18} />}
             sx={{ textTransform: 'none' }}
@@ -201,7 +200,6 @@ const ViewSchemeDetails = ({ api }) => {
           sx={{ p: 3, display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #eee' }}
         >
           <Button
-            variant="contained"
             onClick={() => navigate(-1)}
             sx={{
               textTransform: 'none',

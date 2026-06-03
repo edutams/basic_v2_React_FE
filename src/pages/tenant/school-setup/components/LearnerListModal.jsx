@@ -127,9 +127,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
             </Typography>
           </Typography>
 
-          {totalRows > 0 && !loading && (
-            <Chip label={totalRows} size="small" color="primary" variant="outlined" />
-          )}
+          {totalRows > 0 && !loading && <Chip label={totalRows} size="small" color="primary" />}
         </Box>
 
         <IconButton onClick={handleClose} size="small">
@@ -165,7 +163,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
             }}
           />
 
-          <Button variant="contained" onClick={handleSearch} size="small" disabled={loading}>
+          <Button onClick={handleSearch} size="small" disabled={loading}>
             Search
           </Button>
         </Box>
@@ -245,7 +243,7 @@ const LearnerListModal = ({ open, onClose, classId, className }) => {
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleClose} variant="outlined" size="small">
+        <Button onClick={handleClose} size="small">
           Close
         </Button>
       </DialogActions>

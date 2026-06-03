@@ -146,7 +146,6 @@ const DivisionList = () => {
           sx={{ maxWidth: { xs: '100%', sm: 300 } }}
         />
         <Button
-          variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenModal()}
           sx={{ minWidth: 'auto', whiteSpace: 'nowrap' }}
@@ -155,7 +154,7 @@ const DivisionList = () => {
         </Button>
       </Stack>
 
-      <TableContainer component={Paper} variant="outlined">
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
@@ -268,9 +267,7 @@ const DivisionList = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            Save
-          </Button>
+          <Button onClick={handleSubmit}>Save</Button>
         </DialogActions>
       </Dialog>
 

@@ -79,7 +79,7 @@ const RolePermissionsModal = ({ open, onClose, roleId }) => {
             Permissions for this Role
           </Typography>
           {permissions.length > 0 && !loading && (
-            <Chip label={permissions.length} size="small" color="primary" variant="outlined" />
+            <Chip label={permissions.length} size="small" color="primary" />
           )}
         </Box>
         <IconButton onClick={handleClose} size="small">
@@ -138,7 +138,7 @@ const RolePermissionsModal = ({ open, onClose, roleId }) => {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={handleClose} variant="outlined" size="small">
+        <Button onClick={handleClose} size="small">
           Close
         </Button>
       </DialogActions>

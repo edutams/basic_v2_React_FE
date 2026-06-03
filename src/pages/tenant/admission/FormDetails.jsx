@@ -31,10 +31,10 @@ const FormDetails = () => {
       window.close();
     } else {
       navigate('/application-tracker', {
-        state: { 
-          wardData: formData?.wardData, 
-          academicData: formData?.academicData, 
-          selectedBatch: formData?.selectedBatch 
+        state: {
+          wardData: formData?.wardData,
+          academicData: formData?.academicData,
+          selectedBatch: formData?.selectedBatch,
         },
       });
     }
@@ -74,12 +74,7 @@ const FormDetails = () => {
           Application Form Details
         </Typography>
         <Box display="flex" gap={1} flexWrap="wrap">
-          <Button
-            variant="outlined"
-            startIcon={<PrintIcon />}
-            onClick={handlePrint}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button startIcon={<PrintIcon />} onClick={handlePrint} sx={{ fontWeight: 600 }}>
             Print Application
           </Button>
           <Button

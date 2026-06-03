@@ -90,7 +90,6 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
                     label={`${subject.schemes ? Object.keys(subject.schemes).length : 0} Schemes`}
                     size="small"
                     color="primary"
-                    variant="outlined"
                   />
                   <Button
                     size="small"
@@ -589,17 +588,17 @@ const CurriculumSetup = () => {
               >
                 <Typography variant="h5">Curriculum</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button variant="outlined" onClick={handleOpenImportModal} size="small">
+                  <Button onClick={handleOpenImportModal} size="small">
                     Import
                   </Button>
-                  <Button variant="contained" onClick={handleOpenCreateModal} size="small">
+                  <Button onClick={handleOpenCreateModal} size="small">
                     Create Curriculum
                   </Button>
                 </Box>
               </Box>
             }
           >
-            <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+            <Paper sx={{ overflowX: 'auto' }}>
               <TableContainer>
                 <Table sx={{ tableLayout: 'fixed', minWidth: 400 }}>
                   <TableHead>
@@ -743,19 +742,14 @@ const CurriculumSetup = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <Button
-                    variant="contained"
-                    onClick={handleSaveAssignments}
-                    disabled={loadingSave}
-                    size="small"
-                  >
+                  <Button onClick={handleSaveAssignments} disabled={loadingSave} size="small">
                     {loadingSave ? <CircularProgress size={24} /> : 'Update'}
                   </Button>
                 </Box>
               </Box>
             }
           >
-            <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+            <Paper sx={{ overflowX: 'auto' }}>
               <TableContainer>
                 <Table sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
                   <TableHead>
@@ -891,7 +885,6 @@ const CurriculumSetup = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleCreateCurriculum}
             disabled={loadingCreate}
@@ -936,7 +929,6 @@ const CurriculumSetup = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleUpdateCurriculum}
             disabled={loadingUpdate}
@@ -961,7 +953,6 @@ const CurriculumSetup = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             color="error"
             size="small"
             onClick={handleDeleteCurriculum}
@@ -991,7 +982,6 @@ const CurriculumSetup = () => {
           >
             {/* LEFT PANEL */}
             <Paper
-              variant="outlined"
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1095,7 +1085,6 @@ const CurriculumSetup = () => {
 
             {/* RIGHT PANEL */}
             <Paper
-              variant="outlined"
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1135,7 +1124,6 @@ const CurriculumSetup = () => {
               >
                 {selectedCurriculums.length === 0 ? (
                   <Paper
-                    variant="outlined"
                     sx={{
                       p: 4,
                       textAlign: 'center',
@@ -1182,7 +1170,6 @@ const CurriculumSetup = () => {
           </Button>
 
           <Button
-            variant="contained"
             size="small"
             onClick={handleImportSelected}
             disabled={selectedCurriculums.length === 0}
@@ -1233,7 +1220,6 @@ const CurriculumSetup = () => {
             Cancel
           </Button>
           <Button
-            variant="contained"
             size="small"
             onClick={handleConfirmImport}
             color="primary"
@@ -1262,7 +1248,7 @@ const CurriculumSetup = () => {
           {viewSchemesSubject?.schemes?.length > 0 ? (
             <Box display="flex" flexDirection="column" gap={2}>
               {viewSchemesSubject.schemes.map((scheme, index) => (
-                <Paper key={scheme.id || index} variant="outlined" sx={{ p: 2 }}>
+                <Paper key={scheme.id || index} sx={{ p: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold">
                     {scheme.term?.term_name || `Term ${scheme.term_id}`} -{' '}
                     {scheme.week?.week_name || `Week ${scheme.week_id}`}

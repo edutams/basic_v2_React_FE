@@ -405,7 +405,6 @@ const HolidaySection = ({ refreshKey }) => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h5">Holidays</Typography>
             <Button
-              variant="contained"
               startIcon={<IconPlus size={16} />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
@@ -456,7 +455,7 @@ const HolidaySection = ({ refreshKey }) => {
         ) : !selectedTermId ? (
           <Alert severity="info">Select a session and term to view holidays.</Alert>
         ) : (
-          <Paper variant="outlined">
+          <Paper>
             <TableContainer>
               <Table sx={{ whiteSpace: 'nowrap' }}>
                 <TableHead>
@@ -551,12 +550,7 @@ const HolidaySection = ({ refreshKey }) => {
               </Alert>
             )}
             <Box display="flex" justifyContent="flex-end">
-              <Button
-                variant="outlined"
-                startIcon={<IconPlus size={16} />}
-                onClick={handleAddRow}
-                size="small"
-              >
+              <Button startIcon={<IconPlus size={16} />} onClick={handleAddRow} size="small">
                 Add More
               </Button>
             </Box>
@@ -634,7 +628,7 @@ const HolidaySection = ({ refreshKey }) => {
           <Button size="small" onClick={handleCloseModal}>
             Cancel
           </Button>
-          <Button size="small" variant="contained" onClick={handleSaveHolidays} disabled={saving}>
+          <Button size="small" onClick={handleSaveHolidays} disabled={saving}>
             {saving ? <CircularProgress size={20} /> : 'Create Holiday'}
           </Button>
         </DialogActions>
@@ -648,7 +642,7 @@ const HolidaySection = ({ refreshKey }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDelete({ open: false, id: null })}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+          <Button color="error" onClick={handleConfirmDelete}>
             Delete
           </Button>
         </DialogActions>

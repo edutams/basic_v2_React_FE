@@ -26,7 +26,7 @@ const SchoolNotFound = () => {
           The school domain you are trying to access does not exist or has not been set up yet.
           Please check the URL or contact your administrator.
         </Typography>
-        <Button color="primary" variant="contained" href={CENTRAL_DOMAIN} disableElevation>
+        <Button color="primary" href={CENTRAL_DOMAIN} disableElevation>
           Go Back to Home
         </Button>
       </Container>

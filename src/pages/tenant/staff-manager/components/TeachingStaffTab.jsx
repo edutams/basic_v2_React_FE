@@ -136,14 +136,13 @@ const TeachingStaffTab = ({
             >
               <Button
                 fullWidth={{ xs: true, sm: false }}
-                variant="contained"
                 startIcon={<IconPlus size={18} />}
                 onClick={handleAddStaff}
               >
                 Add Teaching Staff
               </Button>
 
-              <ButtonGroup variant="outlined" fullWidth={{ xs: true, sm: false }}>
+              <ButtonGroup fullWidth={{ xs: true, sm: false }}>
                 <Button
                   startIcon={<IconPlus size={18} />}
                   sx={{ textTransform: 'none' }}

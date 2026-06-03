@@ -167,7 +167,6 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
         >
           <Typography variant="h5">Manage Modules</Typography>
           <Button
-            variant="outlined"
             startIcon={<IconFilter size={18} />}
             onClick={() => setFilterDrawerOpen(true)}
             size="small"
@@ -197,7 +196,7 @@ const ModuleTable = ({ modules = [], onModuleAction, isLoading: externalLoading 
           onReset={handleFilterReset}
         />
 
-        <Paper variant="outlined">
+        <Paper>
           <TableContainer>
             <Table sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>

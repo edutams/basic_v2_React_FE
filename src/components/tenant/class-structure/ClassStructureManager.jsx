@@ -50,7 +50,6 @@ const ClassStructureManager = () => {
         <Box sx={{ display: 'flex', justifyContent: { xs: 'stretch', sm: 'flex-end' }, mt: 2 }}>
           <Button
             size="small"
-            variant="contained"
             onClick={handleSave}
             disabled={saving}
             sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 140 } }}

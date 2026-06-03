@@ -71,7 +71,7 @@ const ParentRow = ({ parent, onClick, showRemove, onRemove }) => {
           ID: {idCode}
         </Typography>
       </Box>
-      <Chip label={relationship} size="small" variant="outlined" />
+      <Chip label={relationship} size="small" />
       {showRemove && (
         <IconButton
           size="small"
@@ -406,7 +406,6 @@ const AddLearnerModal = ({
                     }}
                   />
                   <Button
-                    variant="contained"
                     onClick={handleParentSearch}
                     disabled={parentSearching}
                     sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
@@ -508,7 +507,7 @@ const AddLearnerModal = ({
             <Button onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button variant="contained" type="submit" disabled={isLoading || !isValid}>
+            <Button type="submit" disabled={isLoading || !isValid}>
               {isLoading ? 'Saving...' : isEdit ? 'Save Changes' : 'Save'}
             </Button>
           </Box>

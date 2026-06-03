@@ -294,7 +294,7 @@ const SchoolAlcManager = () => {
             <Box display="flex" alignItems="center" justifyContent="space-between">
               <Typography variant="h5">Manage Roles</Typography>
 
-              <Button variant="contained" color="primary" onClick={() => setNewRoleModalOpen(true)}>
+              <Button color="primary" onClick={() => setNewRoleModalOpen(true)}>
                 New Role
               </Button>
             </Box>
@@ -310,7 +310,6 @@ const SchoolAlcManager = () => {
             }}
           >
             <Button
-              variant="outlined"
               startIcon={<IconAdjustmentsHorizontal size={18} />}
               onClick={() => setFilterDrawerOpen(true)}
               sx={{
@@ -345,7 +344,7 @@ const SchoolAlcManager = () => {
             </Button>
           </Box>
 
-          <Paper variant="outlined">
+          <Paper>
             <TableContainer>
               <Table>
                 <TableHead>

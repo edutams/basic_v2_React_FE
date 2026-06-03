@@ -102,7 +102,6 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
             <CustomTextField
               id="name"
               name="name"
-              variant="outlined"
               fullWidth
               value={formData.name}
               onChange={handleInputChange}
@@ -117,7 +116,6 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
             <CustomTextField
               id="email"
               name="email"
-              variant="outlined"
               fullWidth
               value={formData.email}
               onChange={handleInputChange}
@@ -133,7 +131,6 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
               id="password"
               name="password"
               type="password"
-              variant="outlined"
               fullWidth
               value={formData.password}
               onChange={handleInputChange}
@@ -149,7 +146,7 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
               id="password_confirmation"
               name="password_confirmation"
               type="password"
-              variant="outlined"
+              
               fullWidth
               value={formData.password_confirmation}
               onChange={handleInputChange}
@@ -162,7 +159,6 @@ const AuthRegister = ({ title, subtitle, subtext }) => {
           <Button
             sx={{ mt: 2 }}
             color="primary"
-            variant="contained"
             size="large"
             fullWidth
             type="submit"

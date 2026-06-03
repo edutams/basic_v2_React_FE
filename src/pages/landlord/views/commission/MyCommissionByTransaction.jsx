@@ -93,7 +93,6 @@ const MyCommissionByTransaction = () => {
                 Transaction Commission Details
               </Typography>
               <Button
-                variant="contained"
                 startIcon={<IconDownload size={18} />}
                 sx={{
                   bgcolor: '#3949ab',
@@ -143,7 +142,6 @@ const MyCommissionByTransaction = () => {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <Button
-                    variant="contained"
                     onClick={handleFilter}
                     sx={{
                       bgcolor: '#3949ab',

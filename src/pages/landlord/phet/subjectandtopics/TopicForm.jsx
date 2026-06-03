@@ -80,7 +80,7 @@ const TopicForm = ({
           <Button sx={{ mr: 1 }} color="inherit" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="contained" type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading}>
             {submitText}
           </Button>
         </Box>

@@ -42,7 +42,7 @@ const ApplicationTracker = () => {
     const loadAdmission = async () => {
       // Try to get from location state first
       const stateAdmission = location.state?.admission;
-      
+
       if (stateAdmission) {
         setAdmission(stateAdmission);
         setLoading(false);
@@ -108,7 +108,9 @@ const ApplicationTracker = () => {
   if (loading) {
     return (
       <PageContainer title="Application Tracker" description="Track your admission application">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        >
           <CircularProgress />
         </Box>
       </PageContainer>
@@ -133,7 +135,7 @@ const ApplicationTracker = () => {
       const payload = {
         form_submit_status: 'no',
         admission_batch_id: admission.admission_batch_id || admission.admission_batch?.id,
-        admission_stage:  0,
+        admission_stage: 0,
         surname: admission.surname,
         first_name: admission.first_name,
         other_name: admission.other_name,
@@ -148,8 +150,7 @@ const ApplicationTracker = () => {
         previous_class: admission.previous_class,
         intending_programme_id:
           admission.intending_programme_id || admission.intending_programme?.id || null,
-        intending_class_id:
-          admission.intending_class_id || admission.intending_class?.id || null,
+        intending_class_id: admission.intending_class_id || admission.intending_class?.id || null,
         study_mode: admission.study_mode,
       };
 
@@ -182,11 +183,7 @@ const ApplicationTracker = () => {
           <Typography variant="h6" gutterBottom>
             Admission not found
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/my-applications')}
-            sx={{ mt: 2 }}
-          >
+          <Button onClick={() => navigate('/my-applications')} sx={{ mt: 2 }}>
             Back to Applications
           </Button>
         </Paper>
@@ -194,18 +191,26 @@ const ApplicationTracker = () => {
     );
   }
 
-  const applicantName = `${admission.surname || ''} ${admission.first_name || ''} ${admission.other_name || ''}`.trim();
-  const intendingClass = admission.intending_class?.class_code || admission.intending_class?.class_name || 'N/A';
+  const applicantName =
+    `${admission.surname.toUpperCase() || ''} ${admission.first_name.toUpperCase() || ''} ${admission.other_name.toUpperCase() || ''}`.trim();
+  const intendingClass =
+    admission.intending_class?.class_code || admission.intending_class?.class_name || 'N/A';
   const gender = admission.gender ? admission.gender.toUpperCase() : 'N/A';
   const address = admission.home_address || 'No address provided';
   const photo = admission.passport_photo || ward;
-  const dob = admission.dob ? new Date(admission.dob).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'  ;
+  const dob = admission.dob
+    ? new Date(admission.dob).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    : 'N/A';
   const currentStage = admission.admission_stage || 0;
-  const submittedDate = admission.form_submit_completion 
-    ? new Date(admission.form_submit_completion).toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+  const submittedDate = admission.form_submit_completion
+    ? new Date(admission.form_submit_completion).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
       })
     : 'Not submitted';
 
@@ -238,6 +243,7 @@ const ApplicationTracker = () => {
         address={address}
         photo={photo}
         dob={dob}
+        form_number={admission.form_number}
         admission={admission}
       />
 
@@ -290,7 +296,7 @@ const ApplicationTracker = () => {
           <Button onClick={() => setConfirmOpen(false)} disabled={editLoading}>
             No
           </Button>
-          <Button onClick={confirmEditForm} variant="contained" disabled={editLoading}>
+          <Button onClick={confirmEditForm} disabled={editLoading}>
             Yes
           </Button>
         </DialogActions>

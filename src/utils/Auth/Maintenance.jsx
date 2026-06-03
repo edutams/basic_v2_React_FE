@@ -18,7 +18,7 @@ const Maintenance = () => (
       <Typography align="center" variant="h4" mb={4}>
         Website is Under Construction. Check back later!
       </Typography>
-      <Button color="primary" variant="contained" component={Link} to="/" disableElevation>
+      <Button color="primary" component={Link} to="/" disableElevation>
         Go Back to Home
       </Button>
     </Container>

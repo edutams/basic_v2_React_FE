@@ -95,7 +95,7 @@ const ApplicationReview = ({
 
   return (
     <>
-      <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+      <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
         <Table>
           <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>

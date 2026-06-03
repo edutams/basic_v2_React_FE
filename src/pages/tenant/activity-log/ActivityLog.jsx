@@ -168,7 +168,6 @@ const ActivityLog = () => {
               sx={{ width: { xs: '100%', sm: '160px' } }}
             />
             <Button
-              variant="contained"
               color="primary"
               size="small"
               onClick={handleSearch}
@@ -178,7 +177,6 @@ const ActivityLog = () => {
             </Button>
             {(search || dateFrom || dateTo) && (
               <Button
-                variant="outlined"
                 color="secondary"
                 size="small"
                 onClick={handleClearFilters}
@@ -197,7 +195,7 @@ const ActivityLog = () => {
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
-              <TableContainer component={Paper} variant="outlined">
+              <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -246,7 +244,6 @@ const ActivityLog = () => {
                           <TableCell align="right">
                             <Button
                               size="small"
-                              variant="outlined"
                               startIcon={<IconEye size={18} />}
                               onClick={() => handleOpenModal(log)}
                               sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
@@ -333,7 +330,7 @@ const ActivityLog = () => {
                   <Typography variant="subtitle2" gutterBottom>
                     Additional Properties
                   </Typography>
-                  <TableContainer component={Paper} variant="outlined">
+                  <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
                         <TableRow>

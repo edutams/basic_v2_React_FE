@@ -41,7 +41,7 @@ import { IconAlignCenter, IconAlignLeft, IconAlignRight, IconPlayerPlay, IconPla
         </ButtonGroup>
     </Stack>
     <Stack spacing={1} direction={{ xs: 'column', sm: 'column', lg: 'row' }}>
-        <ButtonGroup variant="outlined" aria-label="outlined button group">
+        <ButtonGroup  aria-label="outlined button group">
           <Button>
             <IconPlayerSkipBack width={18} />
           </Button>
@@ -52,7 +52,7 @@ import { IconAlignCenter, IconAlignLeft, IconAlignRight, IconPlayerPlay, IconPla
             <IconPlayerSkipForward width={18} />
           </Button>
         </ButtonGroup>
-        <ButtonGroup variant="outlined" color="secondary" aria-label="outlined button group">
+        <ButtonGroup  color="secondary" aria-label="outlined button group">
           <Button>
             <IconPlayerSkipBack width={18} />
           </Button>
@@ -63,7 +63,7 @@ import { IconAlignCenter, IconAlignLeft, IconAlignRight, IconPlayerPlay, IconPla
             <IconPlayerSkipForward width={18} />
           </Button>
         </ButtonGroup>
-        <ButtonGroup variant="outlined" color="warning" aria-label="outlined button group">
+        <ButtonGroup  color="warning" aria-label="outlined button group">
           <Button>
             <IconPlayerSkipBack width={18} />
           </Button>
@@ -74,7 +74,7 @@ import { IconAlignCenter, IconAlignLeft, IconAlignRight, IconPlayerPlay, IconPla
             <IconPlayerSkipForward width={18} />
           </Button>
         </ButtonGroup>
-        <ButtonGroup variant="outlined" color="error" aria-label="outlined button group">
+        <ButtonGroup  color="error" aria-label="outlined button group">
           <Button>
             <IconPlayerSkipBack width={18} />
           </Button>
@@ -85,7 +85,7 @@ import { IconAlignCenter, IconAlignLeft, IconAlignRight, IconPlayerPlay, IconPla
             <IconPlayerSkipForward width={18} />
           </Button>
         </ButtonGroup>
-        <ButtonGroup variant="outlined" color="success" aria-label="outlined button group">
+        <ButtonGroup  color="success" aria-label="outlined button group">
           <Button>
             <IconPlayerSkipBack width={18} />
           </Button>

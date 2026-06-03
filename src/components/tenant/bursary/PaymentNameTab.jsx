@@ -9,6 +9,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableFooter,
+  TablePagination,
   Paper,
   Chip,
   IconButton,
@@ -19,6 +21,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Alert,
 } from '@mui/material';
 
 import {
@@ -73,7 +76,12 @@ const PaymentNameTab = ({ showSnackbar }) => {
   const [editingPayment, setEditingPayment] = useState(null);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Pagination states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const handleAddPayment = () => {
     setEditingPayment(null);
@@ -113,6 +121,17 @@ const PaymentNameTab = ({ showSnackbar }) => {
   const filteredPayments = paymentNames.filter((payment) =>
     payment.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  // Pagination calculations
+  const startIndex = page * rowsPerPage;
+  const endIndex = startIndex + rowsPerPage;
+  const paginatedPayments = filteredPayments.slice(startIndex, endIndex);
+
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+    setPage(0);
+  };
+
   return (
     <>
       <Stack spacing={3}>
@@ -124,7 +143,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
                   Payment Name
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  View fee items a parent can pay for
+                  Every fee items a parent can pay for
                 </Typography>
               </Box>
               <Button
@@ -143,9 +162,13 @@ const PaymentNameTab = ({ showSnackbar }) => {
             <TextField
               placeholder="Search Payment Items"
               size="small"
-              fullWidth
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -154,6 +177,14 @@ const PaymentNameTab = ({ showSnackbar }) => {
                 ),
               }}
             />
+            <Button
+              variant="contained"
+              // startIcon={<SearchIcon />}
+              onClick={handleSearch}
+              sx={{ minWidth: 100 }}
+            >
+              Search
+            </Button>
           </Box>
 
           <TableContainer component={Paper} variant="outlined">
@@ -175,20 +206,28 @@ const PaymentNameTab = ({ showSnackbar }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredPayments.length === 0 ? (
+                {paginatedPayments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                      <Typography color="textSecondary">
+                    <TableCell colSpan={8} align="center">
+                      <Alert
+                        severity="info"
+                        sx={{
+                          mb: 3,
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          '& .MuiAlert-icon': { mr: 1.5 },
+                        }}
+                      >
                         {searchQuery
                           ? 'No payment names found matching your search'
                           : 'No payment names added yet'}
-                      </Typography>
+                      </Alert>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPayments.map((payment, index) => (
+                  paginatedPayments.map((payment, index) => (
                     <TableRow key={payment.id} hover>
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{startIndex + index + 1}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{payment.name}</TableCell>
                       <TableCell>
                         <Chip
@@ -274,6 +313,22 @@ const PaymentNameTab = ({ showSnackbar }) => {
                   ))
                 )}
               </TableBody>
+
+              <TableFooter>
+                <TableRow>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 15, 20, 25]}
+                    count={filteredPayments.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
+                  />
+                </TableRow>
+              </TableFooter>
             </Table>
           </TableContainer>
         </ParentCard>

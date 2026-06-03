@@ -276,7 +276,7 @@ const PaymentShedule = () => {
                 </Select>
               </FormControl>
 
-              <FormControl size="small" sx={{ minWidth: 200 }}>
+              <FormControl size="small" sx={{ minWidth: 100 }}>
                 <InputLabel>Student Pay Category</InputLabel>
                 <Select
                   value={selectedCategory}

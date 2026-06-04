@@ -15,6 +15,7 @@ import {
   FormControlLabel,
   Switch,
   Button,
+  Stack,
 } from '@mui/material';
 import {
   Receipt as ReceiptIcon,
@@ -208,17 +209,62 @@ const PaymentShedule = () => {
         </Grid>
       </Grid>
 
+      {/* Action Tabs - Make scrollable on mobile */}
       <Box sx={{ mb: 3 }}>
-        <Tabs value={actionTab} onChange={handleActionTabChange}>
-          <Tab label="1. Set Schedule" sx={{ textTransform: 'none', fontWeight: 600 }} />
-          <Tab label="2. Generate Invoice" sx={{ textTransform: 'none', fontWeight: 600 }} />
-          <Tab label="3. Send Invoice" sx={{ textTransform: 'none', fontWeight: 600 }} />
+        <Tabs
+          value={actionTab}
+          onChange={handleActionTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              minWidth: { xs: 'auto', sm: 120 },
+            },
+          }}
+        >
+          <Tab label="1. Set Schedule" />
+          <Tab label="2. Generate Invoice" />
+          <Tab label="3. Send Invoice" />
+        </Tabs>
+      </Box>
+
+      {/* Action Tabs - Make scrollable on mobile */}
+      <Box sx={{ mb: 3 }}>
+        <Tabs
+          value={actionTab}
+          onChange={handleActionTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              minWidth: { xs: 'auto', sm: 120 },
+            },
+          }}
+        >
+          <Tab label="1. Set Schedule" />
+          <Tab label="2. Generate Invoice" />
+          <Tab label="3. Send Invoice" />
         </Tabs>
       </Box>
 
       <Paper sx={{ borderRadius: 2 }}>
+        {/* Header Section */}
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          {/* Title and Filters Row */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', lg: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', lg: 'center' },
+              gap: 2,
+            }}
+          >
+            {/* Left: Title */}
             <Box display="flex" alignItems="center" gap={2}>
               <Box
                 sx={{
@@ -245,15 +291,17 @@ const PaymentShedule = () => {
               </Box>
             </Box>
 
-            {/* Right Side - Filters Row */}
+            {/* Right: Filters - Keep desktop layout, stack only on small screens */}
             <Box
               sx={{
                 display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
                 gap: 2,
-                alignItems: 'center',
+                alignItems: { xs: 'stretch', sm: 'center' },
+                width: { xs: '100%', lg: 'auto' },
               }}
             >
-              <FormControl size="small" sx={{ minWidth: 180 }}>
+              <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
                 <InputLabel>Select Session</InputLabel>
                 <Select
                   value={selectedSession}
@@ -268,7 +316,7 @@ const PaymentShedule = () => {
                 </Select>
               </FormControl>
 
-              <FormControl size="small" sx={{ minWidth: 100 }}>
+              <FormControl size="small" sx={{ minWidth: { sm: 100 } }}>
                 <InputLabel>Student Pay Category</InputLabel>
                 <Select
                   value={selectedCategory}
@@ -292,10 +340,11 @@ const PaymentShedule = () => {
                   />
                 }
                 label={
-                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                  <Typography variant="body2" sx={{ whiteSpace: { sm: 'nowrap' } }}>
                     Enable full-session payment
                   </Typography>
                 }
+                sx={{ m: 0 }}
               />
             </Box>
           </Box>
@@ -307,79 +356,86 @@ const PaymentShedule = () => {
             px: 3,
             pt: 2,
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 2,
           }}
         >
-          {/* Schedule Type Tabs - Left Side */}
-          <Tabs
-            value={scheduleTab}
-            onChange={handleScheduleTabChange}
-            sx={{
-              minHeight: 40,
-              '& .MuiTab-root': {
+          {/* Schedule Type Tabs */}
+          <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
+            <Tabs
+              value={scheduleTab}
+              onChange={handleScheduleTabChange}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
                 minHeight: 40,
-              },
-            }}
-          >
-            <Tab
-              label="Compulsory"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  1
-                </Box>
-              }
-              iconPosition="start"
-            />
-            <Tab
-              label="Optional Payment"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  2
-                </Box>
-              }
-              iconPosition="start"
-            />
-          </Tabs>
+                '& .MuiTab-root': {
+                  minHeight: 40,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                },
+              }}
+            >
+              <Tab
+                label="Compulsory"
+                icon={
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
+                      color: 'white',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      mr: 1,
+                    }}
+                  >
+                    1
+                  </Box>
+                }
+                iconPosition="start"
+              />
+              <Tab
+                label="Optional Payment"
+                icon={
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
+                      color: 'white',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      mr: 1,
+                    }}
+                  >
+                    2
+                  </Box>
+                }
+                iconPosition="start"
+              />
+            </Tabs>
+          </Box>
 
-          {/* Import Button - Right Side */}
+          {/* Import Button */}
           <Button
+            variant="contained"
             startIcon={<UploadIcon />}
             onClick={handleImportSchedule}
             size="medium"
-            sx={{ fontWeight: 600 }}
+            sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
           >
             Import schedule for current term
           </Button>

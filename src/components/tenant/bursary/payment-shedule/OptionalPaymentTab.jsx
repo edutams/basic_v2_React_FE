@@ -31,6 +31,11 @@ import {
   Tabs,
   Tab,
   Alert,
+  Card,
+  CardContent,
+  CardActions,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -392,100 +397,102 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
         </Typography>
       </Alert>
 
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        gap={2}
-        flexWrap="wrap"
-      >
-        <Tabs
-          value={currentTerm}
-          onChange={(e, val) => setCurrentTerm(val)}
-          sx={{
-            minHeight: 40,
-            '& .MuiTab-root': {
+      {/* Term Tabs and Search Row */}
+      <Stack spacing={2}>
+        {/* Term Tabs */}
+        <Box sx={{ width: '100%', overflowX: 'auto' }}>
+          <Tabs
+            value={currentTerm}
+            onChange={(e, val) => setCurrentTerm(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
               minHeight: 40,
-              textTransform: 'none',
-              fontWeight: 600,
-            },
-          }}
-        >
-          <Tab
-            label="First Term"
-            icon={
-              <Box
-                component="span"
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: currentTerm === 0 ? 'primary.main' : 'grey.300',
-                  color: 'white',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  mr: 1,
-                }}
-              >
-                ●
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            label="Second Term"
-            icon={
-              <Box
-                component="span"
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: currentTerm === 1 ? 'primary.main' : 'grey.300',
-                  color: 'white',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  mr: 1,
-                }}
-              >
-                ●
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            label="Third Term"
-            icon={
-              <Box
-                component="span"
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: currentTerm === 2 ? 'primary.main' : 'grey.300',
-                  color: 'white',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  mr: 1,
-                }}
-              >
-                ●
-              </Box>
-            }
-            iconPosition="start"
-          />
-        </Tabs>
+              '& .MuiTab-root': {
+                minHeight: 40,
+                textTransform: 'none',
+                fontWeight: 600,
+                minWidth: { xs: 'auto', sm: 120 },
+              },
+            }}
+          >
+            <Tab
+              label="First Term"
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: currentTerm === 0 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  ●
+                </Box>
+              }
+              iconPosition="start"
+            />
+            <Tab
+              label="Second Term"
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: currentTerm === 1 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  ●
+                </Box>
+              }
+              iconPosition="start"
+            />
+            <Tab
+              label="Third Term"
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: currentTerm === 2 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  ●
+                </Box>
+              }
+              iconPosition="start"
+            />
+          </Tabs>
+        </Box>
 
-        <Box display="flex" gap={2}>
+        {/* Search Bar */}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} width="100%">
           <TextField
             placeholder="Search optional payment items..."
             size="small"
@@ -503,15 +510,28 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: 300 }}
+            sx={{ flex: 1 }}
           />
-          <Button startIcon={<SearchIcon />} size="small" onClick={handleSearch}>
+          <Button
+            variant="contained"
+            startIcon={<SearchIcon />}
+            size="small"
+            onClick={handleSearch}
+            fullWidth={{ xs: true, sm: false }}
+            sx={{ minWidth: { sm: 100 } }}
+          >
             Search
           </Button>
-        </Box>
-      </Box>
+        </Stack>
+      </Stack>
 
-      <Box display="flex" justifyContent="space-between" alignItems="center">
+      {/* Header and Add Button */}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        spacing={2}
+      >
         <Box>
           <Typography variant="h6" fontWeight={700} gutterBottom>
             Optional Services
@@ -521,22 +541,29 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           </Typography>
         </Box>
 
-        <Button startIcon={<AddIcon />} onClick={handleAddPaymentItem} sx={{ fontWeight: 600 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleAddPaymentItem}
+          sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+          fullWidth={{ xs: true, sm: false }}
+        >
           Add payment item
         </Button>
-      </Box>
+      </Stack>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table>
+      {/* Scrollable Table for all screen sizes */}
+      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.50' }}>
-              <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Payment Name</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Option Name</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Payment Category</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
+              <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+              <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>Payment Name</TableCell>
+              <TableCell sx={{ fontWeight: 700, minWidth: 250 }}>Option Name</TableCell>
+              <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>Payment Category</TableCell>
+              <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>Class</TableCell>
+              <TableCell sx={{ fontWeight: 700, width: 100 }}>Status</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, width: 80 }}>
                 Action
               </TableCell>
             </TableRow>
@@ -553,31 +580,14 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                 >
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>
-                    <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                      {/* <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          bgcolor: 'primary.lighter',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 20,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {schedule.icon}
-                      </Box> */}
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {schedule.paymentName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {schedule.description}
-                        </Typography>
-                      </Box>
-                    </Stack>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        {schedule.paymentName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {schedule.description}
+                      </Typography>
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Box display="flex" gap={1} flexWrap="wrap">
@@ -593,7 +603,6 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                         />
                       ))}
                     </Box>
-
                     <Typography
                       variant="caption"
                       color="text.secondary"
@@ -672,34 +681,45 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
       </Menu>
 
       {/* View Details Dialog */}
-      <Dialog open={detailsDialog.open} onClose={handleDetailsDialogClose} maxWidth="sm" fullWidth>
+      <Dialog
+        open={detailsDialog.open}
+        onClose={handleDetailsDialogClose}
+        maxWidth="sm"
+        fullWidth
+        fullScreen={{ xs: true, sm: false }}
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 0, sm: 2 },
+            maxHeight: { xs: '100%', sm: 'calc(100% - 64px)' },
+          },
+        }}
+      >
         <DialogTitle
           sx={{
             fontWeight: 700,
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: 'flex-start',
+            gap: 2,
           }}
         >
-          <Box display="flex" alignItems="center" gap={2}>
-            <Box>
-              <Typography variant="h6" fontWeight={700} color="primary.main">
-                {detailsDialog.schedule?.paymentName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {detailsDialog.schedule?.description}
-              </Typography>
-            </Box>
+          <Box flex={1}>
+            <Typography variant="h6" fontWeight={700} color="primary.main">
+              {detailsDialog.schedule?.paymentName}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {detailsDialog.schedule?.description}
+            </Typography>
           </Box>
 
-          <IconButton onClick={handleDetailsDialogClose}>
+          <IconButton onClick={handleDetailsDialogClose} size="small">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
         <Divider />
 
-        <DialogContent>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
           <Stack spacing={3}>
             {/* Status and Category */}
             <Grid container spacing={2}>
@@ -724,7 +744,7 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
 
               <Grid item xs={6}>
                 <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                  Payment Category
+                  Category
                 </Typography>
 
                 <Chip
@@ -745,12 +765,12 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
               </Typography>
               <Chip
                 label={detailsDialog.schedule?.classes}
-                small="small"
+                size="small"
                 sx={{
                   bgcolor: 'primary.light',
                   color: 'primary.main',
                 }}
-              ></Chip>
+              />
             </Box>
 
             <Box>
@@ -758,31 +778,55 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                 Payment Options ({detailsDialog.schedule?.totalTypes} types)
               </Typography>
 
-              <Grid container spacing={2} mt={1}>
+              <Stack spacing={1.5} mt={2}>
                 {detailsDialog.schedule?.options.map((option, idx) => (
-                  <Grid item xs={12} sm={6} md={6} key={idx}>
-                    <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
-                      <Typography variant="body2" fontWeight={600}>
-                        {option.name}
-                      </Typography>
+                  <Paper
+                    key={idx}
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={600}>
+                      {option.name}
+                    </Typography>
 
-                      <Typography variant="body2" fontWeight={700} color="primary.main" mt={1}>
-                        {option.price}
-                      </Typography>
-                    </Paper>
-                  </Grid>
+                    <Typography variant="body2" fontWeight={700} color="primary.main">
+                      {option.price}
+                    </Typography>
+                  </Paper>
                 ))}
-              </Grid>
+              </Stack>
 
-              <Typography variant="body2" fontWeight={700} mt={2} textAlign="right">
-                Total: {detailsDialog.schedule?.totalAmount}
-              </Typography>
+              <Box
+                sx={{
+                  mt: 2,
+                  pt: 2,
+                  borderTop: 1,
+                  borderColor: 'divider',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="body2" fontWeight={600}>
+                  Total Amount
+                </Typography>
+                <Typography variant="h6" fontWeight={700} color="primary.main">
+                  {detailsDialog.schedule?.totalAmount}
+                </Typography>
+              </Box>
             </Box>
           </Stack>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={handleDetailsDialogClose}>Close</Button>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
+          <Button onClick={handleDetailsDialogClose} fullWidth={{ xs: true, sm: false }}>
+            Close
+          </Button>
 
           <Button
             variant="contained"
@@ -794,6 +838,7 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                 data: detailsDialog.schedule,
               });
             }}
+            fullWidth={{ xs: true, sm: false }}
           >
             Edit
           </Button>
@@ -984,16 +1029,36 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
       </ReusableModal>
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmDialog.open} onClose={handleConfirmDialogClose} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleConfirmDialogClose}
+        maxWidth="xs"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 2, sm: 2 },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, pb: 1 }}>{confirmDialog.title}</DialogTitle>
         <DialogContent>
           <Typography variant="body2">{confirmDialog.message}</Typography>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button color="inherit" onClick={handleConfirmDialogClose}>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Button
+            color="inherit"
+            onClick={handleConfirmDialogClose}
+            fullWidth={{ xs: true, sm: false }}
+            sx={{ order: { xs: 2, sm: 1 } }}
+          >
             Cancel
           </Button>
-          <Button variant="contained" onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
+          <Button
+            variant="contained"
+            onClick={confirmDialog.onConfirm}
+            sx={{ fontWeight: 600, order: { xs: 1, sm: 2 } }}
+            fullWidth={{ xs: true, sm: false }}
+          >
             Confirm
           </Button>
         </DialogActions>

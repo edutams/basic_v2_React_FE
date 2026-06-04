@@ -24,12 +24,28 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Alert,
 } from '@mui/material';
 import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
 import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
+import ReusableModal from '@/components/shared/ReusableModal';
 import CategoryModal from '@/components/tenant/bursary/CategoryModal';
 import InstalmentModal from '@/components/tenant/bursary/InstalmentModal';
+
+import { useEffect } from 'react';
+import {
+  fetchPaymentCategories,
+  createPaymentCategory,
+  updatePaymentCategory,
+  togglePaymentCategoryStatus,
+} from '@/api/tenant/bursary/paymentCategoryApi';
+import {
+  fetchInstallments,
+  createInstallment,
+  updateInstallment,
+  toggleInstallmentStatus,
+} from '@/api/tenant/bursary/installmentApi';
 
 const StatusChip = ({ status }) => {
   const isActive = status === 'active';
@@ -76,6 +92,42 @@ const BursarySetupTab = ({
   const [instalmentMenuAnchor, setInstalmentMenuAnchor] = useState(null);
   const [selectedInstalment, setSelectedInstalment] = useState(null);
 
+  const [categoryActionLoading, setCategoryActionLoading] = useState(false);
+  const [confirmStatusModal, setConfirmStatusModal] = useState({ open: false, category: null });
+
+  const [instalmentActionLoading, setInstalmentActionLoading] = useState(false);
+  const [confirmInstalmentStatusModal, setConfirmInstalmentStatusModal] = useState({
+    open: false,
+    instalment: null,
+  });
+
+  const loadCategories = async () => {
+    try {
+      const res = await fetchPaymentCategories();
+      setCategories(res.data?.data || []);
+    } catch {
+      showSnackbar('Failed to load categories', 'error');
+    }
+  };
+
+  const loadInstalments = async () => {
+    try {
+      const res = await fetchInstallments();
+      const mapped = (res.data?.data || []).map((i) => ({
+        ...i,
+        options: `${i.inst1} : ${i.inst2}`,
+      }));
+      setInstalments(mapped);
+    } catch {
+      showSnackbar('Failed to load instalment plans', 'error');
+    }
+  };
+
+  useEffect(() => {
+    loadCategories();
+    loadInstalments();
+  }, []);
+
   const handleAddCategory = () => {
     setEditingCategory(null);
     setCategoryModalOpen(true);
@@ -87,26 +139,41 @@ const BursarySetupTab = ({
     setCategoryMenuAnchor(null);
   };
 
-  const handleToggleCategoryStatus = (category) => {
-    const newStatus = category.status === 'active' ? 'inactive' : 'active';
-    setCategories((prev) =>
-      prev.map((c) => (c.id === category.id ? { ...c, status: newStatus } : c)),
-    );
-    showSnackbar(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
-    setCategoryMenuAnchor(null);
+  const handleSaveCategory = async (categoryData) => {
+    try {
+      if (editingCategory) {
+        const res = await updatePaymentCategory(editingCategory.id, categoryData);
+        setCategories((prev) => prev.map((c) => (c.id === editingCategory.id ? res.data : c)));
+        showSnackbar(res.message);
+      } else {
+        const res = await createPaymentCategory(categoryData);
+        setCategories((prev) => [...prev, res.data]);
+        showSnackbar(res.message);
+      }
+      setCategoryModalOpen(false);
+    } catch {
+      showSnackbar('Failed to save category', 'error');
+    }
   };
 
-  const handleSaveCategory = (categoryData) => {
-    if (editingCategory) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === editingCategory.id ? { ...c, ...categoryData } : c)),
+  const handleToggleCategoryStatus = async () => {
+    const category = confirmStatusModal.category;
+    if (!category) return;
+
+    setCategoryActionLoading(true);
+    try {
+      const res = await togglePaymentCategoryStatus(category.id);
+      setCategories((prev) => prev.map((c) => (c.id === category.id ? res.data : c)));
+      showSnackbar(
+        `Category ${res.data.status === 'active' ? 'activated' : 'deactivated'} successfully`,
       );
-      showSnackbar('Category updated successfully');
-    } else {
-      setCategories((prev) => [...prev, { id: Date.now(), ...categoryData }]);
-      showSnackbar('Category added successfully');
+      setConfirmStatusModal({ open: false, category: null });
+      setCategoryMenuAnchor(null);
+    } catch {
+      showSnackbar('Failed to update status', 'error');
+    } finally {
+      setCategoryActionLoading(false);
     }
-    setCategoryModalOpen(false);
   };
 
   const handleAddInstalment = () => {
@@ -120,28 +187,51 @@ const BursarySetupTab = ({
     setInstalmentMenuAnchor(null);
   };
 
-  const handleToggleInstalmentStatus = (instalment) => {
-    const newStatus = instalment.status === 'active' ? 'inactive' : 'active';
-    setInstalments((prev) =>
-      prev.map((i) => (i.id === instalment.id ? { ...i, status: newStatus } : i)),
-    );
-    showSnackbar(
-      `Instalment plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
-    );
-    setInstalmentMenuAnchor(null);
+  const handleSaveInstalment = async (instalmentData) => {
+    try {
+      if (editingInstalment) {
+        const res = await updateInstallment(editingInstalment.id, {
+          first_installment: parseInt(instalmentData.options.split(':')[0].trim()),
+          second_installment: parseInt(instalmentData.options.split(':')[1].trim()),
+          status: instalmentData.status,
+        });
+        const updated = { ...res.data, options: `${res.data.inst1} : ${res.data.inst2}` };
+        setInstalments((prev) => prev.map((i) => (i.id === editingInstalment.id ? updated : i)));
+        showSnackbar(res.message);
+      } else {
+        const res = await createInstallment({
+          first_installment: parseInt(instalmentData.options.split(':')[0].trim()),
+          second_installment: parseInt(instalmentData.options.split(':')[1].trim()),
+          status: instalmentData.status,
+        });
+        const created = { ...res.data, options: `${res.data.inst1} : ${res.data.inst2}` };
+        setInstalments((prev) => [...prev, created]);
+        showSnackbar(res.message);
+      }
+      setInstalmentModalOpen(false);
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to save instalment plan', 'error');
+    }
   };
 
-  const handleSaveInstalment = (instalmentData) => {
-    if (editingInstalment) {
-      setInstalments((prev) =>
-        prev.map((i) => (i.id === editingInstalment.id ? { ...i, ...instalmentData } : i)),
+  const handleToggleInstalmentStatus = async () => {
+    const instalment = confirmInstalmentStatusModal.instalment;
+    if (!instalment) return;
+    setInstalmentActionLoading(true);
+    try {
+      const res = await toggleInstallmentStatus(instalment.id);
+      const updated = { ...res.data, options: `${res.data.inst1} : ${res.data.inst2}` };
+      setInstalments((prev) => prev.map((i) => (i.id === instalment.id ? updated : i)));
+      showSnackbar(
+        `Instalment ${res.data.status === 'active' ? 'activated' : 'deactivated'} successfully`,
       );
-      showSnackbar('Instalment plan updated successfully');
-    } else {
-      setInstalments((prev) => [...prev, { id: Date.now(), ...instalmentData }]);
-      showSnackbar('Instalment plan added successfully');
+      setConfirmInstalmentStatusModal({ open: false, instalment: null });
+      setInstalmentMenuAnchor(null);
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to update status', 'error');
+    } finally {
+      setInstalmentActionLoading(false);
     }
-    setInstalmentModalOpen(false);
   };
 
   return (
@@ -473,6 +563,27 @@ const BursarySetupTab = ({
                         </TableCell>
                       </TableRow>
                     ))}
+
+                    {categories.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={100} align="center">
+                          <Alert
+                            severity="info"
+                            sx={{
+                              mb: 3,
+                              width: '100%',
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              '& .MuiAlert-icon': {
+                                mr: 1.5,
+                              },
+                            }}
+                          >
+                            No records found
+                          </Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -551,6 +662,27 @@ const BursarySetupTab = ({
                         </TableCell>
                       </TableRow>
                     ))}
+
+                    {instalments.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={100} align="center">
+                          <Alert
+                            severity="info"
+                            sx={{
+                              mb: 3,
+                              width: '100%',
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              '& .MuiAlert-icon': {
+                                mr: 1.5,
+                              },
+                            }}
+                          >
+                            No records found
+                          </Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -623,7 +755,10 @@ const BursarySetupTab = ({
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem
-          onClick={() => selectedCategory && handleToggleCategoryStatus(selectedCategory)}
+          onClick={() => {
+            setConfirmStatusModal({ open: true, category: selectedCategory });
+            setCategoryMenuAnchor(null);
+          }}
           sx={{
             color: selectedCategory?.status === 'active' ? 'error.main' : 'success.main',
           }}
@@ -659,7 +794,10 @@ const BursarySetupTab = ({
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem
-          onClick={() => selectedInstalment && handleToggleInstalmentStatus(selectedInstalment)}
+          onClick={() => {
+            setConfirmInstalmentStatusModal({ open: true, instalment: selectedInstalment });
+            setInstalmentMenuAnchor(null);
+          }}
           sx={{
             color: selectedInstalment?.status === 'active' ? 'error.main' : 'success.main',
           }}
@@ -682,6 +820,99 @@ const BursarySetupTab = ({
           <ListItemText>Edit Installment</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Confirm Status Modal */}
+      <ReusableModal
+        open={confirmStatusModal.open}
+        onClose={() => setConfirmStatusModal({ open: false, category: null })}
+        title={
+          confirmStatusModal.category?.status === 'active'
+            ? 'Deactivate Category'
+            : 'Activate Category'
+        }
+        size="small"
+        showCloseButton
+        showDivider
+      >
+        <Stack spacing={3}>
+          <Typography variant="body2">
+            Are you sure you want to{' '}
+            <strong>
+              {confirmStatusModal.category?.status === 'active' ? 'deactivate' : 'activate'}
+            </strong>{' '}
+            the category <strong>"{confirmStatusModal.category?.name}"</strong>?
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button
+              onClick={() => setConfirmStatusModal({ open: false, category: null })}
+              disabled={categoryActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'}
+              onClick={handleToggleCategoryStatus}
+              disabled={categoryActionLoading}
+            >
+              {categoryActionLoading
+                ? 'Updating...'
+                : confirmStatusModal.category?.status === 'active'
+                  ? 'Deactivate'
+                  : 'Activate'}
+            </Button>
+          </Stack>
+        </Stack>
+      </ReusableModal>
+
+      {/* Instalment Modal */}
+      <ReusableModal
+        open={confirmInstalmentStatusModal.open}
+        onClose={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
+        title={
+          confirmInstalmentStatusModal.instalment?.status === 'active'
+            ? 'Deactivate Instalment Plan'
+            : 'Activate Instalment Plan'
+        }
+        size="small"
+        showCloseButton
+        showDivider
+      >
+        <Stack spacing={3}>
+          <Typography variant="body2">
+            Are you sure you want to{' '}
+            <strong>
+              {confirmInstalmentStatusModal.instalment?.status === 'active'
+                ? 'deactivate'
+                : 'activate'}
+            </strong>{' '}
+            the instalment plan{' '}
+            <strong>"{confirmInstalmentStatusModal.instalment?.options}"</strong>?
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button
+              onClick={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
+              disabled={instalmentActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color={
+                confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success'
+              }
+              onClick={handleToggleInstalmentStatus}
+              disabled={instalmentActionLoading}
+            >
+              {instalmentActionLoading
+                ? 'Updating...'
+                : confirmInstalmentStatusModal.instalment?.status === 'active'
+                  ? 'Deactivate'
+                  : 'Activate'}
+            </Button>
+          </Stack>
+        </Stack>
+      </ReusableModal>
 
       <CategoryModal
         open={categoryModalOpen}

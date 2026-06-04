@@ -11,6 +11,7 @@ const CategoryModal = ({ open, onClose, onSave, category }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (category) {
@@ -48,10 +49,15 @@ const CategoryModal = ({ open, onClose, onSave, category }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      onSave(formData);
-      onClose();
+      setLoading(true);
+      try {
+        await onSave(formData);
+        onClose();
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -100,8 +106,8 @@ const CategoryModal = ({ open, onClose, onSave, category }) => {
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
           <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} sx={{ fontWeight: 600 }}>
-            {category ? 'Update' : 'Add'} Category
+          <Button onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
+            {loading ? 'Saving...' : `${category ? 'Update' : 'Add'} Category`}
           </Button>
         </Stack>
       </Stack>

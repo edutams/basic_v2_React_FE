@@ -88,7 +88,7 @@ const StatCard = ({
                   {stat.label}
                 </Typography>
                 <Typography variant="subtitle2" fontWeight="700" sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}>
-                  {stat.value}
+                  #{stat.value}
                 </Typography>
               </Box>
             ))}

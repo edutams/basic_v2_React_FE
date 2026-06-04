@@ -108,12 +108,6 @@ const FeeChart = ({
                                 variant="contained"
                                 startIcon={<IconDownload size={18} />}
                                 size="small"
-                                sx={{
-                                    bgcolor: '#3949ab',
-                                    textTransform: 'none',
-                                    borderRadius: '8px',
-                                    '&:hover': { bgcolor: '#303f9f' },
-                                }}
                             >
                                 {buttonLabel}
                             </Button>

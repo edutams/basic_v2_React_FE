@@ -30,6 +30,7 @@ import {
   Add as AddIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
+import PaymentScheduleModal from './PaymentScheduleModal';
 
 const OptionalPaymentTab = ({ showSnackbar }) => {
   const [currentTerm, setCurrentTerm] = useState(0);
@@ -41,6 +42,11 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
     title: '',
     message: '',
     onConfirm: null,
+  });
+  const [paymentModal, setPaymentModal] = useState({
+    open: false,
+    payment: null,
+    isEdit: false,
   });
 
   // Mock data for optional payments

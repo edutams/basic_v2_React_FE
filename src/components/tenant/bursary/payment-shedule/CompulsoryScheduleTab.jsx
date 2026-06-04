@@ -30,7 +30,7 @@ import {
 import ParentCard from '@/components/shared/ParentCard';
 import {
   Search as SearchIcon,
-  Add as AddIcon,
+  // Add as AddIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import PaymentScheduleModal from './PaymentScheduleModal';
@@ -496,7 +496,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
 
         {/* Add Button - Right Side */}
         <Button
-          startIcon={<AddIcon />}
+          // startIcon={<AddIcon />}
           onClick={handleAddPaymentItem}
           sx={{ fontWeight: 600 }}
         >

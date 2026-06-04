@@ -209,39 +209,15 @@ const PaymentShedule = () => {
         </Grid>
       </Grid>
 
-      {/* Action Tabs - Make scrollable on mobile */}
+      {/* Action Tabs */}
       <Box sx={{ mb: 3 }}>
         <Tabs
           value={actionTab}
           onChange={handleActionTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
           sx={{
             '& .MuiTab-root': {
               textTransform: 'none',
               fontWeight: 600,
-              minWidth: { xs: 'auto', sm: 120 },
-            },
-          }}
-        >
-          <Tab label="1. Set Schedule" />
-          <Tab label="2. Generate Invoice" />
-          <Tab label="3. Send Invoice" />
-        </Tabs>
-      </Box>
-
-      {/* Action Tabs - Make scrollable on mobile */}
-      <Box sx={{ mb: 3 }}>
-        <Tabs
-          value={actionTab}
-          onChange={handleActionTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              minWidth: { xs: 'auto', sm: 120 },
             },
           }}
         >
@@ -367,8 +343,6 @@ const PaymentShedule = () => {
             <Tabs
               value={scheduleTab}
               onChange={handleScheduleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
               sx={{
                 minHeight: 40,
                 '& .MuiTab-root': {

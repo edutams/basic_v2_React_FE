@@ -31,11 +31,8 @@ import {
   Tabs,
   Tab,
   Alert,
-  Card,
-  CardContent,
-  CardActions,
-  useMediaQuery,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -47,6 +44,9 @@ import {
 import ReusableModal from '@/components/shared/ReusableModal';
 
 const OptionalPaymentTab = ({ showSnackbar }) => {
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
+
   const [currentTerm, setCurrentTerm] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
@@ -334,7 +334,7 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
         options: prev.data.options.filter((_, i) => i !== index),
       },
     }));
-    // Clear errors for this option
+    // Clear errors 
     if (errors.options?.[index]) {
       const newErrors = { ...errors };
       newErrors.options = newErrors.options.filter((_, i) => i !== index);
@@ -352,7 +352,7 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
         ),
       },
     }));
-    // Clear error for this field
+    // Clear error 
     if (errors.options?.[index]?.[field]) {
       const newErrors = { ...errors };
       if (newErrors.options[index]) {
@@ -397,22 +397,35 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
         </Typography>
       </Alert>
 
-      {/* Term Tabs and Search Row */}
-      <Stack spacing={2}>
-        {/* Term Tabs */}
-        <Box sx={{ width: '100%', overflowX: 'auto' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { md: 'center' },
+          gap: 2,
+          width: '100%',
+        }}
+      >
+        <Box sx={{ flex: 1 }}>
           <Tabs
             value={currentTerm}
             onChange={(e, val) => setCurrentTerm(val)}
             variant="scrollable"
             scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               minHeight: 40,
+              '& .MuiTabs-flexContainer': {
+                gap: 2,
+              },
               '& .MuiTab-root': {
                 minHeight: 40,
                 textTransform: 'none',
                 fontWeight: 600,
-                minWidth: { xs: 'auto', sm: 120 },
+                fontSize: { xs: '0.813rem', sm: '0.875rem' },
+                px: { xs: 0.5, sm: 2 },
+                minWidth: 'auto',
               },
             }}
           >
@@ -422,17 +435,17 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                 <Box
                   component="span"
                   sx={{
-                    width: 20,
-                    height: 20,
+                    width: { xs: 16, sm: 20 },
+                    height: { xs: 16, sm: 20 },
                     borderRadius: '50%',
                     bgcolor: currentTerm === 0 ? 'primary.main' : 'grey.300',
                     color: 'white',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 12,
+                    fontSize: { xs: 10, sm: 12 },
                     fontWeight: 700,
-                    mr: 1,
+                    mr: { xs: 0.5, sm: 1 },
                   }}
                 >
                   ●
@@ -440,23 +453,24 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
               }
               iconPosition="start"
             />
+
             <Tab
               label="Second Term"
               icon={
                 <Box
                   component="span"
                   sx={{
-                    width: 20,
-                    height: 20,
+                    width: { xs: 16, sm: 20 },
+                    height: { xs: 16, sm: 20 },
                     borderRadius: '50%',
                     bgcolor: currentTerm === 1 ? 'primary.main' : 'grey.300',
                     color: 'white',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 12,
+                    fontSize: { xs: 10, sm: 12 },
                     fontWeight: 700,
-                    mr: 1,
+                    mr: { xs: 0.5, sm: 1 },
                   }}
                 >
                   ●
@@ -464,23 +478,24 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
               }
               iconPosition="start"
             />
+
             <Tab
               label="Third Term"
               icon={
                 <Box
                   component="span"
                   sx={{
-                    width: 20,
-                    height: 20,
+                    width: { xs: 16, sm: 20 },
+                    height: { xs: 16, sm: 20 },
                     borderRadius: '50%',
                     bgcolor: currentTerm === 2 ? 'primary.main' : 'grey.300',
                     color: 'white',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 12,
+                    fontSize: { xs: 10, sm: 12 },
                     fontWeight: 700,
-                    mr: 1,
+                    mr: { xs: 0.5, sm: 1 },
                   }}
                 >
                   ●
@@ -491,17 +506,22 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           </Tabs>
         </Box>
 
-        {/* Search Bar */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} width="100%">
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          sx={{
+            width: '100%',
+            justifyContent: { md: 'flex-end' },
+            alignItems: { sm: 'center' },
+          }}
+        >
           <TextField
             placeholder="Search optional payment items..."
             size="small"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSearch();
             }}
             InputProps={{
               startAdornment: (
@@ -510,20 +530,25 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                 </InputAdornment>
               ),
             }}
-            sx={{ flex: 1 }}
+            sx={{
+              width: { xs: '100%', sm: 280 },
+            }}
           />
+
           <Button
             variant="contained"
             startIcon={<SearchIcon />}
             size="small"
             onClick={handleSearch}
-            fullWidth={{ xs: true, sm: false }}
-            sx={{ minWidth: { sm: 100 } }}
+            sx={{
+              width: { xs: '100%', sm: 'auto' },
+              minWidth: { sm: 100 },
+            }}
           >
             Search
           </Button>
         </Stack>
-      </Stack>
+      </Box>
 
       {/* Header and Add Button */}
       <Stack
@@ -1044,7 +1069,9 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
         <DialogContent>
           <Typography variant="body2">{confirmDialog.message}</Typography>
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+        <DialogActions
+          sx={{ px: { xs: 2, sm: 3 }, pb: 2, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}
+        >
           <Button
             color="inherit"
             onClick={handleConfirmDialogClose}

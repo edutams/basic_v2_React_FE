@@ -80,9 +80,7 @@ const PaymentShedule = () => {
         items={BCrumb}
       />
 
-      {/* Top Stats Section */}
       <Grid container spacing={3} mb={3}>
-        {/* Compulsory Schedule Card */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
             <Typography variant="body2" color="textSecondary" mb={3}>
@@ -115,10 +113,9 @@ const PaymentShedule = () => {
           </Paper>
         </Grid>
 
-        {/* Payment Name Card */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
+            <Box display="flex"  alignItems="center" gap={1} mb={2}>
               <Box
                 sx={{
                   width: 25,
@@ -163,7 +160,6 @@ const PaymentShedule = () => {
           </Paper>
         </Grid>
 
-        {/* Student Category Card */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
             <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -212,7 +208,6 @@ const PaymentShedule = () => {
         </Grid>
       </Grid>
 
-      {/* Action Tabs */}
       <Box sx={{ mb: 3 }}>
         <Tabs value={actionTab} onChange={handleActionTabChange}>
           <Tab label="1. Set Schedule" sx={{ textTransform: 'none', fontWeight: 600 }} />
@@ -221,12 +216,9 @@ const PaymentShedule = () => {
         </Tabs>
       </Box>
 
-      {/* Main Content Card with Tabs Inside */}
       <Paper sx={{ borderRadius: 2 }}>
-        {/* Header Section with Title and Filters on Same Row */}
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            {/* Left Side - Title and Description */}
             <Box display="flex" alignItems="center" gap={2}>
               <Box
                 sx={{
@@ -400,7 +392,6 @@ const PaymentShedule = () => {
         </Box>
       </Paper>
 
-      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}

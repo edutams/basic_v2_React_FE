@@ -384,7 +384,6 @@ const PaymentShedule = () => {
 
           {/* Import Button - Right Side */}
           <Button
-            variant="contained"
             startIcon={<UploadIcon />}
             onClick={handleImportSchedule}
             size="medium"

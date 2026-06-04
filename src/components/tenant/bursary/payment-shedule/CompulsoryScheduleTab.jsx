@@ -496,7 +496,6 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
 
         {/* Add Button - Right Side */}
         <Button
-          variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAddPaymentItem}
           sx={{ fontWeight: 600 }}

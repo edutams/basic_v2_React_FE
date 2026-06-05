@@ -52,6 +52,10 @@ import {
   fetchBursarySettings,
   setActiveSessionTerm,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import {
+  fetchResultPaymentSettings,
+  saveResultPaymentSettings,
+} from '@/api/tenant/bursary/bursaryResultSettingsApi';
 
 const StatusChip = ({ status }) => {
   const isActive = status === 'active';
@@ -111,6 +115,34 @@ const BursarySetupTab = ({
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [savingCode, setSavingCode] = useState(null);
 
+  const [resultSettings, setResultSettings] = useState({
+    pay_condition: 'no',
+    pay_type: '',
+    pay_method: '',
+    compulsory_pay_method: '',
+    optional_pay_method: '',
+  });
+  const [savingResultSettings, setSavingResultSettings] = useState(false);
+
+  const loadResultSettings = async () => {
+    try {
+      const res = await fetchResultPaymentSettings();
+      // console.log(res, 77);
+
+      if (res.status && res.data) {
+        setResultSettings({
+          pay_condition: res.data.pay_condition || 'no',
+          pay_type: res.data.pay_type || '',
+          pay_method: res.data.pay_method || '',
+          compulsory_pay_method: res.data.compulsory_pay_method || '',
+          optional_pay_method: res.data.optional_pay_method || '',
+        });
+      }
+    } catch {
+      showSnackbar('Failed to load result settings', 'error');
+    }
+  };
+
   const loadCategories = async () => {
     try {
       const res = await fetchPaymentCategories();
@@ -168,6 +200,7 @@ const BursarySetupTab = ({
 
   useEffect(() => {
     loadCategories();
+    loadResultSettings();
     loadInstalments();
     loadSettings();
   }, []);
@@ -216,6 +249,22 @@ const BursarySetupTab = ({
       showSnackbar('Failed to update session term', 'error');
     } finally {
       setSavingCode(null);
+    }
+  };
+
+  const handleSaveResultSettings = async (updatedSettings) => {
+    setSavingResultSettings(true);
+    try {
+      const res = await saveResultPaymentSettings({
+        ...updatedSettings,
+        // session_term_id: selectedSessionTerm,
+      });
+      showSnackbar(res.message);
+      loadResultSettings();
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to save result settings', 'error');
+    } finally {
+      setSavingResultSettings(false);
     }
   };
 
@@ -757,6 +806,7 @@ const BursarySetupTab = ({
             </Box>
           </Box>
 
+          {/* Main toggle */}
           <Box
             sx={{
               display: 'flex',
@@ -765,6 +815,7 @@ const BursarySetupTab = ({
               p: 2,
               bgcolor: '#f6f6f6',
               borderRadius: 2,
+              mb: 2,
             }}
           >
             <Box>
@@ -776,11 +827,146 @@ const BursarySetupTab = ({
               </Typography>
             </Box>
             <Switch
-              checked={requirePaymentForResults}
-              onChange={(e) => setRequirePaymentForResults(e.target.checked)}
+              checked={resultSettings.pay_condition === 'yes'}
+              onChange={(e) => {
+                const updated = {
+                  ...resultSettings,
+                  pay_condition: e.target.checked ? 'yes' : 'no',
+                  pay_type: '',
+                  pay_method: '',
+                  compulsory_pay_method: '',
+                  optional_pay_method: '',
+                };
+                setResultSettings(updated);
+                // auto save when toggled off
+                if (!e.target.checked) handleSaveResultSettings(updated);
+              }}
               color="primary"
             />
           </Box>
+
+          {/* Expanded options when switch is ON */}
+          {resultSettings.pay_condition === 'yes' && (
+            <Stack
+              spacing={3}
+              sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+            >
+              {/* Pay Type */}
+              <FormControl fullWidth>
+                <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                  Payment Type
+                </FormLabel>
+                <TextField
+                  select
+                  size="small"
+                  value={resultSettings.pay_type}
+                  onChange={(e) =>
+                    setResultSettings((prev) => ({
+                      ...prev,
+                      pay_type: e.target.value,
+                      pay_method: '',
+                      compulsory_pay_method: '',
+                      optional_pay_method: '',
+                    }))
+                  }
+                  sx={{ maxWidth: 300 }}
+                >
+                  <MenuItem value="compulsory">Compulsory</MenuItem>
+                  <MenuItem value="optional">Optional</MenuItem>
+                  <MenuItem value="both">Both</MenuItem>
+                </TextField>
+              </FormControl>
+
+              {/* Pay Method — shown when compulsory or optional */}
+              {(resultSettings.pay_type === 'compulsory' ||
+                resultSettings.pay_type === 'optional') && (
+                <FormControl>
+                  <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+                    Payment Method
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={resultSettings.pay_method}
+                    onChange={(e) =>
+                      setResultSettings((prev) => ({ ...prev, pay_method: e.target.value }))
+                    }
+                  >
+                    <FormControlLabel value="full" control={<Radio />} label="Full Payment" />
+                    <FormControlLabel value="part" control={<Radio />} label="Part Payment" />
+                  </RadioGroup>
+                </FormControl>
+              )}
+
+              {/* Split method — shown when "both" */}
+              {resultSettings.pay_type === 'both' && (
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Box
+                      sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+                    >
+                      <Typography variant="body2" fontWeight={600} mb={1}>
+                        Compulsory Payment Method
+                      </Typography>
+                      <RadioGroup
+                        row
+                        value={resultSettings.compulsory_pay_method}
+                        onChange={(e) =>
+                          setResultSettings((prev) => ({
+                            ...prev,
+                            compulsory_pay_method: e.target.value,
+                          }))
+                        }
+                      >
+                        <FormControlLabel value="full" control={<Radio />} label="Full Payment" />
+                        <FormControlLabel value="part" control={<Radio />} label="Part Payment" />
+                      </RadioGroup>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Box
+                      sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+                    >
+                      <Typography variant="body2" fontWeight={600} mb={1}>
+                        Optional Payment Method
+                      </Typography>
+                      <RadioGroup
+                        row
+                        value={resultSettings.optional_pay_method}
+                        onChange={(e) =>
+                          setResultSettings((prev) => ({
+                            ...prev,
+                            optional_pay_method: e.target.value,
+                          }))
+                        }
+                      >
+                        <FormControlLabel value="full" control={<Radio />} label="Full Payment" />
+                        <FormControlLabel value="part" control={<Radio />} label="Part Payment" />
+                      </RadioGroup>
+                    </Box>
+                  </Grid>
+                </Grid>
+              )}
+
+              {/* Save button */}
+              <Box display="flex" justifyContent="flex-end">
+                <Button
+                  variant="contained"
+                  disabled={
+                    savingResultSettings ||
+                    !resultSettings.pay_type ||
+                    (resultSettings.pay_type !== 'both' && !resultSettings.pay_method) ||
+                    (resultSettings.pay_type === 'both' &&
+                      (!resultSettings.compulsory_pay_method ||
+                        !resultSettings.optional_pay_method))
+                  }
+                  onClick={() => handleSaveResultSettings(resultSettings)}
+                  sx={{ fontWeight: 600 }}
+                >
+                  {savingResultSettings ? 'Saving...' : 'Save Settings'}
+                </Button>
+              </Box>
+            </Stack>
+          )}
         </ParentCard>
       </Stack>
 

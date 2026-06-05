@@ -79,6 +79,7 @@ const StatCard = ({
           </Typography>
         </Box>
 
+
         {/* Sub Stats */}
         {subStats.length > 0 && (
           <Stack direction="row" spacing={0} divider={<Divider orientation="vertical" flexItem />} sx={{ mt: 'auto' }}>
@@ -90,6 +91,7 @@ const StatCard = ({
                 <Typography variant="subtitle2" fontWeight="700" sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}>
                   #{stat.value}
                 </Typography>
+                
               </Box>
             ))}
           </Stack>

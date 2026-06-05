@@ -162,13 +162,10 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   const [studentsData] = useState([
     { id: 1, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 2, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 3, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 4, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 5, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 6, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 7, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 8, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
+    { id: 2, admissionId: 'STU-1043', name: 'Adejoke Mojisola', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
+    { id: 3, admissionId: 'STU-1044', name: 'Lawal Romota', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
+    { id: 4, admissionId: 'STU-1045', name: 'Kehinde Dada', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
+    { id: 5, admissionId: 'STU-1046', name: 'Adejumobi Johnson', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
   ]);
 
   const calculateTotal = (column) => {
@@ -207,7 +204,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   if (viewMode === 'students') {
     return (
-      <Stack spacing={3} sx={{ bgcolor: '#fafafa', p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
+      <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
         <Box>
           <Box
             sx={{
@@ -246,7 +243,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 gap: 2,
               }}
             >
-              <FormControl size="small" sx={{ minWidth: 200, bgcolor: 'white' }}>
+              <FormControl size="small" sx={{ minWidth: 200}}>
                 <Select displayEmpty defaultValue="" label="" sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}>
                   <MenuItem value="" disabled>Category</MenuItem>
                   <MenuItem value="Returning Student">Returning Student</MenuItem>
@@ -286,7 +283,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               gap: 2,
             }}
           >
-            <Box sx={{ bgcolor: '#EDF2FD', px: 2, py: 1, borderRadius: 1 }}>
+            <Box sx={{ bgcolor: 'info.light', px: 2, py: 1, borderRadius: 1 }}>
               <Typography variant="body2" fontWeight={600}>
                  Payment Schedule for {selectedSession} · {selectedClass}
               </Typography>
@@ -306,7 +303,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
           <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto', borderRadius: 2, borderColor: 'grey.200' }}>
             <Table sx={{ minWidth: 800 }}>
               <TableHead>
-                <TableRow sx={{ bgcolor: '#F8F9FA' }}>
+                <TableRow>
                   <TableCell padding="checkbox" sx={{ borderBottom: '1px solid', borderColor: 'grey.200' }}>
                     <Checkbox
                       color="primary"

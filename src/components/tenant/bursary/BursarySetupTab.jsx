@@ -24,12 +24,34 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Alert,
+  Divider,
 } from '@mui/material';
 import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
 import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
+import ReusableModal from '@/components/shared/ReusableModal';
 import CategoryModal from '@/components/tenant/bursary/CategoryModal';
 import InstalmentModal from '@/components/tenant/bursary/InstalmentModal';
+
+import { useEffect } from 'react';
+import {
+  fetchPaymentCategories,
+  createPaymentCategory,
+  updatePaymentCategory,
+  togglePaymentCategoryStatus,
+} from '@/api/tenant/bursary/paymentCategoryApi';
+import {
+  fetchInstallments,
+  createInstallment,
+  updateInstallment,
+  toggleInstallmentStatus,
+} from '@/api/tenant/bursary/installmentApi';
+import {
+  changeBursarySetting,
+  fetchBursarySettings,
+  setActiveSessionTerm,
+} from '@/api/tenant/bursary/bursarySettingsApi';
 
 const StatusChip = ({ status }) => {
   const isActive = status === 'active';
@@ -55,10 +77,7 @@ const BursarySetupTab = ({
   sessionTerms,
   selectedSessionTerm,
   setSelectedSessionTerm,
-  categories,
-  setCategories,
-  instalments,
-  setInstalments,
+  onStatsChange,
   showSnackbar,
 }) => {
   const [collectionMethod, setCollectionMethod] = useState('single');
@@ -76,6 +95,83 @@ const BursarySetupTab = ({
   const [instalmentMenuAnchor, setInstalmentMenuAnchor] = useState(null);
   const [selectedInstalment, setSelectedInstalment] = useState(null);
 
+  const [categoryActionLoading, setCategoryActionLoading] = useState(false);
+  const [confirmStatusModal, setConfirmStatusModal] = useState({ open: false, category: null });
+
+  const [instalmentActionLoading, setInstalmentActionLoading] = useState(false);
+  const [confirmInstalmentStatusModal, setConfirmInstalmentStatusModal] = useState({
+    open: false,
+    instalment: null,
+  });
+
+  const [categories, setCategories] = useState([]);
+  const [instalments, setInstalments] = useState([]);
+
+  const [settings, setSettings] = useState({});
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [savingCode, setSavingCode] = useState(null);
+
+  const loadCategories = async () => {
+    try {
+      const res = await fetchPaymentCategories();
+      setCategories(res.data?.data || []);
+    } catch {
+      showSnackbar('Failed to load categories', 'error');
+    }
+  };
+
+  const loadInstalments = async () => {
+    try {
+      const res = await fetchInstallments();
+      const mapped = (res.data?.data || []).map((i) => ({
+        ...i,
+        options: `${i.inst1} : ${i.inst2}`,
+      }));
+      setInstalments(mapped);
+    } catch {
+      showSnackbar('Failed to load instalment plans', 'error');
+    }
+  };
+
+  const loadSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const res = await fetchBursarySettings();
+      const map = {};
+      (res.data?.data || []).forEach((s) => {
+        map[s.code] = {
+          ...s,
+          options: typeof s.options === 'string' ? JSON.parse(s.options) : s.options,
+        };
+      });
+      setSettings(map);
+
+      // seed local radio states from DB values
+      if (map.fee_collection_method) setCollectionMethod(map.fee_collection_method.value);
+      if (map.installment_style) setInstalmentStyle(map.installment_style.value);
+      if (map.gateway_charge_bearer) setGatewayPayer(map.gateway_charge_bearer.value);
+    } catch {
+      showSnackbar('Failed to load bursary settings', 'error');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    onStatsChange?.({
+      totalCategories: categories.length,
+      activeCategories: categories.filter((c) => c.status === 'active').length,
+      totalInstalments: instalments.length,
+      activeInstalments: instalments.filter((i) => i.status === 'active').length,
+    });
+  }, [categories, instalments]);
+
+  useEffect(() => {
+    loadCategories();
+    loadInstalments();
+    loadSettings();
+  }, []);
+
   const handleAddCategory = () => {
     setEditingCategory(null);
     setCategoryModalOpen(true);
@@ -87,26 +183,77 @@ const BursarySetupTab = ({
     setCategoryMenuAnchor(null);
   };
 
-  const handleToggleCategoryStatus = (category) => {
-    const newStatus = category.status === 'active' ? 'inactive' : 'active';
-    setCategories((prev) =>
-      prev.map((c) => (c.id === category.id ? { ...c, status: newStatus } : c)),
-    );
-    showSnackbar(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
-    setCategoryMenuAnchor(null);
+  const handleSettingChange = async (code, value) => {
+    // optimistically update local state first
+    if (code === 'fee_collection_method') setCollectionMethod(value);
+    if (code === 'installment_style') setInstalmentStyle(value);
+    if (code === 'gateway_charge_bearer') setGatewayPayer(value);
+
+    setSavingCode(code);
+    try {
+      await changeBursarySetting(code, value);
+      setSettings((prev) => ({ ...prev, [code]: { ...prev[code], value } }));
+      showSnackbar('Setting saved successfully');
+    } catch {
+      // revert on failure
+      if (code === 'fee_collection_method')
+        setCollectionMethod(settings.fee_collection_method?.value);
+      if (code === 'installment_style') setInstalmentStyle(settings.installment_style?.value);
+      if (code === 'gateway_charge_bearer') setGatewayPayer(settings.gateway_charge_bearer?.value);
+      showSnackbar('Failed to save setting', 'error');
+    } finally {
+      setSavingCode(null);
+    }
   };
 
-  const handleSaveCategory = (categoryData) => {
-    if (editingCategory) {
-      setCategories((prev) =>
-        prev.map((c) => (c.id === editingCategory.id ? { ...c, ...categoryData } : c)),
-      );
-      showSnackbar('Category updated successfully');
-    } else {
-      setCategories((prev) => [...prev, { id: Date.now(), ...categoryData }]);
-      showSnackbar('Category added successfully');
+  const handleSessionTermChange = async (termId) => {
+    setSelectedSessionTerm(termId);
+    setSavingCode('active_ses_term');
+    try {
+      await setActiveSessionTerm(termId);
+      showSnackbar('Active session term updated');
+    } catch {
+      showSnackbar('Failed to update session term', 'error');
+    } finally {
+      setSavingCode(null);
     }
-    setCategoryModalOpen(false);
+  };
+
+  const handleSaveCategory = async (categoryData) => {
+    try {
+      if (editingCategory) {
+        const res = await updatePaymentCategory(editingCategory.id, categoryData);
+        setCategories((prev) => prev.map((c) => (c.id === editingCategory.id ? res.data : c)));
+        showSnackbar(res.message);
+      } else {
+        const res = await createPaymentCategory(categoryData);
+        setCategories((prev) => [...prev, res.data]);
+        showSnackbar(res.message);
+      }
+      setCategoryModalOpen(false);
+    } catch {
+      showSnackbar('Failed to save category', 'error');
+    }
+  };
+
+  const handleToggleCategoryStatus = async () => {
+    const category = confirmStatusModal.category;
+    if (!category) return;
+
+    setCategoryActionLoading(true);
+    try {
+      const res = await togglePaymentCategoryStatus(category.id);
+      setCategories((prev) => prev.map((c) => (c.id === category.id ? res.data : c)));
+      showSnackbar(
+        `Category ${res.data.status === 'active' ? 'activated' : 'deactivated'} successfully`,
+      );
+      setConfirmStatusModal({ open: false, category: null });
+      setCategoryMenuAnchor(null);
+    } catch {
+      showSnackbar('Failed to update status', 'error');
+    } finally {
+      setCategoryActionLoading(false);
+    }
   };
 
   const handleAddInstalment = () => {
@@ -120,49 +267,85 @@ const BursarySetupTab = ({
     setInstalmentMenuAnchor(null);
   };
 
-  const handleToggleInstalmentStatus = (instalment) => {
-    const newStatus = instalment.status === 'active' ? 'inactive' : 'active';
-    setInstalments((prev) =>
-      prev.map((i) => (i.id === instalment.id ? { ...i, status: newStatus } : i)),
-    );
-    showSnackbar(
-      `Instalment plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
-    );
-    setInstalmentMenuAnchor(null);
+  const handleSaveInstalment = async (instalmentData) => {
+    try {
+      if (editingInstalment) {
+        const res = await updateInstallment(editingInstalment.id, {
+          first_installment: parseInt(instalmentData.options.split(':')[0].trim()),
+          second_installment: parseInt(instalmentData.options.split(':')[1].trim()),
+          status: instalmentData.status,
+        });
+        const updated = { ...res.data, options: `${res.data.inst1} : ${res.data.inst2}` };
+        setInstalments((prev) => prev.map((i) => (i.id === editingInstalment.id ? updated : i)));
+        showSnackbar(res.message);
+      } else {
+        const res = await createInstallment({
+          first_installment: parseInt(instalmentData.options.split(':')[0].trim()),
+          second_installment: parseInt(instalmentData.options.split(':')[1].trim()),
+          status: instalmentData.status,
+        });
+        const created = { ...res.data, options: `${res.data.inst1} : ${res.data.inst2}` };
+        setInstalments((prev) => [...prev, created]);
+        showSnackbar(res.message);
+      }
+      setInstalmentModalOpen(false);
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to save instalment plan', 'error');
+    }
   };
 
-  const handleSaveInstalment = (instalmentData) => {
-    if (editingInstalment) {
-      setInstalments((prev) =>
-        prev.map((i) => (i.id === editingInstalment.id ? { ...i, ...instalmentData } : i)),
+  const handleToggleInstalmentStatus = async () => {
+    const instalment = confirmInstalmentStatusModal.instalment;
+    if (!instalment) return;
+    setInstalmentActionLoading(true);
+    try {
+      const res = await toggleInstallmentStatus(instalment.id);
+      const updated = { ...res.data, options: `${res.data.inst1} : ${res.data.inst2}` };
+      setInstalments((prev) => prev.map((i) => (i.id === instalment.id ? updated : i)));
+      showSnackbar(
+        `Instalment ${res.data.status === 'active' ? 'activated' : 'deactivated'} successfully`,
       );
-      showSnackbar('Instalment plan updated successfully');
-    } else {
-      setInstalments((prev) => [...prev, { id: Date.now(), ...instalmentData }]);
-      showSnackbar('Instalment plan added successfully');
+      setConfirmInstalmentStatusModal({ open: false, instalment: null });
+      setInstalmentMenuAnchor(null);
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to update status', 'error');
+    } finally {
+      setInstalmentActionLoading(false);
     }
-    setInstalmentModalOpen(false);
   };
 
   return (
     <>
       <Stack spacing={3}>
-        <ParentCard title="Select Session Term">
-          <TextField
-            select
-            label="Select Session Term"
-            value={selectedSessionTerm}
-            onChange={(e) => setSelectedSessionTerm(e.target.value)}
-            size="small"
-          >
-            {sessionTerms.map((term) => (
-              <MenuItem key={term.id} value={term.id}>
-                {term.label}
-              </MenuItem>
-            ))}
-          </TextField>
+        <ParentCard title="Bursary Setup">
+          {/* Session Term */}
+          <Box mb={3}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Set Bursary Active Session Term
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={1.5}>
+              This determines which session term bursary fees are being collected for.
+            </Typography>
+            <TextField
+              select
+              label="Select Session Term"
+              value={selectedSessionTerm}
+              onChange={(e) => handleSessionTermChange(e.target.value)}
+              size="small"
+              disabled={savingCode === 'active_ses_term'}
+              sx={{ minWidth: 280 }}
+            >
+              {sessionTerms.map((term) => (
+                <MenuItem key={term.id} value={term.id}>
+                  {term.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
 
-          <Box display="flex" alignItems="flex-start" gap={2} mb={3} mt={2}>
+          <Divider sx={{ mb: 3 }} />
+
+          <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
             <Box
               sx={{
                 width: 40,
@@ -177,7 +360,6 @@ const BursarySetupTab = ({
             >
               <PaymentsIcon sx={{ fontSize: 20, color: 'primary.main' }} />
             </Box>
-
             <Box>
               <Typography variant="h6" fontWeight={600}>
                 How should fees be collected?
@@ -189,6 +371,7 @@ const BursarySetupTab = ({
           </Box>
 
           <Grid container spacing={3}>
+            {/* Collection Method */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
@@ -201,63 +384,46 @@ const BursarySetupTab = ({
               >
                 <FormControl fullWidth>
                   <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    Collection method
+                    {settings.fee_collection_method?.name || 'Collection method'}
                   </FormLabel>
                   <RadioGroup
                     value={collectionMethod}
-                    onChange={(e) => setCollectionMethod(e.target.value)}
+                    onChange={(e) => handleSettingChange('fee_collection_method', e.target.value)}
                   >
                     <Stack spacing={2}>
-                      <FormControlLabel
-                        value="single"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              Single payment
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              All fees collected together in one transaction.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
-                      <FormControlLabel
-                        value="per_fee"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              Pay per fee
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Each fee is processed separately.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
+                      {(settings.fee_collection_method?.options || []).map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={savingCode === 'fee_collection_method'}
+                          control={<Radio />}
+                          label={
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {opt.value === 'single_payment' ? 'Single payment' : 'Pay per fee'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {opt.text}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{
+                            m: 0,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            alignItems: 'flex-start',
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
               </Box>
             </Grid>
 
+            {/* Instalment Style */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
@@ -270,63 +436,46 @@ const BursarySetupTab = ({
               >
                 <FormControl fullWidth>
                   <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    Installment style
+                    {settings.installment_style?.name || 'Installment style'}
                   </FormLabel>
                   <RadioGroup
                     value={instalmentStyle}
-                    onChange={(e) => setInstalmentStyle(e.target.value)}
+                    onChange={(e) => handleSettingChange('installment_style', e.target.value)}
                   >
                     <Stack spacing={2}>
-                      <FormControlLabel
-                        value="percentage"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              By percentage
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              e.g. 60% now, 40% later.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
-                      <FormControlLabel
-                        value="amount"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              By amount
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Pay any amount, anytime.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
+                      {(settings.installment_style?.options || []).map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={savingCode === 'installment_style'}
+                          control={<Radio />}
+                          label={
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {opt.value === 'percentage' ? 'By percentage' : 'By amount'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {opt.text}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{
+                            m: 0,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            alignItems: 'flex-start',
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
               </Box>
             </Grid>
 
+            {/* Gateway Payer */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
@@ -339,57 +488,39 @@ const BursarySetupTab = ({
               >
                 <FormControl fullWidth>
                   <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    Who pays gateway charges?
+                    {settings.gateway_charge_bearer?.name || 'Who pays gateway charges?'}
                   </FormLabel>
                   <RadioGroup
                     value={gatewayPayer}
-                    onChange={(e) => setGatewayPayer(e.target.value)}
+                    onChange={(e) => handleSettingChange('gateway_charge_bearer', e.target.value)}
                   >
                     <Stack spacing={2}>
-                      <FormControlLabel
-                        value="parent"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              Parent / Student
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Charges added on top of the fee.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
-                      <FormControlLabel
-                        value="school"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              School
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              School absorbs the charges.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
+                      {(settings.gateway_charge_bearer?.options || []).map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={savingCode === 'gateway_charge_bearer'}
+                          control={<Radio />}
+                          label={
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {opt.value === 'parent' ? 'Parent / Student' : 'School'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {opt.text}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{
+                            m: 0,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            alignItems: 'flex-start',
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
@@ -473,6 +604,27 @@ const BursarySetupTab = ({
                         </TableCell>
                       </TableRow>
                     ))}
+
+                    {categories.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={100} align="center">
+                          <Alert
+                            severity="info"
+                            sx={{
+                              mb: 3,
+                              width: '100%',
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              '& .MuiAlert-icon': {
+                                mr: 1.5,
+                              },
+                            }}
+                          >
+                            No records found
+                          </Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -551,6 +703,27 @@ const BursarySetupTab = ({
                         </TableCell>
                       </TableRow>
                     ))}
+
+                    {instalments.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={100} align="center">
+                          <Alert
+                            severity="info"
+                            sx={{
+                              mb: 3,
+                              width: '100%',
+                              justifyContent: 'center',
+                              textAlign: 'center',
+                              '& .MuiAlert-icon': {
+                                mr: 1.5,
+                              },
+                            }}
+                          >
+                            No records found
+                          </Alert>
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -623,7 +796,10 @@ const BursarySetupTab = ({
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem
-          onClick={() => selectedCategory && handleToggleCategoryStatus(selectedCategory)}
+          onClick={() => {
+            setConfirmStatusModal({ open: true, category: selectedCategory });
+            setCategoryMenuAnchor(null);
+          }}
           sx={{
             color: selectedCategory?.status === 'active' ? 'error.main' : 'success.main',
           }}
@@ -659,7 +835,10 @@ const BursarySetupTab = ({
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem
-          onClick={() => selectedInstalment && handleToggleInstalmentStatus(selectedInstalment)}
+          onClick={() => {
+            setConfirmInstalmentStatusModal({ open: true, instalment: selectedInstalment });
+            setInstalmentMenuAnchor(null);
+          }}
           sx={{
             color: selectedInstalment?.status === 'active' ? 'error.main' : 'success.main',
           }}
@@ -682,6 +861,99 @@ const BursarySetupTab = ({
           <ListItemText>Edit Installment</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Confirm Status Modal */}
+      <ReusableModal
+        open={confirmStatusModal.open}
+        onClose={() => setConfirmStatusModal({ open: false, category: null })}
+        title={
+          confirmStatusModal.category?.status === 'active'
+            ? 'Deactivate Category'
+            : 'Activate Category'
+        }
+        size="small"
+        showCloseButton
+        showDivider
+      >
+        <Stack spacing={3}>
+          <Typography variant="body2">
+            Are you sure you want to{' '}
+            <strong>
+              {confirmStatusModal.category?.status === 'active' ? 'deactivate' : 'activate'}
+            </strong>{' '}
+            the category <strong>"{confirmStatusModal.category?.name}"</strong>?
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button
+              onClick={() => setConfirmStatusModal({ open: false, category: null })}
+              disabled={categoryActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color={confirmStatusModal.category?.status === 'active' ? 'error' : 'success'}
+              onClick={handleToggleCategoryStatus}
+              disabled={categoryActionLoading}
+            >
+              {categoryActionLoading
+                ? 'Updating...'
+                : confirmStatusModal.category?.status === 'active'
+                  ? 'Deactivate'
+                  : 'Activate'}
+            </Button>
+          </Stack>
+        </Stack>
+      </ReusableModal>
+
+      {/* Instalment Modal */}
+      <ReusableModal
+        open={confirmInstalmentStatusModal.open}
+        onClose={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
+        title={
+          confirmInstalmentStatusModal.instalment?.status === 'active'
+            ? 'Deactivate Instalment Plan'
+            : 'Activate Instalment Plan'
+        }
+        size="small"
+        showCloseButton
+        showDivider
+      >
+        <Stack spacing={3}>
+          <Typography variant="body2">
+            Are you sure you want to{' '}
+            <strong>
+              {confirmInstalmentStatusModal.instalment?.status === 'active'
+                ? 'deactivate'
+                : 'activate'}
+            </strong>{' '}
+            the instalment plan{' '}
+            <strong>"{confirmInstalmentStatusModal.instalment?.options}"</strong>?
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button
+              onClick={() => setConfirmInstalmentStatusModal({ open: false, instalment: null })}
+              disabled={instalmentActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color={
+                confirmInstalmentStatusModal.instalment?.status === 'active' ? 'error' : 'success'
+              }
+              onClick={handleToggleInstalmentStatus}
+              disabled={instalmentActionLoading}
+            >
+              {instalmentActionLoading
+                ? 'Updating...'
+                : confirmInstalmentStatusModal.instalment?.status === 'active'
+                  ? 'Deactivate'
+                  : 'Activate'}
+            </Button>
+          </Stack>
+        </Stack>
+      </ReusableModal>
 
       <CategoryModal
         open={categoryModalOpen}

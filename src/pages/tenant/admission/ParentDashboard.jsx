@@ -153,7 +153,6 @@ const ParentDashboard = () => {
       session: session,
       term: term,
     };
-    // navigate(`/admission-status/${ward.id}`, { state: { ward: normalized } });
   };
 
   const handleViewProspectiveWard = (ward) => {

@@ -113,10 +113,12 @@ const CashPost = () => {
                   elevation={0}
                   sx={{
                       display: 'flex',
-                      alignItems: 'center',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'stretch', sm: 'center' },
                       justifyContent: 'space-between',
                       p: 2,
                       mb: 2,
+                      gap: { xs: 2, sm: 0 },
                       bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
                       border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
                       borderLeft: `5px solid ${borderLeftColor}`,
@@ -143,7 +145,7 @@ const CashPost = () => {
                           {title}
                       </Typography>
                   </Box>
-                  <Box>{action}</Box>
+                  <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>{action}</Box>
               </Paper>
           );
       };
@@ -390,14 +392,28 @@ const CashPost = () => {
                     borderLeftColor: '#10b981',
                     icon: <ReceiptLongOutlinedIcon fontSize="small" />,
                     action: (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            flexWrap: 'wrap', 
+                            alignItems: 'center', 
+                            gap: { xs: 1.5, sm: 3 },
+                            width: { xs: '100%', sm: 'auto' },
+                            justifyContent: { xs: 'flex-start', sm: 'flex-end' }
+                        }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
                                 <Switch
                                     size="small"
                                     checked={compDiscountGlobal}
                                     onChange={(e) => setCompDiscountGlobal(e.target.checked)}
-
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -406,10 +422,16 @@ const CashPost = () => {
                                     size="small"
                                     checked={compPenaltyGlobal}
                                     onChange={(e) => setCompPenaltyGlobal(e.target.checked)}
-
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
-                    
                         </Box>
                     ),
                 })}
@@ -421,21 +443,28 @@ const CashPost = () => {
                     borderLeftColor: '#3b82f6',
                     icon: <ReceiptLongOutlinedIcon fontSize="small" />,
                     action: (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            flexWrap: 'wrap', 
+                            alignItems: 'center', 
+                            gap: { xs: 1.5, sm: 3 },
+                            width: { xs: '100%', sm: 'auto' },
+                            justifyContent: { xs: 'flex-start', sm: 'flex-end' }
+                        }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
                                 <Switch
                                     size="small"
                                     checked={optDiscountGlobal}
                                     onChange={(e) => setOptDiscountGlobal(e.target.checked)}
-                                // sx={{
-                                //     '& .MuiSwitch-switchBase.Mui-checked': {
-                                //         color: '#8338ec',
-                                //         '& + .MuiSwitch-track': {
-                                //             backgroundColor: '#8338ec',
-                                //         },
-                                //     },
-                                // }}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -444,17 +473,16 @@ const CashPost = () => {
                                     size="small"
                                     checked={optPenaltyGlobal}
                                     onChange={(e) => setOptPenaltyGlobal(e.target.checked)}
-                                // sx={{
-                                //     '& .MuiSwitch-switchBase.Mui-checked': {
-                                //         color: '#8338ec',
-                                //         '& + .MuiSwitch-track': {
-                                //             backgroundColor: '#8338ec',
-                                //         },
-                                //     },
-                                // }}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
-                           
                         </Box>
                     ),
                 })}

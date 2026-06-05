@@ -398,11 +398,22 @@ const Overview = () => {
                 </Grid>
 
                 {/* Tabs */}
-                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                <Box
+                    sx={{
+                        mb: 3,
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                        overflowX: 'auto',
+                        '& .MuiTabs-root': {
+                            minWidth: '300px',
+                        },
+                    }}
+                >
                     <Tabs
                         value={activeTab}
                         onChange={handleTabChange}
                         aria-label="transaction status tabs"
+                        variant="scrollable"
                         sx={{
                             '& .MuiTab-root': {
                                 textTransform: 'none',

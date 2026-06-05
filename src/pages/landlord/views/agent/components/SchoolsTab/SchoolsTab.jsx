@@ -410,15 +410,12 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                   Reject
                 </Button>
                 <Button
-                  color="success"
                   startIcon={<CheckCircleOutlineIcon />}
                   onClick={() => onApprove(prospect.id)}
                   disabled={loading}
                   sx={{
                     borderRadius: 2,
                     textTransform: 'none',
-                    bgcolor: '#2e7d32',
-                    '&:hover': { bgcolor: '#1b5e20' },
                   }}
                 >
                   {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}

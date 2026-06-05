@@ -27,7 +27,6 @@ import {
   InputLabel,
   Select,
   InputAdornment,
-
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -43,8 +42,6 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import StatCard from './components/StatCard';
 import FeeChart from './components/FeeChart';
 import { IconDotsVertical, IconEye, IconEdit } from '@tabler/icons-react';
-import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
@@ -55,7 +52,8 @@ const dummyData = [
   {
     id: 1,
     studentName: 'John Doe',
-    avatar: "https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848",
+    avatar:
+      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
     compulsoryBill: '₦80,000',
     optionalBill: '₦10,000',
     totalPayable: '₦90,000',
@@ -67,7 +65,8 @@ const dummyData = [
   {
     id: 2,
     studentName: 'Mary Johnson',
-    avatar: "https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848",
+    avatar:
+      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
     compulsoryBill: '₦75,000',
     optionalBill: '₦5,000',
     totalPayable: '₦80,000',
@@ -79,7 +78,8 @@ const dummyData = [
   {
     id: 3,
     studentName: 'David Williams',
-    avatar: "https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848",
+    avatar:
+      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
     compulsoryBill: '₦90,000',
     optionalBill: '₦15,000',
     totalPayable: '₦105,000',
@@ -91,7 +91,8 @@ const dummyData = [
   {
     id: 4,
     studentName: 'Sarah Brown',
-    avatar: "https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848",
+    avatar:
+      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
     compulsoryBill: '₦85,000',
     optionalBill: '₦8,000',
     totalPayable: '₦93,000',
@@ -102,7 +103,8 @@ const dummyData = [
   },
   {
     id: 5,
-    avatar: "https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848",
+    avatar:
+      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
     studentName: 'Michael Adams',
     compulsoryBill: '₦70,000',
     optionalBill: '₦12,000',
@@ -114,27 +116,22 @@ const dummyData = [
   },
 ];
 
-
-const BCrumb = [
-  { to: '/', title: 'Home' },
-  { title: 'Bursary' },
-  { title: 'class ledger' },
-];
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 const compulsoryChartData = {
   type: 'bar',
-  title: "Compulsory Fees",
-  categories: ["JSS1 A", "JSS2 A", "JSS3 A"],
+  title: 'Compulsory Fees',
+  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
   series: [
     {
-      name: "Total Expected",
+      name: 'Total Expected',
       data: [10200000, 1400000, 400000],
     },
     {
-      name: "Total Paid",
+      name: 'Total Paid',
       data: [7200000, 0, 0],
     },
     {
-      name: "Balance",
+      name: 'Balance',
       data: [3000000, 1400000, 400000],
     },
   ],
@@ -142,19 +139,19 @@ const compulsoryChartData = {
 
 const optionalChartData = {
   type: 'bar',
-  title: "Optional Fees",
-  categories: ["JSS1 A", "JSS2 A", "JSS3 A"],
+  title: 'Optional Fees',
+  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
   series: [
     {
-      name: "Total Expected",
+      name: 'Total Expected',
       data: [5000000, 2500000, 1200000],
     },
     {
-      name: "Total Paid",
+      name: 'Total Paid',
       data: [3200000, 1500000, 800000],
     },
     {
-      name: "Balance",
+      name: 'Balance',
       data: [1800000, 1000000, 400000],
     },
   ],
@@ -162,19 +159,19 @@ const optionalChartData = {
 
 const payableChartData = {
   type: 'bar',
-  title: "Payable Fees",
-  categories: ["JSS1 A", "JSS2 A", "JSS3 A"],
+  title: 'Payable Fees',
+  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
   series: [
     {
-      name: "Total Expected",
+      name: 'Total Expected',
       data: [12000000, 5000000, 2000000],
     },
     {
-      name: "Total Paid",
+      name: 'Total Paid',
       data: [8000000, 3000000, 1000000],
     },
     {
-      name: "Balance",
+      name: 'Balance',
       data: [4000000, 2000000, 1000000],
     },
   ],
@@ -193,8 +190,6 @@ const ClassLedger = () => {
   const [isCompulsory, setIsCompulsory] = useState(false);
   const [isOptional, setIsOptional] = useState(false);
   const [isPayable, setIsPayable] = useState(false);
-
-
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -220,7 +215,7 @@ const ClassLedger = () => {
     },
 
     legend: {
-      position: 'top',          // 👈 key change
+      position: 'top', // 👈 key change
       horizontalAlign: 'center',
       fontSize: '13px',
       labels: {
@@ -270,9 +265,6 @@ const ClassLedger = () => {
     },
   });
 
-
-
-
   return (
     <PageContainer title="Class Ledger">
       <Breadcrumb title="Class Ledger" items={BCrumb} />
@@ -287,14 +279,14 @@ const ClassLedger = () => {
             subStats={[
               {
                 label: 'Total Paid',
-                value: '304,043,000'
+                value: '304,043,000',
                 // value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0),
               },
               {
                 label: 'Balance',
-                value: '304,043,000'
+                value: '304,043,000',
                 // value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0),
-              }
+              },
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
@@ -308,10 +300,7 @@ const ClassLedger = () => {
               setChartType(compulsoryChartData.type);
               setChartData(compulsoryChartData);
               setIsCompulsory(true);
-
-
             }}
-
           />
         </Grid>
 
@@ -337,7 +326,6 @@ const ClassLedger = () => {
               setChartType(optionalChartData.type);
               setChartData(optionalChartData);
               setIsOptional(true);
-
             }}
           />
         </Grid>
@@ -363,12 +351,9 @@ const ClassLedger = () => {
               setChartType(payableChartData.type);
               setChartData(payableChartData);
               setIsPayable(true);
-
             }}
           />
         </Grid>
-
-
       </Grid>
       <ParentCard
         title={
@@ -391,7 +376,6 @@ const ClassLedger = () => {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
-
               <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}
@@ -418,8 +402,7 @@ const ClassLedger = () => {
           </Box>
         }
       >
-        <Grid container spacing={3} sx={{ mb: 3,mt:3 }} alignItems="center">
-
+        <Grid container spacing={3} sx={{ mb: 3, mt: 3 }} alignItems="center">
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>Program</InputLabel>
@@ -465,23 +448,13 @@ const ClassLedger = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }}>
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ height: '40px' }}
-            >
+            <Button variant="contained" fullWidth sx={{ height: '40px' }}>
               Fetch
             </Button>
           </Grid>
-
         </Grid>
 
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          variant="outlined"
-          sx={{ borderRadius: 2 }}
-        >
+        <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
           <Table>
             <TableHead sx={{ bgcolor: '#fafafa' }}>
               <TableRow>
@@ -521,7 +494,6 @@ const ClassLedger = () => {
                         </Typography>
                       </Box>
                     </Box>
-
                   </TableCell>
 
                   <TableCell>{row.compulsoryBill}</TableCell>
@@ -567,12 +539,14 @@ const ClassLedger = () => {
             Pay for Student
           </MenuItem>
 
-          <MenuItem onClick={() => {
+          <MenuItem
+            onClick={() => {
               setAnchorEl(null);
               if (activeRow) {
                 window.open(`/class-ledger/${activeRow.id}/invoice`, '_blank');
               }
-            }}>
+            }}
+          >
             <EditNoteOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Update Invoice
           </MenuItem>
@@ -606,12 +580,7 @@ const ClassLedger = () => {
           isCompulsory={isCompulsory}
         />
       </ParentCard>
-
-
     </PageContainer>
-
-
-
   );
 };
 

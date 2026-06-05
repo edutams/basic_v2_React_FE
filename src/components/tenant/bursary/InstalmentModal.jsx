@@ -11,6 +11,7 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (instalment) {
@@ -70,18 +71,25 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      const instalmentData = {
-        options: `${formData.inst1} : ${formData.inst2}`,
-        status: formData.status,
-      };
-      onSave(instalmentData);
-      onClose();
+      setLoading(true);
+      try {
+        await onSave({
+          options: `${formData.inst1} : ${formData.inst2}`,
+          status: formData.status,
+        });
+        onClose();
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const total = (parseInt(formData.inst1, 10) || 0) + (parseInt(formData.inst2, 10) || 0);
+
+  const isFullPayment =
+    !!instalment && parseInt(instalment.inst1) === 100 && parseInt(instalment.inst2) === 0;
 
   return (
     <ReusableModal
@@ -94,6 +102,12 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
     >
       <Stack spacing={3}>
         {errors.general && <Alert severity="error">{errors.general}</Alert>}
+
+        {isFullPayment && (
+          <Alert severity="info">
+            This is a <strong>100% full payment</strong> plan and cannot be edited.
+          </Alert>
+        )}
 
         <Box>
           <Typography variant="body2" color="textSecondary" mb={2}>
@@ -109,6 +123,7 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
                 onChange={handleChange('inst1')}
                 error={!!errors.inst1}
                 helperText={errors.inst1}
+                disabled={isFullPayment}
                 placeholder="e.g., 60"
                 inputProps={{ maxLength: 3 }}
               />
@@ -126,6 +141,7 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
                 onChange={handleChange('inst2')}
                 error={!!errors.inst2}
                 helperText={errors.inst2}
+                disabled={isFullPayment}
                 placeholder="e.g., 40"
                 inputProps={{ maxLength: 3 }}
               />
@@ -167,8 +183,12 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
           <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} sx={{ fontWeight: 600 }}>
-            {instalment ? 'Update' : 'Add'} Plan
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || isFullPayment}
+            sx={{ fontWeight: 600 }}
+          >
+            {loading ? 'Saving...' : `${instalment ? 'Update' : 'Add'} Plan`}
           </Button>
         </Stack>
       </Stack>

@@ -63,8 +63,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   return (
     <Stack spacing={3}>
-      {/* Generate Invoice Section */}
-      <Paper sx={{ p: 3, borderRadius: 2 }}>
+      <Box>
         <Box display="flex" alignItems="center" gap={2} mb={3}>
           <Box
             sx={{
@@ -84,7 +83,6 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
           </Typography>
         </Box>
 
-        {/* Filters and Search */}
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
@@ -337,7 +335,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Paper>
+      </Box>
     </Stack>
   );
 };

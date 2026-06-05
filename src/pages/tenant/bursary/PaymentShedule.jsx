@@ -236,7 +236,6 @@ const PaymentShedule = () => {
       {actionTab === 1 && (
         // Generate Invoice Stats
         <Grid container spacing={3} mb={3}>
-          {/* Invoice Generated Card */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
               <Typography variant="caption" color="text.secondary" gutterBottom display="block">
@@ -257,7 +256,7 @@ const PaymentShedule = () => {
                     {invoiceStats.invoiceGenerated}
                   </Typography>
                 </Box>
-                <Box>
+                <Box display="flex" ml="auto" flexDirection="column" justifyContent="end">
                   <Typography variant="h4" fontWeight={700}>
                     {invoiceStats.totalAmount}
                   </Typography>
@@ -269,7 +268,6 @@ const PaymentShedule = () => {
             </Paper>
           </Grid>
 
-          {/* Payment Name Card */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -327,7 +325,6 @@ const PaymentShedule = () => {
             </Paper>
           </Grid>
 
-          {/* Category Name Card */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
@@ -387,7 +384,6 @@ const PaymentShedule = () => {
         </Grid>
       )}
 
-      {/* Action Tabs */}
       <Box sx={{ mb: 3 }}>
         <Tabs
           value={actionTab}
@@ -406,186 +402,190 @@ const PaymentShedule = () => {
       </Box>
 
       <Paper sx={{ borderRadius: 2 }}>
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', lg: 'row' },
-              justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', lg: 'center' },
-              gap: 2,
-            }}
-          >
-            <Box display="flex" alignItems="center" gap={2}>
+        {actionTab === 0 && (
+          <>
+            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
               <Box
                 sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 1,
-                  bgcolor: 'primary.lighter',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  flexDirection: { xs: 'column', lg: 'row' },
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', lg: 'center' },
+                  gap: 2,
                 }}
               >
-                <Typography variant="h6" fontWeight={700} color="primary.main">
-                  ⚙️
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h6" fontWeight={600}>
-                  Payment Schedule
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  Switch tabs to configure compulsory or optional items.
-                </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1,
+                      bgcolor: 'primary.lighter',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight={700} color="primary.main">
+                      ⚙️
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" fontWeight={600}>
+                      Payment Schedule
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Switch tabs to configure compulsory or optional items.
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2,
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    width: { xs: '100%', lg: 'auto' },
+                  }}
+                >
+                  <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
+                    <InputLabel>Select Session</InputLabel>
+                    <Select
+                      value={selectedSession}
+                      label="Select Session"
+                      onChange={(e) => setSelectedSession(e.target.value)}
+                    >
+                      {sessions.map((session) => (
+                        <MenuItem key={session} value={session}>
+                          {session}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: { sm: 100 } }}>
+                    <InputLabel>Student Pay Category</InputLabel>
+                    <Select
+                      value={selectedCategory}
+                      label="Student Pay Category"
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={enableFullSession}
+                        onChange={(e) => setEnableFullSession(e.target.checked)}
+                        size="small"
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" sx={{ whiteSpace: { sm: 'nowrap' } }}>
+                        Enable full-session payment
+                      </Typography>
+                    }
+                    sx={{ m: 0 }}
+                  />
+                </Box>
               </Box>
             </Box>
 
+            {/* Tabs and Import Button Row */}
             <Box
               sx={{
+                px: 3,
+                pt: 2,
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
-                gap: 2,
+                justifyContent: 'space-between',
                 alignItems: { xs: 'stretch', sm: 'center' },
-                width: { xs: '100%', lg: 'auto' },
+                gap: 2,
               }}
             >
-              <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
-                <InputLabel>Select Session</InputLabel>
-                <Select
-                  value={selectedSession}
-                  label="Select Session"
-                  onChange={(e) => setSelectedSession(e.target.value)}
+              {/* Schedule Type Tabs */}
+              <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
+                <Tabs
+                  value={scheduleTab}
+                  onChange={handleScheduleTabChange}
+                  sx={{
+                    minHeight: 40,
+                    '& .MuiTab-root': {
+                      minHeight: 40,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                    },
+                  }}
                 >
-                  {sessions.map((session) => (
-                    <MenuItem key={session} value={session}>
-                      {session}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: { sm: 100 } }}>
-                <InputLabel>Student Pay Category</InputLabel>
-                <Select
-                  value={selectedCategory}
-                  label="Student Pay Category"
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={enableFullSession}
-                    onChange={(e) => setEnableFullSession(e.target.checked)}
-                    size="small"
+                  <Tab
+                    label="Compulsory"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        1
+                      </Box>
+                    }
+                    iconPosition="start"
                   />
-                }
-                label={
-                  <Typography variant="body2" sx={{ whiteSpace: { sm: 'nowrap' } }}>
-                    Enable full-session payment
-                  </Typography>
-                }
-                sx={{ m: 0 }}
-              />
+                  <Tab
+                    label="Optional Payment"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        2
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                </Tabs>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={<UploadIcon />}
+                onClick={handleImportSchedule}
+                size="medium"
+                sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+              >
+                Import schedule for current term
+              </Button>
             </Box>
-          </Box>
-        </Box>
-
-        {/* Tabs and Import Button Row */}
-        <Box
-          sx={{
-            px: 3,
-            pt: 2,
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            gap: 2,
-          }}
-        >
-          {/* Schedule Type Tabs */}
-          <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
-            <Tabs
-              value={scheduleTab}
-              onChange={handleScheduleTabChange}
-              sx={{
-                minHeight: 40,
-                '& .MuiTab-root': {
-                  minHeight: 40,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                },
-              }}
-            >
-              <Tab
-                label="Compulsory"
-                icon={
-                  <Box
-                    component="span"
-                    sx={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
-                      color: 'white',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      mr: 1,
-                    }}
-                  >
-                    1
-                  </Box>
-                }
-                iconPosition="start"
-              />
-              <Tab
-                label="Optional Payment"
-                icon={
-                  <Box
-                    component="span"
-                    sx={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
-                      color: 'white',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      mr: 1,
-                    }}
-                  >
-                    2
-                  </Box>
-                }
-                iconPosition="start"
-              />
-            </Tabs>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<UploadIcon />}
-            onClick={handleImportSchedule}
-            size="medium"
-            sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
-          >
-            Import schedule for current term
-          </Button>
-        </Box>
+          </>
+        )}
 
         {/* Tab Content */}
         <Box sx={{ p: 3 }}>

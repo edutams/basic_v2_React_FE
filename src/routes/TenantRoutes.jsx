@@ -59,6 +59,7 @@ const CreateAdmissionBatch = Loadable(
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
 const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
+const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/Invoice')));
 
 const TenantRoutes = [
   {
@@ -336,6 +337,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="bursary_manager.ledger.index">
             <CashPost />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'class-ledger/:studentId/invoice',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.ledger.index">
+            <Invoice />
           </TenantProtectedRoute>
         ),
       },

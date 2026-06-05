@@ -562,12 +562,17 @@ const ClassLedger = () => {
             Student Ledger
           </MenuItem>
 
-          <MenuItem onClick={() => setAnchorEl(null)}>
+          <MenuItem>
             <PaymentsOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Pay for Student
           </MenuItem>
 
-          <MenuItem onClick={() => setAnchorEl(null)}>
+          <MenuItem onClick={() => {
+              setAnchorEl(null);
+              if (activeRow) {
+                window.open(`/class-ledger/${activeRow.id}/invoice`, '_blank');
+              }
+            }}>
             <EditNoteOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
             Update Invoice
           </MenuItem>

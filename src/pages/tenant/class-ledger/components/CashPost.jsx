@@ -25,6 +25,8 @@ import {
   useTheme,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+
 
 /* ================= DATA ================= */
 const dummyStudentData = {
@@ -104,6 +106,47 @@ const CashPost = () => {
   };
 
   const format = (n) => new Intl.NumberFormat('en-NG').format(n || 0);
+  /* SECTION HEADER BLOCK */
+      const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
+          return (
+              <Paper
+                  elevation={0}
+                  sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 2,
+                      mb: 2,
+                      bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                      borderLeft: `5px solid ${borderLeftColor}`,
+                      borderRadius: '8px',
+                  }}
+              >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box
+                          sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: 38,
+                              height: 38,
+                              borderRadius: '8px',
+                              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+                              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                              color: isDark ? '#cbd5e1' : '#64748b',
+                          }}
+                      >
+                          {icon}
+                      </Box>
+                      <Typography variant="subtitle1" fontWeight={700} color={isDark ? '#f1f5f9' : '#334155'}>
+                          {title}
+                      </Typography>
+                  </Box>
+                  <Box>{action}</Box>
+              </Paper>
+          );
+      };
 
   /* RENDER TABLE */
   const renderTable = (type, data) => {
@@ -111,7 +154,7 @@ const CashPost = () => {
     const penaltyGlobal = type === 'comp' ? compPenaltyGlobal : optPenaltyGlobal;
 
     return (
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2,mb:3 }}>
         <Table>
           <TableHead sx={{ bgcolor: isDark ? '#222' : '#fafafa' }}>
             <TableRow>
@@ -342,70 +385,79 @@ const CashPost = () => {
         </Grid>
 
         {/* COMPULSORY */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            gap: { xs: 2, sm: 0 },
-            mb: 2,
-          }}
-        >
-          <Typography variant="h6" sx={{ color: '#6b7280', fontWeight: 600 }}>
-            COMPULSORY FEES
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">Discount</Typography>
-              <Switch
-                checked={compDiscountGlobal}
-                onChange={(e) => setCompDiscountGlobal(e.target.checked)}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">Penalty</Typography>
-              <Switch
-                checked={compPenaltyGlobal}
-                onChange={(e) => setCompPenaltyGlobal(e.target.checked)}
-              />
-            </Box>
-          </Box>
-        </Box>
+         {renderHeaderBlock({
+                    title: 'Compulsory Payment',
+                    borderLeftColor: '#10b981',
+                    icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+                    action: (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
+                                <Switch
+                                    size="small"
+                                    checked={compDiscountGlobal}
+                                    onChange={(e) => setCompDiscountGlobal(e.target.checked)}
+
+                                />
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Penalty</Typography>
+                                <Switch
+                                    size="small"
+                                    checked={compPenaltyGlobal}
+                                    onChange={(e) => setCompPenaltyGlobal(e.target.checked)}
+
+                                />
+                            </Box>
+                    
+                        </Box>
+                    ),
+                })}
         {renderTable('comp', compFees)}
 
         {/* OPTIONAL */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            gap: { xs: 2, sm: 0 },
-            mt: 4,
-            mb: 2,
-          }}
-        >
-          <Typography variant="h6" sx={{ color: '#6b7280', fontWeight: 600 }}>
-            OPTIONAL FEES
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">Discount</Typography>
-              <Switch
-                checked={optDiscountGlobal}
-                onChange={(e) => setOptDiscountGlobal(e.target.checked)}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2">Penalty</Typography>
-              <Switch
-                checked={optPenaltyGlobal}
-                onChange={(e) => setOptPenaltyGlobal(e.target.checked)}
-              />
-            </Box>
-          </Box>
-        </Box>
+        {renderHeaderBlock({
+                    title: 'Optional Payment',
+                    borderLeftColor: '#3b82f6',
+                    icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+                    action: (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
+                                <Switch
+                                    size="small"
+                                    checked={optDiscountGlobal}
+                                    onChange={(e) => setOptDiscountGlobal(e.target.checked)}
+                                // sx={{
+                                //     '& .MuiSwitch-switchBase.Mui-checked': {
+                                //         color: '#8338ec',
+                                //         '& + .MuiSwitch-track': {
+                                //             backgroundColor: '#8338ec',
+                                //         },
+                                //     },
+                                // }}
+                                />
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="text.secondary" fontWeight={500}>Penalty</Typography>
+                                <Switch
+                                    size="small"
+                                    checked={optPenaltyGlobal}
+                                    onChange={(e) => setOptPenaltyGlobal(e.target.checked)}
+                                // sx={{
+                                //     '& .MuiSwitch-switchBase.Mui-checked': {
+                                //         color: '#8338ec',
+                                //         '& + .MuiSwitch-track': {
+                                //             backgroundColor: '#8338ec',
+                                //         },
+                                //     },
+                                // }}
+                                />
+                            </Box>
+                           
+                        </Box>
+                    ),
+                })}
         {renderTable('opt', optFees)}
       </Box>
     </PageContainer>

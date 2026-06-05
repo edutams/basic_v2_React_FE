@@ -24,15 +24,21 @@ import {
   Menu,
   IconButton,
 } from '@mui/material';
-import { Search as SearchIcon, CheckCircle as CheckCircleIcon, Person as PersonIcon, MoreHoriz as MoreHorizIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  CheckCircle as CheckCircleIcon,
+  Person as PersonIcon,
+  MoreHoriz as MoreHorizIcon,
+} from '@mui/icons-material';
 
 const GenerateInvoiceTab = ({ showSnackbar }) => {
   const [selectedSession, setSelectedSession] = useState('2024/2025 - Third Term');
   const [selectedClass, setSelectedClass] = useState('JSS2');
   const [searchQuery, setSearchQuery] = useState('');
   const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
-  const [selectedStudentCategory, setSelectedStudentCategory] = useState('');
-  const [appliedStudentCategory, setAppliedStudentCategory] = useState('');
+  const [selectedStudentCategory, setSelectedStudentCategory] = useState('category');
+  const [appliedStudentCategory, setAppliedStudentCategory] = useState('category');
+  const [isInvoiceGenerated, setIsInvoiceGenerated] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState('schedule');
@@ -43,12 +49,10 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
-  
+
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-
-
 
   const handleStudentClick = (event, id) => {
     const selectedIndex = selectedStudents.indexOf(id);
@@ -157,11 +161,51 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
   ]);
 
   const [studentsData] = useState([
-    { id: 1, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 2, admissionId: 'STU-1043', name: 'Adejoke Mojisola', category: 'New Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 3, admissionId: 'STU-1044', name: 'Lawal Romota', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 4, admissionId: 'STU-1045', name: 'Kehinde Dada', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 5, admissionId: 'STU-1046', name: 'Adejumobi Johnson', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
+    {
+      id: 1,
+      admissionId: 'STU-1042',
+      name: 'Ada Obi',
+      category: 'Returning Student',
+      compulsory: 15000,
+      optional: null,
+      totalAmount: 105000,
+    },
+    {
+      id: 2,
+      admissionId: 'STU-1043',
+      name: 'Adejoke Mojisola',
+      category: 'New Student',
+      compulsory: 15000,
+      optional: null,
+      totalAmount: 105000,
+    },
+    {
+      id: 3,
+      admissionId: 'STU-1044',
+      name: 'Lawal Romota',
+      category: 'Returning Student',
+      compulsory: 15000,
+      optional: null,
+      totalAmount: 105000,
+    },
+    {
+      id: 4,
+      admissionId: 'STU-1045',
+      name: 'Kehinde Dada',
+      category: 'Returning Student',
+      compulsory: 15000,
+      optional: null,
+      totalAmount: 105000,
+    },
+    {
+      id: 5,
+      admissionId: 'STU-1046',
+      name: 'Adejumobi Johnson',
+      category: 'Returning Student',
+      compulsory: 15000,
+      optional: null,
+      totalAmount: 105000,
+    },
   ]);
 
   const calculateTotal = (column) => {
@@ -196,24 +240,27 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   // Paginate data
   const paginatedData = scheduleData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  
+
   const filteredStudentsData = studentsData.filter((student) => {
     let match = true;
     if (appliedSearchQuery) {
       const lowerQuery = appliedSearchQuery.toLowerCase();
-      match = match && (
-        student.name.toLowerCase().includes(lowerQuery) ||
-        student.admissionId.toLowerCase().includes(lowerQuery) ||
-        student.category.toLowerCase().includes(lowerQuery)
-      );
+      match =
+        match &&
+        (student.name.toLowerCase().includes(lowerQuery) ||
+          student.admissionId.toLowerCase().includes(lowerQuery) ||
+          student.category.toLowerCase().includes(lowerQuery));
     }
-    if (appliedStudentCategory) {
+    if (appliedStudentCategory && appliedStudentCategory !== 'category') {
       match = match && student.category === appliedStudentCategory;
     }
     return match;
   });
-  
-  const paginatedStudentsData = filteredStudentsData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const paginatedStudentsData = filteredStudentsData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   const handleStudentFetch = () => {
     setAppliedSearchQuery(searchQuery);
@@ -271,14 +318,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 gap: 2,
               }}
             >
-              <FormControl size="small" sx={{ minWidth: 200}}>
+              <FormControl size="small" sx={{ minWidth: 200 }}>
                 <Select
                   displayEmpty
                   value={selectedStudentCategory}
                   onChange={(e) => setSelectedStudentCategory(e.target.value)}
                   sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}
                 >
-                  <MenuItem value="category" >Category</MenuItem>
+                  <MenuItem value="category">Category</MenuItem>
                   <MenuItem value="Returning Student">Returning Student</MenuItem>
                   <MenuItem value="New Student">New Student</MenuItem>
                 </Select>
@@ -312,7 +359,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 }}
               />
 
-              <Button size='small' onClick={handleStudentFetch}>
+              <Button size="small" onClick={handleStudentFetch}>
                 Fetch
               </Button>
             </Box>
@@ -330,49 +377,143 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
           >
             <Box sx={{ bgcolor: 'info.light', px: 2, py: 1, borderRadius: 1 }}>
               <Typography variant="body2" fontWeight={600}>
-                 Payment Schedule for {selectedSession} · {selectedClass}
+                Payment Schedule for {selectedSession} · {selectedClass}
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-               <Button size="small">
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  setIsInvoiceGenerated(true);
+                  showSnackbar?.('Invoice generated successfully', 'success');
+                }}
+              >
                 Generate Invoice
               </Button>
-              <Button
-              variant="outlined" 
-                size="small"
-              >
-                View Class Invoice
-              </Button>
+              {isInvoiceGenerated && (
+                <Button size="small" onClick={() => setViewMode('invoice')}>
+                  View Class Invoice
+                </Button>
+              )}
             </Stack>
           </Box>
 
-          <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto', borderRadius: 2, borderColor: 'grey.200' }}>
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{ overflowX: 'auto', borderRadius: 2, borderColor: 'grey.200' }}
+          >
             <Table sx={{ minWidth: 800 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox" sx={{ borderBottom: '1px solid', borderColor: 'grey.200' }}>
+                  <TableCell
+                    padding="checkbox"
+                    sx={{ borderBottom: '1px solid', borderColor: 'grey.200' }}
+                  >
                     <Checkbox
                       color="primary"
-                      indeterminate={selectedStudents.length > 0 && selectedStudents.length < filteredStudentsData.length}
-                      checked={filteredStudentsData.length > 0 && selectedStudents.length === filteredStudentsData.length}
+                      indeterminate={
+                        selectedStudents.length > 0 &&
+                        selectedStudents.length < filteredStudentsData.length
+                      }
+                      checked={
+                        filteredStudentsData.length > 0 &&
+                        selectedStudents.length === filteredStudentsData.length
+                      }
                       onChange={handleSelectAllClick}
                     />
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Admission ID</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Category</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Compulsory</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Optional</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Total Amount</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Action</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Admission ID
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Name
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Category
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Compulsory
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Optional
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Total Amount
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Status
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                    }}
+                  >
+                    Action
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {paginatedStudentsData.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
-                      <Alert severity="info" sx={{ justifyContent: 'center', bgcolor: 'transparent' }}>
+                      <Alert
+                        severity="info"
+                        sx={{ justifyContent: 'center', bgcolor: 'transparent' }}
+                      >
                         No students found matching your criteria.
                       </Alert>
                     </TableCell>
@@ -381,53 +522,85 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                   paginatedStudentsData.map((row) => {
                     const isItemSelected = isStudentSelected(row.id);
                     return (
-                    <TableRow
-                      key={row.id}
-                      hover
-                      onClick={(event) => handleStudentClick(event, row.id)}
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      selected={isItemSelected}
-                      sx={{ '& td': { borderBottom: '1px solid', borderColor: 'grey.100' }, cursor: 'pointer' }}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox checked={isItemSelected} color="primary" />
-                      </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{row.admissionId}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
-                    <TableCell>
-                      <Box sx={{ bgcolor: 'primary.light', px: 1.5, py: 0.5, borderRadius: 5, display: 'inline-block' }}>
-                        <Typography variant="caption" fontWeight={600} color="primary">{row.category}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>₦{row.compulsory.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Box sx={{ bgcolor: 'primary.light', width: '40px', py: 0.5, borderRadius: 1, display: 'flex', justifyContent: 'center' }}>
-                        <Typography variant="body2" color="text.secondary" fontWeight={600}>-</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ bgcolor: 'primary.light', px: 1.5, py: 0.5, borderRadius: 1, display: 'inline-block' }}>
-                        <Typography variant="body2" fontWeight={700}>₦{row.totalAmount.toLocaleString()}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="small"
-                        variant='contained'
-                      
+                      <TableRow
+                        key={row.id}
+                        hover
+                        onClick={(event) => handleStudentClick(event, row.id)}
+                        role="checkbox"
+                        aria-checked={isItemSelected}
+                        selected={isItemSelected}
+                        sx={{
+                          '& td': { borderBottom: '1px solid', borderColor: 'grey.100' },
+                          cursor: 'pointer',
+                        }}
                       >
-                        Add Optional
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={handleMenuClick}>
-                        <MoreHorizIcon sx={{ color: 'text.secondary' }} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-                })
+                        <TableCell padding="checkbox">
+                          <Checkbox checked={isItemSelected} color="primary" />
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{row.admissionId}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              bgcolor: 'primary.light',
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 5,
+                              display: 'inline-block',
+                            }}
+                          >
+                            <Typography variant="caption" fontWeight={600} color="primary">
+                              {row.category}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          ₦{row.compulsory.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              bgcolor: 'primary.light',
+                              width: '40px',
+                              py: 0.5,
+                              borderRadius: 1,
+                              display: 'flex',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                              -
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              bgcolor: 'primary.light',
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 1,
+                              display: 'inline-block',
+                            }}
+                          >
+                            <Typography variant="body2" fontWeight={700}>
+                              ₦{row.totalAmount.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Button size="small" variant="contained">
+                            Add Optional
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton size="small" onClick={handleMenuClick}>
+                            <MoreHorizIcon sx={{ color: 'text.secondary' }} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -455,14 +628,337 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
           </Menu>
 
           <Box display="flex" justifyContent="flex-end" alignItems="center" mt={3}>
-            <Button size='small' sx={{ mr: 2 }} onClick={() => setViewMode('schedule')}>
+            <Button size="small" sx={{ mr: 2 }} onClick={() => setViewMode('schedule')}>
               Back
             </Button>
-            <Button size='small'>
-              Print Invoice for All
-            </Button>
+            <Button size="small">Print Invoice for All</Button>
           </Box>
         </Box>
+      </Stack>
+    );
+  }
+
+  if (viewMode === 'invoice') {
+    return (
+      <Stack spacing={3} sx={{ bgcolor: '#fafafa', p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6" fontWeight={700}>
+            Class Invoice
+          </Typography>
+          <Button variant="outlined" size="small" onClick={() => setViewMode('students')}>
+            Back
+          </Button>
+        </Box>
+
+        {studentsData.slice(0, 2).map((student, index) => (
+          <Box key={index} sx={{ mb: 4 }}>
+            {/* Learner Info Card */}
+            <Box
+              sx={{
+                bgcolor: 'white',
+                mb: 2,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'grey.200',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Grey Header Area */}
+              <Box
+                sx={{
+                  bgcolor: 'primary.light',
+                  p: 3,
+                  m: 2,                  
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                }}
+              >
+                {/* Logo */}
+                <Box
+                  component="img"
+                  src="/Edutams.png"
+                  alt="School Logo"
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 2,
+                    bgcolor: 'white',
+                    objectFit: 'contain',
+                    p: 1,
+                    // boxShadow: 1,
+                    flexShrink: 0,
+                  }}
+                />
+
+                {/* School Details */}
+                <Box flex={1} textAlign="center">
+                  <Typography variant="h6" fontWeight={800} color="text.primary">
+                    Funmilola Model College
+                  </Typography>
+
+                  <Typography variant="body2" color="text.secondary" fontWeight={700}>
+                    FMC Avenue, Sawmill, Okeowa, Ijebu Ode
+                  </Typography>
+
+                  <Box display="flex" flexWrap="wrap" gap={3} mt={1} justifyContent="center">
+                    <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                      ✉ hassankikiopemi2020@gmail.com
+                    </Typography>
+
+                    <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                      ☎ (+234)-816-8223-065
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* White Learner Area */}
+              <Box sx={{ p: 4 }}>
+                <Typography
+                  variant="h5"
+                  fontWeight={800}
+                  textAlign="center"
+                  mb={4}
+                  color="text.primary"
+                >
+                  2024/2025 Third Term Invoice
+                </Typography>
+
+                <Box
+                  display="flex"
+                  flexDirection={{ xs: 'column', sm: 'row' }}
+                  justifyContent="space-between"
+                  width="100%"
+                  gap={4}
+                >
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight={800} color="text.primary">
+                      Learner Details
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" mb={0.5}>
+                      {student.name}
+                    </Typography>
+                    <Typography variant="body1" fontWeight={700} mb={2}>
+                      Class:{' '}
+                      <Box component="span" fontWeight={400} color="text.secondary">
+                        {selectedClass} a
+                      </Box>
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      sx={{
+                        bgcolor: '#7cb342',
+                        '&:hover': { bgcolor: '#689f38' },
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        px: 3,
+                        py: 1,
+                        boxShadow: 'none',
+                        borderRadius: 1,
+                      }}
+                    >
+                      PROCEED TO PAY
+                    </Button>
+                  </Box>
+                  <Box textAlign={{ xs: 'left', sm: 'right' }}>
+                    <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={1}>
+                      Invoice Number:{' '}
+                      <Box component="span" fontWeight={400} color="text.secondary">
+                        36056531
+                      </Box>
+                    </Typography>
+                    <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={2}>
+                      Balance Due:{' '}
+                      <Typography
+                        component="span"
+                        variant="h5"
+                        fontWeight={800}
+                        color="text.primary"
+                      >
+                        ₦{student.totalAmount?.toLocaleString() || '230,010'}
+                      </Typography>
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      sx={{
+                        bgcolor: '#7cb342',
+                        '&:hover': { bgcolor: '#689f38' },
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        px: 3,
+                        py: 1,
+                        boxShadow: 'none',
+                        borderRadius: 1,
+                      }}
+                    >
+                      UPDATE INVOICE
+                    </Button>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* White Table Card */}
+            <Box
+              sx={{
+                bgcolor: 'white',
+                p: { xs: 2, sm: 4 },
+                m: 2,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'grey.200',
+              }}
+            >
+              <Box
+                display="flex"
+                flexDirection={{ xs: 'column', sm: 'row' }}
+                justifyContent="space-between"
+                mb={3}
+                gap={1}
+              >
+                <Box>
+                  <Typography variant="caption" fontWeight={800} color="text.secondary">
+                    INVOICE FOR
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800}>
+                    {student.name}
+                  </Typography>
+                  <Typography variant="caption" fontWeight={600} color="text.secondary">
+                    {student.admissionId} - {selectedClass}
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  fontWeight={600}
+                  color="text.secondary"
+                  textAlign={{ xs: 'left', sm: 'right' }}
+                >
+                  2024/2025 Third Term
+                </Typography>
+              </Box>
+
+              <Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    School fee
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800}>
+                    ₦6,000
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    Text book
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800}>
+                    ₦15,000
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    Inter house sport
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800}>
+                    ₦25,000
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    Portal Fee
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800}>
+                    ₦2,000
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    CARDIGAN
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800}>
+                    ₦7,000
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    Tie
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800}>
+                    ₦3,000
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    Transport
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800}>
+                    ₦20,000
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  py={2}
+                  borderBottom="1px solid"
+                  borderColor="grey.100"
+                >
+                  <Typography variant="body1" fontWeight={800}>
+                    Total
+                  </Typography>
+                  <Typography variant="body1" fontWeight={800}>
+                    ₦78,000
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            </Box>
+
+            
+          </Box>
+        ))}
       </Stack>
     );
   }
@@ -530,7 +1026,11 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               sx={{ width: 250 }}
             />
 
-            <Button variant="contained" onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
+            <Button
+              variant="contained"
+              onClick={handleFetch}
+              sx={{ fontWeight: 600, minWidth: 100 }}
+            >
               Fetch
             </Button>
           </Stack>
@@ -596,9 +1096,11 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
             >
               Generate Invoice / {selectedClass}
             </Button>
-            <Button size="small" onClick={handleViewClassInvoice}>
-              View Class Invoice
-            </Button>
+            {isInvoiceGenerated && (
+              <Button size="small" onClick={() => setViewMode('invoice')}>
+                View Class Invoice
+              </Button>
+            )}
           </Stack>
         </Box>
 

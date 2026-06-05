@@ -278,7 +278,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                   onChange={(e) => setSelectedStudentCategory(e.target.value)}
                   sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}
                 >
-                  <MenuItem value="" disabled>Category</MenuItem>
+                  <MenuItem value="category" >Category</MenuItem>
                   <MenuItem value="Returning Student">Returning Student</MenuItem>
                   <MenuItem value="New Student">New Student</MenuItem>
                 </Select>
@@ -334,13 +334,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+               <Button size="small">
+                Generate Invoice
+              </Button>
               <Button
+              variant="outlined" 
                 size="small"
               >
                 View Class Invoice
-              </Button>
-              <Button variant="outlined" size="small">
-                Generate Invoice
               </Button>
             </Stack>
           </Box>

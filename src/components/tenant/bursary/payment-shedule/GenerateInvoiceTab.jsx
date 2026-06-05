@@ -21,6 +21,8 @@ import {
   TablePagination,
   Alert,
   Checkbox,
+  Menu,
+  IconButton,
 } from '@mui/material';
 import { Search as SearchIcon, CheckCircle as CheckCircleIcon, Person as PersonIcon, MoreHoriz as MoreHorizIcon } from '@mui/icons-material';
 
@@ -31,6 +33,47 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState('schedule');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+  const [selectedStudents, setSelectedStudents] = useState([]);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelecteds = studentsData.map((n) => n.id);
+      setSelectedStudents(newSelecteds);
+      return;
+    }
+    setSelectedStudents([]);
+  };
+
+  const handleStudentClick = (event, id) => {
+    const selectedIndex = selectedStudents.indexOf(id);
+    let newSelected = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selectedStudents, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selectedStudents.slice(1));
+    } else if (selectedIndex === selectedStudents.length - 1) {
+      newSelected = newSelected.concat(selectedStudents.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selectedStudents.slice(0, selectedIndex),
+        selectedStudents.slice(selectedIndex + 1),
+      );
+    }
+    setSelectedStudents(newSelected);
+  };
+
+  const isStudentSelected = (id) => selectedStudents.indexOf(id) !== -1;
 
   const classes = ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3', 'SSS3'];
 
@@ -160,72 +203,77 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   // Paginate data
   const paginatedData = scheduleData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedStudentsData = studentsData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   if (viewMode === 'students') {
     return (
       <Stack spacing={3} sx={{ bgcolor: '#fafafa', p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
         <Box>
-          <Box display="flex" alignItems="center" gap={2} mb={3}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                bgcolor: 'grey.200',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <PersonIcon />
-            </Box>
-            <Typography variant="h6" fontWeight={700}>
-              Select a student
-            </Typography>
-          </Box>
-
           <Box
             sx={{
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' },
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'stretch', md: 'center' },
               gap: 2,
               mb: 4,
             }}
           >
-            <FormControl size="small" sx={{ minWidth: 200, bgcolor: 'white' }}>
-              <Select displayEmpty defaultValue="" label="" sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}>
-                <MenuItem value="" disabled>Category</MenuItem>
-                <MenuItem value="Returning Student">Returning Student</MenuItem>
-                <MenuItem value="New Student">New Student</MenuItem>
-              </Select>
-            </FormControl>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 1,
+                  bgcolor: 'grey.200',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <PersonIcon />
+              </Box>
+              <Typography variant="h6" fontWeight={700}>
+                Select a student
+              </Typography>
+            </Box>
 
-            {/* <FormControl size="small" sx={{ minWidth: 200, bgcolor: 'white' }}>
-              <Select value={selectedClass} label="" onChange={(e) => setSelectedClass(e.target.value)}>
-                {classes.map(cls => <MenuItem key={cls} value={cls}>{cls}</MenuItem>)}
-              </Select>
-            </FormControl> */}
-
-            <TextField
-              size="small"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 2,
               }}
-            />
+            >
+              <FormControl size="small" sx={{ minWidth: 200, bgcolor: 'white' }}>
+                <Select displayEmpty defaultValue="" label="" sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}>
+                  <MenuItem value="" disabled>Category</MenuItem>
+                  <MenuItem value="Returning Student">Returning Student</MenuItem>
+                  <MenuItem value="New Student">New Student</MenuItem>
+                </Select>
+              </FormControl>
 
-            <Button size='small'>
-              Fetch
-            </Button>
+              <TextField
+                size="small"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+
+              <Button size='small' variant="contained">
+                Fetch
+              </Button>
+            </Box>
           </Box>
 
           <Box
@@ -260,7 +308,12 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F8F9FA' }}>
                   <TableCell padding="checkbox" sx={{ borderBottom: '1px solid', borderColor: 'grey.200' }}>
-                    <Checkbox  />
+                    <Checkbox
+                      color="primary"
+                      indeterminate={selectedStudents.length > 0 && selectedStudents.length < studentsData.length}
+                      checked={studentsData.length > 0 && selectedStudents.length === studentsData.length}
+                      onChange={handleSelectAllClick}
+                    />
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Admission ID</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Name</TableCell>
@@ -273,11 +326,21 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {studentsData.map((row) => (
-                  <TableRow key={row.id} hover sx={{ '& td': { borderBottom: '1px solid', borderColor: 'grey.100' } }}>
-                    <TableCell padding="checkbox">
-                      <Checkbox  />
-                    </TableCell>
+                {paginatedStudentsData.map((row) => {
+                  const isItemSelected = isStudentSelected(row.id);
+                  return (
+                    <TableRow
+                      key={row.id}
+                      hover
+                      onClick={(event) => handleStudentClick(event, row.id)}
+                      role="checkbox"
+                      aria-checked={isItemSelected}
+                      selected={isItemSelected}
+                      sx={{ '& td': { borderBottom: '1px solid', borderColor: 'grey.100' }, cursor: 'pointer' }}
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox checked={isItemSelected} color="primary" />
+                      </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{row.admissionId}</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
                     <TableCell>
@@ -306,13 +369,37 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                       </Button>
                     </TableCell>
                     <TableCell>
-                      <MoreHorizIcon sx={{ color: 'text.secondary', cursor: 'pointer' }} />
+                      <IconButton size="small" onClick={handleMenuClick}>
+                        <MoreHorizIcon sx={{ color: 'text.secondary' }} />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
-                ))}
+                );
+                })}
               </TableBody>
             </Table>
+            <TablePagination
+              component="div"
+              count={studentsData.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
           </TableContainer>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={openMenu}
+            onClose={handleMenuClose}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem onClick={handleMenuClose}>Print Invoice</MenuItem>
+            <MenuItem onClick={handleMenuClose}>Regenerate Invoice</MenuItem>
+            <MenuItem onClick={handleMenuClose}>Go to Student Ledger</MenuItem>
+          </Menu>
 
           <Box display="flex" justifyContent="flex-end" alignItems="center" mt={3}>
             <Button size='small'>

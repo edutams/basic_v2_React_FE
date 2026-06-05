@@ -35,7 +35,8 @@ import {
 const GenerateInvoiceTab = ({ showSnackbar }) => {
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
-  const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || 'School Name';
+  const schoolName =
+    tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || 'School Name';
   const schoolAddress = tenantInfo?.address || '';
   const schoolEmail = tenantInfo?.administrator_info?.school_owner?.school_owner_email || '';
   const schoolPhone = tenantInfo?.administrator_info?.school_owner?.school_owner_phone || '';
@@ -648,22 +649,19 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   if (viewMode === 'invoice') {
     return (
-      <Stack spacing={3} sx={{ bgcolor: '#fafafa', p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" fontWeight={700}>
-            Class Invoice · {selectedClass}
-          </Typography>
-          <Button variant="outlined" size="small" onClick={() => setViewMode('students')}>
-            Back
-          </Button>
-        </Box>
+      <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
+        <Typography variant="h6" fontWeight={700}>
+          Class Invoice ·{' '}
+          <Box component="span" color="primary.main">
+            {selectedClass}
+          </Box>
+        </Typography>
 
         {studentsData.slice(0, 2).map((student, index) => (
           <Box key={index} sx={{ mb: 4 }}>
             {/* Learner Info Card */}
             <Box
               sx={{
-                bgcolor: 'white',
                 mb: 2,
                 borderRadius: 2,
                 border: '1px solid',
@@ -671,18 +669,16 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 overflow: 'hidden',
               }}
             >
-              {/* Grey Header Area */}
               <Box
                 sx={{
                   bgcolor: 'primary.light',
                   p: 3,
-                  m: 2,                  
+                  m: 2,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 3,
                 }}
               >
-                {/* Logo */}
                 <Box
                   component="img"
                   src={schoolLogo}
@@ -694,14 +690,13 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     bgcolor: 'white',
                     objectFit: 'contain',
                     p: 1,
-                    // boxShadow: 1,
                     flexShrink: 0,
                   }}
                 />
 
                 {/* School Details */}
                 <Box flex={1} textAlign="center">
-                  <Typography variant="h6" fontWeight={800} color="text.primary">
+                  <Typography variant="h4" fontWeight={800} color="text.primary">
                     {schoolName}
                   </Typography>
 
@@ -713,14 +708,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
                   <Box display="flex" flexWrap="wrap" gap={3} mt={1} justifyContent="center">
                     {schoolEmail && (
-                      <Typography variant="caption" color="text.secondary" fontWeight={700}>
-                        ✉ {schoolEmail}
+                      <Typography variant="h6" color="text.secondary" fontWeight={700}>
+                        {schoolEmail}
                       </Typography>
                     )}
 
                     {schoolPhone && (
-                      <Typography variant="caption" color="text.secondary" fontWeight={700}>
-                        ☎ {schoolPhone}
+                      <Typography variant="h6" color="text.secondary" fontWeight={700}>
+                        {schoolPhone}
                       </Typography>
                     )}
                   </Box>
@@ -759,11 +754,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                         {selectedClass} a
                       </Box>
                     </Typography>
-                    <Button
-                    size='small'
-                    >
-                      PROCEED TO PAY
-                    </Button>
+                    <Button size="small">PROCEED TO PAY</Button>
                   </Box>
                   <Box textAlign={{ xs: 'left', sm: 'right' }}>
                     <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={1}>
@@ -783,172 +774,250 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                         ₦{student.totalAmount?.toLocaleString() || '230,010'}
                       </Typography>
                     </Typography>
-                    <Button
-                      size='small'
-                    >
-                      UPDATE INVOICE
-                    </Button>
+                    <Button size="small">UPDATE INVOICE</Button>
                   </Box>
                 </Box>
               </Box>
 
               {/* White Table Card */}
-            <Box
-              sx={{
-                bgcolor: 'white',
-                p: { xs: 2, sm: 4 },
-                m: 2,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: 'grey.200',
-              }}
-            >
               <Box
-                display="flex"
-                flexDirection={{ xs: 'column', sm: 'row' }}
-                justifyContent="space-between"
-                mb={3}
-                gap={1}
+                sx={{
+                  p: { xs: 2, sm: 4 },
+                  m: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'grey.200',
+                }}
               >
-                <Box>
-                  <Typography variant="caption" fontWeight={800} color="text.secondary">
-                    INVOICE FOR
-                  </Typography>
-                  <Typography variant="h6" fontWeight={800}>
-                    {student.name}
-                  </Typography>
-                  <Typography variant="caption" fontWeight={600} color="text.secondary">
-                    {student.admissionId} - {selectedClass}
+                <Box
+                  display="flex"
+                  flexDirection={{ xs: 'column', sm: 'row' }}
+                  justifyContent="space-between"
+                  mb={3}
+                  gap={1}
+                >
+                  <Box>
+                    <Typography variant="caption" fontWeight={800} color="text.secondary">
+                      INVOICE FOR
+                    </Typography>
+                    <Typography variant="h6" fontWeight={800}>
+                      {student.name}
+                    </Typography>
+                    <Typography variant="caption" fontWeight={600} color="text.secondary">
+                      {student.admissionId} - {selectedClass}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    fontWeight={600}
+                    color="text.secondary"
+                    textAlign={{ xs: 'left', sm: 'right' }}
+                  >
+                    2024/2025 Third Term
                   </Typography>
                 </Box>
-                <Typography
-                  variant="caption"
-                  fontWeight={600}
-                  color="text.secondary"
-                  textAlign={{ xs: 'left', sm: 'right' }}
-                >
-                  2024/2025 Third Term
-                </Typography>
-              </Box>
 
-              <Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
+                <TableContainer
+                  component={Paper}
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    borderColor: 'grey.200',
+                    boxShadow: 'none',
+                  }}
                 >
-                  <Typography variant="body2" fontWeight={600}>
-                    School fee
-                  </Typography>
-                  <Typography variant="body2" fontWeight={800}>
-                    ₦6,000
-                  </Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
-                >
-                  <Typography variant="body2" fontWeight={600}>
-                    Text book
-                  </Typography>
-                  <Typography variant="body2" fontWeight={800}>
-                    ₦15,000
-                  </Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
-                >
-                  <Typography variant="body2" fontWeight={600}>
-                    Inter house sport
-                  </Typography>
-                  <Typography variant="body2" fontWeight={800}>
-                    ₦25,000
-                  </Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
-                >
-                  <Typography variant="body2" fontWeight={600}>
-                    Portal Fee
-                  </Typography>
-                  <Typography variant="body2" fontWeight={800}>
-                    ₦2,000
-                  </Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
-                >
-                  <Typography variant="body2" fontWeight={600}>
-                    CARDIGAN
-                  </Typography>
-                  <Typography variant="body2" fontWeight={800}>
-                    ₦7,000
-                  </Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
-                >
-                  <Typography variant="body2" fontWeight={600}>
-                    Tie
-                  </Typography>
-                  <Typography variant="body2" fontWeight={800}>
-                    ₦3,000
-                  </Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
-                >
-                  <Typography variant="body2" fontWeight={600}>
-                    Transport
-                  </Typography>
-                  <Typography variant="body2" fontWeight={800}>
-                    ₦20,000
-                  </Typography>
-                </Box>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  py={2}
-                  borderBottom="1px solid"
-                  borderColor="grey.100"
-                >
-                  <Typography variant="body1" fontWeight={800}>
-                    Total
-                  </Typography>
-                  <Typography variant="body1" fontWeight={800}>
-                    ₦78,000
-                  </Typography>
-                </Box>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 500,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          School fee
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 700,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦6,000
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 500,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          Text book
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 700,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦15,000
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 500,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          Inter house sport
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 700,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦25,000
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 500,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          Portal Fee
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 700,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦2,000
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 500,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          CARDIGAN
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 700,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦7,000
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 500,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          Tie
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 700,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦3,000
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 500,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          Transport
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 700,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦20,000
+                        </TableCell>
+                      </TableRow>
+                      <TableRow sx={{ bgcolor: 'grey.50' }}>
+                        <TableCell
+                          sx={{
+                            py: 2,
+                            fontWeight: 800,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          Total
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            py: 2,
+                            fontWeight: 800,
+                            borderColor: 'grey.200',
+                            color: 'text.primary',
+                          }}
+                        >
+                          ₦78,000
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </Box>
             </Box>
-            </Box>
-
-            
           </Box>
         ))}
       </Stack>

@@ -649,19 +649,27 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   if (viewMode === 'invoice') {
     return (
-      <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
-        <Typography variant="h6" fontWeight={700}>
+      <Stack spacing={3} sx={{ bgcolor: '#fafafa', p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6" fontWeight={700}>
           Class Invoice ·{' '}
           <Box component="span" color="primary.main">
             {selectedClass}
           </Box>
         </Typography>
+          <Button variant="outlined" size="small" onClick={() => setViewMode('students')}>
+            Back
+          </Button>
+        </Box>
+
+       
 
         {studentsData.slice(0, 2).map((student, index) => (
           <Box key={index} sx={{ mb: 4 }}>
             {/* Learner Info Card */}
             <Box
               sx={{
+                bgcolor: 'white',
                 mb: 2,
                 borderRadius: 2,
                 border: '1px solid',
@@ -782,6 +790,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               {/* White Table Card */}
               <Box
                 sx={{
+                  bgcolor: 'white',
                   p: { xs: 2, sm: 4 },
                   m: 2,
                   borderRadius: 2,

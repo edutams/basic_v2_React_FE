@@ -18,35 +18,110 @@ import {
   Select,
   MenuItem,
   Chip,
+  TablePagination,
+  Alert,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 
 const GenerateInvoiceTab = ({ showSnackbar }) => {
   const [selectedSession, setSelectedSession] = useState('2024/2025 - Third Term');
   const [selectedClass, setSelectedClass] = useState('JSS2');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const classes = ['JSS1', 'JSS2', 'JSS3', 'SSS1', 'SSS2', 'SSS3', 'SSS3'];
 
   const [scheduleData] = useState([
-    { id: 1, paymentName: 'School Fee', beneficiary: 10000, newStudent: 2000, returningStudent: 47000, scholarship: 7000, staffWard: 7000, transportation: 7000 },
-    { id: 2, paymentName: 'Bag', beneficiary: 7000, newStudent: 7000, returningStudent: 7000, scholarship: 7000, staffWard: 7000, transportation: 7000 },
-    { id: 3, paymentName: 'Bag', beneficiary: 7000, newStudent: 7000, returningStudent: 7000, scholarship: '----', staffWard: 7000, transportation: 7000 },
-    { id: 4, paymentName: 'Bag', beneficiary: 7000, newStudent: 7000, returningStudent: 7000, scholarship: 7000, staffWard: 7000, transportation: 7000 },
-    { id: 5, paymentName: 'Bag', beneficiary: 7000, newStudent: 7000, returningStudent: 7000, scholarship: 7000, staffWard: 7000, transportation: 7000 },
-    { id: 6, paymentName: 'Bag', beneficiary: 7000, newStudent: 7000, returningStudent: 7000, scholarship: 7000, staffWard: 7000, transportation: 7000 },
-    { id: 7, paymentName: 'Bag', beneficiary: 7000, newStudent: 7000, returningStudent: 7000, scholarship: 7000, staffWard: 7000, transportation: 7000 },
-    { id: 8, paymentName: 'Bag', beneficiary: 7000, newStudent: 7000, returningStudent: 7000, scholarship: 7000, staffWard: 7000, transportation: 7000 },
+    {
+      id: 1,
+      paymentName: 'School Fee',
+      beneficiary: 10000,
+      newStudent: 2000,
+      returningStudent: 47000,
+      scholarship: 7000,
+      staffWard: 7000,
+      transportation: 7000,
+    },
+    {
+      id: 2,
+      paymentName: 'Bag',
+      beneficiary: 7000,
+      newStudent: 7000,
+      returningStudent: 7000,
+      scholarship: 7000,
+      staffWard: 7000,
+      transportation: 7000,
+    },
+    {
+      id: 3,
+      paymentName: 'Bag',
+      beneficiary: 7000,
+      newStudent: 7000,
+      returningStudent: 7000,
+      scholarship: '----',
+      staffWard: 7000,
+      transportation: 7000,
+    },
+    {
+      id: 4,
+      paymentName: 'Bag',
+      beneficiary: 7000,
+      newStudent: 7000,
+      returningStudent: 7000,
+      scholarship: 7000,
+      staffWard: 7000,
+      transportation: 7000,
+    },
+    {
+      id: 5,
+      paymentName: 'Bag',
+      beneficiary: 7000,
+      newStudent: 7000,
+      returningStudent: 7000,
+      scholarship: 7000,
+      staffWard: 7000,
+      transportation: 7000,
+    },
+    {
+      id: 6,
+      paymentName: 'Bag',
+      beneficiary: 7000,
+      newStudent: 7000,
+      returningStudent: 7000,
+      scholarship: 7000,
+      staffWard: 7000,
+      transportation: 7000,
+    },
+    {
+      id: 7,
+      paymentName: 'Bag',
+      beneficiary: 7000,
+      newStudent: 7000,
+      returningStudent: 7000,
+      scholarship: 7000,
+      staffWard: 7000,
+      transportation: 7000,
+    },
+    {
+      id: 8,
+      paymentName: 'Bag',
+      beneficiary: 7000,
+      newStudent: 7000,
+      returningStudent: 7000,
+      scholarship: 7000,
+      staffWard: 7000,
+      transportation: 7000,
+    },
   ]);
 
   const calculateTotal = (column) => {
-    return scheduleData.reduce((sum, row) => {
-      const value = row[column];
-      return sum + (typeof value === 'number' ? value : 0);
-    }, 0).toLocaleString();
+    return scheduleData
+      .reduce((sum, row) => {
+        const value = row[column];
+        return sum + (typeof value === 'number' ? value : 0);
+      }, 0)
+      .toLocaleString();
   };
 
   const handleFetch = () => {
@@ -60,6 +135,18 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
   const handleViewClassInvoice = () => {
     showSnackbar?.('Viewing class invoice...', 'info');
   };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Paginate data
+  const paginatedData = scheduleData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <Stack spacing={3}>
@@ -114,34 +201,36 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 </InputAdornment>
               ),
             }}
-            sx={{ flex: 1 }}
           />
 
-          <Button variant="contained" onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
+          <Button onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
             Fetch
           </Button>
         </Stack>
 
-        {/* Class Selection Chips */}
         <Box
           sx={{
             bgcolor: 'rgba(255, 152, 0, 0.08)',
             p: 2,
             borderRadius: 1,
             mb: 3,
+            overflowX: 'auto',
+            '&::-webkit-scrollbar': {
+              height: 6,
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0,0,0,0.2)',
+              borderRadius: 3,
+            },
           }}
         >
-          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+          <Stack direction="row" spacing={1} sx={{ minWidth: 'max-content' }}>
             {classes.map((cls) => (
               <Chip
                 key={cls}
                 label={cls}
                 onClick={() => setSelectedClass(cls)}
-                icon={
-                  selectedClass === cls ? (
-                    <CheckCircleIcon sx={{ fontSize: 18 }} />
-                  ) : undefined
-                }
+                icon={selectedClass === cls ? <CheckCircleIcon sx={{ fontSize: 18 }} /> : undefined}
                 sx={{
                   bgcolor: selectedClass === cls ? 'primary.main' : 'white',
                   color: selectedClass === cls ? 'white' : 'text.primary',
@@ -157,19 +246,20 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
           </Stack>
         </Box>
 
-        {/* Table Header with Actions */}
         <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-          flexWrap="wrap"
-          gap={2}
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            mb: 2,
+            gap: 2,
+          }}
         >
-          <Typography variant="body2" color="primary.main" fontWeight={600}>
+          <Alert severity="info">
             Payment Schedule for {selectedSession} - {selectedClass}
-          </Typography>
-          <Stack direction="row" spacing={1}>
+          </Alert>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <Button
               variant="contained"
               size="small"
@@ -196,9 +286,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="caption" fontWeight={700} display="block">
                       Beneficiary
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Update
-                    </Typography>
+                    <Chip
+                      label="Update"
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
                   </Box>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>
@@ -206,9 +301,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="caption" fontWeight={700} display="block">
                       New Student
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Update
-                    </Typography>
+                    <Chip
+                      label="Update"
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
                   </Box>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 140 }}>
@@ -216,9 +316,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="caption" fontWeight={700} display="block">
                       Returning Student
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Update
-                    </Typography>
+                    <Chip
+                      label="Update"
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
                   </Box>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>
@@ -226,9 +331,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="caption" fontWeight={700} display="block">
                       Scholarship
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Update
-                    </Typography>
+                    <Chip
+                      label="Update"
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
                   </Box>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>
@@ -236,9 +346,14 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="caption" fontWeight={700} display="block">
                       Staff Ward
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Update
-                    </Typography>
+                    <Chip
+                      label="Update"
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
                   </Box>
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 140 }}>
@@ -246,15 +361,20 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="caption" fontWeight={700} display="block">
                       Transportation
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Update
-                    </Typography>
+                    <Chip
+                      label="Update"
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
                   </Box>
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {scheduleData.map((row) => (
+              {paginatedData.map((row) => (
                 <TableRow key={row.id} hover>
                   <TableCell>{row.id}</TableCell>
                   <TableCell>
@@ -264,32 +384,44 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {typeof row.beneficiary === 'number' ? row.beneficiary.toLocaleString() : row.beneficiary}
+                      {typeof row.beneficiary === 'number'
+                        ? row.beneficiary.toLocaleString()
+                        : row.beneficiary}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {typeof row.newStudent === 'number' ? row.newStudent.toLocaleString() : row.newStudent}
+                      {typeof row.newStudent === 'number'
+                        ? row.newStudent.toLocaleString()
+                        : row.newStudent}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {typeof row.returningStudent === 'number' ? row.returningStudent.toLocaleString() : row.returningStudent}
+                      {typeof row.returningStudent === 'number'
+                        ? row.returningStudent.toLocaleString()
+                        : row.returningStudent}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {typeof row.scholarship === 'number' ? row.scholarship.toLocaleString() : row.scholarship}
+                      {typeof row.scholarship === 'number'
+                        ? row.scholarship.toLocaleString()
+                        : row.scholarship}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {typeof row.staffWard === 'number' ? row.staffWard.toLocaleString() : row.staffWard}
+                      {typeof row.staffWard === 'number'
+                        ? row.staffWard.toLocaleString()
+                        : row.staffWard}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {typeof row.transportation === 'number' ? row.transportation.toLocaleString() : row.transportation}
+                      {typeof row.transportation === 'number'
+                        ? row.transportation.toLocaleString()
+                        : row.transportation}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -334,6 +466,15 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               </TableRow>
             </TableBody>
           </Table>
+          <TablePagination
+            component="div"
+            count={scheduleData.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
         </TableContainer>
       </Box>
     </Stack>

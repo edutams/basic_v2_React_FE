@@ -17,7 +17,7 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import { Receipt as ReceiptIcon, FileUpload as UploadIcon } from '@mui/icons-material';
+import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
@@ -282,14 +282,7 @@ const PaymentShedule = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '14px',
-                    }}
-                  >
-                    🏠
-                  </Box>
+                  <WalletIcon sx={{ fontSize: 16, color: 'rgba(139, 195, 74, 1)' }} />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Payment Name
@@ -339,14 +332,7 @@ const PaymentShedule = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '14px',
-                    }}
-                  >
-                    📊
-                  </Box>
+                  <WalletIcon sx={{ fontSize: 16, color: 'rgba(103, 58, 183, 1)' }} />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Category Name

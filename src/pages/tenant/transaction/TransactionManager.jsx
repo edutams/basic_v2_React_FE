@@ -107,13 +107,24 @@ const TransactionManager = () => {
 
       <Box sx={{ mt: 3 }}>
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Box
+          sx={{
+            mb: 3,
+            borderBottom: 1,
+            borderColor: 'divider',
+            overflowX: 'auto',
+            '& .MuiTabs-root': {
+              minWidth: '300px',
+            },
+          }}
+        >
           <Tabs
             value={tab}
             onChange={handleTabChange}
             aria-label="online management tabs"
             textColor="primary"
             indicatorColor="primary"
+            variant="scrollable"
           >
             <Tab
               label="Overview"

@@ -23,8 +23,6 @@ import {
     Alert,
     Checkbox,
     TextField,
-    InputLabel,
-    FormControlLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
@@ -161,10 +159,12 @@ const Invoice = () => {
                 elevation={0}
                 sx={{
                     display: 'flex',
-                    alignItems: 'center',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'stretch', sm: 'center' },
                     justifyContent: 'space-between',
                     p: 2,
                     mb: 2,
+                    gap: { xs: 2, sm: 0 },
                     bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
                     borderLeft: `5px solid ${borderLeftColor}`,
@@ -201,123 +201,124 @@ const Invoice = () => {
             <Breadcrumb title="Invoice" items={BCrumb} />
             <Box sx={{ pb: 8 }}>
                 {/* HEADER - Student Info & Filters */}
-                <Grid
-                    container
-                    spacing={2}
+                <Box
                     sx={{
-                        mb: 4,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        alignItems: { xs: 'stretch', md: 'center' },
+                        justifyContent: 'space-between',
+                        gap: 2,
+                        mb: 3,
                         mt: 2,
-                        bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f9fafb',
-                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb'}`,
-                        borderRadius: 3,
+                        p: 2.5,
+                        bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                        borderRadius: '12px',
                     }}
-                    alignItems="stretch"
                 >
-                    {/* LEFT SIDE - Student Info */}
-                    <Grid size={{ xs: 12, md: 4 }}>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 2,
-                                p: 3,
-                                height: '100%',
-                            }}
+                    {/* Student details */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar
+                            src={dummyStudentData.avatar}
+                            alt={dummyStudentData.studentName}
+                            sx={{ width: 52, height: 52, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
                         >
-                            <Avatar
-                                src={dummyStudentData.avatar}
-                                alt={dummyStudentData.studentName}
-                                sx={{ width: 64, height: 64 }}
-                            >
-                                <PersonOutlineIcon sx={{ fontSize: 40 }} />
-                            </Avatar>
-                            <Box>
-                                <Typography variant="h5" fontWeight={600} gutterBottom>
-                                    {dummyStudentData.studentName}
+                            <PersonOutlineIcon sx={{ fontSize: 32 }} />
+                        </Avatar>
+                        <Box>
+                            <Typography variant="h6" fontWeight={700} color="text.primary" sx={{ lineHeight: 1.2 }}>
+                                {dummyStudentData.studentName}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                                    ID: {dummyStudentData.admissionNumber}
                                 </Typography>
-                                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {dummyStudentData.admissionNumber}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        • {dummyStudentData.class}
-                                    </Typography>
-                                </Box>
+                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#4caf50' }} />
+                                <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                                    {dummyStudentData.class}
+                                </Typography>
                             </Box>
                         </Box>
-                    </Grid>
+                    </Box>
 
-                    {/* RIGHT SIDE - Filters */}
-                    <Grid size={{ xs: 12, md: 8 }}>
-                        <Grid
-                            container
-                            spacing={2}
+                    {/* Filter controls */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: { xs: 'column', sm: 'row' }, 
+                        alignItems: { xs: 'stretch', sm: 'center' }, 
+                        gap: 1.5,
+                        width: { xs: '100%', md: 'auto' }
+                    }}>
+                        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
+                            <Select
+                                value={selectedTerm}
+                                onChange={(e) => setSelectedTerm(e.target.value)}
+                                sx={{
+                                    borderRadius: 2,
+                                    bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
+                                    '& .MuiSelect-select': { py: 1 }
+                                }}
+                            >
+                                <MenuItem value="First Term">First Term</MenuItem>
+                                <MenuItem value="Second Term">Second Term</MenuItem>
+                                <MenuItem value="Third Term">Third Term</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+                            <Select
+                                value={selectedSession}
+                                onChange={(e) => setSelectedSession(e.target.value)}
+                                sx={{
+                                    borderRadius: 2,
+                                    bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
+                                    '& .MuiSelect-select': { py: 1 }
+                                }}
+                            >
+                                <MenuItem value="Session 2024/2025">Session 2024/2025</MenuItem>
+                                <MenuItem value="Session 2025/2026">Session 2025/2026</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <Button
+                            variant="contained"
                             sx={{
-                                p: 3,
-                                height: '100%',
-                            }}
-                            alignItems="center"
-                            justifyContent="center"
-                        >
-                            <Grid size={{ xs: 12, sm: 6, md: 3.5 }}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Term</InputLabel>
-                                    <Select
-                                        value={selectedTerm}
-                                        label="Term"
-                                        onChange={(e) => setSelectedTerm(e.target.value)}
-                                    >
-                                        <MenuItem value="First Term">First Term</MenuItem>
-                                        <MenuItem value="Second Term">Second Term</MenuItem>
-                                        <MenuItem value="Third Term">Third Term</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6, md: 3.5 }}>
-                                <FormControl size="small" fullWidth>
-                                    <InputLabel>Session</InputLabel>
-                                    <Select
-                                        value={selectedSession}
-                                        label="Session"
-                                        onChange={(e) => setSelectedSession(e.target.value)}
-                                    >
-                                        <MenuItem value="Session 2024/2025">Session 2024/2025</MenuItem>
-                                        <MenuItem value="Session 2025/2026">Session 2025/2026</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-
-
-                            <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
-                                <Button variant="contained" fullWidth sx={{ height: '40px' }}>
-                                    Fetch
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 12 }} p={2}>
-                        <Alert
-                            severity="info"
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                '& .MuiAlert-message': {
-                                    flex: 'none',
-                                    textAlign: 'center',
-                                },
-                                '& .MuiAlert-icon': {
-                                    marginRight: 1,
-                                    padding: 0,
-                                },
+                                bgcolor: '#3b82f6',
+                                '&:hover': { bgcolor: '#2563eb' },
+                                borderRadius: 2,
+                                px: 3,
+                                py: 1.1,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                width: { xs: '100%', sm: 'auto' }
                             }}
                         >
-                            Note: You need to pay for the previous term you owe before you can pay for this term.
-                        </Alert>
-                    </Grid>
-                </Grid>
+                            Fetch
+                        </Button>
+                    </Box>
+                </Box>
+
+                {/* INFO ALERT BANNER */}
+                <Alert
+                    icon={false}
+                    severity="info"
+                    sx={{
+                        mb: 4,
+                        bgcolor: isDark ? 'rgba(3, 105, 161, 0.2)' : '#e0f2fe',
+                        color: isDark ? '#bae6fd' : '#0369a1',
+                        border: `1px solid ${isDark ? 'rgba(3, 105, 161, 0.4)' : '#bae6fd'}`,
+                        borderRadius: 2,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        '& .MuiAlert-message': {
+                            textAlign: 'center',
+                            width: '100%',
+                            fontWeight: 500,
+                        },
+                    }}
+                >
+                    Note: You need to pay for the previous term you owe before you can pay for this term.
+                </Alert>
 
                 {/* COMPULSORY PAYMENT */}
                 {renderHeaderBlock({
@@ -325,14 +326,28 @@ const Invoice = () => {
                     borderLeftColor: '#10b981',
                     icon: <ReceiptLongOutlinedIcon fontSize="small" />,
                     action: (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            flexWrap: 'wrap', 
+                            alignItems: 'center', 
+                            gap: { xs: 1.5, sm: 3 },
+                            width: { xs: '100%', sm: 'auto' },
+                            justifyContent: { xs: 'flex-start', sm: 'flex-end' }
+                        }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
                                 <Switch
                                     size="small"
                                     checked={compDiscountGlobal}
                                     onChange={(e) => setCompDiscountGlobal(e.target.checked)}
-
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -341,13 +356,29 @@ const Invoice = () => {
                                     size="small"
                                     checked={compPenaltyGlobal}
                                     onChange={(e) => setCompPenaltyGlobal(e.target.checked)}
-
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
                             <Button
                                 variant="contained"
                                 size="small"
-
+                                sx={{
+                                    bgcolor: '#8338ec',
+                                    '&:hover': { bgcolor: '#6a0dad' },
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    px: 2.5,
+                                    py: 0.8,
+                                    width: { xs: '100%', sm: 'auto' }
+                                }}
                             >
                                 Print Invoice
                             </Button>
@@ -361,11 +392,11 @@ const Invoice = () => {
                     sx={{
                         borderRadius: 3,
                         mb: 4,
-                        overflow: 'hidden',
+                        overflowX: 'auto',
                         borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'
                     }}
                 >
-                    <Table>
+                    <Table sx={{ minWidth: 900 }}>
                         <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
                             <TableRow>
                                 <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>#</TableCell>
@@ -504,17 +535,17 @@ const Invoice = () => {
                                     <Button
                                         variant="contained"
                                         disabled={compTotal === 0}
-                                    // sx={{
-                                    //     bgcolor: isDark ? '#475569' : '#94a3b8',
-                                    //     color: 'white',
-                                    //     '&:hover': { bgcolor: isDark ? '#334155' : '#64748b' },
-                                    //     '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
-                                    //     textTransform: 'none',
-                                    //     fontWeight: 700,
-                                    //     borderRadius: 2,
-                                    //     px: 3,
-                                    //     py: 0.8,
-                                    // }}
+                                        sx={{
+                                            bgcolor: isDark ? '#475569' : '#94a3b8',
+                                            color: 'white',
+                                            '&:hover': { bgcolor: isDark ? '#334155' : '#64748b' },
+                                            '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
+                                            textTransform: 'none',
+                                            fontWeight: 700,
+                                            borderRadius: 2,
+                                            px: 3,
+                                            py: 0.8,
+                                        }}
                                     >
                                         Pay Now - ₦{format(compTotal)} &gt;
                                     </Button>
@@ -530,21 +561,28 @@ const Invoice = () => {
                     borderLeftColor: '#3b82f6',
                     icon: <ReceiptLongOutlinedIcon fontSize="small" />,
                     action: (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            flexWrap: 'wrap', 
+                            alignItems: 'center', 
+                            gap: { xs: 1.5, sm: 3 },
+                            width: { xs: '100%', sm: 'auto' },
+                            justifyContent: { xs: 'flex-start', sm: 'flex-end' }
+                        }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="body2" color="text.secondary" fontWeight={500}>Discount</Typography>
                                 <Switch
                                     size="small"
                                     checked={optDiscountGlobal}
                                     onChange={(e) => setOptDiscountGlobal(e.target.checked)}
-                                // sx={{
-                                //     '& .MuiSwitch-switchBase.Mui-checked': {
-                                //         color: '#8338ec',
-                                //         '& + .MuiSwitch-track': {
-                                //             backgroundColor: '#8338ec',
-                                //         },
-                                //     },
-                                // }}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -553,27 +591,27 @@ const Invoice = () => {
                                     size="small"
                                     checked={optPenaltyGlobal}
                                     onChange={(e) => setOptPenaltyGlobal(e.target.checked)}
-                                // sx={{
-                                //     '& .MuiSwitch-switchBase.Mui-checked': {
-                                //         color: '#8338ec',
-                                //         '& + .MuiSwitch-track': {
-                                //             backgroundColor: '#8338ec',
-                                //         },
-                                //     },
-                                // }}
+                                    sx={{
+                                        '& .MuiSwitch-switchBase.Mui-checked': {
+                                            color: '#8338ec',
+                                            '& + .MuiSwitch-track': {
+                                                backgroundColor: '#8338ec',
+                                            },
+                                        },
+                                    }}
                                 />
                             </Box>
                             <Switch
                                 checked={optionalEnabled}
                                 onChange={(e) => setOptionalEnabled(e.target.checked)}
-                            // sx={{
-                            //     '& .MuiSwitch-switchBase.Mui-checked': {
-                            //         color: '#8338ec',
-                            //         '& + .MuiSwitch-track': {
-                            //             backgroundColor: '#8338ec',
-                            //         },
-                            //     },
-                            // }}
+                                sx={{
+                                    '& .MuiSwitch-switchBase.Mui-checked': {
+                                        color: '#8338ec',
+                                        '& + .MuiSwitch-track': {
+                                            backgroundColor: '#8338ec',
+                                        },
+                                    },
+                                }}
                             />
                         </Box>
                     ),
@@ -586,11 +624,11 @@ const Invoice = () => {
                         sx={{
                             borderRadius: 3,
                             mb: 4,
-                            overflow: 'hidden',
+                            overflowX: 'auto',
                             borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'
                         }}
                     >
-                        <Table>
+                        <Table sx={{ minWidth: 1000 }}>
                             <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
                                 <TableRow>
                                     <TableCell sx={{ fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 1.5 }}>#</TableCell>
@@ -688,14 +726,14 @@ const Invoice = () => {
                                                         checked={penaltyRowEnabled}
                                                         disabled={optPenaltyGlobal}
                                                         onChange={(e) => handlePenaltySwitchChange('opt', fee.id, e.target.checked)}
-                                                    // sx={{
-                                                    //     '& .MuiSwitch-switchBase.Mui-checked': {
-                                                    //         color: '#8338ec',
-                                                    //         '& + .MuiSwitch-track': {
-                                                    //             backgroundColor: '#8338ec',
-                                                    //         },
-                                                    //     },
-                                                    // }}
+                                                        sx={{
+                                                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                                                color: '#8338ec',
+                                                                '& + .MuiSwitch-track': {
+                                                                    backgroundColor: '#8338ec',
+                                                                },
+                                                            },
+                                                        }}
                                                     />
                                                     <TextField
                                                         size="small"
@@ -752,56 +790,65 @@ const Invoice = () => {
                         border: `1px solid ${isDark ? 'rgba(234, 179, 8, 0.3)' : '#fef08a'}`,
                         borderRadius: 3,
                         display: 'flex',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        alignItems: { xs: 'stretch', md: 'center' },
                         justifyContent: 'space-between',
                         gap: 2,
                         boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
                     }}
                 >
+                    {/* LEFT - Legends */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: { xs: 'row', sm: 'column', md: 'column' }, 
+                        justifyContent: { xs: 'space-between', sm: 'flex-start' },
+                        gap: { xs: 2, sm: 0.5 } 
+                    }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Checkbox
+                                size="small"
+                                checked={compFees.length > 0 && compFees.every(f => f.checked)}
+                                indeterminate={compFees.some(f => f.checked) && !compFees.every(f => f.checked)}
+                                onChange={(e) => handleAllCompCheckChange(e.target.checked)}
+                                sx={{
+                                    color: '#10b981',
+                                    '&.Mui-checked': { color: '#10b981' },
+                                    '&.MuiCheckbox-indeterminate': { color: '#10b981' },
+                                    p: 0.5
+                                }}
+                            />
+                            <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
+                                Compulsory Payment
+                            </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Checkbox
+                                size="small"
+                                checked={optionalEnabled && optFees.length > 0 && optFees.every(f => f.checked)}
+                                indeterminate={optionalEnabled && optFees.some(f => f.checked) && !optFees.every(f => f.checked)}
+                                disabled={!optionalEnabled}
+                                onChange={(e) => handleAllOptCheckChange(e.target.checked)}
+                                sx={{
+                                    color: '#84cc16',
+                                    '&.Mui-checked': { color: '#84cc16' },
+                                    '&.MuiCheckbox-indeterminate': { color: '#84cc16' },
+                                    p: 0.5
+                                }}
+                            />
+                            <Typography variant="body2" fontWeight={600} color={isDark ? '#cbd5e1' : '#374151'}>
+                                Optional Payment
+                            </Typography>
+                        </Box>
+                    </Box>
 
-                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-    <FormControlLabel
-        control={
-            <Checkbox
-                size="small"
-                checked={compFees.length > 0 && compFees.every(f => f.checked)}
-                indeterminate={
-                    compFees.some(f => f.checked) &&
-                    !compFees.every(f => f.checked)
-                }
-                onChange={(e) => handleAllCompCheckChange(e.target.checked)}
-            />
-        }
-        label="Compulsory Payment"
-        sx={{ m: 0 }}
-    />
-
-    <FormControlLabel
-        control={
-            <Checkbox
-                size="small"
-                checked={
-                    optionalEnabled &&
-                    optFees.length > 0 &&
-                    optFees.every(f => f.checked)
-                }
-                indeterminate={
-                    optionalEnabled &&
-                    optFees.some(f => f.checked) &&
-                    !optFees.every(f => f.checked)
-                }
-                disabled={!optionalEnabled}
-                onChange={(e) => handleAllOptCheckChange(e.target.checked)}
-            />
-        }
-        label="Optional Payment"
-        sx={{ m: 0 }}
-    />
-</Box>
                     {/* MIDDLE - Global Installment Dropdown */}
-                    <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
-                        <FormControl size="small" sx={{ minWidth: 220, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
+                    <Box sx={{ 
+                        flexGrow: 1, 
+                        display: 'flex', 
+                        justifyContent: 'center',
+                        width: { xs: '100%', md: 'auto' } 
+                    }}>
+                        <FormControl size="small" sx={{ minWidth: 220, width: { xs: '100%', sm: 220, md: 220 }, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
                             <Select
                                 value={globalInstallment}
                                 onChange={(e) => setGlobalInstallment(e.target.value)}
@@ -821,22 +868,24 @@ const Invoice = () => {
                     <Button
                         variant="contained"
                         disabled={grandTotal === 0}
-                    // sx={{
-                    //     bgcolor: '#84cc16',
-                    //     color: 'white',
-                    //     '&:hover': { bgcolor: '#65a30d' },
-                    //     '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
-                    //     textTransform: 'none',
-                    //     fontWeight: 700,
-                    //     fontSize: '1rem',
-                    //     borderRadius: 3,
-                    //     px: 4,
-                    //     py: 1.2,
-                    //     display: 'flex',
-                    //     alignItems: 'center',
-                    //     gap: 1.5,
-                    //     boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.4)',
-                    // }}
+                        sx={{
+                            bgcolor: '#84cc16',
+                            color: 'white',
+                            '&:hover': { bgcolor: '#65a30d' },
+                            '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            fontSize: '1rem',
+                            borderRadius: 3,
+                            px: 4,
+                            py: 1.2,
+                            width: { xs: '100%', md: 'auto' },
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1.5,
+                            boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.4)',
+                        }}
                     >
                         Pay Now - ₦{format(grandTotal)} &gt;
                     </Button>

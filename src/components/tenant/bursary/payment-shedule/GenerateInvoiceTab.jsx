@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import {
   Box,
   Typography,
@@ -32,6 +33,13 @@ import {
 } from '@mui/icons-material';
 
 const GenerateInvoiceTab = ({ showSnackbar }) => {
+  const { tenantInfo } = useContext(TenantAuthContext) || {};
+  const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
+  const schoolName = tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || 'School Name';
+  const schoolAddress = tenantInfo?.address || '';
+  const schoolEmail = tenantInfo?.administrator_info?.school_owner?.school_owner_email || '';
+  const schoolPhone = tenantInfo?.administrator_info?.school_owner?.school_owner_phone || '';
+
   const [selectedSession, setSelectedSession] = useState('2024/2025 - Third Term');
   const [selectedClass, setSelectedClass] = useState('JSS2');
   const [searchQuery, setSearchQuery] = useState('');
@@ -643,7 +651,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
       <Stack spacing={3} sx={{ bgcolor: '#fafafa', p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h6" fontWeight={700}>
-            Class Invoice
+            Class Invoice · {selectedClass}
           </Typography>
           <Button variant="outlined" size="small" onClick={() => setViewMode('students')}>
             Back
@@ -677,7 +685,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 {/* Logo */}
                 <Box
                   component="img"
-                  src="/Edutams.png"
+                  src={schoolLogo}
                   alt="School Logo"
                   sx={{
                     width: 80,
@@ -694,21 +702,27 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 {/* School Details */}
                 <Box flex={1} textAlign="center">
                   <Typography variant="h6" fontWeight={800} color="text.primary">
-                    Funmilola Model College
+                    {schoolName}
                   </Typography>
 
-                  <Typography variant="body2" color="text.secondary" fontWeight={700}>
-                    FMC Avenue, Sawmill, Okeowa, Ijebu Ode
-                  </Typography>
+                  {schoolAddress && (
+                    <Typography variant="body2" color="text.secondary" fontWeight={700}>
+                      {schoolAddress}
+                    </Typography>
+                  )}
 
                   <Box display="flex" flexWrap="wrap" gap={3} mt={1} justifyContent="center">
-                    <Typography variant="caption" color="text.secondary" fontWeight={700}>
-                      ✉ hassankikiopemi2020@gmail.com
-                    </Typography>
+                    {schoolEmail && (
+                      <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                        ✉ {schoolEmail}
+                      </Typography>
+                    )}
 
-                    <Typography variant="caption" color="text.secondary" fontWeight={700}>
-                      ☎ (+234)-816-8223-065
-                    </Typography>
+                    {schoolPhone && (
+                      <Typography variant="caption" color="text.secondary" fontWeight={700}>
+                        ☎ {schoolPhone}
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
               </Box>
@@ -746,18 +760,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                       </Box>
                     </Typography>
                     <Button
-                      variant="contained"
-                      sx={{
-                        bgcolor: '#7cb342',
-                        '&:hover': { bgcolor: '#689f38' },
-                        color: 'white',
-                        fontWeight: 700,
-                        fontSize: '0.8rem',
-                        px: 3,
-                        py: 1,
-                        boxShadow: 'none',
-                        borderRadius: 1,
-                      }}
+                    size='small'
                     >
                       PROCEED TO PAY
                     </Button>
@@ -781,18 +784,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                       </Typography>
                     </Typography>
                     <Button
-                      variant="contained"
-                      sx={{
-                        bgcolor: '#7cb342',
-                        '&:hover': { bgcolor: '#689f38' },
-                        color: 'white',
-                        fontWeight: 700,
-                        fontSize: '0.8rem',
-                        px: 3,
-                        py: 1,
-                        boxShadow: 'none',
-                        borderRadius: 1,
-                      }}
+                      size='small'
                     >
                       UPDATE INVOICE
                     </Button>

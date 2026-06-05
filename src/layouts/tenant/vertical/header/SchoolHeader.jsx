@@ -171,6 +171,8 @@ const SchoolHeader = () => {
         {isImpersonated && (
           <Box
             sx={{
+              bgcolor: '#593196',
+              color: '#ffffff',
               px: { xs: 1, sm: 2 },
               py: 0.5,
               borderRadius: 1,
@@ -193,6 +195,7 @@ const SchoolHeader = () => {
 
             <Button
               size="small"
+              color="inherit"
               onClick={() => setConfirmOpen(true)}
               sx={{
                 whiteSpace: 'nowrap',

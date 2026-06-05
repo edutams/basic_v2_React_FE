@@ -176,16 +176,6 @@ const Header = () => {
             >
               Logged in as Agent
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                display: { xs: 'block', sm: 'none' },
-                whiteSpace: 'nowrap',
-                fontSize: '11px',
-              }}
-            >
-              Impersonating
-            </Typography>
             <Button
               size="small"
               color="inherit"

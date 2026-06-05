@@ -17,14 +17,12 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import {
-  Receipt as ReceiptIcon,
-  FileUpload as UploadIcon,
-} from '@mui/icons-material';
+import { Receipt as ReceiptIcon, FileUpload as UploadIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
 import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
+import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
@@ -58,6 +56,30 @@ const PaymentShedule = () => {
     },
   };
 
+  // Stats for Generate Invoice Tab
+  const invoiceStats = {
+    invoiceGenerated: 382,
+    totalAmount: '₦900,805,000.00',
+    paymentNames: [
+      { name: 'With Minimum Invoice', count: 798, amount: '₦539,253,760.00', label: 'School Fee' },
+      {
+        name: 'With Maximum Invoice',
+        count: 798,
+        amount: '₦539,455,900.00',
+        label: 'Acceptance Fee',
+      },
+    ],
+    categories: [
+      {
+        name: 'With Minimum Invoice',
+        count: 798,
+        amount: '₦539,253,760.00',
+        label: 'Returning Student',
+      },
+      { name: 'With Maximum Invoice', count: 798, amount: '₦539,495,900.00', label: 'New Student' },
+    ],
+  };
+
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
@@ -81,133 +103,289 @@ const PaymentShedule = () => {
         items={BCrumb}
       />
 
-      <Grid container spacing={3} mb={3}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-            <Typography variant="body2" color="textSecondary" mb={3}>
-              Compulsory Schedule
-            </Typography>
-            <Box display="flex" justifyContent= "space-between" alignItems= "center" gap={4}>
-              <Box
-                sx={{
-                  bgcolor: 'primary.light',
-                  borderRadius: 1,
-                  px: 3,
-                  py: 2,
-                  minWidth: 100,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography variant="h2" fontWeight={700} color='primary' sx={{ lineHeight: 1 }}>
-                  {stats.compulsorySchedule.total}
-                </Typography>
+      {/* Dynamic Stats Cards based on active tab */}
+      {actionTab === 0 && (
+        // Set Schedule Stats
+        <Grid container spacing={3} mb={3}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+              <Typography variant="body2" color="textSecondary" mb={3}>
+                Compulsory Schedule
+              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
+                <Box
+                  sx={{
+                    bgcolor: 'primary.light',
+                    borderRadius: 1,
+                    px: 3,
+                    py: 2,
+                    minWidth: 100,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h2" fontWeight={700} color="primary" sx={{ lineHeight: 1 }}>
+                    {stats.compulsorySchedule.total}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.compulsorySchedule.classes}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Classes
+                  </Typography>
+                </Box>
               </Box>
-              <Box>
-                <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                  {stats.compulsorySchedule.classes}
-                </Typography>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 25,
+                    height: 25,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ReceiptIcon color="primary" sx={{ fontSize: 14 }} />
+                </Box>
                 <Typography variant="body2" color="textSecondary">
-                  Classes
+                  Payment Name
                 </Typography>
               </Box>
-            </Box>
-          </Paper>
-        </Grid>
+              <Box display="flex" gap={2}>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Minimum Schedule
+                  </Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.paymentName.withMinSchedule}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.paymentName.minLabel}
+                  </Typography>
+                </Box>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Maximum Schedule
+                  </Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.paymentName.withMaxSchedule}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.paymentName.maxLabel}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-            <Box display="flex"  alignItems="center" gap={1} mb={2}>
-              <Box
-                sx={{
-                  width: 25,
-                  height: 25,
-                  borderRadius: '50%',
-                  bgcolor: 'primary.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ReceiptIcon  color= 'primary' sx={{ fontSize: 14 }} />
-              </Box>
-              <Typography variant="body2" color="textSecondary">
-                Payment Name
-              </Typography>
-            </Box>
-            <Box display="flex" gap={2}>
-              <Box flex={1}>
-                <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                  With Minimum Schedule
-                </Typography>
-                <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                  {stats.paymentName.withMinSchedule}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {stats.paymentName.minLabel}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 25,
+                    height: 25,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ReceiptIcon color="primary" sx={{ fontSize: 14 }} />
+                </Box>
+                <Typography variant="body2" color="textSecondary">
+                  Student Category
                 </Typography>
               </Box>
-              <Box flex={1}>
-                <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                  With Maximum Schedule
-                </Typography>
-                <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                  {stats.paymentName.withMaxSchedule}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {stats.paymentName.maxLabel}
-                </Typography>
+              <Box display="flex" gap={2}>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Minimum Schedule
+                  </Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.studentCategory.withMinSchedule}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.studentCategory.minLabel}
+                  </Typography>
+                </Box>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Maximum Schedule
+                  </Typography>
+                  <Typography variant="h3">{stats.studentCategory.withMaxSchedule}</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.studentCategory.maxLabel}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          </Paper>
+            </Paper>
+          </Grid>
         </Grid>
+      )}
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
-              <Box
-                sx={{
-                  width: 25,
-                  height: 25,
-                  borderRadius: '50%',
-                  bgcolor: 'primary.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <ReceiptIcon color= 'primary' sx={{ fontSize: 14 }} />
-              </Box>
-              <Typography variant="body2" color="textSecondary">
-                Student Category
+      {actionTab === 1 && (
+        // Generate Invoice Stats
+        <Grid container spacing={3} mb={3}>
+          {/* Invoice Generated Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+              <Typography variant="caption" color="text.secondary" gutterBottom display="block">
+                Invoice Generated
               </Typography>
-            </Box>
-            <Box display="flex" gap={2}>
-              <Box flex={1}>
-                <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                  With Minimum Schedule
-                </Typography>
-                <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                  {stats.studentCategory.withMinSchedule}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {stats.studentCategory.minLabel}
+              <Box display="flex" alignItems="center" gap={2} mt={5}>
+                <Box
+                  sx={{
+                    bgcolor: '#FFF8E1',
+                    borderRadius: 1,
+                    px: 3,
+                    py: 1.5,
+                    minWidth: 80,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h2" fontWeight={700} color="#F57C00">
+                    {invoiceStats.invoiceGenerated}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h4" fontWeight={700}>
+                    {invoiceStats.totalAmount}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Amount
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Payment Name Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '4px',
+                    bgcolor: 'rgba(139, 195, 74, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '14px',
+                    }}
+                  >
+                    🏠
+                  </Box>
+                </Box>
+                <Typography variant="body2" fontWeight={600}>
+                  Payment Name
                 </Typography>
               </Box>
-              <Box flex={1}>
-                <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                  With Maximum Schedule
-                </Typography>
-                <Typography variant="h3" >
-                  {stats.studentCategory.withMaxSchedule}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {stats.studentCategory.maxLabel}
+
+              <Stack direction="row" spacing={1.5}>
+                {invoiceStats.paymentNames.map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      bgcolor: idx === 0 ? 'rgba(139, 195, 74, 0.12)' : 'rgba(103, 58, 183, 0.12)',
+                      p: 1.5,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="h5" fontWeight={700} mb={0.5}>
+                      {item.count}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} mb={0.5}>
+                      {item.amount}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {item.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+
+          {/* Category Name Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '4px',
+                    bgcolor: 'rgba(103, 58, 183, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '14px',
+                    }}
+                  >
+                    📊
+                  </Box>
+                </Box>
+                <Typography variant="body2" fontWeight={600}>
+                  Category Name
                 </Typography>
               </Box>
-            </Box>
-          </Paper>
+
+              <Stack direction="row" spacing={1.5}>
+                {invoiceStats.categories.map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      bgcolor: idx === 0 ? 'rgba(139, 195, 74, 0.12)' : 'rgba(103, 58, 183, 0.12)',
+                      p: 1.5,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="h5" fontWeight={700} mb={0.5}>
+                      {item.count}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} mb={0.5}>
+                      {item.amount}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {item.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       {/* Action Tabs */}
       <Box sx={{ mb: 3 }}>
@@ -228,9 +406,7 @@ const PaymentShedule = () => {
       </Box>
 
       <Paper sx={{ borderRadius: 2 }}>
-        {/* Header Section */}
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-          {/* Title and Filters Row */}
           <Box
             sx={{
               display: 'flex',
@@ -240,7 +416,6 @@ const PaymentShedule = () => {
               gap: 2,
             }}
           >
-            {/* Left: Title */}
             <Box display="flex" alignItems="center" gap={2}>
               <Box
                 sx={{
@@ -267,7 +442,6 @@ const PaymentShedule = () => {
               </Box>
             </Box>
 
-            {/* Right: Filters - Keep desktop layout, stack only on small screens */}
             <Box
               sx={{
                 display: 'flex',
@@ -402,8 +576,6 @@ const PaymentShedule = () => {
               />
             </Tabs>
           </Box>
-
-          {/* Import Button */}
           <Button
             variant="contained"
             startIcon={<UploadIcon />}
@@ -417,8 +589,20 @@ const PaymentShedule = () => {
 
         {/* Tab Content */}
         <Box sx={{ p: 3 }}>
-          {scheduleTab === 0 && <CompulsoryScheduleTab showSnackbar={showSnackbar} />}
-          {scheduleTab === 1 && <OptionalPaymentTab showSnackbar={showSnackbar} />}
+          {actionTab === 0 && (
+            <>
+              {scheduleTab === 0 && <CompulsoryScheduleTab showSnackbar={showSnackbar} />}
+              {scheduleTab === 1 && <OptionalPaymentTab showSnackbar={showSnackbar} />}
+            </>
+          )}
+          {actionTab === 1 && <GenerateInvoiceTab showSnackbar={showSnackbar} />}
+          {actionTab === 2 && (
+            <Box textAlign="center" py={8}>
+              <Typography variant="h6" color="text.secondary">
+                Send Invoice - Coming Soon
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Paper>
 

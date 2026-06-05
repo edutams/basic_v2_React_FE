@@ -25,6 +25,7 @@ import {
   ListItemIcon,
   ListItemText,
   Alert,
+  Divider,
 } from '@mui/material';
 import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
 import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
@@ -46,6 +47,11 @@ import {
   updateInstallment,
   toggleInstallmentStatus,
 } from '@/api/tenant/bursary/installmentApi';
+import {
+  changeBursarySetting,
+  fetchBursarySettings,
+  setActiveSessionTerm,
+} from '@/api/tenant/bursary/bursarySettingsApi';
 
 const StatusChip = ({ status }) => {
   const isActive = status === 'active';
@@ -71,10 +77,7 @@ const BursarySetupTab = ({
   sessionTerms,
   selectedSessionTerm,
   setSelectedSessionTerm,
-  categories,
-  setCategories,
-  instalments,
-  setInstalments,
+  onStatsChange,
   showSnackbar,
 }) => {
   const [collectionMethod, setCollectionMethod] = useState('single');
@@ -101,6 +104,13 @@ const BursarySetupTab = ({
     instalment: null,
   });
 
+  const [categories, setCategories] = useState([]);
+  const [instalments, setInstalments] = useState([]);
+
+  const [settings, setSettings] = useState({});
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [savingCode, setSavingCode] = useState(null);
+
   const loadCategories = async () => {
     try {
       const res = await fetchPaymentCategories();
@@ -123,9 +133,43 @@ const BursarySetupTab = ({
     }
   };
 
+  const loadSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const res = await fetchBursarySettings();
+      const map = {};
+      (res.data?.data || []).forEach((s) => {
+        map[s.code] = {
+          ...s,
+          options: typeof s.options === 'string' ? JSON.parse(s.options) : s.options,
+        };
+      });
+      setSettings(map);
+
+      // seed local radio states from DB values
+      if (map.fee_collection_method) setCollectionMethod(map.fee_collection_method.value);
+      if (map.installment_style) setInstalmentStyle(map.installment_style.value);
+      if (map.gateway_charge_bearer) setGatewayPayer(map.gateway_charge_bearer.value);
+    } catch {
+      showSnackbar('Failed to load bursary settings', 'error');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    onStatsChange?.({
+      totalCategories: categories.length,
+      activeCategories: categories.filter((c) => c.status === 'active').length,
+      totalInstalments: instalments.length,
+      activeInstalments: instalments.filter((i) => i.status === 'active').length,
+    });
+  }, [categories, instalments]);
+
   useEffect(() => {
     loadCategories();
     loadInstalments();
+    loadSettings();
   }, []);
 
   const handleAddCategory = () => {
@@ -137,6 +181,42 @@ const BursarySetupTab = ({
     setEditingCategory(category);
     setCategoryModalOpen(true);
     setCategoryMenuAnchor(null);
+  };
+
+  const handleSettingChange = async (code, value) => {
+    // optimistically update local state first
+    if (code === 'fee_collection_method') setCollectionMethod(value);
+    if (code === 'installment_style') setInstalmentStyle(value);
+    if (code === 'gateway_charge_bearer') setGatewayPayer(value);
+
+    setSavingCode(code);
+    try {
+      await changeBursarySetting(code, value);
+      setSettings((prev) => ({ ...prev, [code]: { ...prev[code], value } }));
+      showSnackbar('Setting saved successfully');
+    } catch {
+      // revert on failure
+      if (code === 'fee_collection_method')
+        setCollectionMethod(settings.fee_collection_method?.value);
+      if (code === 'installment_style') setInstalmentStyle(settings.installment_style?.value);
+      if (code === 'gateway_charge_bearer') setGatewayPayer(settings.gateway_charge_bearer?.value);
+      showSnackbar('Failed to save setting', 'error');
+    } finally {
+      setSavingCode(null);
+    }
+  };
+
+  const handleSessionTermChange = async (termId) => {
+    setSelectedSessionTerm(termId);
+    setSavingCode('active_ses_term');
+    try {
+      await setActiveSessionTerm(termId);
+      showSnackbar('Active session term updated');
+    } catch {
+      showSnackbar('Failed to update session term', 'error');
+    } finally {
+      setSavingCode(null);
+    }
   };
 
   const handleSaveCategory = async (categoryData) => {
@@ -237,22 +317,35 @@ const BursarySetupTab = ({
   return (
     <>
       <Stack spacing={3}>
-        <ParentCard title="Select Session Term">
-          <TextField
-            select
-            label="Select Session Term"
-            value={selectedSessionTerm}
-            onChange={(e) => setSelectedSessionTerm(e.target.value)}
-            size="small"
-          >
-            {sessionTerms.map((term) => (
-              <MenuItem key={term.id} value={term.id}>
-                {term.label}
-              </MenuItem>
-            ))}
-          </TextField>
+        <ParentCard title="Bursary Setup">
+          {/* Session Term */}
+          <Box mb={3}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Set Bursary Active Session Term
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={1.5}>
+              This determines which session term bursary fees are being collected for.
+            </Typography>
+            <TextField
+              select
+              label="Select Session Term"
+              value={selectedSessionTerm}
+              onChange={(e) => handleSessionTermChange(e.target.value)}
+              size="small"
+              disabled={savingCode === 'active_ses_term'}
+              sx={{ minWidth: 280 }}
+            >
+              {sessionTerms.map((term) => (
+                <MenuItem key={term.id} value={term.id}>
+                  {term.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Box>
 
-          <Box display="flex" alignItems="flex-start" gap={2} mb={3} mt={2}>
+          <Divider sx={{ mb: 3 }} />
+
+          <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
             <Box
               sx={{
                 width: 40,
@@ -267,7 +360,6 @@ const BursarySetupTab = ({
             >
               <PaymentsIcon sx={{ fontSize: 20, color: 'primary.main' }} />
             </Box>
-
             <Box>
               <Typography variant="h6" fontWeight={600}>
                 How should fees be collected?
@@ -279,6 +371,7 @@ const BursarySetupTab = ({
           </Box>
 
           <Grid container spacing={3}>
+            {/* Collection Method */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
@@ -291,63 +384,46 @@ const BursarySetupTab = ({
               >
                 <FormControl fullWidth>
                   <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    Collection method
+                    {settings.fee_collection_method?.name || 'Collection method'}
                   </FormLabel>
                   <RadioGroup
                     value={collectionMethod}
-                    onChange={(e) => setCollectionMethod(e.target.value)}
+                    onChange={(e) => handleSettingChange('fee_collection_method', e.target.value)}
                   >
                     <Stack spacing={2}>
-                      <FormControlLabel
-                        value="single"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              Single payment
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              All fees collected together in one transaction.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
-                      <FormControlLabel
-                        value="per_fee"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              Pay per fee
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Each fee is processed separately.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
+                      {(settings.fee_collection_method?.options || []).map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={savingCode === 'fee_collection_method'}
+                          control={<Radio />}
+                          label={
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {opt.value === 'single_payment' ? 'Single payment' : 'Pay per fee'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {opt.text}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{
+                            m: 0,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            alignItems: 'flex-start',
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
               </Box>
             </Grid>
 
+            {/* Instalment Style */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
@@ -360,63 +436,46 @@ const BursarySetupTab = ({
               >
                 <FormControl fullWidth>
                   <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    Installment style
+                    {settings.installment_style?.name || 'Installment style'}
                   </FormLabel>
                   <RadioGroup
                     value={instalmentStyle}
-                    onChange={(e) => setInstalmentStyle(e.target.value)}
+                    onChange={(e) => handleSettingChange('installment_style', e.target.value)}
                   >
                     <Stack spacing={2}>
-                      <FormControlLabel
-                        value="percentage"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              By percentage
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              e.g. 60% now, 40% later.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
-                      <FormControlLabel
-                        value="amount"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              By amount
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Pay any amount, anytime.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
+                      {(settings.installment_style?.options || []).map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={savingCode === 'installment_style'}
+                          control={<Radio />}
+                          label={
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {opt.value === 'percentage' ? 'By percentage' : 'By amount'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {opt.text}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{
+                            m: 0,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            alignItems: 'flex-start',
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
               </Box>
             </Grid>
 
+            {/* Gateway Payer */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
@@ -429,57 +488,39 @@ const BursarySetupTab = ({
               >
                 <FormControl fullWidth>
                   <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    Who pays gateway charges?
+                    {settings.gateway_charge_bearer?.name || 'Who pays gateway charges?'}
                   </FormLabel>
                   <RadioGroup
                     value={gatewayPayer}
-                    onChange={(e) => setGatewayPayer(e.target.value)}
+                    onChange={(e) => handleSettingChange('gateway_charge_bearer', e.target.value)}
                   >
                     <Stack spacing={2}>
-                      <FormControlLabel
-                        value="parent"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              Parent / Student
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              Charges added on top of the fee.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
-                      <FormControlLabel
-                        value="school"
-                        control={<Radio />}
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              School
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              School absorbs the charges.
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{
-                          m: 0,
-                          p: 2,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 2,
-                          alignItems: 'flex-start',
-                        }}
-                      />
+                      {(settings.gateway_charge_bearer?.options || []).map((opt) => (
+                        <FormControlLabel
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={savingCode === 'gateway_charge_bearer'}
+                          control={<Radio />}
+                          label={
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                {opt.value === 'parent' ? 'Parent / Student' : 'School'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {opt.text}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{
+                            m: 0,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 2,
+                            alignItems: 'flex-start',
+                          }}
+                        />
+                      ))}
                     </Stack>
                   </RadioGroup>
                 </FormControl>

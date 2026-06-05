@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Grid,
-  Typography,
-  Paper,
-  Tabs,
-  Tab,
-  Alert,
-  Snackbar,
-} from '@mui/material';
+import { Box, Grid, Typography, Paper, Tabs, Tab, Alert, Snackbar } from '@mui/material';
 import { IconSettings, IconFileText } from '@tabler/icons-react';
 import {
   Settings as SettingsIcon,
@@ -20,6 +11,7 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import StatCard from '@/components/shared/StatCard';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
+import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary Setup' }];
 
@@ -31,46 +23,13 @@ const BursarySetup = () => {
   const [sessionTerms, setSessionTerms] = useState([]);
   const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
 
-  // Payment Categories
-  const [categories, setCategories] = useState([
-    {
-      id: 1,
-      name: 'Returning Students',
-      description: 'Students who are not meant to pay school fees',
-      status: 'active',
-    },
-    {
-      id: 2,
-      name: 'Scholarship',
-      description: 'Students who are not meant to pay school fees',
-      status: 'active',
-    },
-    {
-      id: 3,
-      name: 'Scholarship',
-      description: 'Students who are not meant to pay school fees',
-      status: 'inactive',
-    },
-    { id: 4, name: 'Staff ward', description: 'Staffward', status: 'inactive' },
-    { id: 5, name: 'Staff ward', description: 'Staffward', status: 'inactive' },
-  ]);
-
-  // Installment Plans
-  const [instalments, setInstalments] = useState([
-    { id: 1, options: '60 : 40', status: 'active' },
-    { id: 2, options: '70 : 30', status: 'active' },
-    { id: 3, options: '50 : 50', status: 'active' },
-    { id: 4, options: '100 : 0', status: 'active' },
-    { id: 5, options: '80 : 20', status: 'inactive' },
-  ]);
-
   // Stats data for different tabs
-  const bursaryStats = {
-    totalCategories: categories.length,
-    activeCategories: categories.filter((c) => c.status === 'active').length,
-    totalInstalments: instalments.length,
-    activeInstalments: instalments.filter((i) => i.status === 'active').length,
-  };
+  const [bursaryStats, setBursaryStats] = useState({
+    totalCategories: 0,
+    activeCategories: 0,
+    totalInstalments: 0,
+    activeInstalments: 0,
+  });
 
   const paymentNameStats = {
     totalItems: 164,
@@ -95,13 +54,23 @@ const BursarySetup = () => {
     loadSessionTerms();
   }, []);
 
-  const loadSessionTerms = () => {
-    setSessionTerms([
-      { id: 1, label: '2024/2025 - First Term' },
-      { id: 2, label: '2024/2025 - Second Term' },
-      { id: 3, label: '2024/2025 - Third Term' },
-    ]);
-    setSelectedSessionTerm(1);
+  const loadSessionTerms = async () => {
+    try {
+      const response = await fetchSessionTerms();
+      if (response.status) {
+        const sess_terms = [
+          { id: 'all', label: 'All Sessions' },
+          ...response.data.map((sterm) => ({
+            id: sterm.id,
+            label:
+              `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+          })),
+        ];
+        setSessionTerms(sess_terms);
+      }
+    } catch (error) {
+      console.error('Failed to fetch session terms:', error);
+    }
   };
 
   const showSnackbar = (message, severity = 'success') =>
@@ -341,10 +310,7 @@ const BursarySetup = () => {
           sessionTerms={sessionTerms}
           selectedSessionTerm={selectedSessionTerm}
           setSelectedSessionTerm={setSelectedSessionTerm}
-          categories={categories}
-          setCategories={setCategories}
-          instalments={instalments}
-          setInstalments={setInstalments}
+          onStatsChange={setBursaryStats}
           showSnackbar={showSnackbar}
         />
       )}

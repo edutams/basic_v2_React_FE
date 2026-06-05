@@ -30,6 +30,9 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
   const [selectedSession, setSelectedSession] = useState('2024/2025 - Third Term');
   const [selectedClass, setSelectedClass] = useState('JSS2');
   const [searchQuery, setSearchQuery] = useState('');
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
+  const [selectedStudentCategory, setSelectedStudentCategory] = useState('');
+  const [appliedStudentCategory, setAppliedStudentCategory] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState('schedule');
@@ -45,14 +48,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
     setAnchorEl(null);
   };
 
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = studentsData.map((n) => n.id);
-      setSelectedStudents(newSelecteds);
-      return;
-    }
-    setSelectedStudents([]);
-  };
+
 
   const handleStudentClick = (event, id) => {
     const selectedIndex = selectedStudents.indexOf(id);
@@ -162,7 +158,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   const [studentsData] = useState([
     { id: 1, admissionId: 'STU-1042', name: 'Ada Obi', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
-    { id: 2, admissionId: 'STU-1043', name: 'Adejoke Mojisola', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
+    { id: 2, admissionId: 'STU-1043', name: 'Adejoke Mojisola', category: 'New Student', compulsory: 15000, optional: null, totalAmount: 105000 },
     { id: 3, admissionId: 'STU-1044', name: 'Lawal Romota', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
     { id: 4, admissionId: 'STU-1045', name: 'Kehinde Dada', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
     { id: 5, admissionId: 'STU-1046', name: 'Adejumobi Johnson', category: 'Returning Student', compulsory: 15000, optional: null, totalAmount: 105000 },
@@ -200,7 +196,39 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
 
   // Paginate data
   const paginatedData = scheduleData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  const paginatedStudentsData = studentsData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  
+  const filteredStudentsData = studentsData.filter((student) => {
+    let match = true;
+    if (appliedSearchQuery) {
+      const lowerQuery = appliedSearchQuery.toLowerCase();
+      match = match && (
+        student.name.toLowerCase().includes(lowerQuery) ||
+        student.admissionId.toLowerCase().includes(lowerQuery) ||
+        student.category.toLowerCase().includes(lowerQuery)
+      );
+    }
+    if (appliedStudentCategory) {
+      match = match && student.category === appliedStudentCategory;
+    }
+    return match;
+  });
+  
+  const paginatedStudentsData = filteredStudentsData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const handleStudentFetch = () => {
+    setAppliedSearchQuery(searchQuery);
+    setAppliedStudentCategory(selectedStudentCategory);
+    setPage(0);
+  };
+
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelecteds = filteredStudentsData.map((n) => n.id);
+      setSelectedStudents(newSelecteds);
+      return;
+    }
+    setSelectedStudents([]);
+  };
 
   if (viewMode === 'students') {
     return (
@@ -244,7 +272,12 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               }}
             >
               <FormControl size="small" sx={{ minWidth: 200}}>
-                <Select displayEmpty defaultValue="" label="" sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}>
+                <Select
+                  displayEmpty
+                  value={selectedStudentCategory}
+                  onChange={(e) => setSelectedStudentCategory(e.target.value)}
+                  sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}
+                >
                   <MenuItem value="" disabled>Category</MenuItem>
                   <MenuItem value="Returning Student">Returning Student</MenuItem>
                   <MenuItem value="New Student">New Student</MenuItem>
@@ -255,7 +288,19 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 size="small"
                 placeholder="Search"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  if (val === '') {
+                    setAppliedSearchQuery('');
+                    setPage(0);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleStudentFetch();
+                  }
+                }}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -267,7 +312,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 }}
               />
 
-              <Button size='small' variant="contained">
+              <Button size='small' onClick={handleStudentFetch}>
                 Fetch
               </Button>
             </Box>
@@ -307,8 +352,8 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                   <TableCell padding="checkbox" sx={{ borderBottom: '1px solid', borderColor: 'grey.200' }}>
                     <Checkbox
                       color="primary"
-                      indeterminate={selectedStudents.length > 0 && selectedStudents.length < studentsData.length}
-                      checked={studentsData.length > 0 && selectedStudents.length === studentsData.length}
+                      indeterminate={selectedStudents.length > 0 && selectedStudents.length < filteredStudentsData.length}
+                      checked={filteredStudentsData.length > 0 && selectedStudents.length === filteredStudentsData.length}
                       onChange={handleSelectAllClick}
                     />
                   </TableCell>
@@ -323,9 +368,18 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedStudentsData.map((row) => {
-                  const isItemSelected = isStudentSelected(row.id);
-                  return (
+                {paginatedStudentsData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
+                      <Alert severity="info" sx={{ justifyContent: 'center', bgcolor: 'transparent' }}>
+                        No students found matching your criteria.
+                      </Alert>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedStudentsData.map((row) => {
+                    const isItemSelected = isStudentSelected(row.id);
+                    return (
                     <TableRow
                       key={row.id}
                       hover
@@ -372,12 +426,13 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     </TableCell>
                   </TableRow>
                 );
-                })}
+                })
+                )}
               </TableBody>
             </Table>
             <TablePagination
               component="div"
-              count={studentsData.length}
+              count={filteredStudentsData.length}
               page={page}
               onPageChange={handleChangePage}
               rowsPerPage={rowsPerPage}
@@ -399,6 +454,9 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
           </Menu>
 
           <Box display="flex" justifyContent="flex-end" alignItems="center" mt={3}>
+            <Button size='small' sx={{ mr: 2 }} onClick={() => setViewMode('schedule')}>
+              Back
+            </Button>
             <Button size='small'>
               Print Invoice for All
             </Button>

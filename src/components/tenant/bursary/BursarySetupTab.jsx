@@ -25,13 +25,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import {
-  IconPlus,
-  IconEdit,
-  IconDotsVertical,
-  IconCheck,
-  IconX,
-} from '@tabler/icons-react';
+import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
 import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
 import CategoryModal from '@/components/tenant/bursary/CategoryModal';
@@ -347,7 +341,10 @@ const BursarySetupTab = ({
                   <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
                     Who pays gateway charges?
                   </FormLabel>
-                  <RadioGroup value={gatewayPayer} onChange={(e) => setGatewayPayer(e.target.value)}>
+                  <RadioGroup
+                    value={gatewayPayer}
+                    onChange={(e) => setGatewayPayer(e.target.value)}
+                  >
                     <Stack spacing={2}>
                       <FormControlLabel
                         value="parent"
@@ -429,7 +426,6 @@ const BursarySetupTab = ({
                     </Box>
                   </Box>
                   <Button
-                    variant="contained"
                     size="small"
                     startIcon={<IconPlus size={18} />}
                     onClick={handleAddCategory}
@@ -510,7 +506,6 @@ const BursarySetupTab = ({
                     </Box>
                   </Box>
                   <Button
-                    variant="contained"
                     size="small"
                     startIcon={<IconPlus size={18} />}
                     onClick={handleAddInstalment}

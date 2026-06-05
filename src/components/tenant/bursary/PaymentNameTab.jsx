@@ -78,7 +78,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -153,7 +153,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
                 </Typography>
               </Box>
               <Button
-                variant="contained"
                 size="small"
                 startIcon={<IconPlus size={18} />}
                 onClick={handleAddPayment}
@@ -191,7 +190,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
               }}
             />
             <Button
-              variant="contained"
               onClick={handleSearch}
               sx={{ minWidth: 100, width: { xs: '100%', sm: 'auto' } }}
             >
@@ -311,8 +309,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
                           label={payment.status === 'active' ? 'Active' : 'Inactive'}
                           size="small"
                           sx={{
-                            bgcolor:
-                              payment.status === 'active' ? 'success.light' : 'error.light',
+                            bgcolor: payment.status === 'active' ? 'success.light' : 'error.light',
                             color: payment.status === 'active' ? 'success.dark' : 'error.dark',
                             fontWeight: 600,
                             fontSize: 11,

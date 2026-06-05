@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Button,
-  TextField,
-  MenuItem,
-  Stack,
-  Typography,
-  Box,
-  Grid,
-  Alert,
-} from '@mui/material';
+import { Button, TextField, MenuItem, Stack, Typography, Box, Grid, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
 
@@ -173,10 +164,10 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
 
         {/* Action Buttons */}
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} color="inherit" variant="outlined">
+          <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
+          <Button onClick={handleSubmit} sx={{ fontWeight: 600 }}>
             {instalment ? 'Update' : 'Add'} Plan
           </Button>
         </Stack>

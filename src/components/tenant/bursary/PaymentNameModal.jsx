@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Button,
-  TextField,
-  MenuItem,
-  Stack,
-  Typography,
-  Box,
-  Grid,
-  Divider,
-} from '@mui/material';
+import { Button, TextField, MenuItem, Stack, Typography, Box, Grid, Divider } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
 
@@ -55,15 +46,15 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
 
   const handleChange = (field) => (event) => {
     let value = event.target.value;
-    
+
     if (field === 'accountNumber') {
       value = value.replace(/\D/g, '');
     }
-    
+
     if (field === 'accountName') {
       value = value.replace(/[^a-zA-Z\s]/g, '');
     }
-    
+
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: '' }));
@@ -72,21 +63,21 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
 
   const validate = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Payment name is required';
     }
-    
+
     if (!formData.accountNumber.trim()) {
       newErrors.accountNumber = 'Account number is required';
     } else if (!/^\d{10}$/.test(formData.accountNumber)) {
       newErrors.accountNumber = 'Account number must be 10 digits';
     }
-    
+
     if (!formData.accountName.trim()) {
       newErrors.accountName = 'Account name is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -125,7 +116,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
         </Box>
         <Box>
           <Grid container spacing={2}>
-            <Grid size= {{ xs: 12, md:6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Payment Name"
                 fullWidth
@@ -137,7 +128,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 required
               />
             </Grid>
-            <Grid size= {{ xs: 12, md:6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 select
                 label="Pay Option"
@@ -155,7 +146,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
 
         <Box>
           <Grid container spacing={2}>
-            <Grid size= {{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 select
                 label="Bank"
@@ -173,7 +164,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 <MenuItem value="firstbank">First Bank</MenuItem>
               </TextField>
             </Grid>
-            <Grid size= {{ xs: 12, md:6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Account Number"
                 fullWidth
@@ -183,14 +174,14 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 helperText={errors.accountNumber}
                 placeholder="0123456789"
                 required
-                inputProps={{ 
+                inputProps={{
                   maxLength: 10,
                   inputMode: 'numeric',
-                  pattern: '[0-9]*'
+                  pattern: '[0-9]*',
                 }}
               />
             </Grid>
-            <Grid size= {{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Account Name"
                 fullWidth
@@ -202,7 +193,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 required
               />
             </Grid>
-            <Grid size= {{ xs: 12, md:6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 select
                 label="Fee Bearer"
@@ -221,7 +212,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
 
         <Box>
           <Grid container spacing={2}>
-            <Grid size= {{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 select
                 label="Modules"
@@ -239,7 +230,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
                 <MenuItem value="exam">Exam</MenuItem>
               </TextField>
             </Grid>
-            <Grid size= {{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 select
                 label="Status"
@@ -259,7 +250,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           <Button onClick={onClose} variant="outlined">
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
+          <Button onClick={handleSubmit} sx={{ fontWeight: 600 }}>
             {paymentName ? 'Update' : 'Add'} Payment Name
           </Button>
         </Stack>

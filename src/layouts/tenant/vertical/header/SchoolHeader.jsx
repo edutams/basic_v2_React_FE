@@ -157,7 +157,7 @@ const SchoolHeader = () => {
                         display: { xs: 'none', sm: 'block' },
                         whiteSpace: 'normal',
                         wordBreak: 'break-word',
-                        maxWidth: 200,
+                        maxWidth: 350,
                       }}
                     >
                       {schoolName}
@@ -197,7 +197,7 @@ const SchoolHeader = () => {
 
             <Button
               size="small"
-              color="inherit"
+              // color="inherit"
               onClick={() => setConfirmOpen(true)}
               sx={{
                 whiteSpace: 'nowrap',

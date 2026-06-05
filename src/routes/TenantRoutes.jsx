@@ -59,6 +59,10 @@ const CreateAdmissionBatch = Loadable(
 const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
 const PaymentShedule = Loadable(lazy(() => import('@/pages/tenant/bursary/PaymentShedule')));
 
+const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
+const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
+const CashPost = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/CashPost')));
+const Invoice = Loadable(lazy(() => import('@/pages/tenant/class-ledger/components/Invoice')));
 
 const TenantRoutes = [
   {
@@ -305,6 +309,14 @@ const TenantRoutes = [
         ),
       },
       {
+        path: 'transactions',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.transactions.index">
+            <Transactions />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
         path: 'bursary-setup',
         element: (
           <TenantProtectedRoute permission="dashboard.index">
@@ -312,14 +324,27 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
-       {
+      {
         path: 'class-ledger',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
-            <PageUnderDevelopment
-              title="Class Ledger  Under Development"
-              subtitle="The Bursary Class Ledger module is currently under development. Check back soon!"
-            />
+          <TenantProtectedRoute permission="bursary_manager.ledger.index">
+            <ClassLedger />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'class-ledger/:studentId/cash-post',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.ledger.index">
+            <CashPost />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'class-ledger/:studentId/invoice',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.ledger.index">
+            <Invoice />
           </TenantProtectedRoute>
         ),
       },

@@ -12,6 +12,7 @@ import StatCard from '@/components/shared/StatCard';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
 import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary Setup' }];
 
@@ -56,17 +57,21 @@ const BursarySetup = () => {
 
   const loadSessionTerms = async () => {
     try {
-      const response = await fetchSessionTerms();
-      if (response.status) {
-        const sess_terms = [
-          { id: 'all', label: 'All Sessions' },
-          ...response.data.map((sterm) => ({
-            id: sterm.id,
-            label:
-              `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
-          })),
-        ];
+      const [termsRes, activeTermRes] = await Promise.all([
+        fetchSessionTerms(),
+        fetchActiveSessionTerm(),
+      ]);
+
+      if (termsRes.status) {
+        const sess_terms = termsRes.data.map((sterm) => ({
+          id: sterm.id,
+          label: `${sterm.session?.sesname || ''} ${sterm.display_term?.display_name || ''}`.trim(),
+        }));
         setSessionTerms(sess_terms);
+      }
+
+      if (activeTermRes.status && activeTermRes.data) {
+        setSelectedSessionTerm(activeTermRes.data.session_term_id);
       }
     } catch (error) {
       console.error('Failed to fetch session terms:', error);

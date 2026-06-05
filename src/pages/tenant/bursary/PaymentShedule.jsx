@@ -1,0 +1,611 @@
+import { useState } from 'react';
+import {
+  Box,
+  Grid,
+  Typography,
+  Paper,
+  Tabs,
+  Tab,
+  Alert,
+  Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Switch,
+  Button,
+  Stack,
+} from '@mui/material';
+import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon } from '@mui/icons-material';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
+import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
+import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
+import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
+
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
+
+const PaymentShedule = () => {
+  const [actionTab, setActionTab] = useState(0);
+  const [scheduleTab, setScheduleTab] = useState(0);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [selectedSession, setSelectedSession] = useState('2024/2025 - Second Term');
+  const [selectedCategory, setSelectedCategory] = useState('New Student Category');
+  const [enableFullSession, setEnableFullSession] = useState(false);
+
+  const sessions = ['2024/2025 - First Term', '2024/2025 - Second Term', '2024/2025 - Third Term'];
+  const categories = ['New Student Category', 'Returning Students', 'Scholarship'];
+
+  const stats = {
+    compulsorySchedule: {
+      total: 2000,
+      classes: 6,
+    },
+    paymentName: {
+      withMinSchedule: 799,
+      withMaxSchedule: 989,
+      minLabel: 'School Fee',
+      maxLabel: 'Acceptance Fee',
+    },
+    studentCategory: {
+      withMinSchedule: 989,
+      withMaxSchedule: 187,
+      minLabel: 'Returning Student',
+      maxLabel: 'Staff ward',
+    },
+  };
+
+  // Stats for Generate Invoice Tab
+  const invoiceStats = {
+    invoiceGenerated: 382,
+    totalAmount: '₦900,805,000.00',
+    paymentNames: [
+      { name: 'With Minimum Invoice', count: 798, amount: '₦539,253,760.00', label: 'School Fee' },
+      {
+        name: 'With Maximum Invoice',
+        count: 798,
+        amount: '₦539,455,900.00',
+        label: 'Acceptance Fee',
+      },
+    ],
+    categories: [
+      {
+        name: 'With Minimum Invoice',
+        count: 798,
+        amount: '₦539,253,760.00',
+        label: 'Returning Student',
+      },
+      { name: 'With Maximum Invoice', count: 798, amount: '₦539,495,900.00', label: 'New Student' },
+    ],
+  };
+
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
+
+  const handleActionTabChange = (event, newValue) => {
+    setActionTab(newValue);
+  };
+
+  const handleScheduleTabChange = (event, newValue) => {
+    setScheduleTab(newValue);
+  };
+
+  const handleImportSchedule = () => {
+    showSnackbar('Import schedule for current term');
+  };
+
+  return (
+    <PageContainer title="Payment Schedule" description="Configure fees and payment settings">
+      <Breadcrumb
+        title="Payment Schedule"
+        subtitle="Configure how fees are collected for the current term"
+        items={BCrumb}
+      />
+
+      {/* Dynamic Stats Cards based on active tab */}
+      {actionTab === 0 && (
+        // Set Schedule Stats
+        <Grid container spacing={3} mb={3}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+              <Typography variant="body2" color="textSecondary" mb={3}>
+                Compulsory Schedule
+              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
+                <Box
+                  sx={{
+                    bgcolor: 'primary.light',
+                    borderRadius: 1,
+                    px: 3,
+                    py: 2,
+                    minWidth: 100,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h2" fontWeight={700} color="primary" sx={{ lineHeight: 1 }}>
+                    {stats.compulsorySchedule.total}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.compulsorySchedule.classes}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Classes
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 25,
+                    height: 25,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ReceiptIcon color="primary" sx={{ fontSize: 14 }} />
+                </Box>
+                <Typography variant="body2" color="textSecondary">
+                  Payment Name
+                </Typography>
+              </Box>
+              <Box display="flex" gap={2}>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Minimum Schedule
+                  </Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.paymentName.withMinSchedule}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.paymentName.minLabel}
+                  </Typography>
+                </Box>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Maximum Schedule
+                  </Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.paymentName.withMaxSchedule}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.paymentName.maxLabel}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 25,
+                    height: 25,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <ReceiptIcon color="primary" sx={{ fontSize: 14 }} />
+                </Box>
+                <Typography variant="body2" color="textSecondary">
+                  Student Category
+                </Typography>
+              </Box>
+              <Box display="flex" gap={2}>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Minimum Schedule
+                  </Typography>
+                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                    {stats.studentCategory.withMinSchedule}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.studentCategory.minLabel}
+                  </Typography>
+                </Box>
+                <Box flex={1}>
+                  <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                    With Maximum Schedule
+                  </Typography>
+                  <Typography variant="h3">{stats.studentCategory.withMaxSchedule}</Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {stats.studentCategory.maxLabel}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+      )}
+
+      {actionTab === 1 && (
+        // Generate Invoice Stats
+        <Grid container spacing={3} mb={3}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+              <Typography variant="caption" color="text.secondary" gutterBottom display="block">
+                Invoice Generated
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2} mt={5}>
+                <Box
+                  sx={{
+                    bgcolor: '#FFF8E1',
+                    borderRadius: 1,
+                    px: 3,
+                    py: 1.5,
+                    minWidth: 80,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h2" fontWeight={700} color="#F57C00">
+                    {invoiceStats.invoiceGenerated}
+                  </Typography>
+                </Box>
+                <Box display="flex" ml="auto" flexDirection="column" justifyContent="end">
+                  <Typography variant="h4" fontWeight={700}>
+                    {invoiceStats.totalAmount}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Amount
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '4px',
+                    bgcolor: 'rgba(139, 195, 74, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <WalletIcon sx={{ fontSize: 16, color: 'rgba(139, 195, 74, 1)' }} />
+                </Box>
+                <Typography variant="body2" fontWeight={600}>
+                  Payment Name
+                </Typography>
+              </Box>
+
+              <Stack direction="row" spacing={1.5}>
+                {invoiceStats.paymentNames.map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      bgcolor: idx === 0 ? 'rgba(139, 195, 74, 0.12)' : 'rgba(103, 58, 183, 0.12)',
+                      p: 1.5,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="h5" fontWeight={700} mb={0.5}>
+                      {item.count}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} mb={0.5}>
+                      {item.amount}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {item.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '4px',
+                    bgcolor: 'rgba(103, 58, 183, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <WalletIcon sx={{ fontSize: 16, color: 'rgba(103, 58, 183, 1)' }} />
+                </Box>
+                <Typography variant="body2" fontWeight={600}>
+                  Category Name
+                </Typography>
+              </Box>
+
+              <Stack direction="row" spacing={1.5}>
+                {invoiceStats.categories.map((item, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      bgcolor: idx === 0 ? 'rgba(139, 195, 74, 0.12)' : 'rgba(103, 58, 183, 0.12)',
+                      p: 1.5,
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="h5" fontWeight={700} mb={0.5}>
+                      {item.count}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} mb={0.5}>
+                      {item.amount}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {item.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+        </Grid>
+      )}
+
+      <Box sx={{ mb: 3 }}>
+        <Tabs
+          value={actionTab}
+          onChange={handleActionTabChange}
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+            },
+          }}
+        >
+          <Tab label="1. Set Schedule" />
+          <Tab label="2. Generate Invoice" />
+          <Tab label="3. Send Invoice" />
+        </Tabs>
+      </Box>
+
+      <Paper sx={{ borderRadius: 2 }}>
+        {actionTab === 0 && (
+          <>
+            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', lg: 'row' },
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', lg: 'center' },
+                  gap: 2,
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1,
+                      bgcolor: 'primary.lighter',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight={700} color="primary.main">
+                      ⚙️
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" fontWeight={600}>
+                      Payment Schedule
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Switch tabs to configure compulsory or optional items.
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: 2,
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    width: { xs: '100%', lg: 'auto' },
+                  }}
+                >
+                  <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
+                    <InputLabel>Select Session</InputLabel>
+                    <Select
+                      value={selectedSession}
+                      label="Select Session"
+                      onChange={(e) => setSelectedSession(e.target.value)}
+                    >
+                      {sessions.map((session) => (
+                        <MenuItem key={session} value={session}>
+                          {session}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: { sm: 100 } }}>
+                    <InputLabel>Student Pay Category</InputLabel>
+                    <Select
+                      value={selectedCategory}
+                      label="Student Pay Category"
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={enableFullSession}
+                        onChange={(e) => setEnableFullSession(e.target.checked)}
+                        size="small"
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" sx={{ whiteSpace: { sm: 'nowrap' } }}>
+                        Enable full-session payment
+                      </Typography>
+                    }
+                    sx={{ m: 0 }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                px: 3,
+                pt: 2,
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'stretch', sm: 'center' },
+                gap: 2,
+              }}
+            >
+              {/* Schedule Type Tabs */}
+              <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
+                <Tabs
+                  value={scheduleTab}
+                  onChange={handleScheduleTabChange}
+                  sx={{
+                    minHeight: 40,
+                    '& .MuiTab-root': {
+                      minHeight: 40,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <Tab
+                    label="Compulsory"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        1
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                  <Tab
+                    label="Optional Payment"
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        2
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                </Tabs>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={<UploadIcon />}
+                onClick={handleImportSchedule}
+                size="medium"
+                sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+              >
+                Import schedule for current term
+              </Button>
+            </Box>
+          </>
+        )}
+
+        {/* Tab Content */}
+        <Box sx={{ p: 3 }}>
+          {actionTab === 0 && (
+            <>
+              {scheduleTab === 0 && <CompulsoryScheduleTab showSnackbar={showSnackbar} />}
+              {scheduleTab === 1 && <OptionalPaymentTab showSnackbar={showSnackbar} />}
+            </>
+          )}
+          {actionTab === 1 && <GenerateInvoiceTab showSnackbar={showSnackbar} />}
+          {actionTab === 2 && (
+            <Box textAlign="center" py={8}>
+              <Typography variant="h6" color="text.secondary">
+                Send Invoice - Coming Soon
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Paper>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </PageContainer>
+  );
+};
+
+export default PaymentShedule;

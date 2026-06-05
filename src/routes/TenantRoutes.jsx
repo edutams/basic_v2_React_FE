@@ -49,12 +49,15 @@ const AdmissionLetter = Loadable(lazy(() => import('@/pages/tenant/admission/Adm
 const ApplicationTracker = Loadable(
   lazy(() => import('@/pages/tenant/admission/ApplicationTracker')),
 );
-const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
+
 const FormDetails = Loadable(lazy(() => import('@/pages/tenant/admission/FormDetails')));
 const AdmissionSetup = Loadable(lazy(() => import('@/pages/tenant/admission/AdmissionSetup')));
 const CreateAdmissionBatch = Loadable(
   lazy(() => import('@/pages/tenant/admission/CreateAdmissionBatch')),
 );
+
+const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
+const PaymentShedule = Loadable(lazy(() => import('@/pages/tenant/bursary/PaymentShedule')));
 
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
@@ -301,10 +304,7 @@ const TenantRoutes = [
         path: 'payment-schedule',
         element: (
           <TenantProtectedRoute permission="dashboard.index">
-            <PageUnderDevelopment
-              title="Bursury Payment Schedule Under Development"
-              subtitle="The Payment Schedule module is currently under development. Check back soon!"
-            />
+            <PaymentShedule/>
           </TenantProtectedRoute>
         ),
       },

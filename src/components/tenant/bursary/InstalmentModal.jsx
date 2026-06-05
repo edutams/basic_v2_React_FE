@@ -15,7 +15,6 @@ const InstalmentModal = ({ open, onClose, onSave, instalment }) => {
 
   useEffect(() => {
     if (instalment) {
-      // Parse the "60 : 40" format
       const parts = instalment.options.split(':').map((p) => p.trim());
       setFormData({
         inst1: parts[0] || '',

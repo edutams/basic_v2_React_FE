@@ -484,7 +484,6 @@ const PaymentShedule = () => {
               </Box>
             </Box>
 
-            {/* Tabs and Import Button Row */}
             <Box
               sx={{
                 px: 3,

@@ -170,11 +170,15 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
           </Typography>
         </Box>
 
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-          mb={3}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 2,
+            mb: 3,
+          }}
         >
           <FormControl size="small" sx={{ minWidth: { sm: 200 } }}>
             <InputLabel>Select Session Term</InputLabel>
@@ -189,24 +193,29 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
             </Select>
           </FormControl>
 
-          <TextField
-            size="small"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+          <Stack direction="row" spacing={1} alignItems="center">
+            <TextField
+              size="small"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ width: 250 }}
+            />
 
-          <Button onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
-            Fetch
-          </Button>
-        </Stack>
+            <Button variant="contained" onClick={handleFetch} sx={{ fontWeight: 600, minWidth: 100 }}>
+              Fetch
+            </Button>
+          </Stack>
+        </Box>
 
         <Box
           sx={{
@@ -426,7 +435,6 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                   </TableCell>
                 </TableRow>
               ))}
-              {/* Total Row */}
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell colSpan={2}>
                   <Typography variant="body2" fontWeight={700}>

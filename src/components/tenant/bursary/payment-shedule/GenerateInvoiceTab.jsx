@@ -260,7 +260,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               <TableHead>
                 <TableRow sx={{ bgcolor: '#F8F9FA' }}>
                   <TableCell padding="checkbox" sx={{ borderBottom: '1px solid', borderColor: 'grey.200' }}>
-                    <Checkbox color="success" indeterminate />
+                    <Checkbox  />
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Admission ID</TableCell>
                   <TableCell sx={{ fontWeight: 600, color: 'text.secondary', borderBottom: '1px solid', borderColor: 'grey.200' }}>Name</TableCell>
@@ -276,13 +276,13 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 {studentsData.map((row) => (
                   <TableRow key={row.id} hover sx={{ '& td': { borderBottom: '1px solid', borderColor: 'grey.100' } }}>
                     <TableCell padding="checkbox">
-                      <Checkbox sx={{ color: 'grey.300', '&.Mui-checked': { color: 'success.main' } }} />
+                      <Checkbox  />
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{row.admissionId}</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
                     <TableCell>
                       <Box sx={{ bgcolor: 'primary.light', px: 1.5, py: 0.5, borderRadius: 5, display: 'inline-block' }}>
-                        <Typography variant="caption" fontWeight={600} color="text.secondary">{row.category}</Typography>
+                        <Typography variant="caption" fontWeight={600} color="primary">{row.category}</Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>₦{row.compulsory.toLocaleString()}</TableCell>
@@ -299,16 +299,8 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     <TableCell>
                       <Button
                         size="small"
-                        sx={{
-                          bgcolor: '#FFF3E0',
-                          color: '#E65100',
-                          fontWeight: 600,
-                          textTransform: 'none',
-                          borderRadius: 5,
-                          px: 2,
-                          '&:hover': { bgcolor: '#FFE0B2' },
-                          boxShadow: 'none'
-                        }}
+                        variant='contained'
+                      
                       >
                         Add Optional
                       </Button>

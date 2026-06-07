@@ -124,12 +124,18 @@ const BursarySetupTab = ({
   });
   const [savingResultSettings, setSavingResultSettings] = useState(false);
 
+  const [categoryPage, setCategoryPage] = useState(1);
+  const [categoryMeta, setCategoryMeta] = useState(null);
+
+  const [instalmentPage, setInstalmentPage] = useState(1);
+  const [instalmentMeta, setInstalmentMeta] = useState(null);
+
   const loadResultSettings = async () => {
     try {
       const res = await fetchResultPaymentSettings();
       // console.log(res, 77);
 
-      if (res.status && res.data) {
+      if (res.status) {
         setResultSettings({
           pay_condition: res.data.pay_condition || 'no',
           pay_type: res.data.pay_type || '',
@@ -137,31 +143,35 @@ const BursarySetupTab = ({
           compulsory_pay_method: res.data.compulsory_pay_method || '',
           optional_pay_method: res.data.optional_pay_method || '',
         });
+      } else {
+        showSnackbar(res.message || 'Failed to load result settings', 'error');
       }
-    } catch {
-      showSnackbar('Failed to load result settings', 'error');
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Network error', 'error');
     }
   };
 
-  const loadCategories = async () => {
+  const loadCategories = async (page = 1) => {
     try {
-      const res = await fetchPaymentCategories();
+      const res = await fetchPaymentCategories(page);
       setCategories(res.data?.data || []);
-    } catch {
-      showSnackbar('Failed to load categories', 'error');
+      setCategoryMeta(res.data || null);
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to load categories', 'error');
     }
   };
 
-  const loadInstalments = async () => {
+  const loadInstalments = async (page = 1) => {
     try {
-      const res = await fetchInstallments();
+      const res = await fetchInstallments(page);
       const mapped = (res.data?.data || []).map((i) => ({
         ...i,
         options: `${i.inst1} : ${i.inst2}`,
       }));
       setInstalments(mapped);
-    } catch {
-      showSnackbar('Failed to load instalment plans', 'error');
+      setInstalmentMeta(res.data);
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to load instalments', 'error');
     }
   };
 
@@ -182,8 +192,8 @@ const BursarySetupTab = ({
       if (map.fee_collection_method) setCollectionMethod(map.fee_collection_method.value);
       if (map.installment_style) setInstalmentStyle(map.installment_style.value);
       if (map.gateway_charge_bearer) setGatewayPayer(map.gateway_charge_bearer.value);
-    } catch {
-      showSnackbar('Failed to load bursary settings', 'error');
+    } catch (err) {
+      showSnackbar(err?.response?.data?.message || 'Failed to load settings', 'error');
     } finally {
       setSettingsLoading(false);
     }
@@ -199,10 +209,17 @@ const BursarySetupTab = ({
   }, [categories, instalments]);
 
   useEffect(() => {
-    loadCategories();
-    loadResultSettings();
-    loadInstalments();
+    loadCategories(categoryPage);
+  }, [categoryPage]);
+
+  useEffect(() => {
+    loadInstalments(instalmentPage);
+  }, [instalmentPage]);
+
+  // keep settings and result settings load separate
+  useEffect(() => {
     loadSettings();
+    loadResultSettings();
   }, []);
 
   const handleAddCategory = () => {
@@ -224,9 +241,9 @@ const BursarySetupTab = ({
 
     setSavingCode(code);
     try {
-      await changeBursarySetting(code, value);
+      const res = await changeBursarySetting(code, value);
       setSettings((prev) => ({ ...prev, [code]: { ...prev[code], value } }));
-      showSnackbar('Setting saved successfully');
+      showSnackbar(res.message || 'Setting saved successfully');
     } catch {
       // revert on failure
       if (code === 'fee_collection_method')
@@ -239,14 +256,14 @@ const BursarySetupTab = ({
     }
   };
 
-  const handleSessionTermChange = async (termId) => {
+  const handleBursarySessionTermChange = async (termId) => {
     setSelectedSessionTerm(termId);
     setSavingCode('active_ses_term');
     try {
-      await setActiveSessionTerm(termId);
-      showSnackbar('Active session term updated');
+      const res = await setActiveSessionTerm(termId);
+      showSnackbar(res.message || 'Bursary session term updated successfully');
     } catch {
-      showSnackbar('Failed to update session term', 'error');
+      showSnackbar('Failed to update bursary session term', 'error');
     } finally {
       setSavingCode(null);
     }
@@ -379,7 +396,7 @@ const BursarySetupTab = ({
               select
               label="Select Session Term"
               value={selectedSessionTerm}
-              onChange={(e) => handleSessionTermChange(e.target.value)}
+              onChange={(e) => handleBursarySessionTermChange(e.target.value)}
               size="small"
               disabled={savingCode === 'active_ses_term'}
               sx={{ minWidth: 280 }}
@@ -677,6 +694,30 @@ const BursarySetupTab = ({
                   </TableBody>
                 </Table>
               </TableContainer>
+              {/* Categories Pagination */}
+              {categoryMeta && (
+                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1.5}>
+                  <Typography variant="caption" color="text.secondary">
+                    {categoryMeta.total > 0
+                      ? `${categoryMeta.from}–${categoryMeta.to} of ${categoryMeta.total}`
+                      : '0 records'}
+                  </Typography>
+                  <Button
+                    size="small"
+                    disabled={!categoryMeta.prev_page_url}
+                    onClick={() => setCategoryPage((p) => p - 1)}
+                  >
+                    Prev
+                  </Button>
+                  <Button
+                    size="small"
+                    disabled={!categoryMeta.next_page_url}
+                    onClick={() => setCategoryPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </Box>
+              )}
             </ParentCard>
           </Grid>
 
@@ -776,6 +817,30 @@ const BursarySetupTab = ({
                   </TableBody>
                 </Table>
               </TableContainer>
+              {/* Instalments Pagination */}
+              {instalmentMeta && (
+                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1.5}>
+                  <Typography variant="caption" color="text.secondary">
+                    {instalmentMeta.total > 0
+                      ? `${instalmentMeta.from}–${instalmentMeta.to} of ${instalmentMeta.total}`
+                      : '0 records'}
+                  </Typography>
+                  <Button
+                    size="small"
+                    disabled={!instalmentMeta.prev_page_url}
+                    onClick={() => setInstalmentPage((p) => p - 1)}
+                  >
+                    Prev
+                  </Button>
+                  <Button
+                    size="small"
+                    disabled={!instalmentMeta.next_page_url}
+                    onClick={() => setInstalmentPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </Box>
+              )}
             </ParentCard>
           </Grid>
         </Grid>

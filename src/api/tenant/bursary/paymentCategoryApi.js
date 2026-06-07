@@ -1,7 +1,7 @@
 import api from '@/api/tenant/tenant_api';
 
-export const fetchPaymentCategories = async () => {
-    const res = await api.get('/bursary/payment_category/fetch_payment_categories');
+export const fetchPaymentCategories = async (page = 1) => {
+    const res = await api.get('/bursary/payment_category/fetch_payment_categories', { params: { page } });
     return res.data;
 }
 

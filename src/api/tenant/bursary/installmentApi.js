@@ -1,7 +1,7 @@
 import api from '@/api/tenant/tenant_api';
 
-export const fetchInstallments = async () => {
-    const res = await api.get('/bursary/payment_installment/fetch_payment_installments');
+export const fetchInstallments = async (page = 1) => {
+    const res = await api.get(`/bursary/payment_installment/fetch_payment_installments`, { params: { page } });
     return res.data;
 }
 

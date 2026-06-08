@@ -68,7 +68,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
 
   // Mock data for schedules - separate data for each term
   const [schedules, setSchedules] = useState({
-    0: [ // First Term
+    0: [
+      // First Term
       {
         id: 1,
         paymentName: 'School Fee',
@@ -98,7 +99,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
         missingCount: 5,
       },
     ],
-    1: [ // Second Term
+    1: [
+      // Second Term
       {
         id: 3,
         paymentName: 'School Fee',
@@ -114,7 +116,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
         missingCount: 6,
       },
     ],
-    2: [ // Third Term
+    2: [
+      // Third Term
       {
         id: 4,
         paymentName: 'School Fee',
@@ -164,7 +167,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
 
   const handleClassClick = (schedule, cls) => {
     const isEdit = !cls.missing;
-    
+
     setConfirmDialog({
       open: true,
       title: isEdit ? 'Edit Payment' : 'Add Payment',
@@ -173,13 +176,12 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
         : `Are you sure you want to add payment to ${cls.id} for ${schedule.paymentName}?`,
       onConfirm: () => {
         setConfirmDialog({ ...confirmDialog, open: false });
-        // Open payment modal after confirmation
         setPaymentModal({
           open: true,
           payment: {
             className: cls.id,
             paymentName: schedule.paymentName,
-            amount: isEdit ? '10000' : '', // Pre-fill if editing
+            amount: isEdit ? '10000' : '',
             dueDate: isEdit ? '2025-03-15' : '',
             installmentNumber: isEdit ? '1' : '',
             description: isEdit ? 'First term payment' : '',
@@ -201,7 +203,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
   const handlePaymentSave = (formData) => {
     const action = paymentModal.isEdit ? 'updated' : 'added';
     const { className, paymentName } = paymentModal.payment || {};
-    
+
     // Update the schedules state for current term
     setSchedules((prevSchedules) => ({
       ...prevSchedules,
@@ -242,8 +244,14 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
   const handleAddItemSave = (formData) => {
     // Create new payment item with selected classes for current term
     const currentTermSchedules = schedules[currentTerm] || [];
-    const newId = Math.max(...Object.values(schedules).flat().map((s) => s.id), 0) + 1;
-    
+    const newId =
+      Math.max(
+        ...Object.values(schedules)
+          .flat()
+          .map((s) => s.id),
+        0,
+      ) + 1;
+
     const classes = formData.selectedClasses.map((classId) => ({
       id: classId,
       name: classId,
@@ -275,7 +283,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
         if (schedule.id === editItemModal.schedule?.id) {
           // Get existing classes to preserve their payment data
           const existingClasses = schedule.classes;
-          
+
           // Create updated classes list
           const updatedClasses = formData.selectedClasses.map((classId) => {
             const existingClass = existingClasses.find((cls) => cls.id === classId);
@@ -312,7 +320,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
 
   const handleConfirmDelete = () => {
     const scheduleToDelete = deleteDialog.schedule;
-    
+
     setSchedules((prevSchedules) => ({
       ...prevSchedules,
       [currentTerm]: prevSchedules[currentTerm].filter(
@@ -324,7 +332,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
       `Payment item "${scheduleToDelete.paymentName}" deleted successfully`,
       'success',
     );
-    
+
     setDeleteDialog({ open: false, schedule: null });
   };
 
@@ -348,244 +356,251 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info" sx={{ mb: 2, textAlign: "center", justifyContent: "center" }}>
+      <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
         <Typography variant="body2" fontWeight={600}>
           Payment Schedules for 2024/2025 - Second Term (New Student Category)
         </Typography>
       </Alert>
 
-      {/* Term Tabs and Search Row */}
       <ParentCard>
-      <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
-        {/* Term Tabs - Left Side */}
-        <Tabs
-          value={currentTerm}
-          onChange={(e, val) => setCurrentTerm(val)}
-          sx={{
-            minHeight: 40,
-            '& .MuiTab-root': {
-              minHeight: 40,
-            },
-          }}
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', md: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'stretch', md: 'center' }}
+          gap={2}
         >
-          <Tab
-            label="First Term"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-            icon={
-              <Box
-                component="span"
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: currentTerm === 0 ? 'primary.main' : 'grey.300',
-                  color: 'white',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  mr: 1,
-                }}
-              >
-                ●
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            label="Second Term"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-            icon={
-              <Box
-                component="span"
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: currentTerm === 1 ? 'primary.main' : 'grey.300',
-                  color: 'white',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  mr: 1,
-                }}
-              >
-                ●
-              </Box>
-            }
-            iconPosition="start"
-          />
-          <Tab
-            label="Third Term"
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-            icon={
-              <Box
-                component="span"
-                sx={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  bgcolor: currentTerm === 2 ? 'primary.main' : 'grey.300',
-                  color: 'white',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  mr: 1,
-                }}
-              >
-                ●
-              </Box>
-            }
-            iconPosition="start"
-          />
-        </Tabs>
+          <Tabs
+            value={currentTerm}
+            onChange={(e, val) => setCurrentTerm(val)}
+            variant="scrollable"
+            scrollButtons={false}
+          >
+            <Tab
+              label="First Term"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: currentTerm === 0 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  ●
+                </Box>
+              }
+              iconPosition="start"
+            />
+            <Tab
+              label="Second Term"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: currentTerm === 1 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  ●
+                </Box>
+              }
+              iconPosition="start"
+            />
+            <Tab
+              label="Third Term"
+              sx={{ textTransform: 'none', fontWeight: 600 }}
+              icon={
+                <Box
+                  component="span"
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    bgcolor: currentTerm === 2 ? 'primary.main' : 'grey.300',
+                    color: 'white',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    mr: 1,
+                  }}
+                >
+                  ●
+                </Box>
+              }
+              iconPosition="start"
+            />
+          </Tabs>
 
-        {/* Search - Right Side */}
-        <Box display="flex" gap={2}>
-          <TextField
-            placeholder="Search payment items..."
-            size="small"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
+          <Box display="flex" gap={2}>
+            <TextField
+              placeholder="Search payment items..."
+              size="small"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: 300 }}
+            />
+            <Button variant="contained" size="small">
+              Search
+            </Button>
+          </Box>
+        </Box>
+
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', md: 'center' }}
+          flexDirection={{ xs: 'column', md: 'row' }}
+          gap={2}
+          mt={2}
+          mb={2}
+        >
+          <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: 'primary.main',
+                }}
+              />
+              <Typography variant="caption">Active Payment Schedules</Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: 'error.main',
+                }}
+              />
+              <Typography variant="caption">Inactive Payment Schedules</Typography>
+            </Stack>
+          </Stack>
+
+          <Button
+            // startIcon={<AddIcon />}
+            onClick={handleAddPaymentItem}
+            sx={{
+              fontWeight: 600,
+              width: { xs: '100%', md: 'auto' },
             }}
-            sx={{ width: 300 }}
-          />
-          <Button variant="contained" size="small">
-            Search
+          >
+            Add payment item
           </Button>
         </Box>
-      </Box>
 
-      {/* Legend and Add Button Row */}
-      <Box display="flex" mt={2} mb={2} justifyContent="space-between" alignItems="center">
-        {/* Legend - Left Side */}
-        <Stack direction="row" spacing={3} alignItems="center">
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-              }}
-            />
-            <Typography variant="caption">Active Payment Schedules</Typography>
-          </Stack>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                bgcolor: 'error.main',
-              }}
-            />
-            <Typography variant="caption">Inactive Payment Schedules</Typography>
-          </Stack>
-        </Stack>
-
-        {/* Add Button - Right Side */}
-        <Button
-          // startIcon={<AddIcon />}
-          onClick={handleAddPaymentItem}
-          sx={{ fontWeight: 600 }}
-        >
-          Add payment item
-        </Button>
-      </Box>
-
-      {/* Schedule Table */}
-      <TableContainer component={Paper} variant="outlined">
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'grey.50' }}>
-              <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>PAYMENT NAME</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>CLASS</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
-                ACTION
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedSchedules.map((schedule, index) => (
-              <TableRow key={schedule.id} hover>
-                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {schedule.paymentName}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  {/* Warning message if not all classes set - Above the chips */}
-                  {!schedule.allClassesSet && (
-                    <Typography variant="caption" color="error.main" display="block" mb={1}>
-                      You are yet to set Payment for all classes
-                    </Typography>
-                  )}
-                  <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
-                    {schedule.classes.map((cls) => (
-                      <Chip
-                        key={cls.id}
-                        label={cls.name}
-                        size="small"
-                        onClick={() => handleClassClick(schedule, cls)}
-                        sx={{
-                          bgcolor: cls.missing ? 'transparent' : 'primary.main',
-                          color: cls.missing ? 'error.main' : 'white',
-                          border: cls.missing ? '1px dashed' : 'none',
-                          borderColor: 'error.main',
-                          fontWeight: 600,
-                          fontSize: 11,
-                          cursor: 'pointer',
-                          '&:hover': {
-                            opacity: 0.8,
-                          },
-                        }}
-                      />
-                    ))}
-                    {schedule.missingCount > 0 && (
-                      <Typography variant="caption" color="textSecondary">
-                        {schedule.missingCount} missing
-                      </Typography>
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell align="center">
-                  <IconButton size="small" onClick={(e) => handleMenuOpen(e, schedule)}>
-                    <MoreVertIcon />
-                  </IconButton>
+        <TableContainer component={Paper} variant="outlined">
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>PAYMENT NAME</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>CLASS</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
+                  ACTION
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25, 50]}
-                colSpan={4}
-                count={currentSchedules.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
-            </TableRow>
-          </TableFooter>
-        </Table>
-      </TableContainer>
-</ParentCard>
+            </TableHead>
+            <TableBody>
+              {paginatedSchedules.map((schedule, index) => (
+                <TableRow key={schedule.id} hover>
+                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>
+                      {schedule.paymentName}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    {/* Warning message if not all classes set - Above the chips */}
+                    {!schedule.allClassesSet && (
+                      <Typography variant="caption" color="error.main" display="block" mb={1}>
+                        You are yet to set Payment for all classes
+                      </Typography>
+                    )}
+                    <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
+                      {schedule.classes.map((cls) => (
+                        <Chip
+                          key={cls.id}
+                          label={cls.name}
+                          size="small"
+                          onClick={() => handleClassClick(schedule, cls)}
+                          sx={{
+                            bgcolor: cls.missing ? 'transparent' : 'primary.main',
+                            color: cls.missing ? 'error.main' : 'white',
+                            border: cls.missing ? '1px dashed' : 'none',
+                            borderColor: 'error.main',
+                            fontWeight: 600,
+                            fontSize: 11,
+                            cursor: 'pointer',
+                            '&:hover': {
+                              opacity: 0.8,
+                            },
+                          }}
+                        />
+                      ))}
+                      {schedule.missingCount > 0 && (
+                        <Typography variant="caption" color="textSecondary">
+                          {schedule.missingCount} missing
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center">
+                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, schedule)}>
+                      <MoreVertIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  colSpan={4}
+                  count={currentSchedules.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </TableContainer>
+      </ParentCard>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuOption onClick={handleEditSchedule}>Edit Schedule</MenuOption>
@@ -595,12 +610,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
       </Menu>
 
       {/* Confirmation Dialog */}
-      <Dialog
-        open={confirmDialog.open}
-        onClose={handleConfirmDialogClose}
-        maxWidth="xs"
-        fullWidth
-      >
+      <Dialog open={confirmDialog.open} onClose={handleConfirmDialogClose} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
         <DialogContent>
           <Typography variant="body2">{confirmDialog.message}</Typography>
@@ -609,11 +619,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
           <Button color="inherit" onClick={handleConfirmDialogClose}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={confirmDialog.onConfirm}
-            sx={{ fontWeight: 600 }}
-          >
+          <Button variant="contained" onClick={confirmDialog.onConfirm} sx={{ fontWeight: 600 }}>
             Confirm
           </Button>
         </DialogActions>
@@ -674,10 +680,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            color="inherit"
-            onClick={() => setDeleteDialog({ open: false, schedule: null })}
-          >
+          <Button color="inherit" onClick={() => setDeleteDialog({ open: false, schedule: null })}>
             Cancel
           </Button>
           <Button

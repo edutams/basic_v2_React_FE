@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -35,52 +35,93 @@ import { IconPlus, IconDotsVertical, IconEdit, IconCheck, IconX } from '@tabler/
 import ParentCard from '@/components/shared/ParentCard';
 import PaymentNameModal from '@/components/tenant/bursary/PaymentNameModal';
 
+import {
+  fetchPaymentNames,
+  createPaymentName,
+  updatePaymentName,
+  togglePaymentNameStatus,
+} from '@/api/tenant/bursary/paymentNameApi';
+import ReusableModal from '@/components/shared/ReusableModal';
+
 const PaymentNameTab = ({ showSnackbar }) => {
-  const [paymentNames, setPaymentNames] = useState([
-    {
-      id: 1,
-      name: 'Acceptance Fee',
-      payOption: 'compulsory',
-      settlementBank: 'gtb',
-      accountNumber: '0693040604',
-      accountName: 'Ikeyi$30ceTrube$75',
-      feeBearer: 'client',
-      modules: 'none',
-      status: 'active',
-    },
-    {
-      id: 2,
-      name: 'Tuition Fee',
-      payOption: 'compulsory',
-      settlementBank: 'gtb',
-      accountNumber: '0693040604',
-      accountName: 'Ikeyi$30ceTrube$75',
-      feeBearer: 'client',
-      modules: 'none',
-      status: 'active',
-    },
-    {
-      id: 3,
-      name: 'Development Levy',
-      payOption: 'optional',
-      settlementBank: 'fcmb',
-      accountNumber: '0693040604',
-      accountName: 'Ikeyi$30ceTrube$75',
-      feeBearer: 'client',
-      modules: 'none',
-      status: 'active',
-    },
-  ]);
+  const [paymentNames, setPaymentNames] = useState([]);
+  const [meta, setMeta] = useState(null);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [confirmStatusModal, setConfirmStatusModal] = useState({ open: false, payment: null });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState(null);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
 
-  const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleSavePayment = async (paymentData) => {
+    try {
+      if (editingPayment) {
+        await updatePaymentName(editingPayment.id, paymentData);
+        showSnackbar?.('Payment name updated successfully');
+      } else {
+        await createPaymentName(paymentData);
+        showSnackbar?.('Payment name added successfully');
+      }
+      setModalOpen(false);
+      setPage(1);
+      loadPaymentNames(1, searchQuery);
+    } catch (err) {
+      showSnackbar?.(err?.response?.data?.message || 'Failed to save payment name', 'error');
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    const payment = confirmStatusModal.payment;
+    if (!payment) return;
+    setActionLoading(true);
+    try {
+      const res = await togglePaymentNameStatus(payment.id);
+      setPaymentNames((prev) => prev.map((p) => (p.id === payment.id ? res.data : p)));
+      showSnackbar?.(
+        `Payment name ${res.data.status === 'active' ? 'activated' : 'deactivated'} successfully`,
+      );
+      setConfirmStatusModal({ open: false, payment: null });
+    } catch {
+      showSnackbar?.('Failed to update status', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+    setPage(1);
+  };
+
+  const resetFilters = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setPage(1);
+  };
+
+  const loadPaymentNames = async (pg = 1, search = '', per_page = 10) => {
+    setLoading(true);
+    try {
+      const res = await fetchPaymentNames(pg, search, per_page);
+      setPaymentNames(res.data?.data || []);
+      setMeta(res.data);
+    } catch {
+      showSnackbar?.('Failed to load payment names', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPaymentNames(page + 1, searchQuery, rowsPerPage);
+  }, [page, searchQuery, rowsPerPage]);
 
   const handleAddPayment = () => {
     setEditingPayment(null);
@@ -91,49 +132,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
     setEditingPayment(payment);
     setModalOpen(true);
     setMenuAnchor(null);
-  };
-
-  const handleToggleStatus = (payment) => {
-    const newStatus = payment.status === 'active' ? 'inactive' : 'active';
-    setPaymentNames((prev) =>
-      prev.map((p) => (p.id === payment.id ? { ...p, status: newStatus } : p)),
-    );
-    showSnackbar?.(
-      `Payment name ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
-    );
-    setMenuAnchor(null);
-  };
-
-  const handleSavePayment = (paymentData) => {
-    if (editingPayment) {
-      setPaymentNames((prev) =>
-        prev.map((p) => (p.id === editingPayment.id ? { ...p, ...paymentData } : p)),
-      );
-      showSnackbar?.('Payment name updated successfully');
-    } else {
-      setPaymentNames((prev) => [...prev, { id: Date.now(), ...paymentData }]);
-      showSnackbar?.('Payment name added successfully');
-    }
-    setModalOpen(false);
-  };
-
-  const filteredPayments = paymentNames.filter((payment) =>
-    payment.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  const startIndex = page * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedPayments = filteredPayments.slice(startIndex, endIndex);
-
-  const handleSearch = () => {
-    setSearchQuery(searchInput);
-    setPage(0);
-  };
-
-  const resetFilters = () => {
-    setSearchInput('');
-    setSearchQuery('');
-    setPage(0);
   };
 
   const hasFilters = searchQuery !== '';
@@ -225,7 +223,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedPayments.length === 0 ? (
+                {paymentNames.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} align="center">
                       <Alert
@@ -244,9 +242,9 @@ const PaymentNameTab = ({ showSnackbar }) => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedPayments.map((payment, index) => (
+                  paymentNames.map((payment, index) => (
                     <TableRow key={payment.id} hover>
-                      <TableCell>{startIndex + index + 1}</TableCell>
+                      <TableCell>{(meta?.from || 0) + index}</TableCell>{' '}
                       <TableCell sx={{ fontWeight: 600 }}>{payment.name}</TableCell>
                       <TableCell>
                         <Chip
@@ -336,7 +334,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 15, 20, 25]}
-                    count={filteredPayments.length}
+                    count={meta?.total || 0}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
@@ -362,22 +360,57 @@ const PaymentNameTab = ({ showSnackbar }) => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
+        // Menu item:
         <MenuItem
-          onClick={() => selectedPayment && handleToggleStatus(selectedPayment)}
-          sx={{
-            color: selectedPayment?.status === 'active' ? 'error.main' : 'success.main',
+          onClick={() => {
+            setConfirmStatusModal({ open: true, payment: selectedPayment });
+            setMenuAnchor(null);
           }}
+          sx={{ color: selectedPayment?.status === 'active' ? 'error.main' : 'success.main' }}
         >
-          <ListItemIcon>
-            {selectedPayment?.status === 'active' ? (
-              <IconX size={18} color="currentColor" />
-            ) : (
-              <IconCheck size={18} color="currentColor" />
-            )}
-          </ListItemIcon>
-          <ListItemText>
-            {selectedPayment?.status === 'active' ? 'Deactivate' : 'Activate'}
-          </ListItemText>
+          // Confirm modal before PaymentNameModal:
+          <ReusableModal
+            open={confirmStatusModal.open}
+            onClose={() => setConfirmStatusModal({ open: false, payment: null })}
+            title={
+              confirmStatusModal.payment?.status === 'active'
+                ? 'Deactivate Payment Name'
+                : 'Activate Payment Name'
+            }
+            size="small"
+            showCloseButton
+            showDivider
+          >
+            <Stack spacing={3}>
+              <Typography variant="body2">
+                Are you sure you want to{' '}
+                <strong>
+                  {confirmStatusModal.payment?.status === 'active' ? 'deactivate' : 'activate'}
+                </strong>{' '}
+                <strong>"{confirmStatusModal.payment?.name}"</strong>?
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="flex-end">
+                <Button
+                  onClick={() => setConfirmStatusModal({ open: false, payment: null })}
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'}
+                  onClick={handleToggleStatus}
+                  disabled={actionLoading}
+                >
+                  {actionLoading
+                    ? 'Updating...'
+                    : confirmStatusModal.payment?.status === 'active'
+                      ? 'Deactivate'
+                      : 'Activate'}
+                </Button>
+              </Stack>
+            </Stack>
+          </ReusableModal>
         </MenuItem>
         <MenuItem onClick={() => selectedPayment && handleEditPayment(selectedPayment)}>
           <ListItemIcon>

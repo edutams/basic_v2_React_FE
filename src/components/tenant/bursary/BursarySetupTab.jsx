@@ -700,7 +700,7 @@ const BursarySetupTab = ({
                   <Typography variant="caption" color="text.secondary">
                     {categoryMeta.total > 0
                       ? `${categoryMeta.from}–${categoryMeta.to} of ${categoryMeta.total}`
-                      : '0 records'}
+                      : ''}
                   </Typography>
                   <Button
                     size="small"
@@ -823,7 +823,7 @@ const BursarySetupTab = ({
                   <Typography variant="caption" color="text.secondary">
                     {instalmentMeta.total > 0
                       ? `${instalmentMeta.from}–${instalmentMeta.to} of ${instalmentMeta.total}`
-                      : '0 records'}
+                      : ''}
                   </Typography>
                   <Button
                     size="small"

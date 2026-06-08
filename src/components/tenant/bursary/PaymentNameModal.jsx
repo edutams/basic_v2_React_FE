@@ -1,91 +1,128 @@
 import { useState, useEffect } from 'react';
-import { Button, TextField, MenuItem, Stack, Typography, Box, Grid, Divider } from '@mui/material';
+import {
+  Button,
+  TextField,
+  MenuItem,
+  Stack,
+  Typography,
+  Box,
+  Grid,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
+import { fetchSkoolPayBanks, validateBankAccount } from '@/api/tenant/bursary/paymentNameApi';
 
 const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
   const [formData, setFormData] = useState({
     name: '',
-    payOption: 'compulsory',
-    settlementBank: 'gtb',
-    accountNumber: '',
-    accountName: '',
-    feeBearer: 'client',
-    modules: 'none',
+    pay_option: 'compulsory',
+    bank: '',
+    account_number: '',
+    account_name: '',
+    fee_bearer: 'client',
+    modules: [],
     status: 'active',
   });
 
+  const [banks, setBanks] = useState([]);
+  const [banksLoading, setBanksLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (paymentName) {
-      setFormData({
-        name: paymentName.name || '',
-        payOption: paymentName.payOption || 'compulsory',
-        settlementBank: paymentName.settlementBank || 'gtb',
-        accountNumber: paymentName.accountNumber || '',
-        accountName: paymentName.accountName || '',
-        feeBearer: paymentName.feeBearer || 'client',
-        modules: paymentName.modules || 'none',
-        status: paymentName.status || 'active',
-      });
-    } else {
-      setFormData({
-        name: '',
-        payOption: 'compulsory',
-        settlementBank: 'gtb',
-        accountNumber: '',
-        accountName: '',
-        feeBearer: 'client',
-        modules: 'none',
-        status: 'active',
-      });
+    if (open) {
+      loadBanks();
+      if (paymentName) {
+        setFormData({
+          name: paymentName.name || '',
+          pay_option: paymentName.pay_option || 'compulsory',
+          bank: paymentName.bank_code ? `${paymentName.bank_code}, ${paymentName.bank_name}` : '',
+          account_number: paymentName.account_number || '',
+          account_name: paymentName.account_name || '',
+          fee_bearer: paymentName.fee_bearer || 'client',
+          modules: paymentName.modules ? JSON.parse(paymentName.modules) : [],
+          status: paymentName.status || 'active',
+        });
+      } else {
+        setFormData({
+          name: '',
+          pay_option: 'compulsory',
+          bank: '',
+          account_number: '',
+          account_name: '',
+          fee_bearer: 'client',
+          modules: [],
+          status: 'active',
+        });
+      }
+      setErrors({});
     }
-    setErrors({});
   }, [paymentName, open]);
 
+  const loadBanks = async () => {
+    setBanksLoading(true);
+    try {
+      const res = await fetchSkoolPayBanks();
+      setBanks(res.data || []);
+    } catch {
+      // banks failed to load
+    } finally {
+      setBanksLoading(false);
+    }
+  };
+
   const handleChange = (field) => (event) => {
-    let value = event.target.value;
-
-    if (field === 'accountNumber') {
-      value = value.replace(/\D/g, '');
-    }
-
-    if (field === 'accountName') {
-      value = value.replace(/[^a-zA-Z\s]/g, '');
-    }
-
+    const value = event.target.value;
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
+
+    // clear account name if bank or account number changes
+    if (field === 'bank' || field === 'account_number') {
+      setFormData((prev) => ({ ...prev, [field]: value, account_name: '' }));
+    }
+  };
+
+  const handleValidateAccount = async () => {
+    if (!formData.bank || formData.account_number.length !== 10) return;
+    setValidating(true);
+    try {
+      const res = await validateBankAccount({
+        bank: formData.bank,
+        account_number: formData.account_number,
+      });
+      setFormData((prev) => ({ ...prev, account_name: res.account_name || res.data || '' }));
+    } catch {
+      setErrors((prev) => ({
+        ...prev,
+        account_number: 'Could not validate account. Check details.',
+      }));
+    } finally {
+      setValidating(false);
     }
   };
 
   const validate = () => {
     const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Payment name is required';
-    }
-
-    if (!formData.accountNumber.trim()) {
-      newErrors.accountNumber = 'Account number is required';
-    } else if (!/^\d{10}$/.test(formData.accountNumber)) {
-      newErrors.accountNumber = 'Account number must be 10 digits';
-    }
-
-    if (!formData.accountName.trim()) {
-      newErrors.accountName = 'Account name is required';
-    }
-
+    if (!formData.name.trim()) newErrors.name = 'Payment name is required';
+    if (!formData.bank) newErrors.bank = 'Bank is required';
+    if (!formData.account_number || !/^\d{10}$/.test(formData.account_number))
+      newErrors.account_number = 'Valid 10-digit account number is required';
+    if (!formData.account_name.trim())
+      newErrors.account_name = 'Please validate account number first';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validate()) {
-      onSave(formData);
-      onClose();
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,162 +133,134 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
       title={paymentName ? 'Edit Payment Name' : 'Add New Payment Name'}
       subtitle="Configure payment item details and settlement account"
       size="large"
-      showCloseButton={true}
-      showDivider={true}
+      showCloseButton
+      showDivider
     >
       <Stack spacing={3}>
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: 'info.light',
-            borderRadius: 1,
-            border: '1px solid',
-            borderColor: 'info.light',
-          }}
-        >
-          <Typography variant="caption" color="info.main">
-            💡 <strong>Tip:</strong> Make sure the settlement account details are correct. All
-            payments for this item will be credited to this account.
-          </Typography>
-        </Box>
-        <Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Payment Name"
-                fullWidth
-                value={formData.name}
-                onChange={handleChange('name')}
-                error={!!errors.name}
-                helperText={errors.name}
-                placeholder="e.g., Acceptance Fee, Tuition Fee"
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                select
-                label="Pay Option"
-                fullWidth
-                value={formData.payOption}
-                onChange={handleChange('payOption')}
-                required
-              >
-                <MenuItem value="compulsory">Compulsory</MenuItem>
-                <MenuItem value="optional">Optional</MenuItem>
-              </TextField>
-            </Grid>
+        <Alert severity="info" sx={{ fontSize: 12 }}>
+          Make sure settlement account details are correct. All payments for this item will be
+          credited to this account.
+        </Alert>
+
+        {/* Name + Pay Option */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Payment Name"
+              fullWidth
+              value={formData.name}
+              onChange={handleChange('name')}
+              error={!!errors.name}
+              helperText={errors.name}
+              placeholder="e.g., Acceptance Fee, Tuition Fee"
+            />
           </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              select
+              label="Pay Option"
+              fullWidth
+              value={formData.pay_option}
+              onChange={handleChange('pay_option')}
+            >
+              <MenuItem value="compulsory">Compulsory</MenuItem>
+              <MenuItem value="optional">Optional</MenuItem>
+            </TextField>
+          </Grid>
+        </Grid>
+
+        {/* Bank + Account Number */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              select
+              label="Bank"
+              fullWidth
+              value={formData.bank}
+              onChange={handleChange('bank')}
+              error={!!errors.bank}
+              helperText={errors.bank || ''}
+              disabled={banksLoading}
+            >
+              {banksLoading ? (
+                <MenuItem disabled>Loading banks...</MenuItem>
+              ) : (
+                banks.map((bank) => (
+                  <MenuItem key={bank.code} value={`${bank.code}, ${bank.name}`}>
+                    {bank.name}
+                  </MenuItem>
+                ))
+              )}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              label="Account Number"
+              fullWidth
+              value={formData.account_number}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                setFormData((prev) => ({ ...prev, account_number: value, account_name: '' }));
+                if (errors.account_number) setErrors((prev) => ({ ...prev, account_number: '' }));
+              }}
+              onBlur={handleValidateAccount}
+              error={!!errors.account_number}
+              helperText={errors.account_number || 'Account name will auto-fill on blur'}
+              inputProps={{ maxLength: 10, inputMode: 'numeric' }}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Account Name (auto-filled) */}
+        <Box sx={{ position: 'relative' }}>
+          <TextField
+            label="Account Name"
+            fullWidth
+            value={formData.account_name}
+            error={!!errors.account_name}
+            helperText={errors.account_name || 'Auto-filled after account validation'}
+            InputProps={{
+              readOnly: true,
+              endAdornment: validating ? <CircularProgress size={18} /> : null,
+            }}
+          />
         </Box>
 
-        <Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                select
-                label="Bank"
-                fullWidth
-                value={formData.settlementBank}
-                onChange={handleChange('settlementBank')}
-                required
-              >
-                <MenuItem value="gtb">GTB (Guaranty Trust Bank)</MenuItem>
-                <MenuItem value="fcmb">FCMB (First City Monument Bank)</MenuItem>
-                <MenuItem value="wema">Wema Bank</MenuItem>
-                <MenuItem value="zenith">Zenith Bank</MenuItem>
-                <MenuItem value="access">Access Bank</MenuItem>
-                <MenuItem value="uba">UBA (United Bank for Africa)</MenuItem>
-                <MenuItem value="firstbank">First Bank</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Account Number"
-                fullWidth
-                value={formData.accountNumber}
-                onChange={handleChange('accountNumber')}
-                error={!!errors.accountNumber}
-                helperText={errors.accountNumber}
-                placeholder="0123456789"
-                required
-                inputProps={{
-                  maxLength: 10,
-                  inputMode: 'numeric',
-                  pattern: '[0-9]*',
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Account Name"
-                fullWidth
-                value={formData.accountName}
-                onChange={handleChange('accountName')}
-                error={!!errors.accountName}
-                helperText={errors.accountName}
-                placeholder="School Account Name"
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                select
-                label="Fee Bearer"
-                fullWidth
-                value={formData.feeBearer}
-                onChange={handleChange('feeBearer')}
-                helperText="Who pays the gateway charges"
-                required
-              >
-                <MenuItem value="client">Client</MenuItem>
-                <MenuItem value="student">Student</MenuItem>
-              </TextField>
-            </Grid>
+        {/* Fee Bearer + Modules + Status */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              select
+              label="Fee Bearer"
+              fullWidth
+              value={formData.fee_bearer}
+              onChange={handleChange('fee_bearer')}
+              helperText="Who pays the gateway charges"
+            >
+              <MenuItem value="client">Client</MenuItem>
+              <MenuItem value="school">School</MenuItem>
+            </TextField>
           </Grid>
-        </Box>
-
-        <Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                select
-                label="Modules"
-                fullWidth
-                value={formData.modules}
-                onChange={handleChange('modules')}
-                helperText="Which module this payment applies to"
-                required
-              >
-                <MenuItem value="none">None</MenuItem>
-                <MenuItem value="admission">Admission</MenuItem>
-                <MenuItem value="hostel">Hostel</MenuItem>
-                <MenuItem value="library">Library</MenuItem>
-                <MenuItem value="transport">Transport</MenuItem>
-                <MenuItem value="exam">Exam</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                select
-                label="Status"
-                fullWidth
-                value={formData.status}
-                onChange={handleChange('status')}
-                required
-              >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-              </TextField>
-            </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              select
+              label="Status"
+              fullWidth
+              value={formData.status}
+              onChange={handleChange('status')}
+            >
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </TextField>
           </Grid>
-        </Box>
+        </Grid>
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} variant="outlined">
+          <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} sx={{ fontWeight: 600 }}>
-            {paymentName ? 'Update' : 'Add'} Payment Name
+          <Button onClick={handleSubmit} disabled={loading || validating} sx={{ fontWeight: 600 }}>
+            {loading ? 'Saving...' : `${paymentName ? 'Update' : 'Add'} Payment Name`}
           </Button>
         </Stack>
       </Stack>

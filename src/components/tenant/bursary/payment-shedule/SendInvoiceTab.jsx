@@ -516,7 +516,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             </Box>
           </Box>
 
-          <Tabs value={deliveryTab} onChange={handleDeliveryTabChange}>
+          <Tabs value={deliveryTab} onChange={handleDeliveryTabChange} variant="scrollable">
             <Tab
               label={
                 <Box display="flex" alignItems="center" gap={1}>

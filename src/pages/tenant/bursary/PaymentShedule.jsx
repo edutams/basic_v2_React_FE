@@ -393,6 +393,7 @@ const PaymentShedule = () => {
         <Tabs
           value={actionTab}
           onChange={handleActionTabChange}
+          variant="scrollable"
           sx={{
             '& .MuiTab-root': {
               textTransform: 'none',

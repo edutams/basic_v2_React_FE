@@ -285,13 +285,13 @@ const PaymentShedule = () => {
                     width: 24,
                     height: 24,
                     borderRadius: '4px',
-                    bgcolor: 'rgba(139, 195, 74, 0.15)',
+                    bgcolor: 'primary.light',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <WalletIcon sx={{ fontSize: 16, color: 'rgba(139, 195, 74, 1)' }} />
+                  <WalletIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Payment Name
@@ -335,13 +335,13 @@ const PaymentShedule = () => {
                     width: 24,
                     height: 24,
                     borderRadius: '4px',
-                    bgcolor: 'rgba(103, 58, 183, 0.15)',
+                    bgcolor: 'primary.light',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <WalletIcon sx={{ fontSize: 16, color: 'rgba(103, 58, 183, 1)' }} />
+                  <WalletIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                 </Box>
                 <Typography variant="body2" fontWeight={600}>
                   Category Name

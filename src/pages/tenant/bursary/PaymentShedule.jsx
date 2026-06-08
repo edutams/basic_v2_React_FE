@@ -17,7 +17,8 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon } from '@mui/icons-material';
+import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon, Message as MessageIcon, Email as EmailIcon, Article as ArticleIcon } from '@mui/icons-material';
+import StatCard from '@/components/shared/StatCard';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
@@ -80,6 +81,13 @@ const PaymentShedule = () => {
       { name: 'With Maximum Invoice', count: 798, amount: '₦539,495,900.00', label: 'New Student' },
     ],
   };
+
+  const sendInvoiceStats = [
+    { label: 'Total Invoice Sent', value: 522, icon: MessageIcon },
+    { label: 'Invoice Sent by Mail', value: 522, icon: EmailIcon },
+    { label: 'Invoice Sent by SMS', value: 522, icon: EmailIcon },
+    { label: 'Excel Generated', value: 522, icon: ArticleIcon },
+  ];
 
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
@@ -368,6 +376,16 @@ const PaymentShedule = () => {
               </Stack>
             </Paper>
           </Grid>
+        </Grid>
+      )}
+
+      {actionTab === 2 && (
+        <Grid container spacing={3} mb={3}>
+          {sendInvoiceStats.map((stat, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
+               <StatCard count={stat.value} label={stat.label} icon={stat.icon} color={stat.color} />
+            </Grid>
+          ))}
         </Grid>
       )}
 

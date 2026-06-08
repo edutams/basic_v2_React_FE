@@ -347,8 +347,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info" sx={{ mb: 2 }}>
-        <Typography variant="body2" fontWeight={600} textAlign="center" sx={{ width: '100%' }}>
+      <Alert severity="info" sx={{ mb: 2, textAlign: "center", justifyContent: "center" }}>
+        <Typography variant="body2" fontWeight={600}>
           Payment Schedules for 2024/2025 - Second Term (New Student Category)
         </Typography>
       </Alert>

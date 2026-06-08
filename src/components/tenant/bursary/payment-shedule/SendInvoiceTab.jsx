@@ -43,6 +43,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     .fill({
       name: 'Ada Obi',
       phone: '0904428395',
+      email: 'ada.obi@example.com',
     })
     .map((p, i) => ({ ...p, id: i }));
 
@@ -114,7 +115,6 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    color="success"
                     indeterminate={
                       selectedParents.length > 0 && selectedParents.length < parentsList.length
                     }
@@ -125,7 +125,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   />
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Phone No.</TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                  {deliveryTab === 0 ? 'Phone No.' : 'Email'}
+                </TableCell>
                 <TableCell sx={{ fontWeight: 600, color: 'text.secondary', textAlign: 'center' }}>
                   Action
                 </TableCell>
@@ -142,7 +144,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>{row.name}</TableCell>
                   <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                    {row.phone}
+                    {deliveryTab === 0 ? row.phone : row.email}
                   </TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={handleMenuClick}>
@@ -165,7 +167,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         </TableContainer>
 
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-          <MenuItem onClick={handleMenuClose}>Edit Parent Line</MenuItem>
+          <MenuItem onClick={handleMenuClose}>
+            {deliveryTab === 0 ? 'Edit Parent Line' : 'Edit Email'}
+          </MenuItem>
           <MenuItem onClick={handleMenuClose}>Resend</MenuItem>
         </Menu>
       </Grid>

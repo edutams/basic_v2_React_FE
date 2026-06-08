@@ -407,11 +407,7 @@ const TeamTab = ({
           </Typography>
         </Stack>
         {!isViewingProfile && (
-          <Button
-            startIcon={<IconUsers size={16} />}
-            onClick={onAddAgent}
-            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
-          >
+          <Button startIcon={<IconUsers size={16} />} onClick={onAddAgent}>
             Add New Organization
           </Button>
         )}
@@ -458,12 +454,7 @@ const TeamTab = ({
           </FormControl>
         </Grid>
         <Grid size={{ xs: 12, md: 2 }}>
-          <Button
-            fullWidth
-            size="small"
-            onClick={handleSearch}
-            sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
-          >
+          <Button fullWidth size="small" onClick={handleSearch}>
             Search
           </Button>
         </Grid>

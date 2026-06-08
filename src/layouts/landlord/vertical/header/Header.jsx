@@ -153,9 +153,6 @@ const Header = () => {
         {isImpersonating && (
           <Box
             sx={{
-              // bgcolor: 'warning.main',
-              bgcolor: '#593196',
-              color: '#ffffff',
               px: { xs: 1, sm: 2 },
               py: 0.5,
               borderRadius: 1,
@@ -178,7 +175,6 @@ const Header = () => {
             </Typography>
             <Button
               size="small"
-              color="inherit"
               onClick={() => setConfirmOpen(true)}
               sx={{
                 whiteSpace: 'nowrap',

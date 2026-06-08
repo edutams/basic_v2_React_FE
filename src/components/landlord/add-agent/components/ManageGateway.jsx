@@ -16,7 +16,7 @@ import {
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
-import { fetchSkoolPayBanks } from '@/api/tenant/bursary/paymentNameApi';
+import { fetchSkoolPayBanks } from '@/api/landlord/bank-service/bankService';
 
 const availableCurrencies = [
   { code: 'NGN', name: 'Nigerian Naira (₦)', symbol: '₦' },

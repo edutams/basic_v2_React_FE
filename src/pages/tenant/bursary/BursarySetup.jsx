@@ -13,6 +13,7 @@ import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
 import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchPaymentNameStats } from '@/api/tenant/bursary/paymentNameApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary Setup' }];
 
@@ -32,28 +33,31 @@ const BursarySetup = () => {
     activeInstalments: 0,
   });
 
-  const paymentNameStats = {
-    totalItems: 164,
-    compulsory: 98,
-    optional: 66,
-    active: 164,
+  const [paymentNameStats, setPaymentNameStats] = useState({
+    total: 0,
+    compulsory: 0,
+    optional: 0,
+    active: 0,
     inactive: 0,
-    settlementAccounts: {
-      total: 164,
-      gtb: 98,
-      fcmb: 98,
-      wema: 98,
-    },
-    feeBearer: {
-      total: 164,
-      client: 400,
-      student: 0,
-    },
-  };
+    settlement_accounts: {},
+    fee_bearer: {},
+  });
 
   useEffect(() => {
     loadSessionTerms();
-  }, []);
+    if (currentTab === 1) {
+      loadPaymentNameStats();
+    }
+  }, [currentTab]);
+
+  const loadPaymentNameStats = async () => {
+    try {
+      const res = await fetchPaymentNameStats();
+      if (res.status) setPaymentNameStats(res.data);
+    } catch {
+      console.error('Failed to load payment name stats');
+    }
+  };
 
   const loadSessionTerms = async () => {
     try {
@@ -136,7 +140,7 @@ const BursarySetup = () => {
                 Total Payment Items
               </Typography>
               <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
-                {paymentNameStats.totalItems}
+                {paymentNameStats.total}
               </Typography>
               <Grid container spacing={2} mb={2}>
                 <Grid size={{ xs: 3 }}>
@@ -178,11 +182,13 @@ const BursarySetup = () => {
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    bgcolor: 'success.main',
+                    bgcolor: paymentNameStats.inactive > 0 ? 'warning.main' : 'success.main',
                   }}
                 />
                 <Typography variant="caption" color="textSecondary">
-                  All payment items are currently active
+                  {paymentNameStats.inactive > 0
+                    ? `${paymentNameStats.inactive} item(s) currently inactive`
+                    : 'All payment items are currently active'}
                 </Typography>
               </Box>
             </Paper>
@@ -195,45 +201,33 @@ const BursarySetup = () => {
                 Settlement Accounts
               </Typography>
               <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
-                {paymentNameStats.settlementAccounts.total}
+                {paymentNameStats.total}
               </Typography>
               <Grid container spacing={2} mb={2}>
-                <Grid size={{ xs: 4 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    GTB
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.settlementAccounts.gtb} Items
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 4 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    FCMB
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.settlementAccounts.fcmb} Items
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 4 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Wema
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.settlementAccounts.wema} Items
-                  </Typography>
-                </Grid>
+                {Object.entries(paymentNameStats.settlement_accounts).map(([bank, count]) => (
+                  <Grid size={{ xs: 4 }} key={bank}>
+                    <Typography variant="caption" color="textSecondary">
+                      {bank.toUpperCase()}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {count} Items
+                    </Typography>
+                  </Grid>
+                ))}
+                {Object.keys(paymentNameStats.settlement_accounts).length === 0 && (
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="caption" color="textSecondary">
+                      No accounts yet
+                    </Typography>
+                  </Grid>
+                )}
               </Grid>
               <Box display="flex" alignItems="center" gap={1}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: 'success.main',
-                  }}
-                />
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
                 <Typography variant="caption" color="textSecondary">
-                  GTB is the most Useeland Settlement account
+                  {Object.keys(paymentNameStats.settlement_accounts).length > 0
+                    ? `${Object.keys(paymentNameStats.settlement_accounts).length} bank(s) configured`
+                    : 'No settlement accounts configured'}
                 </Typography>
               </Box>
             </Paper>
@@ -246,7 +240,7 @@ const BursarySetup = () => {
                 Fee Bearer Distribution
               </Typography>
               <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
-                {paymentNameStats.feeBearer.total}
+                {paymentNameStats.total}
               </Typography>
               <Grid container spacing={2} mb={2}>
                 <Grid size={{ xs: 6 }}>
@@ -254,29 +248,24 @@ const BursarySetup = () => {
                     Client
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.feeBearer.client}
+                    {paymentNameStats.fee_bearer?.client || 0}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="caption" color="textSecondary">
-                    Student
+                    School
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.feeBearer.student}
+                    {paymentNameStats.fee_bearer?.school || 0}
                   </Typography>
                 </Grid>
               </Grid>
               <Box display="flex" alignItems="center" gap={1}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: 'success.main',
-                  }}
-                />
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
                 <Typography variant="caption" color="textSecondary">
-                  All Fees are Currently Borne by client
+                  {paymentNameStats.fee_bearer?.school > 0
+                    ? 'School absorbs some gateway charges'
+                    : 'All charges currently borne by client'}
                 </Typography>
               </Box>
             </Paper>
@@ -320,7 +309,9 @@ const BursarySetup = () => {
         />
       )}
 
-      {currentTab === 1 && <PaymentNameTab />}
+      {currentTab === 1 && (
+        <PaymentNameTab showSnackbar={showSnackbar} onStatsRefresh={loadPaymentNameStats} />
+      )}
 
       {/* Snackbar */}
       <Snackbar

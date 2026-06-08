@@ -124,6 +124,7 @@ const ActionMenuCell = ({
   handleSetCommission,
   handleManageReferral,
   handleManageGateway,
+  handleManageBankService,
   handleDeleteAgent,
   handleDeleteOrganization,
 }) => {
@@ -201,6 +202,22 @@ const ActionMenuCell = ({
         <MenuItem
           onClick={() => {
             handleClose();
+            handleManageGateway(agent);
+          }}
+        >
+          Manage Payment Gateway
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            handleManageBankService(agent);
+          }}
+        >
+          Manage Bank Service
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
             handleDeleteOrganization(agent);
           }}
           sx={{ color: 'error.main' }}
@@ -232,22 +249,7 @@ const ActionMenuCell = ({
         >
           Manage Referral
         </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            handleManageGateway(agent);
-          }}
-        >
-          Manage Payment Gateway
-        </MenuItem> */}
-        {/* <MenuItem
-          onClick={() => {
-            handleClose();
-            handleDeleteAgent(agent);
-          }}
-        >
-          Delete Agent
-        </MenuItem> */}
+    */}
       </Menu>
     </>
   );
@@ -649,6 +651,12 @@ const Agent = () => {
   const handleManageGateway = (agentData) => {
     setSelectedAgent(agentData);
     setActionType('manageGateway');
+    setIsModalOpen(true);
+  };
+
+  const handleManageBankService = (agentData) => {
+    setSelectedAgent(agentData);
+    setActionType('manageBankService');
     setIsModalOpen(true);
   };
 
@@ -1492,6 +1500,7 @@ const Agent = () => {
                               handleSetCommission={handleSetCommission}
                               handleManageReferral={handleManageReferral}
                               handleManageGateway={handleManageGateway}
+                              handleManageBankService={handleManageBankService}
                               handleDeleteAgent={handleDeleteAgent}
                               handleDeleteOrganization={handleDeleteOrganization}
                             />

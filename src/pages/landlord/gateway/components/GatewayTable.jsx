@@ -22,8 +22,8 @@ import { FilterList as FilterListIcon, MoreVert as MoreVertIcon } from '@mui/ico
 import { IconFilter } from '@tabler/icons-react';
 
 import { IconEdit, IconTrash } from '@tabler/icons-react';
-import ParentCard from '../../../../components/shared/ParentCard';
-import FilterSideDrawer from '../../../../components/shared/FilterSideDrawer';
+import ParentCard from '@/components/shared/ParentCard';
+import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import PropTypes from 'prop-types';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
 
@@ -188,19 +188,19 @@ const GatewayTable = ({ gateways = [], onGatewayAction, isLoading: externalLoadi
                 gatewaysList.map((gateway, index) => (
                   <TableRow key={gateway.id} hover>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>{gateway.gateway_name || 'N/A'}</TableCell>
-                    <TableCell>{gateway.code || 'N/A'}</TableCell>
+                    <TableCell>{gateway.gateway_name}</TableCell>
+                    <TableCell>{gateway.gateway_code}</TableCell>
                     <TableCell>
                       <Chip
-                        label={gateway.status?.toUpperCase() || 'N/A'}
+                        label={gateway.gateway_status}
                         size="small"
                         sx={{
                           bgcolor:
-                            gateway.status?.toLowerCase() === 'active'
+                            gateway.gateway_status?.toLowerCase() === 'active'
                               ? (theme) => theme.palette.success.light
                               : (theme) => theme.palette.error.light,
                           color:
-                            gateway.status?.toLowerCase() === 'active'
+                            gateway.gateway_status?.toLowerCase() === 'active'
                               ? (theme) => theme.palette.success.main
                               : (theme) => theme.palette.error.main,
                           borderRadius: '8px',

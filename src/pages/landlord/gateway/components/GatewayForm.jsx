@@ -6,8 +6,8 @@ import PropTypes from 'prop-types';
 const GatewayForm = ({
   initialValues = {
     gateway_name: '',
-    code: '',
-    status: 'active',
+    gateway_code: '',
+    gateway_status: 'active',
   },
   onSubmit,
   onCancel,
@@ -36,8 +36,8 @@ const GatewayForm = ({
         <Grid item xs={12}>
           <TextField
             label="Gateway Code"
-            name="code"
-            value={formik.values.code || ''}
+            name="gateway_code"
+            value={formik.values.gateway_code || ''}
             onChange={formik.handleChange}
             fullWidth
           />
@@ -46,8 +46,8 @@ const GatewayForm = ({
         <Grid item xs={12}>
           <FormControl fullWidth>
             <Select
-              name="status"
-              value={formik.values.status || ''}
+              name="gateway_status"
+              value={formik.values.gateway_status || ''}
               onChange={formik.handleChange}
               displayEmpty
             >

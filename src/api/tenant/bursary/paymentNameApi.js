@@ -29,3 +29,8 @@ export const validateBankAccount = async (data) => {
     const res = await api.post('/bursary/payment_name/validate_account', data);
     return res.data;
 };
+
+export const fetchPaymentNameStats = async () => {
+    const res = await api.get('/bursary/payment_name/stats');
+    return res.data;
+};

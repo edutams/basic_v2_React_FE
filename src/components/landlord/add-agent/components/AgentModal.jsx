@@ -13,6 +13,7 @@ import agentApi from '@/api/landlord/organizations/agent';
 import useNotification from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
 import ReusableModal from '@/components/shared/ReusableModal';
+import ManageBankService from './ManageBankService';
 
 const getModalConfig = (actionType) => {
   const configs = {
@@ -42,6 +43,10 @@ const getModalConfig = (actionType) => {
     },
     manageGateway: {
       title: 'Manage Gateway',
+      size: 'small',
+    },
+    manageBankService: {
+      title: 'Manage Bank Service',
       size: 'small',
     },
     changeColorScheme: {
@@ -403,6 +408,18 @@ const AgentModal = ({
           />
         );
 
+      case 'manageBankService':
+        return (
+          <ManageBankService
+            open={open}
+            agent={selectedAgent}
+            onSave={() => {
+              handleClose();
+            }}
+            onClose={handleClose}
+          />
+        );
+
       case 'changeColorScheme':
         return (
           <ChangeColorScheme
@@ -454,6 +471,7 @@ AgentModal.propTypes = {
     'setCommission',
     'manageReferral',
     'manageGateway',
+    'manageBankService',
     'changeColorScheme',
   ]),
 };

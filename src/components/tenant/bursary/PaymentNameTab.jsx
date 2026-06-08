@@ -65,9 +65,11 @@ const PaymentNameTab = ({ showSnackbar }) => {
       if (editingPayment) {
         await updatePaymentName(editingPayment.id, paymentData);
         showSnackbar?.('Payment name updated successfully');
+        onStatsRefresh?.();
       } else {
         await createPaymentName(paymentData);
         showSnackbar?.('Payment name added successfully');
+        onStatsRefresh?.();
       }
       setModalOpen(false);
       setPage(1);
@@ -87,6 +89,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
       showSnackbar?.(
         `Payment name ${res.data.status === 'active' ? 'activated' : 'deactivated'} successfully`,
       );
+      onStatsRefresh?.();
       setConfirmStatusModal({ open: false, payment: null });
     } catch {
       showSnackbar?.('Failed to update status', 'error');

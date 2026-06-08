@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  AssignmentTurnedIn as AssignmentTurnedInIcon,
   CheckCircle as CheckCircleIcon,
   Person as PersonIcon,
   MoreHoriz as MoreHorizIcon,
@@ -552,7 +553,6 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                           <Box
                             sx={{
                               bgcolor: 'primary.light',
-                              px: 1.5,
                               py: 0.5,
                               borderRadius: 5,
                               display: 'inline-block',
@@ -562,6 +562,9 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                               {row.category}
                             </Typography>
                           </Box>
+                          <Chip>
+
+                          </Chip>
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>
                           ₦{row.compulsory.toLocaleString()}
@@ -1038,13 +1041,13 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               width: 40,
               height: 40,
               borderRadius: 1,
-              bgcolor: 'grey.100',
+              bgcolor: 'primary.light',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Typography variant="h6">📄</Typography>
+             <AssignmentTurnedInIcon sx={{ color: 'primary.main' }} />
           </Box>
           <Typography variant="h6" fontWeight={600}>
             Generate Invoice
@@ -1124,7 +1127,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 key={cls}
                 label={cls}
                 onClick={() => setSelectedClass(cls)}
-                icon={selectedClass === cls ? <CheckCircleIcon sx={{ fontSize: 18 }} /> : undefined}
+                icon={selectedClass === cls ? <CheckCircleIcon sx={{ fontSize: 18, color: 'white !important' }} /> : undefined}
                 sx={{
                   bgcolor: selectedClass === cls ? 'primary.main' : 'white',
                   color: selectedClass === cls ? 'white' : 'text.primary',

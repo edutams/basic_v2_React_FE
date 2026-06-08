@@ -16,6 +16,6 @@ export const fetchActiveSessionTerm = async () => {
 };
 
 export const setActiveSessionTerm = async (termId) => {
-    const res = await api.post('/bursary/settings/set_active_session_term', { value: termId });
+    const res = await api.post('/bursary/settings/set_bursary_active_session_term', { value: termId });
     return res.data;
 };

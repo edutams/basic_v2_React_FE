@@ -23,6 +23,7 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
 import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
 import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
+import SendInvoiceTab from '@/components/tenant/bursary/payment-shedule/SendInvoiceTab';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
@@ -581,13 +582,7 @@ const PaymentShedule = () => {
             </>
           )}
           {actionTab === 1 && <GenerateInvoiceTab showSnackbar={showSnackbar} />}
-          {actionTab === 2 && (
-            <Box textAlign="center" py={8}>
-              <Typography variant="h6" color="text.secondary">
-                Send Invoice - Coming Soon
-              </Typography>
-            </Box>
-          )}
+          {actionTab === 2 && <SendInvoiceTab showSnackbar={showSnackbar} />}
         </Box>
       </Paper>
 

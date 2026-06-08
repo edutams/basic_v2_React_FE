@@ -552,7 +552,6 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                           <Box
                             sx={{
                               bgcolor: 'primary.light',
-                              px: 1.5,
                               py: 0.5,
                               borderRadius: 5,
                               display: 'inline-block',
@@ -562,6 +561,9 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                               {row.category}
                             </Typography>
                           </Box>
+                          <Chip>
+
+                          </Chip>
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>
                           ₦{row.compulsory.toLocaleString()}

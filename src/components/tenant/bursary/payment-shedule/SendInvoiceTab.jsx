@@ -22,12 +22,13 @@ import {
   IconButton,
   Menu,
   Chip,
+  TablePagination,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   AssignmentTurnedIn as AssignmentTurnedInIcon,
   Refresh as RefreshIcon,
-  MoreHoriz as MoreHorizIcon,
+  MoreVert as MoreVertIcon,
   GetApp as DownloadIcon,
 } from '@mui/icons-material';
 import TiptapEdit from 'src/pages/landlord/views/forms/form-tiptap/TiptapEdit';
@@ -48,6 +49,19 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const [parentsList] = useState(initialParentsList);
   const [selectedParents, setSelectedParents] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const paginatedParentsList = parentsList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
@@ -86,7 +100,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           <Chip
             label="JSS2"
             size="small"
-            sx={{ bgcolor: '#f4c430', color: 'white', fontWeight: 700 }}
+            sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
           />
         </Box>
 
@@ -97,7 +111,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         >
           <Table size="medium">
             <TableHead>
-              <TableRow sx={{ bgcolor: '#fafafa' }}>
+              <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
                     color="success"
@@ -118,7 +132,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {parentsList.map((row) => (
+              {paginatedParentsList.map((row) => (
                 <TableRow key={row.id} hover selected={selectedParents.includes(row.id)}>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -132,13 +146,22 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   </TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={handleMenuClick}>
-                      <MoreHorizIcon />
+                      <MoreVertIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          <TablePagination
+            component="div"
+            count={parentsList.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
         </TableContainer>
 
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
@@ -165,7 +188,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
 
           <Box
             sx={{
-              bgcolor: '#f4f9f9',
+              bgcolor: 'info.light',
               p: 1.5,
               borderRadius: 2,
               display: 'flex',
@@ -180,7 +203,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               <Box display="flex" alignItems="center" gap={1}>
                 <Box
                   sx={{
-                    bgcolor: '#4154f1',
+                    bgcolor: 'primary.main',
                     color: 'white',
                     px: 1,
                     py: 0.2,
@@ -198,7 +221,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               <Box display="flex" alignItems="center" gap={1}>
                 <Box
                   sx={{
-                    bgcolor: '#2eca6a',
+                    bgcolor: 'success.main',
                     color: 'white',
                     px: 1,
                     py: 0.2,
@@ -219,7 +242,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 </Typography>
                 <Box
                   sx={{
-                    bgcolor: '#ffc107',
+                    bgcolor: 'warning.main',
                     color: 'white',
                     px: 1,
                     py: 0.2,
@@ -350,6 +373,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           <Chip
             label="Regenerate"
             size="small"
+            icon={<RefreshIcon fontSize="small" sx={{ color: 'inherit !important' }} />}
             sx={{
               bgcolor: '#fffbea',
               color: '#856404',
@@ -379,13 +403,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   onChange={handleSelectAll}
                 />
               </TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '1rem' }}>
+              <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
                 Name
               </TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '1rem' }}>
+              <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
                 Phone No
               </TableCell>
-              <TableCell sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '1rem' }}>
+              <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
                 Status
               </TableCell>
               <TableCell
@@ -401,7 +425,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {parentsList.map((row) => (
+            {paginatedParentsList.map((row) => (
               <TableRow key={row.id} hover selected={selectedParents.includes(row.id)}>
                 <TableCell padding="checkbox">
                   <Checkbox
@@ -409,8 +433,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     onChange={() => handleSelectParent(row.id)}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, fontSize: '1rem' }}>{row.name}</TableCell>
-                <TableCell sx={{ color: 'text.secondary', fontWeight: 600, fontSize: '1rem' }}>
+                <TableCell sx={{ fontWeight: 700 }}>{row.name}</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>
                   {row.phone}
                 </TableCell>
                 <TableCell>
@@ -425,13 +449,22 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 </TableCell>
                 <TableCell align="center">
                   <IconButton size="small" onClick={handleMenuClick}>
-                    <MoreHorizIcon />
+                    <MoreVertIcon />
                   </IconButton>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={parentsList.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25]}
+        />
       </TableContainer>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
@@ -613,20 +646,11 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         {deliveryTab === 2 && (
           <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
             <Button
-              variant="contained"
-              color="primary"
-              sx={{ px: 4, bgcolor: '#4154f1', textTransform: 'none' }}
+            size='small'
             >
               Generate
             </Button>
             <Button
-              variant="contained"
-              sx={{
-                px: 3,
-                bgcolor: '#5e35b1',
-                '&:hover': { bgcolor: '#4b2a8d' },
-                textTransform: 'none',
-              }}
               endIcon={<DownloadIcon />}
             >
               Downloaded

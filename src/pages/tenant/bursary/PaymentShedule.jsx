@@ -17,7 +17,7 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon, Message as MessageIcon, Email as EmailIcon, Article as ArticleIcon } from '@mui/icons-material';
+import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon, Message as MessageIcon, Email as EmailIcon, Article as ArticleIcon,   Settings as SettingsIcon,} from '@mui/icons-material';
 import StatCard from '@/components/shared/StatCard';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -425,15 +425,13 @@ const PaymentShedule = () => {
                       width: 40,
                       height: 40,
                       borderRadius: 1,
-                      bgcolor: 'primary.lighter',
+                      bgcolor: 'primary.light',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Typography variant="h6" fontWeight={700} color="primary.main">
-                      ⚙️
-                    </Typography>
+                     <SettingsIcon sx={{ color: 'primary.main' }} />
                   </Box>
                   <Box>
                     <Typography variant="h6" fontWeight={600}>

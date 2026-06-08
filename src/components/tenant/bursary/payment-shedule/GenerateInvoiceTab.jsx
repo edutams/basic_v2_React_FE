@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  AssignmentTurnedIn as AssignmentTurnedInIcon,
   CheckCircle as CheckCircleIcon,
   Person as PersonIcon,
   MoreHoriz as MoreHorizIcon,
@@ -1040,13 +1041,13 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
               width: 40,
               height: 40,
               borderRadius: 1,
-              bgcolor: 'grey.100',
+              bgcolor: 'primary.light',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Typography variant="h6">📄</Typography>
+             <AssignmentTurnedInIcon sx={{ color: 'primary.main' }} />
           </Box>
           <Typography variant="h6" fontWeight={600}>
             Generate Invoice
@@ -1126,7 +1127,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                 key={cls}
                 label={cls}
                 onClick={() => setSelectedClass(cls)}
-                icon={selectedClass === cls ? <CheckCircleIcon sx={{ fontSize: 18 }} /> : undefined}
+                icon={selectedClass === cls ? <CheckCircleIcon sx={{ fontSize: 18, color: 'white !important' }} /> : undefined}
                 sx={{
                   bgcolor: selectedClass === cls ? 'primary.main' : 'white',
                   color: selectedClass === cls ? 'white' : 'text.primary',

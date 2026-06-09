@@ -149,22 +149,22 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
     },
   ]);
 
-  const handleAddPaymentItem = () => {
-    setPaymentDialog({
-      open: true,
-      isEdit: false,
-      data: {
-        icon: '',
-        paymentName: '',
-        description: '',
-        options: [{ name: '', price: '' }],
-        category: '',
-        classes: '',
-        status: 'Active',
-      },
-    });
-    setErrors({});
-  };
+  // const handleAddPaymentItem = () => {
+  //   setPaymentDialog({
+  //     open: true,
+  //     isEdit: false,
+  //     data: {
+  //       icon: '',
+  //       paymentName: '',
+  //       description: '',
+  //       options: [{ name: '', price: '' }],
+  //       category: '',
+  //       classes: '',
+  //       status: 'Active',
+  //     },
+  //   });
+  //   setErrors({});
+  // };
 
   const handleMenuOpen = (event, row) => {
     event.stopPropagation();
@@ -399,7 +399,8 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
       </Alert>
 
       <ParentCard>
-        <Box mb={3}
+        <Box
+          mb={3}
           display="flex"
           flexDirection={{ xs: 'column', md: 'row' }}
           justifyContent="space-between"
@@ -516,22 +517,23 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           </Box>
         </Box>
 
-      <Stack mb={ 3 }
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        spacing={2}
-      >
-        <Box>
-          <Typography variant="h6" fontWeight={700} gutterBottom>
-            Optional Services
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Each row is a service with its variants and payment. Click a row to view details.
-          </Typography>
-        </Box>
+        <Stack
+          mb={3}
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          spacing={2}
+        >
+          <Box>
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              Optional Services
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Each row is a service with its variants and payment. Click a row to view details.
+            </Typography>
+          </Box>
 
-        <Button
+          {/* <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAddPaymentItem}
@@ -539,130 +541,128 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           fullWidth={{ xs: true, sm: false }}
         >
           Add payment item
-        </Button>
-      </Stack>
+        </Button> */}
+        </Stack>
 
-      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }}>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'grey.50' }}>
-              <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>Payment Name</TableCell>
-              <TableCell sx={{ fontWeight: 700, minWidth: 250 }}>Option Name</TableCell>
-              <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>Payment Category</TableCell>
-              <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>Class</TableCell>
-              <TableCell sx={{ fontWeight: 700, width: 100 }}>Status</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700, width: 80 }}>
-                Action
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredSchedules
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((schedule, index) => (
-                <TableRow
-                  key={schedule.id}
-                  hover
-                  onClick={() => handleRowClick(schedule)}
-                  sx={{ cursor: 'pointer' }}
-                >
-                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {schedule.paymentName}
+        <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 800 }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 200 }}>Payment Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 250 }}>Option Name</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>Payment Category</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 100 }}>Status</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, width: 80 }}>
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredSchedules
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((schedule, index) => (
+                  <TableRow
+                    key={schedule.id}
+                    hover
+                    onClick={() => handleRowClick(schedule)}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {schedule.paymentName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {schedule.description}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" gap={1} flexWrap="wrap">
+                        {schedule.options.map((option, idx) => (
+                          <Chip
+                            key={idx}
+                            label={`${option.name} · ${option.price}`}
+                            size="small"
+                            sx={{
+                              bgcolor: 'primary.light',
+                              color: 'primary.main',
+                            }}
+                          />
+                        ))}
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 1, display: 'block' }}
+                      >
+                        {schedule.totalTypes} types · Total {schedule.totalAmount}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {schedule.description}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" gap={1} flexWrap="wrap">
-                      {schedule.options.map((option, idx) => (
-                        <Chip
-                          key={idx}
-                          label={`${option.name} · ${option.price}`}
-                          size="small"
-                          sx={{
-                            bgcolor: 'primary.light',
-                            color: 'primary.main',
-                          }}
-                        />
-                      ))}
-                    </Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mt: 1, display: 'block' }}
-                    >
-                      {schedule.totalTypes} types · Total {schedule.totalAmount}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={schedule.category}
-                      size="small"
-                      sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.main',
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={schedule.classes}
-                      size="small"
-                      sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.main',
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={schedule.status}
-                      size="small"
-                      sx={{
-                        bgcolor:
-                          schedule.status === 'Active'
-                            ? 'rgba(76, 175, 80, 0.1)'
-                            : 'rgba(244, 67, 54, 0.1)',
-                        color: schedule.status === 'Active' ? '#4CAF50' : '#F44336',
-                        fontWeight: 600,
-                        fontSize: 11,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMenuOpen(e, schedule);
-                      }}
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredSchedules.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </TableContainer>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={schedule.category}
+                        size="small"
+                        sx={{
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={schedule.classes}
+                        size="small"
+                        sx={{
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={schedule.status}
+                        size="small"
+                        sx={{
+                          bgcolor:
+                            schedule.status === 'Active'
+                              ? 'rgba(76, 175, 80, 0.1)'
+                              : 'rgba(244, 67, 54, 0.1)',
+                          color: schedule.status === 'Active' ? '#4CAF50' : '#F44336',
+                          fontWeight: 600,
+                          fontSize: 11,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMenuOpen(e, schedule);
+                        }}
+                      >
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredSchedules.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </TableContainer>
       </ParentCard>
-
-     
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuOption onClick={handleEditSchedule}>Edit</MenuOption>
@@ -838,33 +838,19 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
       <ReusableModal
         open={paymentDialog.open}
         onClose={handlePaymentDialogClose}
-        title={paymentDialog.isEdit ? 'Edit Optional Payment Item' : 'Create Optional Payment Item'}
-        subtitle="Configure optional payment item details with multiple pricing options"
+        // title={paymentDialog.isEdit ? 'Edit Optional Payment Item' : 'Create Optional Payment Item'}
+        title="Optional Payment Item"
         size="large"
         showCloseButton={true}
         showDivider={true}
       >
         <Stack spacing={3}>
-          <Box
-            sx={{
-              p: 2,
-              bgcolor: paymentDialog.isEdit ? 'warning.lighter' : 'info.light',
-              borderRadius: 1,
-              border: '1px solid',
-              borderColor: paymentDialog.isEdit ? 'warning.light' : 'info.light',
-            }}
-          >
-            <Typography
-              variant="caption"
-              color={paymentDialog.isEdit ? 'warning.main' : 'info.main'}
-            >
-              {paymentDialog.isEdit ? '✏️ ' : '💡 '}
-              <strong>{paymentDialog.isEdit ? 'Edit Mode:' : 'Tip:'}</strong>{' '}
-              {paymentDialog.isEdit
-                ? 'Update the payment item details below. Changes will apply to all selected classes.'
-                : 'Create optional payment items with multiple variants and prices for different classes.'}
-            </Typography>
-          </Box>
+          {/* <Alert severity='info'>
+            <strong>{paymentDialog.isEdit ? 'Edit Mode:' : 'Tip:'}</strong>{' '}
+            {paymentDialog.isEdit
+              ? 'Update the payment item details below. Changes will apply to all selected classes.'
+              : 'Create optional payment items with multiple variants and prices for different classes.'}
+          </Alert> */}
 
           <TextField
             fullWidth
@@ -891,7 +877,10 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           />
 
           <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+            <Alert severity="info">
+              Configure optional payment item details with multiple pricing options
+            </Alert>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5} mt={2}>
               <Typography variant="body2" fontWeight={600}>
                 Option Name <span style={{ color: 'red' }}>*</span>
               </Typography>
@@ -943,7 +932,7 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           </Box>
 
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <FormControl fullWidth error={!!errors.category} required>
                 <InputLabel>Payment Category</InputLabel>
                 <Select
@@ -962,7 +951,7 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
                 )}
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <FormControl fullWidth error={!!errors.classes} required>
                 <InputLabel>Class Applicable</InputLabel>
                 <Select
@@ -990,7 +979,7 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           {paymentDialog.data?.classes && (
             <Box
               sx={{
-                bgcolor: 'rgba(33, 150, 243, 0.08)',
+                bgcolor: 'primary.light',
                 p: 2,
                 borderRadius: 1,
               }}
@@ -1001,7 +990,6 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
             </Box>
           )}
 
-          {/* Action Buttons */}
           <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
             <Button onClick={handlePaymentDialogClose} variant="outlined">
               Cancel
@@ -1013,7 +1001,6 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
         </Stack>
       </ReusableModal>
 
-      {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialog.open}
         onClose={handleConfirmDialogClose}

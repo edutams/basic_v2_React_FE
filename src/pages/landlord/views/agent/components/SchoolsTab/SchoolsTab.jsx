@@ -65,6 +65,8 @@ import SetupApprovals from './SetupApprovals';
 import ApprovedSchoolsTab from './ApprovedSchoolsTab';
 import { usePermissions } from '@/context/AgentContext/permissions';
 import PlanDistributionModal from '../PlanDistributionModal';
+import ManageSchoolGateway from '../ManageSchoolGateway';
+import gatewayApi from '@/api/landlord/gateway/gatewayApi';
 
 // ── PersonCard ────────────────────────────────────────────────────────────────
 
@@ -504,6 +506,9 @@ const SchoolsTab = ({
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
 
+  const [gatewayModalOpen, setGatewayModalOpen] = useState(false);
+  const [gatewaySchool, setGatewaySchool] = useState(null);
+
   const isActive = schoolToDeactivate
     ? String(schoolToDeactivate.status || '').toLowerCase() === 'active'
     : false;
@@ -539,6 +544,21 @@ const SchoolsTab = ({
   const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
   // ── Data fetching ─────────────────────────────────────────────────────────
+
+  const handleManageGateway = (school) => {
+    setGatewaySchool(school);
+    setGatewayModalOpen(true);
+  };
+
+  const handleSaveGateway = async (data) => {
+    try {
+      await gatewayApi.saveSchoolGateway(data);
+      notify('Gateway saved successfully');
+      setGatewayModalOpen(false);
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to save gateway', 'error');
+    }
+  };
 
   const fetchProspects = useCallback(async () => {
     setProspectLoading(true);
@@ -1147,6 +1167,7 @@ const SchoolsTab = ({
               onViewProfile={handleViewProfile}
               onApproveOnboarding={handleApproveOnboarding}
               onEdit={handleEdit}
+              onManageGateway={handleManageGateway}
               onDeactivate={(school) => {
                 setSchoolToDeactivate(school);
                 setOpenDeactivateDialog(true);
@@ -1264,6 +1285,16 @@ const SchoolsTab = ({
             {snackbar.message}
           </Alert>
         </Snackbar>
+
+        <ManageSchoolGateway
+          open={gatewayModalOpen}
+          onClose={() => {
+            setGatewayModalOpen(false);
+            setGatewaySchool(null);
+          }}
+          school={gatewaySchool}
+          onSave={handleSaveGateway}
+        />
       </Box>
     </LocalizationProvider>
   );

@@ -87,7 +87,6 @@ const BursarySetupTab = ({
   const [collectionMethod, setCollectionMethod] = useState('single');
   const [instalmentStyle, setInstalmentStyle] = useState('percentage');
   const [gatewayPayer, setGatewayPayer] = useState('parent');
-  const [requirePaymentForResults, setRequirePaymentForResults] = useState(true);
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -383,7 +382,7 @@ const BursarySetupTab = ({
   return (
     <>
       <Stack spacing={3}>
-        <ParentCard title="Bursary Setup">
+        <ParentCard>
           {/* Session Term */}
           <Box mb={3}>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
@@ -628,7 +627,7 @@ const BursarySetupTab = ({
                     onClick={handleAddCategory}
                     sx={{ fontWeight: 600 }}
                   >
-                    Add Category
+                    Add New
                   </Button>
                 </Box>
               }

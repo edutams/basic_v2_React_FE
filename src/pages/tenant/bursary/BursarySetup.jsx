@@ -245,10 +245,10 @@ const BursarySetup = () => {
               <Grid container spacing={2} mb={2}>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="caption" color="textSecondary">
-                    Client
+                    Parent
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.fee_bearer?.client || 0}
+                    {paymentNameStats.fee_bearer?.parent || 0}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>

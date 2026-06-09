@@ -31,8 +31,10 @@ import ParentCard from '@/components/shared/ParentCard';
 import {
   Search as SearchIcon,
   AssignmentTurnedIn as AssignmentTurnedInIcon,
-  // Add as AddIcon,
   MoreVert as MoreVertIcon,
+  Delete as DeleteIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import PaymentScheduleModal from './PaymentScheduleModal';
 import AddPaymentItemModal from './AddPaymentItemModal';
@@ -139,6 +141,21 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     setAddItemModal(true);
   };
 
+  // Toggle active/inactive status for a class within a schedule
+  const toggleClassStatus = (scheduleId, classId) => {
+    setSchedules(prev => ({
+      ...prev,
+      [currentTerm]: prev[currentTerm].map(sch => {
+        if (sch.id !== scheduleId) return sch;
+        const updatedClasses = sch.classes.map(cls =>
+          cls.id === classId ? { ...cls, missing: !cls.missing } : cls
+        );
+        const missingCount = updatedClasses.filter(c => c.missing).length;
+        return { ...sch, classes: updatedClasses, missingCount, allClassesSet: missingCount === 0 };
+      })
+    }));
+  };
+
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(row);
@@ -242,7 +259,6 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
   };
 
   const handleAddItemSave = (formData) => {
-    // Create new payment item with selected classes for current term
     const currentTermSchedules = schedules[currentTerm] || [];
     const newId =
       Math.max(
@@ -537,7 +553,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {!schedule.allClassesSet && (
+                    {schedule.missingCount === schedule.classes.length && (
                       <Typography variant="caption" color="error.main" display="block" mb={1}>
                         You are yet to set Payment for all classes
                       </Typography>
@@ -548,12 +564,11 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
                           key={cls.id}
                           label={cls.name}
                           size="small"
-                          onClick={() => handleClassClick(schedule, cls)}
+                          onClick={() => toggleClassStatus(schedule.id, cls.id)}
+                          onDoubleClick={() => handleClassClick(schedule, cls)}
                           sx={{
-                            bgcolor: cls.missing ? 'transparent' : 'primary.main',
-                            color: cls.missing ? 'error.main' : 'white',
-                            border: cls.missing ? '1px dashed' : 'none',
-                            borderColor: 'error.main',
+                            bgcolor: cls.missing ? 'grey.300' : 'primary.main',
+                            color: cls.missing ? 'text.secondary' : 'white',
                             fontWeight: 600,
                             fontSize: 11,
                             cursor: 'pointer',

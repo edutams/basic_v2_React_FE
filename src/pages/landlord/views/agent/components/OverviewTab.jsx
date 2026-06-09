@@ -331,7 +331,6 @@ const OverviewTab = ({ data }) => {
             height: 40,
             px: 3,
             borderRadius: '6px',
-            color: '#fff',
             textTransform: 'none',
             fontWeight: 600,
           }}
@@ -363,8 +362,6 @@ const OverviewTab = ({ data }) => {
                 sx={{
                   borderRadius: '8px',
                   textTransform: 'none',
-                  borderColor: theme.palette.divider,
-                  color: theme.palette.text.secondary,
                   fontWeight: 600,
                 }}
               >

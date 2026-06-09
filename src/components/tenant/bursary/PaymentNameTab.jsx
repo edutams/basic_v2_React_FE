@@ -43,10 +43,10 @@ import {
 } from '@/api/tenant/bursary/paymentNameApi';
 import ReusableModal from '@/components/shared/ReusableModal';
 
-const PaymentNameTab = ({ showSnackbar }) => {
+const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
   const [paymentNames, setPaymentNames] = useState([]);
   const [meta, setMeta] = useState(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,15 +65,16 @@ const PaymentNameTab = ({ showSnackbar }) => {
       if (editingPayment) {
         await updatePaymentName(editingPayment.id, paymentData);
         showSnackbar?.('Payment name updated successfully');
-        onStatsRefresh?.();
       } else {
         await createPaymentName(paymentData);
         showSnackbar?.('Payment name added successfully');
-        onStatsRefresh?.();
       }
+
       setModalOpen(false);
-      setPage(1);
-      loadPaymentNames(1, searchQuery);
+      setEditingPayment(null);
+      setPage(0);
+      await loadPaymentNames(1, searchQuery, rowsPerPage);
+      onStatsRefresh?.();
     } catch (err) {
       showSnackbar?.(err?.response?.data?.message || 'Failed to save payment name', 'error');
     }
@@ -159,7 +160,7 @@ const PaymentNameTab = ({ showSnackbar }) => {
                 onClick={handleAddPayment}
                 sx={{ fontWeight: 600 }}
               >
-                Add New Payment Name
+                Add New
               </Button>
             </Box>
           }
@@ -247,55 +248,69 @@ const PaymentNameTab = ({ showSnackbar }) => {
                 ) : (
                   paymentNames.map((payment, index) => (
                     <TableRow key={payment.id} hover>
-                      <TableCell>{(meta?.from || 0) + index}</TableCell>{' '}
+                      <TableCell>{(meta?.from || 0) + index}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{payment.name}</TableCell>
+
+                      {/* Pay Option */}
                       <TableCell>
                         <Chip
-                          label={payment.payOption.toUpperCase()}
+                          label={payment.pay_option?.toUpperCase() || 'N/A'}
                           size="small"
                           sx={{
                             bgcolor:
-                              payment.payOption === 'optional' ? 'warning.light' : 'primary.light',
+                              payment.pay_option === 'OPTIONAL' ? 'warning.light' : 'primary.light',
                             color:
-                              payment.payOption === 'optional' ? 'warning.dark' : 'primary.dark',
+                              payment.pay_option === 'OPTIONAL' ? 'warning.dark' : 'primary.dark',
                             fontWeight: 600,
                             fontSize: 10,
                           }}
                         />
                       </TableCell>
+
+                      {/* Settlement Account */}
                       <TableCell>
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
-                            {payment.settlementBank.toUpperCase()}
+                            {payment.bank_name?.toUpperCase() || 'N/A'}
                           </Typography>
                           <Chip
-                            label={payment.accountNumber}
+                            label={payment.account_number || '—'}
                             size="small"
-                            sx={{
-                              bgcolor: 'error.light',
-                              fontSize: 10,
-                            }}
+                            sx={{ bgcolor: 'error.light', fontSize: 10 }}
                           />
+                          {/* <Typography variant="caption" display="block" color="textSecondary">
+                            {payment.account_name || 'No account name'}
+                          </Typography> */}
                           <Typography variant="caption" display="block" color="textSecondary">
-                            {payment.accountName}
+                            {payment.rev_code}
                           </Typography>
                         </Box>
                       </TableCell>
+
+                      {/* Fee Bearer */}
                       <TableCell>
                         <Chip
-                          label={payment.feeBearer.toUpperCase()}
+                          label={payment.fee_bearer?.toUpperCase() || 'N/A'}
                           size="small"
                           sx={{
-                            bgcolor: 'success.light',
-                            color: 'success.dark',
+                            bgcolor:
+                              payment.fee_bearer === 'parent' ? 'success.light' : 'warning.light',
+                            color:
+                              payment.fee_bearer === 'parent' ? 'success.dark' : 'warning.dark',
                             fontWeight: 600,
                             fontSize: 10,
                           }}
                         />
                       </TableCell>
+
+                      {/* Modules */}
                       <TableCell>
                         <Chip
-                          label={payment.modules.toUpperCase()}
+                          label={
+                            payment.modules
+                              ? JSON.parse(payment.modules).join(', ') || 'NONE'
+                              : 'N/A'
+                          }
                           size="small"
                           sx={{
                             bgcolor: 'secondary.light',
@@ -305,6 +320,8 @@ const PaymentNameTab = ({ showSnackbar }) => {
                           }}
                         />
                       </TableCell>
+
+                      {/* Status */}
                       <TableCell align="center">
                         <Chip
                           label={payment.status === 'active' ? 'Active' : 'Inactive'}
@@ -312,11 +329,10 @@ const PaymentNameTab = ({ showSnackbar }) => {
                           sx={{
                             bgcolor: payment.status === 'active' ? 'success.light' : 'error.light',
                             color: payment.status === 'active' ? 'success.dark' : 'error.dark',
-                            fontWeight: 600,
-                            fontSize: 11,
                           }}
                         />
                       </TableCell>
+
                       <TableCell align="center">
                         <IconButton
                           size="small"
@@ -363,7 +379,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        // Menu item:
         <MenuItem
           onClick={() => {
             setConfirmStatusModal({ open: true, payment: selectedPayment });
@@ -371,7 +386,6 @@ const PaymentNameTab = ({ showSnackbar }) => {
           }}
           sx={{ color: selectedPayment?.status === 'active' ? 'error.main' : 'success.main' }}
         >
-          // Confirm modal before PaymentNameModal:
           <ReusableModal
             open={confirmStatusModal.open}
             onClose={() => setConfirmStatusModal({ open: false, payment: null })}

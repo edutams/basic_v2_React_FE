@@ -20,6 +20,7 @@ import {
   Avatar,
   Link,
 } from '@mui/material';
+import { Payments as PaymentsIcon } from '@mui/icons-material';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
@@ -44,6 +45,7 @@ const ApprovedSchoolsTab = ({
   onEdit,
   onDeactivate,
   onApproveOnboarding,
+  onManageGateway,
 }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -269,6 +271,16 @@ const ApprovedSchoolsTab = ({
         onClose={() => setAnchorEl(null)}
         PaperProps={{ sx: { borderRadius: 2, minWidth: 180 } }}
       >
+        <MenuItem
+          onClick={() => {
+            onManageGateway(activeRow);
+            setAnchorEl(null);
+          }}
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <PaymentsIcon fontSize="small" sx={{ color: '#6b7280' }} />
+          Manage School Gateway
+        </MenuItem>
         <MenuItem
           onClick={() => {
             onViewProfile(activeRow);

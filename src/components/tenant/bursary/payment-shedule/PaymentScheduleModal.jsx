@@ -5,16 +5,20 @@ import {
   Stack,
   Typography,
   Box,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
+import { createPaymentSchedule } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
+const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionTermId, categoryId }) => {
   const [formData, setFormData] = useState({
     amount: '',
   });
 
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (payment && isEdit) {
@@ -53,10 +57,37 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      onSave(formData);
-      onClose();
+      try {
+        setSaving(true);
+        
+        // Prepare data for API call
+        const payload = {
+          bursary_payment_name_id: payment?.bursaryPaymentNameId,
+          class_id: payment?.classId,
+          session_term_id: sessionTermId,
+          bursary_payment_category_id: categoryId,
+          amount: parseFloat(formData.amount),
+        };
+
+        console.log('Saving individual class payment:', payload);
+
+        const response = await createPaymentSchedule(payload);
+        
+        if (response.success || response.status) {
+          // Pass the form data to parent to refresh the table
+          onSave(formData);
+          onClose();
+        } else {
+          setErrors({ submit: response.message || 'Failed to save payment' });
+        }
+      } catch (err) {
+        console.error('Failed to save payment:', err);
+        setErrors({ submit: err.response?.data?.message || 'Failed to save payment' });
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -102,6 +133,7 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
           helperText={errors.amount}
           placeholder="e.g., 10000"
           required
+          disabled={saving}
           slotProps={{
             input: {
               inputMode: 'numeric',
@@ -110,12 +142,23 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
           }}
         />
 
+        {errors.submit && (
+          <Alert severity="error">
+            {errors.submit}
+          </Alert>
+        )}
+
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-          <Button onClick={onClose} variant="outlined">
+          <Button onClick={onClose} variant="outlined" disabled={saving}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
-            Save
+          <Button 
+            variant="contained" 
+            onClick={handleSubmit} 
+            sx={{ fontWeight: 600 }}
+            disabled={saving}
+          >
+            {saving ? <CircularProgress size={20} /> : 'Save'}
           </Button>
         </Stack>
       </Stack>
@@ -129,6 +172,8 @@ PaymentScheduleModal.propTypes = {
   onSave: PropTypes.func.isRequired,
   payment: PropTypes.object,
   isEdit: PropTypes.bool,
+  sessionTermId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  categoryId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default PaymentScheduleModal;

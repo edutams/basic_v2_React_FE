@@ -43,7 +43,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import ReusableModal from '@/components/shared/ReusableModal';
-import { fetchTermsBySessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchTermsBySessionTerm, fetchPaymentSchedules } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLabel, categoryLabel }) => {
   const theme = useTheme();
@@ -92,6 +92,26 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
     loadTerms();
   }, [sessionTermId]);
 
+  // Load optional payment schedules
+  useEffect(() => {
+    if (!sessionTermId || !categoryId) return;
+    const loadOptionalSchedules = async () => {
+      try {
+        setLoadingTerms(true);
+        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'optional');
+        
+        if (data?.data && Array.isArray(data.data)) {
+          setSchedules(data.data);
+        }
+      } catch (err) {
+        showSnackbar?.('Failed to load payment schedules', 'error');
+      } finally {
+        setLoadingTerms(false);
+      }
+    };
+    loadOptionalSchedules();
+  }, [sessionTermId, categoryId]);
+
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
     title: '',
@@ -99,79 +119,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
     onConfirm: null,
   });
 
-  const [schedules, setSchedules] = useState([
-    {
-      id: 1,
-      paymentName: 'School Bag',
-      description: 'Branded school bag, by type.',
-      options: [
-        { name: 'Trolley Bag', price: '₦18,000' },
-        { name: 'Backpack - Large', price: '₦12,000' },
-        { name: 'Backpack - Small', price: '₦6,000' },
-      ],
-      totalTypes: 3,
-      totalAmount: '₦36,000',
-      category: 'Returning Service',
-      classes: 'JSS1, JSS2, JSS3, SS1, SS2, SS3',
-      status: 'Active',
-    },
-    {
-      id: 2,
-      paymentName: 'School Bus',
-      description: 'Branded school bag.',
-      options: [
-        { name: 'Lagos route', price: '₦20,000' },
-        { name: 'Lagos route', price: '₦40,000' },
-      ],
-      totalTypes: 2,
-      totalAmount: '₦60,000',
-      category: 'Returning Service',
-      classes: 'JSS1, JSS2, JSS3',
-      status: 'Active',
-    },
-    {
-      id: 3,
-      paymentName: 'Uniform',
-      description: 'Day & sports wear in multiple sizes.',
-      options: [
-        { name: 'Size S', price: '₦35,000' },
-        { name: 'Size M', price: '₦45,000' },
-      ],
-      totalTypes: 2,
-      totalAmount: '₦80,00',
-      category: 'Returning Service',
-      classes: 'SS1, SS2, SS3',
-      status: 'Active',
-    },
-    {
-      id: 4,
-      paymentName: 'Textbooks',
-      description: 'Day & sports wear in multiple sizes.',
-      options: [
-        { name: 'JSS Bundle', price: '₦20,000' },
-        { name: 'SSS Bundle', price: '₦30,000' },
-      ],
-      totalTypes: 2,
-      totalAmount: '₦50,000',
-      category: 'Returning Service',
-      classes: 'SS1, SS2, SS3',
-      status: 'Active',
-    },
-    {
-      id: 5,
-      paymentName: 'ICT / Devices',
-      description: 'Tablet, ICT lab access.',
-      options: [
-        { name: 'Tablet rental', price: '₦20,000' },
-        { name: 'ICT lab access', price: '₦20,000' },
-      ],
-      totalTypes: 2,
-      totalAmount: '₦40,000',
-      category: 'Returning Service',
-      classes: 'SS1, SS2, SS3',
-      status: 'Inactive',
-    },
-  ]);
+  const [schedules, setSchedules] = useState([]);
 
   // const handleAddPaymentItem = () => {
   //   setPaymentDialog({

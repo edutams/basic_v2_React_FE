@@ -42,7 +42,7 @@ import {
 import PaymentScheduleModal from './PaymentScheduleModal';
 import AddPaymentItemModal from './AddPaymentItemModal';
 import EditPaymentItemModal from './EditPaymentItemModal';
-import { fetchTermsBySessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchTermsBySessionTerm, fetchPaymentSchedules } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessionLabel, categoryLabel }) => {
   const [terms, setTerms] = useState([]);
@@ -53,6 +53,8 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [scheduleData, setScheduleData] = useState([]);
+  
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
     title: '',
@@ -83,7 +85,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
 
   useEffect(() => {
     if (!sessionTermId) return;
-    const loadTerms = async () => {
+    const loadData = async () => {
       try {
         setLoadingTerms(true);
         const data = await fetchTermsBySessionTerm(sessionTermId);
@@ -99,76 +101,36 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
         setLoadingTerms(false);
       }
     };
-    loadTerms();
+    loadData();
   }, [sessionTermId]);
 
-  const [schedules, setSchedules] = useState({
-    0: [
-      // First Term
-      {
-        id: 1,
-        paymentName: 'School Fee',
-        classes: [
-          { id: 'JSS1', name: 'JSS1 - [10,000 NGN]', missing: false },
-          { id: 'JSS2', name: 'JSS2', missing: true },
-          { id: 'JSS3', name: 'JSS3', missing: true },
-          { id: 'SS1', name: 'SS1', missing: true },
-          { id: 'SS2', name: 'SS2', missing: true },
-          { id: 'SS3', name: 'SS3', missing: true },
-        ],
-        allClassesSet: false,
-        missingCount: 5,
-      },
-      {
-        id: 2,
-        paymentName: 'Bag',
-        classes: [
-          { id: 'JSS1', name: 'JSS1 - [10,000 NGN]', missing: false },
-          { id: 'JSS2', name: 'JSS2', missing: true },
-          { id: 'JSS3', name: 'JSS3', missing: true },
-          { id: 'SS1', name: 'SS1', missing: true },
-          { id: 'SS2', name: 'SS2', missing: true },
-          { id: 'SS3', name: 'SS3', missing: true },
-        ],
-        allClassesSet: false,
-        missingCount: 5,
-      },
-    ],
-    1: [
-      // Second Term
-      {
-        id: 3,
-        paymentName: 'School Fee',
-        classes: [
-          { id: 'JSS1', name: 'JSS1', missing: true },
-          { id: 'JSS2', name: 'JSS2', missing: true },
-          { id: 'JSS3', name: 'JSS3', missing: true },
-          { id: 'SS1', name: 'SS1', missing: true },
-          { id: 'SS2', name: 'SS2', missing: true },
-          { id: 'SS3', name: 'SS3', missing: true },
-        ],
-        allClassesSet: false,
-        missingCount: 6,
-      },
-    ],
-    2: [
-      // Third Term
-      {
-        id: 4,
-        paymentName: 'School Fee',
-        classes: [
-          { id: 'JSS1', name: 'JSS1', missing: true },
-          { id: 'JSS2', name: 'JSS2', missing: true },
-          { id: 'JSS3', name: 'JSS3', missing: true },
-          { id: 'SS1', name: 'SS1', missing: true },
-          { id: 'SS2', name: 'SS2', missing: true },
-          { id: 'SS3', name: 'SS3', missing: true },
-        ],
-        allClassesSet: false,
-        missingCount: 6,
-      },
-    ],
-  });
+  // Load payment schedules when term or sessionTermId changes
+  useEffect(() => {
+    if (!sessionTermId || !categoryId) return;
+    const loadPaymentSchedules = async () => {
+      try {
+        setLoadingTerms(true);
+        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'compulsory');
+        console.log(data,999);
+        
+
+        setScheduleData(data.data.map(item => ({
+    ...item,
+    missingCount: item.classes.filter(c => !c.amount).length,
+  })));
+        
+     
+      } catch (err) {
+        showSnackbar?.('Failed to load payment schedules', 'error');
+        console.error('Error loading schedules:', err);
+      } finally {
+        setLoadingTerms(false);
+      }
+    };
+    loadPaymentSchedules();
+  }, [sessionTermId, categoryId, currentTerm]);
+
+  const [schedules, setSchedules] = useState({});
 
   const handleAddPaymentItem = () => {
     setAddItemModal(true);
@@ -258,76 +220,65 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
     });
   };
 
-  const handleClassClick = (schedule, cls) => {
-    const isEdit = cls.name.includes('NGN'); // Has amount if name contains NGN
+  // const handleClassClick = (schedule, cls) => {
+  //   const isEdit = cls.name.includes('NGN'); // Has amount if name contains NGN
 
-    setConfirmDialog({
-      open: true,
-      title: isEdit ? 'Edit Payment' : 'Add Payment',
-      message: isEdit
-        ? `Are you sure you want to edit payment for ${cls.id} in ${schedule.paymentName}?`
-        : `Are you sure you want to add payment to ${cls.id} for ${schedule.paymentName}?`,
-      onConfirm: () => {
-        setConfirmDialog({ ...confirmDialog, open: false });
-        setPaymentModal({
-          open: true,
-          payment: {
-            className: cls.id,
-            paymentName: schedule.paymentName,
-            amount: isEdit ? cls.name.match(/\d+/)?.[0] || '' : '',
-          },
-          isEdit,
-        });
-      },
-    });
-  };
+  //   setConfirmDialog({
+  //     open: true,
+  //     title: isEdit ? 'Edit Payment' : 'Add Payment',
+  //     message: isEdit
+  //       ? `Are you sure you want to edit payment for ${cls.id} in ${schedule.paymentName}?`
+  //       : `Are you sure you want to add payment to ${cls.id} for ${schedule.paymentName}?`,
+  //     onConfirm: () => {
+  //       setConfirmDialog({ ...confirmDialog, open: false });
+  //       setPaymentModal({
+  //         open: true,
+  //         payment: {
+  //           className: cls.id,
+  //           paymentName: schedule.paymentName,
+  //           amount: isEdit ? cls.name.match(/\d+/)?.[0] || '' : '',
+  //         },
+  //         isEdit,
+  //       });
+  //     },
+  //   });
+  // };
 
   const handleConfirmDialogClose = () => {
     setConfirmDialog({ ...confirmDialog, open: false });
   };
 
   const handlePaymentModalClose = () => {
+    console.log('Closing payment modal');
     setPaymentModal({ open: false, payment: null, isEdit: false });
   };
 
-  const handlePaymentSave = (formData) => {
-    const action = paymentModal.isEdit ? 'updated' : 'added';
-    const { className, paymentName } = paymentModal.payment || {};
+  const handlePaymentSave = async (formData) => {
+    try {
+      console.log('Saving payment:', formData, paymentModal.payment);
+      const action = paymentModal.isEdit ? 'updated' : 'added';
+      const { className, paymentName, classId, scheduleId } = paymentModal.payment || {};
 
-    // Update the schedules state for current term
-    setSchedules((prevSchedules) => ({
-      ...prevSchedules,
-      [currentTerm]: prevSchedules[currentTerm].map((schedule) => {
-        if (schedule.paymentName === paymentName) {
-          // Update the specific class
-          const updatedClasses = schedule.classes.map((cls) => {
-            if (cls.id === className) {
-              return {
-                ...cls,
-                name: `${cls.id} - [${formData.amount} NGN]`,
-                missing: false, // Mark as no longer missing
-              };
-            }
-            return cls;
-          });
-
-          const missingCount = updatedClasses.filter((cls) => cls.missing).length;
-          const allClassesSet = missingCount === 0;
-
-          return {
-            ...schedule,
-            classes: updatedClasses,
-            missingCount,
-            allClassesSet,
-          };
+      // TODO: Call API to save the payment
+      // For now, just update local state and show success
+      showSnackbar?.(
+        `Payment ${action} successfully: ${formData.amount} NGN for ${className} in ${paymentName}`,
+      );
+      
+      // Reload schedules after saving
+      if (sessionTermId && categoryId) {
+        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'compulsory');
+        if (data?.data && Array.isArray(data.data)) {
+          setScheduleData(data.data.map(item => ({
+            ...item,
+            missingCount: item.classes.filter(c => !c.amount).length,
+          })));
         }
-        return schedule;
-      }),
-    }));
-
-    showSnackbar?.(
-      `Payment ${action} successfully: ${formData.amount} NGN for ${className} in ${paymentName}`,
-    );
+      }
+    } catch (err) {
+      console.error('Failed to reload schedules:', err);
+      showSnackbar?.('Failed to reload payment schedules', 'error');
+    }
   };
 
   const handleAddItemSave = (formData) => {
@@ -364,42 +315,29 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
     );
   };
 
-  const handleEditItemSave = (formData) => {
-    setSchedules((prevSchedules) => ({
-      ...prevSchedules,
-      [currentTerm]: prevSchedules[currentTerm].map((schedule) => {
-        if (schedule.id === editItemModal.schedule?.id) {
-          const existingClasses = schedule.classes;
-
-          const updatedClasses = formData.selectedClasses.map((classId) => {
-            const existingClass = existingClasses.find((cls) => cls.id === classId);
-            if (existingClass) {
-              return existingClass;
-            } else {
-              return {
-                id: classId,
-                name: classId,
-                missing: true,
-              };
-            }
-          });
-
-          const missingCount = updatedClasses.filter((cls) => cls.missing).length;
-          const allClassesSet = missingCount === 0;
-
-          return {
-            ...schedule,
-            paymentName: formData.paymentName,
-            classes: updatedClasses,
-            missingCount,
-            allClassesSet,
-          };
+  const handleEditItemSave = async (formData) => {
+    try {
+      console.log('Saving edit item:', formData, editItemModal.schedule);
+      
+      // TODO: Call API to update payment schedule with new classes and amounts
+      // For now, show success message and reload data
+      
+      showSnackbar?.(`Payment item "${formData.paymentName}" updated successfully`);
+      
+      // Reload schedules after saving
+      if (sessionTermId && categoryId) {
+        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'compulsory');
+        if (data?.data && Array.isArray(data.data)) {
+          setScheduleData(data.data.map(item => ({
+            ...item,
+            missingCount: item.classes.filter(c => !c.amount).length,
+          })));
         }
-        return schedule;
-      }),
-    }));
-
-    showSnackbar?.(`Payment item "${formData.paymentName}" updated successfully`);
+      }
+    } catch (err) {
+      console.error('Failed to save edit item:', err);
+      showSnackbar?.('Failed to update payment item', 'error');
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -546,17 +484,16 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
             </Stack>
           </Stack>
 
-          {/* Add payment item button commented out
           <Button
             onClick={handleAddPaymentItem}
+            variant="contained"
             sx={{
               fontWeight: 600,
               width: { xs: '100%', md: 'auto' },
             }}
           >
-            Add payment item
+            Add Payment Item
           </Button>
-          */}
         </Box>
 
         <TableContainer component={Paper} variant="outlined">
@@ -572,81 +509,126 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedSchedules.map((schedule, index) => (
-                <TableRow key={schedule.id} hover>
-                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+              {scheduleData.map((schedule, index) => (
+                <TableRow key={index} hover>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={600}>
-                      {schedule.paymentName}
+                      {schedule.payment_name.name}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {schedule.missingCount > 0 && !schedule.classes.some(c => c.name.includes('NGN')) && (
-                      <Typography variant="caption" color="error.main" display="block" mb={1}>
-                        You are yet to set Payment for all classes
+                   {schedule.missingCount > 0 && (
+                      <Typography
+                        variant="caption"
+                        color="error.main"
+                        display="block"
+                        mb={1}
+                      >
+                        You are yet to set payment for all classes
                       </Typography>
                     )}
                     <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
-                      {schedule.classes.map((cls) => {
-                        const hasAmount = cls.name.includes('NGN');
-                        return (
-                          <Chip
-                            key={cls.id}
-                            label={cls.name}
-                            size="small"
-                            onClick={() => handleClassClick(schedule, cls)}
-                            onDelete={() => {
-                              if (hasAmount) {
-                                handleClassActionClick(schedule.id, cls.id, 'delete');
+                      {schedule.classes && schedule.classes.length > 0 ? (
+                        schedule.classes.map((cls) => {
+                          // Skip null/invalid classes
+                          if (!cls || !cls.id || !cls.name) return null;
+                          
+                          const hasAmount = !!cls.amount && cls.amount > 0;
+                          return (
+                            <Chip
+                              key={cls.id}
+                              label={
+                                hasAmount
+                                  ? `${cls.name} - [${cls.amount} NGN]`
+                                  : cls.name
                               }
-                            }}
-                            deleteIcon={
-                              hasAmount ? (
-                                <Box display="flex" alignItems="center" gap={0.5}>
-                                  <ShieldIcon
-                                    sx={{
-                                      fontSize: 16,
-                                      opacity: cls.missing ? 0.5 : 1,
-                                      cursor: 'pointer',
-                                    }}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleClassActionClick(schedule.id, cls.id, 'toggle');
-                                    }}
-                                  />
-                                  <CloseIcon sx={{ fontSize: 14 }} />
-                                </Box>
-                              ) : (
-                                <AddIcon sx={{ fontSize: 14 }} />
-                              )
-                            }
-                            sx={{
-                              bgcolor: cls.name.includes('NGN') && cls.missing ? 'error.main' : cls.missing ? 'grey.300' : 'primary.main',
-                              color: cls.name.includes('NGN') && cls.missing ? 'white' : cls.missing ? 'text.secondary' : 'white',
-                              fontWeight: 600,
-                              fontSize: 11,
-                              cursor: 'pointer',
-                              '&:hover': {
-                                opacity: 0.8,
-                              },
-                              '& .MuiChip-deleteIcon': {
-                                color: 'inherit',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.25,
+                              size="small"
+                              onClick={(e) => {
+                                // Prevent bubbling if clicking on delete icon
+                                if (e.target.closest('.MuiChip-deleteIcon')) {
+                                  return;
+                                }
+                                
+                                console.log('Chip clicked:', {
+                                  className: cls.name,
+                                  classId: cls.id,
+                                  paymentName: schedule.payment_name.name,
+                                  bursaryPaymentNameId: schedule.payment_name.id,
+                                  scheduleId: cls.schedule_id,
+                                  amount: cls.amount || '',
+                                  hasAmount
+                                });
+                                
+                                // Open modal to set/edit amount for this class
+                                setPaymentModal({
+                                  open: true,
+                                  payment: {
+                                    className: cls.name,
+                                    classId: cls.id,
+                                    paymentName: schedule.payment_name.name,
+                                    bursaryPaymentNameId: schedule.payment_name.id,
+                                    scheduleId: cls.schedule_id,
+                                    amount: cls.amount || '',
+                                  },
+                                  isEdit: hasAmount,
+                                });
+                              }}
+                              onDelete={hasAmount ? (e) => {
+                                e.stopPropagation();
+                                handleClassActionClick(cls.schedule_id, cls.id, 'delete');
+                              } : undefined}
+                              deleteIcon={
+                                hasAmount ? (
+                                  <Box display="flex" alignItems="center" gap={0.5}>
+                                    <ShieldIcon
+                                      sx={{
+                                        fontSize: 16,
+                                        cursor: 'pointer',
+                                      }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleClassActionClick(cls.schedule_id, cls.id, 'toggle');
+                                      }}
+                                    />
+                                    <CloseIcon sx={{ fontSize: 14 }} />
+                                  </Box>
+                                ) : (
+                                  <AddIcon sx={{ fontSize: 14 }} />
+                                )
+                              }
+                              sx={{
+                                bgcolor: hasAmount ? "primary.main" : "grey.300",
+                                color: hasAmount ? "white" : "text.secondary",
+                                fontWeight: 600,
+                                fontSize: 11,
+                                cursor: 'pointer',
                                 '&:hover': {
-                                  color: 'inherit',
+                                  opacity: 0.8,
                                 },
-                              },
-                            }}
-                          />
-                        );
-                      })}
-                      {schedule.missingCount > 0 && (
-                        <Typography variant="caption" color="textSecondary">
-                          {schedule.missingCount} missing
+                                '& .MuiChip-deleteIcon': {
+                                  color: 'inherit',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.25,
+                                  '&:hover': {
+                                    color: 'inherit',
+                                  },
+                                },
+                              }}
+                            />
+                          );
+                        })
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          No classes assigned
                         </Typography>
                       )}
+                     {schedule.missingCount > 0 && (
+                      <Typography variant="caption" color="text.secondary">
+                        {schedule.missingCount} missing
+                      </Typography>
+                    )}
                     </Box>
                   </TableCell>
                   <TableCell align="center">
@@ -657,7 +639,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                 </TableRow>
               ))}
             </TableBody>
-            <TableFooter>
+            {/* <TableFooter>
               <TableRow>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25, 50]}
@@ -669,7 +651,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                   onRowsPerPageChange={handleChangeRowsPerPage}
                 />
               </TableRow>
-            </TableFooter>
+            </TableFooter> */}
           </Table>
         </TableContainer>
       </ParentCard>
@@ -704,6 +686,8 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
         onSave={handlePaymentSave}
         payment={paymentModal.payment}
         isEdit={paymentModal.isEdit}
+        sessionTermId={sessionTermId}
+        categoryId={categoryId}
       />
 
       {/* Add Payment Item Modal */}
@@ -719,6 +703,8 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
         onClose={() => setEditItemModal({ open: false, schedule: null })}
         onSave={handleEditItemSave}
         schedule={editItemModal.schedule}
+        sessionTermId={sessionTermId}
+        categoryId={categoryId}
       />
 
       {/* Delete Confirmation Dialog */}

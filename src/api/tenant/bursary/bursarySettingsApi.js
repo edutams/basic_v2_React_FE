@@ -34,7 +34,48 @@ export const fetchTermsBySessionTerm = async (sessionTermId) => {
     const res = await api.get(`/bursary/settings/fetch_terms_by_session_term/${sessionTermId}`);
     return res.data;
 };
+
+export const fetchClasses = async () => {
+    const res = await api.get(`/bursary/settings/fetch_classes`);
+    return res.data;
+};
+
+export const fetchInstallments = async () => {
+    const res = await api.get(`/bursary/settings/fetch_installments`);
+    return res.data;
+};
+
+export const getBursaryInstalmentSetting = async () => {
+    const res = await api.get(`/bursary/settings/get_bursary_instalment_setting`);
+    return res.data;
+};
+
 export const fetchGatewayChargeBearer = async () => {
     const res = await api.get('/bursary/settings/gateway_charge_bearer');
     return res.data;
 }
+
+export const fetchPaymentSchedules = async (sessionTermId, categoryId, payOption = 'compulsory') => {
+    const res = await api.get('/bursary/payment_schedule/fetch_payment_schedules', { 
+        params: { session_term_id: sessionTermId, category_id: categoryId, pay_option: payOption } 
+    });
+    return res.data;
+};
+
+export const batchUpsertPaymentSchedule = async (data) => {
+    const res = await api.post('/bursary/payment_schedule/batch_upsert_payment_schedule', data);
+    return res.data;
+};
+
+export const createPaymentSchedule = async (data) => {
+    const res = await api.post('/bursary/payment_schedule/create_payment_schedule', data);
+    return res.data;
+};
+
+
+export const deletePaymentSchedule = async (id) => {
+    const res = await api.delete(`/bursary/payment_schedule/delete_payment_schedule/${id}`);
+    return res.data;
+};
+
+

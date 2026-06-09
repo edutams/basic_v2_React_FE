@@ -77,7 +77,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
       try {
         setLoadingTerms(true);
         const data = await fetchTermsBySessionTerm(sessionTermId);
-        const items = data?.data || data?.terms || data || [];
+        const items = data?.data;
         const list = Array.isArray(items) ? items : [];
         setTerms(list);
         if (list.length > 0) {
@@ -418,7 +418,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
       <Alert severity="info" sx={{ mb: 2 }}>
         <Typography variant="body2" fontWeight={600} textAlign="center" sx={{ width: '100%' }}>
           Payment Schedules for {sessionLabel || '...'} -{' '}
-          {terms[currentTerm]?.name || terms[currentTerm]?.term_name || (loadingTerms ? 'Loading...' : '')} ({categoryLabel || '...'})
+          {terms[currentTerm]?.display_term.display_name} ({categoryLabel || '...'})
         </Typography>
       </Alert>
 
@@ -439,11 +439,10 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
               flex: 1,
             }}
           >
-            {terms.length > 0
-              ? terms.map((term, idx) => (
+            { terms.map((term, idx) => (
                   <Tab
-                    key={term.id || idx}
-                    label={term.name || term.term_name || `Term ${idx + 1}`}
+                    key={idx}
+                    label={term.display_term.display_name}
                     sx={{ textTransform: 'none', fontWeight: 600 }}
                     icon={
                       <Box
@@ -468,11 +467,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
                     iconPosition="start"
                   />
                 ))
-              : [
-                  <Tab key="t0" label="First Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
-                  <Tab key="t1" label="Second Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
-                  <Tab key="t2" label="Third Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
-                ]}
+              }
           </Tabs>
 
           <Box display="flex" gap={2}>

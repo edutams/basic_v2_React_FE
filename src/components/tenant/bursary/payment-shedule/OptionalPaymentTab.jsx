@@ -514,12 +514,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
             </Typography>
           </Box>
 
-<<<<<<< HEAD
           {/* <Button
-=======
-        {/* Add payment item button commented out
-        <Button
->>>>>>> origin/chuks_master_branch
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAddPaymentItem}
@@ -527,14 +522,8 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
           fullWidth={{ xs: true, sm: false }}
         >
           Add payment item
-<<<<<<< HEAD
         </Button> */}
         </Stack>
-=======
-        </Button>
-        */}
-      </Stack>
->>>>>>> origin/chuks_master_branch
 
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
           <Table sx={{ minWidth: 800 }}>

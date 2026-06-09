@@ -31,8 +31,13 @@ import ParentCard from '@/components/shared/ParentCard';
 import {
   Search as SearchIcon,
   AssignmentTurnedIn as AssignmentTurnedInIcon,
-  // Add as AddIcon,
   MoreVert as MoreVertIcon,
+  Delete as DeleteIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  Security as ShieldIcon,
+  Close as CloseIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import PaymentScheduleModal from './PaymentScheduleModal';
 import AddPaymentItemModal from './AddPaymentItemModal';
@@ -65,8 +70,14 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     open: false,
     schedule: null,
   });
+  const [classActionDialog, setClassActionDialog] = useState({
+    open: false,
+    action: null, // 'delete' or 'toggle'
+    schedule: null,
+    classId: null,
+    className: null,
+  });
 
-  // Mock data for schedules - separate data for each term
   const [schedules, setSchedules] = useState({
     0: [
       // First Term
@@ -139,6 +150,64 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     setAddItemModal(true);
   };
 
+  // Toggle active/inactive status for a class within a schedule
+  const toggleClassStatus = (scheduleId, classId) => {
+    setSchedules(prev => ({
+      ...prev,
+      [currentTerm]: prev[currentTerm].map(sch => {
+        if (sch.id !== scheduleId) return sch;
+        const updatedClasses = sch.classes.map(cls =>
+          cls.id === classId ? { ...cls, missing: !cls.missing } : cls
+        );
+        const missingCount = updatedClasses.filter(c => c.missing).length;
+        return { ...sch, classes: updatedClasses, missingCount, allClassesSet: missingCount === 0 };
+      })
+    }));
+  };
+
+  const handleClassActionClick = (scheduleId, classId, action) => {
+    const schedule = currentSchedules.find(s => s.id === scheduleId);
+    const cls = schedule?.classes.find(c => c.id === classId);
+    
+    if (cls) {
+      setClassActionDialog({
+        open: true,
+        action,
+        schedule,
+        classId,
+        className: cls.name,
+      });
+    }
+  };
+
+  const handleDeleteClass = (scheduleId, classId) => {
+    setSchedules(prev => ({
+      ...prev,
+      [currentTerm]: prev[currentTerm].map(sch => {
+        if (sch.id !== scheduleId) return sch;
+        const updatedClasses = sch.classes.filter(cls => cls.id !== classId);
+        const missingCount = updatedClasses.filter(c => c.missing).length;
+        return { ...sch, classes: updatedClasses, missingCount, allClassesSet: missingCount === 0 };
+      })
+    }));
+    showSnackbar?.(`Class removed successfully`);
+    setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null });
+  };
+
+  const handleConfirmClassAction = () => {
+    if (classActionDialog.action === 'delete') {
+      handleDeleteClass(classActionDialog.schedule.id, classActionDialog.classId);
+    } else if (classActionDialog.action === 'toggle') {
+      toggleClassStatus(classActionDialog.schedule.id, classActionDialog.classId);
+      const schedule = currentSchedules.find(s => s.id === classActionDialog.schedule.id);
+      const cls = schedule?.classes.find(c => c.id === classActionDialog.classId);
+      if (cls) {
+        showSnackbar?.(cls.missing ? `${classActionDialog.className} activated` : `${classActionDialog.className} deactivated`);
+      }
+      setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null });
+    }
+  };
+
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
     setSelectedRow(row);
@@ -166,7 +235,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
   };
 
   const handleClassClick = (schedule, cls) => {
-    const isEdit = !cls.missing;
+    const isEdit = cls.name.includes('NGN'); // Has amount if name contains NGN
 
     setConfirmDialog({
       open: true,
@@ -181,10 +250,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
           payment: {
             className: cls.id,
             paymentName: schedule.paymentName,
-            amount: isEdit ? '10000' : '',
-            dueDate: isEdit ? '2025-03-15' : '',
-            installmentNumber: isEdit ? '1' : '',
-            description: isEdit ? 'First term payment' : '',
+            amount: isEdit ? cls.name.match(/\d+/)?.[0] || '' : '',
           },
           isEdit,
         });
@@ -221,7 +287,6 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
             return cls;
           });
 
-          // Recalculate missing count
           const missingCount = updatedClasses.filter((cls) => cls.missing).length;
           const allClassesSet = missingCount === 0;
 
@@ -242,7 +307,6 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
   };
 
   const handleAddItemSave = (formData) => {
-    // Create new payment item with selected classes for current term
     const currentTermSchedules = schedules[currentTerm] || [];
     const newId =
       Math.max(
@@ -281,17 +345,13 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
       ...prevSchedules,
       [currentTerm]: prevSchedules[currentTerm].map((schedule) => {
         if (schedule.id === editItemModal.schedule?.id) {
-          // Get existing classes to preserve their payment data
           const existingClasses = schedule.classes;
 
-          // Create updated classes list
           const updatedClasses = formData.selectedClasses.map((classId) => {
             const existingClass = existingClasses.find((cls) => cls.id === classId);
             if (existingClass) {
-              // Keep existing class data
               return existingClass;
             } else {
-              // Add new class as missing
               return {
                 id: classId,
                 name: classId,
@@ -345,10 +405,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     setPage(0);
   };
 
-  // Get schedules for current term
   const currentSchedules = schedules[currentTerm] || [];
 
-  // Paginate schedules
   const paginatedSchedules = currentSchedules.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
@@ -524,7 +582,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
         <TableContainer component={Paper} variant="outlined">
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>PAYMENT NAME</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>CLASS</TableCell>
@@ -543,33 +601,67 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {/* Warning message if not all classes set - Above the chips */}
-                    {!schedule.allClassesSet && (
+                    {schedule.missingCount > 0 && !schedule.classes.some(c => c.name.includes('NGN')) && (
                       <Typography variant="caption" color="error.main" display="block" mb={1}>
                         You are yet to set Payment for all classes
                       </Typography>
                     )}
                     <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
-                      {schedule.classes.map((cls) => (
-                        <Chip
-                          key={cls.id}
-                          label={cls.name}
-                          size="small"
-                          onClick={() => handleClassClick(schedule, cls)}
-                          sx={{
-                            bgcolor: cls.missing ? 'transparent' : 'primary.main',
-                            color: cls.missing ? 'error.main' : 'white',
-                            border: cls.missing ? '1px dashed' : 'none',
-                            borderColor: 'error.main',
-                            fontWeight: 600,
-                            fontSize: 11,
-                            cursor: 'pointer',
-                            '&:hover': {
-                              opacity: 0.8,
-                            },
-                          }}
-                        />
-                      ))}
+                      {schedule.classes.map((cls) => {
+                        const hasAmount = cls.name.includes('NGN');
+                        return (
+                          <Chip
+                            key={cls.id}
+                            label={cls.name}
+                            size="small"
+                            onClick={() => handleClassClick(schedule, cls)}
+                            onDelete={() => {
+                              if (hasAmount) {
+                                handleClassActionClick(schedule.id, cls.id, 'delete');
+                              }
+                            }}
+                            deleteIcon={
+                              hasAmount ? (
+                                <Box display="flex" alignItems="center" gap={0.5}>
+                                  <ShieldIcon
+                                    sx={{
+                                      fontSize: 16,
+                                      opacity: cls.missing ? 0.5 : 1,
+                                      cursor: 'pointer',
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleClassActionClick(schedule.id, cls.id, 'toggle');
+                                    }}
+                                  />
+                                  <CloseIcon sx={{ fontSize: 14 }} />
+                                </Box>
+                              ) : (
+                                <AddIcon sx={{ fontSize: 14 }} />
+                              )
+                            }
+                            sx={{
+                              bgcolor: cls.name.includes('NGN') && cls.missing ? 'error.main' : cls.missing ? 'grey.300' : 'primary.main',
+                              color: cls.name.includes('NGN') && cls.missing ? 'white' : cls.missing ? 'text.secondary' : 'white',
+                              fontWeight: 600,
+                              fontSize: 11,
+                              cursor: 'pointer',
+                              '&:hover': {
+                                opacity: 0.8,
+                              },
+                              '& .MuiChip-deleteIcon': {
+                                color: 'inherit',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.25,
+                                '&:hover': {
+                                  color: 'inherit',
+                                },
+                              },
+                            }}
+                          />
+                        );
+                      })}
                       {schedule.missingCount > 0 && (
                         <Typography variant="caption" color="textSecondary">
                           {schedule.missingCount} missing
@@ -603,7 +695,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
       </ParentCard>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuOption onClick={handleEditSchedule}>Edit Schedule</MenuOption>
+        <MenuOption onClick={handleEditSchedule}>Set/Edit Schedule</MenuOption>
         <MenuOption onClick={handleDeleteSchedule} sx={{ color: 'error.main' }}>
           Delete Schedule
         </MenuOption>
@@ -690,6 +782,51 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
             sx={{ fontWeight: 600 }}
           >
             Delete Item
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Class Action Confirmation Dialog */}
+      <Dialog
+        open={classActionDialog.open}
+        onClose={() => setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {classActionDialog.action === 'delete' ? 'Delete Class' : 'Toggle Class Status'}
+        </DialogTitle>
+        <DialogContent>
+          {classActionDialog.action === 'delete' && (
+            <>
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                This action cannot be undone!
+              </Alert>
+              <Typography variant="body2">
+                Are you sure you want to delete <strong>{classActionDialog.className}</strong> from this payment schedule? The payment amount for this class will be removed.
+              </Typography>
+            </>
+          )}
+          {classActionDialog.action === 'toggle' && (
+            <Typography variant="body2">
+              Are you sure you want to <strong>{classActionDialog.schedule?.classes.find(c => c.id === classActionDialog.classId)?.missing ? 'activate' : 'deactivate'}</strong> <strong>{classActionDialog.className}</strong>?
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            color="inherit"
+            onClick={() => setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null })}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color={classActionDialog.action === 'delete' ? 'error' : 'primary'}
+            onClick={handleConfirmClassAction}
+            sx={{ fontWeight: 600 }}
+          >
+            {classActionDialog.action === 'delete' ? 'Delete' : 'Confirm'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -42,9 +42,12 @@ import {
 import PaymentScheduleModal from './PaymentScheduleModal';
 import AddPaymentItemModal from './AddPaymentItemModal';
 import EditPaymentItemModal from './EditPaymentItemModal';
+import { fetchTermsBySessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const CompulsoryScheduleTab = ({ showSnackbar }) => {
+const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessionLabel, categoryLabel }) => {
+  const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
+  const [loadingTerms, setLoadingTerms] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -77,6 +80,27 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     classId: null,
     className: null,
   });
+
+  useEffect(() => {
+    if (!sessionTermId) return;
+    const loadTerms = async () => {
+      try {
+        setLoadingTerms(true);
+        const data = await fetchTermsBySessionTerm(sessionTermId);
+        const items = data?.data || data?.terms || data || [];
+        const list = Array.isArray(items) ? items : [];
+        setTerms(list);
+        if (list.length > 0) {
+          setCurrentTerm(0);
+        }
+      } catch (err) {
+        showSnackbar?.('Failed to load terms', 'error');
+      } finally {
+        setLoadingTerms(false);
+      }
+    };
+    loadTerms();
+  }, [sessionTermId]);
 
   const [schedules, setSchedules] = useState({
     0: [
@@ -416,7 +440,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     <Stack spacing={3}>
       <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
         <Typography variant="body2" fontWeight={600}>
-          Payment Schedules for 2024/2025 - Second Term (New Student Category)
+          Payment Schedules for {sessionLabel || '...'} - {terms[currentTerm]?.name || terms[currentTerm]?.term_name || (loadingTerms ? 'Loading...' : '')} ({categoryLabel || '...'})
         </Typography>
       </Alert>
 
@@ -434,81 +458,40 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
             variant="scrollable"
             scrollButtons={false}
           >
-            <Tab
-              label="First Term"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: currentTerm === 0 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  ●
-                </Box>
-              }
-              iconPosition="start"
-            />
-            <Tab
-              label="Second Term"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: currentTerm === 1 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  ●
-                </Box>
-              }
-              iconPosition="start"
-            />
-            <Tab
-              label="Third Term"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: currentTerm === 2 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  ●
-                </Box>
-              }
-              iconPosition="start"
-            />
+            {terms.length > 0
+              ? terms.map((term, idx) => (
+                  <Tab
+                    key={term.id || idx}
+                    label={term.name || term.term_name || `Term ${idx + 1}`}
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: currentTerm === idx ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        ●
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                ))
+              : [
+                  <Tab key="t0" label="First Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
+                  <Tab key="t1" label="Second Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
+                  <Tab key="t2" label="Third Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
+                ]}
           </Tabs>
 
           <Box display="flex" gap={2}>
@@ -567,8 +550,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
             </Stack>
           </Stack>
 
+          {/* Add payment item button commented out
           <Button
-            // startIcon={<AddIcon />}
             onClick={handleAddPaymentItem}
             sx={{
               fontWeight: 600,
@@ -577,6 +560,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
           >
             Add payment item
           </Button>
+          */}
         </Box>
 
         <TableContainer component={Paper} variant="outlined">

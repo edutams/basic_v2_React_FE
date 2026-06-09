@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -16,6 +16,7 @@ import {
   Switch,
   Button,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon, Message as MessageIcon, Email as EmailIcon, Article as ArticleIcon,   Settings as SettingsIcon,} from '@mui/icons-material';
 import StatCard from '@/components/shared/StatCard';
@@ -25,19 +26,87 @@ import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/C
 import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
 import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
 import SendInvoiceTab from '@/components/tenant/bursary/payment-shedule/SendInvoiceTab';
+import { fetchBursarySessionTerms, fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
 const PaymentShedule = () => {
   const [actionTab, setActionTab] = useState(0);
   const [scheduleTab, setScheduleTab] = useState(0);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [selectedSession, setSelectedSession] = useState('2025/2026');
-  const [selectedCategory, setSelectedCategory] = useState('New Student Category');
-  const [enableFullSession, setEnableFullSession] = useState(false);
 
-  const sessions = ['2024/2025', '2025/2026', '2026/2027'];
-  const categories = ['New Student Category', 'Returning Students', 'Scholarship'];
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  const [sessions, setSessions] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
+
+  useEffect(() => {
+    const loadSessionTerms = async () => {
+      try {
+        setLoadingSessions(true);
+        const res = await fetchBursarySessionTerms();
+
+        const list = Array.isArray(res?.data) ? res.data : [];
+        setSessions(list);
+
+        if (list.length > 0) {
+          setSelectedSessionTerm(list[0].id);
+        }
+      } catch (err) {
+        showSnackbar('Failed to load session terms', 'error');
+      } finally {
+        setLoadingSessions(false);
+      }
+    };
+
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const res = await fetchActiveCategories();
+
+        const list = Array.isArray(res?.data) ? res.data : [];
+        setCategories(list);
+
+        if (list.length > 0) {
+          setSelectedCategory(String(list[0].id));
+        }
+      } catch (err) {
+        showSnackbar('Failed to load categories', 'error');
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadSessionTerms();
+    loadCategories();
+  }, []);
+
+  const selectedSessionLabel =
+    sessions.find((s) => String(s.id) === String(selectedSessionTerm))
+      ?.session?.sessname || '';
+
+  const selectedCategoryLabel =
+    categories.find((c) => String(c.id) === String(selectedCategory))?.name ||
+    '';
+
+  const handleActionTabChange = (e, v) => setActionTab(v);
+  const handleScheduleTabChange = (e, v) => setScheduleTab(v);
+
+  const handleImportSchedule = () => {
+    showSnackbar('Import schedule triggered');
+  };
 
   const stats = {
     compulsorySchedule: {
@@ -89,20 +158,6 @@ const PaymentShedule = () => {
     { label: 'Excel Generated', value: 522, icon: ArticleIcon },
   ];
 
-  const showSnackbar = (message, severity = 'success') =>
-    setSnackbar({ open: true, message, severity });
-
-  const handleActionTabChange = (event, newValue) => {
-    setActionTab(newValue);
-  };
-
-  const handleScheduleTabChange = (event, newValue) => {
-    setScheduleTab(newValue);
-  };
-
-  const handleImportSchedule = () => {
-    showSnackbar('Import schedule for current term');
-  };
 
   return (
     <PageContainer title="Payment Schedule" description="Configure fees and payment settings">
@@ -453,20 +508,27 @@ const PaymentShedule = () => {
                     width: { xs: '100%', lg: 'auto' },
                   }}
                 >
-                  <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
-                    <InputLabel>Select Session</InputLabel>
-                    <Select
-                      value={selectedSession}
-                      label="Select Session"
-                      onChange={(e) => setSelectedSession(e.target.value)}
-                    >
-                      {sessions.map((session) => (
-                        <MenuItem key={session} value={session}>
-                          {session}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                 <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>Session Term</InputLabel>
+            <Select
+              value={selectedSessionTerm}
+              label="Session Term"
+              onChange={(e) => setSelectedSessionTerm(e.target.value)}
+              disabled={loadingSessions}
+            >
+              {loadingSessions ? (
+                <MenuItem disabled>
+                  <CircularProgress size={16} /> Loading...
+                </MenuItem>
+              ) : (
+                sessions.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.session?.sesname}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </FormControl>
 
                   <FormControl size="small" sx={{ minWidth: { sm: 100 } }}>
                     <InputLabel>Student Pay Category</InputLabel>
@@ -474,16 +536,23 @@ const PaymentShedule = () => {
                       value={selectedCategory}
                       label="Student Pay Category"
                       onChange={(e) => setSelectedCategory(e.target.value)}
+                      disabled={loadingCategories}
                     >
-                      {categories.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
+                      {loadingCategories ? (
+                        <MenuItem disabled>
+                          <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
                         </MenuItem>
-                      ))}
+                      ) : (
+                        categories.map((category) => (
+                          <MenuItem key={category.id} value={String(category.id)}>
+                            {category.name}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   </FormControl>
 
-                  <FormControlLabel
+                  {/* <FormControlLabel
                     control={
                       <Switch
                         checked={enableFullSession}
@@ -497,7 +566,7 @@ const PaymentShedule = () => {
                       </Typography>
                     }
                     sx={{ m: 0 }}
-                  />
+                  /> */}
                 </Box>
               </Box>
             </Box>
@@ -594,8 +663,24 @@ const PaymentShedule = () => {
         <Box sx={{ p: 3 }}>
           {actionTab === 0 && (
             <>
-              {scheduleTab === 0 && <CompulsoryScheduleTab showSnackbar={showSnackbar} />}
-              {scheduleTab === 1 && <OptionalPaymentTab showSnackbar={showSnackbar} />}
+              {scheduleTab === 0 && (
+                <CompulsoryScheduleTab
+                  showSnackbar={showSnackbar}
+                  sessionTermId={selectedSessionTerm}
+                  categoryId={selectedCategory}
+                  sessionLabel={selectedSessionLabel}
+                  categoryLabel={selectedCategoryLabel}
+                />
+              )}
+              {scheduleTab === 1 && (
+                <OptionalPaymentTab
+                  showSnackbar={showSnackbar}
+                  sessionTermId={selectedSessionTerm}
+                  categoryId={selectedCategory}
+                  sessionLabel={selectedSessionLabel}
+                  categoryLabel={selectedCategoryLabel}
+                />
+              )}
             </>
           )}
           {actionTab === 1 && <GenerateInvoiceTab showSnackbar={showSnackbar} />}

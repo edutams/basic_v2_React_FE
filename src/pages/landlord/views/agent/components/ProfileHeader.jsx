@@ -90,7 +90,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
           onClick={onManageSchools}
           startIcon={<IconBuildingStore size={18} />}
           sx={{
-            color: 'white',
+            bgcolor: 'white',
             borderColor: 'rgba(255,255,255,0.5)',
             textTransform: 'none',
             borderRadius: '10px',
@@ -98,7 +98,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
             fontSize: '13px',
             py: 1,
             '&:hover': {
-              borderColor: 'white',
+              borderColor: theme.palette.primary.light,
               bgcolor: 'rgba(255,255,255,0.1)',
             },
           }}
@@ -119,9 +119,8 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
             py: 1,
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             '&:hover': {
-              bgcolor: theme.palette.primary.light,
-              color: 'white',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              borderColor: theme.palette.primary.light,
+              bgcolor: 'rgba(255,255,255,0.1)',
             },
           }}
         >

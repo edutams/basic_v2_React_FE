@@ -12,7 +12,8 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
-import { fetchSkoolPayBanks, validateBankAccount } from '@/api/tenant/bursary/paymentNameApi';
+import { fetchSkoolPayBanks } from '@/api/tenant/bursary/paymentNameApi';
+import { fetchGatewayChargeBearer } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
   const [formData, setFormData] = useState({
@@ -20,15 +21,13 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
     pay_option: 'compulsory',
     bank: '',
     account_number: '',
-    account_name: '',
-    fee_bearer: 'client',
+    fee_bearer: 'school',
     modules: [],
     status: 'active',
   });
 
   const [banks, setBanks] = useState([]);
   const [banksLoading, setBanksLoading] = useState(false);
-  const [validating, setValidating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -38,11 +37,10 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
       if (paymentName) {
         setFormData({
           name: paymentName.name || '',
-          pay_option: paymentName.pay_option || 'compulsory',
+          pay_option: paymentName.pay_option?.toLowerCase() || 'compulsory',
           bank: paymentName.bank_code ? `${paymentName.bank_code}, ${paymentName.bank_name}` : '',
           account_number: paymentName.account_number || '',
-          account_name: paymentName.account_name || '',
-          fee_bearer: paymentName.fee_bearer || 'client',
+          fee_bearer: paymentName.fee_bearer?.toLowerCase() || 'parent',
           modules: paymentName.modules ? JSON.parse(paymentName.modules) : [],
           status: paymentName.status || 'active',
         });
@@ -52,21 +50,35 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           pay_option: 'compulsory',
           bank: '',
           account_number: '',
-          account_name: '',
-          fee_bearer: 'client',
+          fee_bearer: 'parent',
           modules: [],
           status: 'active',
         });
+
+        loadGatewayChargeBearer();
       }
       setErrors({});
     }
   }, [paymentName, open]);
 
+  const loadGatewayChargeBearer = async () => {
+    try {
+      const res = await fetchGatewayChargeBearer();
+
+      setFormData((prev) => ({
+        ...prev,
+        fee_bearer: res.data,
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const loadBanks = async () => {
     setBanksLoading(true);
     try {
       const res = await fetchSkoolPayBanks();
-      setBanks(res.data || []);
+      setBanks(res.data?.result || []);
     } catch {
       // banks failed to load
     } finally {
@@ -85,33 +97,12 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
     }
   };
 
-  const handleValidateAccount = async () => {
-    if (!formData.bank || formData.account_number.length !== 10) return;
-    setValidating(true);
-    try {
-      const res = await validateBankAccount({
-        bank: formData.bank,
-        account_number: formData.account_number,
-      });
-      setFormData((prev) => ({ ...prev, account_name: res.account_name || res.data || '' }));
-    } catch {
-      setErrors((prev) => ({
-        ...prev,
-        account_number: 'Could not validate account. Check details.',
-      }));
-    } finally {
-      setValidating(false);
-    }
-  };
-
   const validate = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Payment name is required';
     if (!formData.bank) newErrors.bank = 'Bank is required';
     if (!formData.account_number || !/^\d{10}$/.test(formData.account_number))
       newErrors.account_number = 'Valid 10-digit account number is required';
-    if (!formData.account_name.trim())
-      newErrors.account_name = 'Please validate account number first';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -185,9 +176,10 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
               {banksLoading ? (
                 <MenuItem disabled>Loading banks...</MenuItem>
               ) : (
-                banks.map((bank) => (
-                  <MenuItem key={bank.code} value={`${bank.code}, ${bank.name}`}>
-                    {bank.name}
+                banks.map((bank, i) => (
+                  <MenuItem key={i} value={`${bank.bankCode}, ${bank.bankName}`}>
+                    {' '}
+                    {bank.bankName}
                   </MenuItem>
                 ))
               )}
@@ -200,19 +192,19 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
               value={formData.account_number}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '');
-                setFormData((prev) => ({ ...prev, account_number: value, account_name: '' }));
+                setFormData((prev) => ({ ...prev, account_number: value }));
                 if (errors.account_number) setErrors((prev) => ({ ...prev, account_number: '' }));
               }}
-              onBlur={handleValidateAccount}
+              // onBlur={handleValidateAccount}
               error={!!errors.account_number}
-              helperText={errors.account_number || 'Account name will auto-fill on blur'}
+              // helperText={errors.account_number || 'Account name will auto-fill on blur'}
               inputProps={{ maxLength: 10, inputMode: 'numeric' }}
             />
           </Grid>
         </Grid>
 
         {/* Account Name (auto-filled) */}
-        <Box sx={{ position: 'relative' }}>
+        {/* <Box sx={{ position: 'relative' }}>
           <TextField
             label="Account Name"
             fullWidth
@@ -224,20 +216,20 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
               endAdornment: validating ? <CircularProgress size={18} /> : null,
             }}
           />
-        </Box>
+        </Box> */}
 
         {/* Fee Bearer + Modules + Status */}
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               select
-              label="Fee Bearer"
+              label="Gateway Charges Bearer"
               fullWidth
               value={formData.fee_bearer}
               onChange={handleChange('fee_bearer')}
               helperText="Who pays the gateway charges"
             >
-              <MenuItem value="client">Client</MenuItem>
+              <MenuItem value="parent">Parent</MenuItem>
               <MenuItem value="school">School</MenuItem>
             </TextField>
           </Grid>
@@ -259,7 +251,7 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading || validating} sx={{ fontWeight: 600 }}>
+          <Button onClick={handleSubmit} disabled={loading} sx={{ fontWeight: 600 }}>
             {loading ? 'Saving...' : `${paymentName ? 'Update' : 'Add'} Payment Name`}
           </Button>
         </Stack>

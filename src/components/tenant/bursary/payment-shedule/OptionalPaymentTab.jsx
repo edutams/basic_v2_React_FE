@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -43,12 +43,15 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import ReusableModal from '@/components/shared/ReusableModal';
+import { fetchTermsBySessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const OptionalPaymentTab = ({ showSnackbar }) => {
+const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLabel, categoryLabel }) => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
 
+  const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
+  const [loadingTerms, setLoadingTerms] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -67,6 +70,27 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (!sessionTermId) return;
+    const loadTerms = async () => {
+      try {
+        setLoadingTerms(true);
+        const data = await fetchTermsBySessionTerm(sessionTermId);
+        const items = data?.data || data?.terms || data || [];
+        const list = Array.isArray(items) ? items : [];
+        setTerms(list);
+        if (list.length > 0) {
+          setCurrentTerm(0);
+        }
+      } catch (err) {
+        showSnackbar?.('Failed to load terms', 'error');
+      } finally {
+        setLoadingTerms(false);
+      }
+    };
+    loadTerms();
+  }, [sessionTermId]);
 
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
@@ -393,8 +417,8 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
     <Stack spacing={3}>
       <Alert severity="info" sx={{ mb: 2 }}>
         <Typography variant="body2" fontWeight={600} textAlign="center" sx={{ width: '100%' }}>
-          Payment Schedules for 2024/2025 -{' '}
-          {currentTerm === 0 ? 'First' : currentTerm === 1 ? 'Second' : 'Third'} Term
+          Payment Schedules for {sessionLabel || '...'} -{' '}
+          {terms[currentTerm]?.name || terms[currentTerm]?.term_name || (loadingTerms ? 'Loading...' : '')} ({categoryLabel || '...'})
         </Typography>
       </Alert>
 
@@ -416,83 +440,40 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
               flex: 1,
             }}
           >
-            <Tab
-              label="First Term"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: currentTerm === 0 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  ●
-                </Box>
-              }
-              iconPosition="start"
-            />
-
-            <Tab
-              label="Second Term"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: currentTerm === 1 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  ●
-                </Box>
-              }
-              iconPosition="start"
-            />
-
-            <Tab
-              label="Third Term"
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-              icon={
-                <Box
-                  component="span"
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    bgcolor: currentTerm === 2 ? 'primary.main' : 'grey.300',
-                    color: 'white',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    mr: 1,
-                  }}
-                >
-                  ●
-                </Box>
-              }
-              iconPosition="start"
-            />
+            {terms.length > 0
+              ? terms.map((term, idx) => (
+                  <Tab
+                    key={term.id || idx}
+                    label={term.name || term.term_name || `Term ${idx + 1}`}
+                    sx={{ textTransform: 'none', fontWeight: 600 }}
+                    icon={
+                      <Box
+                        component="span"
+                        sx={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: currentTerm === idx ? 'primary.main' : 'grey.300',
+                          color: 'white',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          mr: 1,
+                        }}
+                      >
+                        ●
+                      </Box>
+                    }
+                    iconPosition="start"
+                  />
+                ))
+              : [
+                  <Tab key="t0" label="First Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
+                  <Tab key="t1" label="Second Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
+                  <Tab key="t2" label="Third Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
+                ]}
           </Tabs>
 
           <Box display="flex" gap={2}>
@@ -533,7 +514,12 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
             </Typography>
           </Box>
 
+<<<<<<< HEAD
           {/* <Button
+=======
+        {/* Add payment item button commented out
+        <Button
+>>>>>>> origin/chuks_master_branch
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAddPaymentItem}
@@ -541,8 +527,14 @@ const OptionalPaymentTab = ({ showSnackbar }) => {
           fullWidth={{ xs: true, sm: false }}
         >
           Add payment item
+<<<<<<< HEAD
         </Button> */}
         </Stack>
+=======
+        </Button>
+        */}
+      </Stack>
+>>>>>>> origin/chuks_master_branch
 
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
           <Table sx={{ minWidth: 800 }}>

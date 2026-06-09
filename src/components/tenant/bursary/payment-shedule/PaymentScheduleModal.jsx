@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   Button,
   TextField,
-  MenuItem,
   Stack,
   Typography,
   Box,
-  Grid,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -14,9 +12,6 @@ import ReusableModal from '@/components/shared/ReusableModal';
 const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
   const [formData, setFormData] = useState({
     amount: '',
-    dueDate: '',
-    installmentNumber: '',
-    description: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -25,32 +20,23 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
     if (payment && isEdit) {
       setFormData({
         amount: payment.amount || '',
-        dueDate: payment.dueDate || '',
-        installmentNumber: payment.installmentNumber || '',
-        description: payment.description || '',
       });
     } else {
       setFormData({
         amount: '',
-        dueDate: '',
-        installmentNumber: '1',
-        description: '',
       });
     }
     setErrors({});
   }, [payment, isEdit, open]);
 
-  const handleChange = (field) => (event) => {
+  const handleChange = (event) => {
     let value = event.target.value;
 
-    // Only allow numbers for amount
-    if (field === 'amount') {
-      value = value.replace(/\D/g, '');
-    }
+    value = value.replace(/\D/g, '');
 
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+    setFormData((prev) => ({ ...prev, amount: value }));
+    if (errors.amount) {
+      setErrors((prev) => ({ ...prev, amount: '' }));
     }
   };
 
@@ -61,14 +47,6 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
       newErrors.amount = 'Amount is required';
     } else if (parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0';
-    }
-
-    if (!formData.dueDate.trim()) {
-      newErrors.dueDate = 'Due date is required';
-    }
-
-    if (!formData.installmentNumber.trim()) {
-      newErrors.installmentNumber = 'Installment number is required';
     }
 
     setErrors(newErrors);
@@ -91,8 +69,8 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
       open={open}
       onClose={onClose}
       title={modalTitle}
-      subtitle="Configure payment schedule details for this class"
-      size="medium"
+      subtitle="Enter the payment amount for this class"
+      size="small"
       showCloseButton={true}
       showDivider={true}
     >
@@ -110,87 +88,34 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit }) => {
             {isEdit ? '✏️ ' : '💡 '}
             <strong>{isEdit ? 'Edit Mode:' : 'Tip:'}</strong>{' '}
             {isEdit
-              ? 'Update the payment schedule details below. Changes will affect all students in this class.'
-              : 'Set the payment amount and due date for this class. You can configure multiple installments if needed.'}
+              ? 'Update the payment amount for this class.'
+              : 'Set the payment amount for this class.'}
           </Typography>
         </Box>
 
-        <Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Amount (NGN)"
-                fullWidth
-                value={formData.amount}
-                onChange={handleChange('amount')}
-                error={!!errors.amount}
-                helperText={errors.amount}
-                placeholder="e.g., 10000"
-                required
-                inputProps={{
-                  inputMode: 'numeric',
-                  pattern: '[0-9]*',
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Due Date"
-                type="date"
-                fullWidth
-                value={formData.dueDate}
-                onChange={handleChange('dueDate')}
-                error={!!errors.dueDate}
-                helperText={errors.dueDate}
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                select
-                label="Installment Number"
-                fullWidth
-                value={formData.installmentNumber}
-                onChange={handleChange('installmentNumber')}
-                error={!!errors.installmentNumber}
-                helperText={errors.installmentNumber || 'Which installment is this payment for'}
-                required
-              >
-                <MenuItem value="1">1st Installment</MenuItem>
-                <MenuItem value="2">2nd Installment</MenuItem>
-                <MenuItem value="3">3rd Installment</MenuItem>
-                <MenuItem value="4">4th Installment</MenuItem>
-                <MenuItem value="full">Full Payment</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label="Description (Optional)"
-                fullWidth
-                value={formData.description}
-                onChange={handleChange('description')}
-                placeholder="e.g., First term payment"
-                multiline
-                rows={1}
-              />
-            </Grid>
-          </Grid>
-        </Box>
+        <TextField
+          label="Amount (NGN)"
+          fullWidth
+          value={formData.amount}
+          onChange={handleChange}
+          error={!!errors.amount}
+          helperText={errors.amount}
+          placeholder="e.g., 10000"
+          required
+          slotProps={{
+            input: {
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+            },
+          }}
+        />
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
           <Button onClick={onClose} variant="outlined">
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSubmit} sx={{ fontWeight: 600 }}>
-            {isEdit ? 'Update' : 'Add'} Payment
+            Save
           </Button>
         </Stack>
       </Stack>

@@ -87,10 +87,8 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule }) => {
 
   const handleSelectAll = () => {
     if (formData.selectedClasses.length === availableClasses.length) {
-      // Deselect all
       setFormData((prev) => ({ ...prev, selectedClasses: [] }));
     } else {
-      // Select all
       setFormData((prev) => ({
         ...prev,
         selectedClasses: availableClasses.map((cls) => cls.id),
@@ -148,12 +146,6 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule }) => {
         )}
 
         <Box>
-          {/* <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="subtitle1" fontWeight={700}>
-              Class Amounts <span style={{ color: 'red' }}>*</span>
-            </Typography>
-          </Box> */}
-
           <TableContainer
             component={Paper}
             variant="outlined"

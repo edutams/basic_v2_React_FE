@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   Checkbox,
   Chip,
+  Alert
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -121,52 +122,11 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule }) => {
       showDivider={true}
     >
       <Stack spacing={3}>
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: 'warning.lighter',
-            borderRadius: 1,
-            border: '1px solid',
-            borderColor: 'warning.light',
-          }}
-        >
-          <Typography variant="caption" color="warning.main">
-            ⚠️ <strong>Note:</strong> Removing a class that already has payment data will delete
-            that data. Existing payment amounts for selected classes will be preserved.
-          </Typography>
-        </Box>
+          <Alert severity="info">
+            You cannot attach Instalment percentage to this fee because your present bursary settings is to pay on amount available.
+          </Alert>
 
-        <Box>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TextField
-                label="Payment Name"
-                fullWidth
-                value={formData.paymentName}
-                onChange={handleChange('paymentName')}
-                error={!!errors.paymentName}
-                helperText={errors.paymentName}
-                placeholder="e.g., School Fee, Textbook Fee, Lab Fee"
-                required
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                select
-                label="Payment Type"
-                fullWidth
-                value={formData.paymentType}
-                onChange={handleChange('paymentType')}
-                required
-              >
-                <MenuItem value="compulsory">Compulsory</MenuItem>
-                <MenuItem value="optional">Optional</MenuItem>
-              </TextField>
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Box>
+        {/* <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="body2" fontWeight={600}>
               Select Classes <span style={{ color: 'red' }}>*</span>
@@ -272,7 +232,7 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule }) => {
               </Box>
             </Box>
           )}
-        </Box>
+        </Box> */}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
           <Button onClick={onClose} variant="outlined">

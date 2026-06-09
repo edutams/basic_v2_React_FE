@@ -32,11 +32,11 @@ const PaymentShedule = () => {
   const [actionTab, setActionTab] = useState(0);
   const [scheduleTab, setScheduleTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [selectedSession, setSelectedSession] = useState('2024/2025 - Second Term');
+  const [selectedSession, setSelectedSession] = useState('2025/2026');
   const [selectedCategory, setSelectedCategory] = useState('New Student Category');
   const [enableFullSession, setEnableFullSession] = useState(false);
 
-  const sessions = ['2024/2025 - First Term', '2024/2025 - Second Term', '2024/2025 - Third Term'];
+  const sessions = ['2024/2025', '2025/2026', '2026/2027'];
   const categories = ['New Student Category', 'Returning Students', 'Scholarship'];
 
   const stats = {

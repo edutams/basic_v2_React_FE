@@ -543,7 +543,6 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {/* Warning message if not all classes set - Above the chips */}
                     {!schedule.allClassesSet && (
                       <Typography variant="caption" color="error.main" display="block" mb={1}>
                         You are yet to set Payment for all classes
@@ -603,7 +602,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
       </ParentCard>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuOption onClick={handleEditSchedule}>Edit Schedule</MenuOption>
+        <MenuOption onClick={handleEditSchedule}>Set/Edit Schedule</MenuOption>
         <MenuOption onClick={handleDeleteSchedule} sx={{ color: 'error.main' }}>
           Delete Schedule
         </MenuOption>

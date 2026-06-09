@@ -87,7 +87,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
       try {
         setLoadingTerms(true);
         const data = await fetchTermsBySessionTerm(sessionTermId);
-        const items = data?.data || data?.terms || data || [];
+        const items = data?.data;
         const list = Array.isArray(items) ? items : [];
         setTerms(list);
         if (list.length > 0) {
@@ -458,11 +458,11 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
             variant="scrollable"
             scrollButtons={false}
           >
-            {terms.length > 0
-              ? terms.map((term, idx) => (
+           
+              {terms.map((term, idx) => (
                   <Tab
-                    key={term.id || idx}
-                    label={term.name || term.term_name || `Term ${idx + 1}`}
+                    key={idx}
+                    label={term.display_term.display_name}
                     sx={{ textTransform: 'none', fontWeight: 600 }}
                     icon={
                       <Box
@@ -487,11 +487,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                     iconPosition="start"
                   />
                 ))
-              : [
-                  <Tab key="t0" label="First Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
-                  <Tab key="t1" label="Second Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
-                  <Tab key="t2" label="Third Term" disabled sx={{ textTransform: 'none', fontWeight: 600 }} />,
-                ]}
+}
           </Tabs>
 
           <Box display="flex" gap={2}>

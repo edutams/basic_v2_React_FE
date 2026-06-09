@@ -94,8 +94,8 @@ const PaymentShedule = () => {
   }, []);
 
   const selectedSessionLabel =
-    sessions.find((s) => String(s.id) === String(selectedSessionTerm))
-      ?.session?.sessname || '';
+    sessions.find((s) => s.id === selectedSessionTerm)
+      ?.session?.sesname || '';
 
   const selectedCategoryLabel =
     categories.find((c) => String(c.id) === String(selectedCategory))?.name ||

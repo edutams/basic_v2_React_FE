@@ -10,7 +10,15 @@ import {
   FormControlLabel,
   Checkbox,
   Chip,
-  Alert
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  InputAdornment,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -20,6 +28,7 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule }) => {
     paymentName: '',
     paymentType: 'compulsory',
     selectedClasses: [],
+    classAmounts: {},
   });
 
   const [errors, setErrors] = useState({});
@@ -36,10 +45,18 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule }) => {
 
   useEffect(() => {
     if (open && schedule) {
+      const amounts = {};
+      if (schedule.classes) {
+        schedule.classes.forEach((cls) => {
+          if (!cls.missing) amounts[cls.id] = cls.amount || '';
+        });
+      }
+
       setFormData({
         paymentName: schedule.paymentName || '',
         paymentType: 'compulsory',
         selectedClasses: schedule.classes?.map((cls) => cls.id) || [],
+        classAmounts: amounts,
       });
       setErrors({});
     }
@@ -115,124 +132,117 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule }) => {
     <ReusableModal
       open={open}
       onClose={onClose}
-      title="Edit Payment Item"
+      title={`2025/2026 - Third Term (Returning Student Category) ${schedule?.paymentName || 'JS School Fee'}`}
       subtitle="Update payment item details and class selection"
       size="medium"
       showCloseButton={true}
       showDivider={true}
     >
       <Stack spacing={3}>
-          <Alert severity="info">
-            You cannot attach Instalment percentage to this fee because your present bursary settings is to pay on amount available.
-          </Alert>
+        <Alert severity="info">
+          You cannot attach Instalment percentage to this fee because your present bursary settings
+          is to pay on amount available.
+        </Alert>
+        {formData.selectedClasses.length === 0 && (
+          <Alert severity="warning">You are yet to set Payment for all classes</Alert>
+        )}
 
-        {/* <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="body2" fontWeight={600}>
-              Select Classes <span style={{ color: 'red' }}>*</span>
+        <Box>
+          {/* <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="subtitle1" fontWeight={700}>
+              Class Amounts <span style={{ color: 'red' }}>*</span>
             </Typography>
-            <Button size="small" onClick={handleSelectAll} variant="outlined">
-              {allSelected ? 'Deselect All' : 'Select All'}
-            </Button>
-          </Box>
+          </Box> */}
 
-          <Box
-            sx={{
-              p: 2,
-              border: 1,
-              borderColor: errors.selectedClasses ? 'error.main' : 'divider',
-              borderRadius: 1,
-              bgcolor: 'grey.50',
-            }}
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{ borderColor: errors.selectedClasses ? 'error.main' : 'divider' }}
           >
-            <Grid container spacing={1}>
-              {availableClasses.map((cls) => {
-                const isSelected = formData.selectedClasses.includes(cls.id);
-                const hasPaymentData = getClassStatus(cls.id);
-                return (
-                  <Grid size={{ xs: 6, sm: 4 }} key={cls.id}>
-                    <Box
-                      onClick={() => handleClassToggle(cls.id)}
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'grey.50' }}>
+                  <TableCell sx={{ fontWeight: 600 }}>Class</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Amount</TableCell>
+                  <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {availableClasses.map((cls) => {
+                  const isSelected = formData.selectedClasses.includes(cls.id);
+                  return (
+                    <TableRow
+                      key={cls.id}
+                      hover
                       sx={{
-                        p: 1.5,
-                        border: 2,
-                        borderColor: isSelected ? 'primary.main' : 'divider',
-                        borderRadius: 1,
-                        cursor: 'pointer',
-                        bgcolor: isSelected ? 'primary.lighter' : 'white',
-                        position: 'relative',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          borderColor: 'primary.main',
-                          bgcolor: isSelected ? 'primary.lighter' : 'grey.50',
-                        },
+                        bgcolor: isSelected ? 'white' : '#f5f5f5',
                       }}
                     >
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={isSelected}
-                            onChange={() => handleClassToggle(cls.id)}
-                            size="small"
-                          />
-                        }
-                        label={
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              {cls.name}
-                            </Typography>
-                            {hasPaymentData && (
-                              <Typography variant="caption" color="success.main">
-                                ✓ Has data
-                              </Typography>
-                            )}
-                          </Box>
-                        }
-                        sx={{ m: 0, width: '100%' }}
-                      />
-                    </Box>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
+                      <TableCell sx={{ opacity: isSelected ? 1 : 0.5 }}>
+                        <Chip
+                          label={cls.name}
+                          color={isSelected ? 'primary' : 'default'}
+                          variant={isSelected ? 'filled' : 'outlined'}
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </TableCell>
+
+                      <TableCell sx={{ opacity: isSelected ? 1 : 0.5 }}>
+                        <TextField
+                          type="number"
+                          size="small"
+                          inputProps={{ min: 0 }}
+                          placeholder="Amount"
+                          value={formData.classAmounts[cls.id] || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              classAmounts: {
+                                ...prev.classAmounts,
+                                [cls.id]: val,
+                              },
+                              selectedClasses:
+                                val && !isSelected
+                                  ? [...new Set([...prev.selectedClasses, cls.id])]
+                                  : prev.selectedClasses,
+                            }));
+                          }}
+                          disabled={!isSelected}
+                          InputProps={{
+                            startAdornment: <InputAdornment position="start">₦</InputAdornment>,
+                          }}
+                          sx={{ width: '100%', maxWidth: 200 }}
+                        />
+                      </TableCell>
+
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          variant={isSelected ? 'outlined' : 'contained'}
+                          color={isSelected ? 'error' : 'primary'}
+                          onClick={() => handleClassToggle(cls.id)}
+                          sx={{
+                            textTransform: 'none',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {isSelected ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
           {errors.selectedClasses && (
             <Typography variant="caption" color="error.main" sx={{ mt: 1, display: 'block' }}>
               {errors.selectedClasses}
             </Typography>
           )}
-
-          {formData.selectedClasses.length > 0 && (
-            <Box mt={2}>
-              <Typography variant="caption" color="textSecondary" display="block" mb={1}>
-                Selected Classes ({formData.selectedClasses.length}):
-              </Typography>
-              <Box display="flex" flexWrap="wrap" gap={1}>
-                {formData.selectedClasses.map((classId) => {
-                  const cls = availableClasses.find((c) => c.id === classId);
-                  const hasPaymentData = getClassStatus(classId);
-                  return (
-                    <Chip
-                      key={classId}
-                      label={cls?.name}
-                      size="small"
-                      onDelete={() => handleClassToggle(classId)}
-                      color={hasPaymentData ? 'success' : 'primary'}
-                      icon={
-                        hasPaymentData ? (
-                          <Typography component="span" sx={{ fontSize: 14 }}>
-                            ✓
-                          </Typography>
-                        ) : undefined
-                      }
-                    />
-                  );
-                })}
-              </Box>
-            </Box>
-          )}
-        </Box> */}
+        </Box>
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
           <Button onClick={onClose} variant="outlined">

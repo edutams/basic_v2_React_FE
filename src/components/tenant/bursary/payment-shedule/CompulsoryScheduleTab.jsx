@@ -281,17 +281,13 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
       ...prevSchedules,
       [currentTerm]: prevSchedules[currentTerm].map((schedule) => {
         if (schedule.id === editItemModal.schedule?.id) {
-          // Get existing classes to preserve their payment data
           const existingClasses = schedule.classes;
 
-          // Create updated classes list
           const updatedClasses = formData.selectedClasses.map((classId) => {
             const existingClass = existingClasses.find((cls) => cls.id === classId);
             if (existingClass) {
-              // Keep existing class data
               return existingClass;
             } else {
-              // Add new class as missing
               return {
                 id: classId,
                 name: classId,
@@ -345,10 +341,8 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
     setPage(0);
   };
 
-  // Get schedules for current term
   const currentSchedules = schedules[currentTerm] || [];
 
-  // Paginate schedules
   const paginatedSchedules = currentSchedules.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
@@ -524,7 +518,7 @@ const CompulsoryScheduleTab = ({ showSnackbar }) => {
         <TableContainer component={Paper} variant="outlined">
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 180 }}>PAYMENT NAME</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>CLASS</TableCell>

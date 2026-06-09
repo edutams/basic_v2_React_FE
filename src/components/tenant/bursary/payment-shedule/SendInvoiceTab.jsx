@@ -483,10 +483,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
       <Box sx={{ mb: 4 }}>
         <Box
           sx={{
-            // display: 'flex',
-            // flexDirection: { xs: 'column', lg: 'row' },
-            // justifyContent: 'space-between',
-            // alignItems: { xs: 'flex-start', lg: 'center' },
+            display: 'flex',
+            flexDirection: { xs: 'column', lg: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', lg: 'center' },
             mb: 3,
             gap: 2,
             borderBottom: '1px solid',
@@ -494,7 +494,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             pb: 2,
           }}
         >
-          <Box display="flex" alignItems="center" mb={2} gap={2}>
+          <Box display="flex" alignItems="center" gap={2}>
             <Box
               sx={{
                 width: 40,

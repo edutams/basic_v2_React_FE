@@ -34,3 +34,7 @@ export const fetchTermsBySessionTerm = async (sessionTermId) => {
     const res = await api.get(`/bursary/settings/fetch_terms_by_session_term/${sessionTermId}`);
     return res.data;
 };
+export const fetchGatewayChargeBearer = async () => {
+    const res = await api.get('/bursary/settings/gateway_charge_bearer');
+    return res.data;
+}

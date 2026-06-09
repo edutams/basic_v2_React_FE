@@ -71,7 +71,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
     setBanksLoading(true);
     try {
       const res = await fetchSkoolPayBanks();
-      setBanks(res.data || []);
+      setBanks(res.data?.result || []);
     } catch {
       // fallback silently
     } finally {
@@ -201,8 +201,8 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                   </MenuItem>
                 ) : (
                   banks.map((bank) => (
-                    <MenuItem key={bank.code} value={bank.code}>
-                      {bank.name}
+                    <MenuItem key={bank.bankCode} value={bank.bankCode}>
+                      {bank.bankName}
                     </MenuItem>
                   ))
                 )}
@@ -278,7 +278,7 @@ const ManageGateway = ({ selectedAgent, onSave, onClose }) => {
                       Bank:
                     </Typography>
                     <Typography variant="body1" fontWeight="medium">
-                      {banks.find((b) => b.code === formik.values.bank)?.name}
+                      {banks.find((b) => b.bankCode === formik.values.bank)?.bankName}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>

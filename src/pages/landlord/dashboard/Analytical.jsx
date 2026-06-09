@@ -623,13 +623,10 @@ export default function Dashboard() {
                   </Select>
                   <Button
                     sx={{
-                      bgcolor: '#4a3aff',
-                      color: '#fff',
                       borderRadius: '8px',
                       textTransform: 'none',
                       px: 3,
                       boxShadow: 'none',
-                      '&:hover': { bgcolor: '#3929ee', boxShadow: 'none' },
                     }}
                   >
                     Filter

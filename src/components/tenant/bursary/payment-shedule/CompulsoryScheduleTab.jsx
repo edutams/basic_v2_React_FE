@@ -44,7 +44,7 @@ import AddPaymentItemModal from './AddPaymentItemModal';
 import EditPaymentItemModal from './EditPaymentItemModal';
 import { fetchTermsBySessionTerm, fetchPaymentSchedules, deletePaymentSchedule, togglePaymentScheduleStatus } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'compulsory' }) => {
+const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'compulsory', onTermChange }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
   const [selectedTermId, setSelectedTermId] = useState(null);
@@ -95,7 +95,9 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
         setTerms(list);
         if (list.length > 0) {
           setCurrentTerm(0);
-          setSelectedTermId(list[0].term_id); // Set the first term's ID
+          setSelectedTermId(list[0].term_id);
+          // Notify parent of initial term
+          onTermChange?.(list[0].term_id);
         }
       } catch (err) {
         showSnackbar?.('Failed to load terms', 'error');
@@ -165,7 +167,10 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
   const handleTermChange = (e, val) => {
     setCurrentTerm(val);
     if (terms[val]) {
-      setSelectedTermId(terms[val].term_id);
+      const newTermId = terms[val].term_id;
+      setSelectedTermId(newTermId);
+      // Notify parent of term change
+      onTermChange?.(newTermId);
     }
   };
 
@@ -369,7 +374,6 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
       
       showSnackbar?.(`Payment item "${formData.paymentName}" updated successfully`);
       
-      // Reload schedules after saving
       await loadPaymentSchedules(searchQuery);
     } catch (err) {
       console.error('Failed to save edit item:', err);
@@ -408,9 +412,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
     setPage(0);
   };
 
-  const currentSchedules = schedules[currentTerm] || [];
-
-  const paginatedSchedules = currentSchedules.slice(
+  const paginatedSchedules = scheduleData.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage,
   );
@@ -541,7 +543,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
               </TableRow>
             </TableHead>
             <TableBody>
-              {scheduleData.map((schedule, index) => (
+              {paginatedSchedules.map((schedule, index) => (
                 <TableRow key={index} hover>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
@@ -665,19 +667,19 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
                 </TableRow>
               ))}
             </TableBody>
-            {/* <TableFooter>
+            <TableFooter>
               <TableRow>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25, 50]}
                   colSpan={4}
-                  count={currentSchedules.length}
+                  count={scheduleData.length}
                   rowsPerPage={rowsPerPage}
                   page={page}
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
                 />
               </TableRow>
-            </TableFooter> */}
+            </TableFooter>
           </Table>
         </TableContainer>
       </ParentCard>
@@ -705,7 +707,6 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
         </DialogActions>
       </Dialog>
 
-      {/* Payment Schedule Modal */}
       <PaymentScheduleModal
         open={paymentModal.open}
         onClose={handlePaymentModalClose}
@@ -717,7 +718,6 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
         categoryId={categoryId}
       />
 
-      {/* Add Payment Item Modal */}
       <AddPaymentItemModal
         open={addItemModal}
         onClose={() => setAddItemModal(false)}

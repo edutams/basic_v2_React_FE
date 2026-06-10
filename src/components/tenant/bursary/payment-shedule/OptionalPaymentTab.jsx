@@ -12,6 +12,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableFooter,
+  TablePagination,
   Chip,
   IconButton,
   Menu,
@@ -36,7 +38,7 @@ import {
 import EditOptionalPaymentModal from './EditOptionalPaymentModal';
 import { fetchTermsBySessionTerm, fetchPaymentSchedules } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'optional' }) => {
+const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'optional', onTermChange }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
   const [selectedTermId, setSelectedTermId] = useState(null);
@@ -45,6 +47,8 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [scheduleData, setScheduleData] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
    // Load payment schedules when term or sessionId changes
     const loadPaymentSchedules = async (searchTerm = '') => {
@@ -144,6 +148,8 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
         if (list.length > 0) {
           setCurrentTerm(0);
           setSelectedTermId(list[0].term_id);
+          // Notify parent of initial term
+          onTermChange?.(list[0].term_id);
         }
       } catch (err) {
         showSnackbar?.('Failed to load terms', 'error');
@@ -247,6 +253,20 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
     await loadPaymentSchedules(searchQuery);
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const paginatedSchedules = scheduleData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
+
   const handleEditModalSave = async (formData) => {
     try {
       console.log('Saving optional payment:', formData);
@@ -283,7 +303,10 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
             onChange={(e, val) => {
               setCurrentTerm(val);
               if (terms[val]) {
-                setSelectedTermId(terms[val].term_id);
+                const newTermId = terms[val].term_id;
+                setSelectedTermId(newTermId);
+                // Notify parent of term change
+                onTermChange?.(newTermId);
               }
             }}
             variant="scrollable"
@@ -389,7 +412,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
             </TableHead>
             <TableBody>
               {
-                scheduleData.map((schedule, index) => (
+                paginatedSchedules.map((schedule, index) => (
                   <TableRow
                     key={schedule.id}
                     hover
@@ -478,6 +501,19 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
                   </TableRow>
                 ))}
             </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  colSpan={6}
+                  count={scheduleData.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+              </TableRow>
+            </TableFooter>
           </Table>
          
         </TableContainer>

@@ -97,4 +97,9 @@ export const togglePaymentScheduleStatus = async (id, status) => {
     return res.data;
 };
 
-
+export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = 'compulsory') => {
+    const res = await api.get('/bursary/payment_schedule/stats', {
+        params: { session_id: sessionId, term_id: termId, pay_option: payOption }
+    });
+    return res.data;
+};

@@ -26,7 +26,7 @@ import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/C
 import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
 import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
 import SendInvoiceTab from '@/components/tenant/bursary/payment-shedule/SendInvoiceTab';
-import { fetchBursarySessionTerms, fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchBursarySessionTerms, fetchActiveCategories, fetchPaymentScheduleStats } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
@@ -47,9 +47,16 @@ const PaymentShedule = () => {
   const [selectedSession, setSelectedSession] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [activeSubTermId, setActiveSubTermId] = useState(null);
 
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [scheduleStats, setScheduleStats] = useState({
+    schedule: { total: 0, classes: 0 },
+    paymentName: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
+    studentCategory: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
+  });
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
@@ -122,24 +129,45 @@ const PaymentShedule = () => {
     showSnackbar('Import schedule triggered');
   };
 
-  const stats = {
-    compulsorySchedule: {
-      total: 2000,
-      classes: 6,
-    },
-    paymentName: {
-      withMinSchedule: 799,
-      withMaxSchedule: 989,
-      minLabel: 'School Fee',
-      maxLabel: 'Acceptance Fee',
-    },
-    studentCategory: {
-      withMinSchedule: 989,
-      withMaxSchedule: 187,
-      minLabel: 'Returning Student',
-      maxLabel: 'Staff ward',
-    },
-  };
+  // Fetch stats when session, term, schedule tab, or sub-term changes
+  useEffect(() => {
+    if (!selectedSession || !activeSubTermId) return;
+    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+    const loadStats = async () => {
+      try {
+        setLoadingStats(true);
+        const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
+        if (res?.success && res.data) {
+          const { schedule, amount, student_category } = res.data;
+          setScheduleStats({
+            schedule: {
+              total: schedule?.total ?? 0,
+              classes: schedule?.classes ?? 0,
+            },
+            paymentName: {
+              withMinSchedule: amount?.min?.amount ?? 0,
+              withMaxSchedule: amount?.max?.amount ?? 0,
+              minLabel: amount?.min?.name ?? 'N/A',
+              maxLabel: amount?.max?.name ?? 'N/A',
+            },
+            studentCategory: {
+              withMinSchedule: student_category?.min?.amount ?? 0,
+              withMaxSchedule: student_category?.max?.amount ?? 0,
+              minLabel: student_category?.min?.name ?? 'N/A',
+              maxLabel: student_category?.max?.name ?? 'N/A',
+            },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load schedule stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    loadStats();
+  }, [selectedSession, activeSubTermId, scheduleTab]);
+
+  const stats = scheduleStats;
 
   // Stats for Generate Invoice Tab
   const invoiceStats = {
@@ -188,7 +216,7 @@ const PaymentShedule = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
               <Typography variant="body2" color="textSecondary" mb={3}>
-                Compulsory Schedule
+                {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
               </Typography>
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
                 <Box
@@ -202,12 +230,12 @@ const PaymentShedule = () => {
                   }}
                 >
                   <Typography variant="h2" fontWeight={700} color="primary" sx={{ lineHeight: 1 }}>
-                    {stats.compulsorySchedule.total}
+                    {stats.schedule.total}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.compulsorySchedule.classes}
+                    {stats.schedule.classes}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     Classes
@@ -243,7 +271,7 @@ const PaymentShedule = () => {
                     With Minimum Schedule
                   </Typography>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.paymentName.withMinSchedule}
+                    ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.paymentName.minLabel}
@@ -254,7 +282,7 @@ const PaymentShedule = () => {
                     With Maximum Schedule
                   </Typography>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.paymentName.withMaxSchedule}
+                    ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.paymentName.maxLabel}
@@ -290,7 +318,7 @@ const PaymentShedule = () => {
                     With Minimum Schedule
                   </Typography>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.studentCategory.withMinSchedule}
+                    ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.studentCategory.minLabel}
@@ -300,7 +328,7 @@ const PaymentShedule = () => {
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                     With Maximum Schedule
                   </Typography>
-                  <Typography variant="h3">{stats.studentCategory.withMaxSchedule}</Typography>
+                  <Typography variant="h3">₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}</Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.studentCategory.maxLabel}
                   </Typography>
@@ -686,6 +714,7 @@ const PaymentShedule = () => {
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
                   payOption="compulsory"
+                  onTermChange={setActiveSubTermId}
                 />
               )}
               {scheduleTab === 1 && (
@@ -697,6 +726,7 @@ const PaymentShedule = () => {
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
                   payOption="optional"
+                  onTermChange={setActiveSubTermId}
                 />
               )}
             </>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -16,6 +16,7 @@ import {
   Switch,
   Button,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon, Message as MessageIcon, Email as EmailIcon, Article as ArticleIcon,   Settings as SettingsIcon,} from '@mui/icons-material';
 import StatCard from '@/components/shared/StatCard';
@@ -25,38 +26,182 @@ import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/C
 import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
 import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
 import SendInvoiceTab from '@/components/tenant/bursary/payment-shedule/SendInvoiceTab';
+import { fetchBursarySessionTerms, fetchActiveCategories, fetchPaymentScheduleStats } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
 const PaymentShedule = () => {
   const [actionTab, setActionTab] = useState(0);
   const [scheduleTab, setScheduleTab] = useState(0);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [selectedSession, setSelectedSession] = useState('2025/2026');
-  const [selectedCategory, setSelectedCategory] = useState('New Student Category');
-  const [enableFullSession, setEnableFullSession] = useState(false);
 
-  const sessions = ['2024/2025', '2025/2026', '2026/2027'];
-  const categories = ['New Student Category', 'Returning Students', 'Scholarship'];
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
-  const stats = {
-    compulsorySchedule: {
-      total: 2000,
-      classes: 6,
-    },
-    paymentName: {
-      withMinSchedule: 799,
-      withMaxSchedule: 989,
-      minLabel: 'School Fee',
-      maxLabel: 'Acceptance Fee',
-    },
-    studentCategory: {
-      withMinSchedule: 989,
-      withMaxSchedule: 187,
-      minLabel: 'Returning Student',
-      maxLabel: 'Staff ward',
-    },
+  const [sessions, setSessions] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+  const [selectedSession, setSelectedSession] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [activeSubTermId, setActiveSubTermId] = useState(null);
+
+  const [loadingSessions, setLoadingSessions] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [scheduleStats, setScheduleStats] = useState({
+    schedule: { total: 0, classes: 0 },
+    paymentName: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
+    studentCategory: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
+  });
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  const refreshStats = () => {
+    if (!selectedSession || !activeSubTermId) return;
+    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+    const loadStats = async () => {
+      try {
+        setLoadingStats(true);
+        const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
+        if (res?.success && res.data) {
+          const { schedule, amount, student_category } = res.data;
+          setScheduleStats({
+            schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
+            paymentName: {
+              withMinSchedule: amount?.min?.amount ?? 0,
+              withMaxSchedule: amount?.max?.amount ?? 0,
+              minLabel: amount?.min?.name ?? 'N/A',
+              maxLabel: amount?.max?.name ?? 'N/A',
+            },
+            studentCategory: {
+              withMinSchedule: student_category?.min?.amount ?? 0,
+              withMaxSchedule: student_category?.max?.amount ?? 0,
+              minLabel: student_category?.min?.name ?? 'N/A',
+              maxLabel: student_category?.max?.name ?? 'N/A',
+            },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to refresh stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    loadStats();
   };
+
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
+
+  useEffect(() => {
+    const loadSessionTerms = async () => {
+      try {
+        setLoadingSessions(true);
+        const res = await fetchBursarySessionTerms();
+
+        const list = Array.isArray(res?.data) ? res.data : [];
+        setSessions(list);
+
+        if (list.length > 0) {
+          const firstItem = list[0];
+          setSelectedSessionTerm(firstItem.id);
+          setSelectedSession(firstItem.session_id);
+          setSelectedTerm(firstItem.term_id);
+        }
+      } catch (err) {
+        showSnackbar('Failed to load session terms', 'error');
+      } finally {
+        setLoadingSessions(false);
+      }
+    };
+
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const res = await fetchActiveCategories();
+
+        const list = Array.isArray(res?.data) ? res.data : [];
+        setCategories(list);
+
+        if (list.length > 0) {
+          setSelectedCategory(String(list[0].id));
+        }
+      } catch (err) {
+        showSnackbar('Failed to load categories', 'error');
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadSessionTerms();
+    loadCategories();
+  }, []);
+
+  const selectedSessionLabel =
+    sessions.find((s) => s.id === selectedSessionTerm)
+      ?.session?.sesname || '';
+
+  const selectedCategoryLabel =
+    categories.find((c) => String(c.id) === String(selectedCategory))?.name ||
+    '';
+
+  const handleSessionTermChange = (sessionTermId) => {
+    const selectedItem = sessions.find((s) => s.id === sessionTermId);
+    if (selectedItem) {
+      setSelectedSessionTerm(sessionTermId);
+      setSelectedSession(selectedItem.session_id);
+      setSelectedTerm(selectedItem.term_id);
+    }
+  };
+
+  const handleActionTabChange = (e, v) => setActionTab(v);
+  const handleScheduleTabChange = (e, v) => setScheduleTab(v);
+
+  const handleImportSchedule = () => {
+    showSnackbar('Import schedule triggered');
+  };
+
+  // Fetch stats when session, term, schedule tab, or sub-term changes
+  useEffect(() => {
+    if (!selectedSession || !activeSubTermId) return;
+    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+    const loadStats = async () => {
+      try {
+        setLoadingStats(true);
+        const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
+        if (res?.success && res.data) {
+          const { schedule, amount, student_category } = res.data;
+          setScheduleStats({
+            schedule: {
+              total: schedule?.total ?? 0,
+              classes: schedule?.classes ?? 0,
+            },
+            paymentName: {
+              withMinSchedule: amount?.min?.amount ?? 0,
+              withMaxSchedule: amount?.max?.amount ?? 0,
+              minLabel: amount?.min?.name ?? 'N/A',
+              maxLabel: amount?.max?.name ?? 'N/A',
+            },
+            studentCategory: {
+              withMinSchedule: student_category?.min?.amount ?? 0,
+              withMaxSchedule: student_category?.max?.amount ?? 0,
+              minLabel: student_category?.min?.name ?? 'N/A',
+              maxLabel: student_category?.max?.name ?? 'N/A',
+            },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load schedule stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    loadStats();
+  }, [selectedSession, activeSubTermId, scheduleTab]);
+
+  const stats = scheduleStats;
 
   // Stats for Generate Invoice Tab
   const invoiceStats = {
@@ -89,20 +234,6 @@ const PaymentShedule = () => {
     { label: 'Excel Generated', value: 522, icon: ArticleIcon },
   ];
 
-  const showSnackbar = (message, severity = 'success') =>
-    setSnackbar({ open: true, message, severity });
-
-  const handleActionTabChange = (event, newValue) => {
-    setActionTab(newValue);
-  };
-
-  const handleScheduleTabChange = (event, newValue) => {
-    setScheduleTab(newValue);
-  };
-
-  const handleImportSchedule = () => {
-    showSnackbar('Import schedule for current term');
-  };
 
   return (
     <PageContainer title="Payment Schedule" description="Configure fees and payment settings">
@@ -119,7 +250,7 @@ const PaymentShedule = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
               <Typography variant="body2" color="textSecondary" mb={3}>
-                Compulsory Schedule
+                {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
               </Typography>
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
                 <Box
@@ -133,12 +264,12 @@ const PaymentShedule = () => {
                   }}
                 >
                   <Typography variant="h2" fontWeight={700} color="primary" sx={{ lineHeight: 1 }}>
-                    {stats.compulsorySchedule.total}
+                    {stats.schedule.total}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.compulsorySchedule.classes}
+                    {stats.schedule.classes}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     Classes
@@ -174,7 +305,7 @@ const PaymentShedule = () => {
                     With Minimum Schedule
                   </Typography>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.paymentName.withMinSchedule}
+                    ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.paymentName.minLabel}
@@ -185,7 +316,7 @@ const PaymentShedule = () => {
                     With Maximum Schedule
                   </Typography>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.paymentName.withMaxSchedule}
+                    ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.paymentName.maxLabel}
@@ -221,7 +352,7 @@ const PaymentShedule = () => {
                     With Minimum Schedule
                   </Typography>
                   <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.studentCategory.withMinSchedule}
+                    ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
                   </Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.studentCategory.minLabel}
@@ -231,7 +362,7 @@ const PaymentShedule = () => {
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                     With Maximum Schedule
                   </Typography>
-                  <Typography variant="h3">{stats.studentCategory.withMaxSchedule}</Typography>
+                  <Typography variant="h3">₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}</Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.studentCategory.maxLabel}
                   </Typography>
@@ -453,20 +584,27 @@ const PaymentShedule = () => {
                     width: { xs: '100%', lg: 'auto' },
                   }}
                 >
-                  <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
-                    <InputLabel>Select Session</InputLabel>
-                    <Select
-                      value={selectedSession}
-                      label="Select Session"
-                      onChange={(e) => setSelectedSession(e.target.value)}
-                    >
-                      {sessions.map((session) => (
-                        <MenuItem key={session} value={session}>
-                          {session}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                 <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>Session</InputLabel>
+            <Select
+              value={selectedSessionTerm}
+              label="Session Term"
+              onChange={(e) => handleSessionTermChange(e.target.value)}
+              disabled={loadingSessions}
+            >
+              {loadingSessions ? (
+                <MenuItem disabled>
+                  <CircularProgress size={16} /> 
+                </MenuItem>
+              ) : (
+                sessions.map((item) => (
+                  <MenuItem key={item.id} value={item.id}>
+                    {item.session?.sesname}
+                  </MenuItem>
+                ))
+              )}
+            </Select>
+          </FormControl>
 
                   <FormControl size="small" sx={{ minWidth: { sm: 100 } }}>
                     <InputLabel>Student Pay Category</InputLabel>
@@ -474,16 +612,23 @@ const PaymentShedule = () => {
                       value={selectedCategory}
                       label="Student Pay Category"
                       onChange={(e) => setSelectedCategory(e.target.value)}
+                      disabled={loadingCategories}
                     >
-                      {categories.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
+                      {loadingCategories ? (
+                        <MenuItem disabled>
+                          <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
                         </MenuItem>
-                      ))}
+                      ) : (
+                        categories.map((category) => (
+                          <MenuItem key={category.id} value={String(category.id)}>
+                            {category.name}
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                   </FormControl>
 
-                  <FormControlLabel
+                  {/* <FormControlLabel
                     control={
                       <Switch
                         checked={enableFullSession}
@@ -497,7 +642,7 @@ const PaymentShedule = () => {
                       </Typography>
                     }
                     sx={{ m: 0 }}
-                  />
+                  /> */}
                 </Box>
               </Box>
             </Box>
@@ -594,8 +739,32 @@ const PaymentShedule = () => {
         <Box sx={{ p: 3 }}>
           {actionTab === 0 && (
             <>
-              {scheduleTab === 0 && <CompulsoryScheduleTab showSnackbar={showSnackbar} />}
-              {scheduleTab === 1 && <OptionalPaymentTab showSnackbar={showSnackbar} />}
+              {scheduleTab === 0 && (
+                <CompulsoryScheduleTab
+                  showSnackbar={showSnackbar}
+                  sessionId={selectedSession}
+                  termId={selectedTerm}
+                  categoryId={selectedCategory}
+                  sessionLabel={selectedSessionLabel}
+                  categoryLabel={selectedCategoryLabel}
+                  payOption="compulsory"
+                  onTermChange={setActiveSubTermId}
+                  refreshStats={refreshStats}
+                />
+              )}
+              {scheduleTab === 1 && (
+                <OptionalPaymentTab
+                  showSnackbar={showSnackbar}
+                  sessionId={selectedSession}
+                  termId={selectedTerm}
+                  categoryId={selectedCategory}
+                  sessionLabel={selectedSessionLabel}
+                  categoryLabel={selectedCategoryLabel}
+                  payOption="optional"
+                  onTermChange={setActiveSubTermId}
+                  refreshStats={refreshStats}
+                />
+              )}
             </>
           )}
           {actionTab === 1 && <GenerateInvoiceTab showSnackbar={showSnackbar} />}

@@ -58,6 +58,41 @@ const PaymentShedule = () => {
   });
   const [loadingStats, setLoadingStats] = useState(false);
 
+  // Refresh stats function that can be called from child tabs after mutations
+  const refreshStats = () => {
+    if (!selectedSession || !activeSubTermId) return;
+    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+    const loadStats = async () => {
+      try {
+        setLoadingStats(true);
+        const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
+        if (res?.success && res.data) {
+          const { schedule, amount, student_category } = res.data;
+          setScheduleStats({
+            schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
+            paymentName: {
+              withMinSchedule: amount?.min?.amount ?? 0,
+              withMaxSchedule: amount?.max?.amount ?? 0,
+              minLabel: amount?.min?.name ?? 'N/A',
+              maxLabel: amount?.max?.name ?? 'N/A',
+            },
+            studentCategory: {
+              withMinSchedule: student_category?.min?.amount ?? 0,
+              withMaxSchedule: student_category?.max?.amount ?? 0,
+              minLabel: student_category?.min?.name ?? 'N/A',
+              maxLabel: student_category?.max?.name ?? 'N/A',
+            },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to refresh stats:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    loadStats();
+  };
+
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
@@ -715,6 +750,7 @@ const PaymentShedule = () => {
                   categoryLabel={selectedCategoryLabel}
                   payOption="compulsory"
                   onTermChange={setActiveSubTermId}
+                  refreshStats={refreshStats}
                 />
               )}
               {scheduleTab === 1 && (
@@ -727,6 +763,7 @@ const PaymentShedule = () => {
                   categoryLabel={selectedCategoryLabel}
                   payOption="optional"
                   onTermChange={setActiveSubTermId}
+                  refreshStats={refreshStats}
                 />
               )}
             </>

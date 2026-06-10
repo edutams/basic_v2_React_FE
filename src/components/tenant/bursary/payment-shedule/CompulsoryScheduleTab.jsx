@@ -44,7 +44,7 @@ import AddPaymentItemModal from './AddPaymentItemModal';
 import EditPaymentItemModal from './EditPaymentItemModal';
 import { fetchTermsBySessionTerm, fetchPaymentSchedules, deletePaymentSchedule, togglePaymentScheduleStatus } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'compulsory', onTermChange }) => {
+const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'compulsory', onTermChange, refreshStats }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
   const [selectedTermId, setSelectedTermId] = useState(null);
@@ -214,8 +214,9 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
 
         if (response.success) {
           showSnackbar?.(`${classActionDialog.classData.name} removed successfully`, 'success');
-          // Refresh schedules
+          // Refresh schedules and stats
           await loadPaymentSchedules(searchQuery);
+          refreshStats?.();
         } else {
           showSnackbar?.(response.message || 'Failed to delete class schedule', 'error');
         }
@@ -234,8 +235,9 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
             `${classActionDialog.classData.name} ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
             'success'
           );
-          // Refresh schedules
+          // Refresh schedules and stats
           await loadPaymentSchedules(searchQuery);
+          refreshStats?.();
         } else {
           showSnackbar?.(response.message || 'Failed to toggle class schedule', 'error');
         }
@@ -328,6 +330,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
       
       // Reload schedules after saving
       await loadPaymentSchedules(searchQuery);
+      refreshStats?.();
     } catch (err) {
       console.error('Failed to reload schedules:', err);
       showSnackbar?.('Failed to reload payment schedules', 'error');
@@ -375,6 +378,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
       showSnackbar?.(`Payment item "${formData.paymentName}" updated successfully`);
       
       await loadPaymentSchedules(searchQuery);
+      refreshStats?.();
     } catch (err) {
       console.error('Failed to save edit item:', err);
       showSnackbar?.('Failed to update payment item', 'error');

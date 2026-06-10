@@ -38,7 +38,7 @@ import {
 import EditOptionalPaymentModal from './EditOptionalPaymentModal';
 import { fetchTermsBySessionTerm, fetchPaymentSchedules } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'optional', onTermChange }) => {
+const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'optional', onTermChange, refreshStats }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
   const [selectedTermId, setSelectedTermId] = useState(null);
@@ -272,6 +272,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
       console.log('Saving optional payment:', formData);
       showSnackbar?.('Optional payment updated successfully', 'success');
       await loadPaymentSchedules(searchQuery);
+      refreshStats?.();
     } catch (err) {
       console.error('Failed to save optional payment:', err);
       showSnackbar?.('Failed to update optional payment', 'error');

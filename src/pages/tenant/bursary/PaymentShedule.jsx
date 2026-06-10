@@ -58,7 +58,6 @@ const PaymentShedule = () => {
   });
   const [loadingStats, setLoadingStats] = useState(false);
 
-  // Refresh stats function that can be called from child tabs after mutations
   const refreshStats = () => {
     if (!selectedSession || !activeSubTermId) return;
     const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';

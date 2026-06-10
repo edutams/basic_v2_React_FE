@@ -58,13 +58,11 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
         const data = await fetchPaymentSchedules(sessionId, selectedTermId, categoryId, payOption, searchTerm);
         console.log('Raw API response:', data);
         
-        // Transform the data to match expected structure for optional payments
         if (data?.data && Array.isArray(data.data)) {
           const transformedData = data.data.map(paymentName => {
             // Group schedules by payment name and collect options
             const schedules = paymentName.payschedules || [];
             
-            // Collect all unique classes
             const classesSet = new Set();
             const optionsArray = [];
             let totalAmount = 0;
@@ -104,7 +102,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
               category: categoryLabel || 'N/A',
               classes: Array.from(classesSet).join(', ') || 'All Classes',
               status: 'Active',
-              payschedules: schedules, // Keep original schedules for editing
+              payschedules: schedules, 
             };
           });
 
@@ -179,14 +177,12 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
   };
 
   const handleEditSchedule = () => {
-    // Use selectedRow if available (from menu), otherwise use detailsDialog.schedule
     const scheduleToEdit = selectedRow || detailsDialog.schedule;
     
     if (!scheduleToEdit) return;
     
     const rawSchedule = scheduleData.find(s => s.id === scheduleToEdit.id);
     if (rawSchedule) {
-      // Get the original payment name object with payschedules
       const originalPaymentName = {
         id: rawSchedule.id,
         name: rawSchedule.paymentName,
@@ -216,7 +212,6 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
         </>
       ),
       onConfirm: () => {
-        // Update the scheduleData state
         setScheduleData((prev) =>
           prev.map((s) => (s.id === selectedRow.id ? { ...s, status: newStatus } : s)),
         );
@@ -306,7 +301,6 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
               if (terms[val]) {
                 const newTermId = terms[val].term_id;
                 setSelectedTermId(newTermId);
-                // Notify parent of term change
                 onTermChange?.(newTermId);
               }
             }}
@@ -686,7 +680,6 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
         </DialogActions>
       </Dialog>
 
-      {/* Edit Optional Payment Modal */}
       <EditOptionalPaymentModal
         open={editModal.open}
         onClose={() => setEditModal({ open: false, schedule: null })}

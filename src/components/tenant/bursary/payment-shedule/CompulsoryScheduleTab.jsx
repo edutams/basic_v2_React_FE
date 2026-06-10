@@ -108,7 +108,6 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
     loadData();
   }, [sessionId, termId]);
 
-  // Load payment schedules when term or sessionId changes
   const loadPaymentSchedules = async (searchTerm = '') => {
     if (!sessionId || !selectedTermId || !categoryId) return;
     try {
@@ -209,19 +208,16 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
       setProcessingAction(true);
 
       if (classActionDialog.action === 'delete') {
-        // Call delete API
         const response = await deletePaymentSchedule(classActionDialog.classData.schedule_id);
 
         if (response.success) {
           showSnackbar?.(`${classActionDialog.classData.name} removed successfully`, 'success');
-          // Refresh schedules and stats
           await loadPaymentSchedules(searchQuery);
           refreshStats?.();
         } else {
           showSnackbar?.(response.message || 'Failed to delete class schedule', 'error');
         }
       } else if (classActionDialog.action === 'toggle') {
-        // Call toggle API
         const currentStatus = classActionDialog.classData.status || 'active';
         const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
         
@@ -235,7 +231,6 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
             `${classActionDialog.classData.name} ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
             'success'
           );
-          // Refresh schedules and stats
           await loadPaymentSchedules(searchQuery);
           refreshStats?.();
         } else {

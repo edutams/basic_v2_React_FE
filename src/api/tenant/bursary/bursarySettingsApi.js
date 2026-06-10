@@ -111,7 +111,8 @@ export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = '
     const res = await api.get('/bursary/payment_schedule/stats', {
         params: { session_id: sessionId, term_id: termId, pay_option: payOption }
     });
-    };
+    return res.data;
+};
     
 export const fetchStudentForInvoiceData = async ({ sessionTermId, classId } = {}) => {
     const params = {};

@@ -44,6 +44,8 @@ const PaymentShedule = () => {
   const [categories, setCategories] = useState([]);
 
   const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+  const [selectedSession, setSelectedSession] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const [loadingSessions, setLoadingSessions] = useState(true);
@@ -62,7 +64,10 @@ const PaymentShedule = () => {
         setSessions(list);
 
         if (list.length > 0) {
-          setSelectedSessionTerm(list[0].id);
+          const firstItem = list[0];
+          setSelectedSessionTerm(firstItem.id);
+          setSelectedSession(firstItem.session_id);
+          setSelectedTerm(firstItem.term_id);
         }
       } catch (err) {
         showSnackbar('Failed to load session terms', 'error');
@@ -100,6 +105,15 @@ const PaymentShedule = () => {
   const selectedCategoryLabel =
     categories.find((c) => String(c.id) === String(selectedCategory))?.name ||
     '';
+
+  const handleSessionTermChange = (sessionTermId) => {
+    const selectedItem = sessions.find((s) => s.id === sessionTermId);
+    if (selectedItem) {
+      setSelectedSessionTerm(sessionTermId);
+      setSelectedSession(selectedItem.session_id);
+      setSelectedTerm(selectedItem.term_id);
+    }
+  };
 
   const handleActionTabChange = (e, v) => setActionTab(v);
   const handleScheduleTabChange = (e, v) => setScheduleTab(v);
@@ -513,12 +527,12 @@ const PaymentShedule = () => {
             <Select
               value={selectedSessionTerm}
               label="Session Term"
-              onChange={(e) => setSelectedSessionTerm(e.target.value)}
+              onChange={(e) => handleSessionTermChange(e.target.value)}
               disabled={loadingSessions}
             >
               {loadingSessions ? (
                 <MenuItem disabled>
-                  <CircularProgress size={16} /> Loading...
+                  <CircularProgress size={16} /> 
                 </MenuItem>
               ) : (
                 sessions.map((item) => (
@@ -666,19 +680,23 @@ const PaymentShedule = () => {
               {scheduleTab === 0 && (
                 <CompulsoryScheduleTab
                   showSnackbar={showSnackbar}
-                  sessionTermId={selectedSessionTerm}
+                  sessionId={selectedSession}
+                  termId={selectedTerm}
                   categoryId={selectedCategory}
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
+                  payOption="compulsory"
                 />
               )}
               {scheduleTab === 1 && (
                 <OptionalPaymentTab
                   showSnackbar={showSnackbar}
-                  sessionTermId={selectedSessionTerm}
+                  sessionId={selectedSession}
+                  termId={selectedTerm}
                   categoryId={selectedCategory}
                   sessionLabel={selectedSessionLabel}
                   categoryLabel={selectedCategoryLabel}
+                  payOption="optional"
                 />
               )}
             </>

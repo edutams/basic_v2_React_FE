@@ -21,67 +21,129 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TablePagination,
   Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
   Tabs,
   Tab,
   Alert,
-  useTheme,
-  useMediaQuery,
+  Grid,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
   Search as SearchIcon,
-  Add as AddIcon,
   MoreVert as MoreVertIcon,
   Close as CloseIcon,
-  Delete as DeleteIcon,
 } from '@mui/icons-material';
-import ReusableModal from '@/components/shared/ReusableModal';
+import EditOptionalPaymentModal from './EditOptionalPaymentModal';
 import { fetchTermsBySessionTerm, fetchPaymentSchedules } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLabel, categoryLabel }) => {
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
-
+const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'optional' }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
+  const [selectedTermId, setSelectedTermId] = useState(null);
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [scheduleData, setScheduleData] = useState([]);
+
+   // Load payment schedules when term or sessionId changes
+    const loadPaymentSchedules = async (searchTerm = '') => {
+      if (!sessionId || !selectedTermId || !categoryId) return;
+      try {
+        setLoadingTerms(true);
+        const data = await fetchPaymentSchedules(sessionId, selectedTermId, categoryId, payOption, searchTerm);
+        console.log('Raw API response:', data);
+        
+        // Transform the data to match expected structure for optional payments
+        if (data?.data && Array.isArray(data.data)) {
+          const transformedData = data.data.map(paymentName => {
+            // Group schedules by payment name and collect options
+            const schedules = paymentName.payschedules || [];
+            
+            // Collect all unique classes
+            const classesSet = new Set();
+            const optionsArray = [];
+            let totalAmount = 0;
+            
+            schedules.forEach(schedule => {
+              const className = schedule.my_class?.class_name || `Class ${schedule.class_id}`;
+              classesSet.add(className);
+              
+              // If schedule has options, use them; otherwise create option from schedule amount
+              if (schedule.options && schedule.options.length > 0) {
+                schedule.options.forEach(opt => {
+                  optionsArray.push({
+                    name: opt.option_name,
+                    price: `₦${parseFloat(opt.amount).toLocaleString()}`,
+                    amount: parseFloat(opt.amount),
+                  });
+                  totalAmount += parseFloat(opt.amount);
+                });
+              } else if (schedule.amount && schedule.amount > 0) {
+                // Fallback: create option from schedule amount
+                optionsArray.push({
+                  name: className,
+                  price: `₦${parseFloat(schedule.amount).toLocaleString()}`,
+                  amount: parseFloat(schedule.amount),
+                });
+                totalAmount += parseFloat(schedule.amount);
+              }
+            });
+
+            return {
+              id: paymentName.id,
+              paymentName: paymentName.name,
+              description: paymentName.description || '',
+              options: optionsArray,
+              totalTypes: optionsArray.length,
+              totalAmount: `₦${totalAmount.toLocaleString()}`,
+              category: categoryLabel || 'N/A',
+              classes: Array.from(classesSet).join(', ') || 'All Classes',
+              status: 'Active',
+              payschedules: schedules, // Keep original schedules for editing
+            };
+          });
+
+          console.log('Transformed optional data:', transformedData);
+          setScheduleData(transformedData);
+        } else {
+          setScheduleData([]);
+        }
+      } catch (err) {
+        showSnackbar?.('Failed to load payment schedules', 'error');
+        console.error('Error loading schedules:', err);
+      } finally {
+        setLoadingTerms(false);
+      }
+    };
+    useEffect(() => {
+    loadPaymentSchedules();
+  }, [sessionId, selectedTermId, categoryId]);
 
   const [detailsDialog, setDetailsDialog] = useState({
     open: false,
     schedule: null,
   });
 
-  const [paymentDialog, setPaymentDialog] = useState({
+  const [editModal, setEditModal] = useState({
     open: false,
-    isEdit: false,
-    data: null,
+    schedule: null,
   });
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (!sessionTermId) return;
+    if (!sessionId || !termId) return;
     const loadTerms = async () => {
       try {
         setLoadingTerms(true);
-        const data = await fetchTermsBySessionTerm(sessionTermId);
+        const data = await fetchTermsBySessionTerm(sessionId, termId);
         const items = data?.data;
         const list = Array.isArray(items) ? items : [];
         setTerms(list);
         if (list.length > 0) {
           setCurrentTerm(0);
+          setSelectedTermId(list[0].term_id);
         }
       } catch (err) {
         showSnackbar?.('Failed to load terms', 'error');
@@ -90,27 +152,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
       }
     };
     loadTerms();
-  }, [sessionTermId]);
-
-  // Load optional payment schedules
-  useEffect(() => {
-    if (!sessionTermId || !categoryId) return;
-    const loadOptionalSchedules = async () => {
-      try {
-        setLoadingTerms(true);
-        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'optional');
-        
-        if (data?.data && Array.isArray(data.data)) {
-          setSchedules(data.data);
-        }
-      } catch (err) {
-        showSnackbar?.('Failed to load payment schedules', 'error');
-      } finally {
-        setLoadingTerms(false);
-      }
-    };
-    loadOptionalSchedules();
-  }, [sessionTermId, categoryId]);
+  }, [sessionId, termId]);
 
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
@@ -118,25 +160,6 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
     message: '',
     onConfirm: null,
   });
-
-  const [schedules, setSchedules] = useState([]);
-
-  // const handleAddPaymentItem = () => {
-  //   setPaymentDialog({
-  //     open: true,
-  //     isEdit: false,
-  //     data: {
-  //       icon: '',
-  //       paymentName: '',
-  //       description: '',
-  //       options: [{ name: '', price: '' }],
-  //       category: '',
-  //       classes: '',
-  //       status: 'Active',
-  //     },
-  //   });
-  //   setErrors({});
-  // };
 
   const handleMenuOpen = (event, row) => {
     event.stopPropagation();
@@ -150,12 +173,25 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
   };
 
   const handleEditSchedule = () => {
-    setPaymentDialog({
-      open: true,
-      isEdit: true,
-      data: selectedRow,
-    });
-    setErrors({});
+    // Use selectedRow if available (from menu), otherwise use detailsDialog.schedule
+    const scheduleToEdit = selectedRow || detailsDialog.schedule;
+    
+    if (!scheduleToEdit) return;
+    
+    const rawSchedule = scheduleData.find(s => s.id === scheduleToEdit.id);
+    if (rawSchedule) {
+      // Get the original payment name object with payschedules
+      const originalPaymentName = {
+        id: rawSchedule.id,
+        name: rawSchedule.paymentName,
+        payschedules: rawSchedule.payschedules || [],
+      };
+      
+      setEditModal({
+        open: true,
+        schedule: originalPaymentName,
+      });
+    }
     handleMenuClose();
   };
 
@@ -174,7 +210,8 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
         </>
       ),
       onConfirm: () => {
-        setSchedules((prev) =>
+        // Update the scheduleData state
+        setScheduleData((prev) =>
           prev.map((s) => (s.id === selectedRow.id ? { ...s, status: newStatus } : s)),
         );
         showSnackbar?.(
@@ -194,15 +231,6 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
     });
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   const handleConfirmDialogClose = () => {
     setConfirmDialog({ ...confirmDialog, open: false });
   };
@@ -211,155 +239,26 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
     setDetailsDialog({ open: false, schedule: null });
   };
 
-  const handlePaymentDialogClose = () => {
-    setPaymentDialog({ open: false, isEdit: false, data: null });
-    setErrors({});
-  };
-
-  const validatePaymentForm = () => {
-    const newErrors = {};
-
-    if (!paymentDialog.data?.paymentName?.trim()) {
-      newErrors.paymentName = 'Payment name is required';
-    }
-
-    if (!paymentDialog.data?.description?.trim()) {
-      newErrors.description = 'Description is required';
-    }
-
-    if (!paymentDialog.data?.category) {
-      newErrors.category = 'Payment category is required';
-    }
-
-    if (!paymentDialog.data?.classes) {
-      newErrors.classes = 'Class selection is required';
-    }
-
-    const optionErrors = [];
-    paymentDialog.data?.options?.forEach((option, index) => {
-      const optionError = {};
-      if (!option.name?.trim()) {
-        optionError.name = 'Option name is required';
-      }
-      if (!option.price?.trim()) {
-        optionError.price = 'Price is required';
-      }
-      if (Object.keys(optionError).length > 0) {
-        optionErrors[index] = optionError;
-      }
-    });
-
-    if (optionErrors.length > 0) {
-      newErrors.options = optionErrors;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSavePayment = () => {
-    if (!validatePaymentForm()) {
-      showSnackbar?.('Please fix the errors before submitting', 'error');
-      return;
-    }
-
-    const totalTypes = paymentDialog.data.options.length;
-    const totalAmount = paymentDialog.data.options.reduce((sum, opt) => {
-      const price = parseInt(opt.price.replace(/[^\d]/g, ''), 10) || 0;
-      return sum + price;
-    }, 0);
-
-    const updatedData = {
-      ...paymentDialog.data,
-      totalTypes,
-      totalAmount: `₦${totalAmount.toLocaleString()}`,
-    };
-
-    if (paymentDialog.isEdit) {
-      setSchedules((prev) => prev.map((s) => (s.id === updatedData.id ? updatedData : s)));
-      showSnackbar?.('Payment item updated successfully', 'success');
-    } else {
-      const newPayment = {
-        ...updatedData,
-        id: schedules.length + 1,
-      };
-      setSchedules((prev) => [...prev, newPayment]);
-      showSnackbar?.('Payment item added successfully', 'success');
-    }
-    handlePaymentDialogClose();
-  };
-
-  const handleAddOption = () => {
-    setPaymentDialog((prev) => ({
-      ...prev,
-      data: {
-        ...prev.data,
-        options: [...prev.data.options, { name: '', price: '' }],
-      },
-    }));
-  };
-
-  const handleRemoveOption = (index) => {
-    setPaymentDialog((prev) => ({
-      ...prev,
-      data: {
-        ...prev.data,
-        options: prev.data.options.filter((_, i) => i !== index),
-      },
-    }));
-    // Clear errors
-    if (errors.options?.[index]) {
-      const newErrors = { ...errors };
-      newErrors.options = newErrors.options.filter((_, i) => i !== index);
-      setErrors(newErrors);
-    }
-  };
-
-  const handleOptionChange = (index, field, value) => {
-    setPaymentDialog((prev) => ({
-      ...prev,
-      data: {
-        ...prev.data,
-        options: prev.data.options.map((opt, i) =>
-          i === index ? { ...opt, [field]: value } : opt,
-        ),
-      },
-    }));
-    // Clear error
-    if (errors.options?.[index]?.[field]) {
-      const newErrors = { ...errors };
-      if (newErrors.options[index]) {
-        delete newErrors.options[index][field];
-        if (Object.keys(newErrors.options[index]).length === 0) {
-          newErrors.options[index] = undefined;
-        }
-      }
-      setErrors(newErrors);
-    }
-  };
-
-  const handleFieldChange = (field, value) => {
-    setPaymentDialog((prev) => ({
-      ...prev,
-      data: { ...prev.data, [field]: value },
-    }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
-  };
-
   const handleSearch = () => {
-    showSnackbar?.(`Searching for: ${searchQuery}`, 'info');
+    loadPaymentSchedules(searchQuery);
   };
 
-  const filteredSchedules = schedules.filter((schedule) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      schedule.paymentName.toLowerCase().includes(query) ||
-      schedule.description.toLowerCase().includes(query) ||
-      schedule.category.toLowerCase().includes(query)
-    );
-  });
+  const handleRefreshSchedules = async () => {
+    await loadPaymentSchedules(searchQuery);
+  };
+
+  const handleEditModalSave = async (formData) => {
+    try {
+      console.log('Saving optional payment:', formData);
+      showSnackbar?.('Optional payment updated successfully', 'success');
+      await loadPaymentSchedules(searchQuery);
+    } catch (err) {
+      console.error('Failed to save optional payment:', err);
+      showSnackbar?.('Failed to update optional payment', 'error');
+    }
+  };
+// scheduleData
+  
 
   return (
     <Stack spacing={3}>
@@ -381,7 +280,12 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
         >
           <Tabs
             value={currentTerm}
-            onChange={(e, val) => setCurrentTerm(val)}
+            onChange={(e, val) => {
+              setCurrentTerm(val);
+              if (terms[val]) {
+                setSelectedTermId(terms[val].term_id);
+              }
+            }}
             variant="scrollable"
             scrollButtons={false}
             sx={{
@@ -435,7 +339,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
               sx={{ width: 300 }}
             />
 
-            <Button variant="contained" size="small">
+            <Button variant="contained" size="small" onClick={handleSearch}>
               Search
             </Button>
           </Box>
@@ -477,23 +381,22 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
                 <TableCell sx={{ fontWeight: 700, minWidth: 250 }}>Option Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>Payment Category</TableCell>
                 <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }}>Status</TableCell>
+                {/* <TableCell sx={{ fontWeight: 700, width: 100 }}>Status</TableCell> */}
                 <TableCell align="center" sx={{ fontWeight: 700, width: 80 }}>
                   Action
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredSchedules
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((schedule, index) => (
+              {
+                scheduleData.map((schedule, index) => (
                   <TableRow
                     key={schedule.id}
                     hover
                     onClick={() => handleRowClick(schedule)}
                     sx={{ cursor: 'pointer' }}
                   >
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
@@ -546,7 +449,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
                         }}
                       />
                     </TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <Chip
                         label={schedule.status}
                         size="small"
@@ -560,7 +463,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
                           fontSize: 11,
                         }}
                       />
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell align="center">
                       <IconButton
                         size="small"
@@ -576,23 +479,15 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
                 ))}
             </TableBody>
           </Table>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredSchedules.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
+         
         </TableContainer>
       </ParentCard>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuOption onClick={handleEditSchedule}>Edit</MenuOption>
-        <MenuOption onClick={handleToggleStatus}>
+        <MenuOption onClick={handleEditSchedule}>Set/Edit Schedule</MenuOption>
+        {/* <MenuOption onClick={handleToggleStatus}>
           {selectedRow?.status === 'Active' ? 'Deactivate' : 'Activate'}
-        </MenuOption>
+        </MenuOption> */}
       </Menu>
 
       <Dialog
@@ -745,185 +640,26 @@ const OptionalPaymentTab = ({ showSnackbar, sessionTermId, categoryId, sessionLa
             variant="contained"
             onClick={() => {
               handleDetailsDialogClose();
-              setPaymentDialog({
-                open: true,
-                isEdit: true,
-                data: detailsDialog.schedule,
-              });
+              handleEditSchedule();
             }}
             fullWidth={{ xs: true, sm: false }}
           >
-            Edit
+            Set/Edit Optional Payment
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Add/Edit Payment Modal */}
-      <ReusableModal
-        open={paymentDialog.open}
-        onClose={handlePaymentDialogClose}
-        // title={paymentDialog.isEdit ? 'Edit Optional Payment Item' : 'Create Optional Payment Item'}
-        title="Optional Payment Item"
-        size="large"
-        showCloseButton={true}
-        showDivider={true}
-      >
-        <Stack spacing={3}>
-          {/* <Alert severity='info'>
-            <strong>{paymentDialog.isEdit ? 'Edit Mode:' : 'Tip:'}</strong>{' '}
-            {paymentDialog.isEdit
-              ? 'Update the payment item details below. Changes will apply to all selected classes.'
-              : 'Create optional payment items with multiple variants and prices for different classes.'}
-          </Alert> */}
-
-          <TextField
-            fullWidth
-            label="Optional Payment Name"
-            value={paymentDialog.data?.paymentName || ''}
-            onChange={(e) => handleFieldChange('paymentName', e.target.value)}
-            error={!!errors.paymentName}
-            helperText={errors.paymentName}
-            placeholder="e.g., School Bag"
-            required
-          />
-
-          <TextField
-            fullWidth
-            label="Description"
-            multiline
-            rows={2}
-            value={paymentDialog.data?.description || ''}
-            onChange={(e) => handleFieldChange('description', e.target.value)}
-            error={!!errors.description}
-            helperText={errors.description}
-            placeholder="Brief description of the payment item"
-            required
-          />
-
-          <Box>
-            <Alert severity="info">
-              Configure optional payment item details with multiple pricing options
-            </Alert>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5} mt={2}>
-              <Typography variant="body2" fontWeight={600}>
-                Option Name <span style={{ color: 'red' }}>*</span>
-              </Typography>
-              <Button
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={handleAddOption}
-                variant="text"
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              >
-                Add
-              </Button>
-            </Box>
-
-            <Stack spacing={2}>
-              {paymentDialog.data?.options?.map((option, index) => (
-                <Box key={index}>
-                  <Box display="flex" gap={2} alignItems="flex-start">
-                    <TextField
-                      fullWidth
-                      placeholder="Option name"
-                      value={option.name}
-                      onChange={(e) => handleOptionChange(index, 'name', e.target.value)}
-                      size="medium"
-                      error={!!errors.options?.[index]?.name}
-                      helperText={errors.options?.[index]?.name}
-                    />
-                    <TextField
-                      fullWidth
-                      placeholder="Price (₦)"
-                      value={option.price}
-                      onChange={(e) => handleOptionChange(index, 'price', e.target.value)}
-                      size="medium"
-                      error={!!errors.options?.[index]?.price}
-                      helperText={errors.options?.[index]?.price}
-                    />
-                    {paymentDialog.data?.options?.length > 1 && (
-                      <IconButton
-                        onClick={() => handleRemoveOption(index)}
-                        sx={{ color: 'error.main', mt: 0.5 }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  </Box>
-                </Box>
-              ))}
-            </Stack>
-          </Box>
-
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth error={!!errors.category} required>
-                <InputLabel>Payment Category</InputLabel>
-                <Select
-                  value={paymentDialog.data?.category || ''}
-                  label="Payment Category"
-                  onChange={(e) => handleFieldChange('category', e.target.value)}
-                >
-                  <MenuItem value="Returning Service">Returning Service</MenuItem>
-                  <MenuItem value="One-time Payment">One-time Payment</MenuItem>
-                  <MenuItem value="Subscription">Subscription</MenuItem>
-                </Select>
-                {errors.category && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
-                    {errors.category}
-                  </Typography>
-                )}
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth error={!!errors.classes} required>
-                <InputLabel>Class Applicable</InputLabel>
-                <Select
-                  value={paymentDialog.data?.classes || ''}
-                  label="Class Applicable"
-                  onChange={(e) => handleFieldChange('classes', e.target.value)}
-                >
-                  <MenuItem value="JSS1">JSS1</MenuItem>
-                  <MenuItem value="JSS2">JSS2</MenuItem>
-                  <MenuItem value="JSS3">JSS3</MenuItem>
-                  <MenuItem value="SS1">SS1</MenuItem>
-                  <MenuItem value="SS2">SS2</MenuItem>
-                  <MenuItem value="SS3">SS3</MenuItem>
-                </Select>
-                {errors.classes && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 2 }}>
-                    {errors.classes}
-                  </Typography>
-                )}
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          {/* Selected Classes Display */}
-          {paymentDialog.data?.classes && (
-            <Box
-              sx={{
-                bgcolor: 'primary.light',
-                p: 2,
-                borderRadius: 1,
-              }}
-            >
-              <Typography variant="body2" fontWeight={600}>
-                {paymentDialog.data.classes}
-              </Typography>
-            </Box>
-          )}
-
-          <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
-            <Button onClick={handlePaymentDialogClose} variant="outlined">
-              Cancel
-            </Button>
-            <Button variant="contained" onClick={handleSavePayment} sx={{ fontWeight: 600 }}>
-              {paymentDialog.isEdit ? 'Update' : 'Create'}
-            </Button>
-          </Stack>
-        </Stack>
-      </ReusableModal>
+      {/* Edit Optional Payment Modal */}
+      <EditOptionalPaymentModal
+        open={editModal.open}
+        onClose={() => setEditModal({ open: false, schedule: null })}
+        onSave={handleEditModalSave}
+        schedule={editModal.schedule}
+        sessionId={sessionId}
+        termId={selectedTermId}
+        categoryId={categoryId}
+        onRefresh={handleRefreshSchedules}
+      />
 
       <Dialog
         open={confirmDialog.open}

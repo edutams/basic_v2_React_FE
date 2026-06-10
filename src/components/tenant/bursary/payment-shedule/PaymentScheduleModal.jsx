@@ -10,9 +10,9 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
-import { createPaymentSchedule } from '@/api/tenant/bursary/bursarySettingsApi';
+import { createPaymentSchedule, updatePaymentSchedule } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionTermId, categoryId }) => {
+const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionId, termId, categoryId }) => {
   const [formData, setFormData] = useState({
     amount: '',
   });
@@ -62,25 +62,48 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionT
       try {
         setSaving(true);
         
-        // Prepare data for API call
-        const payload = {
-          bursary_payment_name_id: payment?.bursaryPaymentNameId,
-          class_id: payment?.classId,
-          session_term_id: sessionTermId,
-          bursary_payment_category_id: categoryId,
-          amount: parseFloat(formData.amount),
-        };
-
-        console.log('Saving individual class payment:', payload);
-
-        const response = await createPaymentSchedule(payload);
+        // Check if this is an edit (scheduleId exists) or create
+        const isEdit = payment?.scheduleId;
         
-        if (response.success || response.status) {
-          // Pass the form data to parent to refresh the table
-          onSave(formData);
-          onClose();
+        if (isEdit) {
+          // Update existing schedule
+          const payload = {
+            amount: parseFloat(formData.amount),
+          };
+
+          console.log('Updating payment schedule:', payment.scheduleId, payload);
+
+          const response = await updatePaymentSchedule(payment.scheduleId, payload);
+          
+          if (response.success || response.status) {
+            // Pass the form data to parent to refresh the table
+            onSave(formData);
+            onClose();
+          } else {
+            setErrors({ submit: response.message || 'Failed to update payment' });
+          }
         } else {
-          setErrors({ submit: response.message || 'Failed to save payment' });
+          // Create new schedule
+          const payload = {
+            bursary_payment_name_id: payment?.bursaryPaymentNameId,
+            class_id: payment?.classId,
+            session_id: sessionId,
+            term_id: termId,
+            bursary_payment_category_id: categoryId,
+            amount: parseFloat(formData.amount),
+          };
+
+          console.log('Creating payment schedule:', payload);
+
+          const response = await createPaymentSchedule(payload);
+          
+          if (response.success || response.status) {
+            // Pass the form data to parent to refresh the table
+            onSave(formData);
+            onClose();
+          } else {
+            setErrors({ submit: response.message || 'Failed to save payment' });
+          }
         }
       } catch (err) {
         console.error('Failed to save payment:', err);
@@ -172,7 +195,8 @@ PaymentScheduleModal.propTypes = {
   onSave: PropTypes.func.isRequired,
   payment: PropTypes.object,
   isEdit: PropTypes.bool,
-  sessionTermId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  termId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   categoryId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 

@@ -30,8 +30,8 @@ export const fetchActiveCategories = async () => {
     return res.data;
 };
 
-export const fetchTermsBySessionTerm = async (sessionTermId) => {
-    const res = await api.get(`/bursary/settings/fetch_terms_by_session_term/${sessionTermId}`);
+export const fetchTermsBySessionTerm = async (sessionId, termId) => {
+    const res = await api.get(`/bursary/settings/fetch_terms_by_session/${sessionId}`);
     return res.data;
 };
 
@@ -55,10 +55,19 @@ export const fetchGatewayChargeBearer = async () => {
     return res.data;
 }
 
-export const fetchPaymentSchedules = async (sessionTermId, categoryId, payOption = 'compulsory') => {
-    const res = await api.get('/bursary/payment_schedule/fetch_payment_schedules', { 
-        params: { session_term_id: sessionTermId, category_id: categoryId, pay_option: payOption } 
-    });
+export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption = 'compulsory', search = '') => {
+    const params = { 
+        session_id: sessionId,
+        term_id: termId,
+        category_id: categoryId, 
+        pay_option: payOption 
+    };
+    
+    if (search) {
+        params.search = search;
+    }
+    
+    const res = await api.get('/bursary/payment_schedule/fetch_payment_schedules', { params });
     return res.data;
 };
 
@@ -72,9 +81,19 @@ export const createPaymentSchedule = async (data) => {
     return res.data;
 };
 
+export const updatePaymentSchedule = async (id, data) => {
+    const res = await api.put(`/bursary/payment_schedule/update_payment_schedule/${id}`, data);
+    return res.data;
+};
+
 
 export const deletePaymentSchedule = async (id) => {
     const res = await api.delete(`/bursary/payment_schedule/delete_payment_schedule/${id}`);
+    return res.data;
+};
+
+export const togglePaymentScheduleStatus = async (id, status) => {
+    const res = await api.put(`/bursary/payment_schedule/toggle_payment_schedule_status/${id}`, { status });
     return res.data;
 };
 

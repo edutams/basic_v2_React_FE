@@ -42,11 +42,12 @@ import {
 import PaymentScheduleModal from './PaymentScheduleModal';
 import AddPaymentItemModal from './AddPaymentItemModal';
 import EditPaymentItemModal from './EditPaymentItemModal';
-import { fetchTermsBySessionTerm, fetchPaymentSchedules } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchTermsBySessionTerm, fetchPaymentSchedules, deletePaymentSchedule, togglePaymentScheduleStatus } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessionLabel, categoryLabel }) => {
+const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'compulsory' }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
+  const [selectedTermId, setSelectedTermId] = useState(null);
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
@@ -79,21 +80,22 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
     open: false,
     action: null, // 'delete' or 'toggle'
     schedule: null,
-    classId: null,
-    className: null,
+    classData: null,
   });
+  const [processingAction, setProcessingAction] = useState(false);
 
   useEffect(() => {
-    if (!sessionTermId) return;
+    if (!sessionId || !termId) return;
     const loadData = async () => {
       try {
         setLoadingTerms(true);
-        const data = await fetchTermsBySessionTerm(sessionTermId);
+        const data = await fetchTermsBySessionTerm(sessionId, termId);
         const items = data?.data;
         const list = Array.isArray(items) ? items : [];
         setTerms(list);
         if (list.length > 0) {
           setCurrentTerm(0);
+          setSelectedTermId(list[0].term_id); // Set the first term's ID
         }
       } catch (err) {
         showSnackbar?.('Failed to load terms', 'error');
@@ -102,35 +104,70 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
       }
     };
     loadData();
-  }, [sessionTermId]);
+  }, [sessionId, termId]);
 
-  // Load payment schedules when term or sessionTermId changes
-  useEffect(() => {
-    if (!sessionTermId || !categoryId) return;
-    const loadPaymentSchedules = async () => {
-      try {
-        setLoadingTerms(true);
-        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'compulsory');
-        console.log(data,999);
-        
+  // Load payment schedules when term or sessionId changes
+  const loadPaymentSchedules = async (searchTerm = '') => {
+    if (!sessionId || !selectedTermId || !categoryId) return;
+    try {
+      setLoadingTerms(true);
+      const data = await fetchPaymentSchedules(sessionId, selectedTermId, categoryId, payOption, searchTerm);
+      console.log('Raw API response:', data);
+      
+      // Transform the data to match expected structure
+      if (data?.data && Array.isArray(data.data)) {
+        const transformedData = data.data.map(paymentName => {
+          const classes = paymentName.payschedules?.map(schedule => ({
+            id: schedule.class_id,
+            name: schedule.my_class?.class_name || `Class ${schedule.class_id}`,
+            amount: schedule.amount || 0,
+            schedule_id: schedule.id,
+            bursary_installment_id: schedule.bursary_installment_id,
+            status: schedule.status,
+          })) || [];
 
-        setScheduleData(data.data.map(item => ({
-    ...item,
-    missingCount: item.classes.filter(c => !c.amount).length,
-  })));
-        
-     
-      } catch (err) {
-        showSnackbar?.('Failed to load payment schedules', 'error');
-        console.error('Error loading schedules:', err);
-      } finally {
-        setLoadingTerms(false);
+          return {
+            payment_name: {
+              id: paymentName.id,
+              name: paymentName.name,
+            },
+            category: {
+              id: categoryId,
+              name: null,
+            },
+            installment: {
+              id: null,
+            },
+            classes: classes,
+            missingCount: classes.filter(c => !c.amount || c.amount === 0).length,
+          };
+        });
+
+        console.log('Transformed data for table:', transformedData);
+        setScheduleData(transformedData);
+      } else {
+        setScheduleData([]);
       }
-    };
+    } catch (err) {
+      showSnackbar?.('Failed to load payment schedules', 'error');
+      console.error('Error loading schedules:', err);
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
+
+  useEffect(() => {
     loadPaymentSchedules();
-  }, [sessionTermId, categoryId, currentTerm]);
+  }, [sessionId, selectedTermId, categoryId]);
 
   const [schedules, setSchedules] = useState({});
+
+  const handleTermChange = (e, val) => {
+    setCurrentTerm(val);
+    if (terms[val]) {
+      setSelectedTermId(terms[val].term_id);
+    }
+  };
 
   const handleAddPaymentItem = () => {
     setAddItemModal(true);
@@ -151,47 +188,68 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
     }));
   };
 
-  const handleClassActionClick = (scheduleId, classId, action) => {
-    const schedule = currentSchedules.find(s => s.id === scheduleId);
-    const cls = schedule?.classes.find(c => c.id === classId);
-    
-    if (cls) {
-      setClassActionDialog({
-        open: true,
-        action,
-        schedule,
-        classId,
-        className: cls.name,
-      });
-    }
+  const handleClassActionClick = (schedule, cls, action) => {
+    setClassActionDialog({
+      open: true,
+      action,
+      schedule,
+      classData: cls,
+    });
   };
 
-  const handleDeleteClass = (scheduleId, classId) => {
-    setSchedules(prev => ({
-      ...prev,
-      [currentTerm]: prev[currentTerm].map(sch => {
-        if (sch.id !== scheduleId) return sch;
-        const updatedClasses = sch.classes.filter(cls => cls.id !== classId);
-        const missingCount = updatedClasses.filter(c => c.missing).length;
-        return { ...sch, classes: updatedClasses, missingCount, allClassesSet: missingCount === 0 };
-      })
-    }));
-    showSnackbar?.(`Class removed successfully`);
-    setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null });
-  };
+  const handleConfirmClassAction = async () => {
+    if (!classActionDialog.classData) return;
 
-  const handleConfirmClassAction = () => {
-    if (classActionDialog.action === 'delete') {
-      handleDeleteClass(classActionDialog.schedule.id, classActionDialog.classId);
-    } else if (classActionDialog.action === 'toggle') {
-      toggleClassStatus(classActionDialog.schedule.id, classActionDialog.classId);
-      const schedule = currentSchedules.find(s => s.id === classActionDialog.schedule.id);
-      const cls = schedule?.classes.find(c => c.id === classActionDialog.classId);
-      if (cls) {
-        showSnackbar?.(cls.missing ? `${classActionDialog.className} activated` : `${classActionDialog.className} deactivated`);
+    try {
+      setProcessingAction(true);
+
+      if (classActionDialog.action === 'delete') {
+        // Call delete API
+        const response = await deletePaymentSchedule(classActionDialog.classData.schedule_id);
+
+        if (response.success) {
+          showSnackbar?.(`${classActionDialog.classData.name} removed successfully`, 'success');
+          // Refresh schedules
+          await loadPaymentSchedules(searchQuery);
+        } else {
+          showSnackbar?.(response.message || 'Failed to delete class schedule', 'error');
+        }
+      } else if (classActionDialog.action === 'toggle') {
+        // Call toggle API
+        const currentStatus = classActionDialog.classData.status || 'active';
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        
+        const response = await togglePaymentScheduleStatus(
+          classActionDialog.classData.schedule_id,
+          newStatus
+        );
+
+        if (response.success) {
+          showSnackbar?.(
+            `${classActionDialog.classData.name} ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
+            'success'
+          );
+          // Refresh schedules
+          await loadPaymentSchedules(searchQuery);
+        } else {
+          showSnackbar?.(response.message || 'Failed to toggle class schedule', 'error');
+        }
       }
-      setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null });
+
+      setClassActionDialog({ open: false, action: null, schedule: null, classData: null });
+    } catch (err) {
+      console.error('Failed to process class action:', err);
+      showSnackbar?.(
+        err.response?.data?.message || 'Failed to process action',
+        'error'
+      );
+    } finally {
+      setProcessingAction(false);
     }
+  };
+
+  const handleSearch = () => {
+    loadPaymentSchedules(searchQuery);
   };
 
   const handleMenuOpen = (event, row) => {
@@ -257,24 +315,14 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
     try {
       console.log('Saving payment:', formData, paymentModal.payment);
       const action = paymentModal.isEdit ? 'updated' : 'added';
-      const { className, paymentName, classId, scheduleId } = paymentModal.payment || {};
+      const { className, paymentName } = paymentModal.payment || {};
 
-      // TODO: Call API to save the payment
-      // For now, just update local state and show success
       showSnackbar?.(
         `Payment ${action} successfully: ${formData.amount} NGN for ${className} in ${paymentName}`,
       );
       
       // Reload schedules after saving
-      if (sessionTermId && categoryId) {
-        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'compulsory');
-        if (data?.data && Array.isArray(data.data)) {
-          setScheduleData(data.data.map(item => ({
-            ...item,
-            missingCount: item.classes.filter(c => !c.amount).length,
-          })));
-        }
-      }
+      await loadPaymentSchedules(searchQuery);
     } catch (err) {
       console.error('Failed to reload schedules:', err);
       showSnackbar?.('Failed to reload payment schedules', 'error');
@@ -319,25 +367,18 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
     try {
       console.log('Saving edit item:', formData, editItemModal.schedule);
       
-      // TODO: Call API to update payment schedule with new classes and amounts
-      // For now, show success message and reload data
-      
       showSnackbar?.(`Payment item "${formData.paymentName}" updated successfully`);
       
       // Reload schedules after saving
-      if (sessionTermId && categoryId) {
-        const data = await fetchPaymentSchedules(sessionTermId, categoryId, 'compulsory');
-        if (data?.data && Array.isArray(data.data)) {
-          setScheduleData(data.data.map(item => ({
-            ...item,
-            missingCount: item.classes.filter(c => !c.amount).length,
-          })));
-        }
-      }
+      await loadPaymentSchedules(searchQuery);
     } catch (err) {
       console.error('Failed to save edit item:', err);
       showSnackbar?.('Failed to update payment item', 'error');
     }
+  };
+
+  const handleRefreshSchedules = async () => {
+    await loadPaymentSchedules(searchQuery);
   };
 
   const handleConfirmDelete = () => {
@@ -392,7 +433,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
         >
           <Tabs
             value={currentTerm}
-            onChange={(e, val) => setCurrentTerm(val)}
+            onChange={handleTermChange}
             variant="scrollable"
             scrollButtons={false}
           >
@@ -443,7 +484,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
               }}
               sx={{ width: 300 }}
             />
-            <Button variant="contained" size="small">
+            <Button variant="contained" size="small" onClick={handleSearch}>
               Search
             </Button>
           </Box>
@@ -484,16 +525,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
             </Stack>
           </Stack>
 
-          <Button
-            onClick={handleAddPaymentItem}
-            variant="contained"
-            sx={{
-              fontWeight: 600,
-              width: { xs: '100%', md: 'auto' },
-            }}
-          >
-            Add Payment Item
-          </Button>
+        
         </Box>
 
         <TableContainer component={Paper} variant="outlined">
@@ -550,15 +582,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                                   return;
                                 }
                                 
-                                console.log('Chip clicked:', {
-                                  className: cls.name,
-                                  classId: cls.id,
-                                  paymentName: schedule.payment_name.name,
-                                  bursaryPaymentNameId: schedule.payment_name.id,
-                                  scheduleId: cls.schedule_id,
-                                  amount: cls.amount || '',
-                                  hasAmount
-                                });
+                              
                                 
                                 // Open modal to set/edit amount for this class
                                 setPaymentModal({
@@ -576,7 +600,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                               }}
                               onDelete={hasAmount ? (e) => {
                                 e.stopPropagation();
-                                handleClassActionClick(cls.schedule_id, cls.id, 'delete');
+                                handleClassActionClick(schedule, cls, 'delete');
                               } : undefined}
                               deleteIcon={
                                 hasAmount ? (
@@ -588,7 +612,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                                       }}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleClassActionClick(cls.schedule_id, cls.id, 'toggle');
+                                        handleClassActionClick(schedule, cls, 'toggle');
                                       }}
                                     />
                                     <CloseIcon sx={{ fontSize: 14 }} />
@@ -598,7 +622,9 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                                 )
                               }
                               sx={{
-                                bgcolor: hasAmount ? "primary.main" : "grey.300",
+                                bgcolor: hasAmount 
+                                  ? (cls.status === 'inactive' ? 'error.main' : 'primary.main')
+                                  : 'grey.300',
                                 color: hasAmount ? "white" : "text.secondary",
                                 fontWeight: 600,
                                 fontSize: 11,
@@ -686,7 +712,8 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
         onSave={handlePaymentSave}
         payment={paymentModal.payment}
         isEdit={paymentModal.isEdit}
-        sessionTermId={sessionTermId}
+        sessionId={sessionId}
+        termId={selectedTermId}
         categoryId={categoryId}
       />
 
@@ -703,8 +730,10 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
         onClose={() => setEditItemModal({ open: false, schedule: null })}
         onSave={handleEditItemSave}
         schedule={editItemModal.schedule}
-        sessionTermId={sessionTermId}
+        sessionId={sessionId}
+        termId={selectedTermId}
         categoryId={categoryId}
+        onRefresh={handleRefreshSchedules}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -755,12 +784,12 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
       {/* Class Action Confirmation Dialog */}
       <Dialog
         open={classActionDialog.open}
-        onClose={() => setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null })}
+        onClose={() => !processingAction && setClassActionDialog({ open: false, action: null, schedule: null, classData: null })}
         maxWidth="xs"
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
-          {classActionDialog.action === 'delete' ? 'Delete Class' : 'Toggle Class Status'}
+          {classActionDialog.action === 'delete' ? 'Delete Class Schedule' : 'Toggle Class Status'}
         </DialogTitle>
         <DialogContent>
           {classActionDialog.action === 'delete' && (
@@ -769,20 +798,25 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
                 This action cannot be undone!
               </Alert>
               <Typography variant="body2">
-                Are you sure you want to delete <strong>{classActionDialog.className}</strong> from this payment schedule? The payment amount for this class will be removed.
+                Are you sure you want to delete <strong>{classActionDialog.classData?.name}</strong> from{' '}
+                <strong>{classActionDialog.schedule?.payment_name?.name}</strong>? The payment amount and
+                installment settings for this class will be permanently removed.
               </Typography>
             </>
           )}
           {classActionDialog.action === 'toggle' && (
             <Typography variant="body2">
-              Are you sure you want to <strong>{classActionDialog.schedule?.classes.find(c => c.id === classActionDialog.classId)?.missing ? 'activate' : 'deactivate'}</strong> <strong>{classActionDialog.className}</strong>?
+              Are you sure you want to toggle the status of{' '}
+              <strong>{classActionDialog.classData?.name}</strong> in{' '}
+              <strong>{classActionDialog.schedule?.payment_name?.name}</strong>?
             </Typography>
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
             color="inherit"
-            onClick={() => setClassActionDialog({ open: false, action: null, schedule: null, classId: null, className: null })}
+            onClick={() => setClassActionDialog({ open: false, action: null, schedule: null, classData: null })}
+            disabled={processingAction}
           >
             Cancel
           </Button>
@@ -790,9 +824,10 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionTermId, categoryId, sessio
             variant="contained"
             color={classActionDialog.action === 'delete' ? 'error' : 'primary'}
             onClick={handleConfirmClassAction}
+            disabled={processingAction}
             sx={{ fontWeight: 600 }}
           >
-            {classActionDialog.action === 'delete' ? 'Delete' : 'Confirm'}
+            {processingAction ? 'Processing...' : classActionDialog.action === 'delete' ? 'Delete' : 'Confirm'}
           </Button>
         </DialogActions>
       </Dialog>

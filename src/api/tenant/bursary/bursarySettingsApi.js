@@ -92,6 +92,16 @@ export const deletePaymentSchedule = async (id) => {
     return res.data;
 };
 
+
+export const fetchGenerateInvoiceData = async ({ sessionTermId, classId, categoryId } = {}) => {
+    const params = {};
+    if (sessionTermId) params.session_term_id = sessionTermId;
+    if (classId) params.class_id = classId;
+    if (categoryId) params.category_id = categoryId;
+    const res = await api.get('/bursary/payment_schedule/generate_invoice_data', { params });
+    return res.data;
+};
+
 export const togglePaymentScheduleStatus = async (id, status) => {
     const res = await api.put(`/bursary/payment_schedule/toggle_payment_schedule_status/${id}`, { status });
     return res.data;
@@ -101,5 +111,12 @@ export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = '
     const res = await api.get('/bursary/payment_schedule/stats', {
         params: { session_id: sessionId, term_id: termId, pay_option: payOption }
     });
+    };
+    
+export const fetchStudentForInvoiceData = async ({ sessionTermId, classId } = {}) => {
+    const params = {};
+    if (sessionTermId) params.session_term_id = sessionTermId;
+    if (classId) params.class_id = classId;
+    const res = await api.get('/bursary/payment_schedule/fetch_student_for_invoice_data', { params });
     return res.data;
 };

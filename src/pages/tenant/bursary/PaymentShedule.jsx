@@ -523,7 +523,7 @@ const PaymentShedule = () => {
                   }}
                 >
                  <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel>Session Term</InputLabel>
+            <InputLabel>Session</InputLabel>
             <Select
               value={selectedSessionTerm}
               label="Session Term"

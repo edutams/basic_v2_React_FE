@@ -495,13 +495,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
         onClose={handleDetailsDialogClose}
         maxWidth="sm"
         fullWidth
-        fullScreen={{ xs: true, sm: false }}
-        sx={{
-          '& .MuiDialog-paper': {
-            m: { xs: 0, sm: 2 },
-            maxHeight: { xs: '100%', sm: 'calc(100% - 64px)' },
-          },
-        }}
+        
       >
         <DialogTitle
           sx={{
@@ -528,10 +522,10 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
 
         <Divider />
 
-        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }} >
           <Stack spacing={3}>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={{ xs:6 }}>
                 <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
                   Status
                 </Typography>
@@ -550,7 +544,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
                 />
               </Grid>
 
-              <Grid item xs={6}>
+              <Grid size={{ xs:6 }}>
                 <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
                   Category
                 </Typography>

@@ -194,6 +194,9 @@ const ClassLedger = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
 
+  const [programmes, setProgrammes] = useState([]);
+  const [classes, setClasses] = useState([]);
+
   const buildChartOptions = (categories) => ({
     chart: {
       type: chartType,
@@ -366,7 +369,7 @@ const ClassLedger = () => {
               gap: 2,
             }}
           >
-            <Typography variant="h5">Class Ledger</Typography>
+            <Typography variant="h5"></Typography>
 
             <Box
               sx={{
@@ -404,21 +407,43 @@ const ClassLedger = () => {
       >
         <Grid container spacing={3} sx={{ mb: 3, mt: 3 }} alignItems="center">
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormControl size="small" fullWidth>
-              <InputLabel>Program</InputLabel>
-              <Select label="Program">
-                <MenuItem value="">All Programs</MenuItem>
-              </Select>
-            </FormControl>
+            <TextField
+              select
+              fullWidth
+              label="Programme"
+              size="small"
+              value={programmes.some((p) => p.value === programme) ? programme : ''}
+              onChange={(e) => {
+                setProgramme(e.target.value);
+                handleFilterChange('programme', e.target.value);
+              }}
+            >
+              {programmes.map((p) => (
+                <MenuItem key={p.value} value={p.value}>
+                  {p.label}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormControl size="small" fullWidth>
-              <InputLabel>Class</InputLabel>
-              <Select label="Class">
-                <MenuItem value="">All Classes</MenuItem>
-              </Select>
-            </FormControl>
+            <TextField
+              select
+              fullWidth
+              label="Class"
+              size="small"
+              value={classes.some((c) => c.value === classLevel) ? classLevel : ''}
+              onChange={(e) => {
+                setClassLevel(e.target.value);
+                handleFilterChange('classLevel', e.target.value);
+              }}
+            >
+              {classes.map((c) => (
+                <MenuItem key={c.value} value={c.value}>
+                  {c.label}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>

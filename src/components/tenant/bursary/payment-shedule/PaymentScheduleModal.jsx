@@ -47,7 +47,7 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionI
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.amount.trim()) {
+    if (!formData.amount) {
       newErrors.amount = 'Amount is required';
     } else if (parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0';

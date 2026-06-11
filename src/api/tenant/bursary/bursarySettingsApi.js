@@ -56,17 +56,17 @@ export const fetchGatewayChargeBearer = async () => {
 }
 
 export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption = 'compulsory', search = '') => {
-    const params = { 
+    const params = {
         session_id: sessionId,
         term_id: termId,
-        category_id: categoryId, 
-        pay_option: payOption 
+        category_id: categoryId,
+        pay_option: payOption
     };
-    
+
     if (search) {
         params.search = search;
     }
-    
+
     const res = await api.get('/bursary/payment_schedule/fetch_payment_schedules', { params });
     return res.data;
 };
@@ -111,8 +111,8 @@ export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = '
     const res = await api.get('/bursary/payment_schedule/stats', {
         params: { session_id: sessionId, term_id: termId, pay_option: payOption }
     });
-    };
-    
+};
+
 export const fetchStudentForInvoiceData = async ({ sessionTermId, classId } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;

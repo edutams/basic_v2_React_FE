@@ -25,7 +25,11 @@ import {
     Chip,
     TablePagination,
     CircularProgress,
-    Alert
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
 } from '@mui/material';
 import {
     Search as SearchIcon,
@@ -41,6 +45,7 @@ import {
     fetchClassesByProgramme,
     fetchParentsForInvoice,
     fetchSendInvoiceStats,
+    updateParentPhoneNumberOrEmail,
 } from '@/api/tenant/bursary/sendInvoiceApi';
 
 const SendInvoiceTab = ({ showSnackbar }) => {
@@ -66,8 +71,17 @@ const SendInvoiceTab = ({ showSnackbar }) => {
 
     const [selectedParents, setSelectedParents] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [menuParent, setMenuParent] = useState(null); // the row the menu was opened on
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    // Edit contact dialog state
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editParent, setEditParent] = useState(null);  // { guardian_user_id, guardian_name, guardian_phone/email }
+    const [editField, setEditField] = useState('');       // 'phone' | 'email'
+    const [editValue, setEditValue] = useState('');
+    const [savingEdit, setSavingEdit] = useState(false);
+    const [editError, setEditError] = useState('');
 
     // Debounce ref for search
     const searchTimerRef = useRef(null);
@@ -211,12 +225,57 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         );
     };
 
-    const handleMenuClick = (event) => {
+    const handleMenuClick = (event, row) => {
         setAnchorEl(event.currentTarget);
+        setMenuParent(row);
     };
 
     const handleMenuClose = () => {
         setAnchorEl(null);
+        setMenuParent(null);
+    };
+
+    const handleOpenEditDialog = (field) => {
+        handleMenuClose();
+        if (!menuParent) return;
+        setEditParent(menuParent);
+        setEditField(field);
+        setEditValue(field === 'phone' ? menuParent.guardian_phone || '' : menuParent.guardian_email || '');
+        setEditError('');
+        setEditDialogOpen(true);
+    };
+
+    const handleCloseEditDialog = () => {
+        setEditDialogOpen(false);
+        setEditParent(null);
+        setEditValue('');
+        setEditError('');
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editValue.trim()) {
+            setEditError(editField === 'email' ? 'Email is required' : 'Phone number is required');
+            return;
+        }
+        if (editField === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editValue)) {
+            setEditError('Please enter a valid email address');
+            return;
+        }
+        try {
+            setSavingEdit(true);
+            const res = await updateParentPhoneNumberOrEmail(editParent.guardian_user_id, editField, editValue.trim());
+            if (res?.success) {
+                showSnackbar?.(`${editField === 'phone' ? 'Phone' : 'Email'} updated successfully`, 'success');
+                handleCloseEditDialog();
+                loadParents(); // refresh list
+            } else {
+                setEditError(res?.message || 'Failed to update');
+            }
+        } catch (err) {
+            setEditError(err?.response?.data?.message || 'Something went wrong');
+        } finally {
+            setSavingEdit(false);
+        }
     };
 
     const handleDeliveryTabChange = (event, newValue) => {
@@ -297,7 +356,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                             {deliveryTab === 0 ? row.guardian_phone : row.guardian_email}
                                         </TableCell>
                                         <TableCell align="center">
-                                            <IconButton size="small" onClick={handleMenuClick}>
+                                            <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
                                                 <MoreVertIcon />
                                             </IconButton>
                                         </TableCell>
@@ -318,7 +377,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 </TableContainer>
 
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                    <MenuItem onClick={handleMenuClose}>
+                    <MenuItem onClick={() => handleOpenEditDialog(deliveryTab === 0 ? 'phone' : 'email')}>
                         {deliveryTab === 0 ? 'Edit Parent Line' : 'Edit Email'}
                     </MenuItem>
                     <MenuItem onClick={handleMenuClose}>Resend</MenuItem>
@@ -421,7 +480,6 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                 borderRadius: 5,
                                 cursor: 'pointer',
                             }}
-                            onClick={() => showSnackbar?.('Resending invoices...', 'info')}
                         />
                     </Box>
 
@@ -538,7 +596,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                             borderRadius: 5,
                             cursor: 'pointer',
                         }}
-                        onClick={() => showSnackbar?.('Regenerating...', 'info')}
+                        // onClick={() => showSnackbar?.('Regenerating...', 'info')}
                     />
                 </Box>
             </Box>
@@ -620,7 +678,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                         />
                                     </TableCell>
                                     <TableCell align="center">
-                                        <IconButton size="small" onClick={handleMenuClick}>
+                                        <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
                                             <MoreVertIcon />
                                         </IconButton>
                                     </TableCell>
@@ -641,7 +699,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             </TableContainer>
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem onClick={handleMenuClose}>Edit Parent Mail</MenuItem>
+                <MenuItem onClick={() => handleOpenEditDialog('phone')}>Edit Parent Line</MenuItem>
                 <MenuItem onClick={handleMenuClose}>Resend</MenuItem>
             </Menu>
         </Box>
@@ -867,6 +925,53 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             {deliveryTab === 0 && renderSmsMailContent()}
             {deliveryTab === 1 && renderSmsMailContent()}
             {deliveryTab === 2 && renderExcelContent()}
+
+            {/* Edit Parent Contact Dialog */}
+            <Dialog
+                open={editDialogOpen}
+                onClose={handleCloseEditDialog}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    {editField === 'phone' ? 'Edit Parent Phone Number' : 'Edit Parent Email'}
+                </DialogTitle>
+                <DialogContent>
+                    {editParent && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Editing contact for: <strong>{editParent.guardian_name}</strong>
+                        </Typography>
+                    )}
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        size="small"
+                        label={editField === 'phone' ? 'Phone Number' : 'Email Address'}
+                        type={editField === 'phone' ? 'tel' : 'email'}
+                        value={editValue}
+                        onChange={(e) => {
+                            setEditValue(e.target.value);
+                            if (editError) setEditError('');
+                        }}
+                        error={Boolean(editError)}
+                        helperText={editError}
+                        sx={{ mt: 1 }}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={handleCloseEditDialog} disabled={savingEdit}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSaveEdit}
+                        disabled={savingEdit}
+                        startIcon={savingEdit ? <CircularProgress size={14} /> : null}
+                    >
+                        {savingEdit ? 'Saving...' : 'Save'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

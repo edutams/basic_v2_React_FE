@@ -47,3 +47,18 @@ export const fetchSendInvoiceStats = async ({
     const res = await api.get('/bursary/send_invoice/stats', { params });
     return res.data;
 };
+
+/**
+ * Update a guardian's phone or email.
+ * @param {string} userId  - guardian user id
+ * @param {'phone'|'email'} field
+ * @param {string} value
+ */
+export const updateParentPhoneNumberOrEmail = async (userId, field, value) => {
+    const res = await api.put('/bursary/send_invoice/update_parent_contact', {
+        user_id: userId,
+        field,
+        value,
+    });
+    return res.data;
+};

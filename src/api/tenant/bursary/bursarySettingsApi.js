@@ -92,6 +92,11 @@ export const deletePaymentSchedule = async (id) => {
     return res.data;
 };
 
+export const deletePaymentSchedulesByPaymentName = async (paymentNameId) => {
+    const res = await api.delete(`/bursary/payment_schedule/delete_payment_schedules_by_name/${paymentNameId}`);
+    return res.data;
+};
+
 
 export const fetchGenerateInvoiceData = async ({ sessionTermId, classId, categoryId } = {}) => {
     const params = {};

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Box,
     Typography,
     Tabs,
     Tab,
     FormControl,
+    InputLabel,
     Select,
     MenuItem,
     TextField,
@@ -23,6 +24,8 @@ import {
     Menu,
     Chip,
     TablePagination,
+    CircularProgress,
+    Alert
 } from '@mui/material';
 import {
     Search as SearchIcon,
@@ -33,26 +36,155 @@ import {
     Delete as DeleteIcon,
 } from '@mui/icons-material';
 import TiptapEdit from 'src/pages/landlord/views/forms/form-tiptap/TiptapEdit';
+import {
+    fetchSendInvoiceFilterOptions,
+    fetchClassesByProgramme,
+    fetchParentsForInvoice,
+    fetchSendInvoiceStats,
+} from '@/api/tenant/bursary/sendInvoiceApi';
 
 const SendInvoiceTab = ({ showSnackbar }) => {
     const [deliveryTab, setDeliveryTab] = useState(0);
-    const [selectedSession, setSelectedSession] = useState('2024/2025 Third Term');
-    const [selectedProgramme, setSelectedProgramme] = useState('Programme');
-    const [selectedClass, setSelectedClass] = useState('Class');
 
-    const initialParentsList = Array(7)
-        .fill({
-            name: 'Ada Obi',
-            phone: '0904428395',
-            email: 'ada.obi@example.com',
-        })
-        .map((p, i) => ({ ...p, id: i }));
+    const [sessionTerms, setSessionTerms] = useState([]);
+    const [programmes, setProgrammes] = useState([]);
+    const [classes, setClasses] = useState([]);
+    const [loadingFilters, setLoadingFilters] = useState(false);
 
-    const [parentsList] = useState(initialParentsList);
+    const [selectedSessionTermId, setSelectedSessionTermId] = useState('');
+    const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
+    const [selectedClassId, setSelectedClassId] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const [programmeClasses, setProgrammeClasses] = useState([]);
+    const [loadingProgrammeClasses, setLoadingProgrammeClasses] = useState(false);
+
+    const [parentsList, setParentsList] = useState([]);
+    const [loadingParents, setLoadingParents] = useState(false);
+
+    const [stats, setStats] = useState({ total_parents: 0, sent: 0, not_sent: 0 });
+
     const [selectedParents, setSelectedParents] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    // Debounce ref for search
+    const searchTimerRef = useRef(null);
+
+    const selectedClassName =
+        programmeClasses.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
+        classes.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
+        '';
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                setLoadingFilters(true);
+                const res = await fetchSendInvoiceFilterOptions();
+                if (res?.success && res.data) {
+                    const { session_terms, programmes: progs, classes: cls } = res.data;
+
+                    setSessionTerms(session_terms || []);
+                    setProgrammes(progs || []);
+                    setClasses(cls || []);
+
+                    if (session_terms?.length > 0) {
+                        setSelectedSessionTermId(session_terms[0].id);
+                    }
+                    if (progs?.length > 0) {
+                        setSelectedProgrammeId(String(progs[0].id));
+                    }
+                    if (cls?.length > 0) {
+                        setSelectedClassId(String(cls[0].id));
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load filter options', err);
+                showSnackbar?.('Failed to load filter options', 'error');
+            } finally {
+                setLoadingFilters(false);
+            }
+        };
+        load();
+    }, []);
+
+    // --- Load classes when programme changes ---
+    useEffect(() => {
+        if (!selectedProgrammeId) return;
+
+        const load = async () => {
+            try {
+                setLoadingProgrammeClasses(true);
+                const res = await fetchClassesByProgramme(selectedProgrammeId);
+                if (res?.success && res.data) {
+                    setProgrammeClasses(res.data);
+                    if (res.data.length > 0) {
+                        setSelectedClassId(String(res.data[0].id));
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load programme classes', err);
+                showSnackbar?.('Failed to load classes', 'error');
+            } finally {
+                setLoadingProgrammeClasses(false);
+            }
+        };
+        load();
+    }, [selectedProgrammeId]);
+
+    const loadParents = useCallback(async () => {
+        if (!selectedSessionTermId) return;
+        try {
+            setLoadingParents(true);
+            const res = await fetchParentsForInvoice({
+                sessionTermId: selectedSessionTermId,
+                classId: selectedClassId || undefined,
+                programmeId: selectedProgrammeId || undefined,
+                search: searchQuery || undefined,
+            });
+            if (res?.success) {
+                setParentsList(res.data || []);
+            }
+        } catch (err) {
+            console.error('Failed to load parents', err);
+            showSnackbar?.('Failed to load parents', 'error');
+        } finally {
+            setLoadingParents(false);
+        }
+    }, [selectedSessionTermId, selectedClassId, selectedProgrammeId, searchQuery, showSnackbar]);
+
+    useEffect(() => {
+        loadParents();
+    }, [loadParents]);
+
+    useEffect(() => {
+        if (!selectedSessionTermId) return;
+        const load = async () => {
+            try {
+                const res = await fetchSendInvoiceStats({
+                    sessionTermId: selectedSessionTermId,
+                    classId: selectedClassId || undefined,
+                    programmeId: selectedProgrammeId || undefined,
+                });
+                if (res?.success && res.data) {
+                    setStats(res.data);
+                }
+            } catch (err) {
+                console.error('Failed to load stats', err);
+            }
+        };
+        load();
+    }, [selectedSessionTermId, selectedClassId, selectedProgrammeId]);
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setPage(0);
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = setTimeout(() => {
+            setSearchQuery(value);
+        }, 400);
+    };
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -67,7 +199,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
 
     const handleSelectAll = (event) => {
         if (event.target.checked) {
-            setSelectedParents(parentsList.map((p) => p.id));
+            setSelectedParents(parentsList.map((p) => p.guardian_user_id));
         } else {
             setSelectedParents([]);
         }
@@ -99,11 +231,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="subtitle1" fontWeight={700}>
                         List of Parent in
                     </Typography>
-                    <Chip
-                        label="JSS2"
-                        size="small"
-                        sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
-                    />
+                    {selectedClassName && (
+                        <Chip
+                            label={selectedClassName}
+                            size="small"
+                            sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
+                        />
+                    )}
                 </Box>
 
                 <TableContainer
@@ -135,25 +269,41 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {paginatedParentsList.map((row) => (
-                                <TableRow key={row.id} hover selected={selectedParents.includes(row.id)}>
-                                    <TableCell padding="checkbox">
-                                        <Checkbox
-                                            checked={selectedParents.includes(row.id)}
-                                            onChange={() => handleSelectParent(row.id)}
-                                        />
-                                    </TableCell>
-                                    <TableCell sx={{ fontWeight: 700 }}>{row.name}</TableCell>
-                                    <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                                        {deliveryTab === 0 ? row.phone : row.email}
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <IconButton size="small" onClick={handleMenuClick}>
-                                            <MoreVertIcon />
-                                        </IconButton>
+                            {loadingParents ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                                        <CircularProgress size={24} />
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ) : paginatedParentsList.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                        <Alert severity="info">
+                                            No parents found
+                                        </Alert>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                paginatedParentsList.map((row) => (
+                                    <TableRow key={row.guardian_user_id} hover selected={selectedParents.includes(row.guardian_user_id)}>
+                                        <TableCell padding="checkbox">
+                                            <Checkbox
+                                                checked={selectedParents.includes(row.guardian_user_id)}
+                                                onChange={() => handleSelectParent(row.guardian_user_id)}
+                                            />
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700 }}>{row.guardian_name}</TableCell>
+                                        <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                                            {deliveryTab === 0 ? row.guardian_phone : row.guardian_email}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <IconButton size="small" onClick={handleMenuClick}>
+                                                <MoreVertIcon />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                     <TablePagination
@@ -217,7 +367,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                         fontWeight: 700,
                                     }}
                                 >
-                                    34
+                                    {stats.total_parents}
                                 </Box>
                                 <Typography variant="caption" fontWeight={600}>
                                     Parent Attached
@@ -235,7 +385,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                         fontWeight: 700,
                                     }}
                                 >
-                                    24
+                                    {stats.sent}
                                 </Box>
                                 <Typography variant="caption" fontWeight={600}>
                                     Sent
@@ -256,7 +406,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                         fontWeight: 700,
                                     }}
                                 >
-                                    2
+                                    {stats.not_sent}
                                 </Box>
                             </Box>
                         </Box>
@@ -313,11 +463,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     <Typography variant="subtitle2" fontWeight={700}>
                         List of Parent in
                     </Typography>
-                    <Chip
-                        label="JSS2"
-                        size="small"
-                        sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
-                    />
+                    {selectedClassName && (
+                        <Chip
+                            label={selectedClassName}
+                            size="small"
+                            sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 700 }}
+                        />
+                    )}
                 </Box>
 
                 <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
@@ -333,7 +485,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                 fontWeight: 700,
                             }}
                         >
-                            34
+                            {stats.total_parents}
                         </Box>
                         <Typography variant="caption" fontWeight={600}>
                             Parent Attached
@@ -351,7 +503,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                 fontWeight: 700,
                             }}
                         >
-                            24
+                            {stats.sent}
                         </Box>
                         <Typography variant="caption" fontWeight={600}>
                             Invoice Generate
@@ -372,7 +524,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                                 fontWeight: 700,
                             }}
                         >
-                            2
+                            {stats.not_sent}
                         </Box>
                     </Box>
                     <Chip
@@ -398,7 +550,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             >
                 <Table size="medium">
                     <TableHead>
-                        <TableRow >
+                        <TableRow>
                             <TableCell padding="checkbox">
                                 <Checkbox
                                     indeterminate={
@@ -430,35 +582,51 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {paginatedParentsList.map((row) => (
-                            <TableRow key={row.id} hover selected={selectedParents.includes(row.id)}>
-                                <TableCell padding="checkbox">
-                                    <Checkbox
-                                        checked={selectedParents.includes(row.id)}
-                                        onChange={() => handleSelectParent(row.id)}
-                                    />
-                                </TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>{row.name}</TableCell>
-                                <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                                    {row.phone}
-                                </TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label="Generate"
-                                        size="small"
-                                        sx={{
-                                            bgcolor: 'primary.light',
-                                            color: 'primary.main',
-                                        }}
-                                    />
-                                </TableCell>
-                                <TableCell align="center">
-                                    <IconButton size="small" onClick={handleMenuClick}>
-                                        <MoreVertIcon />
-                                    </IconButton>
+                        {loadingParents ? (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                                    <CircularProgress size={24} />
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : paginatedParentsList.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                                    <Alert severity="info">
+                                        No parents found
+                                    </Alert>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            paginatedParentsList.map((row) => (
+                                <TableRow key={row.guardian_user_id} hover selected={selectedParents.includes(row.guardian_user_id)}>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            checked={selectedParents.includes(row.guardian_user_id)}
+                                            onChange={() => handleSelectParent(row.guardian_user_id)}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>{row.guardian_name}</TableCell>
+                                    <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                                        {row.guardian_phone}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label="Generate"
+                                            size="small"
+                                            sx={{
+                                                bgcolor: 'primary.light',
+                                                color: 'primary.main',
+                                            }}
+                                        />
+                                    </TableCell>
+                                    <TableCell align="center">
+                                        <IconButton size="small" onClick={handleMenuClick}>
+                                            <MoreVertIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
                 <TablePagination
@@ -484,10 +652,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             <Box sx={{ mb: 4 }}>
                 <Box
                     sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', lg: 'row' },
-                        justifyContent: 'space-between',
-                        alignItems: { xs: 'flex-start', lg: 'center' },
+                        // display: 'flex',
+                        // flexDirection: { xs: 'column', lg: 'row' },
+                        // justifyContent: 'space-between',
+                        // alignItems: { xs: 'flex-start', lg: 'center' },
                         mb: 3,
                         gap: 2,
                         borderBottom: '1px solid',
@@ -495,7 +663,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                         pb: 2,
                     }}
                 >
-                    <Box display="flex" alignItems="center" gap={2}>
+                    <Box display="flex" alignItems="center" gap={2} mb={2}>
                         <Box
                             sx={{
                                 width: 40,
@@ -597,44 +765,80 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 </Box>
 
                 <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2}>
+                    {/* Session Term */}
+                    <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 } }}>
+                        <InputLabel>Session Term</InputLabel>
+                        <Select
+                            value={selectedSessionTermId}
+                            label="Session Term"
+                            onChange={(e) => setSelectedSessionTermId(e.target.value)}
+                            disabled={loadingFilters}
+                        >
+                            {loadingFilters ? (
+                                <MenuItem disabled>
+                                    <CircularProgress size={16} />
+                                </MenuItem>
+                            ) : (
+                                sessionTerms.map((item) => (
+                                    <MenuItem key={item.id} value={item.id}>
+                                        {item.session?.sesname} - {item.display_term?.display_name}
+                                    </MenuItem>
+                                ))
+                            )}
+                        </Select>
+                    </FormControl>
+
+                    {/* Programme */}
                     <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
+                        <InputLabel>Programme</InputLabel>
                         <Select
-                            value={selectedSession}
-                            onChange={(e) => setSelectedSession(e.target.value)}
-                            displayEmpty
+                            value={selectedProgrammeId}
+                            label="Programme"
+                            onChange={(e) => setSelectedProgrammeId(e.target.value)}
+                            disabled={loadingFilters}
                         >
-                            <MenuItem value="2024/2025 Third Term">Session</MenuItem>
+                            {loadingFilters ? (
+                                <MenuItem disabled>
+                                    <CircularProgress size={16} />
+                                </MenuItem>
+                            ) : (
+                                programmes.map((prog) => (
+                                    <MenuItem key={prog.id} value={String(prog.id)}>
+                                        {prog.programme_name}
+                                    </MenuItem>
+                                ))
+                            )}
                         </Select>
                     </FormControl>
+
+                    {/* Class (cascading from programme) */}
                     <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 120 } }}>
-                        <Select value="Term" displayEmpty>
-                            <MenuItem value="Term">Term</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
+                        <InputLabel>Class</InputLabel>
                         <Select
-                            value={selectedProgramme}
-                            onChange={(e) => setSelectedProgramme(e.target.value)}
-                            displayEmpty
+                            value={selectedClassId}
+                            label="Class"
+                            onChange={(e) => setSelectedClassId(e.target.value)}
+                            disabled={loadingProgrammeClasses}
                         >
-                            <MenuItem value="Programme">Programme</MenuItem>
-                            <MenuItem value="Secondary">Secondary</MenuItem>
+                            {loadingProgrammeClasses ? (
+                                <MenuItem disabled>
+                                    <CircularProgress size={16} />
+                                </MenuItem>
+                            ) : (
+                                programmeClasses.map((cls) => (
+                                    <MenuItem key={cls.id} value={String(cls.id)}>
+                                        {cls.class_name}
+                                    </MenuItem>
+                                ))
+                            )}
                         </Select>
                     </FormControl>
-                    <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 120 } }}>
-                        <Select
-                            value={selectedClass}
-                            onChange={(e) => setSelectedClass(e.target.value)}
-                            displayEmpty
-                        >
-                            <MenuItem value="Class">Class</MenuItem>
-                            <MenuItem value="JSS1">JSS1</MenuItem>
-                            <MenuItem value="JSS2">JSS2</MenuItem>
-                        </Select>
-                    </FormControl>
+
+                    {/* Search (debounced) */}
                     <TextField
                         size="small"
-                        placeholder="Search"
+                        placeholder="Search parents..."
+                        onChange={handleSearchChange}
                         sx={{ flexGrow: 1 }}
                         slotProps={{
                             input: {

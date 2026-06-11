@@ -765,7 +765,6 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 </Box>
 
                 <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2}>
-                    {/* Session Term */}
                     <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 } }}>
                         <InputLabel>Session Term</InputLabel>
                         <Select
@@ -788,7 +787,6 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                         </Select>
                     </FormControl>
 
-                    {/* Programme */}
                     <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
                         <InputLabel>Programme</InputLabel>
                         <Select
@@ -811,7 +809,6 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                         </Select>
                     </FormControl>
 
-                    {/* Class (cascading from programme) */}
                     <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 120 } }}>
                         <InputLabel>Class</InputLabel>
                         <Select
@@ -834,7 +831,6 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                         </Select>
                     </FormControl>
 
-                    {/* Search (debounced) */}
                     <TextField
                         size="small"
                         placeholder="Search parents..."

@@ -56,17 +56,17 @@ export const fetchGatewayChargeBearer = async () => {
 }
 
 export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption = 'compulsory', search = '') => {
-    const params = { 
+    const params = {
         session_id: sessionId,
         term_id: termId,
-        category_id: categoryId, 
-        pay_option: payOption 
+        category_id: categoryId,
+        pay_option: payOption
     };
-    
+
     if (search) {
         params.search = search;
     }
-    
+
     const res = await api.get('/bursary/payment_schedule/fetch_payment_schedules', { params });
     return res.data;
 };
@@ -119,10 +119,25 @@ export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = '
     return res.data;
 };
     
-export const fetchStudentForInvoiceData = async ({ sessionTermId, classId } = {}) => {
+export const fetchStudentForInvoiceData = async ({ sessionTermId, classId, categoryId } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;
     if (classId) params.class_id = classId;
+    if (categoryId) params.category_id = categoryId;
     const res = await api.get('/bursary/payment_schedule/fetch_student_for_invoice_data', { params });
+    return res.data;
+};
+
+export const fetchStudentOptionalPayments = async ({ sessionTermId, classId, categoryId } = {}) => {
+    const params = {};
+    if (sessionTermId) params.session_term_id = sessionTermId;
+    if (classId) params.class_id = classId;
+    if (categoryId) params.category_id = categoryId;
+    const res = await api.get('/bursary/payment_schedule/fetch_student_optional_payments', { params });
+    return res.data;
+};
+
+export const generateStudentInvoice = async (payload) => {
+    const res = await api.post('/bursary/payment_schedule/generate_student_invoice', payload);
     return res.data;
 };

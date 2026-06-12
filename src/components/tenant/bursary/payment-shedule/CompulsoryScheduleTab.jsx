@@ -42,7 +42,7 @@ import {
 import PaymentScheduleModal from './PaymentScheduleModal';
 import AddPaymentItemModal from './AddPaymentItemModal';
 import EditPaymentItemModal from './EditPaymentItemModal';
-import { fetchTermsBySessionTerm, fetchPaymentSchedules, deletePaymentSchedule, togglePaymentScheduleStatus } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchTermsBySessionTerm, fetchPaymentSchedules, deletePaymentSchedule, deletePaymentSchedulesByPaymentName, togglePaymentScheduleStatus } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'compulsory', onTermChange, refreshStats }) => {
   const [terms, setTerms] = useState([]);
@@ -181,7 +181,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
   const toggleClassStatus = (scheduleId, classId) => {
     setSchedules(prev => ({
       ...prev,
-      [currentTerm]: prev[currentTerm].map(sch => {
+      [currentTerm]: (prev[currentTerm] || []).map(sch => {
         if (sch.id !== scheduleId) return sch;
         const updatedClasses = sch.classes.map(cls =>
           cls.id === classId ? { ...cls, missing: !cls.missing } : cls
@@ -333,36 +333,37 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
   };
 
   const handleAddItemSave = (formData) => {
-    const currentTermSchedules = schedules[currentTerm] || [];
-    const newId =
-      Math.max(
-        ...Object.values(schedules)
-          .flat()
-          .map((s) => s.id),
-        0,
-      ) + 1;
+    setSchedules((prev) => {
+      const currentTermSchedules = prev[currentTerm] || [];
+      const allSchedules = Object.values(prev).flat();
+      const newId =
+        Math.max(
+          ...allSchedules.map((s) => s.id),
+          0,
+        ) + 1;
 
-    const classes = formData.selectedClasses.map((classId) => ({
-      id: classId,
-      name: classId,
-      missing: true,
-    }));
+      const classes = formData.selectedClasses.map((classId) => ({
+        id: classId,
+        name: classId,
+        missing: true,
+      }));
 
-    const newSchedule = {
-      id: newId,
-      paymentName: formData.paymentName,
-      classes: classes,
-      allClassesSet: false,
-      missingCount: classes.length,
-    };
+      const newSchedule = {
+        id: newId,
+        paymentName: formData.paymentName,
+        classes: classes,
+        allClassesSet: false,
+        missingCount: classes.length,
+      };
 
-    setSchedules((prev) => ({
-      ...prev,
-      [currentTerm]: [...currentTermSchedules, newSchedule],
-    }));
+      return {
+        ...prev,
+        [currentTerm]: [...currentTermSchedules, newSchedule],
+      };
+    });
 
     showSnackbar?.(
-      `Payment item "${formData.paymentName}" added successfully with ${classes.length} classes`,
+      `Payment item "${formData.paymentName}" added successfully with ${formData.selectedClasses.length} classes`,
     );
   };
 
@@ -384,22 +385,38 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
     await loadPaymentSchedules(searchQuery);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     const scheduleToDelete = deleteDialog.schedule;
 
-    setSchedules((prevSchedules) => ({
-      ...prevSchedules,
-      [currentTerm]: prevSchedules[currentTerm].filter(
-        (schedule) => schedule.id !== scheduleToDelete.id,
-      ),
-    }));
+    try {
+      setProcessingAction(true);
+      const response = await deletePaymentSchedulesByPaymentName(scheduleToDelete.payment_name?.id);
 
-    showSnackbar?.(
-      `Payment item "${scheduleToDelete.paymentName}" deleted successfully`,
-      'success',
-    );
+      if (response.success) {
+        setSchedules((prevSchedules) => ({
+          ...prevSchedules,
+          [currentTerm]: (prevSchedules[currentTerm] || []).filter(
+            (schedule) => schedule.payment_name?.id !== scheduleToDelete.payment_name?.id,
+          ),
+        }));
 
-    setDeleteDialog({ open: false, schedule: null });
+        showSnackbar?.(
+          `Payment item "${scheduleToDelete.payment_name?.name}" deleted successfully`,
+          'success',
+        );
+
+        await loadPaymentSchedules(searchQuery);
+        refreshStats?.();
+      } else {
+        showSnackbar?.(response.message || 'Failed to delete payment item', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to delete payment item:', err);
+      showSnackbar?.(err.response?.data?.message || 'Failed to delete payment item', 'error');
+    } finally {
+      setProcessingAction(false);
+      setDeleteDialog({ open: false, schedule: null });
+    }
   };
 
   const handleChangePage = (event, newPage) => {
@@ -622,27 +639,56 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
                                   <AddIcon sx={{ fontSize: 14 }} />
                                 )
                               }
-                              sx={{
-                                bgcolor: hasAmount 
-                                  ? (cls.status === 'inactive' ? 'error.main' : 'primary.main')
-                                  : 'grey.300',
-                                color: hasAmount ? "white" : "text.secondary",
-                                fontWeight: 600,
-                                fontSize: 11,
-                                cursor: 'pointer',
-                                '&:hover': {
-                                  opacity: 0.8,
-                                },
-                                '& .MuiChip-deleteIcon': {
-                                  color: 'inherit',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 0.25,
-                                  '&:hover': {
-                                    color: 'inherit',
-                                  },
-                                },
-                              }}
+  //                             sx={{
+  //                               bgcolor: hasAmount 
+  //                                 ? (cls.status === 'inactive' ? 'error.main' : 'primary.main')
+  //                                 : 'grey.300',
+  //                               color: hasAmount ? "white" : "text.secondary",
+  //                               fontWeight: 600,
+  //                               fontSize: 11,
+  //                               cursor: 'pointer',
+  //                               '&:hover': {
+  //                                 transform: 'scale(1.03)',
+  // transition: '0.2s',
+  // backgroundColor: 'primary.dark',
+  //                               },
+  //                               '& .MuiChip-deleteIcon': {
+  //                                 color: 'inherit',
+  //                                 display: 'flex',
+  //                                 alignItems: 'center',
+  //                                 gap: 0.25,
+  //                                 '&:hover': {
+  //                                   color: 'inherit',
+  //                                 },
+  //                               },
+  //                             }}
+
+  sx={{
+  bgcolor: hasAmount 
+    ? (cls.status === 'inactive' ? 'error.main' : 'primary.main')
+    : 'grey.300',
+
+  color: hasAmount ? "white" : "text.secondary",
+  fontWeight: 600,
+  fontSize: 11,
+  cursor: 'pointer',
+
+  transition: 'all 0.2s ease',
+
+  '&:hover': {
+    transform: 'scale(1.03)',
+    backgroundColor: hasAmount
+      ? (cls.status === 'inactive' ? 'error.dark' : 'primary.dark')
+      : 'grey.400',
+  },
+
+  '& .MuiChip-deleteIcon': {
+    color: 'inherit',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0.25,
+  },
+}}
                             />
                           );
                         })
@@ -752,7 +798,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
             <strong>{deleteDialog.schedule?.paymentName}</strong>"? All payment schedules and
             amounts for this item will be permanently removed.
           </Typography>
-          {deleteDialog.schedule && deleteDialog.schedule.classes && (
+          {/* {deleteDialog.schedule && deleteDialog.schedule.classes && (
             <Box mt={2}>
               <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                 This will affect the following classes:
@@ -763,7 +809,7 @@ const CompulsoryScheduleTab = ({ showSnackbar, sessionId, termId, categoryId, se
                 ))}
               </Box>
             </Box>
-          )}
+          )} */}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button color="inherit" onClick={() => setDeleteDialog({ open: false, schedule: null })}>

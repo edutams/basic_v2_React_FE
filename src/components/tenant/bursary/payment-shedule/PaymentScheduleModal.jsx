@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
-import {
-  Button,
-  TextField,
-  Stack,
-  Typography,
-  Box,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
+import { Button, TextField, Stack, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
-import { createPaymentSchedule, updatePaymentSchedule } from '@/api/tenant/bursary/bursarySettingsApi';
+import {
+  createPaymentSchedule,
+  updatePaymentSchedule,
+} from '@/api/tenant/bursary/bursarySettingsApi';
 
-const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionId, termId, categoryId }) => {
+const PaymentScheduleModal = ({
+  open,
+  onClose,
+  onSave,
+  payment,
+  isEdit,
+  sessionId,
+  termId,
+  categoryId,
+}) => {
   const [formData, setFormData] = useState({
     amount: '',
   });
@@ -47,7 +51,7 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionI
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.amount.trim()) {
+    if (!formData.amount) {
       newErrors.amount = 'Amount is required';
     } else if (parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0';
@@ -61,10 +65,10 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionI
     if (validate()) {
       try {
         setSaving(true);
-        
+
         // Check if this is an edit (scheduleId exists) or create
         const isEdit = payment?.scheduleId;
-        
+
         if (isEdit) {
           // Update existing schedule
           const payload = {
@@ -74,7 +78,7 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionI
           console.log('Updating payment schedule:', payment.scheduleId, payload);
 
           const response = await updatePaymentSchedule(payment.scheduleId, payload);
-          
+
           if (response.success || response.status) {
             // Pass the form data to parent to refresh the table
             onSave(formData);
@@ -96,7 +100,7 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionI
           console.log('Creating payment schedule:', payload);
 
           const response = await createPaymentSchedule(payload);
-          
+
           if (response.success || response.status) {
             // Pass the form data to parent to refresh the table
             onSave(formData);
@@ -129,23 +133,20 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionI
       showDivider={true}
     >
       <Stack spacing={3}>
-        <Box
+        <Alert
+          severity={'info'}
           sx={{
-            p: 2,
-            bgcolor: isEdit ? 'warning.lighter' : 'info.light',
-            borderRadius: 1,
-            border: '1px solid',
-            borderColor: isEdit ? 'warning.light' : 'info.light',
+            py: 0.5,
+            alignItems: 'center',
+            fontSize: 12,
+            fontWeight: 500,
           }}
         >
-          <Typography variant="caption" color={isEdit ? 'warning.main' : 'info.main'}>
-            {isEdit ? '✏️ ' : '💡 '}
-            <strong>{isEdit ? 'Edit Mode:' : 'Tip:'}</strong>{' '}
-            {isEdit
-              ? 'Update the payment amount for this class.'
-              : 'Set the payment amount for this class.'}
-          </Typography>
-        </Box>
+          <strong>{isEdit ? 'Edit Mode:' : 'Tip:'}</strong>{' '}
+          {isEdit
+            ? 'Update the payment amount for this class.'
+            : 'Set the payment amount for this class.'}
+        </Alert>
 
         <TextField
           label="Amount (NGN)"
@@ -165,19 +166,15 @@ const PaymentScheduleModal = ({ open, onClose, onSave, payment, isEdit, sessionI
           }}
         />
 
-        {errors.submit && (
-          <Alert severity="error">
-            {errors.submit}
-          </Alert>
-        )}
+        {errors.submit && <Alert severity="error">{errors.submit}</Alert>}
 
         <Stack direction="row" spacing={2} justifyContent="flex-end" pt={2}>
           <Button onClick={onClose} variant="outlined" disabled={saving}>
             Cancel
           </Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSubmit} 
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
             sx={{ fontWeight: 600 }}
             disabled={saving}
           >

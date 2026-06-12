@@ -47,6 +47,11 @@ import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
+import {
+  fetchClassesByProgramme,
+  fetchProgrammes,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchPaymentNameOptions } from '@/api/tenant/bursary/classLedger';
 
 const dummyData = [
   {
@@ -196,6 +201,57 @@ const ClassLedger = () => {
 
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
+
+  const [programme, setProgramme] = useState('');
+  const [classLevel, setClassLevel] = useState('');
+
+  const [paymentOptions, setPaymentOptions] = useState([]);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState('');
+
+  const handleFilterChange = React.useCallback(async (key, val) => {
+    if (key === 'programme') {
+      try {
+        const classesRes = await fetchClassesByProgramme(val);
+        setClasses(
+          classesRes.data.map((c) => ({
+            value: c.id,
+            label: c.class_name,
+          })),
+        );
+        setClassLevel(''); // reset class when programme changes
+      } catch (error) {
+        console.error('Failed to fetch classes', error);
+      }
+    }
+  }, []);
+
+  const loadProgrammes = async () => {
+    try {
+      const res = await fetchProgrammes();
+      setProgrammes(
+        res.data.map((p) => ({
+          value: p.id,
+          label: p.programme_name,
+        })),
+      );
+    } catch (error) {
+      console.error('Failed to load programmes');
+    }
+  };
+
+  const loadPaymentOptions = async () => {
+    try {
+      const res = await fetchPaymentNameOptions();
+      setPaymentOptions(res.data || []);
+    } catch (error) {
+      console.error('Failed to load payment options', error);
+    }
+  };
+
+  useEffect(() => {
+    loadProgrammes();
+    loadPaymentOptions();
+  }, []);
 
   const buildChartOptions = (categories) => ({
     chart: {
@@ -412,10 +468,11 @@ const ClassLedger = () => {
               fullWidth
               label="Programme"
               size="small"
-              value={programmes.some((p) => p.value === programme) ? programme : ''}
+              value={programme}
               onChange={(e) => {
-                setProgramme(e.target.value);
-                handleFilterChange('programme', e.target.value);
+                const val = e.target.value;
+                setProgramme(val);
+                handleFilterChange('programme', val);
               }}
             >
               {programmes.map((p) => (
@@ -432,11 +489,8 @@ const ClassLedger = () => {
               fullWidth
               label="Class"
               size="small"
-              value={classes.some((c) => c.value === classLevel) ? classLevel : ''}
-              onChange={(e) => {
-                setClassLevel(e.target.value);
-                handleFilterChange('classLevel', e.target.value);
-              }}
+              value={classLevel}
+              onChange={(e) => setClassLevel(e.target.value)}
             >
               {classes.map((c) => (
                 <MenuItem key={c.value} value={c.value}>
@@ -447,12 +501,21 @@ const ClassLedger = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
-            <FormControl size="small" fullWidth>
-              <InputLabel>Payment Options</InputLabel>
-              <Select label="Payment Options">
-                <MenuItem value="">All Options</MenuItem>
-              </Select>
-            </FormControl>
+            <TextField
+              select
+              fullWidth
+              label="Payment Options"
+              size="small"
+              value={selectedPaymentOption}
+              onChange={(e) => setSelectedPaymentOption(e.target.value)}
+            >
+              <MenuItem value="">All Payment Options</MenuItem>
+              {paymentOptions.map((option, _i) => (
+                <MenuItem key={_i} value={option.pay_option}>
+                  {option.pay_option}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
 
           <Grid size={{ xs: 12, md: 2 }}>

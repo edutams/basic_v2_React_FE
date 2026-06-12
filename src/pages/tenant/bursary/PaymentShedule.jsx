@@ -18,7 +18,15 @@ import {
   Stack,
   CircularProgress,
 } from '@mui/material';
-import { Receipt as ReceiptIcon, FileUpload as UploadIcon, Wallet as WalletIcon, Message as MessageIcon, Email as EmailIcon, Article as ArticleIcon,   Settings as SettingsIcon,} from '@mui/icons-material';
+import {
+  Receipt as ReceiptIcon,
+  FileUpload as UploadIcon,
+  Wallet as WalletIcon,
+  Message as MessageIcon,
+  Email as EmailIcon,
+  Article as ArticleIcon,
+  Settings as SettingsIcon,
+} from '@mui/icons-material';
 import StatCard from '@/components/shared/StatCard';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -26,7 +34,11 @@ import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/C
 import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
 import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
 import SendInvoiceTab from '@/components/tenant/bursary/payment-shedule/SendInvoiceTab';
-import { fetchBursarySessionTerms, fetchActiveCategories, fetchPaymentScheduleStats } from '@/api/tenant/bursary/bursarySettingsApi';
+import {
+  fetchBursarySessionTerms,
+  fetchActiveCategories,
+  fetchPaymentScheduleStats,
+} from '@/api/tenant/bursary/bursarySettingsApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
@@ -140,12 +152,10 @@ const PaymentShedule = () => {
   }, []);
 
   const selectedSessionLabel =
-    sessions.find((s) => s.id === selectedSessionTerm)
-      ?.session?.sesname || '';
+    sessions.find((s) => s.id === selectedSessionTerm)?.session?.sesname || '';
 
   const selectedCategoryLabel =
-    categories.find((c) => String(c.id) === String(selectedCategory))?.name ||
-    '';
+    categories.find((c) => String(c.id) === String(selectedCategory))?.name || '';
 
   const handleSessionTermChange = (sessionTermId) => {
     const selectedItem = sessions.find((s) => s.id === sessionTermId);
@@ -233,7 +243,6 @@ const PaymentShedule = () => {
     { label: 'Invoice Sent by SMS', value: 522, icon: EmailIcon },
     { label: 'Excel Generated', value: 522, icon: ArticleIcon },
   ];
-
 
   return (
     <PageContainer title="Payment Schedule" description="Configure fees and payment settings">
@@ -362,7 +371,9 @@ const PaymentShedule = () => {
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                     With Maximum Schedule
                   </Typography>
-                  <Typography variant="h3">₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}</Typography>
+                  <Typography variant="h3">
+                    ₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}
+                  </Typography>
                   <Typography variant="caption" color="textSecondary">
                     {stats.studentCategory.maxLabel}
                   </Typography>
@@ -514,7 +525,7 @@ const PaymentShedule = () => {
         <Grid container spacing={3} mb={3}>
           {sendInvoiceStats.map((stat, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-               <StatCard count={stat.value} label={stat.label} icon={stat.icon} color={stat.color} />
+              <StatCard count={stat.value} label={stat.label} icon={stat.icon} color={stat.color} />
             </Grid>
           ))}
         </Grid>
@@ -563,7 +574,7 @@ const PaymentShedule = () => {
                       justifyContent: 'center',
                     }}
                   >
-                     <SettingsIcon sx={{ color: 'primary.main' }} />
+                    <SettingsIcon sx={{ color: 'primary.main' }} />
                   </Box>
                   <Box>
                     <Typography variant="h6" fontWeight={600}>
@@ -584,29 +595,29 @@ const PaymentShedule = () => {
                     width: { xs: '100%', lg: 'auto' },
                   }}
                 >
-                 <FormControl size="small" sx={{ minWidth: 220 }}>
-            <InputLabel>Session</InputLabel>
-            <Select
-              value={selectedSessionTerm}
-              label="Session Term"
-              onChange={(e) => handleSessionTermChange(e.target.value)}
-              disabled={loadingSessions}
-            >
-              {loadingSessions ? (
-                <MenuItem disabled>
-                  <CircularProgress size={16} /> 
-                </MenuItem>
-              ) : (
-                sessions.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.session?.sesname}
-                  </MenuItem>
-                ))
-              )}
-            </Select>
-          </FormControl>
+                  <FormControl size="small" sx={{ minWidth: 220 }}>
+                    <InputLabel>Session</InputLabel>
+                    <Select
+                      value={selectedSessionTerm}
+                      label="Session Term"
+                      onChange={(e) => handleSessionTermChange(e.target.value)}
+                      disabled={loadingSessions}
+                    >
+                      {loadingSessions ? (
+                        <MenuItem disabled>
+                          <CircularProgress size={16} />
+                        </MenuItem>
+                      ) : (
+                        sessions.map((item) => (
+                          <MenuItem key={item.id} value={item.id}>
+                            {item.session?.sesname}
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  </FormControl>
 
-                  <FormControl size="small" sx={{ minWidth: { sm: 100 } }}>
+                  <FormControl size="small" sx={{ minWidth: { sm: 200 } }}>
                     <InputLabel>Student Pay Category</InputLabel>
                     <Select
                       value={selectedCategory}

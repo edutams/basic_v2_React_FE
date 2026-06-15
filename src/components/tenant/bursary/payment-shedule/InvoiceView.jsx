@@ -1,3 +1,7 @@
+import { useState, useEffect, useContext } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { TenantAuthContext } from 'src/context/TenantContext/auth';
+import { fetchStudentInvoiceBreakdown } from '@/api/tenant/bursary/bursarySettingsApi';
 import {
   Box,
   Typography,
@@ -9,396 +13,405 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 
-const InvoiceView = ({
-  setViewMode,
-  selectedClass,
-  selectedSessionLabel,
-  selectedTermLabel,
-  studentsData,
-  schoolLogo,
-  schoolName,
-  schoolAddress,
-  schoolEmail,
-  schoolPhone,
-}) => {
+const InvoiceView = () => {
+  const { session_term_id, class_id, category_id } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { tenantInfo } = useContext(TenantAuthContext) || {};
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [studentsData, setStudentsData] = useState([]);
+  const [sessionLabel, setSessionLabel] = useState('');
+  const [termLabel, setTermLabel] = useState('');
+  const [className, setClassName] = useState('');
+
+  const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
+  const schoolName =
+    tenantInfo?.school_name || tenantInfo?.name || tenantInfo?.tenant_name || 'School Name';
+  const schoolEmail = tenantInfo?.administrator_info?.school_owner?.school_owner_email || '';
+  const schoolPhone = tenantInfo?.administrator_info?.school_owner?.school_owner_phone || '';
+  const issuerName = tenantInfo?.issuer_name || 'Bursary Officer';
+  const issuerTitle = tenantInfo?.issuer_title || 'Bursary Officer';
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetchStudentInvoiceBreakdown({
+          sessionTermId: session_term_id,
+          classId: class_id,
+          categoryId: category_id,
+        });
+
+        setStudentsData(res.data ?? []);
+      } catch (err) {
+        console.error(err);
+        setError(err?.response?.data?.message || 'Failed to load invoice breakdown');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [session_term_id, class_id, category_id]);
+
+  const handleBack = () => {
+    navigate(`/payment-schedule/invoice/${session_term_id}/${class_id}`);
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{error}</Alert>
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Button variant="outlined" onClick={handleBack}>
+            Back to Invoice List
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (studentsData.length === 0) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h6" color="text.secondary" textAlign="center">
+          No student data available. Please go back and select students to view invoices.
+        </Typography>
+        <Box display="flex" justifyContent="center" mt={2}>
+          <Button variant="outlined" onClick={handleBack}>
+            Back to Invoice List
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
+  const fmt = (val) => {
+    const num = Number(val) || 0;
+    return num.toLocaleString();
+  };
+
   return (
     <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
+      {/* ── Header ── */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6" fontWeight={700}>
-          Class Invoice ·{' '}
+          View Class Invoice ·{' '}
           <Box component="span" color="primary.main">
-            {selectedClass}
+            {className} {sessionLabel} {termLabel}
           </Box>
         </Typography>
-        <Button variant="outlined" size="small" onClick={() => setViewMode('students')}>
+        <Button variant="outlined" size="small" onClick={handleBack}>
           Back
         </Button>
       </Box>
 
-      {studentsData.slice(0, 2).map((student, index) => (
-        <Box key={index} sx={{ mb: 4 }}>
-          {/* Learner Info Card */}
+      {/* ── Student Invoices ── */}
+      {studentsData.map((student, index) => {
+        const compulsory = student.compulsory_invoice || [];
+        const optional = student.optional_invoice || [];
+        const dueBalance = Number(student.due_balance || 0);
+        const compulsoryTotal = compulsory.reduce(
+          (sum, i) => sum + Number(i.balance || 0),
+          0
+        );
+
+        const optionalTotal = optional.reduce(
+          (sum, i) => sum + Number(i.balance || 0),
+          0
+        );
+
+        // Compute overall balance for the outstanding banner
+        // const overallBalance = compulsory.reduce((sum, i) => sum + (Number(i.balance) || 0), 0)
+        //   + optional.reduce((sum, i) => sum + (Number(i.balance) || 0), 0);
+
+        return (
           <Box
+            key={student.user_id}
             sx={{
               mb: 2,
-              borderRadius: 2,
               border: '1px solid',
               borderColor: 'grey.200',
+              borderRadius: 2,
               overflow: 'hidden',
+              bgcolor: 'background.paper',
+              p: 3
             }}
           >
+            {/* ── SCHOOL HEADER — centered ── */}
             <Box
               sx={{
                 bgcolor: 'primary.light',
-                p: 3,
-                m: 2,
+                p: 2,
+                position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 3,
+                minHeight: 110,
               }}
             >
+              {/* LEFT LOGO */}
               <Box
                 component="img"
                 src={schoolLogo}
-                alt="School Logo"
                 sx={{
                   width: 80,
                   height: 80,
-                  borderRadius: 2,
-                  bgcolor: 'white',
+                  borderRadius: 1,
                   objectFit: 'contain',
-                  p: 1,
-                  flexShrink: 0,
+                  bgcolor: '#fff',
+                  p: 0.5,
+                  position: 'absolute',
+                  left: 16,
                 }}
               />
 
-              <Box flex={1} textAlign="center">
-                <Typography variant="h4" fontWeight={800} color="text.primary">
+              {/* CENTER CONTENT */}
+              <Box sx={{ width: '100%', textAlign: 'center' }}>
+                <Typography
+                  variant="h1"
+                  fontWeight={900}
+                  sx={{ textTransform: 'uppercase' }}
+                >
                   {schoolName}
                 </Typography>
 
-                {schoolAddress && (
-                  <Typography variant="body2" color="text.secondary" fontWeight={700}>
-                    {schoolAddress}
-                  </Typography>
-                )}
-
-                <Box display="flex" flexWrap="wrap" gap={3} mt={1} justifyContent="center">
-                  {schoolEmail && (
-                    <Typography variant="h6" color="text.secondary" fontWeight={700}>
-                      {schoolEmail}
-                    </Typography>
-                  )}
-
-                  {schoolPhone && (
-                    <Typography variant="h6" color="text.secondary" fontWeight={700}>
-                      {schoolPhone}
-                    </Typography>
-                  )}
-                </Box>
+                <Typography
+                  variant="caption"
+                  display="block"
+                  fontWeight={600}
+                  color="text.secondary"
+                >
+                  {[schoolEmail, schoolPhone].filter(Boolean).join(' · ')}
+                </Typography>
               </Box>
             </Box>
 
-            {/* White Learner Area */}
-            <Box sx={{ p: 4 }}>
-              <Typography
-                variant="h5"
-                fontWeight={800}
-                textAlign="center"
-                mb={4}
-                color="text.primary"
-              >
-                {selectedSessionLabel} - {selectedTermLabel} Invoice
-              </Typography>
-
-              <Box
-                display="flex"
-                flexDirection={{ xs: 'column', sm: 'row' }}
-                justifyContent="space-between"
-                width="100%"
-                gap={4}
-              >
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={800} color="text.primary">
-                    Learner Details
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" mb={0.5}>
-                    {student.name}
-                  </Typography>
-                  <Typography variant="body1" fontWeight={700} mb={2}>
-                    Class:{' '}
-                    <Box component="span" fontWeight={400} color="text.secondary">
-                      {selectedClass}
-                    </Box>
-                  </Typography>
-                  <Button size="small">PROCEED TO PAY</Button>
-                </Box>
-                <Box textAlign={{ xs: 'left', sm: 'right' }}>
-                  <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={1}>
-                    Invoice Number:{' '}
-                    <Box component="span" fontWeight={400} color="text.secondary">
-                      36056531
-                    </Box>
-                  </Typography>
-                  <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={2}>
-                    Balance Due:{' '}
-                    <Typography
-                      component="span"
-                      variant="h5"
-                      fontWeight={800}
-                      color="text.primary"
-                    >
-                      ₦{student.totalAmount?.toLocaleString() || '230,010'}
-                    </Typography>
-                  </Typography>
-                  <Button size="small">UPDATE INVOICE</Button>
-                </Box>
-              </Box>
-            </Box>
-
+            {/* ── STUDENT INFO left · INVOICE NUMBER right ── */}
             <Box
               sx={{
-                p: { xs: 2, sm: 4 },
-                m: 2,
-                borderRadius: 2,
-                border: '1px solid',
+                p: 1.5,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                borderBottom: '1px solid',
                 borderColor: 'grey.200',
               }}
             >
-              <Box
-                display="flex"
-                flexDirection={{ xs: 'column', sm: 'row' }}
-                justifyContent="space-between"
-                mb={3}
-                gap={1}
-              >
-                <Box>
-                  <Typography variant="caption" fontWeight={800} color="text.secondary">
-                    INVOICE FOR
-                  </Typography>
-                  <Typography variant="h6" fontWeight={800}>
-                    {student.name}
-                  </Typography>
-                  <Typography variant="caption" fontWeight={600} color="text.secondary">
-                    {student.admissionId} - {selectedClass}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="caption"
-                  fontWeight={600}
-                  color="text.secondary"
-                  textAlign={{ xs: 'left', sm: 'right' }}
-                >
-                  {selectedSessionLabel} - {selectedTermLabel}
+              <Box>
+                <Typography fontWeight={700} fontSize={13}>
+                  {student.student?.fname} {student.student?.lname}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {student.student?.learnerId} · {student.student?.class_name} · {student.student?.term_name}
                 </Typography>
               </Box>
 
-              <TableContainer
-                component={Paper}
-                variant="outlined"
+              <Box textAlign="right">
+                <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+                  Balance Due
+                </Typography>
+                <Typography fontWeight={900} fontSize={15}>
+                  ₦{fmt(dueBalance)}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* ── TOP ACTION BUTTONS ── */}
+            <Box
+              sx={{
+                px: 1.5,
+                py: 1,
+                display: 'flex',
+                justifyContent: 'space-between',
+                borderBottom: '1px solid',
+                borderColor: 'grey.200',
+              }}
+            >
+              <Button size="small" variant="contained">Proceed to Pay</Button>
+              <Button size="small" variant="outlined">Update Invoice</Button>
+            </Box>
+
+            {/* ── BREAKDOWN TABLE ── */}
+            <TableContainer>
+              {/* {overallBalance > 0 && ( */}
+              <Table
+                size="small"
                 sx={{
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                  borderColor: 'grey.200',
-                  boxShadow: 'none',
+                  border: '1px solid',
+                  borderColor: 'grey.400',
+                  '& .MuiTableCell-root': {
+                    border: '1px solid',
+                    borderColor: 'grey.400',
+                  },
                 }}
               >
-                <Table>
-                  <TableBody>
+                <TableBody>
+                  <TableRow>
+                    <TableCell align="center" sx={{ fontWeight: 800 }}>
+                      OUTSTANDING BALANCE
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(student?.outstanding_balance)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+              {/* )} */}
+
+              <Table
+                size="small"
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'grey.400',
+                  '& .MuiTableCell-root': {
+                    border: '1px solid',
+                    borderColor: 'grey.400',
+                  },
+                }}
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYMENT TYPE</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYMENT ITEMS</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYABLE (₦)</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAID (₦)</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>BALANCE (₦)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {/* ── COMPULSORY ROWS ── */}
+                  {compulsory.map((item, i) => (
+                    <TableRow key={`c-${item.id}`}>
+                      {i === 0 && (
+                        <TableCell
+                          rowSpan={compulsory.length}
+                          align="center"
+                          sx={{ fontWeight: 800, verticalAlign: 'middle' }}
+                        >
+                          COMPULSORY
+                        </TableCell>
+                      )}
+                      <TableCell>{item.schedule_info?.payment_name?.name}</TableCell>
+                      <TableCell align="center">₦{fmt(item.schedule_amount)}</TableCell>
+                      <TableCell align="center">₦{fmt(item.paid_amount)}</TableCell>
+                      <TableCell align="center">₦{fmt(item.balance)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {compulsory.length > 0 && (
                     <TableRow>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 500,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        School fee
+                      <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                        COMPULSORY TOTAL
                       </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 700,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦6,000
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(compulsoryTotal)}
                       </TableCell>
                     </TableRow>
+                  )}
+
+                  {/* ── OPTIONAL ROWS ── */}
+                  {optional.map((item, i) => (
+                    <TableRow key={`o-${item.id}`}>
+                      {i === 0 && (
+                        <TableCell
+                          rowSpan={optional.length}
+                          align="center"
+                          sx={{ fontWeight: 800, verticalAlign: 'middle' }}
+                        >
+                          OPTIONAL
+                        </TableCell>
+                      )}
+                      <TableCell>{item.schedule_info?.payment_name?.name}</TableCell>
+                      <TableCell align="center">₦{fmt(item.schedule_amount)}</TableCell>
+                      <TableCell align="center">₦{fmt(item.paid_amount)}</TableCell>
+                      <TableCell align="center">₦{fmt(item.balance)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {optional.length > 0 && (
                     <TableRow>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 500,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        Text book
+                      <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                        OPTIONAL TOTAL
                       </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 700,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦15,000
+                      <TableCell align="center" sx={{ fontWeight: 900 }}>
+                        ₦{fmt(optionalTotal)}
                       </TableCell>
                     </TableRow>
-                    <TableRow>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 500,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        Inter house sport
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 700,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦25,000
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 500,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        Portal Fee
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 700,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦2,000
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 500,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        CARDIGAN
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 700,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦7,000
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 500,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        Tie
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 700,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦3,000
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 500,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        Transport
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 700,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦20,000
-                      </TableCell>
-                    </TableRow>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell
-                        sx={{
-                          py: 2,
-                          fontWeight: 800,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        Total
-                      </TableCell>
-                      <TableCell
-                        align="right"
-                        sx={{
-                          py: 2,
-                          fontWeight: 800,
-                          borderColor: 'grey.200',
-                          color: 'text.primary',
-                        }}
-                      >
-                        ₦78,000
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  )}
+
+                  {/* ── TOTAL ROW ── */}
+                  <TableRow>
+                    <TableCell colSpan={4} align="right" sx={{ fontWeight: 800 }}>
+                      TOTAL DUE
+                    </TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 900 }}>
+                      ₦{fmt(dueBalance)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {/* ── ISSUED BY SECTION ── */}
+            <Box sx={{ px: 2, pt: 2, pb: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
+              >
+                Issued By
+              </Typography>
+              <Box
+                sx={{
+                  mt: 1,
+                  mb: 0.5,
+                  width: 160,
+                  borderBottom: '1.5px solid',
+                  borderColor: 'text.primary',
+                  minHeight: 40,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                }}
+              >
+                <Typography sx={{ fontFamily: 'cursive', fontSize: 20, opacity: 0.7, pb: 0.5 }}>
+                  {issuerName}
+                </Typography>
+              </Box>
+              <Typography fontWeight={700} fontSize={13}>{issuerName}</Typography>
+              <Typography variant="caption" color="text.secondary">{issuerTitle}</Typography>
+            </Box>
+
+            {/* ── BOTTOM ACTION BUTTONS ── */}
+            <Box
+              sx={{
+                px: 1.5,
+                py: 1,
+                display: 'flex',
+                justifyContent: 'space-between',
+                borderTop: '1px solid',
+                borderColor: 'grey.200',
+              }}
+            >
+              <Button size="small" variant="contained">Proceed to Pay</Button>
+              <Button size="small" variant="outlined">Update Invoice</Button>
             </Box>
           </Box>
-        </Box>
-      ))}
+        );
+      })}
     </Stack>
   );
 };

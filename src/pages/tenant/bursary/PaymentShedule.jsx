@@ -85,13 +85,11 @@ const PaymentShedule = () => {
     const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
     const loadStats = async () => {
       try {
-
         setLoadingStats(true);
         const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
         if (res?.success && res.data) {
           const { schedule, amount, student_category } = res.data;
           setScheduleStats({
-
             schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
             paymentName: {
               withMinSchedule: amount?.min?.amount ?? 0,
@@ -204,9 +202,7 @@ const PaymentShedule = () => {
   const previousSubTerm = activeSubTermIndex > 0 ? subTerms[activeSubTermIndex - 1] : null;
   const currentSubTerm = activeSubTermIndex >= 0 ? subTerms[activeSubTermIndex] : null;
   const canImportSchedule =
-    Boolean(activeSubTermId) &&
-    Boolean(firstSubTermId) &&
-    activeSubTermId !== firstSubTermId;
+    Boolean(activeSubTermId) && Boolean(firstSubTermId) && activeSubTermId !== firstSubTermId;
 
   const getSubTermLabel = (term) =>
     term?.display_term?.display_name || term?.displayTerm?.display_name || 'Term';
@@ -244,8 +240,7 @@ const PaymentShedule = () => {
         showSnackbar(res?.message || 'Failed to import payment schedules', 'error');
       }
     } catch (err) {
-      const message =
-        err?.response?.data?.message || 'Failed to import payment schedules';
+      const message = err?.response?.data?.message || 'Failed to import payment schedules';
       showSnackbar(message, 'error');
     } finally {
       setImporting(false);
@@ -341,8 +336,6 @@ const PaymentShedule = () => {
                 {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
               </Typography>
 
-
-
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
                 <Box
                   sx={{
@@ -365,7 +358,6 @@ const PaymentShedule = () => {
                   <Typography variant="body2" color="textSecondary">
                     Classes
                   </Typography>
-                  
                 </Box>
               </Box>
             </Paper>
@@ -819,7 +811,9 @@ const PaymentShedule = () => {
               {canImportSchedule && (
                 <Button
                   variant="contained"
-                  startIcon={importing ? <CircularProgress size={18} color="inherit" /> : <UploadIcon />}
+                  startIcon={
+                    importing ? <CircularProgress size={18} color="inherit" /> : <UploadIcon />
+                  }
                   onClick={handleImportSchedule}
                   size="medium"
                   disabled={importing}
@@ -875,17 +869,26 @@ const PaymentShedule = () => {
         open={importDialogOpen}
         onClose={() => !importing && setImportDialogOpen(false)}
         maxWidth="sm"
-        fullWidth
+        // fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
             This will copy {scheduleTab === 0 ? 'compulsory' : 'optional'} payment schedules for{' '}
-            <strong>{selectedCategoryLabel || 'the selected category'}</strong> from{' '}
-            <strong>{getSubTermLabel(previousSubTerm)}</strong> into{' '}
-            <strong>{getSubTermLabel(currentSubTerm)}</strong>. Existing schedules for the same
-            payment items will be updated.
+            <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {selectedCategoryLabel || 'the selected category'}
+            </Box>{' '}
+            from{' '}
+            <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {getSubTermLabel(previousSubTerm)}
+            </Box>{' '}
+            into{' '}
+            <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {getSubTermLabel(currentSubTerm)}
+            </Box>
+            . Existing schedules for the same payment items will be updated.
           </Typography>
+
           <Alert severity="warning">
             Review imported amounts before generating invoices for this term.
           </Alert>

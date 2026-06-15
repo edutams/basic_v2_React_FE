@@ -153,3 +153,12 @@ export const generateStudentInvoice = async (payload) => {
     const res = await api.post('/bursary/payment_schedule/generate_student_invoice', payload);
     return res.data;
 };
+
+export const fetchStudentInvoiceBreakdown = async ({ sessionTermId, classId, categoryId } = {}) => {
+    const params = {};
+    if (sessionTermId) params.session_term_id = sessionTermId;
+    if (classId) params.class_id = classId;
+    if (categoryId) params.category_id = categoryId;
+    const res = await api.get('/bursary/payment_schedule/fetch_student_invoice_breakdown', { params });
+    return res.data;
+};

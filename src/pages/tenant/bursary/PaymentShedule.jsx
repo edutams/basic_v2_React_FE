@@ -17,6 +17,10 @@ import {
   Button,
   Stack,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Receipt as ReceiptIcon,
@@ -38,6 +42,9 @@ import {
   fetchBursarySessionTerms,
   fetchActiveCategories,
   fetchPaymentScheduleStats,
+  fetchGenerateInvoiceStats,
+  fetchTermsBySessionTerm,
+  importPaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
@@ -60,6 +67,7 @@ const PaymentShedule = () => {
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [activeSubTermId, setActiveSubTermId] = useState(null);
+  const [subTerms, setSubTerms] = useState([]);
 
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -69,19 +77,33 @@ const PaymentShedule = () => {
     studentCategory: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
   });
   const [loadingStats, setLoadingStats] = useState(false);
+  const [invoiceStats, setInvoiceStats] = useState({
+    invoiceGenerated: 0,
+    totalAmount: 0,
+    paymentNames: [
+      { name: 'With Minimum Invoice', count: 0, amount: 0, label: 'N/A' },
+      { name: 'With Maximum Invoice', count: 0, amount: 0, label: 'N/A' },
+    ],
+    categories: [
+      { name: 'With Minimum Invoice', count: 0, amount: 0, label: 'N/A' },
+      { name: 'With Maximum Invoice', count: 0, amount: 0, label: 'N/A' },
+    ],
+  });
+  const [loadingInvoiceStats, setLoadingInvoiceStats] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [scheduleRefreshKey, setScheduleRefreshKey] = useState(0);
 
   const refreshStats = () => {
     if (!selectedSession || !activeSubTermId) return;
     const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
     const loadStats = async () => {
       try {
-
         setLoadingStats(true);
         const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
         if (res?.success && res.data) {
           const { schedule, amount, student_category } = res.data;
           setScheduleStats({
-
             schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
             paymentName: {
               withMinSchedule: amount?.min?.amount ?? 0,
@@ -165,14 +187,78 @@ const PaymentShedule = () => {
       setSelectedSessionTerm(sessionTermId);
       setSelectedSession(selectedItem.session_id);
       setSelectedTerm(selectedItem.term_id);
+      setActiveSubTermId(null);
     }
   };
+
+  useEffect(() => {
+    if (!selectedSession) {
+      setSubTerms([]);
+      return;
+    }
+
+    const loadSubTerms = async () => {
+      try {
+        const res = await fetchTermsBySessionTerm(selectedSession, selectedTerm);
+        const list = Array.isArray(res?.data) ? res.data : [];
+        setSubTerms(list);
+      } catch (err) {
+        console.error('Failed to load sub-terms:', err);
+        setSubTerms([]);
+      }
+    };
+
+    loadSubTerms();
+  }, [selectedSession, selectedTerm]);
+
+  const firstSubTermId = subTerms[0]?.term_id ?? null;
+  const activeSubTermIndex = subTerms.findIndex((term) => term.term_id === activeSubTermId);
+  const previousSubTerm = activeSubTermIndex > 0 ? subTerms[activeSubTermIndex - 1] : null;
+  const currentSubTerm = activeSubTermIndex >= 0 ? subTerms[activeSubTermIndex] : null;
+  const canImportSchedule =
+    Boolean(activeSubTermId) && Boolean(firstSubTermId) && activeSubTermId !== firstSubTermId;
+
+  const getSubTermLabel = (term) =>
+    term?.display_term?.display_name || term?.displayTerm?.display_name || 'Term';
 
   const handleActionTabChange = (e, v) => setActionTab(v);
   const handleScheduleTabChange = (e, v) => setScheduleTab(v);
 
   const handleImportSchedule = () => {
-    showSnackbar('Import schedule triggered');
+    setImportDialogOpen(true);
+  };
+
+  const handleConfirmImportSchedule = async () => {
+    if (!selectedSession || !activeSubTermId || !selectedCategory) {
+      showSnackbar('Please select a session, term, and category before importing', 'error');
+      return;
+    }
+
+    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+
+    try {
+      setImporting(true);
+      const res = await importPaymentSchedule({
+        session_id: selectedSession,
+        term_id: activeSubTermId,
+        bursary_payment_category_id: selectedCategory,
+        pay_option: payOption,
+      });
+
+      if (res?.success) {
+        showSnackbar(res.message || 'Payment schedules imported successfully');
+        setImportDialogOpen(false);
+        setScheduleRefreshKey((key) => key + 1);
+        refreshStats();
+      } else {
+        showSnackbar(res?.message || 'Failed to import payment schedules', 'error');
+      }
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Failed to import payment schedules';
+      showSnackbar(message, 'error');
+    } finally {
+      setImporting(false);
+    }
   };
 
   // Fetch stats when session, term, schedule tab, or sub-term changes
@@ -215,29 +301,59 @@ const PaymentShedule = () => {
 
   const stats = scheduleStats;
 
-  // Stats for Generate Invoice Tab
-  const invoiceStats = {
-    invoiceGenerated: 382,
-    totalAmount: '₦900,805,000.00',
-    paymentNames: [
-      { name: 'With Minimum Invoice', count: 798, amount: '₦539,253,760.00', label: 'School Fee' },
-      {
-        name: 'With Maximum Invoice',
-        count: 798,
-        amount: '₦539,455,900.00',
-        label: 'Acceptance Fee',
-      },
-    ],
-    categories: [
-      {
-        name: 'With Minimum Invoice',
-        count: 798,
-        amount: '₦539,253,760.00',
-        label: 'Returning Student',
-      },
-      { name: 'With Maximum Invoice', count: 798, amount: '₦539,495,900.00', label: 'New Student' },
-    ],
-  };
+  // Fetch invoice stats when session term changes or when Generate Invoice tab is active
+  useEffect(() => {
+    if (!selectedSessionTerm || actionTab !== 1) return;
+    const loadInvoiceStats = async () => {
+      try {
+        setLoadingInvoiceStats(true);
+        const res = await fetchGenerateInvoiceStats(selectedSessionTerm);
+        if (res?.success && res.data) {
+          const { invoice_generated, total_amount, payment_names, categories } = res.data;
+          setInvoiceStats({
+            invoiceGenerated: invoice_generated ?? 0,
+            totalAmount: total_amount ?? 0,
+            paymentNames: [
+              {
+                name: 'With Minimum Invoice',
+                count: payment_names?.min?.count ?? 0,
+                amount: payment_names?.min?.amount ?? 0,
+                label: payment_names?.min?.name ?? 'N/A',
+              },
+              {
+                name: 'With Maximum Invoice',
+                count: payment_names?.max?.count ?? 0,
+                amount: payment_names?.max?.amount ?? 0,
+                label: payment_names?.max?.name ?? 'N/A',
+              },
+            ],
+            categories: [
+              {
+                name: 'With Minimum Invoice',
+                count: categories?.min?.count ?? 0,
+                amount: categories?.min?.amount ?? 0,
+                label: categories?.min?.name ?? 'N/A',
+              },
+              {
+                name: 'With Maximum Invoice',
+                count: categories?.max?.count ?? 0,
+                amount: categories?.max?.amount ?? 0,
+                label: categories?.max?.name ?? 'N/A',
+              },
+            ],
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load invoice stats:', err);
+      } finally {
+        setLoadingInvoiceStats(false);
+      }
+    };
+    loadInvoiceStats();
+  }, [selectedSessionTerm, actionTab]);
+
+  const formatCurrency = (value) =>
+    `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const sendInvoiceStats = [
     { label: 'Total Invoice Sent', value: 522, icon: MessageIcon },
@@ -264,8 +380,6 @@ const PaymentShedule = () => {
                 {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
               </Typography>
 
-
-
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
                 <Box
                   sx={{
@@ -288,7 +402,6 @@ const PaymentShedule = () => {
                   <Typography variant="body2" color="textSecondary">
                     Classes
                   </Typography>
-                  
                 </Box>
               </Box>
             </Paper>
@@ -410,12 +523,12 @@ const PaymentShedule = () => {
                   }}
                 >
                   <Typography variant="h2" fontWeight={700} color="#F57C00">
-                    {invoiceStats.invoiceGenerated}
+                    {loadingInvoiceStats ? '...' : invoiceStats.invoiceGenerated}
                   </Typography>
                 </Box>
                 <Box display="flex" ml="auto" flexDirection="column" justifyContent="end">
                   <Typography variant="h4" fontWeight={700}>
-                    {invoiceStats.totalAmount}
+                    {formatCurrency(invoiceStats.totalAmount)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Amount
@@ -461,10 +574,10 @@ const PaymentShedule = () => {
                       {item.name}
                     </Typography>
                     <Typography variant="h5" fontWeight={700} mb={0.5}>
-                      {item.count}
+                      {loadingInvoiceStats ? '...' : item.count}
                     </Typography>
                     <Typography variant="body2" fontWeight={600} mb={0.5}>
-                      {item.amount}
+                      {formatCurrency(item.amount)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       {item.label}
@@ -511,10 +624,10 @@ const PaymentShedule = () => {
                       {item.name}
                     </Typography>
                     <Typography variant="h5" fontWeight={700} mb={0.5}>
-                      {item.count}
+                      {loadingInvoiceStats ? '...' : item.count}
                     </Typography>
                     <Typography variant="body2" fontWeight={600} mb={0.5}>
-                      {item.amount}
+                      {formatCurrency(item.amount)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       {item.label}
@@ -739,15 +852,20 @@ const PaymentShedule = () => {
                   />
                 </Tabs>
               </Box>
-              <Button
-                variant="contained"
-                startIcon={<UploadIcon />}
-                onClick={handleImportSchedule}
-                size="medium"
-                sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
-              >
-                Import schedule for current term
-              </Button>
+              {canImportSchedule && (
+                <Button
+                  variant="contained"
+                  startIcon={
+                    importing ? <CircularProgress size={18} color="inherit" /> : <UploadIcon />
+                  }
+                  onClick={handleImportSchedule}
+                  size="medium"
+                  disabled={importing}
+                  sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  Import schedule for current term
+                </Button>
+              )}
             </Box>
           </>
         )}
@@ -767,6 +885,7 @@ const PaymentShedule = () => {
                   payOption="compulsory"
                   onTermChange={setActiveSubTermId}
                   refreshStats={refreshStats}
+                  scheduleRefreshKey={scheduleRefreshKey}
                 />
               )}
               {scheduleTab === 1 && (
@@ -780,6 +899,7 @@ const PaymentShedule = () => {
                   payOption="optional"
                   onTermChange={setActiveSubTermId}
                   refreshStats={refreshStats}
+                  scheduleRefreshKey={scheduleRefreshKey}
                 />
               )}
             </>
@@ -788,6 +908,49 @@ const PaymentShedule = () => {
           {actionTab === 2 && <SendInvoiceTab showSnackbar={showSnackbar} />}
         </Box>
       </Paper>
+
+      <Dialog
+        open={importDialogOpen}
+        onClose={() => !importing && setImportDialogOpen(false)}
+        maxWidth="sm"
+        // fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Import Payment Schedule</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            This will copy {scheduleTab === 0 ? 'compulsory' : 'optional'} payment schedules for{' '}
+            <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {selectedCategoryLabel || 'the selected category'}
+            </Box>{' '}
+            from{' '}
+            <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {getSubTermLabel(previousSubTerm)}
+            </Box>{' '}
+            into{' '}
+            <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+              {getSubTermLabel(currentSubTerm)}
+            </Box>
+            . Existing schedules for the same payment items will be updated.
+          </Typography>
+
+          <Alert severity="warning">
+            Review imported amounts before generating invoices for this term.
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setImportDialogOpen(false)} disabled={importing}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmImportSchedule}
+            disabled={importing}
+            startIcon={importing ? <CircularProgress size={16} color="inherit" /> : <UploadIcon />}
+          >
+            {importing ? 'Importing...' : 'Import Schedule'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

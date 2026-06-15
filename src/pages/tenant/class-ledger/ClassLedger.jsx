@@ -27,6 +27,7 @@ import {
   InputLabel,
   Select,
   InputAdornment,
+  CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -51,75 +52,12 @@ import {
   fetchClassesByProgramme,
   fetchProgrammes,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchPaymentNameOptions } from '@/api/tenant/bursary/classLedger';
-
-const dummyData = [
-  {
-    id: 1,
-    studentName: 'John Doe',
-    avatar:
-      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
-    compulsoryBill: '₦80,000',
-    optionalBill: '₦10,000',
-    totalPayable: '₦90,000',
-    totalPaid: '₦50,000',
-    penalty: '₦2,000',
-    discount: '₦5,000',
-    balance: '₦37,000',
-  },
-  {
-    id: 2,
-    studentName: 'Mary Johnson',
-    avatar:
-      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
-    compulsoryBill: '₦75,000',
-    optionalBill: '₦5,000',
-    totalPayable: '₦80,000',
-    totalPaid: '₦80,000',
-    penalty: '₦0',
-    discount: '₦0',
-    balance: '₦0',
-  },
-  {
-    id: 3,
-    studentName: 'David Williams',
-    avatar:
-      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
-    compulsoryBill: '₦90,000',
-    optionalBill: '₦15,000',
-    totalPayable: '₦105,000',
-    totalPaid: '₦60,000',
-    penalty: '₦3,000',
-    discount: '₦10,000',
-    balance: '₦38,000',
-  },
-  {
-    id: 4,
-    studentName: 'Sarah Brown',
-    avatar:
-      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
-    compulsoryBill: '₦85,000',
-    optionalBill: '₦8,000',
-    totalPayable: '₦93,000',
-    totalPaid: '₦93,000',
-    penalty: '₦0',
-    discount: '₦0',
-    balance: '₦0',
-  },
-  {
-    id: 5,
-    avatar:
-      'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
-    studentName: 'Michael Adams',
-    compulsoryBill: '₦70,000',
-    optionalBill: '₦12,000',
-    totalPayable: '₦82,000',
-    totalPaid: '₦40,000',
-    penalty: '₦1,500',
-    discount: '₦2,500',
-    balance: '₦41,000',
-  },
-];
+import {
+  fetchClassLedgerAnalytics,
+  fetchPaymentNameOptions,
+  getClassStudentsPaymentStatus,
+} from '@/api/tenant/bursary/classLedger';
+import useNotification from '@/hooks/useNotification';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 const compulsoryChartData = {
@@ -208,14 +146,22 @@ const ClassLedger = () => {
   const [paymentOptions, setPaymentOptions] = useState([]);
   const [selectedPaymentOption, setSelectedPaymentOption] = useState('');
 
+  const [ledgerData, setLedgerData] = useState([]);
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loadingTable, setLoadingTable] = useState(false);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  const notify = useNotification();
+
   const handleFilterChange = React.useCallback(async (key, val) => {
     if (key === 'programme') {
       try {
         const classesRes = await fetchClassesByProgramme(val);
         setClasses(
           classesRes.data.map((c) => ({
-            value: c.id,
-            label: c.class_name,
+            value: c.class_arm_id,
+            label: c.class_code,
+            arm_names: c.arm_names,
           })),
         );
         setClassLevel(''); // reset class when programme changes
@@ -245,6 +191,42 @@ const ClassLedger = () => {
       setPaymentOptions(res.data || []);
     } catch (error) {
       console.error('Failed to load payment options', error);
+    }
+  };
+
+  const fetchClassLedgerData = async () => {
+    if (!programme || !classLevel) {
+      notify.warning('Please select Programme and Class');
+      return;
+    }
+
+    setLoadingTable(true);
+    setLoadingAnalytics(true);
+
+    try {
+      const payload = {
+        filters: {
+          programme_id: programme,
+          class_arm_id: classLevel,
+          payment_status: selectedPaymentOption || null, // optional later
+        },
+      };
+
+      // console.log('Sending payload:', payload);
+
+      // Fetch Analytics for Stat Cards
+      const analyticsRes = await fetchClassLedgerAnalytics(payload);
+      setAnalyticsData(analyticsRes);
+
+      // Fetch Table Data
+      const tableRes = await getClassStudentsPaymentStatus(payload);
+      setLedgerData(tableRes.students?.data || tableRes.students || []);
+    } catch (error) {
+      console.error(error);
+      notify.error('Failed to load class ledger data');
+    } finally {
+      setLoadingTable(false);
+      setLoadingAnalytics(false);
     }
   };
 
@@ -331,20 +313,17 @@ const ClassLedger = () => {
         <Grid size={{ xs: 12, lg: 4 }}>
           <StatCard
             title="Total Invoice(Compulsory Bill)"
-            // value={analyticsLoading ? '...' : String(analytics?.totalSchools ?? 0)}
-            value="₦7,000,234.00"
+            value={`₦${(analyticsData?.total_comp_schedule || 0).toLocaleString()}`}
             valueColor="#5CB979"
             valueBg={isDark ? '#1e2a4a' : '#EEFAF3'}
             subStats={[
               {
                 label: 'Total Paid',
-                value: '304,043,000',
-                // value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0),
+                value: `₦${(analyticsData?.total_comp_transaction || 0).toLocaleString()}`,
               },
               {
                 label: 'Balance',
-                value: '304,043,000',
-                // value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0),
+                value: `₦${(analyticsData?.total_comp_balance || 0).toLocaleString()}`,
               },
             ]}
             onIconClick={() => {
@@ -366,12 +345,18 @@ const ClassLedger = () => {
         <Grid size={{ xs: 12, lg: 4 }}>
           <StatCard
             title="Total Invoice (Optional Bill)"
-            value="₦7,000,234.00"
+            value={`₦${(analyticsData?.total_opt_schedule || 0).toLocaleString()}`}
             valueColor="#1F35B6"
             valueBg={isDark ? '#0d2e1e' : '#ECEFFF'}
             subStats={[
-              { label: 'Total Paid', value: '₦100,000,000' },
-              { label: 'Balance', value: '304,043,000' },
+              {
+                label: 'Total Paid',
+                value: `₦${(analyticsData?.total_opt_transaction || 0).toLocaleString()}`,
+              },
+              {
+                label: 'Balance',
+                value: `₦${(analyticsData?.total_opt_balance || 0).toLocaleString()}`,
+              },
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
@@ -391,12 +376,18 @@ const ClassLedger = () => {
         <Grid size={{ xs: 12, lg: 4 }}>
           <StatCard
             title="Total Payable"
-            value="₦7,000,234.00"
+            value={`₦${(analyticsData?.outstanding_balance || 0).toLocaleString()}`}
             valueColor="#895CB9"
             valueBg={isDark ? '#0d2e1e' : '#F3EEFA'}
             subStats={[
-              { label: 'Total Paid', value: '₦100,000,000' },
-              { label: 'Balance', value: '304,043,000' },
+              {
+                label: 'Total Paid',
+                value: `₦${(analyticsData?.total_transaction || 0).toLocaleString()}`,
+              },
+              {
+                label: 'Balance',
+                value: `₦${(analyticsData?.total_balance || 0).toLocaleString()}`,
+              },
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
@@ -494,7 +485,7 @@ const ClassLedger = () => {
             >
               {classes.map((c) => (
                 <MenuItem key={c.value} value={c.value}>
-                  {c.label}
+                  {c.label} ({c.arm_names})
                 </MenuItem>
               ))}
             </TextField>
@@ -536,7 +527,13 @@ const ClassLedger = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }}>
-            <Button variant="contained" fullWidth sx={{ height: '40px' }}>
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ height: '40px' }}
+              onClick={fetchClassLedgerData}
+              disabled={!programme || !classLevel}
+            >
               Fetch
             </Button>
           </Grid>
@@ -560,50 +557,76 @@ const ClassLedger = () => {
             </TableHead>
 
             <TableBody>
-              {dummyData.map((row, index) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>{index + 1}</TableCell>
-
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar
-                        src={row.avatar ? row.avatar : <PersonOutlineIcon sx={{ color: '#000' }} />}
-                        alt={row.studentName}
-                        sx={{ width: 36, height: 36 }}
-                      >
-                        {row.studentName?.toUpperCase() ?? '?'}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {row.studentName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {'JNK/009' || '—'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
-
-                  <TableCell>{row.compulsoryBill}</TableCell>
-                  <TableCell>{row.optionalBill}</TableCell>
-                  <TableCell>{row.totalPayable}</TableCell>
-                  <TableCell>{row.totalPaid}</TableCell>
-                  <TableCell>{row.penalty}</TableCell>
-                  <TableCell>{row.discount}</TableCell>
-                  <TableCell>{row.balance}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        setAnchorEl(e.currentTarget);
-                        setActiveRow(row);
-                      }}
-                    >
-                      <IconDotsVertical size={18} />
-                    </IconButton>
+              {loadingTable ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                    <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : ledgerData.length > 0 ? (
+                ledgerData.map((student, index) => {
+                  const user = student.users || student.user || {};
+
+                  return (
+                    <TableRow key={student.user_id || index} hover>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar src={user.avatar} sx={{ width: 36, height: 36 }}>
+                            {user.fname?.[0] || '?'}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              {user.full_name || `${user.fname} ${user.lname}`}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {user.user_id || '—'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        ₦
+                        {(
+                          student.total_compulsory ||
+                          student.total_compulsorys ||
+                          0
+                        ).toLocaleString()}
+                      </TableCell>
+                      <TableCell>₦{(student.total_optional || 0).toLocaleString()}</TableCell>
+                      <TableCell>₦{(student.total_payable || 0).toLocaleString()}</TableCell>
+                      <TableCell>₦{(student.total_paid || 0).toLocaleString()}</TableCell>
+                      <TableCell>₦0</TableCell> {/* Penalty - add if available later */}
+                      <TableCell>₦0</TableCell> {/* Discount - add if available later */}
+                      <TableCell
+                        sx={{
+                          color: (student.total_balance || 0) > 0 ? 'error.main' : 'success.main',
+                          fontWeight: 600,
+                        }}
+                      >
+                        ₦{(student.total_balance || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            setAnchorEl(e.currentTarget);
+                            setActiveRow(student);
+                          }}
+                        >
+                          <IconDotsVertical size={18} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
+                    No students found for the selected class.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>

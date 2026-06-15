@@ -58,8 +58,13 @@ const InvoiceStudentsView = () => {
   const [className, setClassName] = useState('');
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+
+  // ── KEY FIX: track whether categories have been resolved ──
+  // This prevents the student fetch from firing before a valid category_id exists.
+  const [categoriesReady, setCategoriesReady] = useState(false);
+
   const [selectedStudentCategory, setSelectedStudentCategory] = useState(
-    searchParams.get('category_id') || 'all',
+    searchParams.get('category_id') || '',
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudents, setSelectedStudents] = useState([]);
@@ -68,9 +73,7 @@ const InvoiceStudentsView = () => {
   const openMenu = Boolean(anchorEl);
 
   // ── Optional payments per student ──
-  // Stores { [user_id]: totalOptionalAmount }
   const [studentOptionalAmounts, setStudentOptionalAmounts] = useState({});
-  // Stores { [user_id]: Set<option_id> } — persists modal checkbox selections per student
   const [studentSelectedOptionIds, setStudentSelectedOptionIds] = useState({});
 
   // ── Optional payment modal state ──
@@ -80,36 +83,53 @@ const InvoiceStudentsView = () => {
   const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
   const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
 
-  // Fetch available categories from API for the dropdown filter
+  // ── STEP 1: Fetch categories first, then mark ready ──
   useEffect(() => {
+    // Capture the URL param value synchronously before the async work begins
+    const urlCategoryId = searchParams.get('category_id') || '';
+
     const loadCategories = async () => {
       try {
         setCategoriesLoading(true);
+
         const res = await fetchActiveCategories();
         const cats = Array.isArray(res?.data) ? res.data : [];
         setCategories(cats);
 
-        if (cats.length > 0 && !searchParams.get('category_id')) {
+        if (urlCategoryId && cats.some((c) => String(c.id) === urlCategoryId)) {
+          // URL param is valid — keep it
+          setSelectedStudentCategory(urlCategoryId);
+        } else if (cats.length > 0) {
+          // Fall back to first category
           const firstCatId = String(cats[0].id);
           setSelectedStudentCategory(firstCatId);
-          setSearchParams({ category_id: firstCatId });
+          setSearchParams({ category_id: firstCatId }, { replace: true });
         }
       } catch (err) {
         console.error('Failed to load categories', err);
       } finally {
         setCategoriesLoading(false);
+        // Signal that category resolution is complete regardless of outcome
+        setCategoriesReady(true);
       }
     };
+
     loadCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const selectedCategoryId =
-    selectedStudentCategory !== 'all' ? selectedStudentCategory : undefined;
+    selectedStudentCategory && selectedStudentCategory !== 'all'
+      ? selectedStudentCategory
+      : undefined;
 
-  // Fetch compulsory student data
+  // ── STEP 2: Fetch student data only after categories are ready ──
   useEffect(() => {
+    // Guard: don't run until category selection is resolved
+    if (!categoriesReady) return;
+    if (!session_term_id) return;
+
     const loadData = async () => {
-      if (!session_term_id) return;
       try {
         setLoading(true);
         setError(null);
@@ -117,6 +137,8 @@ const InvoiceStudentsView = () => {
         setStudentOptionalAmounts({});
         setStudentSelectedOptionIds({});
         setAnchorStudent(null);
+        setSelectedStudents([]);
+
         const response = await fetchStudentForInvoiceData({
           sessionTermId: session_term_id,
           classId: class_id,
@@ -136,24 +158,23 @@ const InvoiceStudentsView = () => {
         setLoading(false);
       }
     };
+
     loadData();
-  }, [session_term_id, class_id, pay_schedule_id, selectedCategoryId]);
+  }, [session_term_id, class_id, pay_schedule_id, selectedCategoryId, categoriesReady]);
 
   // ── Generate Invoice confirmation state ──
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
-  const [invoiceResult, setInvoiceResult] = useState(null); // { success, message } or null
+  const [invoiceResult, setInvoiceResult] = useState(null);
 
   // ── Fetch optional payments when modal opens ──
   const handleOpenOptionalModal = async (student) => {
     setOptionalModalStudent(student);
     setOptionalModalOpen(true);
 
-    // Restore previously selected options for this student, or start fresh
     const storedIds = studentSelectedOptionIds[student.user_id];
     setSelectedOptionalIds(storedIds ? new Set(storedIds) : new Set());
 
-    // Load the optional payments available for this class/session/category
     try {
       setLoadingOptionalPayments(true);
       const res = await fetchStudentOptionalPayments({
@@ -178,7 +199,6 @@ const InvoiceStudentsView = () => {
     setSelectedOptionalIds(new Set());
   };
 
-  // Toggle a single optional payment option
   const handleToggleOptionalItem = (optionId) => {
     setSelectedOptionalIds((prev) => {
       const next = new Set(prev);
@@ -191,7 +211,6 @@ const InvoiceStudentsView = () => {
     });
   };
 
-  // Mark all / unmark all
   const handleToggleAllOptional = () => {
     const allIds = new Set();
     optionalPaymentList.forEach((group) => {
@@ -199,15 +218,12 @@ const InvoiceStudentsView = () => {
     });
 
     setSelectedOptionalIds((prev) => {
-      // If all are already selected, unselect all
       const isAllSelected =
-        prev.size === allIds.size &&
-        [...allIds].every((id) => prev.has(id));
+        prev.size === allIds.size && [...allIds].every((id) => prev.has(id));
       return isAllSelected ? new Set() : allIds;
     });
   };
 
-  // "Add" button: sum selected optional amounts and store for student
   const handleAddOptionalPayments = () => {
     if (!optionalModalStudent) return;
 
@@ -221,7 +237,6 @@ const InvoiceStudentsView = () => {
       [optionalModalStudent.user_id]: totalOptional,
     }));
 
-    // Persist selected option IDs so re-opening the modal restores the checkboxes
     const userId = optionalModalStudent.user_id;
     setStudentSelectedOptionIds((prev) => {
       const next = { ...prev };
@@ -236,7 +251,6 @@ const InvoiceStudentsView = () => {
     handleCloseOptionalModal();
   };
 
-  // Determine if all optional items are selected
   const allOptionalItems = optionalPaymentList.flatMap((g) => g.options);
   const allOptionalSelected =
     allOptionalItems.length > 0 &&
@@ -264,7 +278,6 @@ const InvoiceStudentsView = () => {
         selectedStudents.includes(idx),
       );
 
-      // Build student_data array: [{ user_id, option_payment_ids }, ...]
       const studentData = selectedStudentData.map((s) => ({
         user_id: String(s.user_id),
         option_payment_ids: studentSelectedOptionIds[s.user_id] || [],
@@ -320,6 +333,22 @@ const InvoiceStudentsView = () => {
     setAnchorStudent(null);
   };
 
+  const handlePrintInvoice = () => {
+    if (!anchorStudent) return;
+    handleMenuClose();
+    navigate(
+      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${anchorStudent.user_id}`,
+    );
+  };
+
+  const handlePrintInvoiceForAll = () => {
+    if (filteredStudents.length === 0) return;
+    const userIds = filteredStudents.map((s) => s.user_id).join(',');
+    navigate(
+      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${userIds}`,
+    );
+  };
+
   // ── Row checkbox handlers ──
   const handleStudentClick = (event, rowIdx) => {
     const selectedIndex = selectedStudents.indexOf(rowIdx);
@@ -359,7 +388,8 @@ const InvoiceStudentsView = () => {
   });
 
   // ── Render states ──
-  if (loading) {
+  // Show spinner while categories are still resolving OR students are loading
+  if (categoriesLoading || (!categoriesReady && loading)) {
     return (
       <Box
         display="flex"
@@ -387,8 +417,14 @@ const InvoiceStudentsView = () => {
     <>
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between">
-            <Typography variant="h5">
+          <Box>
+            <Typography
+              variant="h5"
+              sx={{
+                fontSize: { xs: '1rem', sm: '1.25rem' },
+                wordBreak: 'break-word',
+              }}
+            >
               Student Invoice List {sessionLabel}
               {termLabel ? ` - ${termLabel}` : ''} · {className}
             </Typography>
@@ -397,47 +433,65 @@ const InvoiceStudentsView = () => {
       >
         <Box
           display="flex"
+          flexDirection={{ xs: 'column', sm: 'row' }}
           justifyContent="space-between"
-          alignItems="center"
+          alignItems={{ xs: 'stretch', sm: 'center' }}
+          gap={1.5}
           mb={2}
         >
           <Button
             size="small"
             variant="outlined"
             onClick={() => navigate('/payment-schedule')}
+            sx={{ alignSelf: { xs: 'flex-start', sm: 'auto' } }}
           >
             Back
           </Button>
-          <Stack direction="row" spacing={1}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
             <Button
               size="small"
               variant="contained"
-              disabled={selectedStudents.length === 0}
+              disabled={selectedStudents.length === 0 || generatingInvoice}
               onClick={handleGenerateInvoiceClick}
-              startIcon={
-                generatingInvoice ? undefined : <DescriptionIcon />
-              }
+              startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                whiteSpace: 'nowrap',
+              }}
             >
               {generatingInvoice ? (
                 <CircularProgress size={16} sx={{ color: 'inherit', mr: 0.5 }} />
               ) : null}
               Generate Invoice
             </Button>
-            <Button size="small" variant="outlined">
-              Print Invoice for All
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={handlePrintInvoiceForAll}
+              disabled={filteredStudents.length === 0}
+              sx={{
+                width: { xs: '100%', sm: 'auto' },
+                whiteSpace: 'nowrap',
+              }}
+            >
+              View Invoice for All
             </Button>
           </Stack>
         </Box>
 
         <Grid
           container
-          spacing={1}
+          spacing={1.5}
           mb={3}
           alignItems="center"
           justifyContent="flex-end"
         >
-          <Grid size={{ xs: 12, md: 'auto' }}>
-            <FormControl size="small" sx={{ minWidth: 200 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 'auto' }}>
+            <FormControl size="small" fullWidth sx={{ minWidth: { xs: 1, sm: 200 } }}>
               <Select
                 displayEmpty
                 value={selectedStudentCategory}
@@ -461,12 +515,13 @@ const InvoiceStudentsView = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ xs: 12, md: 'auto' }}>
+          <Grid size={{ xs: 12, sm: 6, md: 'auto' }}>
             <TextField
               size="small"
               placeholder="Search by name or ID"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              fullWidth
               slotProps={{
                 input: {
                   startAdornment: (
@@ -480,256 +535,227 @@ const InvoiceStudentsView = () => {
           </Grid>
         </Grid>
 
-        <TableContainer
-          component={Paper}
-          variant="outlined"
-          sx={{
-            overflowX: 'auto',
-            borderRadius: 2,
-            borderColor: 'grey.200',
-          }}
-        >
-          <Table sx={{ minWidth: 900 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell
-                  padding="checkbox"
-                  sx={{
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  <Checkbox
-                    color="primary"
-                    indeterminate={
-                      selectedStudents.length > 0 &&
-                      selectedStudents.length < filteredStudents.length
-                    }
-                    checked={
-                      filteredStudents.length > 0 &&
-                      selectedStudents.length === filteredStudents.length
-                    }
-                    onChange={handleSelectAllClick}
-                  />
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.secondary',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  User ID
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.secondary',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  Student Name
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.secondary',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  Category
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.secondary',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  Total Compulsory Amount
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.secondary',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  Total Optional Amount
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.secondary',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  Total Payable
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 600,
-                    color: 'text.secondary',
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.200',
-                  }}
-                >
-                  Action
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredStudents.length === 0 ? (
+        {/* Show inline spinner while students load (after categories are ready) */}
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            variant="outlined"
+            sx={{
+              overflowX: 'auto',
+              overflowY: 'auto',
+              borderRadius: 2,
+              borderColor: 'grey.200',
+              '& .MuiTableCell-root': {
+                px: { xs: 1, sm: 2 },
+                py: { xs: 0.75, sm: 1 },
+              },
+            }}
+          >
+            <Table sx={{ minWidth: { xs: 700, sm: 900 } }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                    <Alert
-                      severity="info"
-                      sx={{ justifyContent: 'center', bgcolor: 'transparent' }}
-                    >
-                      No students found matching your criteria.
-                    </Alert>
+                  <TableCell
+                    padding="checkbox"
+                    sx={{
+                      borderBottom: '1px solid',
+                      borderColor: 'grey.200',
+                      px: { xs: 0.5, sm: 1 },
+                    }}
+                  >
+                    <Checkbox
+                      color="primary"
+                      size="small"
+                      indeterminate={
+                        selectedStudents.length > 0 &&
+                        selectedStudents.length < filteredStudents.length
+                      }
+                      checked={
+                        filteredStudents.length > 0 &&
+                        selectedStudents.length === filteredStudents.length
+                      }
+                      onChange={handleSelectAllClick}
+                    />
                   </TableCell>
-                </TableRow>
-              ) : (
-                filteredStudents.map((student, idx) => {
-                  const isItemSelected = isStudentSelected(idx);
-                  const compulsoryAmt =
-                    Number(student.total_compulsory_payment) || 0;
-                  const optionalAmt =
-                    Number(studentOptionalAmounts[student.user_id]) || 0;
-                  const totalPayable = compulsoryAmt + optionalAmt;
-
-                  return (
-                    <TableRow
-                      key={`${student.user_id}-${idx}`}
-                      hover
-                      onClick={(event) => handleStudentClick(event, idx)}
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      selected={isItemSelected}
+                  {[
+                    'User ID',
+                    'Student Name',
+                    'Category',
+                    'Total Compulsory Amount',
+                    'Total Optional Amount',
+                    'Total Payable',
+                    'Action',
+                  ].map((header) => (
+                    <TableCell
+                      key={header}
                       sx={{
-                        '& td': {
-                          borderBottom: '1px solid',
-                          borderColor: 'grey.100',
-                        },
-                        cursor: 'pointer',
+                        fontWeight: 600,
+                        color: 'text.secondary',
+                        borderBottom: '1px solid',
+                        borderColor: 'grey.200',
+                        fontSize: { xs: '0.7rem', sm: '0.8125rem' },
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox checked={isItemSelected} color="primary" />
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        {student.user_id}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        {student.name}
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            bgcolor: 'primary.light',
-                            py: 0.5,
-                            borderRadius: 5,
-                            display: 'inline-block',
-                            px: 1.5,
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            fontWeight={600}
-                            color="primary"
-                          >
-                            {student.category}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>
-                        ₦{compulsoryAmt.toLocaleString()}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>
-  <Box
-    display="flex"
-    flexDirection="column"
-    alignItems="center"
-    justifyContent="center"
-    gap={1}
-  >
-    {optionalAmt > 0 ? (
-      <Typography
-        variant="body2"
-        fontWeight={700}
-        textAlign="center"
-      >
-        ₦{optionalAmt.toLocaleString()}
-      </Typography>
-    ) : (
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        textAlign="center"
-      >
-        -
-      </Typography>
-    )}
+                      {header}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredStudents.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                      <Alert
+                        severity="info"
+                        sx={{ justifyContent: 'center', bgcolor: 'transparent' }}
+                      >
+                        No students found matching your criteria.
+                      </Alert>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredStudents.map((student, idx) => {
+                    const isItemSelected = isStudentSelected(idx);
+                    const compulsoryAmt =
+                      Number(student.total_compulsory_payment) || 0;
+                    const optionalAmt =
+                      Number(studentOptionalAmounts[student.user_id]) || 0;
+                    const totalPayable = compulsoryAmt + optionalAmt;
 
-    <Button
-      size="small"
-      variant="outlined"
-      startIcon={<AddIcon fontSize="small" />}
-      onClick={(e) => {
-        e.stopPropagation();
-        handleOpenOptionalModal(student);
-      }}
-      sx={{
-        textTransform: 'none',
-        fontWeight: 600,
-        fontSize: 12,
-        whiteSpace: 'nowrap',
-      }}
-    >
-      Add Optional Pay.
-    </Button>
-  </Box>
-</TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{
-                            bgcolor: 'primary.light',
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: 1,
-                            display: 'inline-block',
-                          }}
-                        >
-                          <Typography variant="body2" fontWeight={700}>
-                            ₦{totalPayable.toLocaleString()}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMenuClick(e, student);
-                          }}
-                        >
-                          <MoreHorizIcon sx={{ color: 'text.secondary' }} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    return (
+                      <TableRow
+                        key={`${student.user_id}-${idx}`}
+                        hover
+                        onClick={(event) => handleStudentClick(event, idx)}
+                        role="checkbox"
+                        aria-checked={isItemSelected}
+                        selected={isItemSelected}
+                        sx={{
+                          '& td': {
+                            borderBottom: '1px solid',
+                            borderColor: 'grey.100',
+                          },
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <TableCell padding="checkbox" sx={{ px: { xs: 0.5, sm: 1 } }}>
+                          <Checkbox checked={isItemSelected} color="primary" size="small" />
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                          {student.user_id}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                          {student.name}
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              bgcolor: 'primary.light',
+                              py: 0.25,
+                              borderRadius: 5,
+                              display: 'inline-block',
+                              px: { xs: 1, sm: 1.5 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={600}
+                              color="primary"
+                              sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}
+                            >
+                              {student.category}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>
+                          ₦{compulsoryAmt.toLocaleString()}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          <Box
+                            display="flex"
+                            flexDirection="column"
+                            alignItems="center"
+                            justifyContent="center"
+                            gap={0.5}
+                          >
+                            {optionalAmt > 0 ? (
+                              <Typography
+                                variant="body2"
+                                fontWeight={700}
+                                textAlign="center"
+                                sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                              >
+                                ₦{optionalAmt.toLocaleString()}
+                              </Typography>
+                            ) : (
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                textAlign="center"
+                                sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                              >
+                                -
+                              </Typography>
+                            )}
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<AddIcon fontSize="small" />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenOptionalModal(student);
+                              }}
+                              sx={{
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                fontSize: { xs: 10, sm: 12 },
+                                whiteSpace: 'nowrap',
+                                minWidth: { xs: 'auto', sm: 'auto' },
+                                px: { xs: 0.75, sm: 1.5 },
+                              }}
+                            >
+                              Add Optional Pay.
+                            </Button>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              bgcolor: 'primary.light',
+                              px: { xs: 1, sm: 1.5 },
+                              py: 0.25,
+                              borderRadius: 1,
+                              display: 'inline-block',
+                            }}
+                          >
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>
+                              ₦{totalPayable.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMenuClick(e, student);
+                            }}
+                          >
+                            <MoreHorizIcon sx={{ color: 'text.secondary', fontSize: { xs: 18, sm: 24 } }} />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
         <Menu
           anchorEl={anchorEl}
@@ -738,7 +764,7 @@ const InvoiceStudentsView = () => {
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          <MenuItem onClick={handleMenuClose}>Print Invoice</MenuItem>
+          <MenuItem onClick={handlePrintInvoice}>Print Invoice</MenuItem>
           <MenuItem onClick={handleMenuClose}>Regenerate Invoice</MenuItem>
           <MenuItem onClick={handleMenuClose}>Go to Student Ledger</MenuItem>
         </Menu>
@@ -792,7 +818,6 @@ const InvoiceStudentsView = () => {
             </Alert>
           ) : (
             <Stack spacing={1} sx={{ mt: 1 }}>
-              {/* Mark All / Unmark All */}
               <Box
                 sx={{
                   display: 'flex',
@@ -814,9 +839,7 @@ const InvoiceStudentsView = () => {
                   }
                   label={
                     <Typography variant="body2" fontWeight={600}>
-                      {allOptionalSelected
-                        ? 'Unmark All'
-                        : 'Mark All'}
+                      {allOptionalSelected ? 'Unmark All' : 'Mark All'}
                     </Typography>
                   }
                 />
@@ -827,7 +850,6 @@ const InvoiceStudentsView = () => {
 
               <Divider />
 
-              {/* Grouped by payment name */}
               {optionalPaymentList.map((group) => (
                 <Box key={group.payment_name_id} sx={{ mt: 1 }}>
                   <Typography
@@ -845,9 +867,7 @@ const InvoiceStudentsView = () => {
                         control={
                           <Checkbox
                             checked={selectedOptionalIds.has(opt.option_id)}
-                            onChange={() =>
-                              handleToggleOptionalItem(opt.option_id)
-                            }
+                            onChange={() => handleToggleOptionalItem(opt.option_id)}
                             size="small"
                             color="primary"
                           />
@@ -858,16 +878,16 @@ const InvoiceStudentsView = () => {
                             justifyContent="space-between"
                             alignItems="center"
                             width="100%"
-                            sx={{ minWidth: 250 }}
+                            sx={{ minWidth: { xs: 180, sm: 250 } }}
                           >
-                            <Typography variant="body2">
+                            <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}>
                               {opt.option_name}
                             </Typography>
                             <Typography
                               variant="body2"
                               fontWeight={700}
                               color="text.secondary"
-                              sx={{ ml: 2 }}
+                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}
                             >
                               ₦{(Number(opt.amount) || 0).toLocaleString()}
                             </Typography>
@@ -888,7 +908,6 @@ const InvoiceStudentsView = () => {
 
         <Divider />
 
-        {/* Summary footer */}
         {!loadingOptionalPayments && optionalPaymentList.length > 0 && (
           <Box
             sx={{
@@ -914,17 +933,11 @@ const InvoiceStudentsView = () => {
         )}
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button
-            onClick={handleCloseOptionalModal}
-            fullWidth={{ xs: true, sm: false }}
-          >
-            Cancel
-          </Button>
+          <Button onClick={handleCloseOptionalModal}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleAddOptionalPayments}
             disabled={selectedOptionalIds.size === 0}
-            fullWidth={{ xs: true, sm: false }}
             sx={{ fontWeight: 600 }}
           >
             Add
@@ -1008,16 +1021,10 @@ const InvoiceStudentsView = () => {
         </DialogContent>
 
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
-          <Button
-            onClick={() => setConfirmDialogOpen(false)}
-            fullWidth={{ xs: true, sm: false }}
-          >
-            Cancel
-          </Button>
+          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleConfirmGenerateInvoice}
-            fullWidth={{ xs: true, sm: false }}
             sx={{ fontWeight: 600 }}
             startIcon={<DescriptionIcon />}
           >
@@ -1026,7 +1033,7 @@ const InvoiceStudentsView = () => {
         </DialogActions>
       </Dialog>
 
-      {/* ─── Invoice Result Alert (Snackbar-style) ─── */}
+      {/* ─── Invoice Result Alert ─── */}
       <Dialog
         open={Boolean(invoiceResult)}
         onClose={handleCloseInvoiceResult}
@@ -1035,21 +1042,9 @@ const InvoiceStudentsView = () => {
       >
         <DialogContent sx={{ textAlign: 'center', py: 3 }}>
           {invoiceResult?.success ? (
-            <DescriptionIcon
-              sx={{
-                fontSize: 48,
-                color: 'success.main',
-                mb: 1.5,
-              }}
-            />
+            <DescriptionIcon sx={{ fontSize: 48, color: 'success.main', mb: 1.5 }} />
           ) : (
-            <CloseIcon
-              sx={{
-                fontSize: 48,
-                color: 'error.main',
-                mb: 1.5,
-              }}
-            />
+            <CloseIcon sx={{ fontSize: 48, color: 'error.main', mb: 1.5 }} />
           )}
           <Typography
             variant="h6"
@@ -1064,10 +1059,7 @@ const InvoiceStudentsView = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-          <Button
-            variant="contained"
-            onClick={handleCloseInvoiceResult}
-          >
+          <Button variant="contained" onClick={handleCloseInvoiceResult}>
             OK
           </Button>
         </DialogActions>

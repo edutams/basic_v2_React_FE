@@ -89,6 +89,8 @@ const BursarySetup = () => {
     setCurrentTab(newValue);
   };
 
+  const bankCount = Object.keys(paymentNameStats.settlement_accounts || {}).length;
+
   return (
     <PageContainer title="Bursary Setup" description="Configure fees and payment settings">
       <Breadcrumb
@@ -196,37 +198,47 @@ const BursarySetup = () => {
 
           {/* Settlement Accounts Card */}
           <Grid size={{ xs: 12, md: 4 }}>
-            <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Paper sx={{ p: 3, borderRadius: 2, height: '100%' }}>
               <Typography variant="h6" fontWeight={600} mb={2}>
                 Settlement Accounts
               </Typography>
+
               <Typography variant="h2" fontWeight={700} color="primary.main" mb={2}>
-                {paymentNameStats.total}
+                {bankCount}
               </Typography>
+
               <Grid container spacing={2} mb={2}>
-                {Object.entries(paymentNameStats.settlement_accounts).map(([bank, count]) => (
-                  <Grid size={{ xs: 4 }} key={bank}>
-                    <Typography variant="caption" color="textSecondary">
-                      {bank.toUpperCase()}
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600}>
-                      {count} Items
-                    </Typography>
-                  </Grid>
-                ))}
-                {Object.keys(paymentNameStats.settlement_accounts).length === 0 && (
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="caption" color="textSecondary">
-                      No accounts yet
-                    </Typography>
-                  </Grid>
-                )}
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Banks Configured
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {bankCount}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 6 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Status
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {bankCount > 0 ? 'Configured' : 'Not Configured'}
+                  </Typography>
+                </Grid>
               </Grid>
+
               <Box display="flex" alignItems="center" gap={1}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
-                <Typography variant="caption" color="textSecondary">
-                  {Object.keys(paymentNameStats.settlement_accounts).length > 0
-                    ? `${Object.keys(paymentNameStats.settlement_accounts).length} bank(s) configured`
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: bankCount > 0 ? 'success.main' : 'warning.main',
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  {bankCount > 0
+                    ? `${bankCount} bank(s) configured`
                     : 'No settlement accounts configured'}
                 </Typography>
               </Box>

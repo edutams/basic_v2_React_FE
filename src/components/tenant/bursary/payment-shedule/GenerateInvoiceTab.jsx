@@ -1,6 +1,10 @@
 import { useState, useContext, useEffect } from 'react';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
-import { fetchBursarySessionTerms, fetchClasses, fetchGenerateInvoiceData } from '@/api/tenant/bursary/bursarySettingsApi';
+import {
+  fetchBursarySessionTerms,
+  fetchClasses,
+  fetchGenerateInvoiceData,
+} from '@/api/tenant/bursary/bursarySettingsApi';
 import {
   Box,
   Typography,
@@ -54,16 +58,13 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
   const [tableCategories, setTableCategories] = useState([]);
 
   const selectedSessionLabel =
-    sessions.find((s) => s.id === selectedSessionTermId)
-      ?.session?.sesname || '';
+    sessions.find((s) => s.id === selectedSessionTermId)?.session?.sesname || '';
 
   const selectedTermLabel =
-    sessions.find((s) => s.id === selectedSessionTermId)
-      ?.displayTerm?.display_name || '';
+    sessions.find((s) => s.id === selectedSessionTermId)?.displayTerm?.display_name || '';
 
   const selectedClassName =
-    classes.find((c) => String(c.id) === String(selectedClass))
-      ?.class_name || selectedClass;
+    classes.find((c) => String(c.id) === String(selectedClass))?.class_name || selectedClass;
 
   // Fetch session terms on mount
   useEffect(() => {
@@ -96,7 +97,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
         const res = await fetchClasses();
         const list = Array.isArray(res?.data) ? res.data : [];
         setClasses(list);
-        if (list.length > 0 && !list.find(c => String(c.id) === String(selectedClass))) {
+        if (list.length > 0 && !list.find((c) => String(c.id) === String(selectedClass))) {
           setSelectedClass(String(list[0].id));
         }
       } catch (err) {
@@ -175,7 +176,6 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
 
   return (
     <Stack spacing={3}>
@@ -284,15 +284,21 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                   key={cls.id}
                   label={cls.class_name}
                   onClick={() => setSelectedClass(cls.id)}
-                  icon={Number(selectedClass) === Number(cls.id) ? <CheckCircleIcon sx={{ fontSize: 18, color: 'white !important' }} /> : undefined}
+                  icon={
+                    Number(selectedClass) === Number(cls.id) ? (
+                      <CheckCircleIcon sx={{ fontSize: 18, color: 'white !important' }} />
+                    ) : undefined
+                  }
                   sx={{
                     bgcolor: Number(selectedClass) === Number(cls.id) ? 'primary.main' : 'white',
                     color: Number(selectedClass) === Number(cls.id) ? 'white' : 'text.primary',
                     fontWeight: 600,
                     border: '1px solid',
-                    borderColor: Number(selectedClass) === Number(cls.id) ? 'primary.main' : 'divider',
+                    borderColor:
+                      Number(selectedClass) === Number(cls.id) ? 'primary.main' : 'divider',
                     '&:hover': {
-                      bgcolor: Number(selectedClass) === Number(cls.id) ? 'primary.dark' : 'grey.100',
+                      bgcolor:
+                        Number(selectedClass) === Number(cls.id) ? 'primary.dark' : 'grey.100',
                     },
                   }}
                 />
@@ -326,7 +332,6 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
             >
               Generate Invoice / {selectedClassName}
             </Button>
-
           </Stack>
         </Box>
 
@@ -371,9 +376,7 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                     return (
                       <TableCell key={cat.id}>
                         <Typography variant="body2">
-                          {typeof amount === 'number'
-                            ? amount.toLocaleString()
-                            : amount || '-'}
+                          {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
                         </Typography>
                       </TableCell>
                     );

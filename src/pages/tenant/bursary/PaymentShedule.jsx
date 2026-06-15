@@ -75,11 +75,13 @@ const PaymentShedule = () => {
     const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
     const loadStats = async () => {
       try {
+
         setLoadingStats(true);
         const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
         if (res?.success && res.data) {
           const { schedule, amount, student_category } = res.data;
           setScheduleStats({
+
             schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
             paymentName: {
               withMinSchedule: amount?.min?.amount ?? 0,
@@ -261,6 +263,9 @@ const PaymentShedule = () => {
               <Typography variant="body2" color="textSecondary" mb={3}>
                 {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
               </Typography>
+
+
+
               <Box display="flex" justifyContent="space-between" alignItems="center" gap={4}>
                 <Box
                   sx={{
@@ -283,6 +288,7 @@ const PaymentShedule = () => {
                   <Typography variant="body2" color="textSecondary">
                     Classes
                   </Typography>
+                  
                 </Box>
               </Box>
             </Paper>

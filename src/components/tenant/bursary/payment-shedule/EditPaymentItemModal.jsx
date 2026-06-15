@@ -42,7 +42,16 @@ import {
   deletePaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const EditPaymentItemModal = ({ open, onClose, onSave, schedule, sessionId, termId, categoryId, onRefresh }) => {
+const EditPaymentItemModal = ({
+  open,
+  onClose,
+  onSave,
+  schedule,
+  sessionId,
+  termId,
+  categoryId,
+  onRefresh,
+}) => {
   const [formData, setFormData] = useState({
     paymentName: '',
     paymentType: 'compulsory',
@@ -132,7 +141,7 @@ const EditPaymentItemModal = ({ open, onClose, onSave, schedule, sessionId, term
       const selected = [];
       const installmentSelections = {};
       const scheduleIds = {};
-console.log(schedule.classes,6666);
+      console.log(schedule.classes, 6666);
 
       if (schedule.classes) {
         schedule.classes.forEach((cls) => {
@@ -228,7 +237,7 @@ console.log(schedule.classes,6666);
 
       // Show success message
       const action = isCurrentlySelected ? 'deactivated' : 'activated';
-      
+
       // Close dialog after a short delay to show the change
       setTimeout(() => {
         setToggleDialog({ open: false, classData: null });
@@ -262,7 +271,7 @@ console.log(schedule.classes,6666);
         setFormData((prev) => ({
           ...prev,
           selectedClasses: prev.selectedClasses.filter(
-            (id) => id !== deleteDialog.classSchedule.id
+            (id) => id !== deleteDialog.classSchedule.id,
           ),
           classAmounts: {
             ...prev.classAmounts,
@@ -306,7 +315,7 @@ console.log(schedule.classes,6666);
 
     // Validate that all activated classes have amounts
     const activatedClassesWithoutAmounts = formData.selectedClasses.filter(
-      (classId) => !formData.classAmounts[classId] || formData.classAmounts[classId] <= 0
+      (classId) => !formData.classAmounts[classId] || formData.classAmounts[classId] <= 0,
     );
 
     if (activatedClassesWithoutAmounts.length > 0) {
@@ -378,7 +387,7 @@ console.log(schedule.classes,6666);
     <ReusableModal
       open={open}
       onClose={onClose}
-      title={`2025/2026 - Third Term (Returning Student Category) ${schedule?.payment_name?.name || schedule?.paymentName || 'Payment Schedule'}`}
+      title={`Update Payment Schedule for (${schedule?.payment_name?.name || schedule?.paymentName})`}
       subtitle="Update payment item details and class selection"
       size="large"
       showCloseButton={true}
@@ -422,10 +431,10 @@ console.log(schedule.classes,6666);
                       const isSelected = formData.selectedClasses.includes(cls.id);
                       const amount = formData.classAmounts[cls.id] || '';
                       const selectedInstallment = formData.classInstallments[cls.id] || '';
-                      
+
                       // Find the schedule data for this class
                       const classScheduleData = schedule?.classes?.find(
-                        (schedClass) => schedClass.id === cls.id
+                        (schedClass) => schedClass.id === cls.id,
                       );
 
                       return (
@@ -434,7 +443,8 @@ console.log(schedule.classes,6666);
                           hover
                           sx={{
                             bgcolor: isSelected ? 'white' : '#f5f5f5',
-                            borderLeft: isSelected && (!amount || amount <= 0) ? '3px solid' : 'none',
+                            borderLeft:
+                              isSelected && (!amount || amount <= 0) ? '3px solid' : 'none',
                             borderColor: 'error.main',
                           }}
                         >
@@ -484,7 +494,11 @@ console.log(schedule.classes,6666);
                               sx={{ width: '100%', maxWidth: 200 }}
                             />
                             {isSelected && (!amount || amount <= 0) && (
-                              <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5 }}>
+                              <Typography
+                                variant="caption"
+                                color="error.main"
+                                sx={{ display: 'block', mt: 0.5 }}
+                              >
                                 Amount required
                               </Typography>
                             )}
@@ -514,12 +528,12 @@ console.log(schedule.classes,6666);
 
                           <TableCell align="center">
                             {/* {isSelected && classScheduleData?.schedule_id && ( */}
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleRowMenuOpen(e, cls, classScheduleData)}
-                              >
-                                <MoreVertIcon fontSize="small" />
-                              </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleRowMenuOpen(e, cls, classScheduleData)}
+                            >
+                              <MoreVertIcon fontSize="small" />
+                            </IconButton>
                             {/* )} */}
                           </TableCell>
                         </TableRow>
@@ -601,7 +615,8 @@ console.log(schedule.classes,6666);
           <Typography variant="body2">
             Are you sure you want to{' '}
             <strong>
-              {toggleDialog.classData && formData.selectedClasses.includes(toggleDialog.classData.id)
+              {toggleDialog.classData &&
+              formData.selectedClasses.includes(toggleDialog.classData.id)
                 ? 'deactivate'
                 : 'activate'}
             </strong>{' '}
@@ -641,8 +656,8 @@ console.log(schedule.classes,6666);
           </Alert>
           <Typography variant="body2">
             Are you sure you want to delete the payment schedule for{' '}
-            <strong>{deleteDialog.classSchedule?.name}</strong>? The payment amount and
-            installment settings for this class will be permanently removed.
+            <strong>{deleteDialog.classSchedule?.name}</strong>? The payment amount and installment
+            settings for this class will be permanently removed.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>

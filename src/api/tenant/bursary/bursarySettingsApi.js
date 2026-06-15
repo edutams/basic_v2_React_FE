@@ -76,6 +76,11 @@ export const batchUpsertPaymentSchedule = async (data) => {
     return res.data;
 };
 
+export const importPaymentSchedule = async (data) => {
+    const res = await api.post('/bursary/payment_schedule/import_payment_schedule', data);
+    return res.data;
+};
+
 export const createPaymentSchedule = async (data) => {
     const res = await api.post('/bursary/payment_schedule/create_payment_schedule', data);
     return res.data;
@@ -115,6 +120,13 @@ export const togglePaymentScheduleStatus = async (id, status) => {
 export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = 'compulsory') => {
     const res = await api.get('/bursary/payment_schedule/stats', {
         params: { session_id: sessionId, term_id: termId, pay_option: payOption }
+    });
+    return res.data;
+};
+
+export const fetchGenerateInvoiceStats = async (sessionTermId) => {
+    const res = await api.get('/bursary/payment_schedule/generate_invoice_stats', {
+        params: { session_term_id: sessionTermId }
     });
     return res.data;
 };

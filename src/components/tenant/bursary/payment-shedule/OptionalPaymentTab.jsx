@@ -36,9 +36,22 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import EditOptionalPaymentModal from './EditOptionalPaymentModal';
-import { fetchTermsBySessionTerm, fetchPaymentSchedules } from '@/api/tenant/bursary/bursarySettingsApi';
+import {
+  fetchTermsBySessionTerm,
+  fetchPaymentSchedules,
+} from '@/api/tenant/bursary/bursarySettingsApi';
 
-const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessionLabel, categoryLabel, payOption = 'optional', onTermChange, refreshStats }) => {
+const OptionalPaymentTab = ({
+  showSnackbar,
+  sessionId,
+  termId,
+  categoryId,
+  sessionLabel,
+  categoryLabel,
+  payOption = 'optional',
+  onTermChange,
+  refreshStats,
+}) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
   const [selectedTermId, setSelectedTermId] = useState(null);
@@ -50,75 +63,81 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-   // Load payment schedules when term or sessionId changes
-    const loadPaymentSchedules = async (searchTerm = '') => {
-      if (!sessionId || !selectedTermId || !categoryId) return;
-      try {
-        setLoadingTerms(true);
-        const data = await fetchPaymentSchedules(sessionId, selectedTermId, categoryId, payOption, searchTerm);
-        console.log('Raw API response:', data);
-        
-        if (data?.data && Array.isArray(data.data)) {
-          const transformedData = data.data.map(paymentName => {
-            // Group schedules by payment name and collect options
-            const schedules = paymentName.payschedules || [];
-            
-            const classesSet = new Set();
-            const optionsArray = [];
-            let totalAmount = 0;
-            
-            schedules.forEach(schedule => {
-              const className = schedule.my_class?.class_name || `Class ${schedule.class_id}`;
-              classesSet.add(className);
-              
-              // If schedule has options, use them; otherwise create option from schedule amount
-              if (schedule.options && schedule.options.length > 0) {
-                schedule.options.forEach(opt => {
-                  optionsArray.push({
-                    name: opt.option_name,
-                    price: `₦${parseFloat(opt.amount).toLocaleString()}`,
-                    amount: parseFloat(opt.amount),
-                  });
-                  totalAmount += parseFloat(opt.amount);
-                });
-              } else if (schedule.amount && schedule.amount > 0) {
-                // Fallback: create option from schedule amount
-                optionsArray.push({
-                  name: className,
-                  price: `₦${parseFloat(schedule.amount).toLocaleString()}`,
-                  amount: parseFloat(schedule.amount),
-                });
-                totalAmount += parseFloat(schedule.amount);
-              }
-            });
+  // Load payment schedules when term or sessionId changes
+  const loadPaymentSchedules = async (searchTerm = '') => {
+    if (!sessionId || !selectedTermId || !categoryId) return;
+    try {
+      setLoadingTerms(true);
+      const data = await fetchPaymentSchedules(
+        sessionId,
+        selectedTermId,
+        categoryId,
+        payOption,
+        searchTerm,
+      );
+      console.log('Raw API response:', data);
 
-            return {
-              id: paymentName.id,
-              paymentName: paymentName.name,
-              description: paymentName.description || '',
-              options: optionsArray,
-              totalTypes: optionsArray.length,
-              totalAmount: `₦${totalAmount.toLocaleString()}`,
-              category: categoryLabel || 'N/A',
-              classes: Array.from(classesSet).join(', ') || 'All Classes',
-              status: 'Active',
-              payschedules: schedules, 
-            };
+      if (data?.data && Array.isArray(data.data)) {
+        const transformedData = data.data.map((paymentName) => {
+          // Group schedules by payment name and collect options
+          const schedules = paymentName.payschedules || [];
+
+          const classesSet = new Set();
+          const optionsArray = [];
+          let totalAmount = 0;
+
+          schedules.forEach((schedule) => {
+            const className = schedule.my_class?.class_name || `Class ${schedule.class_id}`;
+            classesSet.add(className);
+
+            // If schedule has options, use them; otherwise create option from schedule amount
+            if (schedule.options && schedule.options.length > 0) {
+              schedule.options.forEach((opt) => {
+                optionsArray.push({
+                  name: opt.option_name,
+                  price: `₦${parseFloat(opt.amount).toLocaleString()}`,
+                  amount: parseFloat(opt.amount),
+                });
+                totalAmount += parseFloat(opt.amount);
+              });
+            } else if (schedule.amount && schedule.amount > 0) {
+              // Fallback: create option from schedule amount
+              optionsArray.push({
+                name: className,
+                price: `₦${parseFloat(schedule.amount).toLocaleString()}`,
+                amount: parseFloat(schedule.amount),
+              });
+              totalAmount += parseFloat(schedule.amount);
+            }
           });
 
-          console.log('Transformed optional data:', transformedData);
-          setScheduleData(transformedData);
-        } else {
-          setScheduleData([]);
-        }
-      } catch (err) {
-        showSnackbar?.('Failed to load payment schedules', 'error');
-        console.error('Error loading schedules:', err);
-      } finally {
-        setLoadingTerms(false);
+          return {
+            id: paymentName.id,
+            paymentName: paymentName.name,
+            description: paymentName.description || '',
+            options: optionsArray,
+            totalTypes: optionsArray.length,
+            totalAmount: `₦${totalAmount.toLocaleString()}`,
+            category: categoryLabel || 'N/A',
+            classes: Array.from(classesSet).join(', ') || 'All Classes',
+            status: 'Active',
+            payschedules: schedules,
+          };
+        });
+
+        console.log('Transformed optional data:', transformedData);
+        setScheduleData(transformedData);
+      } else {
+        setScheduleData([]);
       }
-    };
-    useEffect(() => {
+    } catch (err) {
+      showSnackbar?.('Failed to load payment schedules', 'error');
+      console.error('Error loading schedules:', err);
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
+  useEffect(() => {
     loadPaymentSchedules();
   }, [sessionId, selectedTermId, categoryId]);
 
@@ -178,17 +197,17 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
 
   const handleEditSchedule = () => {
     const scheduleToEdit = selectedRow || detailsDialog.schedule;
-    
+
     if (!scheduleToEdit) return;
-    
-    const rawSchedule = scheduleData.find(s => s.id === scheduleToEdit.id);
+
+    const rawSchedule = scheduleData.find((s) => s.id === scheduleToEdit.id);
     if (rawSchedule) {
       const originalPaymentName = {
         id: rawSchedule.id,
         name: rawSchedule.paymentName,
         payschedules: rawSchedule.payschedules || [],
       };
-      
+
       setEditModal({
         open: true,
         schedule: originalPaymentName,
@@ -273,18 +292,17 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
       showSnackbar?.('Failed to update optional payment', 'error');
     }
   };
-// scheduleData
-  
+  // scheduleData
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info" sx={{ mb: 2 }}>
+      <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
         <Typography variant="body2" fontWeight={600} textAlign="center" sx={{ width: '100%' }}>
           Payment Schedules for {sessionLabel || '...'} -{' '}
           {terms[currentTerm]?.display_term.display_name} ({categoryLabel || '...'})
         </Typography>
       </Alert>
-
+      
       <ParentCard>
         <Box
           mb={3}
@@ -310,35 +328,34 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
               flex: 1,
             }}
           >
-            { terms.map((term, idx) => (
-                  <Tab
-                    key={idx}
-                    label={term.display_term.display_name}
-                    sx={{ textTransform: 'none', fontWeight: 600 }}
-                    icon={
-                      <Box
-                        component="span"
-                        sx={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          bgcolor: currentTerm === idx ? 'primary.main' : 'grey.300',
-                          color: 'white',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          mr: 1,
-                        }}
-                      >
-                        ●
-                      </Box>
-                    }
-                    iconPosition="start"
-                  />
-                ))
-              }
+            {terms.map((term, idx) => (
+              <Tab
+                key={idx}
+                label={term.display_term.display_name}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+                icon={
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      bgcolor: currentTerm === idx ? 'primary.main' : 'grey.300',
+                      color: 'white',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      mr: 1,
+                    }}
+                  >
+                    ●
+                  </Box>
+                }
+                iconPosition="start"
+              />
+            ))}
           </Tabs>
 
           <Box display="flex" gap={2}>
@@ -406,68 +423,67 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
               </TableRow>
             </TableHead>
             <TableBody>
-              {
-                paginatedSchedules.map((schedule, index) => (
-                  <TableRow
-                    key={schedule.id}
-                    hover
-                    onClick={() => handleRowClick(schedule)}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {schedule.paymentName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {schedule.description}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" gap={1} flexWrap="wrap">
-                        {schedule.options.map((option, idx) => (
-                          <Chip
-                            key={idx}
-                            label={`${option.name} · ${option.price}`}
-                            size="small"
-                            sx={{
-                              bgcolor: 'primary.light',
-                              color: 'primary.main',
-                            }}
-                          />
-                        ))}
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ mt: 1, display: 'block' }}
-                      >
-                        {schedule.totalTypes} types · Total {schedule.totalAmount}
+              {paginatedSchedules.map((schedule, index) => (
+                <TableRow
+                  key={schedule.id}
+                  hover
+                  onClick={() => handleRowClick(schedule)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    <Box>
+                      <Typography variant="body2" fontWeight={600}>
+                        {schedule.paymentName}
                       </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={schedule.category}
-                        size="small"
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={schedule.classes}
-                        size="small"
-                        sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
-                        }}
-                      />
-                    </TableCell>
-                    {/* <TableCell>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {schedule.description}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box display="flex" gap={1} flexWrap="wrap">
+                      {schedule.options.map((option, idx) => (
+                        <Chip
+                          key={idx}
+                          label={`${option.name} · ${option.price}`}
+                          size="small"
+                          sx={{
+                            bgcolor: 'primary.light',
+                            color: 'primary.main',
+                          }}
+                        />
+                      ))}
+                    </Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mt: 1, display: 'block' }}
+                    >
+                      {schedule.totalTypes} types · Total {schedule.totalAmount}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={schedule.category}
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={schedule.classes}
+                      size="small"
+                      sx={{
+                        bgcolor: 'primary.light',
+                        color: 'primary.main',
+                      }}
+                    />
+                  </TableCell>
+                  {/* <TableCell>
                       <Chip
                         label={schedule.status}
                         size="small"
@@ -482,19 +498,19 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
                         }}
                       />
                     </TableCell> */}
-                    <TableCell align="center">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMenuOpen(e, schedule);
-                        }}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  <TableCell align="center">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMenuOpen(e, schedule);
+                      }}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
             <TableFooter>
               <TableRow>
@@ -510,7 +526,6 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
               </TableRow>
             </TableFooter>
           </Table>
-         
         </TableContainer>
       </ParentCard>
 
@@ -521,13 +536,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
         </MenuOption> */}
       </Menu>
 
-      <Dialog
-        open={detailsDialog.open}
-        onClose={handleDetailsDialogClose}
-        maxWidth="sm"
-        fullWidth
-        
-      >
+      <Dialog open={detailsDialog.open} onClose={handleDetailsDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle
           sx={{
             fontWeight: 700,
@@ -553,10 +562,10 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
 
         <Divider />
 
-        <DialogContent sx={{ px: { xs: 2, sm: 3 } }} >
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
           <Stack spacing={3}>
             <Grid container spacing={2}>
-              <Grid size={{ xs:6 }}>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
                   Status
                 </Typography>
@@ -575,7 +584,7 @@ const OptionalPaymentTab = ({ showSnackbar, sessionId, termId, categoryId, sessi
                 />
               </Grid>
 
-              <Grid size={{ xs:6 }}>
+              <Grid size={{ xs: 6 }}>
                 <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
                   Category
                 </Typography>

@@ -450,7 +450,8 @@ const CompulsoryScheduleTab = ({
       <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
         <Typography variant="body2" fontWeight={600}>
           Payment Schedules for {sessionLabel || '...'} -{' '}
-          {terms[currentTerm]?.name ||
+          {terms[currentTerm]?.display_term?.display_name ||
+            terms[currentTerm]?.name ||
             terms[currentTerm]?.term_name ||
             (loadingTerms ? 'Loading...' : '')}{' '}
           ({categoryLabel || '...'})
@@ -638,7 +639,7 @@ const CompulsoryScheduleTab = ({
                                         handleClassActionClick(schedule, cls, 'toggle');
                                       }}
                                     />
-                                    <CloseIcon sx={{ fontSize: 14 }} />
+                                    <DeleteIcon sx={{ fontSize: 14 }} />
                                   </Box>
                                 ) : (
                                   <AddIcon sx={{ fontSize: 14 }} />
@@ -667,11 +668,8 @@ const CompulsoryScheduleTab = ({
                                     : 'grey.400',
                                 },
 
-                                '& .MuiChip-deleteIcon': {
+                                '& .MuiChip-deleteIcon, & .MuiChip-deleteIcon:hover': {
                                   color: 'inherit',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 0.25,
                                 },
                               }}
                             />

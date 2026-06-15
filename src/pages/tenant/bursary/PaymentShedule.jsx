@@ -42,6 +42,7 @@ import {
   fetchBursarySessionTerms,
   fetchActiveCategories,
   fetchPaymentScheduleStats,
+  fetchGenerateInvoiceStats,
   fetchTermsBySessionTerm,
   importPaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
@@ -76,6 +77,19 @@ const PaymentShedule = () => {
     studentCategory: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
   });
   const [loadingStats, setLoadingStats] = useState(false);
+  const [invoiceStats, setInvoiceStats] = useState({
+    invoiceGenerated: 0,
+    totalAmount: 0,
+    paymentNames: [
+      { name: 'With Minimum Invoice', count: 0, amount: 0, label: 'N/A' },
+      { name: 'With Maximum Invoice', count: 0, amount: 0, label: 'N/A' },
+    ],
+    categories: [
+      { name: 'With Minimum Invoice', count: 0, amount: 0, label: 'N/A' },
+      { name: 'With Maximum Invoice', count: 0, amount: 0, label: 'N/A' },
+    ],
+  });
+  const [loadingInvoiceStats, setLoadingInvoiceStats] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [scheduleRefreshKey, setScheduleRefreshKey] = useState(0);
@@ -287,29 +301,59 @@ const PaymentShedule = () => {
 
   const stats = scheduleStats;
 
-  // Stats for Generate Invoice Tab
-  const invoiceStats = {
-    invoiceGenerated: 382,
-    totalAmount: '₦900,805,000.00',
-    paymentNames: [
-      { name: 'With Minimum Invoice', count: 798, amount: '₦539,253,760.00', label: 'School Fee' },
-      {
-        name: 'With Maximum Invoice',
-        count: 798,
-        amount: '₦539,455,900.00',
-        label: 'Acceptance Fee',
-      },
-    ],
-    categories: [
-      {
-        name: 'With Minimum Invoice',
-        count: 798,
-        amount: '₦539,253,760.00',
-        label: 'Returning Student',
-      },
-      { name: 'With Maximum Invoice', count: 798, amount: '₦539,495,900.00', label: 'New Student' },
-    ],
-  };
+  // Fetch invoice stats when session term changes or when Generate Invoice tab is active
+  useEffect(() => {
+    if (!selectedSessionTerm || actionTab !== 1) return;
+    const loadInvoiceStats = async () => {
+      try {
+        setLoadingInvoiceStats(true);
+        const res = await fetchGenerateInvoiceStats(selectedSessionTerm);
+        if (res?.success && res.data) {
+          const { invoice_generated, total_amount, payment_names, categories } = res.data;
+          setInvoiceStats({
+            invoiceGenerated: invoice_generated ?? 0,
+            totalAmount: total_amount ?? 0,
+            paymentNames: [
+              {
+                name: 'With Minimum Invoice',
+                count: payment_names?.min?.count ?? 0,
+                amount: payment_names?.min?.amount ?? 0,
+                label: payment_names?.min?.name ?? 'N/A',
+              },
+              {
+                name: 'With Maximum Invoice',
+                count: payment_names?.max?.count ?? 0,
+                amount: payment_names?.max?.amount ?? 0,
+                label: payment_names?.max?.name ?? 'N/A',
+              },
+            ],
+            categories: [
+              {
+                name: 'With Minimum Invoice',
+                count: categories?.min?.count ?? 0,
+                amount: categories?.min?.amount ?? 0,
+                label: categories?.min?.name ?? 'N/A',
+              },
+              {
+                name: 'With Maximum Invoice',
+                count: categories?.max?.count ?? 0,
+                amount: categories?.max?.amount ?? 0,
+                label: categories?.max?.name ?? 'N/A',
+              },
+            ],
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load invoice stats:', err);
+      } finally {
+        setLoadingInvoiceStats(false);
+      }
+    };
+    loadInvoiceStats();
+  }, [selectedSessionTerm, actionTab]);
+
+  const formatCurrency = (value) =>
+    `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const sendInvoiceStats = [
     { label: 'Total Invoice Sent', value: 522, icon: MessageIcon },
@@ -479,12 +523,12 @@ const PaymentShedule = () => {
                   }}
                 >
                   <Typography variant="h2" fontWeight={700} color="#F57C00">
-                    {invoiceStats.invoiceGenerated}
+                    {loadingInvoiceStats ? '...' : invoiceStats.invoiceGenerated}
                   </Typography>
                 </Box>
                 <Box display="flex" ml="auto" flexDirection="column" justifyContent="end">
                   <Typography variant="h4" fontWeight={700}>
-                    {invoiceStats.totalAmount}
+                    {formatCurrency(invoiceStats.totalAmount)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Amount
@@ -530,10 +574,10 @@ const PaymentShedule = () => {
                       {item.name}
                     </Typography>
                     <Typography variant="h5" fontWeight={700} mb={0.5}>
-                      {item.count}
+                      {loadingInvoiceStats ? '...' : item.count}
                     </Typography>
                     <Typography variant="body2" fontWeight={600} mb={0.5}>
-                      {item.amount}
+                      {formatCurrency(item.amount)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       {item.label}
@@ -580,10 +624,10 @@ const PaymentShedule = () => {
                       {item.name}
                     </Typography>
                     <Typography variant="h5" fontWeight={700} mb={0.5}>
-                      {item.count}
+                      {loadingInvoiceStats ? '...' : item.count}
                     </Typography>
                     <Typography variant="body2" fontWeight={600} mb={0.5}>
-                      {item.amount}
+                      {formatCurrency(item.amount)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       {item.label}

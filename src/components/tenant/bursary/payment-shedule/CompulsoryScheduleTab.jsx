@@ -60,6 +60,7 @@ const CompulsoryScheduleTab = ({
   payOption = 'compulsory',
   onTermChange,
   refreshStats,
+  scheduleRefreshKey = 0,
 }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
@@ -180,7 +181,7 @@ const CompulsoryScheduleTab = ({
 
   useEffect(() => {
     loadPaymentSchedules();
-  }, [sessionId, selectedTermId, categoryId]);
+  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey]);
 
   const [schedules, setSchedules] = useState({});
 

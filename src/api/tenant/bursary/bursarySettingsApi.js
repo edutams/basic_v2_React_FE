@@ -76,6 +76,11 @@ export const batchUpsertPaymentSchedule = async (data) => {
     return res.data;
 };
 
+export const importPaymentSchedule = async (data) => {
+    const res = await api.post('/bursary/payment_schedule/import_payment_schedule', data);
+    return res.data;
+};
+
 export const createPaymentSchedule = async (data) => {
     const res = await api.post('/bursary/payment_schedule/create_payment_schedule', data);
     return res.data;

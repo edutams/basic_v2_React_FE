@@ -51,6 +51,7 @@ const OptionalPaymentTab = ({
   payOption = 'optional',
   onTermChange,
   refreshStats,
+  scheduleRefreshKey = 0,
 }) => {
   const [terms, setTerms] = useState([]);
   const [currentTerm, setCurrentTerm] = useState(0);
@@ -139,7 +140,7 @@ const OptionalPaymentTab = ({
   };
   useEffect(() => {
     loadPaymentSchedules();
-  }, [sessionId, selectedTermId, categoryId]);
+  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey]);
 
   const [detailsDialog, setDetailsDialog] = useState({
     open: false,

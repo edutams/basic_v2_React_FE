@@ -112,7 +112,7 @@ const InvoiceView = () => {
       {/* ── Header ── */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h6" fontWeight={700}>
-          View Class Invoice ·{' '}
+          View Class Invoice{' '}
           <Box component="span" color="primary.main">
             {className} {sessionLabel} {termLabel}
           </Box>
@@ -127,15 +127,9 @@ const InvoiceView = () => {
         const compulsory = student.compulsory_invoice || [];
         const optional = student.optional_invoice || [];
         const dueBalance = Number(student.due_balance || 0);
-        const compulsoryTotal = compulsory.reduce(
-          (sum, i) => sum + Number(i.balance || 0),
-          0
-        );
+        const compulsoryTotal = compulsory.reduce((sum, i) => sum + Number(i.balance || 0), 0);
 
-        const optionalTotal = optional.reduce(
-          (sum, i) => sum + Number(i.balance || 0),
-          0
-        );
+        const optionalTotal = optional.reduce((sum, i) => sum + Number(i.balance || 0), 0);
 
         // Compute overall balance for the outstanding banner
         // const overallBalance = compulsory.reduce((sum, i) => sum + (Number(i.balance) || 0), 0)
@@ -151,7 +145,7 @@ const InvoiceView = () => {
               borderRadius: 2,
               overflow: 'hidden',
               bgcolor: 'background.paper',
-              p: 3
+              p: 3,
             }}
           >
             {/* ── SCHOOL HEADER — centered ── */}
@@ -183,11 +177,7 @@ const InvoiceView = () => {
 
               {/* CENTER CONTENT */}
               <Box sx={{ width: '100%', textAlign: 'center' }}>
-                <Typography
-                  variant="h1"
-                  fontWeight={900}
-                  sx={{ textTransform: 'uppercase' }}
-                >
+                <Typography variant="h1" fontWeight={900} sx={{ textTransform: 'uppercase' }}>
                   {schoolName}
                 </Typography>
 
@@ -218,7 +208,8 @@ const InvoiceView = () => {
                   {student.student?.fname} {student.student?.lname}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {student.student?.learnerId} · {student.student?.class_name} · {student.student?.term_name}
+                  {student.student?.learnerId} · {student.student?.class_name} ·{' '}
+                  {student.student?.term_name}
                 </Typography>
               </Box>
 
@@ -243,8 +234,12 @@ const InvoiceView = () => {
                 borderColor: 'grey.200',
               }}
             >
-              <Button size="small" variant="contained">Proceed to Pay</Button>
-              <Button size="small" variant="outlined">Update Invoice</Button>
+              <Button size="small" variant="contained">
+                Proceed to Pay
+              </Button>
+              <Button size="small" variant="outlined">
+                Update Invoice
+              </Button>
             </Box>
 
             {/* ── BREAKDOWN TABLE ── */}
@@ -287,8 +282,12 @@ const InvoiceView = () => {
               >
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYMENT TYPE</TableCell>
-                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYMENT ITEMS</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>
+                      PAYMENT TYPE
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>
+                      PAYMENT ITEMS
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAYABLE (₦)</TableCell>
                     <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>PAID (₦)</TableCell>
                     <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>BALANCE (₦)</TableCell>
@@ -391,8 +390,12 @@ const InvoiceView = () => {
                   {issuerName}
                 </Typography>
               </Box>
-              <Typography fontWeight={700} fontSize={13}>{issuerName}</Typography>
-              <Typography variant="caption" color="text.secondary">{issuerTitle}</Typography>
+              <Typography fontWeight={700} fontSize={13}>
+                {issuerName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {issuerTitle}
+              </Typography>
             </Box>
 
             {/* ── BOTTOM ACTION BUTTONS ── */}
@@ -406,8 +409,12 @@ const InvoiceView = () => {
                 borderColor: 'grey.200',
               }}
             >
-              <Button size="small" variant="contained">Proceed to Pay</Button>
-              <Button size="small" variant="outlined">Update Invoice</Button>
+              <Button size="small" variant="contained">
+                Proceed to Pay
+              </Button>
+              <Button size="small" variant="outlined">
+                Update Invoice
+              </Button>
             </Box>
           </Box>
         );

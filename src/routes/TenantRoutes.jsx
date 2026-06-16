@@ -58,8 +58,12 @@ const CreateAdmissionBatch = Loadable(
 
 const BursarySetup = Loadable(lazy(() => import('@/pages/tenant/bursary/BursarySetup')));
 const PaymentShedule = Loadable(lazy(() => import('@/pages/tenant/bursary/PaymentShedule')));
-const InvoiceStudentsView = Loadable(lazy(() => import('@/components/tenant/bursary/payment-shedule/InvoiceStudentsView')));
-const InvoiceView = Loadable(lazy(() => import('@/components/tenant/bursary/payment-shedule/InvoiceView')));
+const InvoiceStudentsView = Loadable(
+  lazy(() => import('@/components/tenant/bursary/payment-shedule/InvoiceStudentsView')),
+);
+const InvoiceView = Loadable(
+  lazy(() => import('@/components/tenant/bursary/payment-shedule/InvoiceView')),
+);
 
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
@@ -306,23 +310,23 @@ const TenantRoutes = [
         path: 'payment-schedule',
         element: (
           <TenantProtectedRoute permission="dashboard.index">
-            <PaymentShedule/>
-          </TenantProtectedRoute>
-        ),
-      },
-       {
-        path: 'payment-schedule/invoice/:session_term_id/:class_id',
-        element: (
-          <TenantProtectedRoute permission="dashboard.index">
-            <InvoiceStudentsView/>
+            <PaymentShedule />
           </TenantProtectedRoute>
         ),
       },
       {
-        path: 'payment-schedule/invoice/:session_term_id/:class_id/:category_id/view',
+        path: 'payment-schedule/invoice/:session_term_id/:class_id',
         element: (
           <TenantProtectedRoute permission="dashboard.index">
-            <InvoiceView/>
+            <InvoiceStudentsView />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'payment-schedule/invoice/:session_term_id/:class_id/:category_id/view_class_invoice',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <InvoiceView />
           </TenantProtectedRoute>
         ),
       },

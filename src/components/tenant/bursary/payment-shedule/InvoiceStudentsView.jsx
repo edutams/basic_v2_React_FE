@@ -151,9 +151,7 @@ const InvoiceStudentsView = () => {
         setClassName(d.class_name || '');
       } catch (err) {
         console.error('Failed to load student invoice data', err);
-        setError(
-          err?.response?.data?.message || 'Failed to load student invoice data',
-        );
+        setError(err?.response?.data?.message || 'Failed to load student invoice data');
       } finally {
         setLoading(false);
       }
@@ -218,8 +216,7 @@ const InvoiceStudentsView = () => {
     });
 
     setSelectedOptionalIds((prev) => {
-      const isAllSelected =
-        prev.size === allIds.size && [...allIds].every((id) => prev.has(id));
+      const isAllSelected = prev.size === allIds.size && [...allIds].every((id) => prev.has(id));
       return isAllSelected ? new Set() : allIds;
     });
   };
@@ -296,8 +293,7 @@ const InvoiceStudentsView = () => {
         setInvoiceResult({
           success: true,
           message:
-            res?.message ||
-            `Invoices generated successfully for ${studentData.length} student(s).`,
+            res?.message || `Invoices generated successfully for ${studentData.length} student(s).`,
         });
       } else {
         setInvoiceResult({
@@ -309,9 +305,7 @@ const InvoiceStudentsView = () => {
       console.error('Failed to generate invoices', err);
       setInvoiceResult({
         success: false,
-        message:
-          err?.response?.data?.message ||
-          'An error occurred while generating invoices.',
+        message: err?.response?.data?.message || 'An error occurred while generating invoices.',
       });
     } finally {
       setGeneratingInvoice(false);
@@ -337,15 +331,17 @@ const InvoiceStudentsView = () => {
     if (!anchorStudent) return;
     handleMenuClose();
     navigate(
-      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${anchorStudent.user_id}`,
+      // `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${anchorStudent.id}`,
+      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view_class_invoice`,
     );
   };
 
   const handlePrintInvoiceForAll = () => {
     if (filteredStudents.length === 0) return;
-    const userIds = filteredStudents.map((s) => s.user_id).join(',');
+    // const userIds = filteredStudents.map((s) => s.id).join(',');
     navigate(
-      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${userIds}`,
+      // `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${userIds}`,
+      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view_class_invoice`,
     );
   };
 
@@ -391,12 +387,7 @@ const InvoiceStudentsView = () => {
   // Show spinner while categories are still resolving OR students are loading
   if (categoriesLoading || (!categoriesReady && loading)) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="300px"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
         <CircularProgress />
       </Box>
     );
@@ -483,13 +474,7 @@ const InvoiceStudentsView = () => {
           </Stack>
         </Box>
 
-        <Grid
-          container
-          spacing={1.5}
-          mb={3}
-          alignItems="center"
-          justifyContent="flex-end"
-        >
+        <Grid container spacing={1.5} mb={3} alignItems="center" justifyContent="flex-end">
           <Grid size={{ xs: 12, sm: 6, md: 'auto' }}>
             <FormControl size="small" fullWidth sx={{ minWidth: { xs: 1, sm: 200 } }}>
               <Select
@@ -620,10 +605,8 @@ const InvoiceStudentsView = () => {
                 ) : (
                   filteredStudents.map((student, idx) => {
                     const isItemSelected = isStudentSelected(idx);
-                    const compulsoryAmt =
-                      Number(student.total_compulsory_payment) || 0;
-                    const optionalAmt =
-                      Number(studentOptionalAmounts[student.user_id]) || 0;
+                    const compulsoryAmt = Number(student.total_compulsory_payment) || 0;
+                    const optionalAmt = Number(studentOptionalAmounts[student.user_id]) || 0;
                     const totalPayable = compulsoryAmt + optionalAmt;
 
                     return (
@@ -645,10 +628,14 @@ const InvoiceStudentsView = () => {
                         <TableCell padding="checkbox" sx={{ px: { xs: 0.5, sm: 1 } }}>
                           <Checkbox checked={isItemSelected} color="primary" size="small" />
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                        <TableCell
+                          sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        >
                           {student.user_id}
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                        <TableCell
+                          sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        >
                           {student.name}
                         </TableCell>
                         <TableCell>
@@ -671,7 +658,13 @@ const InvoiceStudentsView = () => {
                             </Typography>
                           </Box>
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600, fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}>
+                        <TableCell
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           ₦{compulsoryAmt.toLocaleString()}
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>
@@ -732,7 +725,11 @@ const InvoiceStudentsView = () => {
                               display: 'inline-block',
                             }}
                           >
-                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}>
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              sx={{ fontSize: { xs: '0.7rem', sm: '0.875rem' } }}
+                            >
                               ₦{totalPayable.toLocaleString()}
                             </Typography>
                           </Box>
@@ -745,7 +742,9 @@ const InvoiceStudentsView = () => {
                               handleMenuClick(e, student);
                             }}
                           >
-                            <MoreHorizIcon sx={{ color: 'text.secondary', fontSize: { xs: 18, sm: 24 } }} />
+                            <MoreHorizIcon
+                              sx={{ color: 'text.secondary', fontSize: { xs: 18, sm: 24 } }}
+                            />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -771,12 +770,7 @@ const InvoiceStudentsView = () => {
       </ParentCard>
 
       {/* ─── Optional Payment Modal ─── */}
-      <Dialog
-        open={optionalModalOpen}
-        onClose={handleCloseOptionalModal}
-        maxWidth="sm"
-        fullWidth
-      >
+      <Dialog open={optionalModalOpen} onClose={handleCloseOptionalModal} maxWidth="sm" fullWidth>
         <DialogTitle
           sx={{
             display: 'flex',
@@ -804,12 +798,7 @@ const InvoiceStudentsView = () => {
 
         <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
           {loadingOptionalPayments ? (
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              minHeight={200}
-            >
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
               <CircularProgress />
             </Box>
           ) : optionalPaymentList.length === 0 ? (
@@ -830,9 +819,7 @@ const InvoiceStudentsView = () => {
                   control={
                     <Checkbox
                       checked={allOptionalSelected}
-                      indeterminate={
-                        selectedOptionalIds.size > 0 && !allOptionalSelected
-                      }
+                      indeterminate={selectedOptionalIds.size > 0 && !allOptionalSelected}
                       onChange={handleToggleAllOptional}
                       color="primary"
                     />
@@ -880,14 +867,20 @@ const InvoiceStudentsView = () => {
                             width="100%"
                             sx={{ minWidth: { xs: 180, sm: 250 } }}
                           >
-                            <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}
+                            >
                               {opt.option_name}
                             </Typography>
                             <Typography
                               variant="body2"
                               fontWeight={700}
                               color="text.secondary"
-                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, whiteSpace: 'nowrap' }}
+                              sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                whiteSpace: 'nowrap',
+                              }}
                             >
                               ₦{(Number(opt.amount) || 0).toLocaleString()}
                             </Typography>
@@ -1001,9 +994,8 @@ const InvoiceStudentsView = () => {
                     Category
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    {categories.find(
-                      (c) => String(c.id) === selectedStudentCategory,
-                    )?.name || 'N/A'}
+                    {categories.find((c) => String(c.id) === selectedStudentCategory)?.name ||
+                      'N/A'}
                   </Typography>
                 </Box>
                 <Divider />

@@ -788,6 +788,7 @@ const InvoiceStudentsView = () => {
                                 e.stopPropagation();
                                 handleOpenOptionalModal(student);
                               }}
+                              disabled={!student.compulsory_invoice_generated}
                               sx={{
                                 textTransform: 'none',
                                 fontWeight: 600,

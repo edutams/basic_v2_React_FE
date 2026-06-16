@@ -34,7 +34,7 @@ import {
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 
-const GenerateInvoiceTab = ({ showSnackbar }) => {
+const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass }) => {
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
   const schoolName =
@@ -46,7 +46,6 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [selectedSessionTermId, setSelectedSessionTermId] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);

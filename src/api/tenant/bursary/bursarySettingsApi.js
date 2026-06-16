@@ -162,3 +162,13 @@ export const fetchStudentInvoiceBreakdown = async ({ sessionTermId, classId, cat
     const res = await api.get('/bursary/payment_schedule/fetch_student_invoice_breakdown', { params });
     return res.data;
 };
+
+export const fetchStudentPrintInvoice = async ({ sessionTermId, classId, categoryId, userId } = {}) => {
+    const params = {};
+    if (sessionTermId) params.session_term_id = sessionTermId;
+    if (classId) params.class_id = classId;
+    if (categoryId) params.category_id = categoryId;
+    if (userId) params.user_id = userId;
+    const res = await api.get('/bursary/payment_schedule/fetch_student_print_invoice', { params });
+    return res.data;
+};

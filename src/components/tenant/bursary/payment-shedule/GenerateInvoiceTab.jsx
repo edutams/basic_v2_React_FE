@@ -4,6 +4,7 @@ import {
   fetchBursarySessionTerms,
   fetchClasses,
   fetchGenerateInvoiceData,
+  fetchGenerateInvoiceStats,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 import {
   Box,
@@ -110,6 +111,36 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass }) =
     };
     loadClasses();
   }, []);
+
+  useEffect(() => {
+    const loadClassInvoiceStatus = async () => {
+      if (!selectedSessionTermId || classes.length === 0) {
+        return;
+      }
+
+      const classStatuses = await Promise.all(
+        classes.map(async (cls) => {
+          try {
+            const res = await fetchGenerateInvoiceStats(selectedSessionTermId, cls.id);
+            const invoiceGenerated = Number(res?.data?.invoice_generated ?? 0);
+            return {
+              ...cls,
+              invoice_generated: invoiceGenerated,
+            };
+          } catch (err) {
+            return {
+              ...cls,
+              invoice_generated: 0,
+            };
+          }
+        }),
+      );
+
+      setClasses(classStatuses);
+    };
+
+    loadClassInvoiceStatus();
+  }, [selectedSessionTermId, classes.length]);
 
   // Fetch schedule data when session term or selected class changes
   useEffect(() => {
@@ -278,30 +309,43 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass }) =
             <CircularProgress size={24} />
           ) : (
             <Stack direction="row" spacing={1} sx={{ minWidth: 'max-content' }}>
-              {classes.map((cls) => (
-                <Chip
-                  key={cls.id}
-                  label={cls.class_name}
-                  onClick={() => setSelectedClass(cls.id)}
-                  icon={
-                    Number(selectedClass) === Number(cls.id) ? (
-                      <CheckCircleIcon sx={{ fontSize: 18, color: 'white !important' }} />
-                    ) : undefined
-                  }
-                  sx={{
-                    bgcolor: Number(selectedClass) === Number(cls.id) ? 'primary.main' : 'white',
-                    color: Number(selectedClass) === Number(cls.id) ? 'white' : 'text.primary',
-                    fontWeight: 600,
-                    border: '1px solid',
-                    borderColor:
-                      Number(selectedClass) === Number(cls.id) ? 'primary.main' : 'divider',
-                    '&:hover': {
-                      bgcolor:
-                        Number(selectedClass) === Number(cls.id) ? 'primary.dark' : 'grey.100',
-                    },
-                  }}
-                />
-              ))}
+              {classes.map((cls) => {
+                const hasInvoiceGenerated =
+                  (Number(cls.invoice_generated) || Number(cls.invoiceGenerated) || 0) > 0;
+                const isSelected = Number(selectedClass) === Number(cls.id);
+
+                return (
+                  <Chip
+                    key={cls.id}
+                    label={cls.class_name}
+                    onClick={() => setSelectedClass(cls.id)}
+                    icon={
+                      hasInvoiceGenerated ? (
+                        <CheckCircleIcon
+                          sx={{
+                            fontSize: 18,
+                            color: isSelected ? 'white !important' : 'primary.main !important',
+                          }}
+                        />
+                      ) : undefined
+                    }
+                    sx={{
+                      bgcolor: isSelected
+                        ? 'primary.main'
+                        : hasInvoiceGenerated
+                        ? 'primary.light'
+                        : 'white',
+                      color: isSelected ? 'white' : hasInvoiceGenerated ? 'primary.main' : 'text.primary',
+                      fontWeight: 600,
+                      border: '1px solid',
+                      borderColor: isSelected ? 'primary.main' : hasInvoiceGenerated ? 'primary.main' : 'divider',
+                      '&:hover': {
+                        bgcolor: isSelected ? 'primary.dark' : hasInvoiceGenerated ? 'primary.main' : 'grey.100',
+                      },
+                    }}
+                  />
+                );
+              })}
             </Stack>
           )}
         </Box>

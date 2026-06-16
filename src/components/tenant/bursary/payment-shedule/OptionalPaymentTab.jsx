@@ -303,7 +303,7 @@ const OptionalPaymentTab = ({
           {terms[currentTerm]?.display_term.display_name} ({categoryLabel || '...'})
         </Typography>
       </Alert>
-      
+
       <ParentCard>
         <Box
           mb={3}
@@ -475,14 +475,19 @@ const OptionalPaymentTab = ({
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={schedule.classes}
-                      size="small"
-                      sx={{
-                        bgcolor: 'primary.light',
-                        color: 'primary.main',
-                      }}
-                    />
+                    {(schedule.classes?.split(',') || []).map((cls, index) => (
+                      <Chip
+                        key={index}
+                        label={cls.trim()}
+                        size="small"
+                        sx={{
+                          bgcolor: 'primary.light',
+                          color: 'primary.main',
+                          mr: 0.5,
+                          mb: 0.5,
+                        }}
+                      />
+                    ))}
                   </TableCell>
                   {/* <TableCell>
                       <Chip

@@ -25,3 +25,8 @@ export const printClassLedgerPaymentList = async (payload) => {
     const res = await api.post('/bursary/class_ledger/print_payment_list', { payload });
     return res.data;
 };
+
+export const fetchDrilldownStudents = async (payload) => {
+    const res = await api.post('/bursary/class_ledger/drilldown_students', { payload });
+    return res.data;
+};

@@ -62,25 +62,6 @@ import {
 import useNotification from '@/hooks/useNotification';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
-const compulsoryChartData = {
-  type: 'bar',
-  title: 'Compulsory Fees',
-  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
-  series: [
-    {
-      name: 'Total Expected',
-      data: [10200000, 1400000, 400000],
-    },
-    {
-      name: 'Total Paid',
-      data: [7200000, 0, 0],
-    },
-    {
-      name: 'Balance',
-      data: [3000000, 1400000, 400000],
-    },
-  ],
-};
 
 const optionalChartData = {
   type: 'bar',
@@ -125,12 +106,9 @@ const ClassLedger = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isDark = theme.palette.mode === 'dark';
-  const [analytics, setAnalytics] = useState(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [chartTitle, setChartTitle] = useState('');
   const [chartType, setChartType] = useState('bar');
-  const [chartData, setChartData] = useState(null);
 
   const [isCompulsory, setIsCompulsory] = useState(false);
   const [isOptional, setIsOptional] = useState(false);
@@ -533,15 +511,14 @@ const ClassLedger = () => {
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(compulsoryChartData.title);
-              setChartType(compulsoryChartData.type);
-              setChartData(compulsoryChartData);
+              setChartTitle('Compulsory Fees');
+              setChartType('bar');
+              setIsCompulsory(true);
             }}
             onClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(compulsoryChartData.title);
-              setChartType(compulsoryChartData.type);
-              setChartData(compulsoryChartData);
+              setChartTitle('Compulsory Fees');
+              setChartType('bar');
               setIsCompulsory(true);
             }}
           />
@@ -565,15 +542,14 @@ const ClassLedger = () => {
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(optionalChartData.title);
-              setChartType(optionalChartData.type);
-              setChartData(optionalChartData);
+              setChartTitle('Optional Fees');
+              setChartType('bar');
+              setIsOptional(true);
             }}
             onClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(optionalChartData.title);
-              setChartType(optionalChartData.type);
-              setChartData(optionalChartData);
+              setChartTitle('Optional Fees');
+              setChartType('bar');
               setIsOptional(true);
             }}
           />
@@ -596,15 +572,14 @@ const ClassLedger = () => {
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(payableChartData.title);
-              setChartType(payableChartData.type);
-              setChartData(payableChartData);
+              setChartTitle('Total Payable');
+              setChartType('bar');
+              setIsPayable(true);
             }}
             onClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(payableChartData.title);
-              setChartType(payableChartData.type);
-              setChartData(payableChartData);
+              setChartTitle('Total Payable');
+              setChartType('bar');
               setIsPayable(true);
             }}
           />
@@ -888,8 +863,7 @@ const ClassLedger = () => {
           }}
           title={chartTitle}
           chartType={chartType}
-          chartOptions={buildChartOptions(chartData?.categories || [])}
-          chartSeries={chartData?.series || []}
+          chartOptions={buildChartOptions([selectedClassName])}
           isPayable={isPayable}
           isOptional={isOptional}
           isCompulsory={isCompulsory}

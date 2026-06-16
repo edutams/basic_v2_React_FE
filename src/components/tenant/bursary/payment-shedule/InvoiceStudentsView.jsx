@@ -44,6 +44,7 @@ import {
   Description as DescriptionIcon,
 } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
+import PrintInvoiceModal from './PrintInvoiceModal';
 
 const InvoiceStudentsView = () => {
   const { session_term_id, class_id, pay_schedule_id } = useParams();
@@ -145,10 +146,36 @@ const InvoiceStudentsView = () => {
           categoryId: selectedCategoryId,
         });
         const d = response?.data || {};
-        setStudents(Array.isArray(d.students) ? d.students : []);
+        const students = Array.isArray(d.students) ? d.students : [];
+        setStudents(students);
         setSessionLabel(d.session_label || '');
         setTermLabel(d.term_label || '');
         setClassName(d.class_name || '');
+
+        // ── Populate existing optional payment selections from backend ──
+        const optionIdsMap = {};
+        const amountsMap = {};
+        students.forEach((s) => {
+          // Parse existing_optional_option_ids (JSON string or null from DB)
+          if (s.existing_optional_option_ids) {
+            try {
+              const ids = typeof s.existing_optional_option_ids === 'string'
+                ? JSON.parse(s.existing_optional_option_ids)
+                : s.existing_optional_option_ids;
+              if (Array.isArray(ids) && ids.length > 0) {
+                optionIdsMap[s.user_id] = ids.filter((id) => id !== null);
+              }
+            } catch (e) {
+              // Ignore parse errors
+            }
+          }
+          // Use total_existing_optional_amount from backend
+          if (Number(s.total_existing_optional_amount) > 0) {
+            amountsMap[s.user_id] = Number(s.total_existing_optional_amount);
+          }
+        });
+        setStudentSelectedOptionIds((prev) => ({ ...prev, ...optionIdsMap }));
+        setStudentOptionalAmounts((prev) => ({ ...prev, ...amountsMap }));
       } catch (err) {
         console.error('Failed to load student invoice data', err);
         setError(err?.response?.data?.message || 'Failed to load student invoice data');
@@ -164,6 +191,11 @@ const InvoiceStudentsView = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [generatingInvoice, setGeneratingInvoice] = useState(false);
   const [invoiceResult, setInvoiceResult] = useState(null);
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [printStudent, setPrintStudent] = useState(null);
+  const [regeneratingStudent, setRegeneratingStudent] = useState(false);
+  const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false);
+  const [regenerateTargetStudent, setRegenerateTargetStudent] = useState(null);
 
   // ── Fetch optional payments when modal opens ──
   const handleOpenOptionalModal = async (student) => {
@@ -330,10 +362,64 @@ const InvoiceStudentsView = () => {
   const handlePrintInvoice = () => {
     if (!anchorStudent) return;
     handleMenuClose();
-    navigate(
-      // `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${anchorStudent.id}`,
-      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view_class_invoice`,
-    );
+    setPrintStudent(anchorStudent);
+    setPrintModalOpen(true);
+  };
+
+  const handleRegenerateInvoice = () => {
+    if (!anchorStudent) return;
+    setRegenerateTargetStudent(anchorStudent);
+    handleMenuClose();
+    setRegenerateConfirmOpen(true);
+  };
+
+  const handleCloseRegenerateConfirm = () => {
+    setRegenerateConfirmOpen(false);
+    setRegenerateTargetStudent(null);
+  };
+
+  const handleConfirmRegenerateInvoice = async () => {
+    const student = regenerateTargetStudent;
+    if (!student) return;
+
+    setRegenerateConfirmOpen(false);
+    setRegeneratingStudent(true);
+
+    try {
+      const payload = {
+        session_term_id: Number(session_term_id),
+        category_id: Number(selectedStudentCategory),
+        class_id: Number(class_id),
+        student_data: [
+          {
+            user_id: String(student.user_id),
+            option_payment_ids: studentSelectedOptionIds[student.user_id] || [],
+          },
+        ],
+      };
+
+      const res = await generateStudentInvoice(payload);
+
+      if (res?.success) {
+        setInvoiceResult({
+          success: true,
+          message: `Invoice regenerated successfully for ${student.name || student.user_id}.`,
+        });
+      } else {
+        setInvoiceResult({
+          success: false,
+          message: res?.message || 'Failed to regenerate invoice.',
+        });
+      }
+    } catch (err) {
+      console.error('Failed to regenerate invoice', err);
+      setInvoiceResult({
+        success: false,
+        message: err?.response?.data?.message || 'An error occurred while regenerating the invoice.',
+      });
+    } finally {
+      setRegeneratingStudent(false);
+    }
   };
 
   const handlePrintInvoiceForAll = () => {
@@ -764,10 +850,28 @@ const InvoiceStudentsView = () => {
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
           <MenuItem onClick={handlePrintInvoice}>Print Invoice</MenuItem>
-          <MenuItem onClick={handleMenuClose}>Regenerate Invoice</MenuItem>
+          <MenuItem
+            onClick={handleRegenerateInvoice}
+            disabled={regeneratingStudent}
+          >
+            {regeneratingStudent ? 'Regenerating...' : 'Regenerate Invoice'}
+          </MenuItem>
           <MenuItem onClick={handleMenuClose}>Go to Student Ledger</MenuItem>
         </Menu>
       </ParentCard>
+
+      {/* ─── Print Invoice Modal ─── */}
+      <PrintInvoiceModal
+        open={printModalOpen}
+        onClose={() => {
+          setPrintModalOpen(false);
+          setPrintStudent(null);
+        }}
+        student={printStudent}
+        sessionTermId={session_term_id}
+        classId={class_id}
+        categoryId={selectedStudentCategory}
+      />
 
       {/* ─── Optional Payment Modal ─── */}
       <Dialog open={optionalModalOpen} onClose={handleCloseOptionalModal} maxWidth="sm" fullWidth>
@@ -1021,6 +1125,96 @@ const InvoiceStudentsView = () => {
             startIcon={<DescriptionIcon />}
           >
             Yes, Generate
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ─── Regenerate Invoice Confirmation Dialog ─── */}
+      <Dialog
+        open={regenerateConfirmOpen}
+        onClose={handleCloseRegenerateConfirm}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <DescriptionIcon color="success" />
+            <Typography variant="h6" fontWeight={700}>
+              Regenerate Invoice
+            </Typography>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: 2 }}>
+          <Typography variant="body1">
+            Are you sure you want to regenerate invoice for this student?
+          </Typography>
+
+          {regenerateTargetStudent && (
+            <Box
+              sx={{
+                mt: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 2,
+                p: 2,
+                border: '1px solid',
+                borderColor: 'grey.200',
+              }}
+            >
+              <Stack spacing={1}>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="body2" color="text.secondary">
+                    Student
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {regenerateTargetStudent.name} ({regenerateTargetStudent.user_id})
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="body2" color="text.secondary">
+                    Session Term
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {sessionLabel}
+                    {termLabel ? ` - ${termLabel}` : ''}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="body2" color="text.secondary">
+                    Class
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {className}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="body2" color="text.secondary">
+                    Category
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {categories.find((c) => String(c.id) === selectedStudentCategory)?.name || 'N/A'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          )}
+
+          <Alert severity="info" sx={{ mt: 2 }}>
+            This will overwrite any existing invoice for this student.
+          </Alert>
+        </DialogContent>
+
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, gap: 1 }}>
+          <Button onClick={handleCloseRegenerateConfirm}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmRegenerateInvoice}
+            sx={{ fontWeight: 600 }}
+            startIcon={<DescriptionIcon />}
+          >
+            Yes, Regenerate
           </Button>
         </DialogActions>
       </Dialog>

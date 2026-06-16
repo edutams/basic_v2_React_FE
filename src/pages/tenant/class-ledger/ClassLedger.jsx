@@ -54,6 +54,7 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import {
   fetchClassLedgerAnalytics,
+  fetchDrilldownStudents,
   generateClassLedgerExcel,
   getClassStudentsPaymentStatus,
   printClassLedgerPaymentList,
@@ -171,6 +172,24 @@ const ClassLedger = () => {
       }
     }
   }, []);
+
+  const handleFetchDrilldown = async (type) => {
+    const payload = {
+      filters: {
+        programme_id: programme,
+        class_arm_id: classLevel,
+        type,
+      },
+    };
+    const res = await fetchDrilldownStudents(payload);
+    return res.students || [];
+  };
+
+  // find the selected class label for display
+  const selectedClassName = useMemo(() => {
+    const cls = classes.find((c) => c.value === classLevel);
+    return cls ? `${cls.label} ${cls.arm_names}` : '';
+  }, [classes, classLevel]);
 
   const handleDownloadExcel = async () => {
     if (!programme || !classLevel) {
@@ -861,7 +880,12 @@ const ClassLedger = () => {
         </Menu>
         <FeeChart
           open={isFeeModalOpen}
-          onClose={() => setIsFeeModalOpen(false)}
+          onClose={() => {
+            setIsFeeModalOpen(false);
+            setIsCompulsory(false);
+            setIsOptional(false);
+            setIsPayable(false);
+          }}
           title={chartTitle}
           chartType={chartType}
           chartOptions={buildChartOptions(chartData?.categories || [])}
@@ -869,6 +893,9 @@ const ClassLedger = () => {
           isPayable={isPayable}
           isOptional={isOptional}
           isCompulsory={isCompulsory}
+          analyticsData={analyticsData}
+          className={selectedClassName}
+          onFetchDrilldown={handleFetchDrilldown}
         />
       </ParentCard>
     </PageContainer>

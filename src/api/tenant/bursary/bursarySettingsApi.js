@@ -124,10 +124,12 @@ export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = '
     return res.data;
 };
 
-export const fetchGenerateInvoiceStats = async (sessionTermId) => {
-    const res = await api.get('/bursary/payment_schedule/generate_invoice_stats', {
-        params: { session_term_id: sessionTermId }
-    });
+export const fetchGenerateInvoiceStats = async (sessionTermId, classId) => {
+    const params = { session_term_id: sessionTermId };
+    if (classId) {
+        params.class_id = classId;
+    }
+    const res = await api.get('/bursary/payment_schedule/generate_invoice_stats', { params });
     return res.data;
 };
     

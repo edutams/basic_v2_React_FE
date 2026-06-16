@@ -36,14 +36,29 @@ const StatCard = ({
         ...sx,
       }}
     >
-      <CardContent sx={{ p: '20px !important', height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <CardContent
+        sx={{
+          p: '20px !important',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" fontWeight="900" sx={{ color: isDark ? '#ccc' : '#555', fontSize: '13px' }}>
+          <Typography
+            variant="subtitle2"
+            fontWeight="900"
+            sx={{ color: isDark ? '#ccc' : '#555', fontSize: '13px' }}
+          >
             {title}
           </Typography>
           <Box
-            onClick={(e) => { e.stopPropagation(); onIconClick?.(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onIconClick?.();
+            }}
             sx={{
               bgcolor: isDark ? '#333' : '#333333',
               p: 0.6,
@@ -79,19 +94,38 @@ const StatCard = ({
           </Typography>
         </Box>
 
-
         {/* Sub Stats */}
         {subStats.length > 0 && (
-          <Stack direction="row" spacing={0} divider={<Divider orientation="vertical" flexItem />} sx={{ mt: 'auto' }}>
+          <Stack
+            direction="row"
+            spacing={0}
+            divider={<Divider orientation="vertical" flexItem />}
+            sx={{ mt: 'auto' }}
+          >
             {subStats.map((stat, i) => (
-              <Box key={i} sx={{ flex: 1, px: i === 0 ? 0 : 2, pr: i === subStats.length - 1 ? 0 : 2 }}>
-                <Typography variant="caption" sx={{ color: isDark ? '#aaa' : '#333333', fontWeight: 800, display: 'block', mb: 0.3 ,fontSize: '13px'}}>
+              <Box
+                key={i}
+                sx={{ flex: 1, px: i === 0 ? 0 : 2, pr: i === subStats.length - 1 ? 0 : 2 }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: isDark ? '#aaa' : '#333333',
+                    fontWeight: 800,
+                    display: 'block',
+                    mb: 0.3,
+                    fontSize: '13px',
+                  }}
+                >
                   {stat.label}
                 </Typography>
-                <Typography variant="subtitle2" fontWeight="700" sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}>
-                  #{stat.value}
+                <Typography
+                  variant="subtitle2"
+                  fontWeight="700"
+                  sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}
+                >
+                  {stat.value}
                 </Typography>
-                
               </Box>
             ))}
           </Stack>
@@ -110,7 +144,7 @@ StatCard.propTypes = {
     PropTypes.shape({
       label: PropTypes.string.isRequired,
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    })
+    }),
   ),
   onIconClick: PropTypes.func,
   onClick: PropTypes.func,

@@ -182,7 +182,7 @@ const ClassLedger = () => {
       },
     };
     const res = await fetchDrilldownStudents(payload);
-    return res.students || [];
+    return res?.data || [];
   };
 
   // find the selected class label for display

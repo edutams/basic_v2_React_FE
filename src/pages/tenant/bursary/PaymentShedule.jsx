@@ -68,6 +68,7 @@ const PaymentShedule = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [activeSubTermId, setActiveSubTermId] = useState(null);
   const [subTerms, setSubTerms] = useState([]);
+  const [selectedClass, setSelectedClass] = useState('');
 
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -313,7 +314,7 @@ const PaymentShedule = () => {
     const loadInvoiceStats = async () => {
       try {
         setLoadingInvoiceStats(true);
-        const res = await fetchGenerateInvoiceStats(selectedSessionTerm);
+        const res = await fetchGenerateInvoiceStats(selectedSessionTerm, selectedClass);
         if (res?.success && res.data) {
           const { invoice_generated, total_amount, payment_names, categories } = res.data;
           setInvoiceStats({
@@ -356,7 +357,7 @@ const PaymentShedule = () => {
       }
     };
     loadInvoiceStats();
-  }, [selectedSessionTerm, actionTab]);
+  }, [selectedSessionTerm, actionTab, selectedClass]);
 
   const formatCurrency = (value) =>
     `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -914,6 +915,8 @@ const PaymentShedule = () => {
             <GenerateInvoiceTab
               showSnackbar={showSnackbar}
               onUpdateCategory={handleUpdateCategory}
+              selectedClass={selectedClass}
+              setSelectedClass={setSelectedClass}
             />
           )}
           {actionTab === 2 && <SendInvoiceTab showSnackbar={showSnackbar} />}

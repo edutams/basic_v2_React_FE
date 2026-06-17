@@ -54,81 +54,22 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import {
   fetchClassLedgerAnalytics,
-  fetchPaymentNameOptions,
+  fetchDrilldownStudents,
+  generateClassLedgerExcel,
   getClassStudentsPaymentStatus,
+  printClassLedgerPaymentList,
 } from '@/api/tenant/bursary/classLedger';
 import useNotification from '@/hooks/useNotification';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
-const compulsoryChartData = {
-  type: 'bar',
-  title: 'Compulsory Fees',
-  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
-  series: [
-    {
-      name: 'Total Expected',
-      data: [10200000, 1400000, 400000],
-    },
-    {
-      name: 'Total Paid',
-      data: [7200000, 0, 0],
-    },
-    {
-      name: 'Balance',
-      data: [3000000, 1400000, 400000],
-    },
-  ],
-};
 
-const optionalChartData = {
-  type: 'bar',
-  title: 'Optional Fees',
-  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
-  series: [
-    {
-      name: 'Total Expected',
-      data: [5000000, 2500000, 1200000],
-    },
-    {
-      name: 'Total Paid',
-      data: [3200000, 1500000, 800000],
-    },
-    {
-      name: 'Balance',
-      data: [1800000, 1000000, 400000],
-    },
-  ],
-};
-
-const payableChartData = {
-  type: 'bar',
-  title: 'Payable Fees',
-  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
-  series: [
-    {
-      name: 'Total Expected',
-      data: [12000000, 5000000, 2000000],
-    },
-    {
-      name: 'Total Paid',
-      data: [8000000, 3000000, 1000000],
-    },
-    {
-      name: 'Balance',
-      data: [4000000, 2000000, 1000000],
-    },
-  ],
-};
 const ClassLedger = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const isDark = theme.palette.mode === 'dark';
-  const [analytics, setAnalytics] = useState(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [isFeeModalOpen, setIsFeeModalOpen] = useState(false);
   const [chartTitle, setChartTitle] = useState('');
   const [chartType, setChartType] = useState('bar');
-  const [chartData, setChartData] = useState(null);
 
   const [isCompulsory, setIsCompulsory] = useState(false);
   const [isOptional, setIsOptional] = useState(false);
@@ -143,8 +84,8 @@ const ClassLedger = () => {
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
 
-  const [paymentOptions, setPaymentOptions] = useState([]);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
 
   const [ledgerData, setLedgerData] = useState([]);
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -171,6 +112,159 @@ const ClassLedger = () => {
     }
   }, []);
 
+  const handleFetchDrilldown = async (type) => {
+    const payload = {
+      filters: {
+        programme_id: programme,
+        class_arm_id: classLevel,
+        type,
+      },
+    };
+    const res = await fetchDrilldownStudents(payload);
+    return res?.data || [];
+  };
+
+  // find the selected class label for display
+  const selectedClassName = useMemo(() => {
+    const cls = classes.find((c) => c.value === classLevel);
+    return cls ? `${cls.label} ${cls.arm_names}` : '';
+  }, [classes, classLevel]);
+
+  const handleDownloadExcel = async () => {
+    if (!programme || !classLevel) {
+      notify.warning('Please select Programme and Class');
+      return;
+    }
+
+    try {
+      notify.info('Generating Excel...');
+      const payload = {
+        filters: {
+          programme_id: programme,
+          class_arm_id: classLevel,
+        },
+      };
+
+      const blob = await generateClassLedgerExcel(payload);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'payment_list.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      notify.error('Failed to generate Excel');
+    }
+  };
+
+  const handlePrintPaymentList = async () => {
+    if (!programme || !classLevel) {
+      notify.warning('Please select Programme and Class');
+      return;
+    }
+
+    try {
+      notify.info('Preparing print view...');
+      const payload = {
+        filters: {
+          programme_id: programme,
+          class_arm_id: classLevel,
+        },
+      };
+
+      const { students, class_name, sess_term, school_name } =
+        await printClassLedgerPaymentList(payload);
+
+      const rows = students
+        .map(
+          (s, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${[s.fname, s.lname, s.mname].filter(Boolean).join(' ')}</td>
+        <td>${Number(s.total_compulsory).toLocaleString()}</td>
+        <td>${Number(s.total_optional).toLocaleString()}</td>
+        <td>${Number(s.total_payable).toLocaleString()}</td>
+        <td>${Number(s.total_paid).toLocaleString()}</td>
+        <td class="${s.total_balance > 0 ? 'owing' : 'cleared'}">
+          ${Number(s.total_balance).toLocaleString()}
+        </td>
+      </tr>
+    `,
+        )
+        .join('');
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Payment List - ${class_name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #111; padding: 24px; }
+    h2, h3, p { text-align: center; margin-bottom: 4px; }
+    h2 { font-size: 16px; text-transform: uppercase; }
+    h3 { font-size: 14px; }
+    p  { font-size: 12px; color: #444; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th { background: #1a1a2e; color: #fff; padding: 8px 10px; text-align: left; font-size: 12px; }
+    td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
+    tr:nth-child(even) td { background: #f9fafb; }
+    .owing   { font-weight: 600; color: #dc2626; }
+    .cleared { font-weight: 600; color: #16a34a; }
+    .footer  { margin-top: 24px; font-size: 11px; color: #888; text-align: center; }
+    @media print {
+      body { padding: 8px; }
+      .no-print { display: none !important; }
+      @page { margin: 1cm; }
+    }
+  </style>
+</head>
+<body>
+  <h2>Payment List</h2>
+  <h2>${school_name}</h2>
+  <h3>Class: ${class_name}</h3>
+  <p>Session Term: ${sess_term}</p>
+
+  <div class="no-print" style="text-align:right; margin-bottom:12px;">
+    <button onclick="window.print()"
+      style="padding:8px 18px; background:#1a1a2e; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:13px;">
+      🖨️ Print
+    </button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Student Name</th>
+        <th>Compulsory Bill (₦)</th>
+        <th>Optional Bill (₦)</th>
+        <th>Total Payable (₦)</th>
+        <th>Total Paid (₦)</th>
+        <th>Balance (₦)</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="footer">Generated on ${new Date().toLocaleString()}</div>
+  <script>window.onload = () => window.print();<\/script>
+</body>
+</html>`;
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.open();
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error(error);
+      notify.error('Failed to load print view');
+    }
+  };
+
   const loadProgrammes = async () => {
     try {
       const res = await fetchProgrammes();
@@ -182,15 +276,6 @@ const ClassLedger = () => {
       );
     } catch (error) {
       console.error('Failed to load programmes');
-    }
-  };
-
-  const loadPaymentOptions = async () => {
-    try {
-      const res = await fetchPaymentNameOptions();
-      setPaymentOptions(res.data || []);
-    } catch (error) {
-      console.error('Failed to load payment options', error);
     }
   };
 
@@ -208,11 +293,10 @@ const ClassLedger = () => {
         filters: {
           programme_id: programme,
           class_arm_id: classLevel,
-          payment_status: selectedPaymentOption || null, // optional later
+          payment_status: paymentStatusFilter,
+          search: search,
         },
       };
-
-      // console.log('Sending payload:', payload);
 
       // Fetch Analytics for Stat Cards
       const analyticsRes = await fetchClassLedgerAnalytics(payload);
@@ -230,9 +314,69 @@ const ClassLedger = () => {
     }
   };
 
+  const fetchAnalyticsOnly = async () => {
+    if (!programme || !classLevel) return;
+
+    setLoadingAnalytics(true);
+    try {
+      const payload = {
+        filters: {
+          progId: programme,
+          class_arm_id: classLevel,
+          payment_status: paymentStatusFilter || null,
+          search: search,
+        },
+      };
+
+      const analyticsRes = await fetchClassLedgerAnalytics(payload);
+      setAnalyticsData(analyticsRes);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  // Auto-select first Programme
+  useEffect(() => {
+    if (programmes.length > 0 && !programme) {
+      const firstProg = programmes[0].value;
+      setProgramme(firstProg);
+      // handleFilterChange('programme', firstProg);
+
+      // Fetch classes for first programme, then auto-select first class
+      fetchClassesByProgramme(firstProg)
+        .then((classesRes) => {
+          const mapped = classesRes.data.map((c) => ({
+            value: c.class_arm_id,
+            label: c.class_code,
+            arm_names: c.arm_names,
+          }));
+          setClasses(mapped);
+          if (mapped.length > 0) {
+            setClassLevel(mapped[0].value); // ← auto-select first class
+          }
+        })
+        .catch((err) => console.error('Failed to fetch classes', err));
+    }
+  }, [programmes]);
+
+  // Auto-load Analytics when Programme or Class changes
+  useEffect(() => {
+    if (programme && classLevel) {
+      fetchAnalyticsOnly();
+    }
+  }, [programme, classLevel, paymentStatusFilter]);
+
+  // Auto refresh analytics when payment status filter changes
+  // useEffect(() => {
+  //   if (programme && classLevel) {
+  //     fetchAnalyticsOnly();
+  //   }
+  // }, [paymentStatusFilter]);
+
   useEffect(() => {
     loadProgrammes();
-    loadPaymentOptions();
   }, []);
 
   const buildChartOptions = (categories) => ({
@@ -328,15 +472,14 @@ const ClassLedger = () => {
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(compulsoryChartData.title);
-              setChartType(compulsoryChartData.type);
-              setChartData(compulsoryChartData);
+              setChartTitle('Compulsory Fees');
+              setChartType('bar');
+              setIsCompulsory(true);
             }}
             onClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(compulsoryChartData.title);
-              setChartType(compulsoryChartData.type);
-              setChartData(compulsoryChartData);
+              setChartTitle('Compulsory Fees');
+              setChartType('bar');
               setIsCompulsory(true);
             }}
           />
@@ -360,15 +503,14 @@ const ClassLedger = () => {
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(optionalChartData.title);
-              setChartType(optionalChartData.type);
-              setChartData(optionalChartData);
+              setChartTitle('Optional Fees');
+              setChartType('bar');
+              setIsOptional(true);
             }}
             onClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(optionalChartData.title);
-              setChartType(optionalChartData.type);
-              setChartData(optionalChartData);
+              setChartTitle('Optional Fees');
+              setChartType('bar');
               setIsOptional(true);
             }}
           />
@@ -391,15 +533,14 @@ const ClassLedger = () => {
             ]}
             onIconClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(payableChartData.title);
-              setChartType(payableChartData.type);
-              setChartData(payableChartData);
+              setChartTitle('Total Payable');
+              setChartType('bar');
+              setIsPayable(true);
             }}
             onClick={() => {
               setIsFeeModalOpen(true);
-              setChartTitle(payableChartData.title);
-              setChartType(payableChartData.type);
-              setChartData(payableChartData);
+              setChartTitle('Total Payable');
+              setChartType('bar');
               setIsPayable(true);
             }}
           />
@@ -431,10 +572,7 @@ const ClassLedger = () => {
                 startIcon={<DownloadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
-                onClick={() => {
-                  setDownloadClassId('');
-                  setDownloadDialogOpen(true);
-                }}
+                onClick={handleDownloadExcel}
               >
                 View In CSV Format
               </Button>
@@ -444,7 +582,7 @@ const ClassLedger = () => {
                 startIcon={<UploadIcon />}
                 size="small"
                 sx={{ width: { xs: '100%', sm: 'auto' } }}
-                onClick={() => setUploadLearnerOpen(true)}
+                onClick={handlePrintPaymentList}
               >
                 Print Payment List
               </Button>
@@ -495,17 +633,14 @@ const ClassLedger = () => {
             <TextField
               select
               fullWidth
-              label="Payment Options"
+              label="Payment Status"
               size="small"
-              value={selectedPaymentOption}
-              onChange={(e) => setSelectedPaymentOption(e.target.value)}
+              value={paymentStatusFilter}
+              onChange={(e) => setPaymentStatusFilter(e.target.value)}
             >
-              <MenuItem value="">All Payment Options</MenuItem>
-              {paymentOptions.map((option, _i) => (
-                <MenuItem key={_i} value={option.pay_option}>
-                  {option.pay_option}
-                </MenuItem>
-              ))}
+              <MenuItem value="">All Students</MenuItem>
+              <MenuItem value="cleared">Payment List (Cleared)</MenuItem>
+              <MenuItem value="owing">Debtor's List (Owing)</MenuItem>
             </TextField>
           </Grid>
 
@@ -514,6 +649,8 @@ const ClassLedger = () => {
               placeholder="Search by name"
               size="small"
               fullWidth
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -555,7 +692,6 @@ const ClassLedger = () => {
                 <TableCell>Action</TableCell>
               </TableRow>
             </TableHead>
-
             <TableBody>
               {loadingTable ? (
                 <TableRow>
@@ -566,7 +702,6 @@ const ClassLedger = () => {
               ) : ledgerData.length > 0 ? (
                 ledgerData.map((student, index) => {
                   const user = student.users || student.user || {};
-
                   return (
                     <TableRow key={student.user_id || index} hover>
                       <TableCell>{index + 1}</TableCell>
@@ -681,14 +816,21 @@ const ClassLedger = () => {
         </Menu>
         <FeeChart
           open={isFeeModalOpen}
-          onClose={() => setIsFeeModalOpen(false)}
+          onClose={() => {
+            setIsFeeModalOpen(false);
+            setIsCompulsory(false);
+            setIsOptional(false);
+            setIsPayable(false);
+          }}
           title={chartTitle}
           chartType={chartType}
-          chartOptions={buildChartOptions(chartData?.categories || [])}
-          chartSeries={chartData?.series || []}
+          chartOptions={buildChartOptions([selectedClassName])}
           isPayable={isPayable}
           isOptional={isOptional}
           isCompulsory={isCompulsory}
+          analyticsData={analyticsData}
+          className={selectedClassName}
+          onFetchDrilldown={handleFetchDrilldown}
         />
       </ParentCard>
     </PageContainer>

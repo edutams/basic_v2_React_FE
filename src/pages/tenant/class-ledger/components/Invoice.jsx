@@ -831,7 +831,6 @@ const Invoice = () => {
                                                             '& .MuiSelect-select': { py: 0.5, fontSize: '0.875rem' }
                                                         }}
                                                     >
-                                                        <MenuItem value={fee.optionType}>{fee.optionType}</MenuItem>
                                                         {fee.options.map((opt) => (
                                                             <MenuItem key={opt} value={opt}>
                                                                 {opt}

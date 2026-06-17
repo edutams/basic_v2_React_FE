@@ -172,3 +172,8 @@ export const fetchStudentPrintInvoice = async ({ sessionTermId, classId, categor
     const res = await api.get('/bursary/payment_schedule/fetch_student_print_invoice', { params });
     return res.data;
 };
+
+export const saveStudentOptionalPayments = async (payload) => {
+    const res = await api.post('/bursary/payment_schedule/save_student_optional_payments', payload);
+    return res.data;
+};

@@ -5,6 +5,7 @@ import {
   fetchActiveCategories,
   fetchStudentOptionalPayments,
   generateStudentInvoice,
+  saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 import {
   Box,
@@ -134,48 +135,11 @@ const InvoiceStudentsView = () => {
       try {
         setLoading(true);
         setError(null);
-        // Clear optional amounts and selections when filters change
-        setStudentOptionalAmounts({});
-        setStudentSelectedOptionIds({});
+        // Clear selections when filters change
         setAnchorStudent(null);
         setSelectedStudents([]);
 
-        const response = await fetchStudentForInvoiceData({
-          sessionTermId: session_term_id,
-          classId: class_id,
-          categoryId: selectedCategoryId,
-        });
-        const d = response?.data || {};
-        const students = Array.isArray(d.students) ? d.students : [];
-        setStudents(students);
-        setSessionLabel(d.session_label || '');
-        setTermLabel(d.term_label || '');
-        setClassName(d.class_name || '');
-
-        // ── Populate existing optional payment selections from backend ──
-        const optionIdsMap = {};
-        const amountsMap = {};
-        students.forEach((s) => {
-          // Parse existing_optional_option_ids (JSON string or null from DB)
-          if (s.existing_optional_option_ids) {
-            try {
-              const ids = typeof s.existing_optional_option_ids === 'string'
-                ? JSON.parse(s.existing_optional_option_ids)
-                : s.existing_optional_option_ids;
-              if (Array.isArray(ids) && ids.length > 0) {
-                optionIdsMap[s.user_id] = ids.filter((id) => id !== null);
-              }
-            } catch (e) {
-              // Ignore parse errors
-            }
-          }
-          // Use total_existing_optional_amount from backend
-          if (Number(s.total_existing_optional_amount) > 0) {
-            amountsMap[s.user_id] = Number(s.total_existing_optional_amount);
-          }
-        });
-        setStudentSelectedOptionIds((prev) => ({ ...prev, ...optionIdsMap }));
-        setStudentOptionalAmounts((prev) => ({ ...prev, ...amountsMap }));
+        await fetchAndSetStudentData();
       } catch (err) {
         console.error('Failed to load student invoice data', err);
         setError(err?.response?.data?.message || 'Failed to load student invoice data');
@@ -186,6 +150,47 @@ const InvoiceStudentsView = () => {
 
     loadData();
   }, [session_term_id, class_id, pay_schedule_id, selectedCategoryId, categoriesReady]);
+
+  // ── Refetchable helper to load student data from backend ──
+  const fetchAndSetStudentData = async () => {
+    setError(null);
+
+    const response = await fetchStudentForInvoiceData({
+      sessionTermId: session_term_id,
+      classId: class_id,
+      categoryId: selectedCategoryId,
+    });
+    const d = response?.data || {};
+    const students = Array.isArray(d.students) ? d.students : [];
+    setStudents(students);
+    setSessionLabel(d.session_label || '');
+    setTermLabel(d.term_label || '');
+    setClassName(d.class_name || '');
+
+    // ── Populate existing optional payment selections from backend ──
+    const optionIdsMap = {};
+    const amountsMap = {};
+    students.forEach((s) => {
+      if (s.existing_optional_option_ids) {
+        try {
+          const ids =
+            typeof s.existing_optional_option_ids === 'string'
+              ? JSON.parse(s.existing_optional_option_ids)
+              : s.existing_optional_option_ids;
+          if (Array.isArray(ids) && ids.length > 0) {
+            optionIdsMap[s.user_id] = ids.filter((id) => id !== null);
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+      if (Number(s.total_existing_optional_amount) > 0) {
+        amountsMap[s.user_id] = Number(s.total_existing_optional_amount);
+      }
+    });
+    setStudentSelectedOptionIds(optionIdsMap);
+    setStudentOptionalAmounts(amountsMap);
+  };
 
   // ── Generate Invoice confirmation state ──
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -253,31 +258,62 @@ const InvoiceStudentsView = () => {
     });
   };
 
-  const handleAddOptionalPayments = () => {
+  const handleAddOptionalPayments = async () => {
     if (!optionalModalStudent) return;
 
-    const allOptions = optionalPaymentList.flatMap((group) => group.options);
-    const totalOptional = allOptions
-      .filter((opt) => selectedOptionalIds.has(opt.option_id))
-      .reduce((sum, opt) => sum + (Number(opt.amount) || 0), 0);
+    const student = optionalModalStudent;
+    const userId = student.user_id;
+    const invoiceNumber = student.compulsory_invoice_number;
 
-    setStudentOptionalAmounts((prev) => ({
-      ...prev,
-      [optionalModalStudent.user_id]: totalOptional,
-    }));
+    // Check if invoice has been generated (need invoice_number)
+    if (!invoiceNumber) {
+      handleCloseOptionalModal();
+      setInvoiceResult({
+        success: false,
+        message: 'No invoice generated yet for this student. Please generate an invoice first.',
+      });
+      return;
+    }
 
-    const userId = optionalModalStudent.user_id;
-    setStudentSelectedOptionIds((prev) => {
-      const next = { ...prev };
-      if (selectedOptionalIds.size > 0) {
-        next[userId] = [...selectedOptionalIds];
-      } else {
-        delete next[userId];
-      }
-      return next;
-    });
-
+    // Close the modal optimistically while the API call runs
     handleCloseOptionalModal();
+
+    try {
+      const optionPaymentIds = [...selectedOptionalIds];
+
+      const res = await saveStudentOptionalPayments({
+        invoice_number: Number(invoiceNumber),
+        user_id: userId,
+        option_payment_ids: optionPaymentIds,
+      });
+
+      if (res?.success) {
+        // Refetch the full student data from backend so the table columns
+        // (Total Optional Amount, Total Payable) reflect the persisted state
+        try {
+          await fetchAndSetStudentData();
+        } catch (refetchErr) {
+          console.error('Failed to refresh student data after save', refetchErr);
+          // Don't surface this to the user — the save itself succeeded
+        }
+
+        setInvoiceResult({
+          success: true,
+          message: res?.message || 'Optional payments saved successfully.',
+        });
+      } else {
+        setInvoiceResult({
+          success: false,
+          message: res?.message || 'Failed to save optional payments.',
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save optional payments', err);
+      setInvoiceResult({
+        success: false,
+        message: err?.response?.data?.message || 'An error occurred while saving optional payments.',
+      });
+    }
   };
 
   const allOptionalItems = optionalPaymentList.flatMap((g) => g.options);
@@ -322,6 +358,13 @@ const InvoiceStudentsView = () => {
       const res = await generateStudentInvoice(payload);
 
       if (res?.success) {
+        // Refetch student data so the table shows the new invoice status
+        try {
+          await fetchAndSetStudentData();
+        } catch (refetchErr) {
+          console.error('Failed to refresh student data after generation', refetchErr);
+        }
+
         setInvoiceResult({
           success: true,
           message:
@@ -401,6 +444,13 @@ const InvoiceStudentsView = () => {
       const res = await generateStudentInvoice(payload);
 
       if (res?.success) {
+        // Refetch student data so the table shows the updated invoice status
+        try {
+          await fetchAndSetStudentData();
+        } catch (refetchErr) {
+          console.error('Failed to refresh student data after regeneration', refetchErr);
+        }
+
         setInvoiceResult({
           success: true,
           message: `Invoice regenerated successfully for ${student.name || student.user_id}.`,
@@ -788,7 +838,7 @@ const InvoiceStudentsView = () => {
                                 e.stopPropagation();
                                 handleOpenOptionalModal(student);
                               }}
-                              disabled={!student.compulsory_invoice_generated}
+                              disabled={!student.compulsory_invoice_number}
                               sx={{
                                 textTransform: 'none',
                                 fontWeight: 600,

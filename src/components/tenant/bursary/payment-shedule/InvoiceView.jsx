@@ -1,12 +1,14 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import { fetchStudentInvoiceBreakdown } from '@/api/tenant/bursary/bursarySettingsApi';
+import { useReactToPrint } from 'react-to-print';
 import {
   Box,
   Typography,
   Button,
   Stack,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -16,6 +18,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import { Print as PrintIcon, DescriptionOutlined as InvoiceIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 
 const InvoiceView = () => {
   const { session_term_id, class_id, category_id } = useParams();
@@ -37,6 +40,12 @@ const InvoiceView = () => {
   const schoolPhone = tenantInfo?.administrator_info?.school_owner?.school_owner_phone || '';
   const issuerName = tenantInfo?.issuer_name || 'Bursary Officer';
   const issuerTitle = tenantInfo?.issuer_title || 'Bursary Officer';
+  const printRef = useRef(null);
+
+  const handlePrintAll = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Class_Invoice_${className || 'Class'}`,
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -89,15 +98,60 @@ const InvoiceView = () => {
 
   if (studentsData.length === 0) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h6" color="text.secondary" textAlign="center">
-          No student data available. Please go back and select students to view invoices.
-        </Typography>
-        <Box display="flex" justifyContent="center" mt={2}>
-          <Button variant="outlined" onClick={handleBack}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '70vh',
+          px: 2,
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 4, sm: 6 },
+            maxWidth: 500,
+            width: '100%',
+            textAlign: 'center',
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'grey.200',
+          }}
+        >
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              bgcolor: 'warning.light',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 3,
+            }}
+          >
+            <InvoiceIcon sx={{ fontSize: 40, color: 'warning.main' }} />
+          </Box>
+
+          <Typography variant="h5" fontWeight={700} mb={1}>
+            No Invoice Generated
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 4, maxWidth: 360, mx: 'auto', lineHeight: 1.7 }}>
+            Invoices have not been generated for this class yet. Please go back to the invoice list and generate invoices for the selected students before viewing them here.
+          </Typography>
+
+          <Button
+            variant="contained"
+            onClick={handleBack}
+            startIcon={<ArrowBackIcon />}
+            sx={{ fontWeight: 600, px: 4 }}
+          >
             Back to Invoice List
           </Button>
-        </Box>
+        </Paper>
       </Box>
     );
   }
@@ -111,16 +165,44 @@ const InvoiceView = () => {
     <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
       {/* ── Header ── */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" fontWeight={700}>
-          View Class Invoice{' '}
-          <Box component="span" color="primary.main">
-            {className} {sessionLabel} {termLabel}
-          </Box>
-        </Typography>
-        <Button variant="outlined" size="small" onClick={handleBack}>
-          Back
-        </Button>
+        <Box>
+          <Typography variant="h6" fontWeight={700}>
+            View Class Invoice{' '}
+            <Box component="span" color="primary.main">
+              {className} {sessionLabel} {termLabel}
+            </Box>
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {studentsData.length} student(s)
+          </Typography>
+        </Box>
+        <Box display="flex" gap={1}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<PrintIcon />}
+            onClick={handlePrintAll}
+            disabled={studentsData.length === 0}
+            sx={{ fontWeight: 600 }}
+          >
+            Print All
+          </Button>
+          <Button variant="outlined" size="small" onClick={handleBack}>
+            Back
+          </Button>
+        </Box>
       </Box>
+
+      {/* ── Print All Container ── */}
+      <style>
+        {`
+          @media print {
+            body { margin: 0; padding: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { size: A4; margin: 12mm; }
+          }
+        `}
+      </style>
+      <Box ref={printRef} sx={{ '&:print': { p: 2 } }}>
 
       {/* ── Student Invoices ── */}
       {studentsData.map((student, index) => {
@@ -419,6 +501,7 @@ const InvoiceView = () => {
           </Box>
         );
       })}
+      </Box>
     </Stack>
   );
 };

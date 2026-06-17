@@ -284,6 +284,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass }) =
               onClick={handleFetch}
               sx={{ fontWeight: 600, minWidth: 100 }}
             >
+              dfghjkl
               Fetch
             </Button>
           </Stack>
@@ -333,8 +334,8 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass }) =
                       bgcolor: isSelected
                         ? 'primary.main'
                         : hasInvoiceGenerated
-                        ? 'primary.light'
-                        : 'white',
+                          ? 'primary.light'
+                          : 'white',
                       color: isSelected ? 'white' : hasInvoiceGenerated ? 'primary.main' : 'text.primary',
                       fontWeight: 600,
                       border: '1px solid',

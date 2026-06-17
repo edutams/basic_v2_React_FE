@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Skeleton,
 } from '@mui/material';
 import {
   Receipt as ReceiptIcon,
@@ -392,14 +393,22 @@ const PaymentShedule = () => {
                     textAlign: 'center',
                   }}
                 >
-                  <Typography variant="h2" fontWeight={700} color="primary" sx={{ lineHeight: 1 }}>
-                    {stats.schedule.total}
-                  </Typography>
+                  {loadingStats ? (
+                    <Skeleton width={90} height={48} />
+                  ) : (
+                    <Typography variant="h2" fontWeight={700} color="primary" sx={{ lineHeight: 1 }}>
+                      {stats.schedule.total}
+                    </Typography>
+                  )}
                 </Box>
                 <Box>
-                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    {stats.schedule.classes}
-                  </Typography>
+                  {loadingStats ? (
+                    <Skeleton width={80} height={40} />
+                  ) : (
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                      {stats.schedule.classes}
+                    </Typography>
+                  )}
                   <Typography variant="body2" color="textSecondary">
                     Classes
                   </Typography>
@@ -433,9 +442,13 @@ const PaymentShedule = () => {
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                     With Minimum Schedule
                   </Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
-                  </Typography>
+                  {loadingStats ? (
+                    <Skeleton width={120} height={40} />
+                  ) : (
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                      ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
+                    </Typography>
+                  )}
                   <Typography variant="caption" color="textSecondary">
                     {stats.paymentName.minLabel}
                   </Typography>
@@ -444,9 +457,13 @@ const PaymentShedule = () => {
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                     With Maximum Schedule
                   </Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
-                  </Typography>
+                  {loadingStats ? (
+                    <Skeleton width={120} height={40} />
+                  ) : (
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                      ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
+                    </Typography>
+                  )}
                   <Typography variant="caption" color="textSecondary">
                     {stats.paymentName.maxLabel}
                   </Typography>
@@ -480,9 +497,13 @@ const PaymentShedule = () => {
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                     With Minimum Schedule
                   </Typography>
-                  <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                    ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
-                  </Typography>
+                  {loadingStats ? (
+                    <Skeleton width={120} height={40} />
+                  ) : (
+                    <Typography variant="h3" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
+                      ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
+                    </Typography>
+                  )}
                   <Typography variant="caption" color="textSecondary">
                     {stats.studentCategory.minLabel}
                   </Typography>
@@ -491,9 +512,13 @@ const PaymentShedule = () => {
                   <Typography variant="caption" color="textSecondary" display="block" mb={1}>
                     With Maximum Schedule
                   </Typography>
-                  <Typography variant="h3">
-                    ₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}
-                  </Typography>
+                  {loadingStats ? (
+                    <Skeleton width={120} height={40} />
+                  ) : (
+                    <Typography variant="h3">
+                      ₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}
+                    </Typography>
+                  )}
                   <Typography variant="caption" color="textSecondary">
                     {stats.studentCategory.maxLabel}
                   </Typography>
@@ -523,14 +548,22 @@ const PaymentShedule = () => {
                     textAlign: 'center',
                   }}
                 >
-                  <Typography variant="h2" fontWeight={700} color="#F57C00">
-                    {loadingInvoiceStats ? '...' : invoiceStats.invoiceGenerated}
-                  </Typography>
+                  {loadingInvoiceStats ? (
+                    <Skeleton width={80} height={36} />
+                  ) : (
+                    <Typography variant="h2" fontWeight={700} color="#F57C00">
+                      {invoiceStats.invoiceGenerated}
+                    </Typography>
+                  )}
                 </Box>
                 <Box display="flex" ml="auto" flexDirection="column" justifyContent="end">
-                  <Typography variant="h4" fontWeight={700}>
-                    {formatCurrency(invoiceStats.totalAmount)}
-                  </Typography>
+                  {loadingInvoiceStats ? (
+                    <Skeleton width={100} height={32} />
+                  ) : (
+                    <Typography variant="h4" fontWeight={700}>
+                      {formatCurrency(invoiceStats.totalAmount)}
+                    </Typography>
+                  )}
                   <Typography variant="caption" color="text.secondary">
                     Amount
                   </Typography>
@@ -574,12 +607,20 @@ const PaymentShedule = () => {
                     <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
                       {item.name}
                     </Typography>
-                    <Typography variant="h5" fontWeight={700} mb={0.5}>
-                      {loadingInvoiceStats ? '...' : item.count}
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} mb={0.5}>
-                      {formatCurrency(item.amount)}
-                    </Typography>
+                    {loadingInvoiceStats ? (
+                      <Skeleton width={72} height={32} />
+                    ) : (
+                      <Typography variant="h5" fontWeight={700} mb={0.5}>
+                        {item.count}
+                      </Typography>
+                    )}
+                    {loadingInvoiceStats ? (
+                      <Skeleton width={100} height={28} />
+                    ) : (
+                      <Typography variant="body2" fontWeight={600} mb={0.5}>
+                        {formatCurrency(item.amount)}
+                      </Typography>
+                    )}
                     <Typography variant="caption" color="text.secondary" display="block">
                       {item.label}
                     </Typography>
@@ -624,12 +665,20 @@ const PaymentShedule = () => {
                     <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
                       {item.name}
                     </Typography>
-                    <Typography variant="h5" fontWeight={700} mb={0.5}>
-                      {loadingInvoiceStats ? '...' : item.count}
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} mb={0.5}>
-                      {formatCurrency(item.amount)}
-                    </Typography>
+                    {loadingInvoiceStats ? (
+                      <Skeleton width={72} height={32} />
+                    ) : (
+                      <Typography variant="h5" fontWeight={700} mb={0.5}>
+                        {item.count}
+                      </Typography>
+                    )}
+                    {loadingInvoiceStats ? (
+                      <Skeleton width={100} height={28} />
+                    ) : (
+                      <Typography variant="body2" fontWeight={600} mb={0.5}>
+                        {formatCurrency(item.amount)}
+                      </Typography>
+                    )}
                     <Typography variant="caption" color="text.secondary" display="block">
                       {item.label}
                     </Typography>

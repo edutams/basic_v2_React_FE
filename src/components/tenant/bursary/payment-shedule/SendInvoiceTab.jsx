@@ -168,36 +168,35 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     }
   }, [selectedSessionTermId, selectedClassId, selectedProgrammeId, searchQuery, showSnackbar]);
 
-  useEffect(() => {
-    loadParents();
-  }, [loadParents]);
-
-  useEffect(() => {
+  const loadStats = useCallback(async () => {
     if (!selectedSessionTermId) return;
-    const load = async () => {
-      try {
-        const res = await fetchSendInvoiceStats({
-          sessionTermId: selectedSessionTermId,
-          classId: selectedClassId || undefined,
-          programmeId: selectedProgrammeId || undefined,
-        });
-        if (res?.success && res.data) {
-          setStats(res.data);
-        }
-      } catch (err) {
-        console.error('Failed to load stats', err);
+    try {
+      const res = await fetchSendInvoiceStats({
+        sessionTermId: selectedSessionTermId,
+        classId: selectedClassId || undefined,
+        programmeId: selectedProgrammeId || undefined,
+      });
+      if (res?.success && res.data) {
+        setStats(res.data);
       }
-    };
-    load();
+    } catch (err) {
+      console.error('Failed to load stats', err);
+    }
   }, [selectedSessionTermId, selectedClassId, selectedProgrammeId]);
 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
+  const handleSearch = () => {
+    if (!selectedSessionTermId) {
+      showSnackbar?.('Please select a session term.', 'warning');
+      return;
+    }
     setPage(0);
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => {
-      setSearchQuery(value);
-    }, 400);
+    setSelectedParents([]);
+    loadParents();
+    loadStats();
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -612,7 +611,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               borderRadius: 5,
               cursor: 'pointer',
             }}
-            // onClick={() => showSnackbar?.('Regenerating...', 'info')}
+          // onClick={() => showSnackbar?.('Regenerating...', 'info')}
           />
         </Box>
       </Box>
@@ -904,6 +903,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           <TextField
             size="small"
             placeholder="Search parents..."
+            value={searchQuery}
             onChange={handleSearchChange}
             sx={{ flexGrow: 1 }}
             slotProps={{
@@ -916,6 +916,15 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               },
             }}
           />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+            size="small"
+          >
+            Search
+          </Button>
         </Box>
 
         {deliveryTab === 2 && (

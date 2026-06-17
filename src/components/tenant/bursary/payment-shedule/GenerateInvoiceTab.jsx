@@ -34,7 +34,7 @@ import {
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 
-const GenerateInvoiceTab = ({ showSnackbar }) => {
+const GenerateInvoiceTab = ({ showSnackbar, onUpdateCategory }) => {
   const { tenantInfo } = useContext(TenantAuthContext) || {};
   const schoolLogo = tenantInfo?.logo_url || tenantInfo?.logo || '/Edutams.png';
   const schoolName =
@@ -351,9 +351,11 @@ const GenerateInvoiceTab = ({ showSnackbar }) => {
                       <Chip
                         label="Update"
                         size="small"
+                        onClick={() => onUpdateCategory?.(cat.id, selectedSessionTermId)}
                         sx={{
                           bgcolor: 'primary.light',
                           color: 'primary.main',
+                          cursor: 'pointer',
                         }}
                       />
                     </Box>

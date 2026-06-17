@@ -224,6 +224,12 @@ const PaymentShedule = () => {
   const handleActionTabChange = (e, v) => setActionTab(v);
   const handleScheduleTabChange = (e, v) => setScheduleTab(v);
 
+  const handleUpdateCategory = (categoryId, sessionTermId) => {
+    setActionTab(0);
+    setSelectedCategory(String(categoryId));
+    handleSessionTermChange(sessionTermId);
+  };
+
   const handleImportSchedule = () => {
     setImportDialogOpen(true);
   };
@@ -904,7 +910,12 @@ const PaymentShedule = () => {
               )}
             </>
           )}
-          {actionTab === 1 && <GenerateInvoiceTab showSnackbar={showSnackbar} />}
+          {actionTab === 1 && (
+            <GenerateInvoiceTab
+              showSnackbar={showSnackbar}
+              onUpdateCategory={handleUpdateCategory}
+            />
+          )}
           {actionTab === 2 && <SendInvoiceTab showSnackbar={showSnackbar} />}
         </Box>
       </Paper>

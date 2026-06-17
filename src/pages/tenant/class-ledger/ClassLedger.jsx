@@ -63,45 +63,6 @@ import useNotification from '@/hooks/useNotification';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
-const optionalChartData = {
-  type: 'bar',
-  title: 'Optional Fees',
-  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
-  series: [
-    {
-      name: 'Total Expected',
-      data: [5000000, 2500000, 1200000],
-    },
-    {
-      name: 'Total Paid',
-      data: [3200000, 1500000, 800000],
-    },
-    {
-      name: 'Balance',
-      data: [1800000, 1000000, 400000],
-    },
-  ],
-};
-
-const payableChartData = {
-  type: 'bar',
-  title: 'Payable Fees',
-  categories: ['JSS1 A', 'JSS2 A', 'JSS3 A'],
-  series: [
-    {
-      name: 'Total Expected',
-      data: [12000000, 5000000, 2000000],
-    },
-    {
-      name: 'Total Paid',
-      data: [8000000, 3000000, 1000000],
-    },
-    {
-      name: 'Balance',
-      data: [4000000, 2000000, 1000000],
-    },
-  ],
-};
 const ClassLedger = () => {
   const theme = useTheme();
   const navigate = useNavigate();

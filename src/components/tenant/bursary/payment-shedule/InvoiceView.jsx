@@ -297,6 +297,11 @@ const InvoiceView = () => {
 
               <Box textAlign="right">
                 <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+Invoice Number                </Typography>
+                <Typography fontWeight={900} fontSize={15}>
+                  {student.invoice_number}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
                   Balance Due
                 </Typography>
                 <Typography fontWeight={900} fontSize={15}>

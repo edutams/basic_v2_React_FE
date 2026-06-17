@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import {
@@ -44,6 +44,7 @@ const Invoice = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
     const { invoiceId,user_id } = useParams();
+    const navigate = useNavigate();
 
     /* DATA STATE */
     const [studentInfo, setStudentInfo] = useState(null);
@@ -354,6 +355,7 @@ const Invoice = () => {
                 {/* HEADER - Student Info & Filters */}
                 <Box
                     sx={{
+                        position: 'relative',
                         display: 'flex',
                         flexDirection: { xs: 'column', md: 'row' },
                         alignItems: { xs: 'stretch', md: 'center' },
@@ -423,7 +425,26 @@ const Invoice = () => {
         <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel}
     </Typography>
 </Box>
-                   
+
+                    {/* BACK BUTTON */}
+                    <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => navigate('/class-ledger')}
+                        sx={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            color: isDark ? '#94a3b8' : '#64748b',
+                            '&:hover': {
+                                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+                            },
+                        }}
+                    >
+                        ← Go To Class Ledger
+                    </Button>
                 </Box>
 
                 {/* INFO ALERT BANNER

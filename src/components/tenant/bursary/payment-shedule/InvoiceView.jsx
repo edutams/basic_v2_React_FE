@@ -75,6 +75,10 @@ const InvoiceView = () => {
     navigate(`/payment-schedule/invoice/${session_term_id}/${class_id}`);
   };
 
+  const handleUpdateInvoice = (student) => {
+      window.open(`/class-ledger/${student.invoice_number}/${student?.student?.user_id}/invoice`, '_blank');
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
@@ -324,7 +328,7 @@ Invoice Number                </Typography>
               <Button size="small" variant="contained">
                 Proceed to Pay
               </Button>
-              <Button size="small" variant="outlined">
+              <Button size="small" variant="outlined" onClick={() => handleUpdateInvoice(student)}>
                 Update Invoice
               </Button>
             </Box>
@@ -499,7 +503,7 @@ Invoice Number                </Typography>
               <Button size="small" variant="contained">
                 Proceed to Pay
               </Button>
-              <Button size="small" variant="outlined">
+              <Button size="small" variant="outlined" onClick={() => handleUpdateInvoice(student)}>
                 Update Invoice
               </Button>
             </Box>

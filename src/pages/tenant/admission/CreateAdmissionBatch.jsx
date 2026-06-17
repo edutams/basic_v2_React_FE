@@ -426,9 +426,11 @@ const CreateAdmissionBatch = () => {
                     value={selectedClassObjects}
                     loading={classesLoading}
                     disabled={!programmeId || classesLoading}
-                    getOptionLabel={(option) =>
-                      option.class_code || option.class_name || String(option.id)
-                    }
+                    getOptionLabel={(option) => {
+                      const classCode = option.class_code || option.class_name || '';
+                      const arms = option.arm_names || option.arms || '';
+                      return arms ? `${classCode} (${arms})` : classCode;
+                    }}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     onChange={(_, newValue) => {
                       setSelectedClassIds(newValue.map((c) => c.id));
@@ -438,7 +440,11 @@ const CreateAdmissionBatch = () => {
                       tagValue.map((option, index) => (
                         <Chip
                           key={option.id}
-                          label={option.class_code || option.class_name}
+                          label={
+                            option.arm_names
+                              ? `${option.class_code} (${option.arm_names})`
+                              : option.class_code || option.class_name
+                          }
                           size="small"
                           {...getTagProps({ index })}
                           sx={{

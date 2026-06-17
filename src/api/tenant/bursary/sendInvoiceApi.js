@@ -62,3 +62,16 @@ export const updateParentPhoneNumberOrEmail = async (userId, field, value) => {
     });
     return res.data;
 };
+
+/**
+ * Send SMS invoice notifications to selected parents.
+ * @param {Array<string>} parentIds
+ * @param {number|string} sessionTermId
+ */
+export const sendInvoiceSms = async (parentIds, sessionTermId) => {
+    const res = await api.post('/bursary/send_invoice/send_sms', {
+        parent_ids: parentIds,
+        session_term_id: sessionTermId,
+    });
+    return res.data;
+};

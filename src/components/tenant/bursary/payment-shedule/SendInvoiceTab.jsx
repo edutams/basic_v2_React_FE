@@ -47,6 +47,7 @@ import {
   fetchParentsForInvoice,
   fetchSendInvoiceStats,
   updateParentPhoneNumberOrEmail,
+  sendInvoiceSms,
 } from '@/api/tenant/bursary/sendInvoiceApi';
 
 const SendInvoiceTab = ({ showSnackbar }) => {
@@ -82,6 +83,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const [editValue, setEditValue] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
+  const [sendingInvoice, setSendingInvoice] = useState(false);
 
   // Debounce ref for search
   const searchTimerRef = useRef(null);
@@ -90,6 +92,34 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     programmeClasses.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
     classes.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
     '';
+
+  const handleSendInvoice = async () => {
+    if (selectedParents.length === 0) {
+      showSnackbar?.('Please select at least one parent', 'warning');
+      return;
+    }
+    
+    if (deliveryTab === 0) {
+      try {
+        setSendingInvoice(true);
+        const res = await sendInvoiceSms(selectedParents, selectedSessionTermId);
+        if (res?.success) {
+          showSnackbar?.(`Successfully sent ${res.sent_count} SMS messages!`, 'success');
+          setSelectedParents([]);
+          loadParents();
+          loadStats();
+        } else {
+          showSnackbar?.(res?.message || 'Failed to send SMS', 'error');
+        }
+      } catch (err) {
+        showSnackbar?.(err?.response?.data?.message || 'Something went wrong while sending SMS', 'error');
+      } finally {
+        setSendingInvoice(false);
+      }
+    } else {
+      showSnackbar?.('Email sending is not yet fully implemented', 'info');
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -506,8 +536,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             <Button
               size="small"
               color="primary"
-              onClick={() => showSnackbar?.('Invoice sent successfully!', 'success')}
+              onClick={handleSendInvoice}
+              disabled={sendingInvoice || selectedParents.length === 0}
             >
+              {sendingInvoice ? <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} /> : null}
               Send Invoice to Parent
             </Button>
           </Box>

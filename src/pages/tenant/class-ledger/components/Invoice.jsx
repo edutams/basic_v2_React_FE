@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import {
@@ -23,35 +23,14 @@ import {
     Alert,
     Checkbox,
     TextField,
+    CircularProgress,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 
-/* ================= DATA ================= */
-const dummyStudentData = {
-    id: 1,
-    studentName: 'Blessing Okafor Chidi',
-    admissionNumber: 'STA/2025/0934',
-    class: 'JSS 3 Emerald',
-    session: '2025/2026',
-    avatar:
-        'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848',
-};
-
-const initialCompFees = [
-    { id: 1, description: 'Tuition Fee', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-    { id: 2, description: 'Development Levy', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-    { id: 3, description: 'Examination Fee', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-    { id: 4, description: 'ICT Fee', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-];
-
-const initialOptFees = [
-    { id: 1, description: 'School Bus', optionType: 'Route', options: ['Route 1', 'Route 2', 'Route 3'], selectedOption: 'Route', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-    { id: 2, description: 'School Bag', optionType: 'Size', options: ['Small', 'Medium', 'Large'], selectedOption: 'Size', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-    { id: 3, description: 'Uniform', optionType: 'Size', options: ['Small', 'Medium', 'Large'], selectedOption: 'Size', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-    { id: 4, description: 'Textbooks', optionType: 'Type', options: ['Science', 'Arts', 'Commercial'], selectedOption: 'Type', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-    { id: 5, description: 'Uniform', optionType: 'Type', options: ['Primary', 'Secondary'], selectedOption: 'Type', amount: 45000, discount: 0, discountEnabled: false, penalty: 0, penaltyEnabled: false },
-];
+import { fetchInvoiceByNumber } from '@/api/tenant/bursary/classLedger';
+import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
+import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 
 const BCrumb = [
     { to: '/', title: 'Home' },
@@ -64,21 +43,30 @@ const BCrumb = [
 const Invoice = () => {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
+    const { invoiceId,user_id } = useParams();
 
-    const [selectedTerm, setSelectedTerm] = useState('Second Term');
-    const [selectedSession, setSelectedSession] = useState('Session 2025/2026');
+    /* DATA STATE */
+    const [studentInfo, setStudentInfo] = useState(null);
+    const [sessionInfo, setSessionInfo] = useState(null);
+    const [invoiceInfo, setInvoiceInfo] = useState(null);
+    const [compFees, setCompFees] = useState([]);
+    const [optFees, setOptFees] = useState([]);
+    const [installments, setInstallments] = useState([]);
+    const [assignedInstallmentId, setAssignedInstallmentId] = useState(null);
 
-    /* INTERACTIVE DATA STATE */
-    const [compFees, setCompFees] = useState(
-        initialCompFees.map(f => ({ ...f, checked: false }))
-    );
-    const [optFees, setOptFees] = useState(
-        initialOptFees.map(f => ({ ...f, checked: false }))
-    );
+    /* FILTER STATE */
+    const [selectedTermId, setSelectedTermId] = useState('');
+    const [selectedSessionId, setSelectedSessionId] = useState('');
+
+    /* UI STATE */
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [dataLoaded, setDataLoaded] = useState(false);
+
     const [optionalEnabled, setOptionalEnabled] = useState(true);
-
     const [compInstallment, setCompInstallment] = useState('Select Installment');
     const [globalInstallment, setGlobalInstallment] = useState('Select Installment');
+    const [printModalOpen, setPrintModalOpen] = useState(false);
 
     /* GLOBAL SWITCHES */
     const [compDiscountGlobal, setCompDiscountGlobal] = useState(false);
@@ -152,6 +140,128 @@ const Invoice = () => {
 
     const format = (n) => new Intl.NumberFormat('en-NG').format(n || 0);
 
+    /* ───────────────────────────────────────────── */
+    /* DATA FETCHING                                */
+    /* ───────────────────────────────────────────── */
+    const fetchInvoiceData = useCallback(async (sessionId, termId) => {
+        if (!invoiceId) return;
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const res = await fetchInvoiceByNumber({
+                sessionId,
+                termId,
+                invoiceNumber: invoiceId,
+                userId: user_id,
+            });
+
+            if (!res.success || !res.data) {
+                setError(res.message || 'Failed to load invoice data');
+                setLoading(false);
+                return;
+            }
+
+            const { data } = res;
+
+            setStudentInfo(data.student_info);
+            setSessionInfo(data.session_info);
+            setInvoiceInfo(data.invoice_info);
+            setInstallments(data.installments || []);
+            setAssignedInstallmentId(data.assigned_installment_id);
+
+            // Map compulsory data: add checked:false
+            const mappedComp = (data.compulsory_data || []).map(item => ({
+                id: item.id,
+                description: item.description,
+                schedule_amount: item.schedule_amount,
+                amount: item.amount,
+                discount: item.discount,
+                discount_enabled: item.discount_enabled,
+                penalty: item.penalty,
+                penalty_enabled: item.penalty_enabled,
+                paid_amount: item.paid_amount,
+                balance: item.balance,
+                status: item.status,
+                checked: false,
+                discountEnabled: !!item.discount_enabled,
+                penaltyEnabled: !!item.penalty_enabled,
+            }));
+            setCompFees(mappedComp);
+
+            // Map optional data: add checked:false, map options to string arrays
+            const mappedOpt = (data.optional_data || []).map(item => ({
+                id: item.id,
+                description: item.description,
+                schedule_amount: item.schedule_amount,
+                amount: item.amount,
+                optionType: item.option_type || '',
+                options: (item.options || []).map(o => o.option_name),
+                selectedOption: item.selected_option_name || '',
+                discount: item.discount,
+                discount_enabled: item.discount_enabled,
+                penalty: item.penalty,
+                penalty_enabled: item.penalty_enabled,
+                paid_amount: item.paid_amount,
+                balance: item.balance,
+                status: item.status,
+                checked: false,
+                discountEnabled: !!item.discount_enabled,
+                penaltyEnabled: !!item.penalty_enabled,
+            }));
+            setOptFees(mappedOpt);
+
+            // Set installment dropdown defaults
+            if (data.assigned_installment_id) {
+                const assigned = data.installments?.find(i => i.id === data.assigned_installment_id);
+                if (assigned) {
+                    setCompInstallment(assigned.inst1 || 'Select Installment');
+                    setGlobalInstallment(assigned.inst1 || 'Select Installment');
+                }
+            }
+
+            setDataLoaded(true);
+        } catch (err) {
+            console.error('Failed to fetch invoice data:', err);
+            setError(err?.response?.data?.message || err.message || 'Failed to load invoice data');
+        } finally {
+            setLoading(false);
+        }
+    }, [invoiceId]);
+
+    // Fetch active session/term on mount, then load invoice data
+    useEffect(() => {
+        const init = async () => {
+            try {
+                const sessionRes = await fetchActiveSessionTerm();
+                if (sessionRes.status && sessionRes.data) {
+                    const active = sessionRes.data;
+                    setSelectedSessionId(active.session_id || '');
+                    setSelectedTermId(active.term_id || '');
+                    setSessionInfo({
+                        session_id: active.session_id,
+                        term_id: active.term_id,
+                        session: active.sesname || '',
+                        term: active.term_name || '',
+                    });
+
+                    // Fetch invoice using session_id, term_id, invoiceId, and user_id from URL
+                    await fetchInvoiceData(active.session_id, active.term_id);
+                } else {
+                    setLoading(false);
+                    setError('No active session/term found. Please configure bursary settings first.');
+                }
+            } catch (err) {
+                console.error('Failed to fetch active session:', err);
+                setError('Failed to load session/term information');
+                setLoading(false);
+            }
+        };
+
+        init();
+    }, [fetchInvoiceData]);
+
     /* SECTION HEADER BLOCK */
     const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
         return (
@@ -196,9 +306,50 @@ const Invoice = () => {
         );
     };
 
+    /* ───────────────────────────────────────────── */
+    /* LOADING / ERROR SCREEN                     */
+    /* ───────────────────────────────────────────── */
+    if (loading && !dataLoaded) {
+        return (
+            <PageContainer title="Invoice">
+                <Breadcrumb title="Invoice" items={BCrumb} />
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+                    <CircularProgress size={40} />
+                </Box>
+            </PageContainer>
+        );
+    }
+
+    if (error && !dataLoaded) {
+        return (
+            <PageContainer title="Invoice">
+                <Breadcrumb title="Invoice" items={BCrumb} />
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+                    <Alert severity="error" sx={{ maxWidth: 500 }}>{error}</Alert>
+                </Box>
+            </PageContainer>
+        );
+    }
+
+    const studentName = studentInfo?.name || 'Unknown Student';
+    const studentLearnerId = studentInfo?.user_id || '—';
+    const studentClassName = studentInfo?.class_name || '—';
+    const termLabel = sessionInfo?.term || '';
+    const sessionLabel = sessionInfo?.session || '';
+    const invoiceNumber = invoiceInfo?.invoice_number || '';
+
+    const breadcrumbTitle = `Invoice${invoiceNumber ? ` #${invoiceNumber}` : ''}`;
+
+    const BCrumbLive = [
+        { to: '/', title: 'Home' },
+        { title: 'Bursary' },
+        { to: '/class-ledger', title: 'Class Ledger' },
+        { title: breadcrumbTitle },
+    ];
+
     return (
-        <PageContainer title="Invoice">
-            <Breadcrumb title="Invoice" items={BCrumb} />
+        <PageContainer title={breadcrumbTitle}>
+            <Breadcrumb title={breadcrumbTitle} items={BCrumbLive} />
             <Box sx={{ pb: 8 }}>
                 {/* HEADER - Student Info & Filters */}
                 <Box
@@ -206,7 +357,7 @@ const Invoice = () => {
                         display: 'flex',
                         flexDirection: { xs: 'column', md: 'row' },
                         alignItems: { xs: 'stretch', md: 'center' },
-                        justifyContent: 'space-between',
+                        justifyContent: 'center',
                         gap: 2,
                         mb: 3,
                         mt: 2,
@@ -217,108 +368,92 @@ const Invoice = () => {
                     }}
                 >
                     {/* Student details */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar
-                            src={dummyStudentData.avatar}
-                            alt={dummyStudentData.studentName}
-                            sx={{ width: 52, height: 52, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-                        >
-                            <PersonOutlineIcon sx={{ fontSize: 32 }} />
-                        </Avatar>
-                        <Box>
-                            <Typography variant="h6" fontWeight={700} color="text.primary" sx={{ lineHeight: 1.2 }}>
-                                {dummyStudentData.studentName}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                                    ID: {dummyStudentData.admissionNumber}
-                                </Typography>
-                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#4caf50' }} />
-                                <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                                    {dummyStudentData.class}
-                                </Typography>
-                            </Box>
-                        </Box>
-                    </Box>
+<Box
+    sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        width: '100%',
+        py: 1,
+    }}
+>
+    <Avatar
+        sx={{
+            width: 72,
+            height: 72,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            mb: 1.5,
+        }}
+    >
+        <PersonOutlineIcon sx={{ fontSize: 40 }} />
+    </Avatar>
 
-                    {/* Filter controls */}
-                    <Box sx={{ 
-                        display: 'flex', 
-                        flexDirection: { xs: 'column', sm: 'row' }, 
-                        alignItems: { xs: 'stretch', sm: 'center' }, 
-                        gap: 1.5,
-                        width: { xs: '100%', md: 'auto' }
-                    }}>
-                        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
-                            <Select
-                                value={selectedTerm}
-                                onChange={(e) => setSelectedTerm(e.target.value)}
-                                sx={{
-                                    borderRadius: 2,
-                                    bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
-                                    '& .MuiSelect-select': { py: 1 }
-                                }}
-                            >
-                                <MenuItem value="First Term">First Term</MenuItem>
-                                <MenuItem value="Second Term">Second Term</MenuItem>
-                                <MenuItem value="Third Term">Third Term</MenuItem>
-                            </Select>
-                        </FormControl>
+    <Typography
+        variant="h5"
+        fontWeight={800}
+        color="text.primary"
+        sx={{ lineHeight: 1.3 }}
+    >
+        {studentName}
+    </Typography>
 
-                        <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-                            <Select
-                                value={selectedSession}
-                                onChange={(e) => setSelectedSession(e.target.value)}
-                                sx={{
-                                    borderRadius: 2,
-                                    bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
-                                    '& .MuiSelect-select': { py: 1 }
-                                }}
-                            >
-                                <MenuItem value="Session 2024/2025">Session 2024/2025</MenuItem>
-                                <MenuItem value="Session 2025/2026">Session 2025/2026</MenuItem>
-                            </Select>
-                        </FormControl>
+    <Typography
+        variant="body1"
+        fontWeight={600}
+        color="text.secondary"
+        sx={{ mt: 0.5 }}
+    >
+        <strong>Learner ID:</strong> {studentLearnerId}
+    </Typography>
 
-                        <Button
-                            variant="contained"
-                            sx={{
-                                bgcolor: '#3b82f6',
-                                '&:hover': { bgcolor: '#2563eb' },
-                                borderRadius: 2,
-                                px: 3,
-                                py: 1.1,
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                width: { xs: '100%', sm: 'auto' }
-                            }}
-                        >
-                            Fetch
-                        </Button>
-                    </Box>
+    <Typography
+        variant="body1"
+        fontWeight={600}
+        color="text.secondary"
+    >
+        <strong>Class:</strong> {studentClassName}
+    </Typography>
+
+    <Typography
+        variant="body1"
+        fontWeight={600}
+        color="text.secondary"
+    >
+        <strong>Bursary Session/Term:</strong> {sessionLabel} {termLabel}
+    </Typography>
+</Box>
+                   
                 </Box>
 
-                {/* INFO ALERT BANNER */}
-                <Alert
-                    icon={false}
-                    severity="info"
-                    sx={{
-                        mb: 4,
-                        bgcolor: isDark ? 'rgba(3, 105, 161, 0.2)' : '#e0f2fe',
-                        color: isDark ? '#bae6fd' : '#0369a1',
-                        border: `1px solid ${isDark ? 'rgba(3, 105, 161, 0.4)' : '#bae6fd'}`,
-                        borderRadius: 2,
-                        display: 'flex',
-                        justifyContent: 'center',
-                        '& .MuiAlert-message': {
-                            textAlign: 'center',
-                            width: '100%',
-                            fontWeight: 500,
-                        },
-                    }}
-                >
-                    Note: You need to pay for the previous term you owe before you can pay for this term.
-                </Alert>
+                {/* INFO ALERT BANNER
+                {dataLoaded && invoiceInfo?.status && (
+                    <Alert
+                        icon={false}
+                        severity={invoiceInfo.status === 'complete' ? 'success' : 'info'}
+                        sx={{
+                            mb: 4,
+                            bgcolor: isDark ? 'rgba(3, 105, 161, 0.2)' : '#e0f2fe',
+                            color: isDark ? '#bae6fd' : '#0369a1',
+                            border: `1px solid ${isDark ? 'rgba(3, 105, 161, 0.4)' : '#bae6fd'}`,
+                            borderRadius: 2,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            '& .MuiAlert-message': {
+                                textAlign: 'center',
+                                width: '100%',
+                                fontWeight: 500,
+                            },
+                        }}
+                    >
+                        Invoice #{invoiceNumber} — {sessionLabel} {termLabel} — Status: {invoiceInfo.status}
+                    </Alert>
+                )} */}
+
+                {/* ERROR ALERT */}
+                {error && (
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>
+                )}
 
                 {/* COMPULSORY PAYMENT */}
                 {renderHeaderBlock({
@@ -366,22 +501,13 @@ const Invoice = () => {
                                     }}
                                 />
                             </Box>
-                            <Button
+                            {/* <Button
                                 variant="contained"
                                 size="small"
-                                sx={{
-                                    bgcolor: '#8338ec',
-                                    '&:hover': { bgcolor: '#6a0dad' },
-                                    borderRadius: 2,
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    px: 2.5,
-                                    py: 0.8,
-                                    width: { xs: '100%', sm: 'auto' }
-                                }}
+                                onClick={() => setPrintModalOpen(true)}
                             >
                                 Print Invoice
-                            </Button>
+                            </Button> */}
                         </Box>
                     ),
                 })}
@@ -513,20 +639,28 @@ const Invoice = () => {
                             {/* COMPULSORY TABLE FOOTER ROW */}
                             <TableRow sx={{ bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#dbeafe' }}>
                                 <TableCell colSpan={5} sx={{ py: 1.5 }}>
-                                    <FormControl size="small" sx={{ minWidth: 160, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
-                                        <Select
-                                            value={compInstallment}
-                                            onChange={(e) => setCompInstallment(e.target.value)}
-                                            sx={{
-                                                borderRadius: 2,
-                                                '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' }
-                                            }}
-                                        >
-                                            <MenuItem value="Select Installment">Select Installment</MenuItem>
-                                            <MenuItem value="Full Payment">Full Payment</MenuItem>
-                                            <MenuItem value="Part Payment">Part Payment</MenuItem>
-                                        </Select>
-                                    </FormControl>
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                                            Select Installment Plan
+                                        </Typography>
+                                        <FormControl size="small" sx={{ minWidth: 160, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
+                                            <Select
+                                                value={compInstallment}
+                                                onChange={(e) => setCompInstallment(e.target.value)}
+                                                sx={{
+                                                    borderRadius: 2,
+                                                    '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' }
+                                                }}
+                                            >
+                                                <MenuItem value="Select Installment">Select Installment</MenuItem>
+                                                {installments.map((inst) => (
+                                                    <MenuItem key={inst.id} value={inst.inst1 || inst.id}>
+                                                        {inst.inst1}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
                                 </TableCell>
                                 <TableCell sx={{ py: 1.5, fontWeight: 800, color: isDark ? '#60a5fa' : '#1e40af', fontSize: '1.25rem' }}>
                                     ₦{format(compTotal)}
@@ -535,17 +669,17 @@ const Invoice = () => {
                                     <Button
                                         variant="contained"
                                         disabled={compTotal === 0}
-                                        sx={{
-                                            bgcolor: isDark ? '#475569' : '#94a3b8',
-                                            color: 'white',
-                                            '&:hover': { bgcolor: isDark ? '#334155' : '#64748b' },
-                                            '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
-                                            textTransform: 'none',
-                                            fontWeight: 700,
-                                            borderRadius: 2,
-                                            px: 3,
-                                            py: 0.8,
-                                        }}
+                                        // sx={{
+                                        //     bgcolor: isDark ? '#475569' : '#94a3b8',
+                                        //     color: 'white',
+                                        //     '&:hover': { bgcolor: isDark ? '#334155' : '#64748b' },
+                                        //     '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
+                                        //     textTransform: 'none',
+                                        //     fontWeight: 700,
+                                        //     borderRadius: 2,
+                                        //     px: 3,
+                                        //     py: 0.8,
+                                        // }}
                                     >
                                         Pay Now - ₦{format(compTotal)} &gt;
                                     </Button>
@@ -617,7 +751,7 @@ const Invoice = () => {
                     ),
                 })}
 
-                {optionalEnabled && (
+                {optionalEnabled && optFees.length > 0 ? (
                     <TableContainer
                         component={Paper}
                         variant="outlined"
@@ -697,14 +831,7 @@ const Invoice = () => {
                                                         checked={discountRowEnabled}
                                                         disabled={optDiscountGlobal}
                                                         onChange={(e) => handleDiscountSwitchChange('opt', fee.id, e.target.checked)}
-                                                        sx={{
-                                                            '& .MuiSwitch-switchBase.Mui-checked': {
-                                                                color: '#8338ec',
-                                                                '& + .MuiSwitch-track': {
-                                                                    backgroundColor: '#8338ec',
-                                                                },
-                                                            },
-                                                        }}
+                                                        
                                                     />
                                                     <TextField
                                                         size="small"
@@ -726,14 +853,7 @@ const Invoice = () => {
                                                         checked={penaltyRowEnabled}
                                                         disabled={optPenaltyGlobal}
                                                         onChange={(e) => handlePenaltySwitchChange('opt', fee.id, e.target.checked)}
-                                                        sx={{
-                                                            '& .MuiSwitch-switchBase.Mui-checked': {
-                                                                color: '#8338ec',
-                                                                '& + .MuiSwitch-track': {
-                                                                    backgroundColor: '#8338ec',
-                                                                },
-                                                            },
-                                                        }}
+                                                       
                                                     />
                                                     <TextField
                                                         size="small"
@@ -773,6 +893,22 @@ const Invoice = () => {
                             </TableBody>
                         </Table>
                     </TableContainer>
+                ) : optionalEnabled && (
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 4,
+                            mb: 4,
+                            textAlign: 'center',
+                            bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                            borderRadius: 3,
+                        }}
+                    >
+                        <Typography variant="body1" fontWeight={600} color="text.secondary">
+                            No optional payment set for this student.
+                        </Typography>
+                    </Paper>
                 )}
 
                 {/* STICKY BOTTOM ACTION SHEET */}
@@ -845,9 +981,14 @@ const Invoice = () => {
                     <Box sx={{ 
                         flexGrow: 1, 
                         display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center',
                         justifyContent: 'center',
                         width: { xs: '100%', md: 'auto' } 
                     }}>
+                        <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ mb: 0.5 }}>
+                            Select Installment Plan
+                        </Typography>
                         <FormControl size="small" sx={{ minWidth: 220, width: { xs: '100%', sm: 220, md: 220 }, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : 'white', borderRadius: 2 }}>
                             <Select
                                 value={globalInstallment}
@@ -858,8 +999,11 @@ const Invoice = () => {
                                 }}
                             >
                                 <MenuItem value="Select Installment">Select Installment</MenuItem>
-                                <MenuItem value="Full Payment">Full Payment</MenuItem>
-                                <MenuItem value="Part Payment">Part Payment</MenuItem>
+                                {installments.map((inst) => (
+                                    <MenuItem key={inst.id} value={inst.inst1 || inst.id}>
+                                        {inst.inst1}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
                     </Box>
@@ -868,29 +1012,36 @@ const Invoice = () => {
                     <Button
                         variant="contained"
                         disabled={grandTotal === 0}
-                        sx={{
-                            bgcolor: '#84cc16',
-                            color: 'white',
-                            '&:hover': { bgcolor: '#65a30d' },
-                            '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
-                            textTransform: 'none',
-                            fontWeight: 700,
-                            fontSize: '1rem',
-                            borderRadius: 3,
-                            px: 4,
-                            py: 1.2,
-                            width: { xs: '100%', md: 'auto' },
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 1.5,
-                            boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.4)',
-                        }}
+                        // sx={{
+                        //     bgcolor: '#84cc16',
+                        //     color: 'white',
+                        //     '&:hover': { bgcolor: '#65a30d' },
+                        //     '&.Mui-disabled': { bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#e2e8f0', color: isDark ? 'rgba(255,255,255,0.2)' : '#94a3b8' },
+                        //     textTransform: 'none',
+                        //     fontWeight: 700,
+                        //     fontSize: '1rem',
+                        //     borderRadius: 3,
+                        //     px: 4,
+                        //     py: 1.2,
+                        //     width: { xs: '100%', md: 'auto' },
+                        //     display: 'flex',
+                        //     alignItems: 'center',
+                        //     justifyContent: 'center',
+                        //     gap: 1.5,
+                        //     boxShadow: '0 4px 6px -1px rgba(132, 204, 22, 0.4)',
+                        // }}
                     >
                         Pay Now - ₦{format(grandTotal)} &gt;
                     </Button>
                 </Paper>
             </Box>
+
+                {/* ── Print Invoice Modal ── */}
+                <PrintInvoiceModal
+                    open={printModalOpen}
+                    onClose={() => setPrintModalOpen(false)}
+                    student={{ user_id: studentInfo?.user_id || user_id, name: studentName }}
+                />
         </PageContainer>
     );
 };

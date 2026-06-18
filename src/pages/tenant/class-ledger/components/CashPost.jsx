@@ -864,7 +864,14 @@ const CashPost = () => {
             sx={{ px: 6, py: 1.5, fontSize: '1rem', fontWeight: 700 }}
           >
             {posting ? <CircularProgress size={22} sx={{ mr: 1 }} /> : null}
-            {posting ? 'Posting...' : 'Post Cash'}
+            {posting ? 'Posting...' : `Post All Cash — ₦${format(
+              [...compFees, ...optFees]
+                .filter((f) => f.checked)
+                .reduce((sum, f) => {
+                  const g = compFees.includes(f) ? { d: compDiscountGlobal, p: compPenaltyGlobal } : { d: optDiscountGlobal, p: optPenaltyGlobal };
+                  return sum + getPayable(f, g.d, g.p);
+                }, 0)
+            )}`}
           </Button>
         </Box>
 

@@ -801,7 +801,7 @@ const ClassLedger = () => {
             onClick={() => {
               setAnchorEl(null);
               if (activeRow) {
-                window.open(`/class-ledger/${activeRow.user_id}/cash-post`, '_blank');
+                window.open(`/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/cash-post`, '_blank');
               }
             }}
           >

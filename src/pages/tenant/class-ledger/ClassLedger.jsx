@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
-
 import {
+  TableFooter,
+  TablePagination,
   Typography,
   Table,
   TableBody,
@@ -91,6 +92,10 @@ const ClassLedger = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loadingTable, setLoadingTable] = useState(false);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(3);
+  const [meta, setMeta] = useState(null);
 
   const notify = useNotification();
 
@@ -295,6 +300,8 @@ const ClassLedger = () => {
           class_arm_id: classLevel,
           payment_status: paymentStatusFilter,
           search: search,
+          page: page + 1,
+          per_page: rowsPerPage,
         },
       };
 
@@ -304,7 +311,8 @@ const ClassLedger = () => {
 
       // Fetch Table Data
       const tableRes = await getClassStudentsPaymentStatus(payload);
-      setLedgerData(tableRes.students?.data || tableRes.students || []);
+      setLedgerData(tableRes.students?.data || []);
+      setMeta(tableRes.students);
     } catch (error) {
       console.error(error);
       notify.error('Failed to load class ledger data');
@@ -368,12 +376,18 @@ const ClassLedger = () => {
     }
   }, [programme, classLevel, paymentStatusFilter]);
 
+  useEffect(() => {
+    if (programme && classLevel && ledgerData.length > 0) {
+      fetchClassLedgerData();
+    }
+  }, [page, rowsPerPage]);
+
   // Auto refresh analytics when payment status filter changes
-  // useEffect(() => {
-  //   if (programme && classLevel) {
-  //     fetchAnalyticsOnly();
-  //   }
-  // }, [paymentStatusFilter]);
+  useEffect(() => {
+    if (programme && classLevel) {
+      fetchAnalyticsOnly();
+    }
+  }, [paymentStatusFilter]);
 
   useEffect(() => {
     loadProgrammes();
@@ -704,7 +718,8 @@ const ClassLedger = () => {
                   const user = student.users || student.user || {};
                   return (
                     <TableRow key={student.user_id || index} hover>
-                      <TableCell>{index + 1}</TableCell>
+                      {/* <TableCell>{index + 1}</TableCell> */}
+                      <TableCell>{(meta?.from || 0) + index}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar src={user.avatar} sx={{ width: 36, height: 36 }}>
@@ -763,6 +778,22 @@ const ClassLedger = () => {
                 </TableRow>
               )}
             </TableBody>
+
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[10, 20, 30, 50]}
+                  count={meta?.total || 0}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                />
+              </TableRow>
+            </TableFooter>
           </Table>
         </TableContainer>
         <Menu
@@ -789,7 +820,10 @@ const ClassLedger = () => {
             onClick={() => {
               setAnchorEl(null);
               if (activeRow) {
-                window.open(`/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/invoice`, '_blank');
+                window.open(
+                  `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/invoice`,
+                  '_blank',
+                );
               }
             }}
           >
@@ -801,7 +835,10 @@ const ClassLedger = () => {
             onClick={() => {
               setAnchorEl(null);
               if (activeRow) {
-                window.open(`/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/cash-post`, '_blank');
+                window.open(
+                  `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/cash-post`,
+                  '_blank',
+                );
               }
             }}
           >

@@ -16,18 +16,22 @@ import {
   Button,
   TextField,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Switch,
   useTheme,
   Alert,
   CircularProgress,
+  Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import { fetchCashPostData } from '@/api/tenant/bursary/classLedger';
-import { fetchActiveSessionTerm, fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchCashPostData, postCashData } from '@/api/tenant/bursary/classLedger';
+import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -49,13 +53,11 @@ const CashPost = () => {
   const [compFees, setCompFees] = useState([]);
   const [optFees, setOptFees] = useState([]);
   const [installments, setInstallments] = useState([]);
+  const [installmentalSetting, setInstallmentalSetting] = useState('percentage');
 
   /* FILTER STATE */
   const [selectedTermId, setSelectedTermId] = useState('');
   const [selectedSessionId, setSelectedSessionId] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   /* UI STATE */
   const [loading, setLoading] = useState(true);
@@ -67,6 +69,33 @@ const CashPost = () => {
   const [compPenaltyGlobal, setCompPenaltyGlobal] = useState(false);
   const [optDiscountGlobal, setOptDiscountGlobal] = useState(false);
   const [optPenaltyGlobal, setOptPenaltyGlobal] = useState(false);
+
+  /* GLOBAL VALUE MODAL */
+  const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
+  const [globalModalValue, setGlobalModalValue] = useState('');
+
+  /* SELECTION */
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (ids) => {
+    if (selectedIds.size === ids.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(ids));
+    }
+  };
+
+  /* POST CASH */
+  const [posting, setPosting] = useState(false);
 
   /* UPDATE FIELD — local editing only (discount/penalty values) */
   const updateFee = (type, id, key, value) => {
@@ -91,10 +120,72 @@ const CashPost = () => {
     const penaltyRowEnabled = penaltyGlobal ? true : !!fee.penaltyEnabled;
     const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
     const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
-    // Apply installment percentage if set (default to 100% if none selected)
-    const installmentPct = Number(fee.installment_percentage) || 100;
-    const baseAmount = fee.amount * (installmentPct / 100);
+    let baseAmount;
+    if (installmentalSetting === 'percentage') {
+      const installmentPct = Number(fee.installment_inst1) || 100;
+      baseAmount = fee.amount * (installmentPct / 100);
+    } else {
+      baseAmount = Math.min(Number(fee.custom_amount) || 0, fee.amount);
+    }
     return Math.max(0, baseAmount - discount + penalty);
+  };
+
+  /* GLOBAL MODAL CONFIRM */
+  const handleGlobalModalConfirm = () => {
+    const value = Number(globalModalValue) || 0;
+    const { type, field } = globalModal;
+    const setter = type === 'comp' ? setCompFees : setOptFees;
+    const setGlobal = type === 'comp'
+      ? (field === 'discount' ? setCompDiscountGlobal : setCompPenaltyGlobal)
+      : (field === 'discount' ? setOptDiscountGlobal : setOptPenaltyGlobal);
+
+    setter((prev) =>
+      prev.map((f) => ({ ...f, [field]: value, [`${field}Enabled`]: true }))
+    );
+    setGlobal(true);
+    setGlobalModal({ ...globalModal, open: false });
+  };
+
+  /* POST CASH */
+  const handlePostCash = async () => {
+    setPosting(true);
+    setError('');
+
+    const buildItems = (fees) =>
+      fees
+        .filter((f) => !f.has_cashpost && selectedIds.has(f.id))
+        .map((f) => ({
+          id: f.id,
+          bursary_schedule_id: f.bursary_schedule_id,
+          amount_to_pay: Number(f.amountToPay) || 0,
+          discount: Number(f.discount) || 0,
+          penalty: Number(f.penalty) || 0,
+          installment_id: f.installment_id || null,
+          installment_inst1: f.installment_inst1 || '',
+          installment_inst2: f.installment_inst2 || '',
+          custom_amount: Number(f.custom_amount) || 0,
+        }));
+
+    const payload = {
+      user_id,
+      session_id: selectedSessionId,
+      term_id: selectedTermId,
+      invoice_id: invoiceId || null,
+      items: [...buildItems(compFees), ...buildItems(optFees)],
+    };
+
+    try {
+      const res = await postCashData(payload);
+      if (res.success) {
+        await fetchData(selectedSessionId, selectedTermId, '');
+      } else {
+        setError(res.message || 'Failed to post cash');
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || 'Failed to post cash');
+    } finally {
+      setPosting(false);
+    }
   };
 
   /* ───────────────────────────────────────────── */
@@ -128,53 +219,66 @@ const CashPost = () => {
       setSessionInfo(data.session_info);
       const installmentsList = data.installments || [];
       setInstallments(installmentsList);
+      setInstallmentalSetting(data.installmental_setting || 'percentage');
 
-      // Helper to find installment percentage from installment_id or name
-      const findInstallmentPct = (item) => {
+      // Helper to find installment data from installment_id
+      const findInstallment = (item) => {
         const match = installmentsList.find(
           (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name
         );
-        return match ? Number(match.inst1) : 0;
+        return match || null;
       };
 
+      setSelectedIds(new Set());
+
       // Map compulsory data: add editable fields
-      const mappedComp = (data.compulsory_data || []).map((item) => ({
-        id: item.id,
-        bursary_schedule_id: item.bursary_schedule_id,
-        description: item.description,
-        amount: item.amount,
-        schedule_amount: item.schedule_amount,
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
-        paid_amount: item.paid_amount || 0,
-        balance: item.balance || item.amount,
-        installment_id: item.installment_id || null,
-        installment_name: item.installment_name || '',
-        installment_percentage: findInstallmentPct(item),
-        has_cashpost: !!item.has_cashpost,
-      }));
+      const mappedComp = (data.compulsory_data || []).map((item) => {
+        const inst = findInstallment(item);
+        return {
+          id: item.id,
+          bursary_schedule_id: item.bursary_schedule_id,
+          description: item.description,
+          amount: item.amount,
+          schedule_amount: item.schedule_amount,
+          discount: item.discount || 0,
+          discountEnabled: !!item.discount_enabled,
+          penalty: item.penalty || 0,
+          penaltyEnabled: !!item.penalty_enabled,
+          paid_amount: item.paid_amount || 0,
+          balance: item.balance || item.amount,
+          installment_id: item.installment_id || null,
+          installment_inst1: inst ? String(inst.inst1) : '',
+          installment_inst2: inst ? String(inst.inst2) : '',
+          has_cashpost: !!item.has_cashpost,
+          amountToPay: item.balance || item.amount,
+          custom_amount: item.amount,
+        };
+      });
       setCompFees(mappedComp);
 
       // Map optional data: add editable fields
-      const mappedOpt = (data.optional_data || []).map((item) => ({
-        id: item.id,
-        bursary_schedule_id: item.bursary_schedule_id,
-        description: item.description,
-        amount: item.amount,
-        schedule_amount: item.schedule_amount,
-        discount: item.discount || 0,
-        discountEnabled: !!item.discount_enabled,
-        penalty: item.penalty || 0,
-        penaltyEnabled: !!item.penalty_enabled,
-        paid_amount: item.paid_amount || 0,
-        balance: item.balance || item.amount,
-        installment_id: item.installment_id || null,
-        installment_name: item.installment_name || '',
-        installment_percentage: findInstallmentPct(item),
-        has_cashpost: !!item.has_cashpost,
-      }));
+      const mappedOpt = (data.optional_data || []).map((item) => {
+        const inst = findInstallment(item);
+        return {
+          id: item.id,
+          bursary_schedule_id: item.bursary_schedule_id,
+          description: item.description,
+          amount: item.amount,
+          schedule_amount: item.schedule_amount,
+          discount: item.discount || 0,
+          discountEnabled: !!item.discount_enabled,
+          penalty: item.penalty || 0,
+          penaltyEnabled: !!item.penalty_enabled,
+          paid_amount: item.paid_amount || 0,
+          balance: item.balance || item.amount,
+          installment_id: item.installment_id || null,
+          installment_inst1: inst ? String(inst.inst1) : '',
+          installment_inst2: inst ? String(inst.inst2) : '',
+          has_cashpost: !!item.has_cashpost,
+          amountToPay: item.balance || item.amount,
+          custom_amount: item.amount,
+        };
+      });
       setOptFees(mappedOpt);
 
       setDataLoaded(true);
@@ -186,31 +290,8 @@ const CashPost = () => {
     }
   }, [user_id]);
 
-  // Load categories on mount
+  // Initial load: fetch session/term AND cashpost data on mount
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        setCategoriesLoading(true);
-        const res = await fetchActiveCategories();
-        const list = Array.isArray(res?.data) ? res.data : [];
-        setCategories(list);
-        if (list.length > 0 && !selectedCategoryId) {
-          setSelectedCategoryId(String(list[0].id));
-        }
-      } catch (err) {
-        console.error('Failed to load categories:', err);
-      } finally {
-        setCategoriesLoading(false);
-      }
-    };
-    loadCategories();
-  }, []);
-
-  // Initial load: fetch session/term AND cashpost data once categories are ready.
-  // Does NOT re-fetch when category changes — only the Fetch button does that.
-  useEffect(() => {
-    if (categoriesLoading || categories.length === 0) return;
-
     const init = async () => {
       try {
         const sessionRes = await fetchActiveSessionTerm();
@@ -225,8 +306,7 @@ const CashPost = () => {
             term: active.term_name || '',
           });
 
-          // Load cashpost data with the fetched session/term and selected category
-          await fetchData(active.session_id, active.term_id, selectedCategoryId);
+          await fetchData(active.session_id, active.term_id, '');
         } else {
           setLoading(false);
           setError('No active session/term found. Please configure bursary settings first.');
@@ -239,7 +319,7 @@ const CashPost = () => {
     };
 
     init();
-  }, [categories, categoriesLoading]);
+  }, []);
 
   /* SECTION HEADER BLOCK */
   const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
@@ -295,16 +375,25 @@ const CashPost = () => {
         <Table>
           <TableHead sx={{ bgcolor: isDark ? '#222' : '#fafafa' }}>
             <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  indeterminate={selectedIds.size > 0 && selectedIds.size < data.filter((f) => !f.has_cashpost).length}
+                  checked={data.filter((f) => !f.has_cashpost).length > 0 && selectedIds.size === data.filter((f) => !f.has_cashpost).length}
+                  onChange={() => toggleSelectAll(data.filter((f) => !f.has_cashpost).map((f) => f.id))}
+                />
+              </TableCell>
               <TableCell>#</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount (NGN)</TableCell>
+              <TableCell align="center">Amount to Pay</TableCell>
               <TableCell align="center">Discount</TableCell>
               <TableCell align="center">Penalty</TableCell>
-              <TableCell align="center">Installment</TableCell>
+              <TableCell align="center">
+                {installmentalSetting === 'percentage' ? 'Installment' : 'Amount'}
+              </TableCell>
               <TableCell align="right">Paid</TableCell>
               <TableCell align="right">Balance</TableCell>
               <TableCell align="right">Payable</TableCell>
-              <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -325,6 +414,13 @@ const CashPost = () => {
                       : 'inherit',
                   }}
                 >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedIds.has(fee.id)}
+                      onChange={() => toggleSelect(fee.id)}
+                      disabled={fee.has_cashpost}
+                    />
+                  </TableCell>
                   <TableCell>{String(i + 1).padStart(2, '0')}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight={500}>
@@ -337,6 +433,19 @@ const CashPost = () => {
                     )}
                   </TableCell>
                   <TableCell align="right">{format(fee.amount)}</TableCell>
+
+                  {/* AMOUNT TO PAY */}
+                  <TableCell align="center">
+                    <TextField
+                      size="small"
+                      type="number"
+                      sx={{ width: 110 }}
+                      disabled={fee.has_cashpost}
+                      value={fee.amountToPay}
+                      onChange={(e) => updateFee(type, fee.id, 'amountToPay', e.target.value)}
+                      inputProps={{ min: 0 }}
+                    />
+                  </TableCell>
 
                   {/* DISCOUNT */}
                   <TableCell align="center">
@@ -380,31 +489,47 @@ const CashPost = () => {
                     </Box>
                   </TableCell>
 
-                  {/* INSTALLMENT */}
+                  {/* INSTALLMENT / CUSTOM AMOUNT */}
                   <TableCell align="center">
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                      <Select
-                        value={fee.installment_name || ''}
-                        onChange={(e) => {
-                          const selectedInst = installments.find(
-                            (inst) => inst.inst1 === e.target.value || inst.id === e.target.value
-                          );
-                          updateFee(type, fee.id, 'installment_name', e.target.value);
-                          updateFee(type, fee.id, 'installment_id', selectedInst?.id || null);
-                          updateFee(type, fee.id, 'installment_percentage', Number(selectedInst?.inst1 || 0));
-                        }}
-                        displayEmpty
-                      >
-                        <MenuItem value="">
-                          <em>Select</em>
-                        </MenuItem>
-                        {installments.map((inst) => (
-                          <MenuItem key={inst.id} value={inst.inst1 || inst.id}>
-                            {inst.inst1}
+                    {installmentalSetting === 'percentage' ? (
+                      <FormControl size="small" sx={{ minWidth: 130 }}>
+                        <Select
+                          value={fee.installment_id || ''}
+                          onChange={(e) => {
+                            const selectedInst = installments.find(
+                              (inst) => inst.id === Number(e.target.value)
+                            );
+                            updateFee(type, fee.id, 'installment_id', selectedInst?.id || null);
+                            updateFee(type, fee.id, 'installment_inst1', selectedInst ? String(selectedInst.inst1) : '');
+                            updateFee(type, fee.id, 'installment_inst2', selectedInst ? String(selectedInst.inst2) : '');
+                          }}
+                          displayEmpty
+                          disabled={fee.has_cashpost}
+                        >
+                          <MenuItem value="">
+                            <em>Select</em>
                           </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                          {installments.map((inst) => (
+                            <MenuItem key={inst.id} value={inst.id}>
+                              {inst.inst1}:{inst.inst2}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    ) : (
+                      <TextField
+                        size="small"
+                        type="number"
+                        sx={{ width: 110 }}
+                        disabled={fee.has_cashpost}
+                        value={fee.custom_amount}
+                        onChange={(e) => {
+                          const val = Math.min(Number(e.target.value) || 0, fee.amount);
+                          updateFee(type, fee.id, 'custom_amount', val);
+                        }}
+                        inputProps={{ min: 0, max: fee.amount }}
+                      />
+                    )}
                   </TableCell>
 
                   {/* PAID */}
@@ -430,13 +555,6 @@ const CashPost = () => {
                     <Typography variant="body2" fontWeight={700}>
                       {format(payable)}
                     </Typography>
-                  </TableCell>
-
-                  {/* ACTION */}
-                  <TableCell align="center">
-                    <Button variant="contained" size="small" disabled={fee.has_cashpost}>
-                      {fee.has_cashpost ? 'Posted' : 'Post Cash'}
-                    </Button>
                   </TableCell>
                 </TableRow>
               );
@@ -535,7 +653,7 @@ const CashPost = () => {
             </Box>
           </Box>
 
-          {/* RIGHT - Back link, Category Filter & Fetch */}
+          {/* RIGHT - Refresh */}
           <Box
             sx={{
               display: 'flex',
@@ -545,57 +663,17 @@ const CashPost = () => {
               justifyContent: { xs: 'flex-start', sm: 'flex-end' },
             }}
           >
-            {/* <Button
-              variant="text"
-              size="small"
-              onClick={() => navigate('/class-ledger')}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 600,
-                color: isDark ? '#94a3b8' : '#64748b',
-                whiteSpace: 'nowrap',
-                p: 0.5,
-                '&:hover': {
-                  bgcolor: 'transparent',
-                  color: isDark ? '#e2e8f0' : '#334155',
-                },
-              }}
-            >
-              ← Go To Class Ledger
-            </Button> */}
-
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180, md: 200 } }}>
-              <InputLabel>Payment Category</InputLabel>
-              <Select
-                value={selectedCategoryId}
-                label="Payment Category"
-                onChange={(e) => setSelectedCategoryId(e.target.value)}
-                disabled={categoriesLoading}
-              >
-                {categoriesLoading ? (
-                  <MenuItem disabled>
-                    <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
-                  </MenuItem>
-                ) : (
-                  categories.map((cat) => (
-                    <MenuItem key={cat.id} value={String(cat.id)}>
-                      {cat.name}
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-            </FormControl>
             <Button
               variant="contained"
               size="small"
               onClick={() => {
                 if (selectedSessionId && selectedTermId) {
-                  fetchData(selectedSessionId, selectedTermId, selectedCategoryId);
+                  fetchData(selectedSessionId, selectedTermId, '');
                 }
               }}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
-              Fetch
+              Refresh
             </Button>
           </Box>
         </Box>
@@ -624,7 +702,17 @@ const CashPost = () => {
                 <Switch
                   size="small"
                   checked={compDiscountGlobal}
-                  onChange={(e) => setCompDiscountGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'comp', field: 'discount' });
+                      setGlobalModalValue('');
+                    } else {
+                      setCompFees((prev) =>
+                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false }))
+                      );
+                      setCompDiscountGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -638,7 +726,17 @@ const CashPost = () => {
                 <Switch
                   size="small"
                   checked={compPenaltyGlobal}
-                  onChange={(e) => setCompPenaltyGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
+                      setGlobalModalValue('');
+                    } else {
+                      setCompFees((prev) =>
+                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false }))
+                      );
+                      setCompPenaltyGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -690,7 +788,17 @@ const CashPost = () => {
                 <Switch
                   size="small"
                   checked={optDiscountGlobal}
-                  onChange={(e) => setOptDiscountGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'opt', field: 'discount' });
+                      setGlobalModalValue('');
+                    } else {
+                      setOptFees((prev) =>
+                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false }))
+                      );
+                      setOptDiscountGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -704,7 +812,17 @@ const CashPost = () => {
                 <Switch
                   size="small"
                   checked={optPenaltyGlobal}
-                  onChange={(e) => setOptPenaltyGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
+                      setGlobalModalValue('');
+                    } else {
+                      setOptFees((prev) =>
+                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false }))
+                      );
+                      setOptPenaltyGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -736,6 +854,53 @@ const CashPost = () => {
             </Typography>
           </Paper>
         )}
+
+        {/* POST CASH BUTTON */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 4 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handlePostCash}
+            disabled={posting}
+            sx={{ px: 6, py: 1.5, fontSize: '1rem', fontWeight: 700 }}
+          >
+            {posting ? <CircularProgress size={22} sx={{ mr: 1 }} /> : null}
+            {posting ? 'Posting...' : 'Post Cash'}
+          </Button>
+        </Box>
+
+        {/* GLOBAL VALUE MODAL */}
+        <Dialog
+          open={globalModal.open}
+          onClose={() => setGlobalModal({ ...globalModal, open: false })}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle>
+            Set {globalModal.field === 'discount' ? 'Discount' : 'Penalty'} Amount
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label={globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'}
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={globalModalValue}
+              onChange={(e) => setGlobalModalValue(e.target.value)}
+              inputProps={{ min: 0 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleGlobalModalConfirm}>
+              Apply
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </PageContainer>
   );

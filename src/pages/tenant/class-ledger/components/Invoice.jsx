@@ -41,7 +41,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import { fetchInvoiceByNumber } from '@/api/tenant/bursary/classLedger';
 import {
   fetchActiveSessionTerm,
-  fetchActiveCategories,
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
@@ -68,11 +67,11 @@ const Invoice = () => {
   const [compFees, setCompFees] = useState([]);
   const [optFees, setOptFees] = useState([]);
   const [installments, setInstallments] = useState([]);
+  const [installmentalSetting, setInstallmentalSetting] = useState('percentage');
 
   /* SESSION / CLASS / CATEGORY IDs (for optional payments modal) */
   const [sessionTermId, setSessionTermId] = useState(null);
   const [classId, setClassId] = useState(null);
-  const [categories, setCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
 
   /* UI STATE */
@@ -84,7 +83,6 @@ const Invoice = () => {
   const [printModalOpen, setPrintModalOpen] = useState(false);
 
   /* Refs */
-  const initialCategorySet = useRef(false);
   const dataLoadedRef = useRef(false);
 
   /* GLOBAL SWITCHES */
@@ -92,6 +90,25 @@ const Invoice = () => {
   const [compPenaltyGlobal, setCompPenaltyGlobal] = useState(false);
   const [optDiscountGlobal, setOptDiscountGlobal] = useState(false);
   const [optPenaltyGlobal, setOptPenaltyGlobal] = useState(false);
+
+  /* GLOBAL VALUE MODAL */
+  const [globalModal, setGlobalModal] = useState({ open: false, type: 'comp', field: 'discount' });
+  const [globalModalValue, setGlobalModalValue] = useState('');
+
+  const handleGlobalModalConfirm = () => {
+    const value = Number(globalModalValue) || 0;
+    const { type, field } = globalModal;
+    const setter = type === 'comp' ? setCompFees : setOptFees;
+    const setGlobal = type === 'comp'
+      ? (field === 'discount' ? setCompDiscountGlobal : setCompPenaltyGlobal)
+      : (field === 'discount' ? setOptDiscountGlobal : setOptPenaltyGlobal);
+
+    setter((prev) =>
+      prev.map((f) => ({ ...f, [field]: value, [`${field}Enabled`]: true }))
+    );
+    setGlobal(true);
+    setGlobalModal({ ...globalModal, open: false });
+  };
 
   /* ── Optional Payment Modal State ── */
   const [optionalModalOpen, setOptionalModalOpen] = useState(false);
@@ -133,15 +150,15 @@ const Invoice = () => {
 
   /* INSTALLMENT CHANGE HANDLER */
   const handleInstallmentChange = (feeId, value) => {
-    const selectedInst = installments.find((inst) => inst.inst1 === value || inst.id === value);
+    const selectedInst = installments.find((inst) => inst.id === Number(value));
     setCompFees((prev) =>
       prev.map((f) =>
         f.id === feeId
           ? {
               ...f,
-              installment_name: value,
               installment_id: selectedInst?.id || null,
-              installment_percentage: Number(selectedInst?.inst1 || 0),
+              installment_inst1: selectedInst ? String(selectedInst.inst1) : '',
+              installment_inst2: selectedInst ? String(selectedInst.inst2) : '',
             }
           : f,
       ),
@@ -166,9 +183,13 @@ const Invoice = () => {
     const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
     const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
 
-    // Apply installment percentage if set (default to 100% if none selected)
-    const installmentPct = Number(fee.installment_percentage) || 100;
-    const baseAmount = fee.amount * (installmentPct / 100);
+    let baseAmount;
+    if (installmentalSetting === 'percentage') {
+      const installmentPct = Number(fee.installment_inst1) || 100;
+      baseAmount = fee.amount * (installmentPct / 100);
+    } else {
+      baseAmount = Math.min(Number(fee.custom_amount) || 0, fee.amount);
+    }
 
     return Math.max(0, baseAmount - discount + penalty);
   };
@@ -308,20 +329,6 @@ const Invoice = () => {
     .filter((opt) => selectedOptionalIds.has(opt.option_id))
     .reduce((sum, opt) => sum + (Number(opt.amount) || 0), 0);
 
-  /* ── Fetch categories via API ── */
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await fetchActiveCategories();
-      const list = res.data ?? [];
-      if (list.length > 0) {
-        setCategories(list);
-        setSelectedCategoryId(String(list[0].id));
-      }
-    } catch (err) {
-      console.error('Failed to fetch categories', err);
-    }
-  }, []);
-
   /* ───────────────────────────────────────────── */
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
@@ -361,44 +368,49 @@ const Invoice = () => {
           setClassId(data.student_info.class_id);
         }
 
-        // Fetch categories (only on initial load, not when category changes)
-        if (!categoryId) {
-          fetchCategories();
+        // Set category from invoice_info
+        if (data.invoice_info?.bursary_payment_category_id) {
+          setSelectedCategoryId(String(data.invoice_info.bursary_payment_category_id));
         }
 
-        // Store installments
+        // Store installments and installmental setting
         setInstallments(data.installments || []);
+        setInstallmentalSetting(data.installmental_setting || 'percentage');
 
         const installmentsList = data.installments || [];
 
-        // Helper to find installment percentage from installment_id or name
-        const findInstallmentPct = (item) => {
+        // Helper to find installment data from installment_id
+        const findInstallment = (item) => {
           const match = installmentsList.find(
             (inst) => inst.id === item.installment_id || inst.inst1 === item.installment_name,
           );
-          return match ? Number(match.inst1) : 0;
+          return match || null;
         };
 
         // Map compulsory data
-        const mappedComp = (data.compulsory_data || []).map((item) => ({
-          id: item.id,
-          description: item.description,
-          schedule_amount: item.schedule_amount,
-          amount: item.amount,
-          discount: item.discount,
-          discount_enabled: item.discount_enabled,
-          penalty: item.penalty,
-          penalty_enabled: item.penalty_enabled,
-          paid_amount: item.paid_amount,
-          balance: item.balance,
-          status: item.status,
-          checked: false,
-          discountEnabled: !!item.discount_enabled,
-          penaltyEnabled: !!item.penalty_enabled,
-          installment_id: item.installment_id || null,
-          installment_name: item.installment_name || '',
-          installment_percentage: findInstallmentPct(item),
-        }));
+        const mappedComp = (data.compulsory_data || []).map((item) => {
+          const inst = findInstallment(item);
+          return {
+            id: item.id,
+            description: item.description,
+            schedule_amount: item.schedule_amount,
+            amount: item.amount,
+            discount: item.discount,
+            discount_enabled: item.discount_enabled,
+            penalty: item.penalty,
+            penalty_enabled: item.penalty_enabled,
+            paid_amount: item.paid_amount,
+            balance: item.balance,
+            status: item.status,
+            checked: false,
+            discountEnabled: !!item.discount_enabled,
+            penaltyEnabled: !!item.penalty_enabled,
+            installment_id: item.installment_id || null,
+            installment_inst1: inst ? String(inst.inst1) : '',
+            installment_inst2: inst ? String(inst.inst2) : '',
+            custom_amount: item.amount,
+          };
+        });
         setCompFees(mappedComp);
 
         // Map optional data — use selected_options for chip display & amount calculation
@@ -466,26 +478,6 @@ const Invoice = () => {
 
     init();
   }, [fetchInvoiceData]);
-
-  // Re-fetch invoice data when the user changes the category filter
-  useEffect(() => {
-    // Skip the initial category set by fetchCategories
-    if (!initialCategorySet.current) {
-      if (selectedCategoryId) {
-        initialCategorySet.current = true;
-      }
-      return;
-    }
-
-    if (
-      dataLoadedRef.current &&
-      selectedCategoryId &&
-      sessionInfo?.session_id &&
-      sessionInfo?.term_id
-    ) {
-      fetchInvoiceData(sessionInfo.session_id, sessionInfo.term_id, selectedCategoryId);
-    }
-  }, [selectedCategoryId]);
 
   /* SECTION HEADER BLOCK */
   const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => {
@@ -699,7 +691,17 @@ const Invoice = () => {
                 <Switch
                   size="small"
                   checked={compDiscountGlobal}
-                  onChange={(e) => setCompDiscountGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'comp', field: 'discount' });
+                      setGlobalModalValue('');
+                    } else {
+                      setCompFees((prev) =>
+                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false }))
+                      );
+                      setCompDiscountGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -717,7 +719,17 @@ const Invoice = () => {
                 <Switch
                   size="small"
                   checked={compPenaltyGlobal}
-                  onChange={(e) => setCompPenaltyGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'comp', field: 'penalty' });
+                      setGlobalModalValue('');
+                    } else {
+                      setCompFees((prev) =>
+                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false }))
+                      );
+                      setCompPenaltyGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -800,7 +812,7 @@ const Invoice = () => {
                     py: 1.5,
                   }}
                 >
-                  Installment
+                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount'}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -832,7 +844,7 @@ const Invoice = () => {
                       fontWeight={600}
                       color={isDark ? '#94a3b8' : '#475569'}
                     >
-                      Mark
+                      Mark All
                     </Typography>
                     <Checkbox
                       size="small"
@@ -962,28 +974,44 @@ const Invoice = () => {
                       </Box>
                     </TableCell>
 
-                    {/* INSTALLMENT */}
+                    {/* INSTALLMENT / CUSTOM AMOUNT */}
                     <TableCell align="center" sx={{ py: 1.5 }}>
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <Select
-                          value={fee.installment_name || ''}
-                          onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
-                          displayEmpty
-                          sx={{
-                            borderRadius: 2,
-                            '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
-                          }}
-                        >
-                          <MenuItem value="">
-                            <em>Select</em>
-                          </MenuItem>
-                          {installments.map((inst) => (
-                            <MenuItem key={inst.id} value={inst.inst1 || inst.id}>
-                              {inst.inst1}
+                      {installmentalSetting === 'percentage' ? (
+                        <FormControl size="small" sx={{ minWidth: 130 }}>
+                          <Select
+                            value={fee.installment_id || ''}
+                            onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
+                            displayEmpty
+                            sx={{
+                              borderRadius: 2,
+                              '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
+                            }}
+                          >
+                            <MenuItem value="">
+                              <em>Select</em>
                             </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                            {installments.map((inst) => (
+                              <MenuItem key={inst.id} value={inst.id}>
+                                {inst.inst1}:{inst.inst2}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : (
+                        <TextField
+                          size="small"
+                          type="number"
+                          sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                          value={fee.custom_amount}
+                          onChange={(e) => {
+                            const val = Math.min(Number(e.target.value) || 0, fee.amount);
+                            setCompFees((prev) =>
+                              prev.map((f) => (f.id === fee.id ? { ...f, custom_amount: val } : f)),
+                            );
+                          }}
+                          inputProps={{ min: 0, max: fee.amount }}
+                        />
+                      )}
                     </TableCell>
 
                     <TableCell
@@ -1029,11 +1057,7 @@ const Invoice = () => {
                 >
                   ₦{format(compTotal)}
                 </TableCell>
-                <TableCell align="right" sx={{ py: 1.5 }}>
-                  <Button variant="contained" disabled={compTotal === 0}>
-                    Pay Now - ₦{format(compTotal)} &gt;
-                  </Button>
-                </TableCell>
+                <TableCell sx={{ py: 1.5 }} />
               </TableRow>
             </TableBody>
           </Table>
@@ -1062,7 +1086,17 @@ const Invoice = () => {
                 <Switch
                   size="small"
                   checked={optDiscountGlobal}
-                  onChange={(e) => setOptDiscountGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'opt', field: 'discount' });
+                      setGlobalModalValue('');
+                    } else {
+                      setOptFees((prev) =>
+                        prev.map((f) => ({ ...f, discount: 0, discountEnabled: false }))
+                      );
+                      setOptDiscountGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -1080,7 +1114,17 @@ const Invoice = () => {
                 <Switch
                   size="small"
                   checked={optPenaltyGlobal}
-                  onChange={(e) => setOptPenaltyGlobal(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setGlobalModal({ open: true, type: 'opt', field: 'penalty' });
+                      setGlobalModalValue('');
+                    } else {
+                      setOptFees((prev) =>
+                        prev.map((f) => ({ ...f, penalty: 0, penaltyEnabled: false }))
+                      );
+                      setOptPenaltyGlobal(false);
+                    }
+                  }}
                   sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': {
                       color: '#8338ec',
@@ -1103,32 +1147,6 @@ const Invoice = () => {
                   },
                 }}
               />
-              <FormControl size="small" sx={{ minWidth: 160 }}>
-                <Select
-                  value={selectedCategoryId}
-                  onChange={(e) => setSelectedCategoryId(e.target.value)}
-                  displayEmpty
-                  sx={{
-                    borderRadius: 2,
-                    '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
-                  }}
-                >
-                  {categories.length === 0 ? (
-                    <MenuItem value="" disabled>
-                      <em>No categories</em>
-                    </MenuItem>
-                  ) : (
-                    <MenuItem value="">
-                      <em>Select category</em>
-                    </MenuItem>
-                  )}
-                  {categories.map((cat) => (
-                    <MenuItem key={cat.id} value={String(cat.id)}>
-                      {cat.category_name || cat.name || `Category #${cat.id}`}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
               <Button
                 variant="outlined"
                 size="small"
@@ -1241,7 +1259,7 @@ const Invoice = () => {
                         fontWeight={600}
                         color={isDark ? '#94a3b8' : '#475569'}
                       >
-                        Mark
+                        Mark 
                       </Typography>
                       <Checkbox
                         size="small"
@@ -1707,6 +1725,39 @@ const Invoice = () => {
             sx={{ fontWeight: 600 }}
           >
             Add
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* GLOBAL VALUE MODAL */}
+      <Dialog
+        open={globalModal.open}
+        onClose={() => setGlobalModal({ ...globalModal, open: false })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          Set {globalModal.field === 'discount' ? 'Discount' : 'Penalty'} Amount
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label={globalModal.field === 'discount' ? 'Discount Amount (NGN)' : 'Penalty Amount (NGN)'}
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={globalModalValue}
+            onChange={(e) => setGlobalModalValue(e.target.value)}
+            inputProps={{ min: 0 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setGlobalModal({ ...globalModal, open: false })}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleGlobalModalConfirm}>
+            Apply
           </Button>
         </DialogActions>
       </Dialog>

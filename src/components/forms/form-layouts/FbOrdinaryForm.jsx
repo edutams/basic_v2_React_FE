@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  FormControlLabel,
-  Button,
-} from '@mui/material';
+import { FormControlLabel, Button } from '@mui/material';
 import CustomTextField from '../theme-elements/CustomTextField';
 import CustomCheckbox from '../theme-elements/CustomCheckbox';
 import CustomFormLabel from '../theme-elements/CustomFormLabel';
@@ -18,7 +15,7 @@ const FbOrdinaryForm = () => {
   };
 
   return (
-    <ParentCard title='Ordrinary Form'>
+    <ParentCard title="Ordrinary Form">
       <form>
         <CustomFormLabel
           sx={{
@@ -31,7 +28,6 @@ const FbOrdinaryForm = () => {
         <CustomTextField
           id="email-address"
           helperText="We'll never share your email with anyone else."
-          variant="outlined"
           fullWidth
         />
         <CustomFormLabel htmlFor="ordinary-outlined-password-input">Password</CustomFormLabel>
@@ -40,7 +36,6 @@ const FbOrdinaryForm = () => {
           id="ordinary-outlined-password-input"
           type="password"
           autoComplete="current-password"
-          variant="outlined"
           fullWidth
           sx={{
             mb: '10px',

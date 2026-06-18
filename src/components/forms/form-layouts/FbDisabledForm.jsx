@@ -17,15 +17,15 @@ const FbDisabledForm = () => (
       </CustomFormLabel>
       <CustomTextField
         id="df-name"
-        variant="outlined"
         fullWidth
         disabled
         sx={{
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: (theme) =>
-              `${theme.palette.mode === 'dark'
-                ? 'rgba(255, 255, 255, 0.12) !important'
-                : '#dee3e9 !important'
+              `${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.12) !important'
+                  : '#dee3e9 !important'
               }`,
           },
         }}
@@ -34,15 +34,15 @@ const FbDisabledForm = () => (
       <CustomTextField
         id="df-email-address"
         helperText="We'll never share your email with anyone else."
-        variant="outlined"
         fullWidth
         disabled
         sx={{
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: (theme) =>
-              `${theme.palette.mode === 'dark'
-                ? 'rgba(255, 255, 255, 0.12) !important'
-                : '#dee3e9 !important'
+              `${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.12) !important'
+                  : '#dee3e9 !important'
               }`,
           },
         }}
@@ -52,16 +52,16 @@ const FbDisabledForm = () => (
         id="df-outlined-password-input"
         type="password"
         autoComplete="current-password"
-        variant="outlined"
         fullWidth
         disabled
         sx={{
           mb: 2,
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: (theme) =>
-              `${theme.palette.mode === 'dark'
-                ? 'rgba(255, 255, 255, 0.12) !important'
-                : '#dee3e9 !important'
+              `${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.12) !important'
+                  : '#dee3e9 !important'
               }`,
           },
         }}

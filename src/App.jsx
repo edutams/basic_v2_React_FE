@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { ThemeSettings } from './theme/Theme';
-import RTL from './layouts/full/shared/customizer/RTL';
+import RTL from './layouts/landlord/shared/customizer/RTL';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { RouterProvider } from 'react-router-dom';
 import router from './routes/Router';

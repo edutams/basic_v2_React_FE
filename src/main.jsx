@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import Spinner from './views/spinner/Spinner';
+import Spinner from './components/shared/spinner/Spinner';
 import './utils/i18n';
 import { CustomizerContextProvider } from './context/CustomizerContext';
 import { SnackbarProvider } from './context/SnackbarContext';
@@ -17,7 +17,7 @@ if (tenantValidation?.status === false && window.location.pathname !== '/school-
   window.location.replace('/school-not-found');
 }
 
-// ✅ Lazy import — TenantAuthProvider only loads on tenant subdomains
+// Lazy import — TenantAuthProvider only loads on tenant subdomains
 const TenantAuthProvider = isTenantSubdomain
   ? lazy(() =>
       import('./context/TenantContext/auth').then((m) => ({

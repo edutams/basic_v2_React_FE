@@ -25,7 +25,7 @@ export const SnackbarProvider = ({ children }) => {
     } = options;
 
     const id = Date.now() + Math.random();
-    
+
     const newSnackbar = {
       id,
       message,
@@ -38,7 +38,7 @@ export const SnackbarProvider = ({ children }) => {
       open: true,
     };
 
-    setSnackbars(prev => [...prev, newSnackbar]);
+    setSnackbars((prev) => [...prev, newSnackbar]);
 
     if (duration > 0) {
       setTimeout(() => {
@@ -50,23 +50,23 @@ export const SnackbarProvider = ({ children }) => {
   };
 
   const hideSnackbar = (id) => {
-    setSnackbars(prev => prev.filter(snackbar => snackbar.id !== id));
+    setSnackbars((prev) => prev.filter((snackbar) => snackbar.id !== id));
   };
 
   const hideAllSnackbars = () => {
     setSnackbars([]);
   };
 
-  const showSuccess = (message, options = {}) => 
+  const showSuccess = (message, options = {}) =>
     showSnackbar(message, { ...options, severity: 'success' });
 
-  const showError = (message, options = {}) => 
+  const showError = (message, options = {}) =>
     showSnackbar(message, { ...options, severity: 'error' });
 
-  const showWarning = (message, options = {}) => 
+  const showWarning = (message, options = {}) =>
     showSnackbar(message, { ...options, severity: 'warning' });
 
-  const showInfo = (message, options = {}) => 
+  const showInfo = (message, options = {}) =>
     showSnackbar(message, { ...options, severity: 'info' });
 
   const value = {
@@ -82,7 +82,7 @@ export const SnackbarProvider = ({ children }) => {
   return (
     <SnackbarContext.Provider value={value}>
       {children}
-      
+
       {snackbars.map((snackbar) => (
         <Snackbar
           key={snackbar.id}
@@ -90,6 +90,9 @@ export const SnackbarProvider = ({ children }) => {
           autoHideDuration={snackbar.duration}
           onClose={() => hideSnackbar(snackbar.id)}
           anchorOrigin={snackbar.anchorOrigin}
+          sx={{
+            zIndex: (theme) => theme.zIndex.modal + 9999,
+          }}
         >
           <Alert
             onClose={() => hideSnackbar(snackbar.id)}

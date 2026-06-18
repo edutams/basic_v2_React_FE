@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTenantAuth } from '../../hooks/useTenantAuth';
+import { useTenantAuth } from '@/hooks/useTenantAuth';
 
 const SetupRedirectHandler = () => {
   const navigate = useNavigate();

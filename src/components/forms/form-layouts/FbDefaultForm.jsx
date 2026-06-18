@@ -63,32 +63,20 @@ const FbDefaultForm = () => {
         >
           Default Text
         </CustomFormLabel>
-        <CustomTextField
-          id="default-value"
-          variant="outlined"
-          defaultValue="George deo"
-          fullWidth
-        />
+        <CustomTextField id="default-value" defaultValue="George deo" fullWidth />
         <CustomFormLabel htmlFor="email-text">Email</CustomFormLabel>
-        <CustomTextField id="email-text" type="email" variant="outlined" fullWidth />
+        <CustomTextField id="email-text" type="email" fullWidth />
         <CustomFormLabel htmlFor="default-outlined-password-input">Password</CustomFormLabel>
 
         <CustomTextField
           id="default-outlined-password-input"
           type="password"
           autoComplete="current-password"
-          variant="outlined"
           fullWidth
         />
         <CustomFormLabel htmlFor="outlined-multiline-static">Textarea</CustomFormLabel>
 
-        <CustomTextField
-          id="outlined-multiline-static"
-          multiline
-          rows={4}
-          variant="outlined"
-          fullWidth
-        />
+        <CustomTextField id="outlined-multiline-static" multiline rows={4} fullWidth />
         <CustomFormLabel htmlFor="readonly-text">Read Only</CustomFormLabel>
 
         <CustomTextField
@@ -99,7 +87,6 @@ const FbDefaultForm = () => {
               readOnly: true,
             },
           }}
-          variant="outlined"
           fullWidth
         />
         <Grid container spacing={0} my={2}>
@@ -164,7 +151,6 @@ const FbDefaultForm = () => {
         <CustomSelect
           fullWidth
           id="standard-select-number"
-          variant="outlined"
           value={number}
           onChange={handleChange3}
           sx={{

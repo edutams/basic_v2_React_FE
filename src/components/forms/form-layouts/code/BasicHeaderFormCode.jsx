@@ -162,14 +162,14 @@ const handleChange4 = (event) => {
   <Grid container spacing={3} mb={3}>
     <Grid size={{lg: 6, md: 12, sm: 12}} >
       <CustomFormLabel htmlFor="fname-text">First Name</CustomFormLabel>
-      <CustomTextField id="fname-text" variant="outlined" fullWidth />
+      <CustomTextField id="fname-text"  fullWidth />
       <CustomFormLabel htmlFor="standard-select-currency">Select Gender</CustomFormLabel>
       <CustomSelect
         id="standard-select-currency"
         value={currency}
         onChange={handleChange2}
         fullWidth
-        variant="outlined"
+        
 
       >
         {currencies.map((option) => (
@@ -210,13 +210,13 @@ const handleChange4 = (event) => {
     <Grid size={{lg: 6, md: 12, sm: 12}}>
       <CustomFormLabel htmlFor="lname-text">Last Name</CustomFormLabel>
 
-      <CustomTextField id="lname-text" variant="outlined" fullWidth />
+      <CustomTextField id="lname-text"  fullWidth />
       <CustomFormLabel htmlFor="date">Date of Birth</CustomFormLabel>
 
       <CustomTextField
         id="date"
         type="date"
-        variant="outlined"
+        
         fullWidth
         InputLabelProps={{
           shrink: true,
@@ -238,7 +238,7 @@ const handleChange4 = (event) => {
       Street
     </CustomFormLabel>
 
-    <CustomTextField id="street-text" variant="outlined" fullWidth />
+    <CustomTextField id="street-text"  fullWidth />
   </Grid>
   <Grid size={12}>
     <CustomFormLabel
@@ -249,7 +249,7 @@ const handleChange4 = (event) => {
     >
       City
     </CustomFormLabel>
-    <CustomTextField id="city-text" variant="outlined" fullWidth />
+    <CustomTextField id="city-text"  fullWidth />
   </Grid>
   <Grid size={12}>
     <CustomFormLabel
@@ -260,7 +260,7 @@ const handleChange4 = (event) => {
     >
       State
     </CustomFormLabel>
-    <CustomTextField id="state-text" variant="outlined" fullWidth />
+    <CustomTextField id="state-text"  fullWidth />
   </Grid>
   <Grid size={12}>
     <CustomFormLabel
@@ -271,7 +271,7 @@ const handleChange4 = (event) => {
     >
       Post Code
     </CustomFormLabel>
-    <CustomTextField id="post-text" variant="outlined" fullWidth />
+    <CustomTextField id="post-text"  fullWidth />
   </Grid>
   <Grid size={12}>
     <CustomFormLabel
@@ -287,7 +287,7 @@ const handleChange4 = (event) => {
       value={country}
       onChange={handleChange4}
       fullWidth
-      variant="outlined"
+      
 
     >
       {countries.map((option) => (

@@ -1,0 +1,127 @@
+import api from '@/api/landlord/landlord_api';
+
+const eduTierApi = {
+  // Plans
+  getPlans: async () => {
+    const response = await api.get('/v1/landlord/edu_tier/plans/get_plans');
+    return response.data;
+  },
+  savePlan: async (data) => {
+    if (data.id) {
+      const response = await api.put(`/v1/landlord/edu_tier/plans/update_plans/${data.id}`, data);
+      return response.data;
+    }
+    const response = await api.post('/v1/landlord/edu_tier/plans/store_plans', data);
+    return response.data;
+  },
+  deletePlan: async (id) => {
+    const response = await api.delete(`/v1/landlord/edu_tier/plans/delete_plan/${id}`);
+    return response.data;
+  },
+  getPackagesByPlan: async (planId) => {
+    const response = await api.get(`/v1/landlord/edu_tier/plans/package_plan/${planId}`);
+    return response.data;
+  },
+  savePlanModulesNew: async (planId, data) => {
+    const response = await api.post(`/v1/landlord/edu_tier/plans/plan_module/${planId}`, {
+      data: JSON.stringify(data),
+    });
+    return response.data;
+  },
+
+  // Packages
+  getPackages: async (params = {}) => {
+    const response = await api.get('/v1/landlord/edu_tier/packages/get_packages', { params });
+    return response.data;
+  },
+  savePackage: async (data) => {
+    if (data.id) {
+      const response = await api.put(
+        `/v1/landlord/edu_tier/packages/update_package/${data.id}`,
+        data,
+      );
+      return response.data;
+    }
+    const response = await api.post('/v1/landlord/edu_tier/packages/store_package', data);
+    return response.data;
+  },
+  deletePackage: async (id) => {
+    const response = await api.delete(`/v1/landlord/edu_tier/packages/delete_package/${id}`);
+    return response.data;
+  },
+
+  // Modules
+  getModules: async () => {
+    const response = await api.get('/v1/landlord/edu_tier/modules/get_modules');
+    return response.data;
+  },
+  getPackageModules: async (packageId) => {
+    const response = await api.get(
+      `/v1/landlord/edu_tier/packages/${packageId}/module_package`,
+    );
+    return response.data;
+  },
+  saveModule: async (data) => {
+    const moduleId = data.id || data.mod_id;
+    if (moduleId) {
+      const response = await api.put(
+        `/v1/landlord/edu_tier/modules/update_module/${moduleId}`,
+        data,
+      );
+      return response.data;
+    }
+    const response = await api.post('/v1/landlord/edu_tier/modules/store_module', data);
+    return response.data;
+  },
+  batchUpdateModules: async (packageId, modules) => {
+    const response = await api.post(`/v1/landlord/edu_tier/modules/${packageId}/batch_update`, {
+      modules: modules
+    });
+    return response.data;
+  },
+  deleteModule: async (id) => {
+    const response = await api.delete(`/v1/landlord/edu_tier/modules/delete_module/${id}`);
+    return response.data;
+  },
+
+  // Relationships
+  savePlanModules: async (planId, moduleIds) => {
+    const response = await api.post('/v1/landlord/edu_tier/plan_modules/save_plan_modules', {
+      plan_id: planId,
+      module_ids: moduleIds,
+    });
+    return response.data?.data;
+  },
+  savePackageModules: async (packageId, moduleIds) => {
+    const response = await api.post('/v1/landlord/edu_tier/plan_modules/save_package_modules', {
+      package_id: packageId,
+      module_ids: moduleIds,
+    });
+    return response.data?.data;
+  },
+  getAgentModules: async (agentId) => {
+    const response = await api.get(
+      `/v1/landlord/edu_tier/plan_modules/get_agent_modules/${agentId}`,
+    );
+    return response.data?.data;
+  },
+  saveAgentModules: async (agentId, moduleIds) => {
+    const response = await api.post('/v1/landlord/edu_tier/plan_modules/save_agent_modules', {
+      agent_id: agentId,
+      module_ids: moduleIds,
+    });
+    return response.data?.data;
+  },
+  deactivateModuleForTenants: async (moduleId, status) => {
+    const response = await api.post(
+      '/v1/landlord/edu_tier/plan_modules/deactivate_module_tenants',
+      {
+        module_id: moduleId,
+        status: status,
+      },
+    );
+    return response.data;
+  },
+};
+
+export default eduTierApi;

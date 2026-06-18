@@ -1,0 +1,319 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
+  IconButton,
+  CircularProgress,
+  Avatar,
+  Chip,
+  Divider,
+  Alert,
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  Close as CloseIcon,
+  Person as PersonIcon,
+} from '@mui/icons-material';
+import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
+import { useNotification } from 'src/hooks/useNotification';
+import guardianApi from '@/api/tenant/guardians/parentApi';
+import PropTypes from 'prop-types';
+
+const LIST_HEIGHT = 185;
+
+const getWardDisplay = (ward) => {
+  if (ward.name !== undefined) {
+    return {
+      name: ward.name || '—',
+      userIdCode: ward.user_id_code,
+      classArm: ward.class_arm || '—',
+    };
+  }
+  const reg = ward.student_registrations?.[0];
+  const arm = reg?.class_arm;
+  const armNames = arm?.arm_names;
+  const armLabel = Array.isArray(armNames) ? armNames.filter(Boolean).join(', ') : armNames || '';
+  const className = arm?.programme_class?.class?.class_name || '';
+  return {
+    name: `${ward.fname || ''} ${ward.lname || ''}`.trim() || '—',
+    userIdCode: ward.user_id,
+    classArm: [className, armLabel].filter(Boolean).join(' ') || '—',
+  };
+};
+
+const LinkWardForm = ({ parent, onSave, onCancel }) => {
+  const notify = useNotification();
+
+  const [search, setSearch] = useState('');
+  const [classId, setClassId] = useState('');
+  const [classes, setClasses] = useState([]);
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [linkedWards, setLinkedWards] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getClassesWithDivisions()
+      .then((data) => {
+        const flat = [];
+        (data || []).forEach((div) =>
+          (div.programmes || []).forEach((prog) =>
+            (prog.classes || []).forEach((cls) =>
+              flat.push({ id: cls.id, label: `${prog.programme_code} - ${cls.class_code}` }),
+            ),
+          ),
+        );
+        setClasses(flat);
+      })
+      .catch(() => notify.error('Failed to load classes'));
+  }, []);
+
+  useEffect(() => {
+    if (!parent?.user_id) return;
+    setSearch('');
+    setClassId('');
+    setResults([]);
+    guardianApi
+      .getWards(parent.user_id)
+      .then((res) => setLinkedWards(res?.data?.data ?? []))
+      .catch(() => notify.error('Failed to load linked wards'));
+  }, [parent?.user_id]);
+
+  const handleSearch = useCallback(async () => {
+    if (!search.trim() && !classId) return;
+    try {
+      setSearching(true);
+      const res = await guardianApi.searchLearners({
+        search: search.trim(),
+        class_id: classId || undefined,
+      });
+      const data = res?.data?.data ?? [];
+      if (data.length === 0) notify.info('No learners found for that search');
+      setResults(data);
+    } catch {
+      notify.error('Search failed');
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }, [search, classId]);
+
+  const handleAdd = (l) => {
+    if (!linkedWards.some((w) => w.id === l.id)) setLinkedWards((p) => [...p, l]);
+  };
+  const handleRemove = (id) => setLinkedWards((p) => p.filter((w) => w.id !== id));
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await onSave(linkedWards.map((w) => w.id));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const WardRow = ({ ward, onClick, showRemove }) => {
+    const { name, userIdCode, classArm } = getWardDisplay(ward);
+    return (
+      <Box
+        onClick={onClick}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          px: 2,
+          py: 1,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          cursor: onClick ? 'pointer' : 'default',
+          flexShrink: 0,
+          '&:hover': onClick ? { bgcolor: 'primary.lighter', borderColor: 'primary.main' } : {},
+        }}
+      >
+        <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light' }}>
+          <PersonIcon fontSize="small" />
+        </Avatar>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="body2" fontWeight={500} noWrap>
+            {name}
+          </Typography>
+          {userIdCode && (
+            <Typography variant="caption" color="text.secondary" noWrap>
+              ID: {userIdCode}
+            </Typography>
+          )}
+        </Box>
+        <Chip label={classArm} size="small" />
+        {showRemove && (
+          <IconButton
+            size="small"
+            color="error"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemove(ward.id);
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+    );
+  };
+
+  return (
+    <Box>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          mb: 2,
+          p: 1.5,
+          bgcolor: 'grey.50',
+          borderRadius: 2,
+          alignItems: 'center',
+        }}
+      >
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Filter by Class</InputLabel>
+          <Select
+            value={classId}
+            label="Filter by Class"
+            onChange={(e) => setClassId(e.target.value)}
+          >
+            <MenuItem value="">All Classes</MenuItem>
+            {classes.map((cls) => (
+              <MenuItem key={cls.id} value={cls.id}>
+                {cls.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <TextField
+          size="small"
+          placeholder="Search Learner ID | Learner Name"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          sx={{ flex: 1 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        <Button
+          onClick={handleSearch}
+          disabled={searching}
+          sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
+        >
+          {searching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
+        </Button>
+      </Box>
+
+      {/* search results */}
+      {results.length > 0 && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+            {results.length} result{results.length !== 1 ? 's' : ''} — click a learner to link
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0.5,
+              maxHeight: LIST_HEIGHT,
+              overflowY: 'auto',
+              pr: 0.5,
+            }}
+          >
+            {results.map((learner) => {
+              const alreadyLinked = linkedWards.some((w) => w.id === learner.id);
+              return (
+                <Box key={learner.id} sx={{ position: 'relative' }}>
+                  <WardRow
+                    ward={learner}
+                    onClick={!alreadyLinked ? () => handleAdd(learner) : undefined}
+                    showRemove={false}
+                  />
+                  {alreadyLinked && (
+                    <Chip
+                      label="linked"
+                      color="success"
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        right: 12,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                      }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+          <Divider sx={{ mt: 2, mb: 1 }} />
+        </Box>
+      )}
+
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+        Linked Wards {linkedWards.length > 0 && `(${linkedWards.length})`}
+      </Typography>
+      {linkedWards.length === 0 ? (
+        <Alert
+          severity="info"
+          sx={{ justifyContent: 'center', textAlign: 'center', '& .MuiAlert-icon': { mr: 1.5 } }}
+        >
+          No wards linked yet. Search and click a learner to link them.
+        </Alert>
+      ) : (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1,
+            maxHeight: LIST_HEIGHT,
+            overflowY: 'auto',
+            pr: 0.5,
+          }}
+        >
+          {linkedWards.map((ward) => (
+            <WardRow key={ward.id} ward={ward} showRemove />
+          ))}
+        </Box>
+      )}
+
+      <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
+        <Button color="inherit" onClick={onCancel} disabled={saving}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save'}
+        </Button>
+      </Box>
+    </Box>
+  );
+};
+
+LinkWardForm.propTypes = {
+  parent: PropTypes.object,
+  onSave: PropTypes.func.isRequired,
+  onCancel: PropTypes.func.isRequired,
+};
+
+export default LinkWardForm;

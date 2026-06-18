@@ -135,7 +135,6 @@ const FormLabelAlignment = () => {
             value={country}
             onChange={handleChange}
             fullWidth
-            variant="outlined"
           >
             {countries.map((option) => (
               <MenuItem key={option.value} value={option.value}>

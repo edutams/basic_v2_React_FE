@@ -1,0 +1,515 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Chip,
+  Paper,
+  TableContainer,
+  IconButton,
+  Menu,
+  MenuItem,
+  TableFooter,
+  TablePagination,
+  Snackbar,
+  Alert,
+  Button,
+  TextField,
+  CircularProgress,
+} from '@mui/material';
+import api from '@/api/landlord/landlord_api';
+import { IconSchool } from '@tabler/icons-react';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
+import PageContainer from '@/components/container/PageContainer';
+import ParentCard from '@/components/shared/ParentCard';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ReusableModal from '@/components/shared/ReusableModal';
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import FormDialog from '@/components/shared/FormDialog';
+
+import PlanDistributionModal from '../agent/components/PlanDistributionModal';
+
+const BCrumb = [{ to: '/', title: 'Home' }, { title: 'My Plans' }];
+
+const MyPlan = () => {
+  const [openViewModal, setOpenViewModal] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModules, setShowModules] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [activeRow, setActiveRow] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
+  const [planToDeactivate, setPlanToDeactivate] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [openEditModal, setOpenEditModal] = useState(false);
+
+  const [editPlan, setEditPlan] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const studentLimitOptions = [
+    '0 - 99 Students',
+    '100 - 199 Students',
+    '200 - 299 Students',
+    '300+ Students',
+  ];
+  const [selectedStudentLimit, setSelectedStudentLimit] = useState(studentLimitOptions[0]);
+  const fetchPlans = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/v1/landlord/edu_tier/get_my_plans');
+
+      const plansData = Array.isArray(res.data?.data) ? res.data.data : [];
+
+      if (plansData.length === 0) {
+        try {
+          const syncRes = await api.post('/v1/landlord/edu_tier/sync_my_plans');
+          setPlans(Array.isArray(syncRes.data?.data?.plans) ? syncRes.data.data.plans : []);
+        } catch (syncError) {
+          setPlans([]);
+        }
+      } else {
+        setPlans(plansData);
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+      setPlans([]);
+      setSnackbarMessage('Failed to fetch plans');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleActionClick = (event, id) => {
+    setAnchorEl(event.currentTarget);
+    setActiveRow(id);
+  };
+
+  const handleActionClose = () => {
+    setAnchorEl(null);
+    setActiveRow(null);
+  };
+
+  const handleOpenDeactivateDialog = (plan) => {
+    handleActionClose();
+    setTimeout(() => {
+      setPlanToDeactivate(plan);
+      setOpenDeactivateDialog(true);
+    }, 100);
+  };
+
+  const handleDeactivatePlan = async () => {
+    if (planToDeactivate) {
+      try {
+        const newStatus = planToDeactivate.status === 'active' ? 'inactive' : 'active';
+        await api.patch(`/v1/landlord/edu_tier/my_plans_status/${planToDeactivate.id}`, {
+          status: newStatus,
+        });
+
+        setPlans((prev) =>
+          prev.map((p) => (p.id === planToDeactivate.id ? { ...p, status: newStatus } : p)),
+        );
+        setOpenDeactivateDialog(false);
+        setSnackbarMessage(
+          `Plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
+        );
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+      } catch (error) {
+        console.error('Error updating status:', error);
+        setSnackbarMessage(error.response?.data?.message || 'Failed to update plan status');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    }
+  };
+
+  const handleViewPlan = (plan) => {
+    handleActionClose();
+    setSelectedPlan(plan);
+    setShowModules(false);
+    setOpenViewModal(true);
+  };
+
+  const handleViewClose = () => {
+    setOpenViewModal(false);
+    setSelectedPlan(null);
+  };
+
+  const handleEditPlan = (plan) => {
+    handleActionClose();
+    setEditPlan(plan);
+    setEditName(plan.display_name || plan.name);
+    setEditPrice(plan.price);
+    setOpenEditModal(true);
+  };
+  const handleEditSave = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.put(`/v1/landlord/edu_tier/update_my_plans/${editPlan.id}`, {
+        display_name: editName,
+        price: parseFloat(editPrice),
+      });
+
+      // API returns { status, message, data: updatedPlan }
+      const updatedPlan = res.data?.data;
+      setPlans((prev) => prev.map((p) => (p.id === editPlan.id ? { ...p, ...updatedPlan } : p)));
+      setOpenEditModal(false);
+      setSnackbarMessage('Plan updated successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      setSnackbarMessage(error.response?.data?.message || 'Failed to update plan');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  };
+
+  const paginatedPlans = Array.isArray(plans)
+    ? plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    : [];
+
+  return (
+    <PageContainer title="My Plans" description="This is the My Plans page">
+      {/* <Breadcrumb title="My Plans" items={BCrumb} /> */}
+      {/* <ParentCard title={<Typography variant="h5">All My Plans</Typography>}> */}
+      <Paper>
+        <TableContainer>
+          <Table aria-label="my plan table" sx={{ whiteSpace: 'nowrap' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <Typography variant="h6">S/N</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="h6">Name</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="h6">Student Limit</Typography>
+                </TableCell>
+                {/* <TableCell>
+                    <Typography variant="h6">Description</Typography>
+                  </TableCell> */}
+                <TableCell>
+                  <Typography variant="h6">Base Price (₦)</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="h6">Price (₦)</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="h6">Status</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="h6">Action</Typography>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} sx={{ textAlign: 'center', py: 5 }}>
+                    <CircularProgress size={40} />
+                  </TableCell>
+                </TableRow>
+              ) : paginatedPlans.length > 0 ? (
+                paginatedPlans.map((plan, index) => {
+                  const planData = plan.plan?.data ? JSON.parse(plan.plan.data) : {};
+                  return (
+                    <TableRow key={plan.id} hover>
+                      <TableCell>
+                        <Typography variant="subtitle2">
+                          {page * rowsPerPage + index + 1}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="h6" fontWeight="400">
+                          {plan.display_name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="h6">{planData.students_limit || 'N/A'}</Typography>
+                      </TableCell>
+                      {/* <TableCell>
+                          <Typography variant="body2">{plan.plan?.description}</Typography>
+                        </TableCell> */}
+                      <TableCell>
+                        <Typography variant="h6">
+                          ₦{parseFloat(plan.plan?.price || 0).toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="h6">
+                          ₦{parseFloat(plan.price || 0).toFixed(2)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          sx={{
+                            bgcolor:
+                              plan.status === 'active'
+                                ? (theme) => theme.palette.success.light
+                                : (theme) => theme.palette.error.light,
+                            color:
+                              plan.status === 'active'
+                                ? (theme) => theme.palette.success.main
+                                : (theme) => theme.palette.error.main,
+                            borderRadius: '8px',
+                          }}
+                          size="small"
+                          label={
+                            plan.status
+                              ? plan.status.charAt(0).toUpperCase() + plan.status.slice(1)
+                              : 'Unknown'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton onClick={(e) => handleActionClick(e, plan.id)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                        <Menu
+                          anchorEl={anchorEl}
+                          open={Boolean(anchorEl) && activeRow === plan.id}
+                          onClose={handleActionClose}
+                          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                        >
+                          <MenuItem onClick={() => handleViewPlan(plan)}>
+                            View Plan Details
+                          </MenuItem>
+                          <MenuItem onClick={() => handleEditPlan(plan)}>
+                            Edit Plan Details
+                          </MenuItem>
+                          <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
+                            {plan.status === 'active' ? 'Deactivate' : 'Activate'}
+                          </MenuItem>
+                        </Menu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} sx={{ textAlign: 'center', padding: '40px 0' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <IconSchool
+                        width={48}
+                        height={48}
+                        color="#757575"
+                        sx={{ marginBottom: '16px' }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 'bold', color: '#757575', marginBottom: '8px' }}
+                      >
+                        No Plans Available
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#757575', fontSize: '14px' }}>
+                        No plans have been registered yet.
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  count={plans.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      <ReusableModal
+        open={openViewModal}
+        onClose={() => {
+          handleViewClose();
+          setShowModules(false);
+        }}
+        title="View Details"
+        size="medium"
+        showDivider={true}
+        showCloseButton={true}
+      >
+        <Box sx={{ pt: 2, pr: 0, pb: 2, pl: 0 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              Students Limit
+            </Typography>
+            <Box
+              sx={{
+                border: '1px solid #e0e0e0',
+                borderRadius: 1,
+                display: 'inline-block',
+                bgcolor: '#f5f6fa',
+                px: 3,
+                py: 1,
+                width: '100%',
+              }}
+            >
+              <Typography variant="body1" sx={{ fontSize: 16 }}>
+                {selectedPlan?.plan?.data
+                  ? JSON.parse(selectedPlan.plan.data).students_limit
+                  : 'N/A'}{' '}
+                Students
+              </Typography>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              border: '1px solid #bada55',
+              borderRadius: 1,
+              px: 3,
+              py: 3,
+              mb: 2,
+              bgcolor: '#fff',
+              minHeight: 120,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
+              {selectedPlan?.display_name?.toUpperCase()} (₦
+              {parseFloat(selectedPlan?.price || 0).toLocaleString()})
+            </Typography>
+            <Button
+              variant="text"
+              color="primary"
+              sx={{ textTransform: 'none', fontWeight: 500, fontSize: 18 }}
+              onClick={() => setShowModules((prev) => !prev)}
+            >
+              {showModules ? 'Hide Modules' : 'View Modules'}
+            </Button>
+            {showModules && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  Modules
+                </Typography>
+                {selectedPlan?.plan?.modules?.map((module) => (
+                  <Box
+                    key={module.id}
+                    sx={{ mb: 1, p: 1, border: '1px solid #eee', borderRadius: 1 }}
+                  >
+                    <Typography variant="body1" fontWeight={600}>
+                      {module.module_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {module.module_description}
+                    </Typography>
+                  </Box>
+                ))}
+                {(!selectedPlan?.plan?.modules || selectedPlan.plan.modules.length === 0) && (
+                  <Typography variant="body2">No modules assigned to this plan.</Typography>
+                )}
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </ReusableModal>
+
+      {/* Edit Plan Modal using ReusableModal */}
+      <ReusableModal
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        title="Edit Plan"
+        size="medium"
+        showDivider={true}
+        showCloseButton={true}
+      >
+        <form onSubmit={handleEditSave}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="Plan Name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              required
+              fullWidth
+            />
+            <TextField
+              label="Price (₦)"
+              type="number"
+              value={editPrice}
+              onChange={(e) => setEditPrice(e.target.value)}
+              required
+              fullWidth
+              inputProps={{ min: 0, step: '0.01' }}
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+              <Button onClick={() => setOpenEditModal(false)} color="inherit">
+                Cancel
+              </Button>
+              <Button type="submit" color="primary">
+                Save
+              </Button>
+            </Box>
+          </Box>
+        </form>
+      </ReusableModal>
+
+      <ConfirmationDialog
+        open={openDeactivateDialog}
+        onClose={() => setOpenDeactivateDialog(false)}
+        onConfirm={handleDeactivatePlan}
+        title={planToDeactivate?.status === 'active' ? 'Deactivate Plan' : 'Activate Plan'}
+        message={`Are you sure you want to ${
+          planToDeactivate?.status === 'active' ? 'deactivate' : 'activate'
+        } ${planToDeactivate?.display_name || planToDeactivate?.name}?`}
+        confirmText={planToDeactivate?.status === 'active' ? 'Deactivate' : 'Activate'}
+        cancelText="Cancel"
+        confirmColor={planToDeactivate?.status === 'active' ? 'error' : 'primary'}
+        severity={planToDeactivate?.status === 'active' ? 'error' : 'primary'}
+      />
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+      {/* </ParentCard> */}
+    </PageContainer>
+  );
+};
+
+export default MyPlan;

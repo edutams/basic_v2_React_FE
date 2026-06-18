@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import api from '../../api/auth';
+import api from '@/api/landlord/landlord_api';
 import { PermissionProvider } from './permissions';
 import axios from 'axios';
 import { CustomizerContext } from '../CustomizerContext';
@@ -207,14 +207,9 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (passwordData) => {
     setError(null);
-    try {
-      await api.put('/v1/landlord/change_password', passwordData);
-      return { success: true };
-    } catch (err) {
-      const msg = err.response?.data?.error || 'Password change failed';
-      setError(msg);
-      return { success: false, error: msg };
-    }
+    const response = await api.put('/v1/landlord/change_password', passwordData);
+
+    return response.data;
   };
 
   const refreshToken = async () => {
